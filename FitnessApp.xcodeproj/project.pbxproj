@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		00181BFD2DABFA8500884E28 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 00181BFC2DABFA7C00884E28 /* .gitignore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		00181B042DABCCE400884E28 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		00181AF22DABCCE300884E28 /* FitnessApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FitnessApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		00181B032DABCCE400884E28 /* FitnessAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FitnessAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		00181B0D2DABCCE400884E28 /* FitnessAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FitnessAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		00181BFC2DABFA7C00884E28 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +80,7 @@
 		00181AE92DABCCE300884E28 = {
 			isa = PBXGroup;
 			children = (
+				00181BFC2DABFA7C00884E28 /* .gitignore */,
 				00181AF42DABCCE300884E28 /* FitnessApp */,
 				00181B062DABCCE400884E28 /* FitnessAppTests */,
 				00181B102DABCCE400884E28 /* FitnessAppUITests */,
@@ -212,6 +218,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				00181BFD2DABFA8500884E28 /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

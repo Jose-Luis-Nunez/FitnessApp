@@ -1,0 +1,29 @@
+# Xcode & macOS
+DerivedData/
+build/
+*.xcuserstate
+*.moved-aside
+*.xcworkspace/xcuserdata
+*.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+*.xcscmblueprint
+.DS_Store
+
+# JetBrains / IntelliJ / AppCode
+.idea/
+*.iml
+
+# SwiftPM
+.swiftpm/
+Package.resolved
+
+# Logs
+*.log
+
+# Archivierte Apps
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# User-Spezifisches
+*.swp
+*.xcuserdatad/
