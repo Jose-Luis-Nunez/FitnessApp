@@ -11,7 +11,7 @@ struct ExerciseCardView: View {
     @State private var seatInput = ""
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) {
             CardTopSectionView(
                 title: viewModel.exercise.name,
                 seatText: seatDisplayText,
@@ -21,16 +21,19 @@ struct ExerciseCardView: View {
                 }
             )
 
-            Divider().background(Color.white.opacity(0.4)).padding(.horizontal, 4)
+            Divider().background(AppStyle.Color.whiteLite).padding(.horizontal, 4)
 
             CardBottomSectionView(
                 weight: viewModel.exercise.weight,
                 reps: viewModel.exercise.reps,
                 sets: viewModel.exercise.sets
             )
+            .scaleEffect(1.1)
+            .padding(.top, 2)
         }
-        .padding()
-        .background(AppStyle.Color.cardBackground)
+        .padding(.vertical, 12)
+        .padding(.horizontal)
+        .background(AppStyle.Color.purple)
         .cornerRadius(AppStyle.CornerRadius.card)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 4)
         .sheet(isPresented: $isEditingSeat) {
@@ -80,7 +83,7 @@ struct CardTopSectionView: View {
         HStack(alignment: .top) {
             Text(title)
                 .font(AppStyle.Font.headlineLarge)
-                .foregroundColor(.white)
+                .foregroundColor(AppStyle.Color.white)
                 .accessibilityIdentifier(IDS.nameLabel)
 
             Spacer()
@@ -89,8 +92,8 @@ struct CardTopSectionView: View {
                 AppChip(
                     text: seatText,
                     icon: Image("iconSeatSettings"),
-                    backgroundColor: AppStyle.Color.seatChip,
-                    foregroundColor: .white
+                    backgroundColor: AppStyle.Color.purpleDark,
+                    foregroundColor: AppStyle.Color.white
                 )
             }
             .buttonStyle(.plain)
@@ -105,19 +108,27 @@ struct CardBottomSectionView: View {
     let sets: Int
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 12) {
+        HStack(alignment: .center, spacing: 12) {
             IconTextColumnView(
                 icon: Image("iconActivityIncrease"),
                 chipText: "STEIGEND",
-                chipBackground: AppStyle.Color.chipPurple
+                chipBackground: AppStyle.Color.purpleDark
             )
+
+            Spacer(minLength: 4)
 
             ChipColumnView(reps: reps, sets: sets)
 
-            Spacer()
-
-            WeightDisplayView(weight: weight)
+            AppChip(
+                text: "\(weight) kg",
+                icon: nil,
+                backgroundColor: AppStyle.Color.purpleLight,
+                foregroundColor: AppStyle.Color.purpleDark,
+                size: .large
+            )
+            .frame(height: AppStyle.Dimensions.chipHeight * 2 + 42)
         }
+        .padding(.horizontal, AppStyle.Padding.horizontal)
     }
 }
 
@@ -127,16 +138,17 @@ struct IconTextColumnView: View {
     let chipBackground: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: -24) {
             icon
                 .resizable()
                 .scaledToFit()
-                .frame(width: 24, height: 24)
+                .frame(width: 52, height: 52)
+                .offset(x: 12, y: -12)
             AppChip(
                 text: chipText,
                 icon: nil,
                 backgroundColor: chipBackground,
-                foregroundColor: .white
+                foregroundColor: AppStyle.Color.white
             )
         }
     }
@@ -145,34 +157,22 @@ struct IconTextColumnView: View {
 struct ChipColumnView: View {
     let reps: Int
     let sets: Int
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             AppChip(
                 text: "\(sets)x",
                 icon: Image(systemName: "bolt.fill"),
-                backgroundColor: .white.opacity(0.2),
-                foregroundColor: .white
+                backgroundColor: AppStyle.Color.whiteLite,
+                foregroundColor: AppStyle.Color.white
             )
+
             AppChip(
                 text: "\(reps)",
                 icon: Image(systemName: "arrow.triangle.2.circlepath"),
-                backgroundColor: .white.opacity(0.2),
-                foregroundColor: .white
+                backgroundColor: AppStyle.Color.whiteLite,
+                foregroundColor: AppStyle.Color.white
             )
         }
-    }
-}
-
-struct WeightDisplayView: View {
-    let weight: Int
-
-    var body: some View {
-        Text("\(weight) kg")
-            .font(AppStyle.Font.metricValue)
-            .foregroundColor(.white)
-            .padding(8)
-            .background(Color.white.opacity(0.2))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }

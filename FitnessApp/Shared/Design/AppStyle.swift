@@ -22,10 +22,15 @@ enum AppStyle {
     }
 
     enum Color {
-        static let cardBackground = SwiftUI.Color(hex: "#A485FD")
-        //static let cardBackground = SwiftUI.Color(hex: "#C9B3FF")
-        static let chipPurple = SwiftUI.Color(hex: "#E5D8FF")
-        static let chipLabelColor = SwiftUI.Color.white
-        static let seatChip = SwiftUI.Color(hex: "#9575F4")
+        
+        static let white = SwiftUI.Color.white
+        static let whiteLite = SwiftUI.Color.white.opacity(0.2)
+        static let purple = SwiftUI.Color(hex: "#A485FD")
+        static let purpleLight = SwiftUI.Color(hex: "#E5D8FF")
+        static let purpleDark = SwiftUI.Color(hex: "#9575F4")
     }
+    
+    enum Dimensions {
+         static let chipHeight: CGFloat = 28
+     }
 }
