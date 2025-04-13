@@ -13,4 +13,19 @@ final class ExerciseCardViewModel: ObservableObject {
         exercise.seatSetting = newSeat
         onUpdate(exercise)
     }
+
+    func updateWeight(_ newWeight: Int) {
+        exercise.weight = newWeight
+        onUpdate(exercise)
+    }
+
+    func updateSets(_ newSets: Int) {
+        exercise.sets = newSets
+        onUpdate(exercise)
+    }
+
+    func updateReps(_ newReps: Int) {
+        exercise.reps = newReps
+        onUpdate(exercise)
+    }
 }

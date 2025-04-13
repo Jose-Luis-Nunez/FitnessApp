@@ -8,7 +8,13 @@ private struct IDS {
 struct ExerciseCardView: View {
     @StateObject var viewModel: ExerciseCardViewModel
     @State private var isEditingSeat = false
+    @State private var isEditingWeight = false
+    @State private var isEditingSets = false
+    @State private var isEditingReps = false
     @State private var seatInput = ""
+    @State private var weightInput = ""
+    @State private var setsInput = ""
+    @State private var repsInput = ""
 
     var body: some View {
         VStack(spacing: 8) {
@@ -26,7 +32,19 @@ struct ExerciseCardView: View {
             CardBottomSectionView(
                 weight: viewModel.exercise.weight,
                 reps: viewModel.exercise.reps,
-                sets: viewModel.exercise.sets
+                sets: viewModel.exercise.sets,
+                onWeightTap: {
+                    weightInput = "\(viewModel.exercise.weight)"
+                    isEditingWeight = true
+                },
+                onSetsTap: {
+                    setsInput = "\(viewModel.exercise.sets)"
+                    isEditingSets = true
+                },
+                onRepsTap: {
+                    repsInput = "\(viewModel.exercise.reps)"
+                    isEditingReps = true
+                }
             )
             .scaleEffect(1.1)
             .padding(.top, 2)
@@ -38,6 +56,15 @@ struct ExerciseCardView: View {
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 4)
         .sheet(isPresented: $isEditingSeat) {
             seatEditSheet
+        }
+        .sheet(isPresented: $isEditingWeight) {
+            weightEditSheet
+        }
+        .sheet(isPresented: $isEditingSets) {
+            setsEditSheet
+        }
+        .sheet(isPresented: $isEditingReps) {
+            repsEditSheet
         }
     }
 
@@ -67,6 +94,84 @@ struct ExerciseCardView: View {
 
             Button("Abbrechen") {
                 isEditingSeat = false
+            }
+            .foregroundColor(.red)
+        }
+        .padding()
+    }
+
+    private var weightEditSheet: some View {
+        VStack(spacing: 20) {
+            Text("Gewicht ändern")
+                .font(.headline)
+
+            TextField("Neues Gewicht", text: $weightInput)
+                .keyboardType(.numberPad)
+                .textFieldStyle(.roundedBorder)
+                .padding()
+
+            Button("Speichern") {
+                if let newWeight = Int(weightInput) {
+                    viewModel.updateWeight(newWeight)
+                }
+                isEditingWeight = false
+            }
+            .buttonStyle(.borderedProminent)
+
+            Button("Abbrechen") {
+                isEditingWeight = false
+            }
+            .foregroundColor(.red)
+        }
+        .padding()
+    }
+
+    private var setsEditSheet: some View {
+        VStack(spacing: 20) {
+            Text("Sätze ändern")
+                .font(.headline)
+
+            TextField("Neue Anzahl", text: $setsInput)
+                .keyboardType(.numberPad)
+                .textFieldStyle(.roundedBorder)
+                .padding()
+
+            Button("Speichern") {
+                if let newSets = Int(setsInput) {
+                    viewModel.updateSets(newSets)
+                }
+                isEditingSets = false
+            }
+            .buttonStyle(.borderedProminent)
+
+            Button("Abbrechen") {
+                isEditingSets = false
+            }
+            .foregroundColor(.red)
+        }
+        .padding()
+    }
+
+    private var repsEditSheet: some View {
+        VStack(spacing: 20) {
+            Text("Wiederholungen ändern")
+                .font(.headline)
+
+            TextField("Neue Anzahl", text: $repsInput)
+                .keyboardType(.numberPad)
+                .textFieldStyle(.roundedBorder)
+                .padding()
+
+            Button("Speichern") {
+                if let newReps = Int(repsInput) {
+                    viewModel.updateReps(newReps)
+                }
+                isEditingReps = false
+            }
+            .buttonStyle(.borderedProminent)
+
+            Button("Abbrechen") {
+                isEditingReps = false
             }
             .foregroundColor(.red)
         }
@@ -106,6 +211,9 @@ struct CardBottomSectionView: View {
     let weight: Int
     let reps: Int
     let sets: Int
+    let onWeightTap: () -> Void
+    let onSetsTap: () -> Void
+    let onRepsTap: () -> Void
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -117,15 +225,23 @@ struct CardBottomSectionView: View {
 
             Spacer(minLength: 4)
 
-            ChipColumnView(reps: reps, sets: sets)
-
-            AppChip(
-                text: "\(weight) kg",
-                icon: nil,
-                backgroundColor: AppStyle.Color.purpleLight,
-                foregroundColor: AppStyle.Color.purpleDark,
-                size: .large
+            ChipColumnView(
+                reps: reps,
+                sets: sets,
+                onSetsTap: onSetsTap,
+                onRepsTap: onRepsTap
             )
+
+            Button(action: onWeightTap) {
+                AppChip(
+                    text: "\(weight) kg",
+                    icon: nil,
+                    backgroundColor: AppStyle.Color.purpleLight,
+                    foregroundColor: AppStyle.Color.purpleDark,
+                    size: .large
+                )
+            }
+            .buttonStyle(.plain)
             .frame(height: AppStyle.Dimensions.chipHeight * 2 + 42)
         }
         .padding(.horizontal, AppStyle.Padding.horizontal)
@@ -157,22 +273,30 @@ struct IconTextColumnView: View {
 struct ChipColumnView: View {
     let reps: Int
     let sets: Int
+    let onSetsTap: () -> Void
+    let onRepsTap: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            AppChip(
-                text: "\(sets)x",
-                icon: Image(systemName: "bolt.fill"),
-                backgroundColor: AppStyle.Color.whiteLite,
-                foregroundColor: AppStyle.Color.white
-            )
+            Button(action: onSetsTap) {
+                AppChip(
+                    text: "\(sets)x",
+                    icon: Image(systemName: "bolt.fill"),
+                    backgroundColor: AppStyle.Color.whiteLite,
+                    foregroundColor: AppStyle.Color.white
+                )
+            }
+            .buttonStyle(.plain)
 
-            AppChip(
-                text: "\(reps)",
-                icon: Image(systemName: "arrow.triangle.2.circlepath"),
-                backgroundColor: AppStyle.Color.whiteLite,
-                foregroundColor: AppStyle.Color.white
-            )
+            Button(action: onRepsTap) {
+                AppChip(
+                    text: "\(reps)",
+                    icon: Image(systemName: "arrow.triangle.2.circlepath"),
+                    backgroundColor: AppStyle.Color.whiteLite,
+                    foregroundColor: AppStyle.Color.white
+                )
+            }
+            .buttonStyle(.plain)
         }
     }
 }
