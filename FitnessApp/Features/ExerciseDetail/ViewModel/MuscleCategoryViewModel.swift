@@ -27,22 +27,45 @@ final class MuscleCategoryViewModel: ObservableObject {
     }
 
     func startSet(for exercise: Exercise) {
+        if currentExercise?.id != exercise.id {
+            currentSet = 0
+        }
         currentExercise = exercise
         isSetInProgress = true
     }
 
     func completeCurrentSet() {
+        guard let exercise = currentExercise else { return }
+        
+        currentSet += 1
         isSetInProgress = false
-        if let exercise = currentExercise {
-            currentSet += 1
-            if currentSet >= exercise.sets {
-                completeExercise(exercise)
+        
+        if currentSet >= exercise.sets {
+            if let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
+                var updated = exercise
+                updated.isCompleted = true
+                exercises.remove(at: index)
+                exercises.append(updated)
+                currentExercise = nil
+                currentSet = 0
+                save()
             }
         }
     }
 
     func updateCurrentSetReps(_ newReps: Int) {
         completeCurrentSet()
+    }
+
+    func updateCurrentReps(_ newReps: Int) {
+        if let exercise = currentExercise,
+           let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
+            var updated = exercise
+            updated.currentReps = newReps
+            exercises[index] = updated
+            currentExercise = updated
+            save()
+        }
     }
 
     private func completeExercise(_ exercise: Exercise) {

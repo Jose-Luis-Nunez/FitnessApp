@@ -34,6 +34,7 @@ struct ExerciseCardView: View {
             CardBottomSectionView(
                 weight: viewModel.exercise.weight,
                 reps: viewModel.exercise.reps,
+                currentReps: viewModel.exercise.currentReps,
                 sets: viewModel.exercise.sets,
                 onWeightTap: {
                     weightInput = "\(viewModel.exercise.weight)"
@@ -243,6 +244,7 @@ struct CardTopSectionView: View {
 struct CardBottomSectionView: View {
     let weight: Int
     let reps: Int
+    let currentReps: Int
     let sets: Int
     let onWeightTap: () -> Void
     let onSetsTap: () -> Void
@@ -260,6 +262,7 @@ struct CardBottomSectionView: View {
 
             ChipColumnView(
                 reps: reps,
+                currentReps: currentReps,
                 sets: sets,
                 onSetsTap: onSetsTap,
                 onRepsTap: onRepsTap
@@ -305,6 +308,7 @@ struct IconTextColumnView: View {
 
 struct ChipColumnView: View {
     let reps: Int
+    let currentReps: Int
     let sets: Int
     let onSetsTap: () -> Void
     let onRepsTap: () -> Void
@@ -323,7 +327,7 @@ struct ChipColumnView: View {
 
             Button(action: onRepsTap) {
                 AppChip(
-                    text: "\(reps)",
+                    text: "\(currentReps)",
                     icon: Image(systemName: "arrow.triangle.2.circlepath"),
                     backgroundColor: AppStyle.Color.whiteLite,
                     foregroundColor: AppStyle.Color.white
