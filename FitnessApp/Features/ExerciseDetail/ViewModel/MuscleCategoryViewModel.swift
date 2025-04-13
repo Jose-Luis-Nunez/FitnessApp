@@ -104,9 +104,13 @@ final class MuscleCategoryViewModel: ObservableObject {
 
     func resetProgress() {
         isSetInProgress = false
+        currentExercise = nil
+        currentSet = 0
         for index in exercises.indices {
             exercises[index].isCompleted = false
+            exercises[index].currentReps = exercises[index].reps
         }
+        save()
     }
 
 }
