@@ -11,10 +11,12 @@ struct ExerciseCardView: View {
     @State private var isEditingWeight = false
     @State private var isEditingSets = false
     @State private var isEditingReps = false
+    @State private var isEditingCurrentReps = false
     @State private var seatInput = ""
     @State private var weightInput = ""
     @State private var setsInput = ""
     @State private var repsInput = ""
+    @State private var currentRepsInput = ""
 
     var body: some View {
         VStack(spacing: 8) {
@@ -51,7 +53,7 @@ struct ExerciseCardView: View {
         }
         .padding(.vertical, 12)
         .padding(.horizontal)
-        .background(AppStyle.Color.purple)
+        .background(viewModel.exercise.isCompleted ? AppStyle.Color.purpleLight : AppStyle.Color.purple)
         .cornerRadius(AppStyle.CornerRadius.card)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 4)
         .sheet(isPresented: $isEditingSeat) {
@@ -65,6 +67,9 @@ struct ExerciseCardView: View {
         }
         .sheet(isPresented: $isEditingReps) {
             repsEditSheet
+        }
+        .sheet(isPresented: $isEditingCurrentReps) {
+            currentRepsEditSheet
         }
     }
 
@@ -172,6 +177,34 @@ struct ExerciseCardView: View {
 
             Button("Abbrechen") {
                 isEditingReps = false
+            }
+            .foregroundColor(.red)
+        }
+        .padding()
+    }
+
+    private var currentRepsEditSheet: some View {
+        VStack(spacing: 20) {
+            Text("Wiederholungen anpassen")
+                .font(.headline)
+
+            TextField("Neue Anzahl", text: $currentRepsInput)
+                .keyboardType(.numberPad)
+                .textFieldStyle(.roundedBorder)
+                .padding()
+
+            Button("Speichern") {
+                if let newReps = Int(currentRepsInput),
+                   (newReps < viewModel.exercise.reps) {
+                    viewModel.updateRepsForCurrentSet(newReps)
+                }
+                isEditingCurrentReps = false
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(Int(currentRepsInput).map { $0 >= viewModel.exercise.reps } ?? true)
+
+            Button("Abbrechen") {
+                isEditingCurrentReps = false
             }
             .foregroundColor(.red)
         }

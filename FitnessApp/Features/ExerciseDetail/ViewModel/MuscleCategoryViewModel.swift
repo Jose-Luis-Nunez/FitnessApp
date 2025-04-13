@@ -2,15 +2,61 @@ import Foundation
 
 @MainActor
 final class MuscleCategoryViewModel: ObservableObject {
-    @Published private(set) var exercises: [Exercise] = []
+    @Published private(set) var exercises: [Exercise]
+    @Published private(set) var isSetInProgress = false
+    @Published private(set) var currentExercise: Exercise?
+    private(set) var currentSet = 0
     
     private let group: MuscleCategoryGroup
     private let storage: ExerciseStoring
 
+    var startButtonTitle: String {
+        if currentSet == 0 {
+            return "Start Sets"
+        }
+        return "Set \(currentSet + 1) Start"
+    }
+
     init(group: MuscleCategoryGroup, storage: ExerciseStoring = ExerciseStorageService()) {
         self.group = group
         self.storage = storage
-        load()
+        self.exercises = storage.load(for: group)
+        self.isSetInProgress = false
+        self.currentExercise = nil
+        self.currentSet = 0
+    }
+
+    func startSet(for exercise: Exercise) {
+        currentExercise = exercise
+        isSetInProgress = true
+    }
+
+    func completeCurrentSet() {
+        isSetInProgress = false
+        if let exercise = currentExercise {
+            currentSet += 1
+            if currentSet >= exercise.sets {
+                completeExercise(exercise)
+            }
+        }
+    }
+
+    func updateCurrentSetReps(_ newReps: Int) {
+        completeCurrentSet()
+    }
+
+    private func completeExercise(_ exercise: Exercise) {
+        currentSet = 0
+        currentExercise = nil
+        if let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
+            var updated = exercise
+            updated.isCompleted = true
+            
+            exercises.remove(at: index)
+            exercises.append(updated)
+            
+            save()
+        }
     }
 
     func add(_ exercise: Exercise) {
@@ -23,10 +69,6 @@ final class MuscleCategoryViewModel: ObservableObject {
         save()
     }
 
-    private func load() {
-        exercises = storage.load(for: group)
-    }
-
     private func save() {
         storage.save(exercises, for: group)
     }
@@ -35,6 +77,13 @@ final class MuscleCategoryViewModel: ObservableObject {
         guard let index = exercises.firstIndex(where: { $0.id == updated.id }) else { return }
         exercises[index] = updated
         save()
+    }
+
+    func resetProgress() {
+        isSetInProgress = false
+        for index in exercises.indices {
+            exercises[index].isCompleted = false
+        }
     }
 
 }

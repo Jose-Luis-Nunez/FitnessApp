@@ -13,16 +13,22 @@ private struct IDS {
 }
 
 struct MuscleCategoryView: View {
+    enum RepsEditMode {
+        case less, more
+    }
+
     let group: MuscleCategoryGroup
-
     @StateObject private var viewModel: MuscleCategoryViewModel
-
     @State private var showForm = false
+    @State private var isEditingCurrentReps = false
+    @State private var currentRepsInput = ""
+    @State private var currentRepsEditMode: RepsEditMode = .less
     @State private var name = ""
     @State private var weight = ""
     @State private var reps = ""
     @State private var sets = ""
     @State private var seat = ""
+    @State private var showResetConfirmation = false
 
     init(group: MuscleCategoryGroup) {
         self.group = group
@@ -30,41 +36,207 @@ struct MuscleCategoryView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading) {
-            Text(group.rawValue)
-                .font(AppStyle.Font.title)
-                .padding([.top, .horizontal], AppStyle.Padding.horizontal)
-                .accessibilityIdentifier(IDS.groupTitle)
+        ZStack {
+            VStack(alignment: .leading) {
+                Text(group.rawValue)
+                    .font(AppStyle.Font.title)
+                    .padding([.top, .horizontal], AppStyle.Padding.horizontal)
+                    .accessibilityIdentifier(IDS.groupTitle)
 
-            List {
-                exerciseListSection
+                List {
+                    exerciseListSection
 
-                if showForm {
-                    exerciseFormSection
+                    if showForm {
+                        exerciseFormSection
+                    }
+                }
+                .listStyle(.plain)
+            }
+            .navigationBarTitle(group.rawValue, displayMode: .inline)
+            .navigationBarItems(trailing: Button(action: {
+                withAnimation { showForm.toggle() }
+            }) {
+                Image(systemName: showForm ? "minus" : "plus")
+            }.accessibilityIdentifier(IDS.addExerciseButton))
+
+            // FABs at the bottom
+            if let activeExercise = viewModel.exercises.first(where: { !$0.isCompleted }) {
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        
+                        if viewModel.isSetInProgress {
+                            // Less Button
+                            Button(action: {
+                                currentRepsEditMode = .less
+                                isEditingCurrentReps = true
+                            }) {
+                                Text("Less")
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 12)
+                                    .background(AppStyle.Color.purpleDark)
+                                    .clipShape(Capsule())
+                            }
+                            .padding(.trailing, 8)
+
+                            // Done Button
+                            Button(action: {
+                                viewModel.completeCurrentSet()
+                            }) {
+                                Text("Done!")
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(AppStyle.Color.purpleDark)
+                                    .padding(.horizontal, 32)
+                                    .padding(.vertical, 12)
+                                    .background(AppStyle.Color.white)
+                                    .clipShape(Capsule())
+                            }
+
+                            // More Button
+                            Button(action: {
+                                currentRepsEditMode = .more
+                                isEditingCurrentReps = true
+                            }) {
+                                Text("More")
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 12)
+                                    .background(AppStyle.Color.purpleDark)
+                                    .clipShape(Capsule())
+                            }
+                            .padding(.leading, 8)
+                        } else {
+                            // Start Button
+                            Button(action: {
+                                viewModel.startSet(for: activeExercise)
+                            }) {
+                                Text(viewModel.startButtonTitle)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 32)
+                                    .padding(.vertical, 12)
+                                    .background(AppStyle.Color.purpleDark)
+                                    .clipShape(Capsule())
+                            }
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 16)
+                    .background(
+                        Rectangle()
+                            .fill(Color.white.opacity(0.95))
+                            .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -4)
+                    )
+                }
+            } else {
+                // Reset Button when all exercises are completed
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            showResetConfirmation = true
+                        }) {
+                            Text("Reset Progress")
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 32)
+                                .padding(.vertical, 12)
+                                .background(AppStyle.Color.purpleDark)
+                                .clipShape(Capsule())
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 16)
+                    .background(
+                        Rectangle()
+                            .fill(Color.white.opacity(0.95))
+                            .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -4)
+                    )
                 }
             }
-            .listStyle(.plain)
-
-            Spacer()
         }
-        .navigationBarTitle(group.rawValue, displayMode: .inline)
-        .navigationBarItems(trailing: Button(action: {
-            withAnimation { showForm.toggle() }
-        }) {
-            Image(systemName: showForm ? "minus" : "plus")
-        }.accessibilityIdentifier(IDS.addExerciseButton))
+        .sheet(isPresented: $isEditingCurrentReps) {
+            currentRepsEditSheet()
+        }
+        .alert(isPresented: $showResetConfirmation) {
+            Alert(
+                title: Text("Reset Progress"),
+                message: Text("Do you want to reset all exercise progress? This will allow you to start the sets again."),
+                primaryButton: .destructive(Text("Reset")) {
+                    viewModel.resetProgress()
+                },
+                secondaryButton: .cancel()
+            )
+        }
+    }
+
+    private func currentRepsEditSheet() -> some View {
+        NavigationView {
+            Form {
+                Section {
+                    TextField("New Repetitions", text: $currentRepsInput)
+                        .keyboardType(.numberPad)
+                } header: {
+                    Text(currentRepsEditMode == .less ? "Enter Lower Repetitions" : "Enter Higher Repetitions")
+                }
+            }
+            .navigationTitle("Edit Repetitions")
+            .navigationBarItems(
+                leading: Button("Cancel") {
+                    isEditingCurrentReps = false
+                    currentRepsInput = ""
+                },
+                trailing: Button("Save") {
+                    if let newReps = Int(currentRepsInput),
+                       let originalReps = Int(reps) {
+                        let isValid = currentRepsEditMode == .less ? 
+                            newReps < originalReps : 
+                            newReps > originalReps
+                        
+                        if isValid {
+                            reps = String(newReps)
+                            isEditingCurrentReps = false
+                            currentRepsInput = ""
+                        }
+                    }
+                }
+            )
+        }
     }
 
     private var exerciseListSection: some View {
-        ForEach(viewModel.exercises) { exercise in
-            ExerciseCardView(
-                viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
-                    viewModel.updateExercise(updated)
-                }
-            )
-            .padding(.vertical, 4)
+        Group {
+            // Active exercises (not completed) at the top
+            ForEach(viewModel.exercises.filter { !$0.isCompleted }) { exercise in
+                ExerciseCardView(
+                    viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
+                        viewModel.updateExercise(updated)
+                    }
+                )
+                .padding(.vertical, 4)
+                .transition(.move(edge: .top))
+            }
+            
+            // Completed exercises at the bottom
+            ForEach(viewModel.exercises.filter { $0.isCompleted }) { exercise in
+                ExerciseCardView(
+                    viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
+                        viewModel.updateExercise(updated)
+                    }
+                )
+                .padding(.vertical, 4)
+                .transition(.move(edge: .bottom))
+            }
         }
-        .onDelete(perform: viewModel.delete)
+        .animation(.easeInOut, value: viewModel.exercises.map { $0.isCompleted })
     }
 
     private var exerciseFormSection: some View {
