@@ -1,116 +1,168 @@
 import Foundation
+import Combine
+import SwiftUI
 
+// MARK: - Exercise State
+enum ExerciseState: Equatable {
+    case idle
+    case setInProgress(exercise: Exercise)
+    
+    var currentSet: Int {
+        switch self {
+        case .idle:
+            return 0
+        case .setInProgress:
+            return 1
+        }
+    }
+    
+    var isSetInProgress: Bool {
+        switch self {
+        case .idle:
+            return false
+        case .setInProgress:
+            return true
+        }
+    }
+    
+    var currentExercise: Exercise? {
+        switch self {
+        case .idle:
+            return nil
+        case .setInProgress(let exercise):
+            return exercise
+        }
+    }
+}
+
+// MARK: - ViewModel
 @MainActor
 final class MuscleCategoryViewModel: ObservableObject {
-    @Published private(set) var exercises: [Exercise]
-    @Published private(set) var isSetInProgress = false
-    @Published private(set) var currentExercise: Exercise?
-    private(set) var currentSet = 0
+    // MARK: - Published Properties
+    @Published private(set) var exercises: [Exercise] = []
+    @Published private(set) var state: ExerciseState = .idle
+    @Published var error: AppError?
     
+    // MARK: - Dependencies
     private let group: MuscleCategoryGroup
     private let storage: ExerciseStoring
-
+    private let errorHandler: ErrorHandler
+    
+    // MARK: - Computed Properties
     var startButtonTitle: String {
-        if currentSet == 0 {
+        switch state {
+        case .idle:
             return "Start Sets"
+        case .setInProgress:
+            return "Done!"
         }
-        return "Set \(currentSet + 1) Start"
     }
-
-    init(group: MuscleCategoryGroup, storage: ExerciseStoring = ExerciseStorageService()) {
+    
+    var activeExercises: [Exercise] {
+        exercises.filter { !$0.isCompleted }
+    }
+    
+    var completedExercises: [Exercise] {
+        exercises.filter { $0.isCompleted }
+    }
+    
+    // MARK: - Initialization
+    init(
+        group: MuscleCategoryGroup,
+        storage: ExerciseStoring = ExerciseStorageService(),
+        errorHandler: ErrorHandler = .shared
+    ) {
         self.group = group
         self.storage = storage
-        self.exercises = storage.load(for: group)
-        self.isSetInProgress = false
-        self.currentExercise = nil
-        self.currentSet = 0
-    }
-
-    func startSet(for exercise: Exercise) {
-        if currentExercise?.id != exercise.id {
-            currentSet = 0
-        }
-        currentExercise = exercise
-        isSetInProgress = true
-    }
-
-    func completeCurrentSet() {
-        guard let exercise = currentExercise else { return }
+        self.errorHandler = errorHandler
         
-        currentSet += 1
-        isSetInProgress = false
+        // Setup error handling
+        errorHandler.addObserver { [weak self] error in
+            self?.error = error
+        }
         
-        if currentSet >= exercise.sets {
-            if let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
-                var updated = exercise
-                updated.isCompleted = true
-                exercises.remove(at: index)
-                exercises.append(updated)
-                currentExercise = nil
-                currentSet = 0
-                save()
-            }
-        }
+        // Load exercises
+        loadExercises()
     }
-
-    func updateCurrentSetReps(_ newReps: Int) {
-        completeCurrentSet()
+    
+    deinit {
+        errorHandler.removeAllObservers()
     }
-
-    func updateCurrentReps(_ newReps: Int) {
-        if let exercise = currentExercise,
-           let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
-            var updated = exercise
-            updated.currentReps = newReps
-            exercises[index] = updated
-            currentExercise = updated
-            save()
-        }
-    }
-
-    private func completeExercise(_ exercise: Exercise) {
-        currentSet = 0
-        currentExercise = nil
-        if let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
-            var updated = exercise
-            updated.isCompleted = true
-            
-            exercises.remove(at: index)
-            exercises.append(updated)
-            
-            save()
-        }
-    }
-
-    func add(_ exercise: Exercise) {
+    
+    // MARK: - Public Interface
+    func add(name: String, weight: Int, reps: Int, sets: Int, seat: String?) {
+        let exercise = Exercise(
+            name: name,
+            weight: weight,
+            reps: reps,
+            sets: sets,
+            seatSetting: seat
+        )
+        
         exercises.append(exercise)
-        save()
-    }
-
-    func delete(at offsets: IndexSet) {
-        exercises.remove(atOffsets: offsets)
-        save()
-    }
-
-    private func save() {
-        storage.save(exercises, for: group)
+        saveExercises()
     }
     
     func updateExercise(_ updated: Exercise) {
-        guard let index = exercises.firstIndex(where: { $0.id == updated.id }) else { return }
-        exercises[index] = updated
-        save()
-    }
-
-    func resetProgress() {
-        isSetInProgress = false
-        currentExercise = nil
-        currentSet = 0
-        for index in exercises.indices {
-            exercises[index].isCompleted = false
-            exercises[index].currentReps = exercises[index].reps
+        if let index = exercises.firstIndex(where: { $0.id == updated.id }) {
+            exercises[index] = updated
+            saveExercises()
         }
-        save()
     }
-
+    
+    func startSet(for exercise: Exercise) {
+        if let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
+            state = .setInProgress(exercise: exercise)
+            saveExercises()
+        }
+    }
+    
+    func completeCurrentSet() {
+        if case .setInProgress(let exercise) = state {
+            if let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
+                let updated = exercise.updateCurrentReps(exercise.currentReps)
+                exercises[index] = updated
+                
+                if updated.isCompleted {
+                    state = .idle
+                }
+                
+                saveExercises()
+            }
+        }
+    }
+    
+    func updateCurrentReps(_ newReps: Int) {
+        if case .setInProgress(let exercise) = state {
+            if let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
+                let updated = exercise.updateCurrentReps(newReps)
+                exercises[index] = updated
+                saveExercises()
+            }
+        }
+    }
+    
+    func resetProgress() {
+        exercises = exercises.map { $0.reset() }
+        state = .idle
+        saveExercises()
+    }
+    
+    // MARK: - Private Methods
+    private func loadExercises() {
+        do {
+            exercises = try storage.load(for: group)
+        } catch {
+            print("Error loading exercises: \(error)")
+            exercises = []
+        }
+    }
+    
+    private func saveExercises() {
+        do {
+            try storage.save(exercises, for: group)
+        } catch {
+            print("Error saving exercises: \(error)")
+        }
+    }
 }

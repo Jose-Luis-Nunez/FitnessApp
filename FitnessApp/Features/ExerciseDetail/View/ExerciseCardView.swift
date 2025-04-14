@@ -3,337 +3,272 @@ import SwiftUI
 private struct IDS {
     static let nameLabel = "id_label_exercise_name"
     static let seatLabel = "id_label_exercise_seat"
+    static let weightButton = "id_button_weight"
+    static let setsButton = "id_button_sets"
+    static let repsButton = "id_button_reps"
+    static let progressLabel = "id_label_progress"
 }
 
 struct ExerciseCardView: View {
-    @StateObject var viewModel: ExerciseCardViewModel
-    @State private var isEditingSeat = false
-    @State private var isEditingWeight = false
-    @State private var isEditingSets = false
-    @State private var isEditingReps = false
-    @State private var isEditingCurrentReps = false
-    @State private var seatInput = ""
-    @State private var weightInput = ""
-    @State private var setsInput = ""
-    @State private var repsInput = ""
-    @State private var currentRepsInput = ""
-
+    @ObservedObject var viewModel: ExerciseCardViewModel
+    @State private var editMode: ExerciseCardViewModel.EditMode = .none
+    @State private var editValue = ""
+    @State private var localIsCompleted: Bool = false
+    
+    private var isEditing: Binding<Bool> {
+        Binding(
+            get: { editMode != .none },
+            set: { if !$0 { editMode = .none } }
+        )
+    }
+    
     var body: some View {
-        VStack(spacing: 8) {
-            CardTopSectionView(
-                title: viewModel.exercise.name,
-                seatText: seatDisplayText,
-                onSeatTap: {
-                    seatInput = viewModel.exercise.seatSetting ?? ""
-                    isEditingSeat = true
+        FitnessCard(style: viewModel.isCompleted ? .completed : .primary) {
+            VStack(spacing: AppStyle.Layout.Card.contentPadding.top) {
+                CardHeaderView(
+                    name: viewModel.name,
+                    seatText: viewModel.seatDisplayText,
+                    onSeatTap: { showEdit(mode: .seat) }
+                )
+
+                Divider()
+                    .background(Color.white.opacity(0.2))
+                    .padding(.horizontal, 4)
+
+                CardContentView(
+                    viewModel: viewModel,
+                    onSetsTap: { showEdit(mode: .sets) },
+                    onRepsTap: { showEdit(mode: .reps) },
+                    onWeightTap: { showEdit(mode: .weight) }
+                )
+            }
+            .padding(AppStyle.Layout.Card.contentPadding)
+        }
+        .id("\(viewModel.isCompleted)_\(localIsCompleted)")
+        .onChange(of: viewModel.isCompleted) { newValue in
+            localIsCompleted = newValue
+        }
+        .onAppear {
+            localIsCompleted = viewModel.isCompleted
+        }
+        .sheet(isPresented: isEditing) {
+            EditSheet(
+                title: editMode.title,
+                placeholder: editMode.placeholder,
+                value: $editValue,
+                keyboardType: editMode.requiresNumericKeyboard ? .numberPad : .default,
+                onSave: {
+                    switch editMode {
+                    case .seat:
+                        viewModel.updateSeat(editValue)
+                    case .weight:
+                        if let weight = Int(editValue) {
+                            viewModel.updateWeight(weight)
+                        }
+                    case .sets:
+                        if let sets = Int(editValue) {
+                            viewModel.updateSets(sets)
+                        }
+                    case .reps:
+                        if let reps = Int(editValue) {
+                            viewModel.updateReps(reps)
+                        }
+                    case .none:
+                        break
+                    }
                 }
             )
-
-            Divider().background(AppStyle.Color.whiteLite).padding(.horizontal, 4)
-
-            CardBottomSectionView(
-                weight: viewModel.exercise.weight,
-                reps: viewModel.exercise.reps,
-                currentReps: viewModel.exercise.currentReps,
-                sets: viewModel.exercise.sets,
-                onWeightTap: {
-                    weightInput = "\(viewModel.exercise.weight)"
-                    isEditingWeight = true
-                },
-                onSetsTap: {
-                    setsInput = "\(viewModel.exercise.sets)"
-                    isEditingSets = true
-                },
-                onRepsTap: {
-                    repsInput = "\(viewModel.exercise.reps)"
-                    isEditingReps = true
-                }
-            )
-            .scaleEffect(1.1)
-            .padding(.top, 2)
-        }
-        .padding(.vertical, 12)
-        .padding(.horizontal)
-        .background(viewModel.exercise.isCompleted ? AppStyle.Color.purpleLight : AppStyle.Color.purple)
-        .cornerRadius(AppStyle.CornerRadius.card)
-        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 4)
-        .sheet(isPresented: $isEditingSeat) {
-            seatEditSheet
-        }
-        .sheet(isPresented: $isEditingWeight) {
-            weightEditSheet
-        }
-        .sheet(isPresented: $isEditingSets) {
-            setsEditSheet
-        }
-        .sheet(isPresented: $isEditingReps) {
-            repsEditSheet
-        }
-        .sheet(isPresented: $isEditingCurrentReps) {
-            currentRepsEditSheet
         }
     }
-
-    private var seatDisplayText: String {
-        if let seat = viewModel.exercise.seatSetting, !seat.isEmpty {
-            return "\(L10n.seat): \(seat)"
-        } else {
-            return L10n.seatOptional
-        }
-    }
-
-    private var seatEditSheet: some View {
-        VStack(spacing: 20) {
-            Text("Sitzeinstellung ändern")
-                .font(.headline)
-
-            TextField("Neue Einstellung", text: $seatInput)
-                .keyboardType(.numberPad)
-                .textFieldStyle(.roundedBorder)
-                .padding()
-
-            Button("Speichern") {
-                viewModel.updateSeat(seatInput)
-                isEditingSeat = false
-            }
-            .buttonStyle(.borderedProminent)
-
-            Button("Abbrechen") {
-                isEditingSeat = false
-            }
-            .foregroundColor(.red)
-        }
-        .padding()
-    }
-
-    private var weightEditSheet: some View {
-        VStack(spacing: 20) {
-            Text("Gewicht ändern")
-                .font(.headline)
-
-            TextField("Neues Gewicht", text: $weightInput)
-                .keyboardType(.numberPad)
-                .textFieldStyle(.roundedBorder)
-                .padding()
-
-            Button("Speichern") {
-                if let newWeight = Int(weightInput) {
-                    viewModel.updateWeight(newWeight)
-                }
-                isEditingWeight = false
-            }
-            .buttonStyle(.borderedProminent)
-
-            Button("Abbrechen") {
-                isEditingWeight = false
-            }
-            .foregroundColor(.red)
-        }
-        .padding()
-    }
-
-    private var setsEditSheet: some View {
-        VStack(spacing: 20) {
-            Text("Sätze ändern")
-                .font(.headline)
-
-            TextField("Neue Anzahl", text: $setsInput)
-                .keyboardType(.numberPad)
-                .textFieldStyle(.roundedBorder)
-                .padding()
-
-            Button("Speichern") {
-                if let newSets = Int(setsInput) {
-                    viewModel.updateSets(newSets)
-                }
-                isEditingSets = false
-            }
-            .buttonStyle(.borderedProminent)
-
-            Button("Abbrechen") {
-                isEditingSets = false
-            }
-            .foregroundColor(.red)
-        }
-        .padding()
-    }
-
-    private var repsEditSheet: some View {
-        VStack(spacing: 20) {
-            Text("Wiederholungen ändern")
-                .font(.headline)
-
-            TextField("Neue Anzahl", text: $repsInput)
-                .keyboardType(.numberPad)
-                .textFieldStyle(.roundedBorder)
-                .padding()
-
-            Button("Speichern") {
-                if let newReps = Int(repsInput) {
-                    viewModel.updateReps(newReps)
-                }
-                isEditingReps = false
-            }
-            .buttonStyle(.borderedProminent)
-
-            Button("Abbrechen") {
-                isEditingReps = false
-            }
-            .foregroundColor(.red)
-        }
-        .padding()
-    }
-
-    private var currentRepsEditSheet: some View {
-        VStack(spacing: 20) {
-            Text("Wiederholungen anpassen")
-                .font(.headline)
-
-            TextField("Neue Anzahl", text: $currentRepsInput)
-                .keyboardType(.numberPad)
-                .textFieldStyle(.roundedBorder)
-                .padding()
-
-            Button("Speichern") {
-                if let newReps = Int(currentRepsInput),
-                   (newReps < viewModel.exercise.reps) {
-                    viewModel.updateRepsForCurrentSet(newReps)
-                }
-                isEditingCurrentReps = false
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(Int(currentRepsInput).map { $0 >= viewModel.exercise.reps } ?? true)
-
-            Button("Abbrechen") {
-                isEditingCurrentReps = false
-            }
-            .foregroundColor(.red)
-        }
-        .padding()
+    
+    private func showEdit(mode: ExerciseCardViewModel.EditMode) {
+        editMode = mode
+        editValue = viewModel.getInitialValue(for: mode)
     }
 }
 
-struct CardTopSectionView: View {
-    let title: String
+private struct CardHeaderView: View {
+    let name: String
     let seatText: String
     let onSeatTap: () -> Void
-
+    
     var body: some View {
         HStack(alignment: .top) {
-            Text(title)
-                .font(AppStyle.Font.headlineLarge)
-                .foregroundColor(AppStyle.Color.white)
+            Text(name)
+                .font(.system(size: 28, weight: .bold))
+                .foregroundColor(.white)
                 .accessibilityIdentifier(IDS.nameLabel)
+                .accessibilityAddTraits(.isHeader)
 
             Spacer()
 
             Button(action: onSeatTap) {
-                AppChip(
-                    text: seatText,
+                FitnessChip(
+                    seatText,
                     icon: Image("iconSeatSettings"),
-                    backgroundColor: AppStyle.Color.purpleDark,
-                    foregroundColor: AppStyle.Color.white
+                    style: .custom(background: Color(hex: "#2A1B66"), foreground: .white)
                 )
             }
             .buttonStyle(.plain)
+            .frame(maxWidth: AppStyle.Layout.Card.Content.steigendWidth)
             .accessibilityIdentifier(IDS.seatLabel)
+            .accessibilityLabel(seatText)
+            .accessibilityHint("Tippen um Sitzeinstellung zu ändern")
         }
     }
 }
 
-struct CardBottomSectionView: View {
-    let weight: Int
-    let reps: Int
-    let currentReps: Int
-    let sets: Int
-    let onWeightTap: () -> Void
+private struct CardContentView: View {
+    @ObservedObject var viewModel: ExerciseCardViewModel
     let onSetsTap: () -> Void
     let onRepsTap: () -> Void
-
+    let onWeightTap: () -> Void
+    
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            IconTextColumnView(
-                icon: Image("iconActivityIncrease"),
-                chipText: "STEIGEND",
-                chipBackground: AppStyle.Color.purpleDark
-            )
-
-            Spacer(minLength: 4)
-
-            ChipColumnView(
-                reps: reps,
-                currentReps: currentReps,
-                sets: sets,
-                onSetsTap: onSetsTap,
-                onRepsTap: onRepsTap
-            )
-
-            Button(action: onWeightTap) {
-                AppChip(
-                    text: "\(weight) kg",
-                    icon: nil,
-                    backgroundColor: AppStyle.Color.purpleLight,
-                    foregroundColor: AppStyle.Color.purpleDark,
-                    size: .large
+        HStack(alignment: .center, spacing: AppStyle.Layout.Card.Content.spacing) {
+            ProgressSection()
+            
+            Spacer()  // Flexible space that won't force content outside bounds
+            
+            HStack(spacing: 8) {  // Group sets/reps and weight together
+                SetsRepsSection(
+                    setsText: viewModel.setsDisplayText,
+                    repsText: viewModel.repsDisplayText,
+                    setsAccessibilityLabel: viewModel.setsAccessibilityLabel,
+                    repsAccessibilityLabel: viewModel.repsAccessibilityLabel,
+                    onSetsTap: onSetsTap,
+                    onRepsTap: onRepsTap
+                )
+                
+                WeightSection(
+                    text: viewModel.weightDisplayText,
+                    accessibilityLabel: viewModel.weightAccessibilityLabel,
+                    onTap: onWeightTap
                 )
             }
-            .buttonStyle(.plain)
-            .frame(height: AppStyle.Dimensions.chipHeight * 2 + 42)
         }
-        .padding(.horizontal, AppStyle.Padding.horizontal)
+        .padding(.horizontal, 8)  // Add some horizontal padding to maintain margins
     }
 }
 
-struct IconTextColumnView: View {
-    let icon: Image
-    let chipText: String
-    let chipBackground: Color
-
+private struct ProgressSection: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: -24) {
-            icon
+        VStack(alignment: .leading, spacing: -8) {
+            Image("iconActivityIncrease")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 52, height: 52)
-                .offset(x: 12, y: -12)
-            AppChip(
-                text: chipText,
-                icon: nil,
-                backgroundColor: chipBackground,
-                foregroundColor: AppStyle.Color.white
+                .frame(width: 32, height: 32)
+            
+            FitnessChip(
+                L10n.ExerciseCard.steigend,
+                style: .custom(background: Color(hex: "#2A1B66"), foreground: .white),
+                size: .mediumWide
             )
         }
+        .frame(width: AppStyle.Layout.Card.Content.steigendWidth)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier(IDS.progressLabel)
+        .accessibilityLabel("Fortschritt: Steigend")
     }
 }
 
-struct ChipColumnView: View {
-    let reps: Int
-    let currentReps: Int
-    let sets: Int
+private struct SetsRepsSection: View {
+    let setsText: String
+    let repsText: String
+    let setsAccessibilityLabel: String
+    let repsAccessibilityLabel: String
     let onSetsTap: () -> Void
     let onRepsTap: () -> Void
-
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             Button(action: onSetsTap) {
-                AppChip(
-                    text: "\(sets)x",
+                FitnessChip(
+                    setsText,
                     icon: Image(systemName: "bolt.fill"),
-                    backgroundColor: AppStyle.Color.whiteLite,
-                    foregroundColor: AppStyle.Color.white
+                    style: .custom(background: Color(hex: "#2A1B66"), foreground: .white),
+                    iconColor: .yellow,
+                    size: .medium
                 )
             }
             .buttonStyle(.plain)
+            .contentShape(Rectangle())
+            .accessibilityIdentifier(IDS.setsButton)
+            .accessibilityLabel(setsAccessibilityLabel)
+            .accessibilityHint("Tippen um Anzahl Sätze zu ändern")
 
             Button(action: onRepsTap) {
-                AppChip(
-                    text: "\(currentReps)",
+                FitnessChip(
+                    repsText,
                     icon: Image(systemName: "arrow.triangle.2.circlepath"),
-                    backgroundColor: AppStyle.Color.whiteLite,
-                    foregroundColor: AppStyle.Color.white
+                    style: .custom(background: Color(hex: "#2A1B66"), foreground: .white),
+                    iconColor: .white,
+                    size: .medium
                 )
             }
             .buttonStyle(.plain)
+            .contentShape(Rectangle())
+            .accessibilityIdentifier(IDS.repsButton)
+            .accessibilityLabel(repsAccessibilityLabel)
+            .accessibilityHint("Tippen um Anzahl Wiederholungen zu ändern")
+        }
+        .frame(width: AppStyle.Layout.Card.Content.setsRepsWidth)
+    }
+}
+
+private struct WeightSection: View {
+    let text: String
+    let accessibilityLabel: String
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            FitnessChip(
+                text,
+                style: .custom(background: Color(hex: "#2A1B66"), foreground: .white),
+                size: .large
+            )
+            .frame(
+                width: AppStyle.Layout.Card.Content.weightWidth,
+                height: AppStyle.Layout.Card.Content.weightHeight
+            )
+        }
+        .buttonStyle(.plain)
+        .contentShape(Rectangle())
+        .accessibilityIdentifier(IDS.weightButton)
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityHint("Tippen um Gewicht zu ändern")
+    }
+}
+
+private struct EditSheet: View {
+    let title: String
+    let placeholder: String
+    @Binding var value: String
+    let keyboardType: UIKeyboardType
+    let onSave: () -> Void
+    @Environment(\.presentationMode) var presentationMode
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section {
+                    TextField(placeholder, text: $value)
+                        .keyboardType(keyboardType)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                }
+            }
+            .navigationTitle(title)
+            .navigationBarItems(
+                leading: Button(L10n.ExerciseCard.cancel) {
+                    presentationMode.wrappedValue.dismiss()
+                },
+                trailing: Button(L10n.ExerciseCard.save) {
+                    onSave()
+                    presentationMode.wrappedValue.dismiss()
+                }
+            )
         }
     }
 }

@@ -10,4 +10,16 @@ enum L10n {
     static let cancel = "Abbrechen"
     static let newExercise = "Neue Übung"
     static let muscleGroups = "Muskelgruppen"
+
+      enum ExerciseCard {
+        static let steigend = "STEIGEND"
+        static let editSeatTitle = "Sitzeinstellung ändern"
+        static let editSeatPlaceholder = "Sitzeinstellung"
+        static let editWeightTitle = "Gewicht ändern"
+        static let editWeightPlaceholder = "Gewicht (kg)"
+        static let cancel = "Abbrechen"
+        static let save = "Speichern"
+        static let weightUnit = "kg"
+    }
 }
+      
