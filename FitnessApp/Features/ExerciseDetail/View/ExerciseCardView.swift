@@ -29,7 +29,7 @@ struct ExerciseCardView: View {
                 }
             )
 
-            Divider().background(AppStyle.Color.whiteLite).padding(.horizontal, 4)
+            Divider().background(AppStyle.Color.transparent).padding(.horizontal, 4)
 
             CardBottomSectionView(
                 weight: viewModel.exercise.weight,
@@ -54,7 +54,7 @@ struct ExerciseCardView: View {
         }
         .padding(.vertical, 12)
         .padding(.horizontal)
-        .background(viewModel.exercise.isCompleted ? AppStyle.Color.purpleLight : AppStyle.Color.purple)
+        .background(viewModel.exercise.isCompleted ? AppStyle.Color.purpleLight : AppStyle.Color.purpleDark)
         .cornerRadius(AppStyle.CornerRadius.card)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 4)
         .sheet(isPresented: $isEditingSeat) {
@@ -76,7 +76,7 @@ struct ExerciseCardView: View {
 
     private var seatDisplayText: String {
         if let seat = viewModel.exercise.seatSetting, !seat.isEmpty {
-            return "\(L10n.seat): \(seat)"
+            return "\(seat)"
         } else {
             return L10n.seatOptional
         }
@@ -231,8 +231,8 @@ struct CardTopSectionView: View {
                 AppChip(
                     text: seatText,
                     icon: Image("iconSeatSettings"),
-                    backgroundColor: AppStyle.Color.purpleDark,
-                    foregroundColor: AppStyle.Color.white
+                    backgroundColor: AppStyle.Color.purple,
+                    fontColor: AppStyle.Color.white
                 )
             }
             .buttonStyle(.plain)
@@ -255,7 +255,7 @@ struct CardBottomSectionView: View {
             IconTextColumnView(
                 icon: Image("iconActivityIncrease"),
                 chipText: "STEIGEND",
-                chipBackground: AppStyle.Color.purpleDark
+                chipBackground: AppStyle.Color.purpleLight
             )
 
             Spacer(minLength: 4)
@@ -272,8 +272,8 @@ struct CardBottomSectionView: View {
                 AppChip(
                     text: "\(weight) kg",
                     icon: nil,
-                    backgroundColor: AppStyle.Color.purpleLight,
-                    foregroundColor: AppStyle.Color.purpleDark,
+                    backgroundColor: AppStyle.Color.purpleGrey,
+                    fontColor: AppStyle.Color.white,
                     size: .large
                 )
             }
@@ -300,7 +300,7 @@ struct IconTextColumnView: View {
                 text: chipText,
                 icon: nil,
                 backgroundColor: chipBackground,
-                foregroundColor: AppStyle.Color.white
+                fontColor: AppStyle.Color.purpleDark
             )
         }
     }
@@ -319,8 +319,8 @@ struct ChipColumnView: View {
                 AppChip(
                     text: "\(sets)x",
                     icon: Image(systemName: "bolt.fill"),
-                    backgroundColor: AppStyle.Color.whiteLite,
-                    foregroundColor: AppStyle.Color.white
+                    backgroundColor: AppStyle.Color.transparent,
+                    fontColor: AppStyle.Color.white
                 )
             }
             .buttonStyle(.plain)
@@ -329,8 +329,8 @@ struct ChipColumnView: View {
                 AppChip(
                     text: "\(currentReps)",
                     icon: Image(systemName: "arrow.triangle.2.circlepath"),
-                    backgroundColor: AppStyle.Color.whiteLite,
-                    foregroundColor: AppStyle.Color.white
+                    backgroundColor: AppStyle.Color.transparent,
+                    fontColor: AppStyle.Color.white
                 )
             }
             .buttonStyle(.plain)

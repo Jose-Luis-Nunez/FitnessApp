@@ -24,10 +24,12 @@ enum AppStyle {
     enum Color {
         
         static let white = SwiftUI.Color.white
-        static let whiteLite = SwiftUI.Color.white.opacity(0.2)
-        static let purple = SwiftUI.Color(hex: "#A485FD")
+        static let transparent = SwiftUI.Color.white.opacity(0.2)
+        static let purpleGrey = SwiftUI.Color(hex: "#544985")
         static let purpleLight = SwiftUI.Color(hex: "#E5D8FF")
-        static let purpleDark = SwiftUI.Color(hex: "#9575F4")
+        static let purple = SwiftUI.Color(hex: "#9575F4")
+        static let purpleDark = SwiftUI.Color(hex: "#291B66")
+        static let green = SwiftUI.Color(hex: "#22A49A")
     }
     
     enum Dimensions {

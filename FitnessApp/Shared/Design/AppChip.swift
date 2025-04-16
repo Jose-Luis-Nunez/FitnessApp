@@ -4,7 +4,7 @@ struct AppChip: View {
     let text: String
     let icon: Image?
     let backgroundColor: Color
-    let foregroundColor: Color
+    let fontColor: Color
     var size: AppChipSize = .regular
 
     var body: some View {
@@ -13,12 +13,12 @@ struct AppChip: View {
                 icon
                     .resizable()
                     .renderingMode(.original)
-                    .foregroundColor(foregroundColor)
+                    .foregroundColor(fontColor)
                     .frame(width: iconSize, height: iconSize)
             }
             Text(text)
                 .font(font)
-                .foregroundColor(foregroundColor)
+                .foregroundColor(fontColor)
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
         }
