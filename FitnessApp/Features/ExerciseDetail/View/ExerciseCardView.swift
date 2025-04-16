@@ -29,7 +29,7 @@ struct ExerciseCardView: View {
                 }
             )
 
-            Divider().background(AppStyle.Color.transparent).padding(.horizontal, 4)
+            Divider().background(AppStyle.Color.purpleGrey).padding(.horizontal, 4)
 
             CardBottomSectionView(
                 weight: viewModel.exercise.weight,
@@ -319,7 +319,7 @@ struct ChipColumnView: View {
                 AppChip(
                     text: "\(sets)x",
                     icon: Image(systemName: "bolt.fill"),
-                    backgroundColor: AppStyle.Color.transparent,
+                    backgroundColor: AppStyle.Color.purpleGrey,
                     fontColor: AppStyle.Color.white
                 )
             }
@@ -329,7 +329,7 @@ struct ChipColumnView: View {
                 AppChip(
                     text: "\(currentReps)",
                     icon: Image(systemName: "arrow.triangle.2.circlepath"),
-                    backgroundColor: AppStyle.Color.transparent,
+                    backgroundColor: AppStyle.Color.purpleGrey,
                     fontColor: AppStyle.Color.white
                 )
             }

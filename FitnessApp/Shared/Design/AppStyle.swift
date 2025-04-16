@@ -24,7 +24,6 @@ enum AppStyle {
     enum Color {
         
         static let white = SwiftUI.Color.white
-        static let transparent = SwiftUI.Color.white.opacity(0.2)
         static let purpleGrey = SwiftUI.Color(hex: "#544985")
         static let purpleLight = SwiftUI.Color(hex: "#E5D8FF")
         static let purple = SwiftUI.Color(hex: "#9575F4")
