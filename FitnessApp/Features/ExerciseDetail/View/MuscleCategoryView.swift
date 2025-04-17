@@ -38,7 +38,7 @@ struct MuscleCategoryView: View {
     var body: some View {
         ZStack {
             VStack(alignment: .leading) {
-                Text(group.rawValue)
+                Text(group.displayName)
                     .font(AppStyle.Font.title)
                     .padding([.top, .horizontal], AppStyle.Padding.horizontal)
                     .accessibilityIdentifier(IDS.groupTitle)
@@ -52,7 +52,7 @@ struct MuscleCategoryView: View {
                 }
                 .listStyle(.plain)
             }
-            .navigationBarTitle(group.rawValue, displayMode: .inline)
+            .navigationBarTitle(group.displayName, displayMode: .inline)
             .navigationBarItems(trailing: Button(action: {
                 withAnimation { showForm.toggle() }
             }) {
@@ -225,7 +225,7 @@ struct MuscleCategoryView: View {
     private var exerciseListSection: some View {
         Group {
             // Active exercises (not completed) at the top
-            ForEach(viewModel.exercises.filter { !$0.isCompleted }) { exercise in
+            ForEach(viewModel.exercises.filter { !$0.isCompleted },id: \.id) { exercise in
                 ExerciseCardView(
                     viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
                         viewModel.updateExercise(updated)
@@ -250,29 +250,30 @@ struct MuscleCategoryView: View {
     }
 
     private var exerciseFormSection: some View {
-        Section(header: Text(L10n.newExercise)) {
-            TextField(L10n.name, text: $name)
+        Section(header: Text(L10n.cardCreationTitle)) {
+            TextField(L10n.cardCreationPlaceholderTextName, text: $name)
                 .accessibilityIdentifier(IDS.nameField)
                 .keyboardType(.default)
 
-            TextField(L10n.weightKg, text: $weight)
+            TextField(L10n.cardCreationPlaceholderTextWeight, text: $weight)
                 .accessibilityIdentifier(IDS.weightField)
                 .keyboardType(.decimalPad)
 
-            TextField(L10n.repetitions, text: $reps)
+            TextField(L10n.cardCreationPlaceholderTextRepetitions, text: $reps)
                 .accessibilityIdentifier(IDS.repsField)
                 .keyboardType(.numberPad)
 
-            TextField(L10n.sets, text: $sets)
+            
+            TextField(L10n.cardCreationPlaceholderTextSets, text: $sets)
                 .accessibilityIdentifier(IDS.setsField)
                 .keyboardType(.numberPad)
-
-            TextField(L10n.seatOptional, text: $seat)
+            
+            TextField(L10n.cardCreationPlaceholderTextSeat, text: $seat)
                 .accessibilityIdentifier(IDS.seatField)
                 .keyboardType(.numberPad)
-
+            
             HStack {
-                Button(L10n.save) {
+                Button(L10n.cardCreationSave) {
                     let newExercise = Exercise(
                         name: name,
                         weight: Int(weight) ?? 0,
@@ -288,7 +289,7 @@ struct MuscleCategoryView: View {
 
                 Spacer()
 
-                Button(L10n.cancel) {
+                Button(L10n.cardCreationCancel) {
                     clearForm()
                 }
                 .accessibilityIdentifier(IDS.cancelButton)

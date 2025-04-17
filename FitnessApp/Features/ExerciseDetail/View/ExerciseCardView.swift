@@ -6,7 +6,7 @@ private struct IDS {
 }
 
 struct ExerciseCardView: View {
-    @StateObject var viewModel: ExerciseCardViewModel
+    @ObservedObject var viewModel: ExerciseCardViewModel
     @State private var isEditingSeat = false
     @State private var isEditingWeight = false
     @State private var isEditingSets = false
@@ -58,19 +58,40 @@ struct ExerciseCardView: View {
         .cornerRadius(AppStyle.CornerRadius.card)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 4)
         .sheet(isPresented: $isEditingSeat) {
-            seatEditSheet
+            editSheet(
+                title: "Sitzeinstellung ändern",
+                placeholder: "Neue Einstellung",
+                input: $seatInput,
+                update: { viewModel.updateSeat("\($0)") },
+                cancel: { isEditingSeat = false }
+            )
         }
         .sheet(isPresented: $isEditingWeight) {
-            weightEditSheet
+            editSheet(
+                  title: "Gewicht ändern",
+                  placeholder: "Neues Gewicht",
+                  input: $weightInput,
+                  update: { viewModel.updateWeight($0) },
+                  cancel: { isEditingWeight = false }
+              )
         }
         .sheet(isPresented: $isEditingSets) {
-            setsEditSheet
+            editSheet(
+                title: "Sätze ändern",
+                placeholder: "Neue Anzahl",
+                input: $setsInput,
+                update: { viewModel.updateSets($0) },
+                cancel: { isEditingSets = false }
+            )
         }
         .sheet(isPresented: $isEditingReps) {
-            repsEditSheet
-        }
-        .sheet(isPresented: $isEditingCurrentReps) {
-            currentRepsEditSheet
+            editSheet(
+                title: "Wiederholungen ändern",
+                placeholder: "Neue Anzahl",
+                input: $repsInput,
+                update: { viewModel.updateReps($0) },
+                cancel: { isEditingReps = false }
+            )
         }
     }
 
@@ -78,138 +99,31 @@ struct ExerciseCardView: View {
         if let seat = viewModel.exercise.seatSetting, !seat.isEmpty {
             return "\(seat)"
         } else {
-            return L10n.seatOptional
+            return L10n.seatChipDefaultvalue
         }
     }
-
-    private var seatEditSheet: some View {
-        VStack(spacing: 20) {
-            Text("Sitzeinstellung ändern")
-                .font(.headline)
-
-            TextField("Neue Einstellung", text: $seatInput)
-                .keyboardType(.numberPad)
-                .textFieldStyle(.roundedBorder)
-                .padding()
-
-            Button("Speichern") {
-                viewModel.updateSeat(seatInput)
-                isEditingSeat = false
-            }
-            .buttonStyle(.borderedProminent)
-
-            Button("Abbrechen") {
-                isEditingSeat = false
-            }
-            .foregroundColor(.red)
-        }
-        .padding()
-    }
-
-    private var weightEditSheet: some View {
-        VStack(spacing: 20) {
-            Text("Gewicht ändern")
-                .font(.headline)
-
-            TextField("Neues Gewicht", text: $weightInput)
-                .keyboardType(.numberPad)
-                .textFieldStyle(.roundedBorder)
-                .padding()
-
-            Button("Speichern") {
-                if let newWeight = Int(weightInput) {
-                    viewModel.updateWeight(newWeight)
+    
+    private func editSheet(
+        title: String,
+        placeholder: String,
+        input: Binding<String>,
+        update: @escaping (Int) -> Void,
+        cancel: @escaping () -> Void
+    ) -> some View {
+        EditValueSheet(
+            title: title,
+            placeholder: placeholder,
+            input: input,
+            onSave: {
+                if let value = Int(input.wrappedValue) {
+                    update(value)
                 }
-                isEditingWeight = false
-            }
-            .buttonStyle(.borderedProminent)
-
-            Button("Abbrechen") {
-                isEditingWeight = false
-            }
-            .foregroundColor(.red)
-        }
-        .padding()
-    }
-
-    private var setsEditSheet: some View {
-        VStack(spacing: 20) {
-            Text("Sätze ändern")
-                .font(.headline)
-
-            TextField("Neue Anzahl", text: $setsInput)
-                .keyboardType(.numberPad)
-                .textFieldStyle(.roundedBorder)
-                .padding()
-
-            Button("Speichern") {
-                if let newSets = Int(setsInput) {
-                    viewModel.updateSets(newSets)
-                }
-                isEditingSets = false
-            }
-            .buttonStyle(.borderedProminent)
-
-            Button("Abbrechen") {
-                isEditingSets = false
-            }
-            .foregroundColor(.red)
-        }
-        .padding()
-    }
-
-    private var repsEditSheet: some View {
-        VStack(spacing: 20) {
-            Text("Wiederholungen ändern")
-                .font(.headline)
-
-            TextField("Neue Anzahl", text: $repsInput)
-                .keyboardType(.numberPad)
-                .textFieldStyle(.roundedBorder)
-                .padding()
-
-            Button("Speichern") {
-                if let newReps = Int(repsInput) {
-                    viewModel.updateReps(newReps)
-                }
-                isEditingReps = false
-            }
-            .buttonStyle(.borderedProminent)
-
-            Button("Abbrechen") {
-                isEditingReps = false
-            }
-            .foregroundColor(.red)
-        }
-        .padding()
-    }
-
-    private var currentRepsEditSheet: some View {
-        VStack(spacing: 20) {
-            Text("Wiederholungen anpassen")
-                .font(.headline)
-
-            TextField("Neue Anzahl", text: $currentRepsInput)
-                .keyboardType(.numberPad)
-                .textFieldStyle(.roundedBorder)
-                .padding()
-
-            Button("Speichern") {
-                if let newReps = Int(currentRepsInput),
-                   (newReps < viewModel.exercise.reps) {
-                    viewModel.updateRepsForCurrentSet(newReps)
-                }
-                isEditingCurrentReps = false
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(Int(currentRepsInput).map { $0 >= viewModel.exercise.reps } ?? true)
-
-            Button("Abbrechen") {
-                isEditingCurrentReps = false
-            }
-            .foregroundColor(.red)
-        }
-        .padding()
+                cancel()
+            },
+            onCancel: cancel,
+            keyboardType: .numberPad,
+            saveDisabled: Int(input.wrappedValue) == nil
+        )
     }
 }
 
@@ -327,7 +241,7 @@ struct ChipColumnView: View {
 
             Button(action: onRepsTap) {
                 AppChip(
-                    text: "\(currentReps)",
+                    text: "\(reps)",
                     icon: Image(systemName: "arrow.triangle.2.circlepath"),
                     backgroundColor: AppStyle.Color.purpleGrey,
                     fontColor: AppStyle.Color.white

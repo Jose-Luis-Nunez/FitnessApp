@@ -63,9 +63,4 @@ final class ExerciseCardViewModel: ObservableObject {
         exercise.reps = newReps
         onUpdate(exercise)
     }
-
-    func updateRepsForCurrentSet(_ newReps: Int) {
-        // Here we could store the actual reps done for each set if needed
-        completeSet()
-    }
 }
