@@ -36,7 +36,7 @@ struct MuscleCategoryView: View {
     }
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .bottom) {
             VStack(alignment: .leading) {
                 Text(group.displayName)
                     .font(AppStyle.Font.title)
@@ -60,108 +60,31 @@ struct MuscleCategoryView: View {
             }.accessibilityIdentifier(IDS.addExerciseButton))
 
             // FABs at the bottom
-            if let activeExercise = viewModel.exercises.first(where: { !$0.isCompleted }) {
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        
-                        if viewModel.isSetInProgress {
-                            // Less Button
-                            Button(action: {
-                                currentRepsEditMode = .less
-                                isEditingCurrentReps = true
-                            }) {
-                                Text("Less")
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 20)
-                                    .padding(.vertical, 12)
-                                    .background(AppStyle.Color.purpleDark)
-                                    .clipShape(Capsule())
-                            }
-                            .padding(.trailing, 8)
-
-                            // Done Button
-                            Button(action: {
-                                viewModel.completeCurrentSet()
-                            }) {
-                                Text("Done!")
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(AppStyle.Color.purpleDark)
-                                    .padding(.horizontal, 32)
-                                    .padding(.vertical, 12)
-                                    .background(AppStyle.Color.white)
-                                    .clipShape(Capsule())
-                            }
-
-                            // More Button
-                            Button(action: {
-                                currentRepsEditMode = .more
-                                isEditingCurrentReps = true
-                            }) {
-                                Text("More")
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 20)
-                                    .padding(.vertical, 12)
-                                    .background(AppStyle.Color.purpleDark)
-                                    .clipShape(Capsule())
-                            }
-                            .padding(.leading, 8)
-                        } else {
-                            // Start Button
-                            Button(action: {
-                                viewModel.startSet(for: activeExercise)
-                            }) {
-                                Text(viewModel.startButtonTitle)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 32)
-                                    .padding(.vertical, 12)
-                                    .background(AppStyle.Color.purpleDark)
-                                    .clipShape(Capsule())
-                            }
-                        }
-                        
-                        Spacer()
+            BottomActionBarView(
+                hasActiveExercise: viewModel.exercises.contains(where: { !$0.isCompleted }),
+                isSetInProgress: viewModel.isSetInProgress,
+                currentExercise: viewModel.currentExercise,
+                currentSet: viewModel.currentSet,
+                onStart: {
+                    if let activeExercise = viewModel.exercises.first(where: { !$0.isCompleted }) {
+                        viewModel.startSet(for: activeExercise)
                     }
-                    .padding(.horizontal)
-                    .padding(.vertical, 16)
-                    .background(
-                        Rectangle()
-                            .fill(Color.white.opacity(0.95))
-                            .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -4)
-                    )
+                },
+                onCompleteSet: {
+                    viewModel.completeCurrentSet()
+                },
+                onReset: {
+                    showResetConfirmation = true
+                },
+                onEditLess: {
+                    currentRepsEditMode = .less
+                    isEditingCurrentReps = true
+                },
+                onEditMore: {
+                    currentRepsEditMode = .more
+                    isEditingCurrentReps = true
                 }
-            } else {
-                // Reset Button when all exercises are completed
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        Button(action: {
-                            showResetConfirmation = true
-                        }) {
-                            Text("Reset Progress")
-                                .fontWeight(.semibold)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 32)
-                                .padding(.vertical, 12)
-                                .background(AppStyle.Color.purpleDark)
-                                .clipShape(Capsule())
-                        }
-                        Spacer()
-                    }
-                    .padding(.horizontal)
-                    .padding(.vertical, 16)
-                    .background(
-                        Rectangle()
-                            .fill(Color.white.opacity(0.95))
-                            .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -4)
-                    )
-                }
-            }
+            )
         }
         .sheet(isPresented: $isEditingCurrentReps) {
             currentRepsEditSheet
