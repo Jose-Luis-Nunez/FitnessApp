@@ -5,18 +5,41 @@ private struct IDS {
     static let seatLabel = "id_label_exercise_seat"
 }
 
+enum EditField: Identifiable {
+    case seat, weight, sets, reps
+
+    var id: String {
+        switch self {
+        case .seat: return "seat"
+        case .weight: return "weight"
+        case .sets: return "sets"
+        case .reps: return "reps"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .seat: return "Sitzeinstellung ändern"
+        case .weight: return "Gewicht ändern"
+        case .sets: return "Sätze ändern"
+        case .reps: return "Wiederholungen ändern"
+        }
+    }
+
+    var placeholder: String {
+        switch self {
+        case .seat: return "Neue Einstellung"
+        case .weight: return "Neues Gewicht"
+        case .sets: return "Neue Anzahl"
+        case .reps: return "Neue Anzahl"
+        }
+    }
+}
+
 struct ExerciseCardView: View {
     @ObservedObject var viewModel: ExerciseCardViewModel
-    @State private var isEditingSeat = false
-    @State private var isEditingWeight = false
-    @State private var isEditingSets = false
-    @State private var isEditingReps = false
-    @State private var isEditingCurrentReps = false
-    @State private var seatInput = ""
-    @State private var weightInput = ""
-    @State private var setsInput = ""
-    @State private var repsInput = ""
-    @State private var currentRepsInput = ""
+    @State private var activeEditField: EditField?
+    @State private var inputValue = ""
 
     var body: some View {
         VStack(spacing: 8) {
@@ -24,8 +47,8 @@ struct ExerciseCardView: View {
                 title: viewModel.exercise.name,
                 seatText: seatDisplayText,
                 onSeatTap: {
-                    seatInput = viewModel.exercise.seatSetting ?? ""
-                    isEditingSeat = true
+                    inputValue = viewModel.exercise.seatSetting ?? ""
+                    activeEditField = .seat
                 }
             )
 
@@ -37,16 +60,16 @@ struct ExerciseCardView: View {
                 currentReps: viewModel.exercise.currentReps,
                 sets: viewModel.exercise.sets,
                 onWeightTap: {
-                    weightInput = "\(viewModel.exercise.weight)"
-                    isEditingWeight = true
+                    inputValue = "\(viewModel.exercise.weight)"
+                    activeEditField = .weight
                 },
                 onSetsTap: {
-                    setsInput = "\(viewModel.exercise.sets)"
-                    isEditingSets = true
+                    inputValue = "\(viewModel.exercise.sets)"
+                    activeEditField = .sets
                 },
                 onRepsTap: {
-                    repsInput = "\(viewModel.exercise.reps)"
-                    isEditingReps = true
+                    inputValue = "\(viewModel.exercise.reps)"
+                    activeEditField = .reps
                 }
             )
             .scaleEffect(1.1)
@@ -57,42 +80,37 @@ struct ExerciseCardView: View {
         .background(viewModel.exercise.isCompleted ? AppStyle.Color.purpleLight : AppStyle.Color.purpleDark)
         .cornerRadius(AppStyle.CornerRadius.card)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 4)
-        .sheet(isPresented: $isEditingSeat) {
-            editSheet(
-                title: "Sitzeinstellung ändern",
-                placeholder: "Neue Einstellung",
-                input: $seatInput,
-                update: { viewModel.updateSeat("\($0)") },
-                cancel: { isEditingSeat = false }
-            )
-        }
-        .sheet(isPresented: $isEditingWeight) {
-            editSheet(
-                  title: "Gewicht ändern",
-                  placeholder: "Neues Gewicht",
-                  input: $weightInput,
-                  update: { viewModel.updateWeight($0) },
-                  cancel: { isEditingWeight = false }
-              )
-        }
-        .sheet(isPresented: $isEditingSets) {
-            editSheet(
-                title: "Sätze ändern",
-                placeholder: "Neue Anzahl",
-                input: $setsInput,
-                update: { viewModel.updateSets($0) },
-                cancel: { isEditingSets = false }
-            )
-        }
-        .sheet(isPresented: $isEditingReps) {
-            editSheet(
-                title: "Wiederholungen ändern",
-                placeholder: "Neue Anzahl",
-                input: $repsInput,
-                update: { viewModel.updateReps($0) },
-                cancel: { isEditingReps = false }
-            )
-        }
+        .sheet(item: $activeEditField) { field in
+               EditValueSheet(
+                   title: field.title,
+                   placeholder: field.placeholder,
+                   input: $inputValue,
+                   onSave: {
+                       switch field {
+                       case .seat:
+                           viewModel.updateSeat(inputValue)
+                       case .weight:
+                           if let value = Int(inputValue) {
+                               viewModel.updateWeight(value)
+                           }
+                       case .sets:
+                           if let value = Int(inputValue) {
+                               viewModel.updateSets(value)
+                           }
+                       case .reps:
+                           if let value = Int(inputValue) {
+                               viewModel.updateReps(value)
+                           }
+                       }
+                       activeEditField = nil
+                   },
+                   onCancel: {
+                       activeEditField = nil
+                   },
+                   keyboardType: .numberPad,
+                   saveDisabled: field == .seat ? inputValue.isEmpty : Int(inputValue) == nil
+               )
+           }
     }
 
     private var seatDisplayText: String {
@@ -101,29 +119,6 @@ struct ExerciseCardView: View {
         } else {
             return L10n.seatChipDefaultvalue
         }
-    }
-    
-    private func editSheet(
-        title: String,
-        placeholder: String,
-        input: Binding<String>,
-        update: @escaping (Int) -> Void,
-        cancel: @escaping () -> Void
-    ) -> some View {
-        EditValueSheet(
-            title: title,
-            placeholder: placeholder,
-            input: input,
-            onSave: {
-                if let value = Int(input.wrappedValue) {
-                    update(value)
-                }
-                cancel()
-            },
-            onCancel: cancel,
-            keyboardType: .numberPad,
-            saveDisabled: Int(input.wrappedValue) == nil
-        )
     }
 }
 
