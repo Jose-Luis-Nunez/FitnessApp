@@ -7,40 +7,15 @@ private struct IDS {
 
 enum EditField: Identifiable {
     case seat, weight, sets, reps
-
-    var id: String {
-        switch self {
-        case .seat: return "seat"
-        case .weight: return "weight"
-        case .sets: return "sets"
-        case .reps: return "reps"
-        }
-    }
-
-    var title: String {
-        switch self {
-        case .seat: return "Sitzeinstellung ändern"
-        case .weight: return "Gewicht ändern"
-        case .sets: return "Sätze ändern"
-        case .reps: return "Wiederholungen ändern"
-        }
-    }
-
-    var placeholder: String {
-        switch self {
-        case .seat: return "Neue Einstellung"
-        case .weight: return "Neues Gewicht"
-        case .sets: return "Neue Anzahl"
-        case .reps: return "Neue Anzahl"
-        }
-    }
+    var id: String { String(describing: self) }
 }
 
 struct ExerciseCardView: View {
     @ObservedObject var viewModel: ExerciseCardViewModel
-    @State private var activeEditField: EditField?
+    
+    @State private var activeSheet: EditField?
     @State private var inputValue = ""
-
+    
     var body: some View {
         VStack(spacing: 8) {
             CardTopSectionView(
@@ -48,12 +23,12 @@ struct ExerciseCardView: View {
                 seatText: seatDisplayText,
                 onSeatTap: {
                     inputValue = viewModel.exercise.seatSetting ?? ""
-                    activeEditField = .seat
+                    activeSheet = .seat
                 }
             )
-
+            
             Divider().background(AppStyle.Color.purpleGrey).padding(.horizontal, 4)
-
+            
             CardBottomSectionView(
                 weight: viewModel.exercise.weight,
                 reps: viewModel.exercise.reps,
@@ -61,15 +36,15 @@ struct ExerciseCardView: View {
                 sets: viewModel.exercise.sets,
                 onWeightTap: {
                     inputValue = "\(viewModel.exercise.weight)"
-                    activeEditField = .weight
+                    activeSheet = .weight
                 },
                 onSetsTap: {
                     inputValue = "\(viewModel.exercise.sets)"
-                    activeEditField = .sets
+                    activeSheet = .sets
                 },
                 onRepsTap: {
                     inputValue = "\(viewModel.exercise.reps)"
-                    activeEditField = .reps
+                    activeSheet = .reps
                 }
             )
             .scaleEffect(1.1)
@@ -80,44 +55,91 @@ struct ExerciseCardView: View {
         .background(viewModel.exercise.isCompleted ? AppStyle.Color.purpleLight : AppStyle.Color.purpleDark)
         .cornerRadius(AppStyle.CornerRadius.card)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 4)
-        .sheet(item: $activeEditField) { field in
-               EditValueSheet(
-                   title: field.title,
-                   placeholder: field.placeholder,
-                   input: $inputValue,
-                   onSave: {
-                       switch field {
-                       case .seat:
-                           viewModel.updateSeat(inputValue)
-                       case .weight:
-                           if let value = Int(inputValue) {
-                               viewModel.updateWeight(value)
-                           }
-                       case .sets:
-                           if let value = Int(inputValue) {
-                               viewModel.updateSets(value)
-                           }
-                       case .reps:
-                           if let value = Int(inputValue) {
-                               viewModel.updateReps(value)
-                           }
-                       }
-                       activeEditField = nil
-                   },
-                   onCancel: {
-                       activeEditField = nil
-                   },
-                   keyboardType: .numberPad,
-                   saveDisabled: field == .seat ? inputValue.isEmpty : Int(inputValue) == nil
-               )
-           }
+        .sheet(item: $activeSheet) { sheet in
+            editSheet(for: sheet)
+        }
     }
-
+    
     private var seatDisplayText: String {
         if let seat = viewModel.exercise.seatSetting, !seat.isEmpty {
             return "\(seat)"
         } else {
             return L10n.seatChipDefaultvalue
+        }
+    }
+    
+    @ViewBuilder
+    private func editSheet(for field: EditField) -> some View {
+        switch field {
+        case .seat:
+            EditValueSheet(
+                title: "Sitzeinstellung ändern",
+                placeholder: "Neue Einstellung",
+                input: $inputValue,
+                onSave: {
+                    viewModel.updateSeat(inputValue)
+                    activeSheet = nil
+                },
+                onCancel: {
+                    activeSheet = nil
+                },
+                keyboardType: .numberPad,
+                saveDisabled: inputValue.isEmpty
+            )
+
+        case .weight:
+            EditValueSheet(
+                title: "Gewicht ändern",
+                placeholder: "Neues Gewicht",
+                input: $inputValue,
+                onSave: {
+                    if let val = Int(inputValue) {
+                        viewModel.updateWeight(val)
+                    }
+                    activeSheet = nil
+                },
+                onCancel: {
+                    activeSheet = nil
+                },
+                keyboardType: .numberPad,
+                saveDisabled: Int(inputValue) == nil
+            )
+
+        case .sets:
+            EditValueSheet(
+                title: "Sätze ändern",
+                placeholder: "Neue Anzahl",
+                input: $inputValue,
+                onSave: {
+                    if let val = Int(inputValue) {
+                        viewModel.updateSets(val)
+                    }
+                    activeSheet = nil
+                },
+                onCancel: {
+                    activeSheet = nil
+                },
+                keyboardType: .numberPad,
+                saveDisabled: Int(inputValue) == nil
+            )
+
+        case .reps:
+            EditValueSheet(
+                title: "Wiederholungen ändern",
+                placeholder: "Neue Anzahl",
+                input: $inputValue,
+                onSave: {
+                    if let val = Int(inputValue) {
+                        viewModel.updateReps(val)
+                    }
+                    activeSheet = nil
+                },
+                onCancel: {
+                    activeSheet = nil
+                },
+                keyboardType: .numberPad,
+                saveDisabled: Int(inputValue) == nil
+            )
         }
     }
 }
