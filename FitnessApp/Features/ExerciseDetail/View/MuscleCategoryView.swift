@@ -35,6 +35,15 @@ struct MuscleCategoryView: View {
         _viewModel = StateObject(wrappedValue: MuscleCategoryViewModel(group: group))
     }
 
+    private var bottomBarVM: BottomActionBarViewModel {
+        BottomActionBarViewModel(
+            isSetInProgress: viewModel.isSetInProgress,
+            currentSet: viewModel.currentSet,
+            currentExercise: viewModel.currentExercise,
+            hasActiveExercise: viewModel.hasActiveExercise
+        )
+    }
+    
     var body: some View {
         ZStack(alignment: .bottom) {
             VStack(alignment: .leading) {
@@ -59,17 +68,14 @@ struct MuscleCategoryView: View {
                 Image(systemName: showForm ? "minus" : "plus")
             }.accessibilityIdentifier(IDS.addExerciseButton))
 
-            // FABs at the bottom
             BottomActionBarView(
-                hasActiveExercise: viewModel.exercises.contains(where: { !$0.isCompleted }),
-                isSetInProgress: viewModel.isSetInProgress,
-                currentExercise: viewModel.currentExercise,
-                currentSet: viewModel.currentSet,
+                viewModel: bottomBarVM,
                 onStart: {
                     if let activeExercise = viewModel.exercises.first(where: { !$0.isCompleted }) {
                         viewModel.startSet(for: activeExercise)
                     }
                 },
+
                 onCompleteSet: {
                     viewModel.completeCurrentSet()
                 },

@@ -9,12 +9,9 @@ final class MuscleCategoryViewModel: ObservableObject {
     
     private let group: MuscleCategoryGroup
     private let storage: ExerciseStoring
-
-    var startButtonTitle: String {
-        if currentSet == 0 {
-            return "Start Sets"
-        }
-        return "Set \(currentSet + 1) Start"
+    
+    var hasActiveExercise: Bool {
+        exercises.contains { !$0.isCompleted }
     }
 
     init(group: MuscleCategoryGroup, storage: ExerciseStoring = ExerciseStorageService()) {
