@@ -5,8 +5,8 @@ struct ChipIcon {
     let color: Color
     let size: AppChipSize
 
-    init(image: Image, color: Color, size: AppChipSize = .regular) {
-        self.image = image
+    init(image: String, color: Color, size: AppChipSize = .regular) {
+        self.image = Image(image)
         self.color = color
         self.size = size
     }

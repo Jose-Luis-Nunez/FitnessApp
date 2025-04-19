@@ -156,8 +156,10 @@ struct CardTopSectionView: View {
                     text: seatText,
                     fontColor: AppStyle.Color.white,
                     backgroundColor: AppStyle.Color.purple,
-                    icon: ChipIcon(image: Image("iconSeatSettings"), color: AppStyle.Color.white)
+                    size: .regular,
+                    icon: ChipIcon(image: "chairIcon", color:AppStyle.Color.white)
                 )
+                .scaleEffect(1.1)
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier(IDS.seatLabel)
