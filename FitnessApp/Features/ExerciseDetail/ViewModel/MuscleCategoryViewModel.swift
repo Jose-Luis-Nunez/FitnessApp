@@ -65,20 +65,6 @@ final class MuscleCategoryViewModel: ObservableObject {
         }
     }
 
-    private func completeExercise(_ exercise: Exercise) {
-        currentSet = 0
-        currentExercise = nil
-        if let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
-            var updated = exercise
-            updated.isCompleted = true
-            
-            exercises.remove(at: index)
-            exercises.append(updated)
-            
-            save()
-        }
-    }
-
     func add(_ exercise: Exercise) {
         exercises.append(exercise)
         save()
@@ -109,5 +95,4 @@ final class MuscleCategoryViewModel: ObservableObject {
         }
         save()
     }
-
 }

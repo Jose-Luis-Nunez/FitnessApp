@@ -1,8 +1,12 @@
 import Foundation
 
 final class ExerciseCardViewModel: ObservableObject {
-    @Published var exercise: Exercise
-
+    @Published var exercise: Exercise {
+        didSet {
+            onUpdate(exercise)
+        }
+    }
+    
     private let onUpdate: (Exercise) -> Void
 
     init(exercise: Exercise, onUpdate: @escaping (Exercise) -> Void) {
@@ -28,5 +32,13 @@ final class ExerciseCardViewModel: ObservableObject {
     func updateReps(_ newReps: Int) {
         exercise.reps = newReps
         onUpdate(exercise)
+    }
+    
+    func generateFieldTypes() -> [ExerciseFieldType] {
+        [
+            .weight(exercise.weight, AppStyle.Dimensions.chipHeight * 2 + 42),
+            .sets(exercise.sets, nil),
+            .reps(exercise.reps, nil)
+        ]
     }
 }

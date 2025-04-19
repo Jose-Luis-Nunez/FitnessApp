@@ -7,7 +7,9 @@ private struct IDS {
 
 enum EditField: Identifiable {
     case seat, weight, sets, reps
-    var id: String { String(describing: self) }
+    var id: String {
+        String(describing: self)
+    }
 }
 
 struct ExerciseCardView: View {
@@ -30,21 +32,11 @@ struct ExerciseCardView: View {
             Divider().background(AppStyle.Color.purpleGrey).padding(.horizontal, 4)
             
             CardBottomSectionView(
-                weight: viewModel.exercise.weight,
-                reps: viewModel.exercise.reps,
+                viewModel: viewModel,
                 currentReps: viewModel.exercise.currentReps,
-                sets: viewModel.exercise.sets,
-                onWeightTap: {
-                    inputValue = "\(viewModel.exercise.weight)"
-                    activeSheet = .weight
-                },
-                onSetsTap: {
-                    inputValue = "\(viewModel.exercise.sets)"
-                    activeSheet = .sets
-                },
-                onRepsTap: {
-                    inputValue = "\(viewModel.exercise.reps)"
-                    activeSheet = .reps
+                onFieldTap: { field, value in
+                    inputValue = value
+                    activeSheet = field
                 }
             )
             .scaleEffect(1.1)
@@ -86,7 +78,7 @@ struct ExerciseCardView: View {
                 keyboardType: .numberPad,
                 saveDisabled: inputValue.isEmpty
             )
-
+            
         case .weight:
             EditValueSheet(
                 title: "Gewicht ändern",
@@ -104,7 +96,7 @@ struct ExerciseCardView: View {
                 keyboardType: .numberPad,
                 saveDisabled: Int(inputValue) == nil
             )
-
+            
         case .sets:
             EditValueSheet(
                 title: "Sätze ändern",
@@ -122,7 +114,7 @@ struct ExerciseCardView: View {
                 keyboardType: .numberPad,
                 saveDisabled: Int(inputValue) == nil
             )
-
+            
         case .reps:
             EditValueSheet(
                 title: "Wiederholungen ändern",
@@ -148,22 +140,23 @@ struct CardTopSectionView: View {
     let title: String
     let seatText: String
     let onSeatTap: () -> Void
-
+    
     var body: some View {
         HStack(alignment: .top) {
+            
             Text(title)
-                .font(AppStyle.Font.headlineLarge)
+                .font(AppStyle.Font.cardHeadline)
                 .foregroundColor(AppStyle.Color.white)
                 .accessibilityIdentifier(IDS.nameLabel)
-
+            
             Spacer()
-
+            
             Button(action: onSeatTap) {
                 AppChip(
                     text: seatText,
-                    icon: Image("iconSeatSettings"),
+                    fontColor: AppStyle.Color.white,
                     backgroundColor: AppStyle.Color.purple,
-                    fontColor: AppStyle.Color.white
+                    icon: ChipIcon(image: Image("iconSeatSettings"), color: AppStyle.Color.white)
                 )
             }
             .buttonStyle(.plain)
@@ -173,53 +166,65 @@ struct CardTopSectionView: View {
 }
 
 struct CardBottomSectionView: View {
-    let weight: Int
-    let reps: Int
+    @ObservedObject var viewModel: ExerciseCardViewModel
     let currentReps: Int
-    let sets: Int
-    let onWeightTap: () -> Void
-    let onSetsTap: () -> Void
-    let onRepsTap: () -> Void
-
+    let onFieldTap: (EditField, String) -> Void
+    
     var body: some View {
+        let fields = viewModel.generateFieldTypes()
+        let leftFields = fields.filter { $0.column == .left }
+        let rightField = fields.first(where: { $0.column == .right })
+        
         HStack(alignment: .center, spacing: 12) {
-            IconTextColumnView(
+            AppChipExternalIcon(
                 icon: Image("iconActivityIncrease"),
                 chipText: "STEIGEND",
                 chipBackground: AppStyle.Color.purpleLight
             )
-
+            
             Spacer(minLength: 4)
-
-            ChipColumnView(
-                reps: reps,
-                currentReps: currentReps,
-                sets: sets,
-                onSetsTap: onSetsTap,
-                onRepsTap: onRepsTap
-            )
-
-            Button(action: onWeightTap) {
-                AppChip(
-                    text: "\(weight) kg",
-                    icon: nil,
-                    backgroundColor: AppStyle.Color.purpleGrey,
-                    fontColor: AppStyle.Color.white,
-                    size: .large
-                )
+            
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(leftFields) { field in
+                    Button(action: {
+                        onFieldTap(field.editField, field.prefilledValue)
+                    }) {
+                        AppChip(
+                            text: field.valueText,
+                            fontColor: AppStyle.Color.white,
+                            backgroundColor: AppStyle.Color.purpleGrey,
+                            icon: ExerciseFieldType.icon(for: field.editField)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
             }
-            .buttonStyle(.plain)
-            .frame(height: AppStyle.Dimensions.chipHeight * 2 + 42)
+            
+            if let weightField = rightField {
+                Button(action: {
+                    onFieldTap(weightField.editField, weightField.prefilledValue)
+                }) {
+                    AppChip(
+                        text: weightField.valueText,
+                        fontColor: AppStyle.Color.white,
+                        backgroundColor: AppStyle.Color.purpleGrey,
+                        size: .large,
+                        icon: nil
+                    )
+                }
+                .buttonStyle(.plain)
+                .frame(height: weightField.frameHeight)
+            }
         }
         .padding(.horizontal, AppStyle.Padding.horizontal)
     }
 }
 
-struct IconTextColumnView: View {
+struct AppChipExternalIcon: View {
     let icon: Image
     let chipText: String
     let chipBackground: Color
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: -24) {
             icon
@@ -229,42 +234,10 @@ struct IconTextColumnView: View {
                 .offset(x: 12, y: -12)
             AppChip(
                 text: chipText,
-                icon: nil,
+                fontColor: AppStyle.Color.purpleDark,
                 backgroundColor: chipBackground,
-                fontColor: AppStyle.Color.purpleDark
+                icon: nil
             )
-        }
-    }
-}
-
-struct ChipColumnView: View {
-    let reps: Int
-    let currentReps: Int
-    let sets: Int
-    let onSetsTap: () -> Void
-    let onRepsTap: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Button(action: onSetsTap) {
-                AppChip(
-                    text: "\(sets)x",
-                    icon: Image(systemName: "bolt.fill"),
-                    backgroundColor: AppStyle.Color.purpleGrey,
-                    fontColor: AppStyle.Color.white
-                )
-            }
-            .buttonStyle(.plain)
-
-            Button(action: onRepsTap) {
-                AppChip(
-                    text: "\(reps)",
-                    icon: Image(systemName: "arrow.triangle.2.circlepath"),
-                    backgroundColor: AppStyle.Color.purpleGrey,
-                    fontColor: AppStyle.Color.white
-                )
-            }
-            .buttonStyle(.plain)
         }
     }
 }

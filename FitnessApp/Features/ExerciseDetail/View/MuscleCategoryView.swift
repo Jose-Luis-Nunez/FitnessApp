@@ -47,11 +47,6 @@ struct MuscleCategoryView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             VStack(alignment: .leading) {
-                Text(group.displayName)
-                    .font(AppStyle.Font.title)
-                    .padding([.top, .horizontal], AppStyle.Padding.horizontal)
-                    .accessibilityIdentifier(IDS.groupTitle)
-
                 List {
                     exerciseListSection
 
@@ -61,13 +56,7 @@ struct MuscleCategoryView: View {
                 }
                 .listStyle(.plain)
             }
-            .navigationBarTitle(group.displayName, displayMode: .inline)
-            .navigationBarItems(trailing: Button(action: {
-                withAnimation { showForm.toggle() }
-            }) {
-                Image(systemName: showForm ? "minus" : "plus")
-            }.accessibilityIdentifier(IDS.addExerciseButton))
-
+        
             BottomActionBarView(
                 viewModel: bottomBarVM,
                 onStart: {
@@ -91,6 +80,24 @@ struct MuscleCategoryView: View {
                     isEditingCurrentReps = true
                 }
             )
+        }
+
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text(group.displayName)
+                    .font(AppStyle.Font.cardHeadline)
+                    .foregroundColor(AppStyle.Color.white)
+                    .accessibilityIdentifier(IDS.groupTitle)
+            }
+
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    withAnimation { showForm.toggle() }
+                }) {
+                    Image(systemName: showForm ? "minus" : "plus")
+                }
+                .accessibilityIdentifier(IDS.addExerciseButton)
+            }
         }
         .sheet(isPresented: $isEditingCurrentReps) {
             currentRepsEditSheet

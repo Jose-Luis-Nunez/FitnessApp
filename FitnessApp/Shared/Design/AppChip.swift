@@ -1,21 +1,52 @@
 import SwiftUI
 
+struct ChipIcon {
+    let image: Image
+    let color: Color
+    let size: AppChipSize
+
+    init(image: Image, color: Color, size: AppChipSize = .regular) {
+        self.image = image
+        self.color = color
+        self.size = size
+    }
+
+    init(systemName: String, color: Color, size: AppChipSize = .regular) {
+        self.image = Image(systemName: systemName)
+        self.color = color
+        self.size = size
+    }
+    
+    @ViewBuilder
+    var view: some View {
+        image
+            .renderingMode(.template)
+            .resizable()
+            .scaledToFit()
+            .frame(width: iconSize, height: iconSize)
+            .foregroundStyle(color)
+    }
+
+    private var iconSize: CGFloat {
+        switch size {
+        case .regular: return 14
+        case .large: return 16
+        case .wide: return 52
+        }
+    }
+}
+
 struct AppChip: View {
     let text: String
-    let icon: Image?
-    let backgroundColor: Color
     let fontColor: Color
+    let backgroundColor: Color
     var size: AppChipSize = .regular
+    let icon: ChipIcon?
+
 
     var body: some View {
         HStack(spacing: 6) {
-            if let icon = icon {
-                icon
-                    .resizable()
-                    .renderingMode(.original)
-                    .foregroundColor(fontColor)
-                    .frame(width: iconSize, height: iconSize)
-            }
+            icon?.view
             Text(text)
                 .font(font)
                 .foregroundColor(fontColor)
@@ -30,22 +61,17 @@ struct AppChip: View {
     
     private var font: Font {
         switch size {
-        case .regular: return AppStyle.Font.chip
-        case .large: return AppStyle.Font.metricValue
+        case .regular: return AppStyle.Font.regularChip
+        case .large: return AppStyle.Font.largeChip
+        case .wide: return AppStyle.Font.regularChip
         }
     }
-
-    private var iconSize: CGFloat {
-        switch size {
-        case .regular: return 12
-        case .large: return 16
-        }
-    }
-
+    
     private var horizontalPadding: CGFloat {
         switch size {
         case .regular: return 10
         case .large: return 16
+        case .wide: return 10
         }
     }
 
@@ -53,6 +79,8 @@ struct AppChip: View {
         switch size {
         case .regular: return 4
         case .large: return 11
+        case .wide: return 11
+
         }
     }
 }
@@ -60,4 +88,5 @@ struct AppChip: View {
 enum AppChipSize {
     case regular
     case large
+    case wide
 }

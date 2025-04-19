@@ -6,7 +6,7 @@ private struct IDS {
 
 struct MuscleCategorySelectionView: View {
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List(MuscleCategoryGroup.allCases) { group in
                 NavigationLink(destination: MuscleCategoryView(group: group)) {
                     HStack {
@@ -18,6 +18,7 @@ struct MuscleCategorySelectionView: View {
                 }
             }
             .navigationTitle(L10n.muscleCategoryMuscleGroupsTitle)
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
