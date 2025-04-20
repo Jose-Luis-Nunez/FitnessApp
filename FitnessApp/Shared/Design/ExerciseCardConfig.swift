@@ -14,7 +14,7 @@ enum ActionType: String {
 
 enum InteractionField: Identifiable {
     case edit(EditType), action(ActionType)
-
+    
     var id: String {
         switch self {
         case .edit(let type): return "edit_\(type.rawValue)"
@@ -45,6 +45,8 @@ struct TextStyle {
 
 struct IconStyle {
     let icon: ChipIcon
+    let frame: CGSize?
+    let offset: CGSize?
 }
 
 enum ExerciseFieldDisplay {
@@ -78,7 +80,7 @@ enum ExerciseCardConfig {
                 column: .left,
                 frameHeight: nil
             )
-
+            
         case .edit(.setsChip):
             return ExerciseFieldStyle(
                 display: .chip(
@@ -95,7 +97,7 @@ enum ExerciseCardConfig {
                 column: .left,
                 frameHeight: nil
             )
-
+            
         case .edit(.weightChip):
             return ExerciseFieldStyle(
                 display: .chip(
@@ -112,7 +114,7 @@ enum ExerciseCardConfig {
                 column: .right,
                 frameHeight: AppStyle.Dimensions.chipHeight * 2 + 42
             )
-
+            
         case .edit(.seatChip):
             return ExerciseFieldStyle(
                 display: .chip(
@@ -129,18 +131,24 @@ enum ExerciseCardConfig {
                 column: .right,
                 frameHeight: nil
             )
-
+            
         case .action(.analyticsIcon):
             return ExerciseFieldStyle(
                 display: .icon(
                     IconStyle(
-                        icon: ChipIcon(image: "iconActivityIncrease", color: AppStyle.Color.purpleDark, size: .wide)
+                        icon: ChipIcon(
+                            image: "iconActivityIncrease",
+                            color: AppStyle.Color.purpleDark,
+                            size: .wide
+                        ),
+                        frame: CGSize(width: 52, height: 52),
+                        offset: CGSize(width: 12, height: -12)
                     )
                 ),
                 column: .left,
                 frameHeight: nil
             )
-
+            
         case .action(.analyticsText):
             return ExerciseFieldStyle(
                 display: .text(

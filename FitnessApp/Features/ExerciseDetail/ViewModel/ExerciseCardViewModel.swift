@@ -48,4 +48,12 @@ final class ExerciseCardViewModel: ObservableObject {
              )
          }
     }
+    
+    var displaySeatText: String {
+        if let seat = exercise.seatSetting, !seat.isEmpty {
+            return seat
+        } else {
+            return L10n.seatChipDefaultvalue
+        }
+    }
 }
