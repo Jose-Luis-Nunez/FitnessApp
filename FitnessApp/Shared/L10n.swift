@@ -10,7 +10,7 @@ enum L10n {
     static let cardCreationCancel = "Abbrechen"
     
     static let seatChipDefaultvalue = "+"
-    static let analyticsChipText = "STEIGEND"
+    static let analyticsText = "STEIGEND"
 
     static let muscleCategoryMuscleGroupsTitle = "Muskelgruppen"
     static let muscleCategoryOptionArms = "Arme"

@@ -6,8 +6,8 @@ struct AppChip: View {
     let backgroundColor: Color
     var size: AppChipSize = .regular
     let icon: ChipIcon?
-
-
+    
+    
     var body: some View {
         HStack(spacing: 6) {
             icon?.view
@@ -23,11 +23,11 @@ struct AppChip: View {
         .clipShape(Capsule())
     }
     
-    private var font: Font {
+    private var font: Font {//fontSize
         switch size {
         case .regular: return AppStyle.Font.regularChip
         case .large: return AppStyle.Font.largeChip
-        case .wide: return AppStyle.Font.regularChip
+        case .wide: return AppStyle.Font.wideChip
         }
     }
     
@@ -38,13 +38,12 @@ struct AppChip: View {
         case .wide: return 10
         }
     }
-
+    
     private var verticalPadding: CGFloat {
         switch size {
         case .regular: return 4
         case .large: return 11
         case .wide: return 11
-
         }
     }
 }

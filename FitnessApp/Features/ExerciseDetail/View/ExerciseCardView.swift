@@ -76,35 +76,39 @@ struct ExerciseCardView: View {
         }
     }
     
-    
     struct CardTopSectionView: View {
         let title: String
         let seatText: String
         let onSeatTap: () -> Void
         
         var body: some View {
-            let config = ExerciseFieldConfig.config(for: .edit(.seatChip))
+            let seatChip = ExerciseCardConfig.config(for: .edit(.seatChip)).display
+            let exerciseCardTitleText = ExerciseCardConfig.config(for: .action(.exerciseCardTitleText)).display
             
             HStack(alignment: .top) {
-                Text(title)
-                    .font(AppStyle.Font.cardHeadline)
-                    .foregroundColor(AppStyle.Color.white)
-                    .accessibilityIdentifier(IDS.nameLabel)
+                if case let .text(text) = exerciseCardTitleText {
+                    Text(title)
+                        .font(text.textFontSize)
+                        .foregroundColor(text.textColor)
+                        .accessibilityIdentifier(IDS.nameLabel)
+                }
                 
                 Spacer()
                 
-                Button(action: onSeatTap) {
-                    AppChip(
-                        text: seatText,
-                        fontColor: AppStyle.Color.white,
-                        backgroundColor: config.backgroundColor,
-                        size: config.chipSize,
-                        icon: config.icon
-                    )
-                    .scaleEffect(1.1)
+                if case let .chip(style) = seatChip {
+                    Button(action: onSeatTap) {
+                        AppChip(
+                            text: seatText,
+                            fontColor: style.labelColor,
+                            backgroundColor: style.backgroundColor,
+                            size: style.size,
+                            icon: style.icon
+                        )
+                        .scaleEffect(1.1)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier(IDS.seatLabel)
                 }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier(IDS.seatLabel)
             }
         }
     }
@@ -115,75 +119,69 @@ struct ExerciseCardView: View {
         let onFieldTap: (InteractionField, String) -> Void
         
         var body: some View {
-            let fields = viewModel.generateFieldData()
-            let leftFields = fields.filter { ExerciseFieldConfig.config(for: $0.field).column == .left }
-            let rightField = fields.first(where: { ExerciseFieldConfig.config(for: $0.field).column == .right })
+            let styledFields = viewModel.generateStyledFieldData()
+            let leftFields = styledFields.filter { $0.style.column == .left }
+            let rightField = styledFields.first(where: { $0.style.column == .right })
             
             HStack(alignment: .center, spacing: 12) {
-                AppChipExternalIcon(
-                    iconConfig: ExerciseFieldConfig.config(for: .action(.analyticsIcon)),
-                    chipText: L10n.analyticsChipText,
-                )
+                VStack(alignment: .leading, spacing: -24) {
+                    
+                    let analyticsIcon = ExerciseCardConfig.config(for: .action(.analyticsIcon)).display
+                    let analyticsText = ExerciseCardConfig.config(for: .action(.analyticsText)).display
+                    
+                    if case let .icon(analyticsIcon) = analyticsIcon {
+                        analyticsIcon.icon.image
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 52, height: 52)
+                            .offset(x: 12, y: -12)
+                    }
+                    
+                    if case let .text(text) = analyticsText {
+                        Text(text.text)
+                            .font(text.textFontSize)
+                            .foregroundColor(text.textColor)
+                    }
+                }
                 
                 Spacer(minLength: 4)
                 
                 VStack(alignment: .leading, spacing: 6) {
-                    ForEach(leftFields, id: \.id) { field in
-                        let config = ExerciseFieldConfig.config(for: field.field)
-                        Button(action: {
-                            onFieldTap(field.field, field.prefilledValue)
-                        }) {
-                            AppChip(
-                                text: "\(field.value)\(config.textSuffix ?? "")",
-                                fontColor: .white,
-                                backgroundColor: config.backgroundColor,
-                                size: config.chipSize,
-                                icon: config.icon
-                            )
+                    ForEach(leftFields) { styled in
+                        if case let .chip(style) = styled.style.display {
+                            Button(action: {
+                                onFieldTap(styled.data.field, styled.data.prefilledValue)
+                            }) {
+                                AppChip(
+                                    text: "\(styled.data.value)\(style.textSuffix ?? "")",
+                                    fontColor: style.labelColor,
+                                    backgroundColor: style.backgroundColor,
+                                    size: style.size,
+                                    icon: style.icon
+                                )
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
                 
-                if let weightField = rightField {
-                    let config = ExerciseFieldConfig.config(for: weightField.field)
+                if let right = rightField, case let .chip(style) = right.style.display {
                     Button(action: {
-                        onFieldTap(weightField.field, weightField.prefilledValue)
+                        onFieldTap(right.data.field, right.data.prefilledValue)
                     }) {
                         AppChip(
-                            text: "\(weightField.value)\(config.textSuffix ?? "")",
-                            fontColor: .white,
-                            backgroundColor: config.backgroundColor,
-                            size: config.chipSize,
-                            icon: config.icon
+                            text: "\(right.data.value)\(style.textSuffix ?? "")",
+                            fontColor: style.labelColor,
+                            backgroundColor: style.backgroundColor,
+                            size: style.size,
+                            icon: style.icon
                         )
                     }
                     .buttonStyle(.plain)
-                    .frame(height: config.frameHeight)
+                    .frame(height: right.style.frameHeight)
                 }
             }
             .padding(.horizontal, AppStyle.Padding.horizontal)
-        }
-    }
-    
-    struct AppChipExternalIcon: View {
-        let iconConfig: ExerciseFieldStyle
-        let chipText: String
-        
-        var body: some View {
-            VStack(alignment: .leading, spacing: -24) {
-                iconConfig.icon?.image
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 52, height: 52)
-                    .offset(x: 12, y: -12)
-                AppChip(
-                    text: chipText,
-                    fontColor: AppStyle.Color.purpleDark,
-                    backgroundColor: iconConfig.backgroundColor,
-                    icon: nil
-                )
-            }
         }
     }
 }

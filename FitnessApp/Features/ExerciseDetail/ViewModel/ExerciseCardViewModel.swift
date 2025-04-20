@@ -34,11 +34,18 @@ final class ExerciseCardViewModel: ObservableObject {
         onUpdate(exercise)
     }
     
-    func generateFieldData() -> [ExerciseFieldData] {
-        [
-            ExerciseFieldData(field: .edit(.weightChip), value: exercise.weight),
-            ExerciseFieldData(field: .edit(.setsChip), value: exercise.sets),
-            ExerciseFieldData(field: .edit(.repsChip), value: exercise.reps)
-        ]
+    func generateStyledFieldData() -> [StyledExerciseField] {
+        let rawFields: [ExerciseFieldData] = [
+             ExerciseFieldData(field: .edit(.weightChip), value: exercise.weight),
+             ExerciseFieldData(field: .edit(.setsChip), value: exercise.sets),
+             ExerciseFieldData(field: .edit(.repsChip), value: exercise.reps)
+         ]
+         
+         return rawFields.map { data in
+             StyledExerciseField(
+                 data: data,
+                 style: ExerciseCardConfig.config(for: data.field)
+             )
+         }
     }
 }
