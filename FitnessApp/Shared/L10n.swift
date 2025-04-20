@@ -9,13 +9,23 @@ enum L10n {
     static let cardCreationSave = "Speichern"
     static let cardCreationCancel = "Abbrechen"
     
-    
     static let seatChipDefaultvalue = "+"
-    
+    static let analyticsChipText = "STEIGEND"
+
     static let muscleCategoryMuscleGroupsTitle = "Muskelgruppen"
     static let muscleCategoryOptionArms = "Arme"
     static let muscleCategoryOptionChest = "Brust"
     static let muscleCategoryOptionBack = "Rücken"
     static let muscleCategoryOptionLegs = "Beine"
     static let muscleCategoryOptionAbs = "Bauch"
+    
+    static let sheetTitleWeight = "Gewicht ändern"
+    static let sheetTitleSets = "Sätze ändern"
+    static let sheetTitleReps = "Wiederholungen ändern"
+    static let sheetTitleSeat = "Sitzeinstellung ändern"
+
+    static let sheetPlaceholderWeight = "Neues Gewicht"
+    static let sheetPlaceholderSets = "Neue Anzahl"
+    static let sheetPlaceholderReps = "Neue Anzahl"
+    static let sheetPlaceholderSeat = "Neue Einstellung"
 }

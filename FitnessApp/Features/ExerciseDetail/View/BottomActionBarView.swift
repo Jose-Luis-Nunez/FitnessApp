@@ -10,35 +10,35 @@ struct BottomActionBarView: View {
     
     var body: some View {
         HStack {
-                    Spacer()
-
-                    if viewModel.showSetControls {
-                        HStack(spacing: 8) {
-                            Button("Less", action: onEditLess)
-                                .modifier(actionStyle(.dark))
-                            Button("Done!", action: onCompleteSet)
-                                .modifier(actionStyle(.light))
-                            Button("More", action: onEditMore)
-                                .modifier(actionStyle(.dark))
-                        }
-                    } else if viewModel.showStartButton {
-                        Button(viewModel.startTitle, action: onStart)
-                            .modifier(actionStyle(.dark, wide: true))
-                    } else if viewModel.showResetProgress {
-                        Button("Reset Progress", action: onReset)
-                            .modifier(actionStyle(.dark, wide: true))
-                    }
-
-                    Spacer()
+            Spacer()
+            
+            if viewModel.showSetControls {
+                HStack(spacing: 8) {
+                    Button("Less", action: onEditLess)
+                        .modifier(actionStyle(.dark))
+                    Button("Done!", action: onCompleteSet)
+                        .modifier(actionStyle(.light))
+                    Button("More", action: onEditMore)
+                        .modifier(actionStyle(.dark))
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 16)
-                .background(
-                    Rectangle()
-                        .fill(Color.white.opacity(0.95))
-                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -4)
-                )
+            } else if viewModel.showStartButton {
+                Button(viewModel.startTitle, action: onStart)
+                    .modifier(actionStyle(.dark, wide: true))
+            } else if viewModel.showResetProgress {
+                Button("Reset Progress", action: onReset)
+                    .modifier(actionStyle(.dark, wide: true))
             }
+            
+            Spacer()
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 16)
+        .background(
+            Rectangle()
+                .fill(Color.white.opacity(0.95))
+                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -4)
+        )
+    }
     
     private func actionStyle(_ type: ActionType, wide: Bool = false) -> some ViewModifier {
         ActionButtonModifier(type: type, wide: wide)

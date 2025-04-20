@@ -5,17 +5,10 @@ private struct IDS {
     static let seatLabel = "id_label_exercise_seat"
 }
 
-enum EditField: Identifiable {
-    case seat, weight, sets, reps
-    var id: String {
-        String(describing: self)
-    }
-}
-
 struct ExerciseCardView: View {
     @ObservedObject var viewModel: ExerciseCardViewModel
     
-    @State private var activeSheet: EditField?
+    @State private var activeSheet: InteractionField?
     @State private var inputValue = ""
     
     var body: some View {
@@ -25,7 +18,7 @@ struct ExerciseCardView: View {
                 seatText: seatDisplayText,
                 onSeatTap: {
                     inputValue = viewModel.exercise.seatSetting ?? ""
-                    activeSheet = .seat
+                    activeSheet = .edit(.seatChip)
                 }
             )
             
@@ -61,185 +54,136 @@ struct ExerciseCardView: View {
     }
     
     @ViewBuilder
-    private func editSheet(for field: EditField) -> some View {
-        switch field {
-        case .seat:
+    private func editSheet(for field: InteractionField) -> some View {
+        if case let .edit(type) = field {
+            let metadata = type.metadata
             EditValueSheet(
-                title: "Sitzeinstellung ändern",
-                placeholder: "Neue Einstellung",
+                title: metadata.title,
+                placeholder: metadata.placeholder,
                 input: $inputValue,
                 onSave: {
-                    viewModel.updateSeat(inputValue)
+                    metadata.save(inputValue, viewModel)
                     activeSheet = nil
                 },
                 onCancel: {
                     activeSheet = nil
                 },
-                keyboardType: .numberPad,
-                saveDisabled: inputValue.isEmpty
+                keyboardType: metadata.keyboardType,
+                saveDisabled: !metadata.validate(inputValue)
             )
-            
-        case .weight:
-            EditValueSheet(
-                title: "Gewicht ändern",
-                placeholder: "Neues Gewicht",
-                input: $inputValue,
-                onSave: {
-                    if let val = Int(inputValue) {
-                        viewModel.updateWeight(val)
-                    }
-                    activeSheet = nil
-                },
-                onCancel: {
-                    activeSheet = nil
-                },
-                keyboardType: .numberPad,
-                saveDisabled: Int(inputValue) == nil
-            )
-            
-        case .sets:
-            EditValueSheet(
-                title: "Sätze ändern",
-                placeholder: "Neue Anzahl",
-                input: $inputValue,
-                onSave: {
-                    if let val = Int(inputValue) {
-                        viewModel.updateSets(val)
-                    }
-                    activeSheet = nil
-                },
-                onCancel: {
-                    activeSheet = nil
-                },
-                keyboardType: .numberPad,
-                saveDisabled: Int(inputValue) == nil
-            )
-            
-        case .reps:
-            EditValueSheet(
-                title: "Wiederholungen ändern",
-                placeholder: "Neue Anzahl",
-                input: $inputValue,
-                onSave: {
-                    if let val = Int(inputValue) {
-                        viewModel.updateReps(val)
-                    }
-                    activeSheet = nil
-                },
-                onCancel: {
-                    activeSheet = nil
-                },
-                keyboardType: .numberPad,
-                saveDisabled: Int(inputValue) == nil
-            )
+        } else {
+            EmptyView()
         }
     }
-}
-
-struct CardTopSectionView: View {
-    let title: String
-    let seatText: String
-    let onSeatTap: () -> Void
     
-    var body: some View {
-        HStack(alignment: .top) {
-            
-            Text(title)
-                .font(AppStyle.Font.cardHeadline)
-                .foregroundColor(AppStyle.Color.white)
-                .accessibilityIdentifier(IDS.nameLabel)
-            
-            Spacer()
-            
-            Button(action: onSeatTap) {
-                AppChip(
-                    text: seatText,
-                    fontColor: AppStyle.Color.white,
-                    backgroundColor: AppStyle.Color.purple,
-                    size: .regular,
-                    icon: ChipIcon(image: "chairIcon", color:AppStyle.Color.white)
-                )
-                .scaleEffect(1.1)
-            }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier(IDS.seatLabel)
-        }
-    }
-}
-
-struct CardBottomSectionView: View {
-    @ObservedObject var viewModel: ExerciseCardViewModel
-    let currentReps: Int
-    let onFieldTap: (EditField, String) -> Void
     
-    var body: some View {
-        let fields = viewModel.generateFieldTypes()
-        let leftFields = fields.filter { $0.column == .left }
-        let rightField = fields.first(where: { $0.column == .right })
+    struct CardTopSectionView: View {
+        let title: String
+        let seatText: String
+        let onSeatTap: () -> Void
         
-        HStack(alignment: .center, spacing: 12) {
-            AppChipExternalIcon(
-                icon: Image("iconActivityIncrease"),
-                chipText: "STEIGEND",
-                chipBackground: AppStyle.Color.purpleLight
-            )
+        var body: some View {
+            let config = ExerciseFieldConfig.config(for: .edit(.seatChip))
             
-            Spacer(minLength: 4)
+            HStack(alignment: .top) {
+                Text(title)
+                    .font(AppStyle.Font.cardHeadline)
+                    .foregroundColor(AppStyle.Color.white)
+                    .accessibilityIdentifier(IDS.nameLabel)
+                
+                Spacer()
+                
+                Button(action: onSeatTap) {
+                    AppChip(
+                        text: seatText,
+                        fontColor: AppStyle.Color.white,
+                        backgroundColor: config.backgroundColor,
+                        size: config.chipSize,
+                        icon: config.icon
+                    )
+                    .scaleEffect(1.1)
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier(IDS.seatLabel)
+            }
+        }
+    }
+    
+    struct CardBottomSectionView: View {
+        @ObservedObject var viewModel: ExerciseCardViewModel
+        let currentReps: Int
+        let onFieldTap: (InteractionField, String) -> Void
+        
+        var body: some View {
+            let fields = viewModel.generateFieldData()
+            let leftFields = fields.filter { ExerciseFieldConfig.config(for: $0.field).column == .left }
+            let rightField = fields.first(where: { ExerciseFieldConfig.config(for: $0.field).column == .right })
             
-            VStack(alignment: .leading, spacing: 6) {
-                ForEach(leftFields) { field in
+            HStack(alignment: .center, spacing: 12) {
+                AppChipExternalIcon(
+                    iconConfig: ExerciseFieldConfig.config(for: .action(.analyticsIcon)),
+                    chipText: L10n.analyticsChipText,
+                )
+                
+                Spacer(minLength: 4)
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(leftFields, id: \.id) { field in
+                        let config = ExerciseFieldConfig.config(for: field.field)
+                        Button(action: {
+                            onFieldTap(field.field, field.prefilledValue)
+                        }) {
+                            AppChip(
+                                text: "\(field.value)\(config.textSuffix ?? "")",
+                                fontColor: .white,
+                                backgroundColor: config.backgroundColor,
+                                size: config.chipSize,
+                                icon: config.icon
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                
+                if let weightField = rightField {
+                    let config = ExerciseFieldConfig.config(for: weightField.field)
                     Button(action: {
-                        onFieldTap(field.editField, field.prefilledValue)
+                        onFieldTap(weightField.field, weightField.prefilledValue)
                     }) {
                         AppChip(
-                            text: field.valueText,
-                            fontColor: AppStyle.Color.white,
-                            backgroundColor: AppStyle.Color.purpleGrey,
-                            icon: ExerciseFieldType.icon(for: field.editField)
+                            text: "\(weightField.value)\(config.textSuffix ?? "")",
+                            fontColor: .white,
+                            backgroundColor: config.backgroundColor,
+                            size: config.chipSize,
+                            icon: config.icon
                         )
                     }
                     .buttonStyle(.plain)
+                    .frame(height: config.frameHeight)
                 }
             }
-            
-            if let weightField = rightField {
-                Button(action: {
-                    onFieldTap(weightField.editField, weightField.prefilledValue)
-                }) {
-                    AppChip(
-                        text: weightField.valueText,
-                        fontColor: AppStyle.Color.white,
-                        backgroundColor: AppStyle.Color.purpleGrey,
-                        size: .large,
-                        icon: nil
-                    )
-                }
-                .buttonStyle(.plain)
-                .frame(height: weightField.frameHeight)
-            }
+            .padding(.horizontal, AppStyle.Padding.horizontal)
         }
-        .padding(.horizontal, AppStyle.Padding.horizontal)
     }
-}
-
-struct AppChipExternalIcon: View {
-    let icon: Image
-    let chipText: String
-    let chipBackground: Color
     
-    var body: some View {
-        VStack(alignment: .leading, spacing: -24) {
-            icon
-                .resizable()
-                .scaledToFit()
-                .frame(width: 52, height: 52)
-                .offset(x: 12, y: -12)
-            AppChip(
-                text: chipText,
-                fontColor: AppStyle.Color.purpleDark,
-                backgroundColor: chipBackground,
-                icon: nil
-            )
+    struct AppChipExternalIcon: View {
+        let iconConfig: ExerciseFieldStyle
+        let chipText: String
+        
+        var body: some View {
+            VStack(alignment: .leading, spacing: -24) {
+                iconConfig.icon?.image
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 52, height: 52)
+                    .offset(x: 12, y: -12)
+                AppChip(
+                    text: chipText,
+                    fontColor: AppStyle.Color.purpleDark,
+                    backgroundColor: iconConfig.backgroundColor,
+                    icon: nil
+                )
+            }
         }
     }
 }

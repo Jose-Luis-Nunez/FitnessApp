@@ -34,11 +34,11 @@ final class ExerciseCardViewModel: ObservableObject {
         onUpdate(exercise)
     }
     
-    func generateFieldTypes() -> [ExerciseFieldType] {
+    func generateFieldData() -> [ExerciseFieldData] {
         [
-            .weight(exercise.weight, AppStyle.Dimensions.chipHeight * 2 + 42),
-            .sets(exercise.sets, nil),
-            .reps(exercise.reps, nil)
+            ExerciseFieldData(field: .edit(.weightChip), value: exercise.weight),
+            ExerciseFieldData(field: .edit(.setsChip), value: exercise.sets),
+            ExerciseFieldData(field: .edit(.repsChip), value: exercise.reps)
         ]
     }
 }
