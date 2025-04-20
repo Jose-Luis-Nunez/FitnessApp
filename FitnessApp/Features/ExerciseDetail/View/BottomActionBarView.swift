@@ -9,20 +9,26 @@ struct BottomActionBarView: View {
     let onEditMore: () -> Void
 
     var body: some View {
-        HStack {
-            Spacer()
-
-            content
-
-            Spacer()
+        GeometryReader { geo in
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    content
+                    Spacer()
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 16)
+                .frame(width: geo.size.width)
+                .background(
+                    Rectangle()
+                        .fill(AppStyle.Color.purpleDark)
+                        .edgesIgnoringSafeArea(.bottom) // deckt Home-Indikator ab
+                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -4)
+                )
+            }
         }
-        .padding(.horizontal)
-        .padding(.vertical, 16)
-        .background(
-            Rectangle()
-                .fill(AppStyle.Color.purpleDark)
-                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -4)
-        )
+        .frame(height: 80)
     }
 
     @ViewBuilder

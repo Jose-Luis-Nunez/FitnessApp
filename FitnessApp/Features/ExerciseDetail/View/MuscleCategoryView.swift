@@ -31,8 +31,8 @@ struct MuscleCategoryView: View {
     @State private var showResetConfirmation = false
     
     init(group: MuscleCategoryGroup) {
-        self.group = group
         _viewModel = StateObject(wrappedValue: MuscleCategoryViewModel(group: group))
+        self.group = group
     }
     
     private var bottomBarVM: BottomActionBarViewModel {
@@ -45,9 +45,13 @@ struct MuscleCategoryView: View {
         )
     }
     
+    private var bottomBarHeightIfNeeded: CGFloat {
+        80
+    }
+    
     var body: some View {
         ZStack(alignment: .bottom) {
-            VStack(alignment: .leading) {
+            VStack(spacing: 0) {
                 List {
                     exerciseListSection
                     
@@ -56,6 +60,7 @@ struct MuscleCategoryView: View {
                     }
                 }
                 .listStyle(.plain)
+                .padding(.bottom, bottomBarHeightIfNeeded)
             }
             
             if bottomBarVM.shouldShow {
