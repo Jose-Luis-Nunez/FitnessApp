@@ -127,7 +127,7 @@ struct CardBottomSectionView: View {
                 }
             }
             
-            if let right = rightField, case .chip = right.style.display {
+            if let right = rightField {
                 Button(action: {
                     onFieldTap(right.data.field, right.data.prefilledValue)
                 }) {
@@ -140,4 +140,3 @@ struct CardBottomSectionView: View {
         .padding(.horizontal, AppStyle.Padding.horizontal)
     }
 }
-
