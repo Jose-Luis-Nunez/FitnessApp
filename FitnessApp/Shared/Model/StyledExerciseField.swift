@@ -14,7 +14,6 @@ extension StyledExerciseField {
     }
 }
 
-
 extension StyledExerciseField {
     var fullText: String {
         "\(data.value)\((style.display.chip?.textSuffix ?? ""))"

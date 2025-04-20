@@ -16,7 +16,7 @@ struct MuscleCategoryView: View {
     enum RepsEditMode {
         case less, more
     }
-
+    
     let group: MuscleCategoryGroup
     @StateObject private var viewModel: MuscleCategoryViewModel
     @State private var showForm = false
@@ -29,18 +29,19 @@ struct MuscleCategoryView: View {
     @State private var sets = ""
     @State private var seat = ""
     @State private var showResetConfirmation = false
-
+    
     init(group: MuscleCategoryGroup) {
         self.group = group
         _viewModel = StateObject(wrappedValue: MuscleCategoryViewModel(group: group))
     }
-
+    
     private var bottomBarVM: BottomActionBarViewModel {
         BottomActionBarViewModel(
             isSetInProgress: viewModel.isSetInProgress,
             currentSet: viewModel.currentSet,
             currentExercise: viewModel.currentExercise,
-            hasActiveExercise: viewModel.hasActiveExercise
+            hasActiveExercise: viewModel.hasActiveExercise,
+            exercises: viewModel.exercises
         )
     }
     
@@ -49,39 +50,41 @@ struct MuscleCategoryView: View {
             VStack(alignment: .leading) {
                 List {
                     exerciseListSection
-
+                    
                     if showForm {
                         exerciseFormSection
                     }
                 }
                 .listStyle(.plain)
             }
-        
-            BottomActionBarView(
-                viewModel: bottomBarVM,
-                onStart: {
-                    if let activeExercise = viewModel.exercises.first(where: { !$0.isCompleted }) {
-                        viewModel.startSet(for: activeExercise)
+            
+            if bottomBarVM.shouldShow {
+                BottomActionBarView(
+                    viewModel: bottomBarVM,
+                    onStart: {
+                        if let activeExercise = viewModel.exercises.first(where: { !$0.isCompleted }) {
+                            viewModel.startSet(for: activeExercise)
+                        }
+                    },
+                    
+                    onCompleteSet: {
+                        viewModel.completeCurrentSet()
+                    },
+                    onReset: {
+                        showResetConfirmation = true
+                    },
+                    onEditLess: {
+                        currentRepsEditMode = .less
+                        isEditingCurrentReps = true
+                    },
+                    onEditMore: {
+                        currentRepsEditMode = .more
+                        isEditingCurrentReps = true
                     }
-                },
-
-                onCompleteSet: {
-                    viewModel.completeCurrentSet()
-                },
-                onReset: {
-                    showResetConfirmation = true
-                },
-                onEditLess: {
-                    currentRepsEditMode = .less
-                    isEditingCurrentReps = true
-                },
-                onEditMore: {
-                    currentRepsEditMode = .more
-                    isEditingCurrentReps = true
-                }
-            )
+                )
+            }
         }
-
+        
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text(group.displayName)
@@ -89,7 +92,7 @@ struct MuscleCategoryView: View {
                     .foregroundColor(AppStyle.Color.white)
                     .accessibilityIdentifier(IDS.groupTitle)
             }
-
+            
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: {
                     withAnimation { showForm.toggle() }
@@ -113,7 +116,7 @@ struct MuscleCategoryView: View {
             )
         }
     }
-
+    
     private var currentRepsEditSheet: some View {
         NavigationView {
             Form {
@@ -147,17 +150,17 @@ struct MuscleCategoryView: View {
                     isEditingCurrentReps = false
                     currentRepsInput = ""
                 }
-                .disabled(Int(currentRepsInput).map { reps in
-                    guard let currentExercise = viewModel.currentExercise else { return true }
-                    switch currentRepsEditMode {
-                    case .less: return reps >= currentExercise.reps
-                    case .more: return reps <= currentExercise.reps
-                    }
-                } ?? true)
+                    .disabled(Int(currentRepsInput).map { reps in
+                        guard let currentExercise = viewModel.currentExercise else { return true }
+                        switch currentRepsEditMode {
+                        case .less: return reps >= currentExercise.reps
+                        case .more: return reps <= currentExercise.reps
+                        }
+                    } ?? true)
             )
         }
     }
-
+    
     private var exerciseListSection: some View {
         Group {
             // Active exercises (not completed) at the top
@@ -184,21 +187,21 @@ struct MuscleCategoryView: View {
         }
         .animation(.easeInOut, value: viewModel.exercises.map { $0.isCompleted })
     }
-
+    
     private var exerciseFormSection: some View {
         Section(header: Text(L10n.cardCreationTitle)) {
             TextField(L10n.cardCreationPlaceholderTextName, text: $name)
                 .accessibilityIdentifier(IDS.nameField)
                 .keyboardType(.default)
-
+            
             TextField(L10n.cardCreationPlaceholderTextWeight, text: $weight)
                 .accessibilityIdentifier(IDS.weightField)
                 .keyboardType(.decimalPad)
-
+            
             TextField(L10n.cardCreationPlaceholderTextRepetitions, text: $reps)
                 .accessibilityIdentifier(IDS.repsField)
                 .keyboardType(.numberPad)
-
+            
             
             TextField(L10n.cardCreationPlaceholderTextSets, text: $sets)
                 .accessibilityIdentifier(IDS.setsField)
@@ -222,9 +225,9 @@ struct MuscleCategoryView: View {
                 }
                 .disabled(name.isEmpty || weight.isEmpty || reps.isEmpty || sets.isEmpty)
                 .accessibilityIdentifier(IDS.saveButton)
-
+                
                 Spacer()
-
+                
                 Button(L10n.cardCreationCancel) {
                     clearForm()
                 }
@@ -233,7 +236,7 @@ struct MuscleCategoryView: View {
             .padding(.top, 8)
         }
     }
-
+    
     private func clearForm() {
         name = ""
         weight = ""

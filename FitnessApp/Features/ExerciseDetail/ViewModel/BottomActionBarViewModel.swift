@@ -5,9 +5,14 @@ struct BottomActionBarViewModel {
     let currentSet: Int
     let currentExercise: Exercise?
     let hasActiveExercise: Bool
+    let exercises: [Exercise]
+    
+    var shouldShow: Bool {
+        showSetControls || showStartButton || showResetProgress
+    }
 
     var showResetProgress: Bool {
-        !hasActiveExercise && !isSetInProgress
+        !hasActiveExercise && !isSetInProgress && !exercises.isEmpty
     }
 
     var showSetControls: Bool {
