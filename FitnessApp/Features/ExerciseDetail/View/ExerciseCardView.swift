@@ -153,7 +153,7 @@ struct ExerciseCardView: View {
                                 onFieldTap(styled.data.field, styled.data.prefilledValue)
                             }) {
                                 AppChip(
-                                    text: "\(styled.data.value)\(style.textSuffix ?? "")",
+                                    text: styled.fullText,
                                     fontColor: style.labelColor,
                                     backgroundColor: style.backgroundColor,
                                     size: style.size,
@@ -165,20 +165,22 @@ struct ExerciseCardView: View {
                     }
                 }
                 
-                if let right = rightField, case let .chip(style) = right.style.display {
-                    Button(action: {
-                        onFieldTap(right.data.field, right.data.prefilledValue)
-                    }) {
-                        AppChip(
-                            text: "\(right.data.value)\(style.textSuffix ?? "")",
-                            fontColor: style.labelColor,
-                            backgroundColor: style.backgroundColor,
-                            size: style.size,
-                            icon: style.icon
-                        )
+                if let right = rightField {
+                    if case let .chip(style) = right.style.display {
+                        Button(action: {
+                            onFieldTap(right.data.field, right.data.prefilledValue)
+                        }) {
+                            AppChip(
+                                text: right.fullText,
+                                fontColor: style.labelColor,
+                                backgroundColor: style.backgroundColor,
+                                size: style.size,
+                                icon: style.icon
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .frame(height: right.style.frameHeight)
                     }
-                    .buttonStyle(.plain)
-                    .frame(height: right.style.frameHeight)
                 }
             }
             .padding(.horizontal, AppStyle.Padding.horizontal)

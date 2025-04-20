@@ -23,7 +23,7 @@ struct AppChip: View {
         .clipShape(Capsule())
     }
     
-    private var font: Font {//fontSize
+    private var font: Font {
         switch size {
         case .regular: return AppStyle.Font.regularChip
         case .large: return AppStyle.Font.largeChip
