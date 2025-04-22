@@ -11,10 +11,14 @@ struct BottomActionBarView: View {
 
     private let buttonWidth: CGFloat = 110
     private let buttonHeight: CGFloat = 50
+    private let barHeight: CGFloat = 40
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
+        ZStack(alignment: .bottom) {
+            AppStyle.Color.purpleDark
+                .ignoresSafeArea(edges: .bottom)
+                .frame(height: barHeight)
+                .frame(maxWidth: .infinity)
 
             HStack(spacing: 12) {
                 if viewModel.showStartButton {
@@ -24,27 +28,22 @@ struct BottomActionBarView: View {
                         action: onStart
                     )
                 }
-
                 if viewModel.showSetControls {
-                    actionButton(title: "Less", background: AppStyle.Color.purpleGrey, action: onEditLess)
-                    actionButton(title: "Done", background: AppStyle.Color.green, action: onCompleteSet)
-                    actionButton(title: "More", background: AppStyle.Color.purpleGrey, action: onEditMore)
+                    actionButton(title: "Less",     background: AppStyle.Color.purpleGrey, action: onEditLess)
+                    actionButton(title: "Done",     background: AppStyle.Color.green,      action: onCompleteSet)
+                    actionButton(title: "More",     background: AppStyle.Color.purpleGrey, action: onEditMore)
                 }
-
                 if viewModel.showResetProgress {
-                    actionButton(title: "Reset", background: AppStyle.Color.purpleGrey, action: onReset)
+                    actionButton(title: "Reset",    background: AppStyle.Color.purpleGrey, action: onReset)
                 }
-
                 if viewModel.showFinishButton {
                     actionButton(title: "Beenden", background: AppStyle.Color.purpleGrey, action: onFinish)
                 }
             }
             .padding(.horizontal, AppStyle.Padding.horizontal)
-            .padding(.vertical, AppStyle.Padding.vertical)
-            .frame(maxWidth: .infinity)
-            .background(AppStyle.Color.purpleDark)
+            .offset(y: -(barHeight / 2 + buttonHeight / 2 + 10))
         }
-        .frame(height: 80)
+        .frame(maxHeight: .infinity, alignment: .bottom)
     }
 
     @ViewBuilder
@@ -56,6 +55,6 @@ struct BottomActionBarView: View {
                 .frame(width: buttonWidth, height: buttonHeight)
         }
         .background(background)
-        .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
+        .cornerRadius(AppStyle.CornerRadius.card)
     }
 }

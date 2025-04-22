@@ -15,8 +15,8 @@ class MuscleCategoryViewModel: ObservableObject {
 
     init(group: MuscleCategoryGroup) {
         self.group = group
-        self.storageService = ExerciseStorageService() // Kein Parameter
-        self.exercises = storageService.load(for: group) // Parameter 'for: group'
+        self.storageService = ExerciseStorageService()
+        self.exercises = storageService.load(for: group)
     }
 
     func add(_ exercise: Exercise) {

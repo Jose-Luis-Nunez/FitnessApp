@@ -42,7 +42,7 @@ struct MuscleCategoryView: View {
             currentExercise: viewModel.currentExercise,
             hasActiveExercise: viewModel.hasActiveExercise,
             exercises: viewModel.exercises,
-            isLastSetCompleted: viewModel.isLastSetCompleted // Neuer Parameter
+            isLastSetCompleted: viewModel.isLastSetCompleted
         )
     }
     
@@ -93,7 +93,7 @@ struct MuscleCategoryView: View {
                         isEditingCurrentReps = true
                     },
                     onFinish: {
-                        viewModel.finishExercise() // Neue Aktion
+                        viewModel.finishExercise()
                     }
                 )
             }

@@ -1,5 +1,5 @@
 enum L10n {
-    //static let exerciseCardWeight = "Gewicht"
+    
     static let cardCreationTitle = "Neue Übung"
     static let cardCreationPlaceholderTextName = "Name"
     static let cardCreationPlaceholderTextWeight = "Gewicht (kg)"

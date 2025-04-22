@@ -105,15 +105,12 @@ final class MuscleCategoryViewModelTests: XCTestCase {
         sut.startSet(for: exercise)
         let newReps = 8
         
-        // When
         sut.updateCurrentReps(newReps)
         
-        // Then
         XCTAssertEqual(sut.exercises.first?.currentReps, newReps)
         XCTAssertEqual(mockStorage.saveCallCount, 2) // add + update
     }
     
-    // MARK: - Helper Methods
     private func completeSets(count: Int) async {
         for _ in 1...count {
             if let exercise = sut.exercises.first {
@@ -124,7 +121,6 @@ final class MuscleCategoryViewModelTests: XCTestCase {
     }
 }
 
-// MARK: - Mock Storage
 private class MockExerciseStorage: ExerciseStoring {
     var exercises: [Exercise] = []
     private let lock = NSLock()
