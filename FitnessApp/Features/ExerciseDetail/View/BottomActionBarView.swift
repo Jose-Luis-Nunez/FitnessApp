@@ -19,6 +19,7 @@ struct FloatingActionButtonsView: View {
     let onEditLess: () -> Void
     let onEditMore: () -> Void
     let onFinish: () -> Void
+    let barHeight: CGFloat
 
     private let buttonWidth: CGFloat = 110
     private let buttonHeight: CGFloat = 50
@@ -33,19 +34,17 @@ struct FloatingActionButtonsView: View {
 
             HStack(spacing: 12) {
                 if viewModel.showStartButton {
-                    actionButton(
-                        title: viewModel.startButtonTitle,
-                        background: AppStyle.Color.green,
-                        action: onStart
-                    )
+                    actionButton(title: viewModel.startButtonTitle,
+                                 background: AppStyle.Color.green,
+                                 action: onStart)
                 }
                 if viewModel.showSetControls {
-                    actionButton(title: "Less", background: AppStyle.Color.purpleGrey, action: onEditLess)
-                    actionButton(title: "Done", background: AppStyle.Color.green, action: onCompleteSet)
-                    actionButton(title: "More", background: AppStyle.Color.purpleGrey, action: onEditMore)
+                    actionButton(title: "Less",   background: AppStyle.Color.purpleGrey, action: onEditLess)
+                    actionButton(title: "Done",   background: AppStyle.Color.green,      action: onCompleteSet)
+                    actionButton(title: "More",   background: AppStyle.Color.purpleGrey, action: onEditMore)
                 }
                 if viewModel.showResetProgress {
-                    actionButton(title: "Reset", background: AppStyle.Color.purpleGrey, action: onReset)
+                    actionButton(title: "Reset",  background: AppStyle.Color.purpleGrey, action: onReset)
                 }
                 if viewModel.showFinishButton {
                     actionButton(title: "Beenden", background: AppStyle.Color.purpleGrey, action: onFinish)
@@ -54,7 +53,7 @@ struct FloatingActionButtonsView: View {
             .padding(.horizontal, AppStyle.Padding.horizontal)
             .offset(y: -(buttonHeight / 2 + extraOffset))
         }
-        .frame(height: buttonHeight + extraOffset)
+        .frame(height: barHeight + buttonHeight / 2 + extraOffset)
     }
 
     @ViewBuilder
@@ -66,7 +65,7 @@ struct FloatingActionButtonsView: View {
                 .frame(width: buttonWidth, height: buttonHeight)
         }
         .background(background)
-        .cornerRadius(AppStyle.CornerRadius.card)
+        .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
     }
 }
 
@@ -79,12 +78,11 @@ struct BottomActionBarView: View {
     let onEditMore: () -> Void
     let onFinish: () -> Void
 
-    private let barHeight: CGFloat = 50
+    private let barHeight: CGFloat = 40
 
     var body: some View {
         ZStack(alignment: .bottom) {
             BottomMenuBarView(barHeight: barHeight)
-
             FloatingActionButtonsView(
                 viewModel: viewModel,
                 onStart: onStart,
@@ -92,7 +90,8 @@ struct BottomActionBarView: View {
                 onReset: onReset,
                 onEditLess: onEditLess,
                 onEditMore: onEditMore,
-                onFinish: onFinish
+                onFinish: onFinish,
+                barHeight: barHeight
             )
         }
         .frame(maxHeight: .infinity, alignment: .bottom)

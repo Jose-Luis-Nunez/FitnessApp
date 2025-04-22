@@ -8,7 +8,7 @@ enum AppStyle {
 
     enum CornerRadius {
         static let card: CGFloat = 16
-        static let bottomBarButton: CGFloat = 18
+        static let bottomBarButton: CGFloat = 25
     }
 
     enum Font {
