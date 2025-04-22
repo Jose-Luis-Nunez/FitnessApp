@@ -1,41 +1,47 @@
 import SwiftUI
 
 struct BottomMenuBarView: View {
+    private let iconOffset: CGFloat = 6
     let barHeight: CGFloat
-
+    
     var body: some View {
         ZStack(alignment: .center) {
             AppStyle.Color.purpleDark
                 .ignoresSafeArea(edges: .bottom)
                 .frame(height: barHeight)
-                .frame(maxWidth: .infinity)
-
+            
+            HStack(spacing: AppStyle.Padding.horizontal) {
+            }
+            .offset(y: iconOffset)
+            
             HStack(spacing: AppStyle.Padding.horizontal) {
                 Image(systemName: "house")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: barHeight * 1.8, height: barHeight * 0.5)
+                    .frame(maxWidth: .infinity, maxHeight: barHeight * 0.6)
                     .foregroundColor(AppStyle.Color.green)
-
+                
                 Image(systemName: "chart.bar")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: barHeight * 1.8, height: barHeight * 0.5)
+                    .frame(maxWidth: .infinity, maxHeight: barHeight * 0.6)
                     .foregroundColor(AppStyle.Color.green)
-
+                
                 Image(systemName: "calendar")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: barHeight * 1.8, height: barHeight * 0.5)
+                    .frame(maxWidth: .infinity, maxHeight: barHeight * 0.6)
                     .foregroundColor(AppStyle.Color.green)
-
+                
                 Image(systemName: "person")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: barHeight * 1.8, height: barHeight * 0.5)
+                    .frame(maxWidth: .infinity, maxHeight: barHeight * 0.6)
                     .foregroundColor(AppStyle.Color.green)
             }
             .frame(maxWidth: .infinity)
+            .padding(.horizontal, AppStyle.Padding.horizontal)
+            .offset(y: iconOffset)
         }
     }
 }
@@ -49,18 +55,18 @@ struct FloatingActionButtonsView: View {
     let onEditMore: () -> Void
     let onFinish: () -> Void
     let barHeight: CGFloat
-
+    
     private let buttonWidth: CGFloat = 110
     private let buttonHeight: CGFloat = 50
     private let extraOffset: CGFloat = 10
-
+    
     var body: some View {
         ZStack(alignment: .bottom) {
             AppStyle.Color.black
                 .frame(height: buttonHeight)
                 .frame(maxWidth: .infinity)
                 .offset(y: -(buttonHeight / 2 + extraOffset))
-
+            
             HStack(spacing: 12) {
                 if viewModel.showStartButton {
                     actionButton(title: viewModel.startButtonTitle,
@@ -84,7 +90,7 @@ struct FloatingActionButtonsView: View {
         }
         .frame(height: barHeight + buttonHeight / 2 + extraOffset)
     }
-
+    
     @ViewBuilder
     private func actionButton(title: String, background: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -106,9 +112,9 @@ struct BottomActionBarView: View {
     let onEditLess: () -> Void
     let onEditMore: () -> Void
     let onFinish: () -> Void
-
+    
     private let barHeight: CGFloat = 40
-
+    
     var body: some View {
         ZStack(alignment: .bottom) {
             BottomMenuBarView(barHeight: barHeight)
