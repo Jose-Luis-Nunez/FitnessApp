@@ -4,10 +4,39 @@ struct BottomMenuBarView: View {
     let barHeight: CGFloat
 
     var body: some View {
-        AppStyle.Color.purpleDark
-            .ignoresSafeArea(edges: .bottom)
-            .frame(height: barHeight)
+        ZStack(alignment: .center) {
+            AppStyle.Color.purpleDark
+                .ignoresSafeArea(edges: .bottom)
+                .frame(height: barHeight)
+                .frame(maxWidth: .infinity)
+
+            HStack(spacing: AppStyle.Padding.horizontal) {
+                Image(systemName: "house")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: barHeight * 1.8, height: barHeight * 0.5)
+                    .foregroundColor(AppStyle.Color.green)
+
+                Image(systemName: "chart.bar")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: barHeight * 1.8, height: barHeight * 0.5)
+                    .foregroundColor(AppStyle.Color.green)
+
+                Image(systemName: "calendar")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: barHeight * 1.8, height: barHeight * 0.5)
+                    .foregroundColor(AppStyle.Color.green)
+
+                Image(systemName: "person")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: barHeight * 1.8, height: barHeight * 0.5)
+                    .foregroundColor(AppStyle.Color.green)
+            }
             .frame(maxWidth: .infinity)
+        }
     }
 }
 
