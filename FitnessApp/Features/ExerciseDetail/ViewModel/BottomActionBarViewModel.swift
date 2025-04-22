@@ -30,9 +30,9 @@ struct BottomActionBarViewModel {
 
     var startButtonTitle: String {
         if currentSet == 0 {
-            return "Start Sets"
+            return "Start Training"
         } else {
-            return "Set \(currentSet + 1) Start"
+            return "Start set \(currentSet + 1)"
         }
     }
 }

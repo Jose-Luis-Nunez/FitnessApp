@@ -8,84 +8,54 @@ struct BottomActionBarView: View {
     let onEditLess: () -> Void
     let onEditMore: () -> Void
     let onFinish: () -> Void
-    
+
+    private let buttonWidth: CGFloat = 110
+    private let buttonHeight: CGFloat = 50
+
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
             Spacer()
-            
-            HStack(spacing: 8) {
+
+            HStack(spacing: 12) {
                 if viewModel.showStartButton {
-                    Button(action: onStart) {
-                        Text(viewModel.startButtonTitle)
-                            .font(AppStyle.Font.regularChip)
-                            .foregroundColor(AppStyle.Color.white)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(AppStyle.Color.purpleGrey)
-                            .cornerRadius(AppStyle.CornerRadius.card)
-                    }
+                    actionButton(
+                        title: viewModel.startButtonTitle,
+                        background: AppStyle.Color.green,
+                        action: onStart
+                    )
                 }
-                
+
                 if viewModel.showSetControls {
-                    Button(action: onEditLess) {
-                        Text("Less")
-                            .font(AppStyle.Font.regularChip)
-                            .foregroundColor(AppStyle.Color.white)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(AppStyle.Color.purpleGrey)
-                            .cornerRadius(AppStyle.CornerRadius.card)
-                    }
-                    
-                    Button(action: onCompleteSet) {
-                        Text("Done")
-                            .font(AppStyle.Font.regularChip)
-                            .foregroundColor(AppStyle.Color.white)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(AppStyle.Color.purpleGrey)
-                            .cornerRadius(AppStyle.CornerRadius.card)
-                    }
-                    
-                    Button(action: onEditMore) {
-                        Text("More")
-                            .font(AppStyle.Font.regularChip)
-                            .foregroundColor(AppStyle.Color.white)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(AppStyle.Color.purpleGrey)
-                            .cornerRadius(AppStyle.CornerRadius.card)
-                    }
+                    actionButton(title: "Less", background: AppStyle.Color.purpleGrey, action: onEditLess)
+                    actionButton(title: "Done", background: AppStyle.Color.green, action: onCompleteSet)
+                    actionButton(title: "More", background: AppStyle.Color.purpleGrey, action: onEditMore)
                 }
-                
+
                 if viewModel.showResetProgress {
-                    Button(action: onReset) {
-                        Text("Reset Progress")
-                            .font(AppStyle.Font.regularChip)
-                            .foregroundColor(AppStyle.Color.white)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(AppStyle.Color.purpleGrey)
-                            .cornerRadius(AppStyle.CornerRadius.card)
-                    }
+                    actionButton(title: "Reset", background: AppStyle.Color.purpleGrey, action: onReset)
                 }
-                
+
                 if viewModel.showFinishButton {
-                    Button(action: onFinish) {
-                        Text("Beenden")
-                            .font(AppStyle.Font.regularChip)
-                            .foregroundColor(AppStyle.Color.white)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(AppStyle.Color.purpleGrey)
-                            .cornerRadius(AppStyle.CornerRadius.card)
-                    }
+                    actionButton(title: "Beenden", background: AppStyle.Color.purpleGrey, action: onFinish)
                 }
             }
             .padding(.horizontal, AppStyle.Padding.horizontal)
-            .padding(.bottom, AppStyle.Padding.vertical)
+            .padding(.vertical, AppStyle.Padding.vertical)
+            .frame(maxWidth: .infinity)
             .background(AppStyle.Color.purpleDark)
         }
         .frame(height: 80)
+    }
+
+    @ViewBuilder
+    private func actionButton(title: String, background: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(AppStyle.Font.bottomBarButtons)
+                .foregroundColor(AppStyle.Color.white)
+                .frame(width: buttonWidth, height: buttonHeight)
+        }
+        .background(background)
+        .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
     }
 }

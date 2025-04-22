@@ -2,12 +2,13 @@ import SwiftUI
 
 enum AppStyle {
     enum Padding {
-        static let horizontal: CGFloat = 16
+        static let horizontal: CGFloat = 18
         static let vertical: CGFloat = 12
     }
 
     enum CornerRadius {
         static let card: CGFloat = 16
+        static let bottomBarButton: CGFloat = 18
     }
 
     enum Font {
@@ -16,6 +17,7 @@ enum AppStyle {
         static let wideChip = SwiftUI.Font.system(size: 12, weight: .semibold)
         static let largeChip = SwiftUI.Font.system(size: 24, weight: .semibold)
         static let defaultFont = SwiftUI.Font.system(size: 12, weight: .semibold)
+        static let bottomBarButtons = SwiftUI.Font.system(size: 14, weight: .semibold)
     }
 
     enum Color {
