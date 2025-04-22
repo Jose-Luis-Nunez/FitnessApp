@@ -6,24 +6,33 @@ struct BottomActionBarViewModel {
     let currentExercise: Exercise?
     let hasActiveExercise: Bool
     let exercises: [Exercise]
+    let isLastSetCompleted: Bool
     
     var shouldShow: Bool {
-        showSetControls || showStartButton || showResetProgress
+        showStartButton || showSetControls || showResetProgress || showFinishButton
+    }
+
+    var showStartButton: Bool {
+        hasActiveExercise && !isSetInProgress && !isLastSetCompleted
+    }
+
+    var showSetControls: Bool {
+        isSetInProgress && hasActiveExercise && !isLastSetCompleted
     }
 
     var showResetProgress: Bool {
         !hasActiveExercise && !isSetInProgress && !exercises.isEmpty
     }
 
-    var showSetControls: Bool {
-        hasActiveExercise && isSetInProgress
+    var showFinishButton: Bool {
+        isLastSetCompleted && currentExercise != nil
     }
 
-    var showStartButton: Bool {
-        hasActiveExercise && !isSetInProgress
-    }
-
-    var startTitle: String {
-        currentSet == 0 ? "Start Sets" : "Set \(currentSet + 1) Start"
+    var startButtonTitle: String {
+        if currentSet == 0 {
+            return "Start Sets"
+        } else {
+            return "Set \(currentSet + 1) Start"
+        }
     }
 }

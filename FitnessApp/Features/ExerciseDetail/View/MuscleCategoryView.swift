@@ -41,7 +41,8 @@ struct MuscleCategoryView: View {
             currentSet: viewModel.currentSet,
             currentExercise: viewModel.currentExercise,
             hasActiveExercise: viewModel.hasActiveExercise,
-            exercises: viewModel.exercises
+            exercises: viewModel.exercises,
+            isLastSetCompleted: viewModel.isLastSetCompleted // Neuer Parameter
         )
     }
     
@@ -90,6 +91,9 @@ struct MuscleCategoryView: View {
                     onEditMore: {
                         currentRepsEditMode = .more
                         isEditingCurrentReps = true
+                    },
+                    onFinish: {
+                        viewModel.finishExercise() // Neue Aktion
                     }
                 )
             }
@@ -173,7 +177,6 @@ struct MuscleCategoryView: View {
     private var exerciseListSection: some View {
         Group {
             if viewModel.currentExercise != nil {
-                // Zeige nur die aktive Übung, wenn eine Übung aktiv ist
                 if let currentExercise = viewModel.currentExercise {
                     ExerciseCardView(
                         viewModel: ExerciseCardViewModel(exercise: currentExercise) { updated in
@@ -184,7 +187,6 @@ struct MuscleCategoryView: View {
                     .transition(.move(edge: .top))
                 }
             } else {
-                // Zeige alle Übungen (nicht abgeschlossene oben, abgeschlossene unten)
                 ForEach(viewModel.exercises.filter { !$0.isCompleted }, id: \.id) { exercise in
                     ExerciseCardView(
                         viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
