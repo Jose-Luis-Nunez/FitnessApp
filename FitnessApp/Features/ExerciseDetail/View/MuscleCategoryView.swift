@@ -94,6 +94,9 @@ struct MuscleCategoryView: View {
                     },
                     onFinish: {
                         viewModel.finishExercise()
+                    },
+                    onAddExercise: {
+                        withAnimation { showForm.toggle() }
                     }
                 )
             }

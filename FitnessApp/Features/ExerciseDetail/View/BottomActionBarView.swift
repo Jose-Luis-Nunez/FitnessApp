@@ -1,45 +1,34 @@
 import SwiftUI
 
 struct BottomMenuBarView: View {
-    private let iconOffset: CGFloat = 6
     let barHeight: CGFloat
-    
+    let onAddExercise: () -> Void
+    private let iconOffset: CGFloat = 12
+
     var body: some View {
         ZStack(alignment: .center) {
-            AppStyle.Color.purpleDark
+            AppStyle.Color.black
                 .ignoresSafeArea(edges: .bottom)
                 .frame(height: barHeight)
-            
+
             HStack(spacing: AppStyle.Padding.horizontal) {
+                ForEach(["house", "chart.bar", "calendar", "person"], id: \.self) { name in
+                    Image(systemName: name)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: .infinity, maxHeight: barHeight * 0.6)
+                        .foregroundColor(AppStyle.Color.green)
+                }
+                /*
+                Button(action: onAddExercise) {
+                    Image(systemName: "plus.circle.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: .infinity, maxHeight: barHeight * 0.6)
+                        .foregroundColor(AppStyle.Color.green)
+                }
+                */
             }
-            .offset(y: iconOffset)
-            
-            HStack(spacing: AppStyle.Padding.horizontal) {
-                Image(systemName: "house")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: barHeight * 0.6)
-                    .foregroundColor(AppStyle.Color.green)
-                
-                Image(systemName: "chart.bar")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: barHeight * 0.6)
-                    .foregroundColor(AppStyle.Color.green)
-                
-                Image(systemName: "calendar")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: barHeight * 0.6)
-                    .foregroundColor(AppStyle.Color.green)
-                
-                Image(systemName: "person")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: barHeight * 0.6)
-                    .foregroundColor(AppStyle.Color.green)
-            }
-            .frame(maxWidth: .infinity)
             .padding(.horizontal, AppStyle.Padding.horizontal)
             .offset(y: iconOffset)
         }
@@ -54,33 +43,43 @@ struct FloatingActionButtonsView: View {
     let onEditLess: () -> Void
     let onEditMore: () -> Void
     let onFinish: () -> Void
+    let onAddExercise: () -> Void
     let barHeight: CGFloat
-    
+
     private let buttonWidth: CGFloat = 110
     private let buttonHeight: CGFloat = 50
     private let extraOffset: CGFloat = 10
-    
+
     var body: some View {
         ZStack(alignment: .bottom) {
             AppStyle.Color.black
                 .frame(height: buttonHeight)
                 .frame(maxWidth: .infinity)
                 .offset(y: -(buttonHeight / 2 + extraOffset))
-            
+
             HStack(spacing: 12) {
+                if viewModel.showStartButton && viewModel.currentSet == 0 {
+                    actionButton(title: "Add Exercise",
+                                 background: AppStyle.Color.purpleDark,
+                                 action: onAddExercise)
+                }
+
                 if viewModel.showStartButton {
                     actionButton(title: viewModel.startButtonTitle,
                                  background: AppStyle.Color.green,
                                  action: onStart)
                 }
+
                 if viewModel.showSetControls {
-                    actionButton(title: "Less",   background: AppStyle.Color.purpleGrey, action: onEditLess)
-                    actionButton(title: "Done",   background: AppStyle.Color.green,      action: onCompleteSet)
-                    actionButton(title: "More",   background: AppStyle.Color.purpleGrey, action: onEditMore)
+                    actionButton(title: "Less", background: AppStyle.Color.purpleDark, action: onEditLess)
+                    actionButton(title: "Done", background: AppStyle.Color.green, action: onCompleteSet)
+                    actionButton(title: "More", background: AppStyle.Color.purpleDark, action: onEditMore)
                 }
+                
                 if viewModel.showResetProgress {
-                    actionButton(title: "Reset",  background: AppStyle.Color.purpleGrey, action: onReset)
+                    actionButton(title: "Reset", background: AppStyle.Color.purpleGrey, action: onReset)
                 }
+                
                 if viewModel.showFinishButton {
                     actionButton(title: "Beenden", background: AppStyle.Color.purpleGrey, action: onFinish)
                 }
@@ -90,7 +89,7 @@ struct FloatingActionButtonsView: View {
         }
         .frame(height: barHeight + buttonHeight / 2 + extraOffset)
     }
-    
+
     @ViewBuilder
     private func actionButton(title: String, background: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -112,12 +111,13 @@ struct BottomActionBarView: View {
     let onEditLess: () -> Void
     let onEditMore: () -> Void
     let onFinish: () -> Void
-    
+    let onAddExercise: () -> Void
+
     private let barHeight: CGFloat = 40
-    
+
     var body: some View {
         ZStack(alignment: .bottom) {
-            BottomMenuBarView(barHeight: barHeight)
+            BottomMenuBarView(barHeight: barHeight, onAddExercise: onAddExercise)
             FloatingActionButtonsView(
                 viewModel: viewModel,
                 onStart: onStart,
@@ -126,6 +126,7 @@ struct BottomActionBarView: View {
                 onEditLess: onEditLess,
                 onEditMore: onEditMore,
                 onFinish: onFinish,
+                onAddExercise: onAddExercise,
                 barHeight: barHeight
             )
         }
