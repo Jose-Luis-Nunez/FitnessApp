@@ -59,11 +59,9 @@ struct MuscleCategoryView: View {
                         exerciseFormSection
                     }
                     
-                    // Zeige ActiveSetView, solange eine Übung aktiv ist
-                    if viewModel.currentExercise != nil {
+                    if let sets = viewModel.currentExercise?.sets {
                         Section {
-                            ActiveSetView()
-                                .frame(height: 200) // Anpassbare Höhe für die gelbe View
+                            ActiveSetView(sets: sets)
                         }
                     }
                 }
@@ -96,7 +94,6 @@ struct MuscleCategoryView: View {
                 )
             }
         }
-        
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text(group.displayName)
