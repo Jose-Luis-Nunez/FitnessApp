@@ -58,6 +58,14 @@ struct MuscleCategoryView: View {
                     if showForm {
                         exerciseFormSection
                     }
+                    
+                    // Zeige ActiveSetView, solange eine Übung aktiv ist
+                    if viewModel.currentExercise != nil {
+                        Section {
+                            ActiveSetView()
+                                .frame(height: 200) // Anpassbare Höhe für die gelbe View
+                        }
+                    }
                 }
                 .listStyle(.plain)
                 .padding(.bottom, bottomBarHeightIfNeeded)
@@ -71,7 +79,6 @@ struct MuscleCategoryView: View {
                             viewModel.startSet(for: activeExercise)
                         }
                     },
-                    
                     onCompleteSet: {
                         viewModel.completeCurrentSet()
                     },
@@ -168,29 +175,42 @@ struct MuscleCategoryView: View {
     
     private var exerciseListSection: some View {
         Group {
-            // Active exercises (not completed) at the top
-            ForEach(viewModel.exercises.filter { !$0.isCompleted },id: \.id) { exercise in
-                ExerciseCardView(
-                    viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
-                        viewModel.updateExercise(updated)
-                    }
-                )
-                .padding(.vertical, 4)
-                .transition(.move(edge: .top))
-            }
-            
-            // Completed exercises at the bottom
-            ForEach(viewModel.exercises.filter { $0.isCompleted }) { exercise in
-                ExerciseCardView(
-                    viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
-                        viewModel.updateExercise(updated)
-                    }
-                )
-                .padding(.vertical, 4)
-                .transition(.move(edge: .bottom))
+            if viewModel.currentExercise != nil {
+                // Zeige nur die aktive Übung, wenn eine Übung aktiv ist
+                if let currentExercise = viewModel.currentExercise {
+                    ExerciseCardView(
+                        viewModel: ExerciseCardViewModel(exercise: currentExercise) { updated in
+                            viewModel.updateExercise(updated)
+                        }
+                    )
+                    .padding(.vertical, 4)
+                    .transition(.move(edge: .top))
+                }
+            } else {
+                // Zeige alle Übungen (nicht abgeschlossene oben, abgeschlossene unten)
+                ForEach(viewModel.exercises.filter { !$0.isCompleted }, id: \.id) { exercise in
+                    ExerciseCardView(
+                        viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
+                            viewModel.updateExercise(updated)
+                        }
+                    )
+                    .padding(.vertical, 4)
+                    .transition(.move(edge: .top))
+                }
+                
+                ForEach(viewModel.exercises.filter { $0.isCompleted }, id: \.id) { exercise in
+                    ExerciseCardView(
+                        viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
+                            viewModel.updateExercise(updated)
+                        }
+                    )
+                    .padding(.vertical, 4)
+                    .transition(.move(edge: .bottom))
+                }
             }
         }
         .animation(.easeInOut, value: viewModel.exercises.map { $0.isCompleted })
+        .animation(.easeInOut, value: viewModel.currentExercise)
     }
     
     private var exerciseFormSection: some View {
@@ -206,7 +226,6 @@ struct MuscleCategoryView: View {
             TextField(L10n.cardCreationPlaceholderTextRepetitions, text: $reps)
                 .accessibilityIdentifier(IDS.repsField)
                 .keyboardType(.numberPad)
-            
             
             TextField(L10n.cardCreationPlaceholderTextSets, text: $sets)
                 .accessibilityIdentifier(IDS.setsField)

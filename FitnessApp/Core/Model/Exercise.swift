@@ -1,6 +1,6 @@
 import Foundation
 
-struct Exercise: Identifiable, Codable {
+struct Exercise: Identifiable, Codable,Equatable {
     let id: UUID
     let name: String
     var weight: Int
@@ -28,5 +28,9 @@ struct Exercise: Identifiable, Codable {
         self.seatSetting = seatSetting
         self.isCompleted = isCompleted
         self.currentReps = currentReps ?? reps
+    }
+    
+    static func == (lhs: Exercise, rhs: Exercise) -> Bool {
+        return lhs.id == rhs.id
     }
 }
