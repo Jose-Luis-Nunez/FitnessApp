@@ -37,7 +37,7 @@ struct ExerciseCardView: View {
         }
         .padding(.vertical, 12)
         .padding(.horizontal)
-        .background(viewModel.exercise.isCompleted ? AppStyle.Color.purpleLight : AppStyle.Color.purpleDark)
+        .background(viewModel.exercise.isCompleted ? AppStyle.Color.green : AppStyle.Color.purpleDark)
         .cornerRadius(AppStyle.CornerRadius.card)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 4)
         .sheet(item: $activeSheet) { sheet in
