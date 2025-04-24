@@ -21,6 +21,10 @@ enum AppStyle {
     }
 
     enum Color {
+        static let backgroundColor = SwiftUI.Color(hex: "#0C403E")
+        static let primaryButton = SwiftUI.Color(hex: "#0B3436")
+        static let secondaryButton = SwiftUI.Color(hex: "#5CC5BE")
+
         static let white = SwiftUI.Color.white
         static let black = SwiftUI.Color.black
         static let purpleGrey = SwiftUI.Color(hex: "#544985")
@@ -31,8 +35,7 @@ enum AppStyle {
         static let greenBlack = SwiftUI.Color(hex: "#022123")
         static let greenDark = SwiftUI.Color(hex: "#013334")
         static let green = SwiftUI.Color(hex: "#22A49A")
-        static let greenSecondaryButton = SwiftUI.Color(hex: "#0F2D30")
-
+        static let grey = SwiftUI.Color(hex: "#7C6C77")
     }
     
     enum Dimensions {

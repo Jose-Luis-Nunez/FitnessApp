@@ -29,6 +29,8 @@ struct MuscleCategoryView: View {
     @State private var seat = ""
     @State private var showResetConfirmation = false
     
+    let backgroundColor = AppStyle.Color.backgroundColor
+    
     init(group: MuscleCategoryGroup) {
         _viewModel = StateObject(wrappedValue: MuscleCategoryViewModel(group: group))
         self.group = group
@@ -54,26 +56,25 @@ struct MuscleCategoryView: View {
             VStack(spacing: 0) {
                 List {
                     exerciseListSection
-                        .listRowBackground(AppStyle.Color.greenBlack)
+                        .listRowBackground(backgroundColor)
                     
                     if showForm {
                         exerciseFormSection
-                            .listRowBackground(AppStyle.Color.greenBlack)
+                            .listRowBackground(backgroundColor)
                     }
                     
                     if let sets = viewModel.currentExercise?.sets {
                         Section {
                             ActiveSetView(sets: sets)
                         }
-                        .listRowBackground(AppStyle.Color.greenBlack)
+                        .listRowBackground(backgroundColor)
                     }
                 }
                 .listStyle(.plain)
                 .padding(.bottom, bottomBarHeightIfNeeded)
                 .scrollContentBackground(.hidden)
-                .background(AppStyle.Color.greenBlack)
             }
-            .background(AppStyle.Color.greenBlack)
+            .background(backgroundColor)// alles
             
             if bottomBarVM.shouldShow {
                 BottomActionBarView(
@@ -106,7 +107,6 @@ struct MuscleCategoryView: View {
                 )
             }
         }
-        .background(AppStyle.Color.greenBlack.ignoresSafeArea())
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text(group.displayName)
