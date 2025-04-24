@@ -70,7 +70,7 @@ enum ExerciseCardConfig {
                     ChipStyle(
                         textValue: "",
                         textSuffix: "",
-                        backgroundColor: AppStyle.Color.purpleGrey,
+                        backgroundColor: AppStyle.Color.greenBlack,
                         labelColor: AppStyle.Color.white,
                         labelFont: AppStyle.Font.regularChip,
                         size: .regular,
@@ -87,7 +87,7 @@ enum ExerciseCardConfig {
                     ChipStyle(
                         textValue: "",
                         textSuffix: "x",
-                        backgroundColor: AppStyle.Color.purpleGrey,
+                        backgroundColor: AppStyle.Color.greenBlack,
                         labelColor: AppStyle.Color.white,
                         labelFont: AppStyle.Font.regularChip,
                         size: .regular,
@@ -104,7 +104,7 @@ enum ExerciseCardConfig {
                     ChipStyle(
                         textValue: "",
                         textSuffix: " kg",
-                        backgroundColor: AppStyle.Color.purpleGrey,
+                        backgroundColor: AppStyle.Color.greenBlack,
                         labelColor: AppStyle.Color.white,
                         labelFont: AppStyle.Font.largeChip,
                         size: .large,
@@ -121,7 +121,7 @@ enum ExerciseCardConfig {
                     ChipStyle(
                         textValue: "",
                         textSuffix: "",
-                        backgroundColor: AppStyle.Color.purple,
+                        backgroundColor: AppStyle.Color.greenBlack,
                         labelColor: AppStyle.Color.white,
                         labelFont: AppStyle.Font.regularChip,
                         size: .regular,

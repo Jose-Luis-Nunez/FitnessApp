@@ -16,7 +16,6 @@ struct MuscleCategoryView: View {
     enum RepsEditMode {
         case less, more
     }
-    
     let group: MuscleCategoryGroup
     @StateObject private var viewModel: MuscleCategoryViewModel
     @State private var showForm = false
@@ -51,24 +50,30 @@ struct MuscleCategoryView: View {
     }
     
     var body: some View {
-        ZStack(alignment: .bottom) {
+        ZStack(alignment: .bottom) {            
             VStack(spacing: 0) {
                 List {
                     exerciseListSection
+                        .listRowBackground(AppStyle.Color.greenBlack)
                     
                     if showForm {
                         exerciseFormSection
+                            .listRowBackground(AppStyle.Color.greenBlack)
                     }
                     
                     if let sets = viewModel.currentExercise?.sets {
                         Section {
                             ActiveSetView(sets: sets)
                         }
+                        .listRowBackground(AppStyle.Color.greenBlack)
                     }
                 }
                 .listStyle(.plain)
                 .padding(.bottom, bottomBarHeightIfNeeded)
+                .scrollContentBackground(.hidden)
+                .background(AppStyle.Color.greenBlack)
             }
+            .background(AppStyle.Color.greenBlack)
             
             if bottomBarVM.shouldShow {
                 BottomActionBarView(
@@ -101,6 +106,7 @@ struct MuscleCategoryView: View {
                 )
             }
         }
+        .background(AppStyle.Color.greenBlack.ignoresSafeArea())
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text(group.displayName)

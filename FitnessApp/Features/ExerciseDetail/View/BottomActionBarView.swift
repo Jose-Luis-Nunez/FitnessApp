@@ -7,17 +7,9 @@ struct BottomMenuBarView: View {
     
     var body: some View {
         ZStack(alignment: .center) {
-            AppStyle.Color.black
+            AppStyle.Color.greenBlack
                 .ignoresSafeArea(edges: .bottom)
                 .frame(height: barHeight)
-                .opacity(0.1)
-            
-            /*
-             Rectangle().fill(AppStyle.Color.black.opacity(0.3)) // gewünschte Farbe
-             .background(.ultraThinMaterial) // Blur-Effekt
-             .frame(height: barHeight)
-             .ignoresSafeArea(edges: .bottom)
-             */
             
             HStack(spacing: AppStyle.Padding.horizontal) {
                 ForEach(["house", "chart.bar", "calendar", "person"], id: \.self) { name in
@@ -25,17 +17,8 @@ struct BottomMenuBarView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(maxWidth: .infinity, maxHeight: barHeight * 0.6)
-                        .foregroundColor(AppStyle.Color.green)
+                        .foregroundColor(AppStyle.Color.white)
                 }
-                /*
-                 Button(action: onAddExercise) {
-                 Image(systemName: "plus.circle.fill")
-                 .resizable()
-                 .scaledToFit()
-                 .frame(maxWidth: .infinity, maxHeight: barHeight * 0.6)
-                 .foregroundColor(AppStyle.Color.green)
-                 }
-                 */
             }
             .padding(.horizontal, AppStyle.Padding.horizontal)
             .offset(y: iconOffset)
@@ -60,7 +43,7 @@ struct FloatingActionButtonsView: View {
     
     var body: some View {
         ZStack(alignment: .bottom) {
-            AppStyle.Color.black
+            AppStyle.Color.greenBlack
                 .frame(height: buttonHeight)
                 .frame(maxWidth: .infinity)
                 .offset(y: -(buttonHeight / 2 + extraOffset))
@@ -71,12 +54,10 @@ struct FloatingActionButtonsView: View {
                         if viewModel.currentSet == 0 {
                             actionButtonLarge(
                                 title: "Add Exercise",
-                                background: AppStyle.Color.purpleDark,
+                                background: AppStyle.Color.greenSecondaryButton,
                                 action: onAddExercise
                             )
-                            
                         }
-                        
                         actionButtonLarge(
                             title: viewModel.startButtonTitle,
                             background: AppStyle.Color.green,
@@ -87,17 +68,17 @@ struct FloatingActionButtonsView: View {
                 
                 
                 if viewModel.showSetControls {
-                    actionButtonRegular(title: "Less", background: AppStyle.Color.purpleDark, action: onEditLess)
+                    actionButtonRegular(title: "Less", background: AppStyle.Color.greenSecondaryButton, action: onEditLess)
                     actionButtonRegular(title: "Done", background: AppStyle.Color.green, action: onCompleteSet)
-                    actionButtonRegular(title: "More", background: AppStyle.Color.purpleDark, action: onEditMore)
+                    actionButtonRegular(title: "More", background: AppStyle.Color.greenSecondaryButton, action: onEditMore)
                 }
                 
                 if viewModel.showResetProgress {
-                    actionButtonRegular(title: "Reset", background: AppStyle.Color.purpleDark, action: onReset)
+                    actionButtonRegular(title: "Reset", background: AppStyle.Color.greenSecondaryButton, action: onReset)
                 }
                 
                 if viewModel.showFinishButton {
-                    actionButtonRegular(title: "Beenden", background: AppStyle.Color.purpleDark, action: onFinish)
+                    actionButtonRegular(title: "Beenden", background: AppStyle.Color.greenSecondaryButton, action: onFinish)
                 }
             }
             .padding(.horizontal, AppStyle.Padding.horizontal)
@@ -158,6 +139,6 @@ struct BottomActionBarView: View {
                 barHeight: barHeight
             )
         }
-        .frame(maxHeight: .infinity, alignment: .bottom)
+        .background(AppStyle.Color.greenBlack)
     }
 }
