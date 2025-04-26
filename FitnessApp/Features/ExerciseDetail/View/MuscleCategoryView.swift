@@ -52,7 +52,7 @@ struct MuscleCategoryView: View {
     }
     
     var body: some View {
-        ZStack(alignment: .bottom) {            
+        ZStack(alignment: .bottom) {
             VStack(spacing: 0) {
                 List {
                     exerciseListSection
@@ -63,9 +63,13 @@ struct MuscleCategoryView: View {
                             .listRowBackground(backgroundColor)
                     }
                     
-                    if let sets = viewModel.currentExercise?.sets {
+                    if let exercise = viewModel.currentExercise {
                         Section {
-                            ActiveSetView(sets: sets)
+                            ActiveSetView(
+                                sets: exercise.sets,
+                                exercise: exercise,
+                                setProgress: viewModel.setProgress
+                            )
                         }
                         .listRowBackground(backgroundColor)
                     }
@@ -160,12 +164,12 @@ struct MuscleCategoryView: View {
                         case .less:
                             if newReps < currentExercise.reps {
                                 viewModel.updateCurrentReps(newReps)
-                                viewModel.completeCurrentSet()
+                                //viewModel.completeCurrentSet()
                             }
                         case .more:
                             if newReps > currentExercise.reps {
                                 viewModel.updateCurrentReps(newReps)
-                                viewModel.completeCurrentSet()
+                                //viewModel.completeCurrentSet()
                             }
                         }
                     }
