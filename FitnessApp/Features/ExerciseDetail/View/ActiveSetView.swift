@@ -5,7 +5,7 @@ struct ActiveSetView: View {
     let exercise: Exercise
     let setProgress: [SetProgress]
     
-    private let backgroundColor = AppStyle.Color.yellow
+    private let backgroundColor = AppStyle.Color.primaryButton
     
     var body: some View {
         ZStack(alignment: .leading) {
@@ -22,28 +22,28 @@ struct ActiveSetView: View {
                                 Image(systemName: "checkmark.circle.fill")
                                     .resizable()
                                     .frame(width: 24, height: 24)
-                                    .foregroundColor(AppStyle.Color.purpleDark)
+                                    .foregroundColor(AppStyle.Color.white)
                             case .less:
                                 Image(systemName: "stop.circle.fill")
                                     .resizable()
                                     .frame(width: 24, height: 24)
-                                    .foregroundColor(AppStyle.Color.purpleDark)
+                                    .foregroundColor(AppStyle.Color.white)
                             case .more:
                                 Image(systemName: "flame.circle.fill")
                                     .resizable()
                                     .frame(width: 24, height: 24)
-                                    .foregroundColor(AppStyle.Color.purpleDark)
+                                    .foregroundColor(AppStyle.Color.white)
                             case .none:
                                 Image(systemName: "circle.fill")
                                     .resizable()
                                     .frame(width: 24, height: 24)
-                                    .foregroundColor(AppStyle.Color.purpleDark)
+                                    .foregroundColor(AppStyle.Color.white)
                             }
                         } else {
-                            Image(systemName: "circle.fill")
+                            Image(systemName: "play.fill")
                                 .resizable()
                                 .frame(width: 24, height: 24)
-                                .foregroundColor(AppStyle.Color.purpleDark)
+                                .foregroundColor(AppStyle.Color.white)
                         }
                         
                         if index < setProgress.count {
@@ -55,7 +55,7 @@ struct ActiveSetView: View {
                         if index < setProgress.count {
                             Text("\(setProgress[index].weight)kg")
                                 .font(AppStyle.Font.defaultFont)
-                                .foregroundColor(AppStyle.Color.purpleDark)
+                                .foregroundColor(AppStyle.Color.greenDark)
                         }
                     }
                 }
