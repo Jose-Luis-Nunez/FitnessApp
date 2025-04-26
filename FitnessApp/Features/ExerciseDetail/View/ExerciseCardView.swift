@@ -26,7 +26,7 @@ struct ExerciseCardView: View {
             
             CardBottomSectionView(
                 viewModel: viewModel,
-                currentReps: viewModel.exercise.currentReps,
+                currentReps: viewModel.exercise.reps,
                 onFieldTap: { field, value in
                     inputValue = value
                     activeSheet = field

@@ -8,7 +8,6 @@ struct Exercise: Identifiable, Codable,Equatable {
     var sets: Int
     var seatSetting: String?
     var isCompleted: Bool
-    var currentReps: Int
     
     init(
         id: UUID = UUID(),
@@ -18,7 +17,6 @@ struct Exercise: Identifiable, Codable,Equatable {
         sets: Int,
         seatSetting: String? = nil,
         isCompleted: Bool = false,
-        currentReps: Int? = nil
     ) {
         self.id = id
         self.name = name
@@ -27,7 +25,6 @@ struct Exercise: Identifiable, Codable,Equatable {
         self.sets = sets
         self.seatSetting = seatSetting
         self.isCompleted = isCompleted
-        self.currentReps = currentReps ?? reps
     }
     
     static func == (lhs: Exercise, rhs: Exercise) -> Bool {
