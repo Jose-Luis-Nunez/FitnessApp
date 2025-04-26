@@ -74,7 +74,7 @@ struct MuscleCategoryView: View {
                 .padding(.bottom, bottomBarHeightIfNeeded)
                 .scrollContentBackground(.hidden)
             }
-            .background(backgroundColor)// alles
+            .background(backgroundColor)
             
             if bottomBarVM.shouldShow {
                 BottomActionBarView(
@@ -194,6 +194,7 @@ struct MuscleCategoryView: View {
                     )
                     .padding(.vertical, 4)
                     .transition(.move(edge: .top))
+                    .listRowSeparator(.hidden)
                 }
             } else {
                 ForEach(viewModel.exercises.filter { !$0.isCompleted }, id: \.id) { exercise in
@@ -204,6 +205,7 @@ struct MuscleCategoryView: View {
                     )
                     .padding(.vertical, 4)
                     .transition(.move(edge: .top))
+                    .listRowSeparator(.hidden)
                 }
                 
                 ForEach(viewModel.exercises.filter { $0.isCompleted }, id: \.id) { exercise in
@@ -214,6 +216,7 @@ struct MuscleCategoryView: View {
                     )
                     .padding(.vertical, 4)
                     .transition(.move(edge: .bottom))
+                    .listRowSeparator(.hidden)
                 }
             }
         }
