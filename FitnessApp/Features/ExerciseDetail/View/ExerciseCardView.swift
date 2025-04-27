@@ -111,7 +111,7 @@ struct CardBottomSectionView: View {
             VStack(alignment: .leading, spacing: -24) {
                 AppIconView(styled: StyledExerciseField(field: .action(.analyticsIcon)))
                 
-                TextView(styled: StyledExerciseField(field: .action(.analyticsText)))
+                TextView(styled: StyledExerciseField(field: .action(.analyticsText))).offset(x: 10)
             }
             
             Spacer(minLength: 4)
