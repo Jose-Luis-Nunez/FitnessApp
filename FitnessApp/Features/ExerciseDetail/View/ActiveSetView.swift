@@ -6,7 +6,7 @@ struct ActiveSetView: View {
     let setProgress: [SetProgress]
     let timerSeconds: Int
     
-    private let backgroundColor = AppStyle.Color.primaryButton
+    private let backgroundColor = AppStyle.Color.grayDark
     private let iconSizeWidth: CGFloat = 32
     private let iconSizeHeight: CGFloat = 32
     var body: some View {
@@ -17,11 +17,23 @@ struct ActiveSetView: View {
             
             VStack(alignment: .leading, spacing: 16) {
                 if timerSeconds > 0 {
-                    Text(formatTime(seconds: timerSeconds))
-                        .font(AppStyle.Font.largeChip)
-                        .foregroundColor(AppStyle.Color.white)
-                        .padding(.bottom, 8)
+                    HStack(spacing: 16) {
+                        Image(systemName: "timer")
+                            .resizable()
+                            .frame(width: 20, height: 20)
+                            .foregroundColor(AppStyle.Color.white)
+                        
+                        Text(formatTime(seconds: timerSeconds))
+                            .font(AppStyle.Font.largeChip)
+                            .foregroundColor(AppStyle.Color.white)
+                        
+                        Text("Aktiver Satz")
+                            .font(AppStyle.Font.largeChip)
+                            .foregroundColor(AppStyle.Color.white)
+                    }
+                    .padding(.bottom, 8)
                 }
+                
                 ForEach(0..<sets, id: \.self) { index in
                     HStack(spacing: 12) {
                         if index < setProgress.count {
@@ -31,19 +43,19 @@ struct ActiveSetView: View {
                                     .resizable()
                                     .frame(width: iconSizeWidth, height: iconSizeHeight)
                                     .symbolRenderingMode(.palette)
-                                    .foregroundStyle(AppStyle.Color.white, AppStyle.Color.grayDark)
+                                    .foregroundStyle(AppStyle.Color.white, AppStyle.Color.green)
                             case .less:
                                 Image(systemName: "minus.circle.fill")
                                     .resizable()
                                     .frame(width: iconSizeWidth, height: iconSizeHeight)
                                     .symbolRenderingMode(.palette)
-                                    .foregroundStyle(AppStyle.Color.white, AppStyle.Color.grayDark)
+                                    .foregroundStyle(AppStyle.Color.white, AppStyle.Color.green)
                             case .more:
                                 Image(systemName: "flame.circle.fill")
                                     .resizable()
                                     .frame(width: iconSizeWidth, height: iconSizeHeight)
                                     .symbolRenderingMode(.palette)
-                                    .foregroundStyle(AppStyle.Color.white, AppStyle.Color.grayDark)
+                                    .foregroundStyle(AppStyle.Color.white, AppStyle.Color.green)
                             case .none:
                                 Image(systemName: "circle.fill")
                                     .resizable()
@@ -62,16 +74,23 @@ struct ActiveSetView: View {
                         }
                         
                         if index < setProgress.count {
-                            Text("\(setProgress[index].currentReps)/\(exercise.reps)")
+                            Text("\(setProgress[index].weight) KG")
                                 .font(AppStyle.Font.largeChip)
                                 .foregroundColor(AppStyle.Color.white)
                         }
                         
                         if index < setProgress.count {
-                            Text("\(setProgress[index].weight)kg")
+                            Text("\(setProgress[index].currentReps)")
+                                .font(AppStyle.Font.largeChip)
+                                .foregroundColor(AppStyle.Color.green)
+                        }
+                        
+                        if index < setProgress.count {
+                            Text("/  \(exercise.reps)")
                                 .font(AppStyle.Font.largeChip)
                                 .foregroundColor(AppStyle.Color.white)
                         }
+                        
                     }
                 }
             }

@@ -15,7 +15,7 @@ enum AppStyle {
     enum Font {
         static let cardHeadline = SwiftUI.Font.system(size: 28, weight: .bold)
         static let regularChip = SwiftUI.Font.system(size: 12, weight: .semibold)
-        static let wideChip = SwiftUI.Font.system(size: 12, weight: .semibold)
+        static let wideChip = SwiftUI.Font.system(size: 16, weight: .semibold)
         static let largeChip = SwiftUI.Font.system(size: 24, weight: .semibold)
         static let defaultFont = SwiftUI.Font.system(size: 12, weight: .semibold)
         static let bottomBarButtons = SwiftUI.Font.system(size: 16, weight: .semibold)
