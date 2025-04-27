@@ -70,7 +70,7 @@ enum ExerciseCardConfig {
                     ChipStyle(
                         textValue: "",
                         textSuffix: "",
-                        backgroundColor: AppStyle.Color.greenBlack,
+                        backgroundColor: AppStyle.Color.grayDark,
                         labelColor: AppStyle.Color.white,
                         labelFont: AppStyle.Font.regularChip,
                         size: .regular,
@@ -87,7 +87,7 @@ enum ExerciseCardConfig {
                     ChipStyle(
                         textValue: "",
                         textSuffix: "x",
-                        backgroundColor: AppStyle.Color.greenBlack,
+                        backgroundColor: AppStyle.Color.grayDark,
                         labelColor: AppStyle.Color.white,
                         labelFont: AppStyle.Font.regularChip,
                         size: .regular,
@@ -104,7 +104,7 @@ enum ExerciseCardConfig {
                     ChipStyle(
                         textValue: "",
                         textSuffix: " kg",
-                        backgroundColor: AppStyle.Color.greenBlack,
+                        backgroundColor: AppStyle.Color.green,
                         labelColor: AppStyle.Color.white,
                         labelFont: AppStyle.Font.largeChip,
                         size: .large,
@@ -121,7 +121,7 @@ enum ExerciseCardConfig {
                     ChipStyle(
                         textValue: "",
                         textSuffix: "",
-                        backgroundColor: AppStyle.Color.greenBlack,
+                        backgroundColor: AppStyle.Color.black,
                         labelColor: AppStyle.Color.white,
                         labelFont: AppStyle.Font.regularChip,
                         size: .regular,
@@ -155,7 +155,7 @@ enum ExerciseCardConfig {
                     TextStyle(
                         text: L10n.analyticsText,
                         textFontSize: AppStyle.Font.defaultFont,
-                        textColor: AppStyle.Color.purpleLight
+                        textColor: AppStyle.Color.white
                     )
                 ),
                 column: .left,

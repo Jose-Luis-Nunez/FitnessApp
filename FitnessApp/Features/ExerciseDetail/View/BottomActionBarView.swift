@@ -115,14 +115,13 @@ struct FloatingActionButtonsView: View {
                     }
                 }
                 
-                
                 if viewModel.showSetControls {
                     
                     actionButtonRegular(
                         title: "Less",
                         font:AppStyle.Font.bottomBarButtons,
-                        backgroundColor: AppStyle.Color.white,
-                        fontColor: AppStyle.Color.green,
+                        backgroundColor: AppStyle.Color.greenLight,
+                        fontColor: AppStyle.Color.white,
                         action: onEditLess
                     )
                     
@@ -137,8 +136,8 @@ struct FloatingActionButtonsView: View {
                     actionButtonRegular(
                         title: "More",
                         font:AppStyle.Font.bottomBarButtons,
-                        backgroundColor: AppStyle.Color.white,
-                        fontColor: AppStyle.Color.green,
+                        backgroundColor: AppStyle.Color.greenLight,
+                        fontColor: AppStyle.Color.white,
                         action: onEditMore
                     )
                 }

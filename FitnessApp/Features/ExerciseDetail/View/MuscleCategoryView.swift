@@ -143,7 +143,7 @@ struct MuscleCategoryView: View {
                 
                 if isEditingCurrentReps {
                     EditPickerView(
-                        title: currentRepsEditMode == .less ? "Weniger" : "Mehr",
+                        title: currentRepsEditMode == .less ? "Verschlechtert" : "Verbessert",
                         selectedReps: $currentRepsInput,
                         selectedWeight: $weightInput,
                         repsRange: 1...30,
@@ -221,7 +221,7 @@ struct MuscleCategoryView: View {
                             viewModel.updateExercise(updated)
                         }
                     )
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 0.5)
                     .transition(.move(edge: .top))
                     .listRowSeparator(.hidden)
                 }
@@ -232,7 +232,7 @@ struct MuscleCategoryView: View {
                             viewModel.updateExercise(updated)
                         }
                     )
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 0.5)
                     .transition(.move(edge: .top))
                     .listRowSeparator(.hidden)
                 }
@@ -243,7 +243,7 @@ struct MuscleCategoryView: View {
                             viewModel.updateExercise(updated)
                         }
                     )
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 0.5)
                     .transition(.move(edge: .bottom))
                     .listRowSeparator(.hidden)
                 }

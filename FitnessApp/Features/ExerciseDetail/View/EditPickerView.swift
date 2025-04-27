@@ -12,6 +12,7 @@ struct EditPickerView: View {
     
     let textColor: Color = AppStyle.Color.white
     let backgroundColor = AppStyle.Color.black
+    let pickerColor: Color = AppStyle.Color.greenLight
     
     let cancelButtonTextColor: Color = AppStyle.Color.white
     
@@ -31,10 +32,7 @@ struct EditPickerView: View {
                     .font(.title2)
                     .foregroundColor(textColor)
                     .fontWeight(.bold)
-                
-                Text("Deine Auswahl")
-                    .font(.subheadline)
-                    .foregroundColor(textColor)
+                    .padding(.bottom, 16)
                 
                 VStack(spacing: 0) {
                     HStack {
@@ -51,7 +49,7 @@ struct EditPickerView: View {
                     HStack {
                         Picker("Reps", selection: $selectedReps) {
                             ForEach(repsRange.map(String.init), id: \.self) { value in
-                                Text(value).tag(value).foregroundColor(textColor)
+                                Text(value).tag(value).foregroundColor(pickerColor)
                             }
                         }
                         .pickerStyle(.wheel)
@@ -60,7 +58,7 @@ struct EditPickerView: View {
                         
                         Picker("Weight", selection: $selectedWeight) {
                             ForEach(weightRange.map(String.init), id: \.self) { value in
-                                Text("\(value) kg").tag(value).foregroundColor(textColor)
+                                Text("\(value) kg").tag(value).foregroundColor(pickerColor)
                             }
                         }
                         .pickerStyle(.wheel)
@@ -74,17 +72,18 @@ struct EditPickerView: View {
                     Spacer()
                     
                     Text("Abbrechen")
-                            .foregroundColor(cancelButtonTextColor)
-                            .font(.system(size: 14))
-                            .padding(5)
-                            .frame(width: 120)
-                            .cornerRadius(25)
-                            .onTapGesture {
-                                onCancel()
-                            }
+                        .foregroundColor(cancelButtonTextColor)
+                        .font(.system(size: 14))
+                        .padding(5)
+                        .frame(width: 120)
+                        .cornerRadius(AppStyle.CornerRadius.editPickerViewButton)
+                        .onTapGesture {
+                            onCancel()
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
                     
                     Spacer()
-
+                    
                     Button("Speichern") {
                         if let reps = Int(selectedReps), let weight = Int(selectedWeight) {
                             onSave(reps, weight)
@@ -93,10 +92,11 @@ struct EditPickerView: View {
                     .foregroundColor(saveDisabled ? saveButtonTextDisabledColor : saveButtonTextEnabledColor)
                     .font(.system(size: 14))
                     .padding(5)
-                    .frame(width: 120)
+                    .frame(width: 140,height: 40)
                     .background(saveDisabled ? saveButtonBackgroundDisabledColor : saveButtonBackgroundEnabledColor)
-                    .cornerRadius(25)
+                    .cornerRadius(AppStyle.CornerRadius.editPickerViewButton)
                     .disabled(saveDisabled)
+                    .frame(maxWidth: .infinity, alignment: .center)
                     
                     Spacer()
                 }
