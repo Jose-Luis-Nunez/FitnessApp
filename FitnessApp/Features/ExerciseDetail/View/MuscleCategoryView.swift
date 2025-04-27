@@ -34,12 +34,17 @@ struct MuscleCategoryView: View {
     
     private var isInputValid: Bool {
         guard let newReps = Int(currentRepsInput),
+              let newWeight = Int(weightInput),
               let currentExercise = viewModel.currentExercise else { return false }
+        
+        let currentReps = currentExercise.reps
+        let currentWeight = currentExercise.weight
+        
         switch currentRepsEditMode {
         case .less:
-            return newReps < currentExercise.reps
+            return newReps < currentReps || newWeight < currentWeight
         case .more:
-            return newReps > currentExercise.reps
+            return newReps > currentReps || newWeight > currentWeight
         }
     }
     
@@ -64,75 +69,113 @@ struct MuscleCategoryView: View {
     }
     
     var body: some View {
-        ZStack(alignment: .bottom) {
-            VStack(spacing: 0) {
-                List {
-                    exerciseListSection
-                        .listRowBackground(backgroundColor)
-                    
-                    if showForm {
-                        exerciseFormSection
+        GeometryReader { geometry in
+            ZStack(alignment: .bottom) {
+                VStack(spacing: 0) {
+                    List {
+                        exerciseListSection
                             .listRowBackground(backgroundColor)
-                    }
-                    
-                    if let exercise = viewModel.currentExercise {
-                        Section {
-                            ActiveSetView(
-                                sets: exercise.sets,
-                                exercise: exercise,
-                                setProgress: viewModel.setProgress
-                            )
+                        
+                        if showForm {
+                            exerciseFormSection
+                                .listRowBackground(backgroundColor)
                         }
-                        .listRowBackground(backgroundColor)
-                    }
-                }
-                .listStyle(.plain)
-                .padding(.bottom, bottomBarHeightIfNeeded)
-                .scrollContentBackground(.hidden)
-            }
-            .background(backgroundColor)
-            
-            if bottomBarVM.shouldShow {
-                BottomActionBarView(
-                    viewModel: bottomBarVM,
-                    onStart: {
-                        if let activeExercise = viewModel.exercises.first(where: { !$0.isCompleted }) {
-                            if viewModel.currentExercise == nil {
-                                viewModel.startSet(for: activeExercise)
-                            } else {
-                                viewModel.startNextSet()
+                        
+                        if let exercise = viewModel.currentExercise {
+                            Section {
+                                ActiveSetView(
+                                    sets: exercise.sets,
+                                    exercise: exercise,
+                                    setProgress: viewModel.setProgress
+                                )
                             }
+                            .listRowBackground(backgroundColor)
                         }
-                    },
-                    onCompleteSet: {
-                        viewModel.completeCurrentSet()
-                    },
-                    onReset: {
-                        showResetConfirmation = true
-                    },
-                    onEditLess: {
-                        currentRepsEditMode = .less
-                        isEditingCurrentReps = true
-                        if let currentExercise = viewModel.currentExercise {
-                            currentRepsInput = String(currentExercise.reps)
-                            weightInput = String(currentExercise.weight)
-                        }
-                    },
-                    onEditMore: {
-                        currentRepsEditMode = .more
-                        isEditingCurrentReps = true
-                        if let currentExercise = viewModel.currentExercise {
-                            currentRepsInput = String(currentExercise.reps)
-                            weightInput = String(currentExercise.weight)
-                        }
-                    },
-                    onFinish: {
-                        viewModel.finishExercise()
-                    },
-                    onAddExercise: {
-                        withAnimation { showForm.toggle() }
                     }
-                )
+                    .listStyle(.plain)
+                    .padding(.bottom, bottomBarHeightIfNeeded)
+                    .scrollContentBackground(.hidden)
+                }
+                .background(backgroundColor)
+                
+                if bottomBarVM.shouldShow {
+                    BottomActionBarView(
+                        viewModel: bottomBarVM,
+                        onStart: {
+                            if let activeExercise = viewModel.exercises.first(where: { !$0.isCompleted }) {
+                                if viewModel.currentExercise == nil {
+                                    viewModel.startSet(for: activeExercise)
+                                } else {
+                                    viewModel.startNextSet()
+                                }
+                            }
+                        },
+                        onCompleteSet: {
+                            viewModel.completeCurrentSet()
+                        },
+                        onReset: {
+                            showResetConfirmation = true
+                        },
+                        onEditLess: {
+                            currentRepsEditMode = .less
+                            isEditingCurrentReps = true
+                            if let currentExercise = viewModel.currentExercise {
+                                currentRepsInput = String(currentExercise.reps)
+                                weightInput = String(currentExercise.weight)
+                            }
+                        },
+                        onEditMore: {
+                            currentRepsEditMode = .more
+                            isEditingCurrentReps = true
+                            if let currentExercise = viewModel.currentExercise {
+                                currentRepsInput = String(currentExercise.reps)
+                                weightInput = String(currentExercise.weight)
+                            }
+                        },
+                        onFinish: {
+                            viewModel.finishExercise()
+                        },
+                        onAddExercise: {
+                            withAnimation { showForm.toggle() }
+                        }
+                    )
+                }
+                
+                if isEditingCurrentReps {
+                    EditPickerView(
+                        title: currentRepsEditMode == .less ? "Weniger" : "Mehr",
+                        selectedReps: $currentRepsInput,
+                        selectedWeight: $weightInput,
+                        repsRange: 1...30,
+                        weightRange: 0...180,
+                        onSave: { newReps, newWeight in
+                            if let currentExercise = viewModel.currentExercise {
+                                let currentReps = currentExercise.reps
+                                let currentWeight = currentExercise.weight
+                                let isValid: Bool
+                                switch currentRepsEditMode {
+                                case .less:
+                                    isValid = newReps < currentReps || newWeight < currentWeight
+                                case .more:
+                                    isValid = newReps > currentReps || newWeight > currentWeight
+                                }
+                                
+                                if isValid {
+                                    viewModel.updateCurrentReps(newReps, newWeight)
+                                }
+                            }
+                            isEditingCurrentReps = false
+                        },
+                        onCancel: {
+                            isEditingCurrentReps = false
+                        },
+                        saveDisabled: !isInputValid
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: 200, alignment: .bottom)
+                    .shadow(radius: 5)
+                    .transition(.move(edge: .bottom))
+                    .ignoresSafeArea(edges: .bottom)
+                }
             }
         }
         .toolbar {
@@ -150,35 +193,6 @@ struct MuscleCategoryView: View {
                 }
                 .accessibilityIdentifier(IDS.addExerciseButton)
             }
-        }
-        .sheet(isPresented: $isEditingCurrentReps) {
-            EditPickerView(
-                title: currentRepsEditMode == .less ? "Weniger anpassen" : "Mehr anpassen",
-                selectedReps: $currentRepsInput,
-                selectedWeight: $weightInput,
-                repsRange: 1...30,
-                weightRange: 0...150,
-                onSave: { newReps, newWeight in
-                    if let currentExercise = viewModel.currentExercise {
-                        let isValid: Bool
-                        switch currentRepsEditMode {
-                        case .less:
-                            isValid = newReps < currentExercise.reps
-                        case .more:
-                            isValid = newReps > currentExercise.reps
-                        }
-                        
-                        if isValid {
-                            viewModel.updateCurrentReps(newReps, newWeight)
-                        }
-                    }
-                    isEditingCurrentReps = false
-                },
-                onCancel: {
-                    isEditingCurrentReps = false
-                },
-                saveDisabled: !isInputValid
-            )
         }
         .onChange(of: isEditingCurrentReps) { _, newValue in
             if !newValue {

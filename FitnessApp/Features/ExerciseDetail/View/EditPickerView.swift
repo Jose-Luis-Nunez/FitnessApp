@@ -10,39 +10,48 @@ struct EditPickerView: View {
     let onCancel: () -> Void
     let saveDisabled: Bool
     
+    let textColor: Color = AppStyle.Color.white
+    let backgroundColor = AppStyle.Color.black
+    
+    let cancelButtonTextColor: Color = AppStyle.Color.white
+    
+    let saveButtonTextDisabledColor: Color = AppStyle.Color.white
+    let saveButtonBackgroundDisabledColor: Color = AppStyle.Color.green.opacity(0.15)
+    
+    let saveButtonTextEnabledColor: Color = AppStyle.Color.white
+    let saveButtonBackgroundEnabledColor: Color = AppStyle.Color.green
+    
     var body: some View {
         ZStack {
-            // Hintergrund, ähnlich wie in BottomMenuBarView
-            AppStyle.Color.white
+            backgroundColor
                 .ignoresSafeArea(edges: .bottom)
             
-            // Inhalt über dem Hintergrund
-            VStack(alignment: .center, spacing: 2) {
+            VStack(alignment: .center, spacing: 4) {
                 Text(title)
                     .font(.title2)
-                    .foregroundColor(.black)
+                    .foregroundColor(textColor)
                     .fontWeight(.bold)
                 
                 Text("Deine Auswahl")
                     .font(.subheadline)
-                    .foregroundColor(.black)
+                    .foregroundColor(textColor)
                 
                 VStack(spacing: 0) {
                     HStack {
                         Text("Wiederholung")
                             .font(.headline)
-                            .foregroundColor(.black)
+                            .foregroundColor(textColor)
                             .frame(maxWidth: .infinity)
                         Text("Gewicht")
                             .font(.headline)
-                            .foregroundColor(.black)
+                            .foregroundColor(textColor)
                             .frame(maxWidth: .infinity)
                     }
                     
                     HStack {
                         Picker("Reps", selection: $selectedReps) {
                             ForEach(repsRange.map(String.init), id: \.self) { value in
-                                Text(value).tag(value).foregroundColor(.black)
+                                Text(value).tag(value).foregroundColor(textColor)
                             }
                         }
                         .pickerStyle(.wheel)
@@ -51,39 +60,45 @@ struct EditPickerView: View {
                         
                         Picker("Weight", selection: $selectedWeight) {
                             ForEach(weightRange.map(String.init), id: \.self) { value in
-                                Text("\(value) kg").tag(value).foregroundColor(.black)
+                                Text("\(value) kg").tag(value).foregroundColor(textColor)
                             }
                         }
                         .pickerStyle(.wheel)
                         .frame(maxWidth: .infinity)
                         .clipped()
                     }
-                    .frame(height: 50)
+                    .frame(height: 120)
                 }
                 
-                HStack(spacing: 6) {
-                    Button("Abbrechen") {
-                        onCancel()
-                    }
-                    .foregroundColor(.gray)
-                    .font(.system(size: 14))
-                    .frame(maxWidth: .infinity)
-                    .padding(5)
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(10)
+                HStack() {
+                    Spacer()
                     
+                    Text("Abbrechen")
+                            .foregroundColor(cancelButtonTextColor)
+                            .font(.system(size: 14))
+                            .padding(5)
+                            .frame(width: 120)
+                            .cornerRadius(25)
+                            .onTapGesture {
+                                onCancel()
+                            }
+                    
+                    Spacer()
+
                     Button("Speichern") {
                         if let reps = Int(selectedReps), let weight = Int(selectedWeight) {
                             onSave(reps, weight)
                         }
                     }
+                    .foregroundColor(saveDisabled ? saveButtonTextDisabledColor : saveButtonTextEnabledColor)
                     .font(.system(size: 14))
-                    .frame(maxWidth: .infinity)
                     .padding(5)
-                    .background(saveDisabled ? Color.gray : Color.blue)
-                    .foregroundColor(.black)
-                    .cornerRadius(10)
+                    .frame(width: 120)
+                    .background(saveDisabled ? saveButtonBackgroundDisabledColor : saveButtonBackgroundEnabledColor)
+                    .cornerRadius(25)
                     .disabled(saveDisabled)
+                    
+                    Spacer()
                 }
                 .padding(.horizontal, 5)
             }
