@@ -21,7 +21,6 @@ struct AppChip: View {
         .padding(.vertical, verticalPadding)
         .background(backgroundColor)
         .cornerRadius(12)
-        //.clipShape(Capsule())
     }
     
     private var font: Font {

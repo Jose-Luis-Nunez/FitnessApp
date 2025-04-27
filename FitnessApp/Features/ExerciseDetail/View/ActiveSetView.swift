@@ -4,6 +4,7 @@ struct ActiveSetView: View {
     let sets: Int
     let exercise: Exercise
     let setProgress: [SetProgress]
+    let timerSeconds: Int
     
     private let backgroundColor = AppStyle.Color.primaryButton
     private let iconSizeWidth: CGFloat = 32
@@ -15,6 +16,12 @@ struct ActiveSetView: View {
                 .frame(maxWidth: .infinity)
             
             VStack(alignment: .leading, spacing: 16) {
+                if timerSeconds > 0 {
+                    Text(formatTime(seconds: timerSeconds))
+                        .font(AppStyle.Font.largeChip)
+                        .foregroundColor(AppStyle.Color.white)
+                        .padding(.bottom, 8)
+                }
                 ForEach(0..<sets, id: \.self) { index in
                     HStack(spacing: 12) {
                         if index < setProgress.count {
@@ -23,17 +30,20 @@ struct ActiveSetView: View {
                                 Image(systemName: "checkmark.circle.fill")
                                     .resizable()
                                     .frame(width: iconSizeWidth, height: iconSizeHeight)
-                                    .foregroundColor(AppStyle.Color.white)
+                                    .symbolRenderingMode(.palette)
+                                    .foregroundStyle(AppStyle.Color.white, AppStyle.Color.grayDark)
                             case .less:
-                                Image(systemName: "stop.circle.fill")
+                                Image(systemName: "minus.circle.fill")
                                     .resizable()
                                     .frame(width: iconSizeWidth, height: iconSizeHeight)
-                                    .foregroundColor(AppStyle.Color.white)
+                                    .symbolRenderingMode(.palette)
+                                    .foregroundStyle(AppStyle.Color.white, AppStyle.Color.grayDark)
                             case .more:
                                 Image(systemName: "flame.circle.fill")
                                     .resizable()
                                     .frame(width: iconSizeWidth, height: iconSizeHeight)
-                                    .foregroundColor(AppStyle.Color.white)
+                                    .symbolRenderingMode(.palette)
+                                    .foregroundStyle(AppStyle.Color.white, AppStyle.Color.grayDark)
                             case .none:
                                 Image(systemName: "circle.fill")
                                     .resizable()
@@ -41,10 +51,14 @@ struct ActiveSetView: View {
                                     .foregroundColor(AppStyle.Color.white)
                             }
                         } else {
-                            Image(systemName: "play.fill")
+                            Image(systemName: "bolt.fill")
                                 .resizable()
-                                .frame(width: iconSizeWidth, height: iconSizeHeight)
-                                .foregroundColor(AppStyle.Color.white)
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: iconSizeWidth * 0.7, height: iconSizeHeight * 0.7)
+                                .padding(6)
+                                .background(AppStyle.Color.grayDark)
+                                .clipShape(Circle())
+                                .foregroundColor(AppStyle.Color.yellow)
                         }
                         
                         if index < setProgress.count {
@@ -63,7 +77,8 @@ struct ActiveSetView: View {
             }
             
             .padding(.horizontal, AppStyle.Padding.horizontal)
-            .padding(.vertical, 16)
+            .padding(.top, timerSeconds > 0 ? 24 : 16)
+            .padding(.bottom, timerSeconds > 0 ? 32 : 16)
         }
         .frame(height: calculateHeight())
         .cornerRadius(AppStyle.CornerRadius.card)
@@ -72,9 +87,18 @@ struct ActiveSetView: View {
     private func calculateHeight() -> CGFloat {
         let iconHeight = 32.0
         let spacing = 16.0
-        let verticalPadding = 16.0 * 2
+        let topPadding: CGFloat = timerSeconds > 0 ? 24.0 : 16.0
+        let bottomPadding: CGFloat = timerSeconds > 0 ? 32.0 : 16.0
+        let verticalPadding = topPadding + bottomPadding
         let totalIconHeight = CGFloat(sets) * iconHeight
         let totalSpacing = CGFloat(max(0, sets - 1)) * spacing
-        return totalIconHeight + totalSpacing + verticalPadding
+        let timerHeight: CGFloat = timerSeconds > 0 ? 24.0 : 0.0
+        return totalIconHeight + totalSpacing + verticalPadding + timerHeight
+    }
+    
+    private func formatTime(seconds: Int) -> String {
+        let minutes = seconds / 60
+        let remainingSeconds = seconds % 60
+        return String(format: "%02d:%02d", minutes, remainingSeconds)
     }
 }

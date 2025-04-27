@@ -27,8 +27,6 @@ enum AppStyle {
         static let exerciseCardDoneBackGround = black
         static let primaryButton = green
         static let secondaryButton = greenLight
-        //static let secondaryButton = SwiftUI.Color(hex: "#CFFFB3")
-
 
         static let white = SwiftUI.Color.white
         static let black = SwiftUI.Color.black
@@ -46,9 +44,6 @@ enum AppStyle {
         
         static let greenLight = SwiftUI.Color(hex: "#7EBBAF")
         static let green = SwiftUI.Color(hex: "#088177")
-        
-
-
     }
     
     enum Dimensions {

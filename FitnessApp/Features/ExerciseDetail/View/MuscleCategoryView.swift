@@ -29,6 +29,8 @@ struct MuscleCategoryView: View {
     @State private var sets = ""
     @State private var seat = ""
     @State private var showResetConfirmation = false
+    @State private var timerSeconds: Int = 0
+    @State private var timer: Timer?
     
     let backgroundColor = AppStyle.Color.backgroundColor
     
@@ -86,7 +88,8 @@ struct MuscleCategoryView: View {
                                 ActiveSetView(
                                     sets: exercise.sets,
                                     exercise: exercise,
-                                    setProgress: viewModel.setProgress
+                                    setProgress: viewModel.setProgress,
+                                    timerSeconds: timerSeconds
                                 )
                             }
                             .listRowBackground(backgroundColor)
@@ -102,6 +105,7 @@ struct MuscleCategoryView: View {
                     BottomActionBarView(
                         viewModel: bottomBarVM,
                         onStart: {
+                            startTimer()
                             if let activeExercise = viewModel.exercises.first(where: { !$0.isCompleted }) {
                                 if viewModel.currentExercise == nil {
                                     viewModel.startSet(for: activeExercise)
@@ -111,12 +115,15 @@ struct MuscleCategoryView: View {
                             }
                         },
                         onCompleteSet: {
+                            stopTimer()
                             viewModel.completeCurrentSet()
                         },
                         onReset: {
+                            stopTimer()
                             showResetConfirmation = true
                         },
                         onEditLess: {
+                            stopTimer()
                             currentRepsEditMode = .less
                             isEditingCurrentReps = true
                             if let currentExercise = viewModel.currentExercise {
@@ -125,6 +132,7 @@ struct MuscleCategoryView: View {
                             }
                         },
                         onEditMore: {
+                            stopTimer()
                             currentRepsEditMode = .more
                             isEditingCurrentReps = true
                             if let currentExercise = viewModel.currentExercise {
@@ -133,6 +141,7 @@ struct MuscleCategoryView: View {
                             }
                         },
                         onFinish: {
+                            stopTimer()
                             viewModel.finishExercise()
                         },
                         onAddExercise: {
@@ -210,6 +219,23 @@ struct MuscleCategoryView: View {
                 secondaryButton: .cancel()
             )
         }
+        .onDisappear {
+            stopTimer()
+        }
+    }
+    
+    private func startTimer() {
+        timerSeconds = 0
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            timerSeconds += 1
+        }
+    }
+    
+    private func stopTimer() {
+        timer?.invalidate()
+        timer = nil
+        timerSeconds = 0
     }
     
     private var exerciseListSection: some View {
