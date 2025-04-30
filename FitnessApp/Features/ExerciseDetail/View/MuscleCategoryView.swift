@@ -16,45 +16,15 @@ struct MuscleCategoryView: View {
     enum RepsEditMode {
         case less, more
     }
+    
     let group: MuscleCategoryGroup
     @StateObject private var viewModel: MuscleCategoryViewModel
-    @State private var showForm = false
-    @State private var isEditingCurrentReps = false
-    @State private var currentRepsInput = ""
-    @State private var weightInput = ""
-    @State private var currentRepsEditMode: RepsEditMode = .less
-    @State private var name = ""
-    @State private var weight = ""
-    @State private var reps = ""
-    @State private var sets = ""
-    @State private var seat = ""
-    @State private var showResetConfirmation = false
-    @State private var timerSeconds: Int = 0
-    @State private var timer: Timer?
-    
-    let backgroundColor = AppStyle.Color.backgroundColor
-    
-    private var isInputValid: Bool {
-        guard let newReps = Int(currentRepsInput),
-              let newWeight = Int(weightInput),
-              let currentExercise = viewModel.currentExercise else { return false }
-        
-        let currentReps = currentExercise.reps
-        let currentWeight = currentExercise.weight
-        
-        switch currentRepsEditMode {
-        case .less:
-            return newReps < currentReps || newWeight < currentWeight
-        case .more:
-            return newReps > currentReps || newWeight > currentWeight
-        }
-    }
-    
+
     init(group: MuscleCategoryGroup) {
         _viewModel = StateObject(wrappedValue: MuscleCategoryViewModel(group: group))
         self.group = group
     }
-    
+
     private var bottomBarVM: BottomActionBarViewModel {
         BottomActionBarViewModel(
             isSetInProgress: viewModel.isSetInProgress,
@@ -65,47 +35,43 @@ struct MuscleCategoryView: View {
             isLastSetCompleted: viewModel.isLastSetCompleted
         )
     }
-    
-    private var bottomBarHeightIfNeeded: CGFloat {
-        80
-    }
-    
+
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .bottom) {
                 VStack(spacing: 0) {
                     List {
                         exerciseListSection
-                            .listRowBackground(backgroundColor)
-                        
-                        if showForm {
+                            .listRowBackground(AppStyle.Color.backgroundColor)
+
+                        if viewModel.showForm {
                             exerciseFormSection
-                                .listRowBackground(backgroundColor)
+                                .listRowBackground(AppStyle.Color.backgroundColor)
                         }
-                        
+
                         if let exercise = viewModel.currentExercise {
                             Section {
                                 ActiveSetView(
                                     sets: exercise.sets,
                                     exercise: exercise,
                                     setProgress: viewModel.setProgress,
-                                    timerSeconds: timerSeconds
+                                    timerSeconds: viewModel.timerSeconds
                                 )
                             }
-                            .listRowBackground(backgroundColor)
+                            .listRowBackground(AppStyle.Color.backgroundColor)
                         }
                     }
                     .listStyle(.plain)
-                    .padding(.bottom, bottomBarHeightIfNeeded)
+                    .padding(.bottom, 80) // Konstante Höhe für BottomActionBar
                     .scrollContentBackground(.hidden)
                 }
-                .background(backgroundColor)
-                
+                .background(AppStyle.Color.backgroundColor)
+
                 if bottomBarVM.shouldShow {
                     BottomActionBarView(
                         viewModel: bottomBarVM,
                         onStart: {
-                            startTimer()
+                            viewModel.startTimer()
                             if let activeExercise = viewModel.exercises.first(where: { !$0.isCompleted }) {
                                 if viewModel.currentExercise == nil {
                                     viewModel.startSet(for: activeExercise)
@@ -115,46 +81,46 @@ struct MuscleCategoryView: View {
                             }
                         },
                         onCompleteSet: {
-                            stopTimer()
+                            viewModel.stopTimer()
                             viewModel.completeCurrentSet()
                         },
                         onReset: {
-                            stopTimer()
-                            showResetConfirmation = true
+                            viewModel.stopTimer()
+                            viewModel.showResetConfirmation = true
                         },
                         onEditLess: {
-                            stopTimer()
-                            currentRepsEditMode = .less
-                            isEditingCurrentReps = true
+                            viewModel.stopTimer()
+                            viewModel.currentRepsEditMode = .less
+                            viewModel.isEditingCurrentReps = true
                             if let currentExercise = viewModel.currentExercise {
-                                currentRepsInput = String(currentExercise.reps)
-                                weightInput = String(currentExercise.weight)
+                                viewModel.currentRepsInput = String(currentExercise.reps)
+                                viewModel.weightInput = String(currentExercise.weight)
                             }
                         },
                         onEditMore: {
-                            stopTimer()
-                            currentRepsEditMode = .more
-                            isEditingCurrentReps = true
+                            viewModel.stopTimer()
+                            viewModel.currentRepsEditMode = .more
+                            viewModel.isEditingCurrentReps = true
                             if let currentExercise = viewModel.currentExercise {
-                                currentRepsInput = String(currentExercise.reps)
-                                weightInput = String(currentExercise.weight)
+                                viewModel.currentRepsInput = String(currentExercise.reps)
+                                viewModel.weightInput = String(currentExercise.weight)
                             }
                         },
                         onFinish: {
-                            stopTimer()
+                            viewModel.stopTimer()
                             viewModel.finishExercise()
                         },
                         onAddExercise: {
-                            withAnimation { showForm.toggle() }
+                            withAnimation { viewModel.toggleForm() }
                         }
                     )
                 }
-                
-                if isEditingCurrentReps {
+
+                if viewModel.isEditingCurrentReps {
                     EditPickerView(
-                        title: currentRepsEditMode == .less ? "Verschlechtert" : "Verbessert",
-                        selectedReps: $currentRepsInput,
-                        selectedWeight: $weightInput,
+                        title: viewModel.currentRepsEditMode == .less ? "Verschlechtert" : "Verbessert",
+                        selectedReps: $viewModel.currentRepsInput,
+                        selectedWeight: $viewModel.weightInput,
                         repsRange: 1...30,
                         weightRange: 0...180,
                         onSave: { newReps, newWeight in
@@ -162,23 +128,23 @@ struct MuscleCategoryView: View {
                                 let currentReps = currentExercise.reps
                                 let currentWeight = currentExercise.weight
                                 let isValid: Bool
-                                switch currentRepsEditMode {
+                                switch viewModel.currentRepsEditMode {
                                 case .less:
                                     isValid = newReps < currentReps || newWeight < currentWeight
                                 case .more:
                                     isValid = newReps > currentReps || newWeight > currentWeight
                                 }
-                                
+
                                 if isValid {
                                     viewModel.updateCurrentReps(newReps, newWeight)
                                 }
                             }
-                            isEditingCurrentReps = false
+                            viewModel.isEditingCurrentReps = false
                         },
                         onCancel: {
-                            isEditingCurrentReps = false
+                            viewModel.isEditingCurrentReps = false
                         },
-                        saveDisabled: !isInputValid
+                        saveDisabled: !viewModel.isInputValid
                     )
                     .frame(maxWidth: .infinity, maxHeight: 200, alignment: .bottom)
                     .shadow(radius: 5)
@@ -196,20 +162,19 @@ struct MuscleCategoryView: View {
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: {
-                    withAnimation { showForm.toggle() }
+                    withAnimation { viewModel.toggleForm() }
                 }) {
-                    Image(systemName: showForm ? "minus" : "plus")
+                    Image(systemName: viewModel.showForm ? "minus" : "plus")
                 }
                 .accessibilityIdentifier(IDS.addExerciseButton)
             }
         }
-        .onChange(of: isEditingCurrentReps) { _, newValue in
+        .onChange(of: viewModel.isEditingCurrentReps) { _, newValue in
             if !newValue {
-                currentRepsInput = ""
-                weightInput = ""
+                viewModel.resetEditingState()
             }
         }
-        .alert(isPresented: $showResetConfirmation) {
+        .alert(isPresented: $viewModel.showResetConfirmation) {
             Alert(
                 title: Text("Reset Progress"),
                 message: Text("Do you want to reset all exercise progress? This will allow you to start the sets again."),
@@ -220,24 +185,10 @@ struct MuscleCategoryView: View {
             )
         }
         .onDisappear {
-            stopTimer()
+            viewModel.stopTimer()
         }
     }
-    
-    private func startTimer() {
-        timerSeconds = 0
-        timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            timerSeconds += 1
-        }
-    }
-    
-    private func stopTimer() {
-        timer?.invalidate()
-        timer = nil
-        timerSeconds = 0
-    }
-    
+
     private var exerciseListSection: some View {
         Group {
             if viewModel.currentExercise != nil {
@@ -262,7 +213,7 @@ struct MuscleCategoryView: View {
                     .transition(.move(edge: .top))
                     .listRowSeparator(.hidden)
                 }
-                
+
                 ForEach(viewModel.exercises.filter { $0.isCompleted }, id: \.id) { exercise in
                     ExerciseCardView(
                         viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
@@ -278,61 +229,52 @@ struct MuscleCategoryView: View {
         .animation(.easeInOut, value: viewModel.exercises.map { $0.isCompleted })
         .animation(.easeInOut, value: viewModel.currentExercise)
     }
-    
+
     private var exerciseFormSection: some View {
         Section(header: Text(L10n.cardCreationTitle)) {
-            TextField(L10n.cardCreationPlaceholderTextName, text: $name)
+            TextField(L10n.cardCreationPlaceholderTextName, text: $viewModel.name)
                 .accessibilityIdentifier(IDS.nameField)
                 .keyboardType(.default)
-            
-            TextField(L10n.cardCreationPlaceholderTextWeight, text: $weight)
+
+            TextField(L10n.cardCreationPlaceholderTextWeight, text: $viewModel.weight)
                 .accessibilityIdentifier(IDS.weightField)
                 .keyboardType(.decimalPad)
-            
-            TextField(L10n.cardCreationPlaceholderTextRepetitions, text: $reps)
+
+            TextField(L10n.cardCreationPlaceholderTextRepetitions, text: $viewModel.reps)
                 .accessibilityIdentifier(IDS.repsField)
                 .keyboardType(.numberPad)
-            
-            TextField(L10n.cardCreationPlaceholderTextSets, text: $sets)
+
+            TextField(L10n.cardCreationPlaceholderTextSets, text: $viewModel.sets)
                 .accessibilityIdentifier(IDS.setsField)
                 .keyboardType(.numberPad)
-            
-            TextField(L10n.cardCreationPlaceholderTextSeat, text: $seat)
+
+            TextField(L10n.cardCreationPlaceholderTextSeat, text: $viewModel.seat)
                 .accessibilityIdentifier(IDS.seatField)
                 .keyboardType(.numberPad)
-            
+
             HStack {
                 Button(L10n.cardCreationSave) {
                     let newExercise = Exercise(
-                        name: name,
-                        weight: Int(weight) ?? 0,
-                        reps: Int(reps) ?? 0,
-                        sets: Int(sets) ?? 0,
-                        seatSetting: seat.isEmpty ? nil : seat
+                        name: viewModel.name,
+                        weight: Int(viewModel.weight) ?? 0,
+                        reps: Int(viewModel.reps) ?? 0,
+                        sets: Int(viewModel.sets) ?? 0,
+                        seatSetting: viewModel.seat.isEmpty ? nil : viewModel.seat
                     )
                     viewModel.add(newExercise)
-                    clearForm()
+                    viewModel.clearForm()
                 }
-                .disabled(name.isEmpty || weight.isEmpty || reps.isEmpty || sets.isEmpty)
+                .disabled(viewModel.name.isEmpty || viewModel.weight.isEmpty || viewModel.reps.isEmpty || viewModel.sets.isEmpty)
                 .accessibilityIdentifier(IDS.saveButton)
-                
+
                 Spacer()
-                
+
                 Button(L10n.cardCreationCancel) {
-                    clearForm()
+                    viewModel.clearForm()
                 }
                 .accessibilityIdentifier(IDS.cancelButton)
             }
             .padding(.top, 8)
         }
-    }
-    
-    private func clearForm() {
-        name = ""
-        weight = ""
-        reps = ""
-        sets = ""
-        seat = ""
-        showForm = false
     }
 }
