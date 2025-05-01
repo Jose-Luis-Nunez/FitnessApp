@@ -45,26 +45,21 @@ struct MuscleCategoryView: View {
                         exerciseListSection
                             .listRowBackground(AppStyle.Color.backgroundColor)
 
-                        if formViewModel.showForm {
-                            exerciseFormSection
-                                .listRowBackground(AppStyle.Color.backgroundColor)
-                        }
-
-                        if let exercise = viewModel.currentExercise {
+                        if let exercise = activeSetViewModel.currentExercise {
                             Section {
                                 ActiveSetView(
                                     sets: exercise.sets,
                                     exercise: exercise,
-                                    setProgress: viewModel.setProgress,
-                                    timerSeconds: viewModel.timerSeconds
+                                    setProgress: activeSetViewModel.setProgress,
+                                    timerSeconds: activeSetViewModel.timerSeconds
                                 )
                             }
                             .listRowBackground(AppStyle.Color.backgroundColor)
                         }
                     }
                     .listStyle(.plain)
-                    .padding(.bottom, 80)
                     .scrollContentBackground(.hidden)
+                    .padding(.bottom, formViewModel.showForm ? 300 : (activeSetViewModel.isEditing ? 200 : (bottomBarVM.shouldShow ? 80 : 0)))
                 }
                 .background(AppStyle.Color.backgroundColor)
 
@@ -72,14 +67,22 @@ struct MuscleCategoryView: View {
                     BottomActionBarView(
                         viewModel: bottomBarVM,
                         onStart: {
+                            print("Start Training clicked")
+                            print("Exercises: \(viewModel.exercises.map { "\($0.name) - isCompleted: \($0.isCompleted)" })")
                             viewModel.startTimer()
                             if let activeExercise = viewModel.exercises.first(where: { !$0.isCompleted }) {
-                                if viewModel.currentExercise == nil {
+                                print("Found active exercise: \(activeExercise.name)")
+                                if viewModel.currentExercise == nil || viewModel.currentExercise?.isCompleted == true {
+                                    print("Starting set for \(activeExercise.name)")
                                     viewModel.startSet(for: activeExercise)
                                 } else {
+                                    print("Starting next set for \(viewModel.currentExercise?.name ?? "none")")
                                     viewModel.startNextSet()
                                 }
+                            } else {
+                                print("No active exercise found")
                             }
+                            print("Current Exercise after onStart: \(viewModel.currentExercise?.name ?? "nil")")
                         },
                         onCompleteSet: {
                             viewModel.stopTimer()
@@ -91,25 +94,28 @@ struct MuscleCategoryView: View {
                         },
                         onEditLess: {
                             viewModel.stopTimer()
-                            activeSetViewModel.startEditing(mode: SetEditingMode.less) // Anpassung an SetEditingMode
+                            activeSetViewModel.startEditing(mode: SetEditingMode.less)
                         },
                         onEditMore: {
                             viewModel.stopTimer()
-                            activeSetViewModel.startEditing(mode: SetEditingMode.more) // Anpassung an SetEditingMode
+                            activeSetViewModel.startEditing(mode: SetEditingMode.more)
                         },
                         onFinish: {
                             viewModel.stopTimer()
                             viewModel.finishExercise()
                         },
                         onAddExercise: {
-                            withAnimation { formViewModel.toggleForm() }
+                            withAnimation {
+                                formViewModel.loadExercise(nil as Exercise?)
+                                formViewModel.toggleForm()
+                            }
                         }
                     )
                 }
 
                 if activeSetViewModel.isEditing {
                     EditPickerView(
-                        title: activeSetViewModel.editMode == SetEditingMode.less ? "Verschlechtert" : "Verbessert", // Anpassung an SetEditingMode
+                        title: activeSetViewModel.editMode == SetEditingMode.less ? "Verschlechtert" : "Verbessert",
                         selectedReps: $activeSetViewModel.repsInput,
                         selectedWeight: $activeSetViewModel.weightInput,
                         repsRange: 1...30,
@@ -128,9 +134,40 @@ struct MuscleCategoryView: View {
                     .transition(.move(edge: .bottom))
                     .ignoresSafeArea(edges: .bottom)
                 }
+
+                if formViewModel.showForm {
+                    ExercisePickerView(
+                        title: formViewModel.editingExercise != nil ? "Übung bearbeiten" : L10n.cardCreationTitle,
+                        name: $formViewModel.name,
+                        reps: $formViewModel.reps,
+                        weight: $formViewModel.weight,
+                        sets: $formViewModel.sets,
+                        isPresented: $formViewModel.showForm,
+                        onSave: {
+                            if let exercise = formViewModel.createOrUpdateExercise() {
+                                if formViewModel.editingExercise != nil {
+                                    viewModel.updateExercise(exercise)
+                                } else {
+                                    viewModel.add(exercise, atTop: true)
+                                }
+                            }
+                        },
+                        onCancel: {
+                            formViewModel.clearForm()
+                        },
+                        saveDisabled: !formViewModel.isFormValid,
+                        repsRange: 1...30,
+                        weightRange: 0...180,
+                        setsRange: 1...10
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: 300, alignment: .bottom)
+                    .shadow(radius: 5)
+                    .transition(.move(edge: .bottom))
+                    .ignoresSafeArea(edges: .bottom)
+                }
             }
         }
-        .toolbar {
+        .toolbar(content: {
             ToolbarItem(placement: .principal) {
                 Text(group.displayName)
                     .font(AppStyle.Font.cardHeadline)
@@ -139,13 +176,16 @@ struct MuscleCategoryView: View {
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: {
-                    withAnimation { formViewModel.toggleForm() }
+                    withAnimation {
+                        formViewModel.loadExercise(nil as Exercise?)
+                        formViewModel.toggleForm()
+                    }
                 }) {
                     Image(systemName: formViewModel.showForm ? "minus" : "plus")
                 }
                 .accessibilityIdentifier(IDS.addExerciseButton)
             }
-        }
+        })
         .onChange(of: activeSetViewModel.isEditing) { _, newValue in
             if !newValue {
                 activeSetViewModel.resetEditingState()
@@ -168,85 +208,48 @@ struct MuscleCategoryView: View {
 
     private var exerciseListSection: some View {
         Group {
-            if viewModel.currentExercise != nil {
-                if let currentExercise = viewModel.currentExercise {
-                    ExerciseCardView(
-                        viewModel: ExerciseCardViewModel(exercise: currentExercise) { updated in
-                            viewModel.updateExercise(updated)
-                        }
-                    )
-                    .padding(.vertical, 0.5)
-                    .transition(.move(edge: .top))
-                    .listRowSeparator(.hidden)
-                }
-            } else {
-                ForEach(viewModel.exercises.filter { !$0.isCompleted }, id: \.id) { exercise in
-                    ExerciseCardView(
-                        viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
-                            viewModel.updateExercise(updated)
-                        }
-                    )
-                    .padding(.vertical, 0.5)
-                    .transition(.move(edge: .top))
-                    .listRowSeparator(.hidden)
-                }
-
-                ForEach(viewModel.exercises.filter { $0.isCompleted }, id: \.id) { exercise in
-                    ExerciseCardView(
-                        viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
-                            viewModel.updateExercise(updated)
-                        }
-                    )
-                    .padding(.vertical, 0.5)
-                    .transition(.move(edge: .bottom))
-                    .listRowSeparator(.hidden)
-                }
-            }
+            incompleteExercisesSection
+            completedExercisesSection
         }
-        .animation(.easeInOut, value: viewModel.exercises.map { $0.isCompleted })
-        .animation(.easeInOut, value: viewModel.currentExercise)
     }
 
-    private var exerciseFormSection: some View {
-        Section(header: Text(L10n.cardCreationTitle)) {
-            TextField(L10n.cardCreationPlaceholderTextName, text: $formViewModel.name)
-                .accessibilityIdentifier(IDS.nameField)
-                .keyboardType(.default)
-
-            TextField(L10n.cardCreationPlaceholderTextWeight, text: $formViewModel.weight)
-                .accessibilityIdentifier(IDS.weightField)
-                .keyboardType(.decimalPad)
-
-            TextField(L10n.cardCreationPlaceholderTextRepetitions, text: $formViewModel.reps)
-                .accessibilityIdentifier(IDS.repsField)
-                .keyboardType(.numberPad)
-
-            TextField(L10n.cardCreationPlaceholderTextSets, text: $formViewModel.sets)
-                .accessibilityIdentifier(IDS.setsField)
-                .keyboardType(.numberPad)
-
-            TextField(L10n.cardCreationPlaceholderTextSeat, text: $formViewModel.seat)
-                .accessibilityIdentifier(IDS.seatField)
-                .keyboardType(.numberPad)
-
-            HStack {
-                Button(L10n.cardCreationSave) {
-                    if let newExercise = formViewModel.createExercise() {
-                        viewModel.add(newExercise)
-                        formViewModel.clearForm()
+    private var incompleteExercisesSection: some View {
+        ForEach(viewModel.exercises.filter { !$0.isCompleted }, id: \.id) { exercise in
+            ExerciseCardView(
+                viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
+                    viewModel.updateExercise(updated)
+                },
+                onEdit: { exercise in
+                    withAnimation {
+                        formViewModel.loadExercise(exercise)
+                        formViewModel.toggleForm()
                     }
                 }
-                .disabled(!formViewModel.isFormValid)
-                .accessibilityIdentifier(IDS.saveButton)
-
-                Spacer()
-
-                Button(L10n.cardCreationCancel) {
-                    formViewModel.clearForm()
-                }
-                .accessibilityIdentifier(IDS.cancelButton)
-            }
-            .padding(.top, 8)
+            )
+            .padding(.vertical, 0.5)
+            .transition(.move(edge: .top))
+            .listRowSeparator(.hidden)
         }
+        .animation(.easeInOut, value: viewModel.exercises.map { $0.isCompleted })
+    }
+
+    private var completedExercisesSection: some View {
+        ForEach(viewModel.exercises.filter { $0.isCompleted }, id: \.id) { exercise in
+            ExerciseCardView(
+                viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
+                    viewModel.updateExercise(updated)
+                },
+                onEdit: { exercise in
+                    withAnimation {
+                        formViewModel.loadExercise(exercise)
+                        formViewModel.toggleForm()
+                    }
+                }
+            )
+            .padding(.vertical, 0.5)
+            .transition(.move(edge: .bottom))
+            .listRowSeparator(.hidden)
+        }
+        .animation(.easeInOut, value: viewModel.currentExercise)
     }
 }

@@ -7,92 +7,63 @@ private struct IDS {
 
 struct ExerciseCardView: View {
     @ObservedObject var viewModel: ExerciseCardViewModel
-    
-    @State private var activeSheet: InteractionField?
-    @State private var inputValue = ""
-    
+    let onEdit: (Exercise) -> Void
+
     var body: some View {
         VStack(spacing: 8) {
             CardTopSectionView(
                 title: viewModel.exercise.name,
-                seatText: viewModel.displaySeatText,
-                onSeatTap: {
-                    inputValue = viewModel.exercise.seatSetting ?? ""
-                    activeSheet = .edit(.seatChip)
-                }
+                seatText: viewModel.displaySeatText
             )
             
             Divider().background(AppStyle.Color.purpleGrey).padding(.horizontal, 4)
             
             CardBottomSectionView(
                 viewModel: viewModel,
-                currentReps: viewModel.exercise.reps,
-                onFieldTap: { field, value in
-                    inputValue = value
-                    activeSheet = field
-                }
+                currentReps: viewModel.exercise.reps
             )
             .scaleEffect(1.1)
             .padding(.top, 2)
+            
+            // Bearbeiten-Button hinzufügen
+            Button(action: {
+                onEdit(viewModel.exercise) // onEdit aufrufen, wenn der Button geklickt wird
+            }) {
+                Image(systemName: "pencil")
+                    .foregroundColor(AppStyle.Color.white)
+                    .padding(8)
+                    .background(AppStyle.Color.purpleGrey)
+                    .clipShape(Circle())
+            }
+            .padding(.top, 8)
         }
         .padding(.vertical, 12)
         .padding(.horizontal)
         .background(viewModel.exercise.isCompleted ? AppStyle.Color.exerciseCardDoneBackGround : AppStyle.Color.exerciseCardBackground)
         .cornerRadius(AppStyle.CornerRadius.card)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 4)
-        .sheet(item: $activeSheet) { sheet in
-            editSheet(for: sheet)
-        }
     }
+}
+
+struct CardTopSectionView: View {
+    let title: String
+    let seatText: String
     
-    @ViewBuilder
-    private func editSheet(for field: InteractionField) -> some View {
-        if case let .edit(type) = field {
-            let metadata = type.metadata
-            EditValueSheet(
-                title: metadata.title,
-                placeholder: metadata.placeholder,
-                input: $inputValue,
-                onSave: {
-                    metadata.save(inputValue, viewModel)
-                    activeSheet = nil
-                },
-                onCancel: {
-                    activeSheet = nil
-                },
-                keyboardType: metadata.keyboardType,
-                saveDisabled: !metadata.validate(inputValue)
+    var body: some View {
+        HStack(alignment: .top) {
+            TextView(
+                styled: StyledExerciseField(field: .action(.exerciseCardTitleText)),
+                content: title
+            ).accessibilityIdentifier(IDS.nameLabel)
+            
+            Spacer()
+            
+            AppChipView(
+                styled: StyledExerciseField(field: .edit(.seatChip)),
+                content: seatText
             )
-        } else {
-            EmptyView()
-        }
-    }
-    
-    struct CardTopSectionView: View {
-        let title: String
-        let seatText: String
-        let onSeatTap: () -> Void
-        
-        var body: some View {
-            HStack(alignment: .top) {
-                
-                TextView(
-                    styled: StyledExerciseField(field: .action(.exerciseCardTitleText)),
-                    content: title
-                ).accessibilityIdentifier(IDS.nameLabel)
-                
-                Spacer()
-                
-                Button(action: onSeatTap) {
-                    AppChipView(
-                        styled: StyledExerciseField(field: .edit(.seatChip)),
-                        content: seatText
-                    )
-                    .scaleEffect(1.1)
-                }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier(IDS.seatLabel)
-            }
+            .scaleEffect(1.1)
+            .accessibilityIdentifier(IDS.seatLabel)
         }
     }
 }
@@ -100,7 +71,6 @@ struct ExerciseCardView: View {
 struct CardBottomSectionView: View {
     @ObservedObject var viewModel: ExerciseCardViewModel
     let currentReps: Int
-    let onFieldTap: (InteractionField, String) -> Void
     
     var body: some View {
         let styledFields = viewModel.generateStyledFieldData()
@@ -118,23 +88,13 @@ struct CardBottomSectionView: View {
             
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(leftFields) { styled in
-                    Button(action: {
-                        onFieldTap(styled.data.field, styled.data.prefilledValue)
-                    }) {
-                        AppChipView(styled: styled)
-                    }
-                    .buttonStyle(.plain)
+                    AppChipView(styled: styled)
                 }
             }
             
             if let right = rightField {
-                Button(action: {
-                    onFieldTap(right.data.field, right.data.prefilledValue)
-                }) {
-                    AppChipView(styled: right)
-                }
-                .buttonStyle(.plain)
-                .frame(height: right.style.frameHeight)
+                AppChipView(styled: right)
+                    .frame(height: right.style.frameHeight)
             }
         }
         .padding(.horizontal, AppStyle.Padding.horizontal)

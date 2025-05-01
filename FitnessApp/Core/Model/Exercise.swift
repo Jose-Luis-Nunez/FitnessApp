@@ -2,7 +2,7 @@ import Foundation
 
 struct Exercise: Identifiable, Codable,Equatable {
     let id: UUID
-    let name: String
+    var name: String
     var weight: Int
     var reps: Int
     var sets: Int

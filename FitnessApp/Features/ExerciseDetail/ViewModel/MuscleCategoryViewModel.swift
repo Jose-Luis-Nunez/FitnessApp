@@ -10,47 +10,66 @@ struct SetProgress {
     let weight: Int
 }
 
-final class MuscleCategoryViewModel: ObservableObject {
+class MuscleCategoryViewModel: ObservableObject {
     @Published var exercises: [Exercise]
     @Published var showResetConfirmation: Bool = false
-
+    
     let group: MuscleCategoryGroup
-    private let storageService: ExerciseStorageService
     let formViewModel: ExerciseFormViewModel
     let activeSetViewModel: ActiveSetViewModel
-
+    
     init(group: MuscleCategoryGroup) {
         self.group = group
-        self.storageService = ExerciseStorageService()
+        self.exercises = []
         self.formViewModel = ExerciseFormViewModel()
         self.activeSetViewModel = ActiveSetViewModel()
-        self.exercises = storageService.load(for: group)
     }
-
+    
     var currentExercise: Exercise? {
         activeSetViewModel.currentExercise
     }
-
-    var setProgress: [SetProgress] {
-        activeSetViewModel.setProgress
-    }
-
+    
     var currentSet: Int {
         activeSetViewModel.currentSet
     }
-
-    var isSetInProgress: Bool {
-        activeSetViewModel.isSetInProgress
+    
+    var setProgress: [SetProgress] {
+        activeSetViewModel.setProgress
     }
-
-    var isLastSetCompleted: Bool {
-        activeSetViewModel.isLastSetCompleted
-    }
-
+    
     var timerSeconds: Int {
         activeSetViewModel.timerSeconds
     }
-
+    
+    var isSetInProgress: Bool {
+        activeSetViewModel.isSetInProgress
+    }
+    
+    var isLastSetCompleted: Bool {
+        activeSetViewModel.isLastSetCompleted
+    }
+    
+    var hasActiveExercise: Bool {
+        exercises.contains { !$0.isCompleted }
+    }
+    
+    func add(_ exercise: Exercise, atTop: Bool) {
+        if atTop {
+            exercises.insert(exercise, at: 0)
+        } else {
+            exercises.append(exercise)
+        }
+    }
+    
+    func updateExercise(_ updatedExercise: Exercise) {
+        if let index = exercises.firstIndex(where: { $0.id == updatedExercise.id }) {
+            exercises[index] = updatedExercise
+            if activeSetViewModel.currentExercise?.id == updatedExercise.id {
+                activeSetViewModel.currentExercise = updatedExercise
+            }
+        }
+    }
+    
     func startSet(for exercise: Exercise) {
         activeSetViewModel.startSet(for: exercise)
     }
@@ -61,64 +80,38 @@ final class MuscleCategoryViewModel: ObservableObject {
     
     func completeCurrentSet() {
         activeSetViewModel.completeCurrentSet()
-        if let exercise = activeSetViewModel.currentExercise,
-           let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
-            exercises[index] = exercise
-            storageService.save(exercises, for: group)
-        }
-    }
-    
-    func updateCurrentReps(_ newReps: Int, _ newWeight: Int) {
-        activeSetViewModel.updateCurrentReps(newReps, newWeight)
-        if let exercise = activeSetViewModel.currentExercise,
-           let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
-            exercises[index] = exercise
-            storageService.save(exercises, for: group)
-        }
     }
     
     func finishExercise() {
-        guard let exercise = activeSetViewModel.currentExercise,
-              let index = exercises.firstIndex(where: { $0.id == exercise.id }) else { return }
-        
-        var updatedExercise = exercise
-        updatedExercise.isCompleted = true
-        exercises[index] = updatedExercise
-        activeSetViewModel.finishExercise()
-        storageService.save(exercises, for: group)
-    }
-    
-    func resetProgress() {
-        activeSetViewModel.resetProgress()
-        exercises = exercises.map { exercise in
-            var updatedExercise = exercise
-            updatedExercise.isCompleted = false
-            return updatedExercise
-        }
-        storageService.save(exercises, for: group)
-    }
-    
-    func add(_ exercise: Exercise) {
-        exercises.append(exercise)
-        storageService.save(exercises, for: group)
-    }
-    
-    func updateExercise(_ exercise: Exercise) {
-        if let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
-            exercises[index] = exercise
-            storageService.save(exercises, for: group)
+        if let currentExercise = activeSetViewModel.currentExercise,
+           let index = exercises.firstIndex(where: { $0.id == currentExercise.id }) {
+            var updatedExercise = currentExercise
+            updatedExercise.isCompleted = true
+            exercises[index] = updatedExercise
+            activeSetViewModel.finishExercise()
         }
     }
     
-    var hasActiveExercise: Bool {
-        !exercises.filter { !$0.isCompleted }.isEmpty
-    }
-
     func startTimer() {
         activeSetViewModel.startTimer()
     }
-
+    
     func stopTimer() {
         activeSetViewModel.stopTimer()
+    }
+    
+    func updateCurrentReps(_ newReps: Int, _ newWeight: Int) {
+        // Nur die ActiveSetView aktualisieren, nicht die exercises-Liste
+        activeSetViewModel.updateCurrentReps(newReps, newWeight)
+    }
+    
+    func resetProgress() {
+        exercises = exercises.map { exercise in
+            var updated = exercise
+            updated.isCompleted = false
+            return updated
+        }
+        activeSetViewModel.resetProgress()
+        stopTimer()
     }
 }
