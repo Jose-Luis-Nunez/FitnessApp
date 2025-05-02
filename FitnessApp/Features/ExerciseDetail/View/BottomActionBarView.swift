@@ -88,7 +88,7 @@ struct FloatingActionButtonsView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             backgroundColor
-                .frame(height: buttonHeightRegular)
+                .frame(height: buttonHeightRegular + 10)
                 .frame(maxWidth: .infinity)
                 .offset(y: -(buttonHeightRegular / 2 + extraOffset))
             
