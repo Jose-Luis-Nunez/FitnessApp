@@ -39,7 +39,6 @@ struct ExercisePickerView: View {
                     .fontWeight(.bold)
                     .padding(.bottom, 16)
                 
-                // Textfeld für den Namen
                 TextField("Name der Übung", text: $name)
                     .padding(12)
                     .background(AppStyle.Color.backgroundColor)
@@ -51,42 +50,12 @@ struct ExercisePickerView: View {
                     )
                     .padding(.bottom, 16)
                 
-                // Picker für Wiederholungen, Gewicht und Sätze
-                VStack(spacing: 0) {
-                    HStack {
-                        Text("Wiederholung")
-                            .font(.headline)
-                            .foregroundColor(textColor)
-                            .frame(maxWidth: .infinity)
-                        Text("Gewicht")
-                            .font(.headline)
-                            .foregroundColor(textColor)
-                            .frame(maxWidth: .infinity)
+                HStack(alignment: .top, spacing: 0) {
+                    VStack {
                         Text("Sätze")
                             .font(.headline)
                             .foregroundColor(textColor)
                             .frame(maxWidth: .infinity)
-                    }
-                    
-                    HStack {
-                        Picker("Reps", selection: $reps) {
-                            ForEach(repsRange, id: \.self) { value in
-                                Text("\(value)").tag(value).foregroundColor(pickerColor)
-                            }
-                        }
-                        .pickerStyle(.wheel)
-                        .frame(maxWidth: .infinity)
-                        .clipped()
-                        
-                        Picker("Weight", selection: $weight) {
-                            ForEach(weightRange, id: \.self) { value in
-                                Text("\(value) kg").tag(value).foregroundColor(pickerColor)
-                            }
-                        }
-                        .pickerStyle(.wheel)
-                        .frame(maxWidth: .infinity)
-                        .clipped()
-                        
                         Picker("Sets", selection: $sets) {
                             ForEach(setsRange, id: \.self) { value in
                                 Text("\(value)").tag(value).foregroundColor(pickerColor)
@@ -96,10 +65,39 @@ struct ExercisePickerView: View {
                         .frame(maxWidth: .infinity)
                         .clipped()
                     }
-                    .frame(height: 120)
+                    
+                    VStack {
+                        Text("Wiederholung")
+                            .font(.headline)
+                            .foregroundColor(textColor)
+                            .frame(maxWidth: .infinity)
+                        Picker("Reps", selection: $reps) {
+                            ForEach(repsRange, id: \.self) { value in
+                                Text("\(value)").tag(value).foregroundColor(pickerColor)
+                            }
+                        }
+                        .pickerStyle(.wheel)
+                        .frame(maxWidth: .infinity)
+                        .clipped()
+                    }
+                    
+                    VStack {
+                        Text("Gewicht")
+                            .font(.headline)
+                            .foregroundColor(textColor)
+                            .frame(maxWidth: .infinity)
+                        Picker("Weight", selection: $weight) {
+                            ForEach(weightRange, id: \.self) { value in
+                                Text("\(value) kg").tag(value).foregroundColor(pickerColor)
+                            }
+                        }
+                        .pickerStyle(.wheel)
+                        .frame(maxWidth: .infinity)
+                        .clipped()
+                    }
                 }
+                .frame(height: 120)
                 
-                // Buttons
                 HStack {
                     Spacer()
                     

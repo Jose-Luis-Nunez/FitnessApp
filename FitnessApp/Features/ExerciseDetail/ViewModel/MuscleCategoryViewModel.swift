@@ -101,7 +101,6 @@ class MuscleCategoryViewModel: ObservableObject {
     }
     
     func updateCurrentReps(_ newReps: Int, _ newWeight: Int) {
-        // Nur die ActiveSetView aktualisieren, nicht die exercises-Liste
         activeSetViewModel.updateCurrentReps(newReps, newWeight)
     }
     

@@ -17,7 +17,7 @@ struct MuscleCategoryView: View {
     @StateObject private var viewModel: MuscleCategoryViewModel
     @StateObject private var formViewModel: ExerciseFormViewModel
     @StateObject private var activeSetViewModel: ActiveSetViewModel
-
+    
     init(group: MuscleCategoryGroup) {
         self.group = group
         let muscleCategoryViewModel = MuscleCategoryViewModel(group: group)
@@ -25,7 +25,7 @@ struct MuscleCategoryView: View {
         _formViewModel = StateObject(wrappedValue: muscleCategoryViewModel.formViewModel)
         _activeSetViewModel = StateObject(wrappedValue: muscleCategoryViewModel.activeSetViewModel)
     }
-
+    
     private var bottomBarVM: BottomActionBarViewModel {
         BottomActionBarViewModel(
             isSetInProgress: viewModel.isSetInProgress,
@@ -36,7 +36,7 @@ struct MuscleCategoryView: View {
             isLastSetCompleted: viewModel.isLastSetCompleted
         )
     }
-
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .bottom) {
@@ -44,7 +44,7 @@ struct MuscleCategoryView: View {
                     List {
                         exerciseListSection
                             .listRowBackground(AppStyle.Color.backgroundColor)
-
+                        
                         if let exercise = activeSetViewModel.currentExercise {
                             Section {
                                 ActiveSetView(
@@ -62,7 +62,7 @@ struct MuscleCategoryView: View {
                     .padding(.bottom, formViewModel.showForm ? 300 : (activeSetViewModel.isEditing ? 200 : (bottomBarVM.shouldShow ? 80 : 0)))
                 }
                 .background(AppStyle.Color.backgroundColor)
-
+                
                 if bottomBarVM.shouldShow {
                     BottomActionBarView(
                         viewModel: bottomBarVM,
@@ -71,18 +71,14 @@ struct MuscleCategoryView: View {
                             print("Exercises: \(viewModel.exercises.map { "\($0.name) - isCompleted: \($0.isCompleted)" })")
                             viewModel.startTimer()
                             if let activeExercise = viewModel.exercises.first(where: { !$0.isCompleted }) {
-                                print("Found active exercise: \(activeExercise.name)")
                                 if viewModel.currentExercise == nil || viewModel.currentExercise?.isCompleted == true {
-                                    print("Starting set for \(activeExercise.name)")
                                     viewModel.startSet(for: activeExercise)
                                 } else {
-                                    print("Starting next set for \(viewModel.currentExercise?.name ?? "none")")
                                     viewModel.startNextSet()
                                 }
                             } else {
                                 print("No active exercise found")
                             }
-                            print("Current Exercise after onStart: \(viewModel.currentExercise?.name ?? "nil")")
                         },
                         onCompleteSet: {
                             viewModel.stopTimer()
@@ -112,7 +108,7 @@ struct MuscleCategoryView: View {
                         }
                     )
                 }
-
+                
                 if activeSetViewModel.isEditing {
                     EditPickerView(
                         title: activeSetViewModel.editMode == SetEditingMode.less ? "Verschlechtert" : "Verbessert",
@@ -134,7 +130,7 @@ struct MuscleCategoryView: View {
                     .transition(.move(edge: .bottom))
                     .ignoresSafeArea(edges: .bottom)
                 }
-
+                
                 if formViewModel.showForm {
                     ExercisePickerView(
                         title: formViewModel.editingExercise != nil ? "Übung bearbeiten" : L10n.cardCreationTitle,
@@ -205,51 +201,93 @@ struct MuscleCategoryView: View {
             viewModel.stopTimer()
         }
     }
-
+    
     private var exerciseListSection: some View {
-        Group {
-            incompleteExercisesSection
-            completedExercisesSection
+        let isActiveSetVisible = activeSetViewModel.currentExercise != nil
+        
+        if isActiveSetVisible {
+            let incompleteExercises = viewModel.exercises.filter { !$0.isCompleted }
+            if let firstIncomplete = incompleteExercises.first {
+                return AnyView(
+                    ExerciseCardView(
+                        viewModel: ExerciseCardViewModel(exercise: firstIncomplete) { updated in
+                            viewModel.updateExercise(updated)
+                        },
+                        onEdit: { exercise in
+                            withAnimation {
+                                formViewModel.loadExercise(exercise)
+                                formViewModel.toggleForm()
+                            }
+                        }
+                    )
+                    .padding(.vertical, 0.5)
+                    .transition(.move(edge: .top))
+                    .listRowSeparator(.hidden)
+                )
+            } else {
+                return AnyView(EmptyView())
+            }
+        } else {
+            return AnyView(
+                Group {
+                    incompleteExercisesSection
+                    completedExercisesSection
+                }
+            )
         }
     }
-
+    
     private var incompleteExercisesSection: some View {
-        ForEach(viewModel.exercises.filter { !$0.isCompleted }, id: \.id) { exercise in
-            ExerciseCardView(
-                viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
-                    viewModel.updateExercise(updated)
-                },
-                onEdit: { exercise in
-                    withAnimation {
-                        formViewModel.loadExercise(exercise)
-                        formViewModel.toggleForm()
-                    }
+        let incompleteExercises = viewModel.exercises.filter { !$0.isCompleted }
+        
+        if incompleteExercises.isEmpty {
+            return AnyView(EmptyView())
+        } else {
+            return AnyView(
+                ForEach(incompleteExercises, id: \.id) { exercise in
+                    ExerciseCardView(
+                        viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
+                            viewModel.updateExercise(updated)
+                        },
+                        onEdit: { exercise in
+                            withAnimation {
+                                formViewModel.loadExercise(exercise)
+                                formViewModel.toggleForm()
+                            }
+                        }
+                    )
+                    .padding(.vertical, 0.5)
+                    .transition(.move(edge: .top))
+                    .listRowSeparator(.hidden)
                 }
             )
-            .padding(.vertical, 0.5)
-            .transition(.move(edge: .top))
-            .listRowSeparator(.hidden)
         }
-        .animation(.easeInOut, value: viewModel.exercises.map { $0.isCompleted })
     }
-
+    
     private var completedExercisesSection: some View {
-        ForEach(viewModel.exercises.filter { $0.isCompleted }, id: \.id) { exercise in
-            ExerciseCardView(
-                viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
-                    viewModel.updateExercise(updated)
-                },
-                onEdit: { exercise in
-                    withAnimation {
-                        formViewModel.loadExercise(exercise)
-                        formViewModel.toggleForm()
-                    }
+        let completedExercises = viewModel.exercises.filter { $0.isCompleted }
+        
+        if completedExercises.isEmpty {
+            return AnyView(EmptyView())
+        } else {
+            return AnyView(
+                ForEach(completedExercises, id: \.id) { exercise in
+                    ExerciseCardView(
+                        viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
+                            viewModel.updateExercise(updated)
+                        },
+                        onEdit: { exercise in
+                            withAnimation {
+                                formViewModel.loadExercise(exercise)
+                                formViewModel.toggleForm()
+                            }
+                        }
+                    )
+                    .padding(.vertical, 0.5)
+                    .transition(.move(edge: .bottom))
+                    .listRowSeparator(.hidden)
                 }
             )
-            .padding(.vertical, 0.5)
-            .transition(.move(edge: .bottom))
-            .listRowSeparator(.hidden)
         }
-        .animation(.easeInOut, value: viewModel.currentExercise)
     }
 }

@@ -12,7 +12,7 @@ enum ActionType: String {
     case analyticsIcon, analyticsText, exerciseCardTitleText
 }
 
-enum InteractionField: Identifiable {
+enum InteractionField: Identifiable, Equatable {
     case edit(EditType), action(ActionType)
     
     var id: String {

@@ -1,12 +1,34 @@
 import SwiftUI
 
+enum AppChipSize {
+    case regular
+    case large
+    case wide
+}
+
 struct AppChip: View {
     let text: String
     let fontColor: Color
     let backgroundColor: Color
     var size: AppChipSize = .regular
     let icon: ChipIcon?
+    let onTap: (() -> Void)?
     
+    init(
+        text: String,
+        fontColor: Color,
+        backgroundColor: Color,
+        size: AppChipSize = .regular,
+        icon: ChipIcon? = nil,
+        onTap: (() -> Void)? = nil
+    ) {
+        self.text = text
+        self.fontColor = fontColor
+        self.backgroundColor = backgroundColor
+        self.size = size
+        self.icon = icon
+        self.onTap = onTap
+    }
     
     var body: some View {
         HStack(spacing: 6) {
@@ -21,6 +43,9 @@ struct AppChip: View {
         .padding(.vertical, verticalPadding)
         .background(backgroundColor)
         .cornerRadius(12)
+        .onTapGesture {
+            onTap?()
+        }
     }
     
     private var font: Font {
@@ -46,10 +71,4 @@ struct AppChip: View {
         case .wide: return 11
         }
     }
-}
-
-enum AppChipSize {
-    case regular
-    case large
-    case wide
 }

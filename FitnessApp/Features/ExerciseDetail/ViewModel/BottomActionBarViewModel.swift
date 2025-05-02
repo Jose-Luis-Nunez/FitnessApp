@@ -9,7 +9,7 @@ struct BottomActionBarViewModel {
     let isLastSetCompleted: Bool
     
     var shouldShow: Bool {
-        showStartButton || showSetControls || showResetProgress || showFinishButton
+        showStartButton || showSetControls || showResetProgress || showFinishButton || showAddExerciseButton
     }
 
     var showStartButton: Bool {
@@ -26,6 +26,10 @@ struct BottomActionBarViewModel {
 
     var showFinishButton: Bool {
         isLastSetCompleted && currentExercise != nil
+    }
+
+    var showAddExerciseButton: Bool {
+        (exercises.isEmpty || (showStartButton && currentSet == 0) || showResetProgress)
     }
 
     var startButtonTitle: String {

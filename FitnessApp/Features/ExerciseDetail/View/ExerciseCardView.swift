@@ -8,7 +8,7 @@ private struct IDS {
 struct ExerciseCardView: View {
     @ObservedObject var viewModel: ExerciseCardViewModel
     let onEdit: (Exercise) -> Void
-
+    
     var body: some View {
         VStack(spacing: 8) {
             CardTopSectionView(
@@ -20,22 +20,11 @@ struct ExerciseCardView: View {
             
             CardBottomSectionView(
                 viewModel: viewModel,
-                currentReps: viewModel.exercise.reps
+                currentReps: viewModel.exercise.reps,
+                onEdit: onEdit
             )
             .scaleEffect(1.1)
             .padding(.top, 2)
-            
-            // Bearbeiten-Button hinzufügen
-            Button(action: {
-                onEdit(viewModel.exercise) // onEdit aufrufen, wenn der Button geklickt wird
-            }) {
-                Image(systemName: "pencil")
-                    .foregroundColor(AppStyle.Color.white)
-                    .padding(8)
-                    .background(AppStyle.Color.purpleGrey)
-                    .clipShape(Circle())
-            }
-            .padding(.top, 8)
         }
         .padding(.vertical, 12)
         .padding(.horizontal)
@@ -60,7 +49,8 @@ struct CardTopSectionView: View {
             
             AppChipView(
                 styled: StyledExerciseField(field: .edit(.seatChip)),
-                content: seatText
+                content: seatText,
+                onTap: nil
             )
             .scaleEffect(1.1)
             .accessibilityIdentifier(IDS.seatLabel)
@@ -71,6 +61,7 @@ struct CardTopSectionView: View {
 struct CardBottomSectionView: View {
     @ObservedObject var viewModel: ExerciseCardViewModel
     let currentReps: Int
+    let onEdit: (Exercise) -> Void
     
     var body: some View {
         let styledFields = viewModel.generateStyledFieldData()
@@ -78,25 +69,59 @@ struct CardBottomSectionView: View {
         let rightField = styledFields.first(where: { $0.style.column == .right })
         
         HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: -24) {
-                AppIconView(styled: StyledExerciseField(field: .action(.analyticsIcon)))
-                
-                TextView(styled: StyledExerciseField(field: .action(.analyticsText))).offset(x: 10)
-            }
+            AnalyticsSectionView()
             
             Spacer(minLength: 4)
             
-            VStack(alignment: .leading, spacing: 6) {
-                ForEach(leftFields) { styled in
-                    AppChipView(styled: styled)
-                }
-            }
+            LeftFieldsView(fields: leftFields, exercise: viewModel.exercise, onEdit: onEdit)
             
             if let right = rightField {
-                AppChipView(styled: right)
-                    .frame(height: right.style.frameHeight)
+                RightFieldView(field: right, exercise: viewModel.exercise, onEdit: onEdit)
             }
         }
         .padding(.horizontal, AppStyle.Padding.horizontal)
+    }
+}
+
+struct AnalyticsSectionView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: -24) {
+            AppIconView(styled: StyledExerciseField(field: .action(.analyticsIcon)))
+            
+            TextView(styled: StyledExerciseField(field: .action(.analyticsText)))
+                .offset(x: 10)
+        }
+    }
+}
+
+struct LeftFieldsView: View {
+    let fields: [StyledExerciseField]
+    let exercise: Exercise
+    let onEdit: (Exercise) -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ForEach(fields) { styled in
+                AppChipView(styled: styled, onTap: handleTap(for: styled))
+            }
+        }
+    }
+    
+    private func handleTap(for styled: StyledExerciseField) -> (() -> Void)? {
+        if styled.data.field == .edit(.repsChip) || styled.data.field == .edit(.setsChip) {
+            return { onEdit(exercise) }
+        }
+        return nil
+    }
+}
+
+struct RightFieldView: View {
+    let field: StyledExerciseField
+    let exercise: Exercise
+    let onEdit: (Exercise) -> Void
+    
+    var body: some View {
+        AppChipView(styled: field, onTap: field.data.field == .edit(.weightChip) ? { onEdit(exercise) } : nil)
+            .frame(height: field.style.frameHeight)
     }
 }

@@ -93,33 +93,30 @@ struct FloatingActionButtonsView: View {
                 .offset(y: -(buttonHeightRegular / 2 + extraOffset))
             
             HStack(spacing: 12) {
+                if viewModel.showAddExerciseButton {
+                    actionButtonLarge(
+                        text: "Add Exercise",
+                        textFont: AppStyle.Font.bottomBarButtons,
+                        backgroundColor: AppStyle.Color.secondaryButton,
+                        fontColor: AppStyle.Color.white,
+                        action: onAddExercise
+                    )
+                }
+                
                 if viewModel.showStartButton {
-                    HStack(spacing: 32) {
-                        if viewModel.currentSet == 0 {
-                            actionButtonLarge(
-                                text: "Add Exercise",
-                                textFont: AppStyle.Font.bottomBarButtons,
-                                backgroundColor: AppStyle.Color.secondaryButton,
-                                fontColor: AppStyle.Color.white,
-                                action: onAddExercise
-                            )
-                        }
-                        
-                        actionButtonLarge(
-                            text: viewModel.startButtonTitle,
-                            textFont: AppStyle.Font.bottomBarButtons,
-                            backgroundColor: AppStyle.Color.primaryButton,
-                            fontColor: AppStyle.Color.white,
-                            action: onStart
-                        )
-                    }
+                    actionButtonLarge(
+                        text: viewModel.startButtonTitle,
+                        textFont: AppStyle.Font.bottomBarButtons,
+                        backgroundColor: AppStyle.Color.primaryButton,
+                        fontColor: AppStyle.Color.white,
+                        action: onStart
+                    )
                 }
                 
                 if viewModel.showSetControls {
-                    
                     actionButtonRegular(
                         title: "Less",
-                        font:AppStyle.Font.bottomBarButtons,
+                        font: AppStyle.Font.bottomBarButtons,
                         backgroundColor: AppStyle.Color.greenLight,
                         fontColor: AppStyle.Color.white,
                         action: onEditLess
@@ -127,7 +124,7 @@ struct FloatingActionButtonsView: View {
                     
                     actionButtonRegular(
                         title: "Done",
-                        font:AppStyle.Font.bottomBarButtons,
+                        font: AppStyle.Font.bottomBarButtons,
                         backgroundColor: AppStyle.Color.green,
                         fontColor: AppStyle.Color.white,
                         action: onCompleteSet
@@ -135,7 +132,7 @@ struct FloatingActionButtonsView: View {
                     
                     actionButtonRegular(
                         title: "More",
-                        font:AppStyle.Font.bottomBarButtons,
+                        font: AppStyle.Font.bottomBarButtons,
                         backgroundColor: AppStyle.Color.greenLight,
                         fontColor: AppStyle.Color.white,
                         action: onEditMore
@@ -145,7 +142,7 @@ struct FloatingActionButtonsView: View {
                 if viewModel.showResetProgress {
                     actionButtonRegular(
                         title: "Reset",
-                        font:AppStyle.Font.bottomBarButtons,
+                        font: AppStyle.Font.bottomBarButtons,
                         backgroundColor: AppStyle.Color.green,
                         fontColor: AppStyle.Color.white,
                         action: onReset
@@ -155,7 +152,7 @@ struct FloatingActionButtonsView: View {
                 if viewModel.showFinishButton {
                     actionButtonRegular(
                         title: "Beenden",
-                        font:AppStyle.Font.bottomBarButtons,
+                        font: AppStyle.Font.bottomBarButtons,
                         backgroundColor: AppStyle.Color.green,
                         fontColor: AppStyle.Color.white,
                         action: onFinish
@@ -171,12 +168,11 @@ struct FloatingActionButtonsView: View {
     @ViewBuilder
     private func actionButtonRegular(
         title: String,
-        font:Font,
-        backgroundColor:Color,
+        font: Font,
+        backgroundColor: Color,
         fontColor: Color,
         action: @escaping () -> Void
     ) -> some View {
-        
         Button(action: action) {
             Text(title)
                 .font(font)
@@ -190,12 +186,11 @@ struct FloatingActionButtonsView: View {
     @ViewBuilder
     private func actionButtonLarge(
         text: String,
-        textFont:Font,
+        textFont: Font,
         backgroundColor: Color,
         fontColor: Color,
         action: @escaping () -> Void
     ) -> some View {
-        
         Button(action: action) {
             Text(text)
                 .font(textFont)

@@ -34,7 +34,6 @@ class ExerciseFormViewModel: ObservableObject {
         guard isFormValid else { return nil }
         
         if let existingExercise = editingExercise {
-            // Bearbeiten einer bestehenden Übung
             return Exercise(
                 id: existingExercise.id,
                 name: name,
@@ -45,7 +44,6 @@ class ExerciseFormViewModel: ObservableObject {
                 isCompleted: existingExercise.isCompleted
             )
         } else {
-            // Neue Übung erstellen
             return Exercise(
                 name: name,
                 weight: weight,
