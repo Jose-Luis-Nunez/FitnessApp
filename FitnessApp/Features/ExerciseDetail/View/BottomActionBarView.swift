@@ -115,24 +115,24 @@ struct FloatingActionButtonsView: View {
                 
                 if viewModel.showSetControls {
                     actionButtonRegular(
-                        title: "Less",
-                        font: AppStyle.Font.bottomBarButtons,
+                        text: "Less",
+                        textFont: AppStyle.Font.bottomBarButtons,
                         backgroundColor: AppStyle.Color.greenLight,
                         fontColor: AppStyle.Color.white,
                         action: onEditLess
                     )
                     
                     actionButtonRegular(
-                        title: "Done",
-                        font: AppStyle.Font.bottomBarButtons,
+                        text: "Done",
+                        textFont: AppStyle.Font.bottomBarButtons,
                         backgroundColor: AppStyle.Color.green,
                         fontColor: AppStyle.Color.white,
                         action: onCompleteSet
                     )
                     
                     actionButtonRegular(
-                        title: "More",
-                        font: AppStyle.Font.bottomBarButtons,
+                        text: "More",
+                        textFont: AppStyle.Font.bottomBarButtons,
                         backgroundColor: AppStyle.Color.greenLight,
                         fontColor: AppStyle.Color.white,
                         action: onEditMore
@@ -140,9 +140,9 @@ struct FloatingActionButtonsView: View {
                 }
                 
                 if viewModel.showResetProgress {
-                    actionButtonRegular(
-                        title: "Reset",
-                        font: AppStyle.Font.bottomBarButtons,
+                    actionButtonLarge(
+                        text: "Reset",
+                        textFont: AppStyle.Font.bottomBarButtons,
                         backgroundColor: AppStyle.Color.green,
                         fontColor: AppStyle.Color.white,
                         action: onReset
@@ -150,9 +150,9 @@ struct FloatingActionButtonsView: View {
                 }
                 
                 if viewModel.showFinishButton {
-                    actionButtonRegular(
-                        title: "Beenden",
-                        font: AppStyle.Font.bottomBarButtons,
+                    actionButtonLarge(
+                        text: "Beenden",
+                        textFont: AppStyle.Font.bottomBarButtons,
                         backgroundColor: AppStyle.Color.green,
                         fontColor: AppStyle.Color.white,
                         action: onFinish
@@ -167,15 +167,15 @@ struct FloatingActionButtonsView: View {
     
     @ViewBuilder
     private func actionButtonRegular(
-        title: String,
-        font: Font,
+        text: String,
+        textFont: Font,
         backgroundColor: Color,
         fontColor: Color,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            Text(title)
-                .font(font)
+            Text(text)
+                .font(textFont)
                 .foregroundColor(fontColor)
                 .frame(width: buttonWidthRegular, height: buttonHeightRegular)
         }
