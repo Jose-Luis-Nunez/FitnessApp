@@ -10,10 +10,11 @@ struct ExercisePickerView: View {
     let onSave: () -> Void
     let onCancel: () -> Void
     let saveDisabled: Bool
-    
     let repsRange: ClosedRange<Int>
     let weightRange: ClosedRange<Int>
     let setsRange: ClosedRange<Int>
+    let viewModel: MuscleCategoryViewModel
+    let editingExercise: Exercise?
     
     let textColor: Color = AppStyle.Color.white
     let backgroundColor = AppStyle.Color.black
@@ -33,11 +34,33 @@ struct ExercisePickerView: View {
                 .ignoresSafeArea(edges: .bottom)
             
             VStack(alignment: .center, spacing: 4) {
-                Text(title)
-                    .font(.title2)
-                    .foregroundColor(textColor)
-                    .fontWeight(.bold)
-                    .padding(.bottom, 16)
+                HStack {
+                    Text(title)
+                        .font(.title2)
+                        .foregroundColor(textColor)
+                        .fontWeight(.bold)
+                        .padding(.bottom, 16)
+                    
+                    Spacer()
+                    
+                    if let exercise = editingExercise {
+                        Button(action: {
+                            
+                            if let index = viewModel.exercises.firstIndex(where: { $0.id == exercise.id }) {
+                                viewModel.exercises.remove(at: index)
+                            }
+                            onCancel()
+                            isPresented = false
+                        }) {
+                            Image(systemName: "trash")
+                                .foregroundColor(AppStyle.Color.white)
+                                .imageScale(.large)
+                        }
+                        .padding(.trailing, 8)
+                    }
+                    
+                }
+                .padding(.bottom, 16)
                 
                 TextField("Name der Übung", text: $name)
                     .padding(12)
@@ -135,35 +158,5 @@ struct ExercisePickerView: View {
             .padding(.top, 4)
         }
         .frame(maxWidth: .infinity)
-    }
-}
-
-struct ExercisePickerView_Previews: PreviewProvider {
-    @State static var name = ""
-    @State static var reps = 12
-    @State static var weight = 10
-    @State static var sets = 3
-    @State static var isPresented = true
-    
-    static var previews: some View {
-        ExercisePickerView(
-            title: "Neue Übung",
-            name: $name,
-            reps: $reps,
-            weight: $weight,
-            sets: $sets,
-            isPresented: $isPresented,
-            onSave: {
-                print("Saved: \(name), \(reps), \(weight), \(sets)")
-            },
-            onCancel: {
-                print("Cancelled")
-            },
-            saveDisabled: false,
-            repsRange: 1...30,
-            weightRange: 0...180,
-            setsRange: 1...10
-        )
-        .background(Color.black)
     }
 }

@@ -154,7 +154,9 @@ struct MuscleCategoryView: View {
                         saveDisabled: !formViewModel.isFormValid,
                         repsRange: 1...30,
                         weightRange: 0...180,
-                        setsRange: 1...10
+                        setsRange: 1...10,
+                        viewModel: viewModel,
+                        editingExercise: formViewModel.editingExercise
                     )
                     .frame(maxWidth: .infinity, maxHeight: 300, alignment: .bottom)
                     .shadow(radius: 5)
@@ -208,6 +210,8 @@ struct MuscleCategoryView: View {
         if isActiveSetVisible {
             let incompleteExercises = viewModel.exercises.filter { !$0.isCompleted }
             if let firstIncomplete = incompleteExercises.first {
+                
+                let isTrainingActive = viewModel.isSetInProgress || viewModel.currentExercise != nil || viewModel.currentSet > 0
                 return AnyView(
                     ExerciseCardView(
                         viewModel: ExerciseCardViewModel(exercise: firstIncomplete) { updated in
@@ -218,7 +222,8 @@ struct MuscleCategoryView: View {
                                 formViewModel.loadExercise(exercise)
                                 formViewModel.toggleForm()
                             }
-                        }
+                        },
+                        isEditable: !isTrainingActive
                     )
                     .padding(.vertical, 0.5)
                     .transition(.move(edge: .top))
@@ -254,7 +259,8 @@ struct MuscleCategoryView: View {
                                 formViewModel.loadExercise(exercise)
                                 formViewModel.toggleForm()
                             }
-                        }
+                        },
+                        isEditable: true
                     )
                     .padding(.vertical, 0.5)
                     .transition(.move(edge: .top))
@@ -281,7 +287,8 @@ struct MuscleCategoryView: View {
                                 formViewModel.loadExercise(exercise)
                                 formViewModel.toggleForm()
                             }
-                        }
+                        },
+                        isEditable: true
                     )
                     .padding(.vertical, 0.5)
                     .transition(.move(edge: .bottom))

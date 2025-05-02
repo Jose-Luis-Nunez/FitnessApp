@@ -8,6 +8,7 @@ private struct IDS {
 struct ExerciseCardView: View {
     @ObservedObject var viewModel: ExerciseCardViewModel
     let onEdit: (Exercise) -> Void
+    let isEditable: Bool
     
     var body: some View {
         VStack(spacing: 8) {
@@ -21,7 +22,8 @@ struct ExerciseCardView: View {
             CardBottomSectionView(
                 viewModel: viewModel,
                 currentReps: viewModel.exercise.reps,
-                onEdit: onEdit
+                onEdit: onEdit,
+                isEditable: isEditable
             )
             .scaleEffect(1.1)
             .padding(.top, 2)
@@ -62,6 +64,7 @@ struct CardBottomSectionView: View {
     @ObservedObject var viewModel: ExerciseCardViewModel
     let currentReps: Int
     let onEdit: (Exercise) -> Void
+    let isEditable: Bool
     
     var body: some View {
         let styledFields = viewModel.generateStyledFieldData()
@@ -73,11 +76,9 @@ struct CardBottomSectionView: View {
             
             Spacer(minLength: 4)
             
-            LeftFieldsView(fields: leftFields, exercise: viewModel.exercise, onEdit: onEdit)
-            
+            LeftFieldsView(fields: leftFields, exercise: viewModel.exercise, onEdit: onEdit, isEditable: isEditable)
             if let right = rightField {
-                RightFieldView(field: right, exercise: viewModel.exercise, onEdit: onEdit)
-            }
+                RightFieldView(field: right, exercise: viewModel.exercise, onEdit: onEdit, isEditable: isEditable)            }
         }
         .padding(.horizontal, AppStyle.Padding.horizontal)
     }
@@ -98,6 +99,7 @@ struct LeftFieldsView: View {
     let fields: [StyledExerciseField]
     let exercise: Exercise
     let onEdit: (Exercise) -> Void
+    let isEditable: Bool
     
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -108,6 +110,8 @@ struct LeftFieldsView: View {
     }
     
     private func handleTap(for styled: StyledExerciseField) -> (() -> Void)? {
+        if !isEditable { return nil }
+        
         if styled.data.field == .edit(.repsChip) || styled.data.field == .edit(.setsChip) {
             return { onEdit(exercise) }
         }
@@ -119,9 +123,10 @@ struct RightFieldView: View {
     let field: StyledExerciseField
     let exercise: Exercise
     let onEdit: (Exercise) -> Void
+    let isEditable: Bool
     
     var body: some View {
-        AppChipView(styled: field, onTap: field.data.field == .edit(.weightChip) ? { onEdit(exercise) } : nil)
+        AppChipView(styled: field, onTap: isEditable && field.data.field == .edit(.weightChip) ? { onEdit(exercise) } : nil)
             .frame(height: field.style.frameHeight)
     }
 }
