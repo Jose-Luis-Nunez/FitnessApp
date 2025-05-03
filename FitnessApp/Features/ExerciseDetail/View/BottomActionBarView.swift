@@ -43,6 +43,7 @@ struct BottomMenuBarView: View {
     let onAddExercise: () -> Void
     let backgroundColor: Color
     private let iconOffset: CGFloat = 12
+    @State private var showProfile = false
     
     var body: some View {
         ZStack(alignment: .center) {
@@ -51,8 +52,26 @@ struct BottomMenuBarView: View {
                 .frame(height: barHeight)
             
             HStack(spacing: AppStyle.Padding.horizontal) {
-                ForEach(["house", "chart.bar", "calendar", "person"], id: \.self) { name in
-                    Image(systemName: name)
+                Image(systemName: "house")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: .infinity, maxHeight: barHeight * 0.6)
+                    .foregroundColor(AppStyle.Color.white)
+                
+                Image(systemName: "chart.bar")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: .infinity, maxHeight: barHeight * 0.6)
+                    .foregroundColor(AppStyle.Color.white)
+                
+                Image(systemName: "calendar")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: .infinity, maxHeight: barHeight * 0.6)
+                    .foregroundColor(AppStyle.Color.white)
+                
+                Button(action: { showProfile = true }) {
+                    Image(systemName: "person")
                         .resizable()
                         .scaledToFit()
                         .frame(maxWidth: .infinity, maxHeight: barHeight * 0.6)
@@ -61,6 +80,9 @@ struct BottomMenuBarView: View {
             }
             .padding(.horizontal, AppStyle.Padding.horizontal)
             .offset(y: iconOffset)
+            .sheet(isPresented: $showProfile) {
+                ProfileView()
+            }
         }
     }
 }

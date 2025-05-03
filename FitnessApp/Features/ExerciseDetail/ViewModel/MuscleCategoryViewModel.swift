@@ -17,12 +17,14 @@ class MuscleCategoryViewModel: ObservableObject {
     let group: MuscleCategoryGroup
     let formViewModel: ExerciseFormViewModel
     let activeSetViewModel: ActiveSetViewModel
+    private let storageService: ExerciseStorageService
     
     init(group: MuscleCategoryGroup) {
         self.group = group
-        self.exercises = []
         self.formViewModel = ExerciseFormViewModel()
         self.activeSetViewModel = ActiveSetViewModel()
+        self.storageService = ExerciseStorageService()
+        self.exercises = storageService.load(for: group)
     }
     
     var currentExercise: Exercise? {
@@ -59,6 +61,7 @@ class MuscleCategoryViewModel: ObservableObject {
         } else {
             exercises.append(exercise)
         }
+        saveExercises()
     }
     
     func updateExercise(_ updatedExercise: Exercise) {
@@ -67,6 +70,7 @@ class MuscleCategoryViewModel: ObservableObject {
             if activeSetViewModel.currentExercise?.id == updatedExercise.id {
                 activeSetViewModel.currentExercise = updatedExercise
             }
+            saveExercises()
         }
     }
     
@@ -89,6 +93,7 @@ class MuscleCategoryViewModel: ObservableObject {
             updatedExercise.isCompleted = true
             exercises[index] = updatedExercise
             activeSetViewModel.finishExercise()
+            saveExercises()
         }
     }
     
@@ -112,5 +117,14 @@ class MuscleCategoryViewModel: ObservableObject {
         }
         activeSetViewModel.resetProgress()
         stopTimer()
+        saveExercises()
+    }
+    
+    private func saveExercises() {
+        if storageService.hasUserId {
+            storageService.save(exercises, for: group)
+        } else {
+            print("No userId available, skipping save")
+        }
     }
 }
