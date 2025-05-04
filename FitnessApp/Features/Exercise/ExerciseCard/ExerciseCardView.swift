@@ -11,7 +11,9 @@ struct ExerciseCardView: View {
     let isEditable: Bool
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 2) {
+            Spacer().frame(height: 8)
+
             CardTopSectionView(
                 title: viewModel.exercise.name,
                 seatText: viewModel.displaySeatText
@@ -25,10 +27,10 @@ struct ExerciseCardView: View {
                 onEdit: onEdit,
                 isEditable: isEditable
             )
-            .padding(.top, 2)
+            .padding(.top, 0)
         }
         .padding(.horizontal, AppStyle.Padding.horizontal)
-        .padding(.vertical, 12)
+        .padding(.vertical, 6)
         .frame(maxWidth: UIScreen.main.bounds.width - 2 * AppStyle.Padding.horizontal)
         .background(viewModel.exercise.isCompleted ? AppStyle.Color.exerciseCardDoneBackGround : AppStyle.Color.exerciseCardBackground)
         .cornerRadius(AppStyle.CornerRadius.card)
@@ -46,7 +48,7 @@ struct CardTopSectionView: View {
                 styled: StyledExerciseField(field: .action(.exerciseCardTitleText)),
                 content: title
             )
-            .frame(maxWidth: 200, alignment: .leading)
+            .frame(maxWidth: 200, maxHeight: 20, alignment: .leading)
             .accessibilityIdentifier(IDS.nameLabel)
             
             Spacer()
@@ -73,14 +75,19 @@ struct CardBottomSectionView: View {
         let leftFields = styledFields.filter { $0.style.column == .left }
         let rightField = styledFields.first(where: { $0.style.column == .right })
         
-        HStack(alignment: .center, spacing: 12) {
+        HStack(alignment: .center, spacing: 8) {
             AnalyticsSectionView()
+            .offset(x: -AppStyle.Padding.horizontal)
+            
+            Spacer()
+            
             LeftFieldsView(fields: leftFields, exercise: viewModel.exercise, onEdit: onEdit, isEditable: isEditable)
             if let right = rightField {
                 RightFieldView(field: right, exercise: viewModel.exercise, onEdit: onEdit, isEditable: isEditable)            }
         }
         .frame(maxWidth: .infinity, alignment: .center)
         .padding(.horizontal, AppStyle.Padding.horizontal)
+        .padding(.vertical, 4)
     }
 }
 
@@ -128,6 +135,5 @@ struct RightFieldView: View {
     
     var body: some View {
         AppChipView(styled: field, onTap: isEditable && field.data.field == .edit(.weightChip) ? { onEdit(exercise) } : nil)
-            .frame(width: 60, height: field.style.frameHeight)
     }
 }
