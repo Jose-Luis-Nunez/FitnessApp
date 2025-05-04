@@ -59,7 +59,7 @@ struct MuscleCategoryView: View {
                         .listRowSeparator(.hidden)
                     }
                 }
-                .frame(maxWidth: UIScreen.main.bounds.width - 32, alignment: .center)
+                .frame(maxWidth: UIScreen.main.bounds.width - 36, alignment: .center)
                 .listStyle(.plain)
                 .listSectionSpacing(0)
                 .scrollContentBackground(.hidden)
