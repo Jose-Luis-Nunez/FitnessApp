@@ -41,8 +41,13 @@ struct MuscleCategoryView: View {
         GeometryReader { geometry in
             ZStack(alignment: .bottom) {
                 VStack(spacing: 0) {
+                    
+                    
+                    
+                    
                     List {
                         exerciseListSection
+                            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                             .listRowBackground(AppStyle.Color.backgroundColor)
                         
                         if let exercise = activeSetViewModel.currentExercise {
@@ -61,7 +66,15 @@ struct MuscleCategoryView: View {
                     .listStyle(.plain)
                     .listSectionSpacing(0)
                     .scrollContentBackground(.hidden)
+                    .padding(.top, -2)
                     .padding(.bottom, formViewModel.showForm ? 340 : (activeSetViewModel.isEditing ? 240 : (bottomBarVM.shouldShow ? 70 : 40)))
+                    
+                    
+                    
+                    
+                    
+                    
+                    
                 }
                 .background(AppStyle.Color.backgroundColor)
                 
@@ -229,7 +242,8 @@ struct MuscleCategoryView: View {
                         },
                         isEditable: !isTrainingActive
                     )
-                    .padding(.vertical, 0.5)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 6)
                     .transition(.move(edge: .top))
                     .listRowSeparator(.hidden)
                 )
@@ -266,7 +280,8 @@ struct MuscleCategoryView: View {
                         },
                         isEditable: true
                     )
-                    .padding(.vertical, 0.5)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 6)
                     .transition(.move(edge: .top))
                     .listRowSeparator(.hidden)
                 }
@@ -294,7 +309,8 @@ struct MuscleCategoryView: View {
                         },
                         isEditable: true
                     )
-                    .padding(.vertical, 0.5)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 6)
                     .transition(.move(edge: .bottom))
                     .listRowSeparator(.hidden)
                 }
