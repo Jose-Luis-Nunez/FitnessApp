@@ -55,11 +55,13 @@ struct MuscleCategoryView: View {
                                 )
                             }
                             .listRowBackground(AppStyle.Color.backgroundColor)
+                            .listRowSeparator(.hidden)
                         }
                     }
                     .listStyle(.plain)
+                    .listSectionSpacing(0)
                     .scrollContentBackground(.hidden)
-                    .padding(.bottom, formViewModel.showForm ? 300 : (activeSetViewModel.isEditing ? 200 : (bottomBarVM.shouldShow ? 80 : 0)))
+                    .padding(.bottom, formViewModel.showForm ? 340 : (activeSetViewModel.isEditing ? 240 : (bottomBarVM.shouldShow ? 70 : 40)))
                 }
                 .background(AppStyle.Color.backgroundColor)
                 
@@ -107,6 +109,7 @@ struct MuscleCategoryView: View {
                             }
                         }
                     )
+                    .padding(.bottom, 40)
                 }
                 
                 if activeSetViewModel.isEditing {
@@ -126,9 +129,9 @@ struct MuscleCategoryView: View {
                         saveDisabled: !activeSetViewModel.isInputValid
                     )
                     .frame(maxWidth: .infinity, maxHeight: 200, alignment: .bottom)
+                    .offset(y: -50)
                     .shadow(radius: 5)
                     .transition(.move(edge: .bottom))
-                    .ignoresSafeArea(edges: .bottom)
                 }
                 
                 if formViewModel.showForm {
@@ -159,9 +162,9 @@ struct MuscleCategoryView: View {
                         editingExercise: formViewModel.editingExercise
                     )
                     .frame(maxWidth: .infinity, maxHeight: 300, alignment: .bottom)
+                    .offset(y: -50)
                     .shadow(radius: 5)
                     .transition(.move(edge: .bottom))
-                    .ignoresSafeArea(edges: .bottom)
                 }
             }
         }
@@ -199,9 +202,10 @@ struct MuscleCategoryView: View {
                 secondaryButton: .cancel()
             )
         }
+        /*
         .onDisappear {
             viewModel.stopTimer()
-        }
+        }*/
     }
     
     private var exerciseListSection: some View {

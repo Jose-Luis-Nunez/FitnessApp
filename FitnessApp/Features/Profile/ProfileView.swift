@@ -2,47 +2,54 @@ import SwiftUI
 
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
-    @Environment(\.presentationMode) var presentationMode: Binding<PresentationMode>
-    
+
     var body: some View {
-        NavigationView {
-            VStack(spacing: 10) {
-                if viewModel.isNicknameSet {
-                    greetingView
-                } else {
-                    nicknameInputView
+        VStack(spacing: 16) {
+            Text(viewModel.greetingTitle)
+                .font(.largeTitle)
+                .foregroundColor(.white)
+            
+            Text(viewModel.greetingMessage)
+                .font(.title2)
+                .foregroundColor(.white)
+            
+            TextField("Nickname", text: $viewModel.nickname)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .foregroundColor(.black)
+                .padding()
+                .background(Color.white.opacity(0.8))
+                .cornerRadius(8)
+                .disabled(viewModel.isNicknameSet)
+            
+            Button(action: {
+                if viewModel.saveNickname() {
+                    print("Nickname saved successfully")
                 }
+            }) {
+                Text("Save")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(viewModel.isNicknameSet ? Color.gray : Color.blue)
+                    .cornerRadius(8)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .navigationTitle(viewModel.greetingTitle)
-            .alert(isPresented: $viewModel.showAlert) {
-                Alert(title: Text("Error"), message: Text("Nickname cannot be empty"), dismissButton: .default(Text("OK")))
+            .disabled(viewModel.isNicknameSet)
+            
+            if viewModel.showAlert {
+                Text("Nickname cannot be empty!")
+                    .foregroundColor(.red)
+                    .padding()
             }
         }
-    }
-    
-    private var greetingView: some View {
-        Text(viewModel.greetingMessage)
-            .font(.title2)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, 20)
-            .padding(.horizontal)
-    }
-    
-    private var nicknameInputView: some View {
-        VStack(spacing: 20) {
-            TextField("Enter your nickname", text: $viewModel.nickname)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .padding()
-            
-            Button("Save") {
-                if viewModel.saveNickname() {
-                    presentationMode.wrappedValue.dismiss()
-                }
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(AppStyle.Color.green)
-            .disabled(viewModel.nickname.isEmpty)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(AppStyle.Color.backgroundColor)
+        .padding()
+        .alert(isPresented: $viewModel.showAlert) {
+            Alert(title: Text("Error"), message: Text("Nickname cannot be empty!"), dismissButton: .default(Text("OK")))
+        }
+        .onAppear {
+            print("Minimal ProfileView appeared")
         }
     }
 }

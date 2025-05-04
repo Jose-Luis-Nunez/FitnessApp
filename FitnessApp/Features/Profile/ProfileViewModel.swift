@@ -16,20 +16,20 @@ class ProfileViewModel: ObservableObject {
     }
     
     var greetingTitle: String {
-        isNicknameSet ? "Hallo \(nickname)!" : "Profile"
+        isNicknameSet ? "Hey \(nickname)" : "Profile"
     }
     
     var greetingMessage: String {
-        isNicknameSet ? "Willkommen zurück, \(nickname)!" : ""
+        isNicknameSet ? "Willkommen zurück!" : ""
     }
     
     func saveNickname() -> Bool {
-        guard !isNicknameSet else {
+        guard !isNicknameValid() else {
+            showAlert = true
             return false
         }
         
-        guard isNicknameValid() else {
-            showAlert = true
+        guard !isNicknameSet else {
             return false
         }
         
@@ -38,7 +38,7 @@ class ProfileViewModel: ObservableObject {
     }
     
     private func isNicknameValid() -> Bool {
-        !nickname.isEmpty
+        nickname.isEmpty
     }
     
     private func persistNickname() {

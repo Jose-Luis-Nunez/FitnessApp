@@ -68,7 +68,6 @@ struct ActiveSetView: View {
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: iconSizeWidth * 0.7, height: iconSizeHeight * 0.7)
                                 .padding(6)
-                                .background(AppStyle.Color.grayDark)
                                 .clipShape(Circle())
                                 .foregroundColor(AppStyle.Color.yellow)
                         }

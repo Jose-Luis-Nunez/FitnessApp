@@ -10,17 +10,12 @@ struct BottomActionBarView: View {
     let onFinish: () -> Void
     let onAddExercise: () -> Void
     
-    private let barHeight: CGFloat = 40
+    private let barHeight: CGFloat = 0
     private let backgroundColor = AppStyle.Color.backgroundColor
     
     var body: some View {
         ZStack(alignment: .bottom) {
-            BottomMenuBarView(
-                barHeight: barHeight,
-                onAddExercise: onAddExercise,
-                backgroundColor: backgroundColor
-            )
-            
+    
             FloatingActionButtonsView(
                 viewModel: viewModel,
                 onStart: onStart,
@@ -34,56 +29,7 @@ struct BottomActionBarView: View {
                 backgroundColor: backgroundColor
             )
         }
-        .background(AppStyle.Color.backgroundColor)
-    }
-}
-
-struct BottomMenuBarView: View {
-    let barHeight: CGFloat
-    let onAddExercise: () -> Void
-    let backgroundColor: Color
-    private let iconOffset: CGFloat = 12
-    @State private var showProfile = false
-    
-    var body: some View {
-        ZStack(alignment: .center) {
-            backgroundColor
-                .ignoresSafeArea(edges: .bottom)
-                .frame(height: barHeight)
-            
-            HStack(spacing: AppStyle.Padding.horizontal) {
-                Image(systemName: "house")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: barHeight * 0.6)
-                    .foregroundColor(AppStyle.Color.white)
-                
-                Image(systemName: "chart.bar")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: barHeight * 0.6)
-                    .foregroundColor(AppStyle.Color.white)
-                
-                Image(systemName: "calendar")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: barHeight * 0.6)
-                    .foregroundColor(AppStyle.Color.white)
-                
-                Button(action: { showProfile = true }) {
-                    Image(systemName: "person")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxWidth: .infinity, maxHeight: barHeight * 0.6)
-                        .foregroundColor(AppStyle.Color.white)
-                }
-            }
-            .padding(.horizontal, AppStyle.Padding.horizontal)
-            .offset(y: iconOffset)
-            .sheet(isPresented: $showProfile) {
-                ProfileView()
-            }
-        }
+        .background(backgroundColor)
     }
 }
 
@@ -105,7 +51,7 @@ struct FloatingActionButtonsView: View {
     private let buttonWidthLarge: CGFloat = 160
     private let buttonHeightLarge: CGFloat = 40
     
-    private let extraOffset: CGFloat = 10
+    private let extraOffset: CGFloat = 4
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -114,7 +60,7 @@ struct FloatingActionButtonsView: View {
                 .frame(maxWidth: .infinity)
                 .offset(y: -(buttonHeightRegular / 2 + extraOffset))
             
-            HStack(spacing: 12) {
+            HStack(spacing: 24) {
                 if viewModel.showAddExerciseButton {
                     actionButtonLarge(
                         text: "Add Exercise",
