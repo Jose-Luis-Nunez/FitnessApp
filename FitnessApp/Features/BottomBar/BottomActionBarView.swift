@@ -57,7 +57,7 @@ struct FloatingActionButtonsView: View {
         ZStack(alignment: .bottom) {
             backgroundColor
                 .frame(height: buttonHeightRegular + 10)
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: UIScreen.main.bounds.width - 32)
                 .offset(y: -(buttonHeightRegular / 2 + extraOffset))
             
             HStack(spacing: 24) {
@@ -127,6 +127,7 @@ struct FloatingActionButtonsView: View {
                     )
                 }
             }
+            .frame(maxWidth: UIScreen.main.bounds.width - 32, alignment: .center)
             .padding(.horizontal, AppStyle.Padding.horizontal)
             .offset(y: -(buttonHeightRegular / 2 + extraOffset))
         }

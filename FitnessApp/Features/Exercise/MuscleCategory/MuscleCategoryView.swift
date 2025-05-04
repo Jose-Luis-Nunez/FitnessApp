@@ -38,149 +38,139 @@ struct MuscleCategoryView: View {
     }
     
     var body: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .bottom) {
-                VStack(spacing: 0) {
+        ZStack(alignment: .bottom) {
+            VStack(spacing: 0) {
+                List {
+                    exerciseListSection
+                        .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                        .listRowBackground(AppStyle.Color.backgroundColor)
                     
-                    
-                    
-                    
-                    List {
-                        exerciseListSection
-                            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                            .listRowBackground(AppStyle.Color.backgroundColor)
-                        
-                        if let exercise = activeSetViewModel.currentExercise {
-                            Section {
-                                ActiveSetView(
-                                    sets: exercise.sets,
-                                    exercise: exercise,
-                                    setProgress: activeSetViewModel.setProgress,
-                                    timerSeconds: activeSetViewModel.timerSeconds
-                                )
+                    if let exercise = activeSetViewModel.currentExercise {
+                        Section {
+                            ActiveSetView(
+                                sets: exercise.sets,
+                                exercise: exercise,
+                                setProgress: activeSetViewModel.setProgress,
+                                timerSeconds: activeSetViewModel.timerSeconds
+                            )
+                        }
+                        .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                        .listRowBackground(AppStyle.Color.backgroundColor)
+                        .listRowSeparator(.hidden)
+                    }
+                }
+                .frame(maxWidth: UIScreen.main.bounds.width - 32, alignment: .center)
+                .listStyle(.plain)
+                .listSectionSpacing(0)
+                .scrollContentBackground(.hidden)
+                .padding(.top, -2)
+                .padding(.bottom, formViewModel.showForm ? 340 : (activeSetViewModel.isEditing ? 240 : (bottomBarVM.shouldShow ? 70 : 40)))
+            }
+            .background(AppStyle.Color.backgroundColor)
+            
+            if bottomBarVM.shouldShow {
+                BottomActionBarView(
+                    viewModel: bottomBarVM,
+                    onStart: {
+                        print("Start Training clicked")
+                        print("Exercises: \(viewModel.exercises.map { "\($0.name) - isCompleted: \($0.isCompleted)" })")
+                        viewModel.startTimer()
+                        if let activeExercise = viewModel.exercises.first(where: { !$0.isCompleted }) {
+                            if viewModel.currentExercise == nil || viewModel.currentExercise?.isCompleted == true {
+                                viewModel.startSet(for: activeExercise)
+                            } else {
+                                viewModel.startNextSet()
                             }
-                            .listRowBackground(AppStyle.Color.backgroundColor)
-                            .listRowSeparator(.hidden)
+                        } else {
+                            print("No active exercise found")
+                        }
+                    },
+                    onCompleteSet: {
+                        viewModel.stopTimer()
+                        viewModel.completeCurrentSet()
+                    },
+                    onReset: {
+                        viewModel.stopTimer()
+                        viewModel.showResetConfirmation = true
+                    },
+                    onEditLess: {
+                        viewModel.stopTimer()
+                        activeSetViewModel.startEditing(mode: SetEditingMode.less)
+                    },
+                    onEditMore: {
+                        viewModel.stopTimer()
+                        activeSetViewModel.startEditing(mode: SetEditingMode.more)
+                    },
+                    onFinish: {
+                        viewModel.stopTimer()
+                        viewModel.finishExercise()
+                    },
+                    onAddExercise: {
+                        withAnimation {
+                            formViewModel.loadExercise(nil as Exercise?)
+                            formViewModel.toggleForm()
                         }
                     }
-                    .listStyle(.plain)
-                    .listSectionSpacing(0)
-                    .scrollContentBackground(.hidden)
-                    .padding(.top, -2)
-                    .padding(.bottom, formViewModel.showForm ? 340 : (activeSetViewModel.isEditing ? 240 : (bottomBarVM.shouldShow ? 70 : 40)))
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                }
-                .background(AppStyle.Color.backgroundColor)
-                
-                if bottomBarVM.shouldShow {
-                    BottomActionBarView(
-                        viewModel: bottomBarVM,
-                        onStart: {
-                            print("Start Training clicked")
-                            print("Exercises: \(viewModel.exercises.map { "\($0.name) - isCompleted: \($0.isCompleted)" })")
-                            viewModel.startTimer()
-                            if let activeExercise = viewModel.exercises.first(where: { !$0.isCompleted }) {
-                                if viewModel.currentExercise == nil || viewModel.currentExercise?.isCompleted == true {
-                                    viewModel.startSet(for: activeExercise)
-                                } else {
-                                    viewModel.startNextSet()
-                                }
+                )
+                .padding(.bottom, 40)
+            }
+            
+            if activeSetViewModel.isEditing {
+                EditPickerView(
+                    title: activeSetViewModel.editMode == SetEditingMode.less ? "Verschlechtert" : "Verbessert",
+                    selectedReps: $activeSetViewModel.repsInput,
+                    selectedWeight: $activeSetViewModel.weightInput,
+                    repsRange: 1...30,
+                    weightRange: 0...180,
+                    onSave: { newReps, newWeight in
+                        viewModel.updateCurrentReps(newReps, newWeight)
+                        activeSetViewModel.isEditing = false
+                    },
+                    onCancel: {
+                        activeSetViewModel.isEditing = false
+                    },
+                    saveDisabled: !activeSetViewModel.isInputValid
+                )
+                .frame(maxWidth: .infinity, maxHeight: 200, alignment: .bottom)
+                .offset(y: -50)
+                .shadow(radius: 5)
+                .transition(.move(edge: .bottom))
+            }
+            
+            if formViewModel.showForm {
+                ExercisePickerView(
+                    title: formViewModel.editingExercise != nil ? "Übung bearbeiten" : L10n.cardCreationTitle,
+                    name: $formViewModel.name,
+                    reps: $formViewModel.reps,
+                    weight: $formViewModel.weight,
+                    sets: $formViewModel.sets,
+                    isPresented: $formViewModel.showForm,
+                    onSave: {
+                        if let exercise = formViewModel.createOrUpdateExercise() {
+                            if formViewModel.editingExercise != nil {
+                                viewModel.updateExercise(exercise)
                             } else {
-                                print("No active exercise found")
-                            }
-                        },
-                        onCompleteSet: {
-                            viewModel.stopTimer()
-                            viewModel.completeCurrentSet()
-                        },
-                        onReset: {
-                            viewModel.stopTimer()
-                            viewModel.showResetConfirmation = true
-                        },
-                        onEditLess: {
-                            viewModel.stopTimer()
-                            activeSetViewModel.startEditing(mode: SetEditingMode.less)
-                        },
-                        onEditMore: {
-                            viewModel.stopTimer()
-                            activeSetViewModel.startEditing(mode: SetEditingMode.more)
-                        },
-                        onFinish: {
-                            viewModel.stopTimer()
-                            viewModel.finishExercise()
-                        },
-                        onAddExercise: {
-                            withAnimation {
-                                formViewModel.loadExercise(nil as Exercise?)
-                                formViewModel.toggleForm()
+                                viewModel.add(exercise, atTop: true)
                             }
                         }
-                    )
-                    .padding(.bottom, 40)
-                }
-                
-                if activeSetViewModel.isEditing {
-                    EditPickerView(
-                        title: activeSetViewModel.editMode == SetEditingMode.less ? "Verschlechtert" : "Verbessert",
-                        selectedReps: $activeSetViewModel.repsInput,
-                        selectedWeight: $activeSetViewModel.weightInput,
-                        repsRange: 1...30,
-                        weightRange: 0...180,
-                        onSave: { newReps, newWeight in
-                            viewModel.updateCurrentReps(newReps, newWeight)
-                            activeSetViewModel.isEditing = false
-                        },
-                        onCancel: {
-                            activeSetViewModel.isEditing = false
-                        },
-                        saveDisabled: !activeSetViewModel.isInputValid
-                    )
-                    .frame(maxWidth: .infinity, maxHeight: 200, alignment: .bottom)
-                    .offset(y: -50)
-                    .shadow(radius: 5)
-                    .transition(.move(edge: .bottom))
-                }
-                
-                if formViewModel.showForm {
-                    ExercisePickerView(
-                        title: formViewModel.editingExercise != nil ? "Übung bearbeiten" : L10n.cardCreationTitle,
-                        name: $formViewModel.name,
-                        reps: $formViewModel.reps,
-                        weight: $formViewModel.weight,
-                        sets: $formViewModel.sets,
-                        isPresented: $formViewModel.showForm,
-                        onSave: {
-                            if let exercise = formViewModel.createOrUpdateExercise() {
-                                if formViewModel.editingExercise != nil {
-                                    viewModel.updateExercise(exercise)
-                                } else {
-                                    viewModel.add(exercise, atTop: true)
-                                }
-                            }
-                        },
-                        onCancel: {
-                            formViewModel.clearForm()
-                        },
-                        saveDisabled: !formViewModel.isFormValid,
-                        repsRange: 1...30,
-                        weightRange: 0...180,
-                        setsRange: 1...10,
-                        viewModel: viewModel,
-                        editingExercise: formViewModel.editingExercise
-                    )
-                    .frame(maxWidth: .infinity, maxHeight: 300, alignment: .bottom)
-                    .offset(y: -50)
-                    .shadow(radius: 5)
-                    .transition(.move(edge: .bottom))
-                }
+                    },
+                    onCancel: {
+                        formViewModel.clearForm()
+                    },
+                    saveDisabled: !formViewModel.isFormValid,
+                    repsRange: 1...30,
+                    weightRange: 0...180,
+                    setsRange: 1...10,
+                    viewModel: viewModel,
+                    editingExercise: formViewModel.editingExercise
+                )
+                .frame(maxWidth: .infinity, maxHeight: 300, alignment: .bottom)
+                .offset(y: -50)
+                .shadow(radius: 5)
+                .transition(.move(edge: .bottom))
             }
         }
+        
         .toolbar(content: {
             ToolbarItem(placement: .principal) {
                 Text(group.displayName)
@@ -216,9 +206,9 @@ struct MuscleCategoryView: View {
             )
         }
         /*
-        .onDisappear {
-            viewModel.stopTimer()
-        }*/
+         .onDisappear {
+         viewModel.stopTimer()
+         }*/
     }
     
     private var exerciseListSection: some View {
@@ -242,7 +232,6 @@ struct MuscleCategoryView: View {
                         },
                         isEditable: !isTrainingActive
                     )
-                    .padding(.horizontal, 6)
                     .padding(.vertical, 6)
                     .transition(.move(edge: .top))
                     .listRowSeparator(.hidden)
@@ -280,7 +269,6 @@ struct MuscleCategoryView: View {
                         },
                         isEditable: true
                     )
-                    .padding(.horizontal, 6)
                     .padding(.vertical, 6)
                     .transition(.move(edge: .top))
                     .listRowSeparator(.hidden)
@@ -309,7 +297,6 @@ struct MuscleCategoryView: View {
                         },
                         isEditable: true
                     )
-                    .padding(.horizontal, 6)
                     .padding(.vertical, 6)
                     .transition(.move(edge: .bottom))
                     .listRowSeparator(.hidden)

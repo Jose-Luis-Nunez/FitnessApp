@@ -25,11 +25,11 @@ struct ExerciseCardView: View {
                 onEdit: onEdit,
                 isEditable: isEditable
             )
-            .scaleEffect(1.1)
             .padding(.top, 2)
         }
+        .padding(.horizontal, AppStyle.Padding.horizontal)
         .padding(.vertical, 12)
-        .padding(.horizontal)
+        .frame(maxWidth: UIScreen.main.bounds.width - 2 * AppStyle.Padding.horizontal)
         .background(viewModel.exercise.isCompleted ? AppStyle.Color.exerciseCardDoneBackGround : AppStyle.Color.exerciseCardBackground)
         .cornerRadius(AppStyle.CornerRadius.card)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 4)
@@ -45,7 +45,9 @@ struct CardTopSectionView: View {
             TextView(
                 styled: StyledExerciseField(field: .action(.exerciseCardTitleText)),
                 content: title
-            ).accessibilityIdentifier(IDS.nameLabel)
+            )
+            .frame(maxWidth: 200, alignment: .leading)
+            .accessibilityIdentifier(IDS.nameLabel)
             
             Spacer()
             
@@ -54,7 +56,7 @@ struct CardTopSectionView: View {
                 content: seatText,
                 onTap: nil
             )
-            .scaleEffect(1.1)
+            .frame(width: 60)
             .accessibilityIdentifier(IDS.seatLabel)
         }
     }
@@ -73,13 +75,11 @@ struct CardBottomSectionView: View {
         
         HStack(alignment: .center, spacing: 12) {
             AnalyticsSectionView()
-            
-            Spacer(minLength: 4)
-            
             LeftFieldsView(fields: leftFields, exercise: viewModel.exercise, onEdit: onEdit, isEditable: isEditable)
             if let right = rightField {
                 RightFieldView(field: right, exercise: viewModel.exercise, onEdit: onEdit, isEditable: isEditable)            }
         }
+        .frame(maxWidth: .infinity, alignment: .center)
         .padding(.horizontal, AppStyle.Padding.horizontal)
     }
 }
@@ -105,6 +105,7 @@ struct LeftFieldsView: View {
         VStack(alignment: .leading, spacing: 6) {
             ForEach(fields) { styled in
                 AppChipView(styled: styled, onTap: handleTap(for: styled))
+                    .frame(width: 80)
             }
         }
     }
@@ -127,6 +128,6 @@ struct RightFieldView: View {
     
     var body: some View {
         AppChipView(styled: field, onTap: isEditable && field.data.field == .edit(.weightChip) ? { onEdit(exercise) } : nil)
-            .frame(height: field.style.frameHeight)
+            .frame(width: 60, height: field.style.frameHeight)
     }
 }
