@@ -93,7 +93,6 @@ struct ActiveSetView: View {
                     }
                 }
             }
-            
             .padding(.horizontal, AppStyle.Padding.horizontal)
             .padding(.top, timerSeconds > 0 ? 24 : 16)
             .padding(.bottom, timerSeconds > 0 ? 32 : 16)

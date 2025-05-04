@@ -42,7 +42,7 @@ struct MuscleCategoryView: View {
             VStack(spacing: 0) {
                 List {
                     exerciseListSection
-                        .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                        .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 8, trailing: 0))
                         .listRowBackground(AppStyle.Color.backgroundColor)
                     
                     if let exercise = activeSetViewModel.currentExercise {
@@ -54,7 +54,7 @@ struct MuscleCategoryView: View {
                                 timerSeconds: activeSetViewModel.timerSeconds
                             )
                         }
-                        .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                        .listRowInsets(EdgeInsets(top: 12, leading: 0, bottom: 8, trailing: 0))
                         .listRowBackground(AppStyle.Color.backgroundColor)
                         .listRowSeparator(.hidden)
                     }
