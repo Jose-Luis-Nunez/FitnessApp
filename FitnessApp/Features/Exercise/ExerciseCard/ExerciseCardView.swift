@@ -12,12 +12,12 @@ struct ExerciseCardView: View {
     
     var body: some View {
         VStack(spacing: 2) {
-            Spacer().frame(height: 8)
-
+            Spacer().frame(height: 4)
+            
             CardTopSectionView(
                 title: viewModel.exercise.name,
                 seatText: viewModel.displaySeatText
-            )
+            ).padding(.bottom, 6)
             
             Divider().background(AppStyle.Color.purpleGrey).padding(.horizontal, 4)
             
@@ -77,16 +77,25 @@ struct CardBottomSectionView: View {
         
         HStack(alignment: .center, spacing: 8) {
             AnalyticsSectionView()
-            .offset(x: -AppStyle.Padding.horizontal)
             
             Spacer()
             
-            LeftFieldsView(fields: leftFields, exercise: viewModel.exercise, onEdit: onEdit, isEditable: isEditable)
+            LeftFieldsView(
+                fields: leftFields,
+                exercise: viewModel.exercise,
+                onEdit: onEdit,
+                isEditable: isEditable
+            )
+                        
             if let right = rightField {
-                RightFieldView(field: right, exercise: viewModel.exercise, onEdit: onEdit, isEditable: isEditable)            }
+                RightFieldView(
+                    field: right,
+                    exercise: viewModel.exercise,
+                    onEdit: onEdit,
+                    isEditable: isEditable
+                )
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .center)
-        .padding(.horizontal, AppStyle.Padding.horizontal)
         .padding(.vertical, 4)
     }
 }
