@@ -8,12 +8,14 @@ class MuscleCategoryViewModel: ObservableObject {
     let formViewModel: ExerciseFormViewModel
     let activeSetViewModel: ActiveSetViewModel
     private let storageService: ExerciseStorageService
+    private let analyticsViewModel: AnalyticsViewModel
     
     init(group: MuscleCategoryGroup) {
         self.group = group
         self.formViewModel = ExerciseFormViewModel()
         self.activeSetViewModel = ActiveSetViewModel()
         self.storageService = ExerciseStorageService()
+        self.analyticsViewModel = AnalyticsViewModel()
         self.exercises = storageService.load(for: group)
     }
     
@@ -74,6 +76,9 @@ class MuscleCategoryViewModel: ObservableObject {
     
     func completeCurrentSet() {
         activeSetViewModel.completeCurrentSet()
+        if activeSetViewModel.isLastSetCompleted {
+            saveAnalytics()
+        }
     }
     
     func finishExercise() {
@@ -97,6 +102,9 @@ class MuscleCategoryViewModel: ObservableObject {
     
     func updateCurrentReps(_ newReps: Int, _ newWeight: Int) {
         activeSetViewModel.updateCurrentReps(newReps, newWeight)
+        if activeSetViewModel.isLastSetCompleted {
+            saveAnalytics()
+        }
     }
     
     func resetProgress() {
@@ -116,5 +124,16 @@ class MuscleCategoryViewModel: ObservableObject {
         } else {
             print("No userId available, skipping save")
         }
+    }
+    
+    private func saveAnalytics() {
+        guard let exercise = activeSetViewModel.currentExercise else {
+            print("No exercise to save for analytics")
+            return
+        }
+        analyticsViewModel.saveAnalytics(
+            exerciseId: exercise.id,
+            setProgress: activeSetViewModel.setProgress
+        )
     }
 }

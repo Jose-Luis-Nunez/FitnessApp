@@ -17,6 +17,7 @@ struct MuscleCategoryView: View {
     @StateObject private var viewModel: MuscleCategoryViewModel
     @StateObject private var formViewModel: ExerciseFormViewModel
     @StateObject private var activeSetViewModel: ActiveSetViewModel
+    @StateObject private var analyticsViewModel: AnalyticsViewModel
     
     init(group: MuscleCategoryGroup) {
         self.group = group
@@ -24,6 +25,7 @@ struct MuscleCategoryView: View {
         _viewModel = StateObject(wrappedValue: muscleCategoryViewModel)
         _formViewModel = StateObject(wrappedValue: muscleCategoryViewModel.formViewModel)
         _activeSetViewModel = StateObject(wrappedValue: muscleCategoryViewModel.activeSetViewModel)
+        _analyticsViewModel = StateObject(wrappedValue: AnalyticsViewModel())
     }
     
     private var bottomBarVM: BottomActionBarViewModel {
@@ -217,7 +219,6 @@ struct MuscleCategoryView: View {
         if isActiveSetVisible {
             let incompleteExercises = viewModel.exercises.filter { !$0.isCompleted }
             if let firstIncomplete = incompleteExercises.first {
-                
                 let isTrainingActive = viewModel.isSetInProgress || viewModel.currentExercise != nil || viewModel.currentSet > 0
                 return AnyView(
                     ExerciseCardView(
@@ -230,7 +231,8 @@ struct MuscleCategoryView: View {
                                 formViewModel.toggleForm()
                             }
                         },
-                        isEditable: !isTrainingActive
+                        isEditable: !isTrainingActive,
+                        analyticsViewModel: analyticsViewModel
                     )
                     .padding(.vertical, 6)
                     .transition(.move(edge: .top))
@@ -267,7 +269,8 @@ struct MuscleCategoryView: View {
                                 formViewModel.toggleForm()
                             }
                         },
-                        isEditable: true
+                        isEditable: true,
+                        analyticsViewModel: analyticsViewModel
                     )
                     .padding(.vertical, 6)
                     .transition(.move(edge: .top))
@@ -295,7 +298,8 @@ struct MuscleCategoryView: View {
                                 formViewModel.toggleForm()
                             }
                         },
-                        isEditable: true
+                        isEditable: true,
+                        analyticsViewModel: analyticsViewModel
                     )
                     .padding(.vertical, 6)
                     .transition(.move(edge: .bottom))

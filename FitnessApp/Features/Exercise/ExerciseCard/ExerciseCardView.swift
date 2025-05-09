@@ -9,6 +9,7 @@ struct ExerciseCardView: View {
     @ObservedObject var viewModel: ExerciseCardViewModel
     let onEdit: (Exercise) -> Void
     let isEditable: Bool
+    @ObservedObject var analyticsViewModel: AnalyticsViewModel
     
     var body: some View {
         VStack(spacing: 2) {
@@ -25,7 +26,8 @@ struct ExerciseCardView: View {
                 viewModel: viewModel,
                 currentReps: viewModel.exercise.reps,
                 onEdit: onEdit,
-                isEditable: isEditable
+                isEditable: isEditable,
+                analyticsViewModel: analyticsViewModel
             )
             .padding(.top, 0)
         }
@@ -69,14 +71,15 @@ struct CardBottomSectionView: View {
     let currentReps: Int
     let onEdit: (Exercise) -> Void
     let isEditable: Bool
-    
+    @ObservedObject var analyticsViewModel: AnalyticsViewModel
+
     var body: some View {
         let styledFields = viewModel.generateStyledFieldData()
         let leftFields = styledFields.filter { $0.style.column == .left }
         let rightField = styledFields.first(where: { $0.style.column == .right })
         
         HStack(alignment: .center, spacing: 8) {
-            AnalyticsSectionView()
+            AnalyticsSectionView(exercise: viewModel.exercise, viewModel: analyticsViewModel)
             
             Spacer()
             
@@ -97,17 +100,6 @@ struct CardBottomSectionView: View {
             }
         }
         .padding(.vertical, 4)
-    }
-}
-
-struct AnalyticsSectionView: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: -24) {
-            AppIconView(styled: StyledExerciseField(field: .action(.analyticsIcon)))
-            
-            TextView(styled: StyledExerciseField(field: .action(.analyticsText)))
-                .offset(x: 10)
-        }
     }
 }
 
