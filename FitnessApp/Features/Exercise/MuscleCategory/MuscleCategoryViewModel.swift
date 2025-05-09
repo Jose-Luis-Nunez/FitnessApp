@@ -1,15 +1,5 @@
 import Foundation
 
-enum SetAction {
-    case none, done, less, more
-}
-
-struct SetProgress {
-    let action: SetAction
-    let currentReps: Int
-    let weight: Int
-}
-
 class MuscleCategoryViewModel: ObservableObject {
     @Published var exercises: [Exercise]
     @Published var showResetConfirmation: Bool = false
