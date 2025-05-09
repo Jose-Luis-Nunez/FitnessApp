@@ -10,6 +10,8 @@ enum AppStyle {
         static let card: CGFloat = 16
         static let bottomBarButton: CGFloat = 12
         static let editPickerViewButton: CGFloat = 12
+        static let defaultButton: CGFloat = 12
+
     }
 
     enum Font {
