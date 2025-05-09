@@ -30,4 +30,14 @@ class AnalyticsViewModel: ObservableObject {
         print("Loaded \(entries.count) analytics entries for exercise \(exerciseId)")
         return entries
     }
+    
+    func loadAnalytics(for exerciseId: UUID, on date: Date) -> [AnalyticsEntry] {
+        let calendar = Calendar.current
+        let entries = loadAnalytics(for: exerciseId)
+        let filteredEntries = entries.filter { entry in
+            calendar.isDate(entry.date, inSameDayAs: date)
+        }
+        print("Loaded \(filteredEntries.count) analytics entries for exercise \(exerciseId) on \(date)")
+        return filteredEntries
+    }
 }
