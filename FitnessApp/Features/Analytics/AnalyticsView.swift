@@ -30,7 +30,6 @@ struct AnalyticsView: View {
     private var mainContent: some View {
         VStack(alignment: .leading, spacing: 16) {
             headerView
-            calendarSelectionView
             resultsView
             Spacer()
         }
@@ -50,43 +49,35 @@ struct AnalyticsView: View {
     }
 
     private var headerView: some View {
-        Text(exercise.name)
-            .font(AppStyle.Font.navigationHeadline)
-            .foregroundColor(AppStyle.Color.white)
-            .padding(.top, 45)
-            .padding(.horizontal, AppStyle.Padding.horizontal)
-    }
-    
-    private var calendarSelectionView: some View {
-        HStack(spacing: 8) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(AppStyle.Color.green, lineWidth: 2)
-                    .frame(height: 32)
-                
-                HStack(spacing: 8) {
-                    Image(systemName: "calendar")
-                        .foregroundColor(AppStyle.Color.white)
-                        .imageScale(.medium)
-                        .onTapGesture {
-                            showCalendarDialog = true
-                        }
-                    
-                    Text(formattedDate(selectedDate))
-                        .font(.body)
-                        .foregroundColor(AppStyle.Color.white)
-                        .onTapGesture {
-                            showCalendarDialog = true
-                        }
-                }
-                .padding(.horizontal, 8)
-            }
-            .padding(.top, 8)
+        HStack(alignment: .center, spacing: 12) {
+            Text(exercise.name)
+                .font(AppStyle.Font.analyticsExerciseTitle)
+                .foregroundColor(AppStyle.Color.green)
+                .fixedSize()
             
+            HStack(spacing: 8) {
+                Image(systemName: "calendar")
+                    .foregroundColor(AppStyle.Color.green)
+                    .imageScale(.medium)
+                    .onTapGesture {
+                        showCalendarDialog = true
+                    }
+                
+                Text(formattedDate(selectedDate))
+                    .font(.body)
+                    .foregroundColor(AppStyle.Color.white)
+                    .onTapGesture {
+                        showCalendarDialog = true
+                    }
+            }
+            .padding(.horizontal, 8)
+            .frame(height: 32)
+            .background(AppStyle.Color.greenDark)
+            .cornerRadius(AppStyle.CornerRadius.defaultButton)
             Spacer()
         }
         .padding(.horizontal, AppStyle.Padding.horizontal)
-        .padding(.top, 8)
+        .padding(.top, 32)
     }
     
     private var resultsView: some View {
@@ -103,6 +94,11 @@ struct AnalyticsView: View {
             return AnyView(
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
+                        Text("Results")
+                            .font(AppStyle.Font.analyticsExerciseData)
+                            .foregroundColor(AppStyle.Color.gray)
+                            .padding(.horizontal, AppStyle.Padding.horizontal)
+
                         ForEach(entries) { entry in
                             entryView(entry)
                         }
@@ -115,8 +111,8 @@ struct AnalyticsView: View {
     private func entryView(_ entry: AnalyticsEntry) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             ForEach(entry.setProgress, id: \.self) { progress in
-                Text("\(progress.weight) kg \(progress.currentReps) / \(initialReps)")
-                    .font(AppStyle.Font.largeChip)
+                Text("Set \(progress.weight) kg \(progress.currentReps) / \(initialReps)")
+                    .font(AppStyle.Font.analyticsExerciseData)
                     .foregroundColor(AppStyle.Color.white)
             }
         }
