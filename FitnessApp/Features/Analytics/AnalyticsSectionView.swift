@@ -13,5 +13,6 @@ struct AnalyticsSectionView: View {
                     .offset(x: 10)
             }
         }
+        .buttonStyle(PlainButtonStyle())
     }
 }
