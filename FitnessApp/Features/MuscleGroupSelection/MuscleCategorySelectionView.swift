@@ -12,7 +12,7 @@ struct MuscleCategorySelectionView: View {
             List(MuscleCategoryGroup.allCases, id: \.self) { group in
                 NavigationLink(value: NavigationDestination.muscleCategory(group)) {
                     Text(group.displayName)
-                        .font(AppStyle.Font.cardHeadline)
+                        .font(AppStyle.Font.navigationHeadline)
                         .foregroundColor(AppStyle.Color.white)
                         .padding()
                 }

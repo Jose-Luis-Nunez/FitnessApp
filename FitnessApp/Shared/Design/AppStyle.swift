@@ -13,6 +13,7 @@ enum AppStyle {
     }
 
     enum Font {
+        static let navigationHeadline = SwiftUI.Font.system(size: 28, weight: .bold)
         static let cardHeadline = SwiftUI.Font.system(size: 28, weight: .bold)
         static let regularChip = SwiftUI.Font.system(size: 16, weight: .semibold)
         static let wideChip = SwiftUI.Font.system(size: 16, weight: .semibold)

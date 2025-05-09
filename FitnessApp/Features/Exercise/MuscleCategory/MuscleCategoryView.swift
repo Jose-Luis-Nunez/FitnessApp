@@ -176,7 +176,7 @@ struct MuscleCategoryView: View {
         .toolbar(content: {
             ToolbarItem(placement: .principal) {
                 Text(group.displayName)
-                    .font(AppStyle.Font.cardHeadline)
+                    .font(AppStyle.Font.navigationHeadline)
                     .foregroundColor(AppStyle.Color.white)
                     .accessibilityIdentifier(IDS.groupTitle)
             }
@@ -207,10 +207,6 @@ struct MuscleCategoryView: View {
                 secondaryButton: .cancel()
             )
         }
-        /*
-         .onDisappear {
-         viewModel.stopTimer()
-         }*/
     }
     
     private var exerciseListSection: some View {
