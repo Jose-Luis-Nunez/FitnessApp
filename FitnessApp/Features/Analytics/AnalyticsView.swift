@@ -119,7 +119,7 @@ struct AnalyticsView: View {
         } else {
             return AnyView(
                 VStack(alignment: .leading, spacing: 16) {
-                    ForEach(entries) { entry in
+                    ForEach(entries.reversed()) { entry in
                         Text("Results today")
                             .font(AppStyle.Font.analyticsExerciseData)
                             .foregroundColor(AppStyle.Color.gray)
