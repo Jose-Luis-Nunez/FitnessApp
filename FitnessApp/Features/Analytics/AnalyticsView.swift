@@ -347,9 +347,7 @@ struct AnalyticsView: View {
 
                 let filteredMilestones = [secondMilestone, firstMilestone]
                     .filter { $0 < goalWeight }
-
                     .sorted(by: >)
-
 
                 VStack(spacing: 32) {
                     ForEach(filteredMilestones, id: \.self) { milestone in
@@ -374,13 +372,24 @@ struct AnalyticsView: View {
                             startPoint: .top,
                             endPoint: .bottom
                         ))
-                        .frame(width: 2),
+                        .frame(width: 4),
                     alignment: .center
                 )
+            } else if goalWeight == 0 {
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [AppStyle.Color.greenGlow.opacity(0.4), .clear]),
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .frame(width: 4, height: 60) // Höhe kannst du bei Bedarf anpassen
+
             }
 
             VStack(spacing: 4) {
-                Text("\(viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? 0)")
+                Text("\(exercise.weight)")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(AppStyle.Color.white)
                 Text("kg")
