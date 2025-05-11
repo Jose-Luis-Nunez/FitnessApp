@@ -323,9 +323,10 @@ struct AnalyticsView: View {
     private var weightMilestoneView: some View {
         VStack(spacing: 12) {
             VStack(spacing: 4) {
-                Text("\(goalWeight)")
+                Text(goalWeight == 0 ? "?" : "\(goalWeight)")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(AppStyle.Color.white)
+
                 Text("kg")
                     .font(.caption2)
                     .foregroundColor(AppStyle.Color.white)
@@ -340,8 +341,15 @@ struct AnalyticsView: View {
             if let current = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight,
                goalWeight > current {
 
-                let allMilestones = stride(from: ((current / 5) + 1) * 5, through: goalWeight, by: 5)
-                let filteredMilestones = allMilestones.filter { $0 != 25 && $0 != 30 }
+                let isMultipleOfTen = current % 10 == 0
+                let firstMilestone = isMultipleOfTen ? current + 5 : Int(ceil(Double(current) / 10.0)) * 10
+                let secondMilestone = firstMilestone + 5
+
+                let filteredMilestones = [secondMilestone, firstMilestone]
+                    .filter { $0 < goalWeight }
+
+                    .sorted(by: >)
+
 
                 VStack(spacing: 32) {
                     ForEach(filteredMilestones, id: \.self) { milestone in
