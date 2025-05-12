@@ -36,7 +36,7 @@ struct AnalyticsView: View {
         }
     }
     
-    private func mainContent(geometry: GeometryProxy)->some View {
+    private func mainContent(geometry: GeometryProxy) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 headerView
@@ -72,7 +72,6 @@ struct AnalyticsView: View {
             }
         }
         .overlay(goalWeightDialog)
-        
     }
     
     private var headerView: some View {
@@ -127,9 +126,9 @@ struct AnalyticsView: View {
                         entryView(entry)
                     }
                 }
-                    .padding(.vertical, 10)
-                    .padding(.top, 10)
-                    .background(AppStyle.Color.backgroundColor)
+                .padding(.vertical, 10)
+                .padding(.top, 10)
+                .background(AppStyle.Color.backgroundColor)
             )
         }
     }
@@ -243,7 +242,6 @@ struct AnalyticsView: View {
         Group {
             if showGoalWeightDialog {
                 VStack(spacing: 16) {
-                    
                     Text("Set Goal Weight")
                         .font(.headline)
                         .foregroundColor(AppStyle.Color.white)
@@ -318,8 +316,6 @@ struct AnalyticsView: View {
     
     private var weightMilestoneView: some View {
         VStack(spacing: 12) {
-            
-            
             Group {
                 if goalWeight == 0 {
                     ZStack {
@@ -343,12 +339,12 @@ struct AnalyticsView: View {
                 } else {
                     VStack(spacing: -4) {
                         Spacer(minLength: 22)
-                        
                         Text("\(goalWeight)")
                             .font(.system(size: 24, weight: .bold))
                             .foregroundColor(AppStyle.Color.greenDark)
+                        
                         Text("kg")
-                            .font(.system(size: 14,weight: .bold))
+                            .font(.system(size: 14, weight: .bold))
                             .foregroundColor(AppStyle.Color.greenDark)
                         Spacer(minLength: 0)
                     }
@@ -360,35 +356,33 @@ struct AnalyticsView: View {
                     }
                 }
             }
-            
-            if let current = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight,
-               goalWeight > current {
-                
+
+            let current = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight
+
+            if goalWeight > current {
                 let isMultipleOfTen = current % 10 == 0
                 let firstMilestone = isMultipleOfTen ? current + 5 : Int(ceil(Double(current) / 10.0)) * 10
                 let secondMilestone = firstMilestone + 5
-                
+
                 let filteredMilestones = [secondMilestone, firstMilestone]
                     .filter { $0 < goalWeight }
                     .sorted(by: >)
-                
+
                 VStack(spacing: 32) {
-                    
                     ForEach(filteredMilestones, id: \.self) { milestone in
-                        HStack(spacing: 6) {
+                        ZStack {
                             Circle()
                                 .fill(AppStyle.Color.greenGlow)
                                 .frame(width: 12, height: 12)
-                            
-                            Text("\(milestone) kg")
+
+                            Text("\(milestone)")
                                 .font(.system(size: 14, weight: .bold))
                                 .foregroundColor(AppStyle.Color.greenGlow)
-                                .padding(.leading, 6)
-                            
+                                .offset(x: 30)
                         }
                         .frame(maxWidth: .infinity, alignment: .center)
-                        .offset(x: 26)
                     }
+
                     Circle()
                         .fill(AppStyle.Color.greenGlow.opacity(0.2))
                         .frame(width: 6, height: 6)
@@ -403,19 +397,8 @@ struct AnalyticsView: View {
                         .frame(width: 4),
                     alignment: .center
                 )
-            } else if goalWeight == 0 {
-                Rectangle()
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [AppStyle.Color.greenGlow.opacity(0.4), .clear]),
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .frame(width: 4, height: 60)
-                
             }
-            
+
             VStack(spacing: -4) {
                 Text("\(exercise.weight)")
                     .font(.system(size: 18, weight: .bold))
