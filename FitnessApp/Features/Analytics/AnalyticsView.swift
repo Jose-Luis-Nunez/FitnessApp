@@ -397,6 +397,19 @@ struct AnalyticsView: View {
                         .frame(width: 4),
                     alignment: .center
                 )
+            } else if goalWeight == 0 {
+                VStack {}
+                    .frame(height: 60)
+                    .overlay(
+                        Rectangle()
+                            .fill(LinearGradient(
+                                gradient: Gradient(colors: [AppStyle.Color.greenGlow.opacity(0.4), .clear]),
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ))
+                            .frame(width: 4),
+                        alignment: .center
+                    )
             }
 
             VStack(spacing: -4) {
