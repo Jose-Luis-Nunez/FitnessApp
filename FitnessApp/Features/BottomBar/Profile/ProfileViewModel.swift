@@ -1,8 +1,16 @@
 import Foundation
 
 class ProfileViewModel: ObservableObject {
-    @Published var nickname: String
+    
+    @Published var nickname: String {
+        didSet {
+            if nickname.isEmpty {
+                showAlert = true
+            }
+        }
+    }
     @Published var showAlert = false
+    
     
     private let userDefaults = UserDefaults.standard
     private let nicknameKey = "userNickname"
@@ -24,21 +32,13 @@ class ProfileViewModel: ObservableObject {
     }
     
     func saveNickname() -> Bool {
-        guard !isNicknameValid() else {
+        guard !nickname.isEmpty else {
             showAlert = true
-            return false
-        }
-        
-        guard !isNicknameSet else {
             return false
         }
         
         persistNickname()
         return true
-    }
-    
-    private func isNicknameValid() -> Bool {
-        nickname.isEmpty
     }
     
     private func persistNickname() {

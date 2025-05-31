@@ -1,10 +1,4 @@
 import SwiftUI
-/*
-enum NavigationDestination {
-    case home
-    case profile
-}
- */
 
 struct BottomMenuBarView: View {
     let barHeight: CGFloat
@@ -21,9 +15,7 @@ struct BottomMenuBarView: View {
             
             HStack(spacing: AppStyle.Padding.horizontal) {
                 Button(action: {
-                    if !navigationPath.isEmpty {
-                        navigationPath.removeLast()
-                    }
+                    navigationPath = NavigationPath()
                 }) {
                     Image(systemName: "house")
                         .resizable()
@@ -45,7 +37,12 @@ struct BottomMenuBarView: View {
                     .foregroundColor(AppStyle.Color.white)
 
                 Button(action: {
-                    navigationPath.append(NavigationDestination.profile)
+                    if navigationPath.count == 0 {
+                        navigationPath.append(NavigationDestination.profile)
+                    } else {
+                        navigationPath = NavigationPath()
+                        navigationPath.append(NavigationDestination.profile)
+                    }
                 }) {
                     Image(systemName: "person")
                         .resizable()
@@ -59,3 +56,4 @@ struct BottomMenuBarView: View {
         }
     }
 }
+

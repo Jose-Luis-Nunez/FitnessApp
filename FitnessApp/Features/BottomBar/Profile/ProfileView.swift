@@ -1,51 +1,110 @@
 import SwiftUI
 
 struct ProfileView: View {
-    @StateObject private var viewModel = ProfileViewModel()
-
+    @AppStorage("userNickname") private var nickname: String = ""
+    @State private var inputNickname: String = ""
+    @State private var showAlert = false
+    @State private var isEditing = false
+    
+    let textColor: Color = AppStyle.Color.white
+    let backgroundColor = AppStyle.Color.black
+    let saveButtonBackgroundEnabledColor: Color = AppStyle.Color.green
+    let saveButtonBackgroundDisabledColor: Color = AppStyle.Color.green.opacity(0.15)
+    let saveButtonTextEnabledColor: Color = AppStyle.Color.white
+    let saveButtonTextDisabledColor: Color = AppStyle.Color.white
+    let cancelButtonTextColor: Color = AppStyle.Color.white
+    
     var body: some View {
         VStack(spacing: 16) {
-            Text(viewModel.greetingTitle)
-                .font(.largeTitle)
-                .foregroundColor(.white)
-            
-            Text(viewModel.greetingMessage)
-                .font(.title2)
-                .foregroundColor(.white)
-            
-            TextField("Nickname", text: $viewModel.nickname)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .foregroundColor(.black)
-                .padding()
-                .background(Color.white.opacity(0.8))
-                .cornerRadius(8)
-                .disabled(viewModel.isNicknameSet)
-            
-            Button(action: {
-                if viewModel.saveNickname() {
-                    print("Nickname saved successfully")
+            if !nickname.isEmpty && !isEditing {
+                Button(action: {
+                    isEditing = true
+                    inputNickname = nickname
+                }) {
+                    Text("Hey \(nickname)")
+                        .font(.largeTitle)
+                        .foregroundColor(textColor)
                 }
-            }) {
-                Text("Save")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(viewModel.isNicknameSet ? Color.gray : Color.blue)
-                    .cornerRadius(8)
+                Text("Willkommen zurück!")
+                    .font(.title2)
+                    .foregroundColor(textColor)
+            } else {
+                Text(nickname.isEmpty ? "Profile" : "Hey \(nickname)")
+                    .font(.largeTitle)
+                    .foregroundColor(textColor)
+                
+                if isEditing || nickname.isEmpty {
+                    TextField("Nickname", text: $inputNickname)
+                        .foregroundColor(textColor)
+                        .padding()
+                        .background(backgroundColor)
+                        .cornerRadius(8)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                        )
+                        .frame(width: 250)
+                    
+                    HStack {
+                        Spacer()
+                        
+                        Text("Abbrechen")
+                            .foregroundColor(cancelButtonTextColor)
+                            .font(.system(size: 14))
+                            .padding(5)
+                            .frame(width: 120)
+                            .cornerRadius(8)
+                            .onTapGesture {
+                                inputNickname = ""
+                                isEditing = false
+                            }
+                            .frame(maxWidth: .infinity, alignment: .center)
+                        
+                        Spacer()
+                        
+                        Button(action: {
+                            if inputNickname.isEmpty {
+                                showAlert = true
+                            } else {
+                                nickname = inputNickname
+                                inputNickname = ""
+                                isEditing = false
+                                print("Nickname saved successfully")
+                            }
+                        }) {
+                            Text("Speichern")
+                                .foregroundColor(inputNickname.isEmpty ? saveButtonTextDisabledColor : saveButtonTextEnabledColor)
+                                .font(.system(size: 14))
+                                .padding(5)
+                                .frame(width: 140, height: 40)
+                                .background(inputNickname.isEmpty ? saveButtonBackgroundDisabledColor : saveButtonBackgroundEnabledColor)
+                                .cornerRadius(8)
+                        }
+                        .disabled(inputNickname.isEmpty)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 5)
+                }
+                
+                if nickname.isEmpty {
+                    Text("Willkommen zurück!")
+                        .font(.title2)
+                        .foregroundColor(textColor)
+                }
             }
-            .disabled(viewModel.isNicknameSet)
             
-            if viewModel.showAlert {
+            if showAlert {
                 Text("Nickname cannot be empty!")
                     .foregroundColor(.red)
                     .padding()
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(AppStyle.Color.backgroundColor)
+        .background(backgroundColor)
         .padding()
-        .alert(isPresented: $viewModel.showAlert) {
+        .alert(isPresented: $showAlert) {
             Alert(title: Text("Error"), message: Text("Nickname cannot be empty!"), dismissButton: .default(Text("OK")))
         }
         .onAppear {
@@ -53,3 +112,4 @@ struct ProfileView: View {
         }
     }
 }
+
