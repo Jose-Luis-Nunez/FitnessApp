@@ -53,7 +53,8 @@ struct MuscleCategoryView: View {
                                 sets: exercise.sets,
                                 exercise: exercise,
                                 setProgress: activeSetViewModel.setProgress,
-                                viewModel: activeSetViewModel                            )
+                                viewModel: activeSetViewModel
+                            )
                             .onAppear {
                                 if activeSetViewModel.isSetInProgress {
                                     activeSetViewModel.startTimer()

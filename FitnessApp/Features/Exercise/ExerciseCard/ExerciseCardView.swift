@@ -17,7 +17,10 @@ struct ExerciseCardView: View {
             
             CardTopSectionView(
                 title: viewModel.exercise.name,
-                seatText: viewModel.displaySeatText
+                seatText: viewModel.displaySeatText,
+                onEdit: onEdit,
+                exercise: viewModel.exercise,
+                isEditable: isEditable
             ).padding(.bottom, 6)
             
             Divider().background(AppStyle.Color.purpleGrey).padding(.horizontal, 4)
@@ -43,7 +46,10 @@ struct ExerciseCardView: View {
 struct CardTopSectionView: View {
     let title: String
     let seatText: String
-    
+    let onEdit: (Exercise) -> Void
+    let exercise: Exercise
+    let isEditable: Bool
+
     var body: some View {
         HStack(alignment: .top) {
             TextView(
@@ -52,6 +58,11 @@ struct CardTopSectionView: View {
             )
             .frame(maxWidth: 200, maxHeight: 20, alignment: .leading)
             .accessibilityIdentifier(IDS.nameLabel)
+            .onTapGesture {
+                if isEditable {
+                    onEdit(exercise)
+                }
+            }
             
             Spacer()
             
