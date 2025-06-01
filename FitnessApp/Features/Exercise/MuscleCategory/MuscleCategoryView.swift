@@ -123,7 +123,7 @@ struct MuscleCategoryView: View {
             }
             
             if activeSetViewModel.isEditing {
-                EditPickerView(
+                ActiveSetEditPickerView(
                     title: activeSetViewModel.editMode == SetEditingMode.less ? "Verschlechtert" : "Verbessert",
                     selectedReps: $activeSetViewModel.repsInput,
                     selectedWeight: $activeSetViewModel.weightInput,

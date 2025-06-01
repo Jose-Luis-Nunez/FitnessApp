@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct EditPickerView: View {
+struct ActiveSetEditPickerView: View {
     let title: String
     @Binding var selectedReps: String
     @Binding var selectedWeight: String

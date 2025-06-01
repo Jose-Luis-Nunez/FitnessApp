@@ -56,7 +56,10 @@ struct CardTopSectionView: View {
                 styled: StyledExerciseField(field: .action(.exerciseCardTitleText)),
                 content: title
             )
-            .frame(maxWidth: 200, maxHeight: 20, alignment: .leading)
+            .frame(maxWidth: 400, maxHeight: 20, alignment: .leading)
+            .lineLimit(1)
+            .allowsTightening(true)
+            .minimumScaleFactor(0.7)
             .accessibilityIdentifier(IDS.nameLabel)
             .onTapGesture {
                 if isEditable {
