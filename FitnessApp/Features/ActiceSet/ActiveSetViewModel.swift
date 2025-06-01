@@ -55,7 +55,6 @@ class ActiveSetViewModel: ObservableObject {
     func startNextSet() {
         guard let exercise = currentExercise, currentSet < exercise.sets else { return }
         isSetInProgress = true
-        currentSet += 1
         timerService.resetAndStartTimer()
     }
     
@@ -73,14 +72,13 @@ class ActiveSetViewModel: ObservableObject {
             setProgress[currentSet] = progress
         }
         
-        currentSet += 1
-        
-        isSetInProgress = false
-        timerService.stopTimer()
-
-        if currentSet >= exercise.sets {
+        if currentSet + 1 >= exercise.sets {
             isLastSetCompleted = true
         }
+        
+        currentSet += 1
+        isSetInProgress = false
+        timerService.stopTimer()
     }
     
     func updateCurrentReps(_ newReps: Int, _ newWeight: Int) {
@@ -98,14 +96,14 @@ class ActiveSetViewModel: ObservableObject {
             setProgress[currentSet] = progress
         }
         
-        currentSet += 1
-        
-        if currentSet >= exercise.sets {
+        if currentSet + 1 >= exercise.sets {
             isSetInProgress = false
             isLastSetCompleted = true
         } else {
             isSetInProgress = false
         }
+        
+        currentSet += 1
     }
     
     func finishExercise() {
