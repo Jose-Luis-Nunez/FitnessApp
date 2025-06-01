@@ -5,16 +5,20 @@ class TimerService: ObservableObject {
     private var timer: Timer?
 
     func startTimer() {
-        timerSeconds = 0
-        timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            self.timerSeconds += 1
+        guard timer == nil else { return }
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.timerSeconds += 1
         }
     }
 
     func stopTimer() {
         timer?.invalidate()
         timer = nil
+    }
+    
+    func resetAndStartTimer() {
+        stopTimer()
         timerSeconds = 0
+        startTimer()
     }
 }

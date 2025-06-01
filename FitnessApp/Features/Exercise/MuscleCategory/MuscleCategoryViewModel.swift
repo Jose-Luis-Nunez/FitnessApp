@@ -13,10 +13,16 @@ class MuscleCategoryViewModel: ObservableObject {
     init(group: MuscleCategoryGroup) {
         self.group = group
         self.formViewModel = ExerciseFormViewModel()
-        self.activeSetViewModel = ActiveSetViewModel()
         self.storageService = ExerciseStorageService()
         self.analyticsViewModel = AnalyticsViewModel()
         self.exercises = storageService.load(for: group)
+        if let existing = SessionTrainingCache.shared.activeSetVMs[group] {
+            self.activeSetViewModel = existing
+        } else {
+            let newVM = ActiveSetViewModel()
+            self.activeSetViewModel = newVM
+            SessionTrainingCache.shared.activeSetVMs[group] = newVM
+        }
     }
     
     var currentExercise: Exercise? {

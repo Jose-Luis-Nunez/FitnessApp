@@ -6,11 +6,9 @@ class ActiveSetViewModel: ObservableObject {
     @Published var currentSet: Int = 0
     @Published var isSetInProgress: Bool = false
     @Published var isLastSetCompleted: Bool = false
+    @Published var timerSeconds: Int = 0
     
     private let timerService: TimerService
-    var timerSeconds: Int {
-        timerService.timerSeconds
-    }
     
     @Published var isEditing: Bool = false
     @Published var repsInput: String = ""
@@ -40,6 +38,9 @@ class ActiveSetViewModel: ObservableObject {
         self.currentSet = 0
         self.isSetInProgress = false
         self.isLastSetCompleted = false
+        
+        timerService.$timerSeconds
+            .assign(to: &$timerSeconds)
     }
 
     func startSet(for exercise: Exercise) {
@@ -48,12 +49,14 @@ class ActiveSetViewModel: ObservableObject {
         setProgress = []
         isSetInProgress = true
         isLastSetCompleted = false
+        timerService.resetAndStartTimer()
     }
     
     func startNextSet() {
-        if currentExercise != nil {
-            isSetInProgress = true
-        }
+        guard let exercise = currentExercise, currentSet < exercise.sets else { return }
+        isSetInProgress = true
+        currentSet += 1
+        timerService.resetAndStartTimer()
     }
     
     func completeCurrentSet() {
@@ -72,11 +75,11 @@ class ActiveSetViewModel: ObservableObject {
         
         currentSet += 1
         
+        isSetInProgress = false
+        timerService.stopTimer()
+
         if currentSet >= exercise.sets {
-            isSetInProgress = false
             isLastSetCompleted = true
-        } else {
-            isSetInProgress = false
         }
     }
     

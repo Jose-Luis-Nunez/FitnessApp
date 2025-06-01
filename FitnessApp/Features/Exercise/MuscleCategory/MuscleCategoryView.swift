@@ -53,8 +53,12 @@ struct MuscleCategoryView: View {
                                 sets: exercise.sets,
                                 exercise: exercise,
                                 setProgress: activeSetViewModel.setProgress,
-                                timerSeconds: activeSetViewModel.timerSeconds
-                            )
+                                viewModel: activeSetViewModel                            )
+                            .onAppear {
+                                if activeSetViewModel.isSetInProgress {
+                                    activeSetViewModel.startTimer()
+                                }
+                            }
                         }
                         .listRowInsets(EdgeInsets(top: 12, leading: 0, bottom: 8, trailing: 0))
                         .listRowBackground(AppStyle.Color.backgroundColor)

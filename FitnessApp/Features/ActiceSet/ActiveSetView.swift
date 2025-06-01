@@ -4,8 +4,8 @@ struct ActiveSetView: View {
     let sets: Int
     let exercise: Exercise
     let setProgress: [SetProgress]
-    let timerSeconds: Int
-    
+    @ObservedObject var viewModel: ActiveSetViewModel
+
     private let backgroundColor = AppStyle.Color.grayDark
     private let iconSizeWidth: CGFloat = 32
     private let iconSizeHeight: CGFloat = 32
@@ -16,14 +16,14 @@ struct ActiveSetView: View {
                 .frame(maxWidth: .infinity)
             
             VStack(alignment: .leading, spacing: 16) {
-                if timerSeconds > 0 {
+                if viewModel.isSetInProgress && viewModel.timerSeconds > 0 {
                     HStack(spacing: 16) {
                         Image(systemName: "timer")
                             .resizable()
                             .frame(width: 20, height: 20)
                             .foregroundColor(AppStyle.Color.white)
                         
-                        Text(formatTime(seconds: timerSeconds))
+                        Text(formatTime(seconds: viewModel.timerSeconds))
                             .font(AppStyle.Font.largeChip)
                             .foregroundColor(AppStyle.Color.white)
                         
@@ -94,8 +94,8 @@ struct ActiveSetView: View {
                 }
             }
             .padding(.horizontal, AppStyle.Padding.horizontal)
-            .padding(.top, timerSeconds > 0 ? 24 : 16)
-            .padding(.bottom, timerSeconds > 0 ? 32 : 16)
+            .padding(.top, viewModel.timerSeconds > 0 ? 24 : 16)
+            .padding(.bottom, viewModel.timerSeconds > 0 ? 32 : 16)
         }
         .frame(height: calculateHeight())
         .cornerRadius(AppStyle.CornerRadius.card)
@@ -104,12 +104,12 @@ struct ActiveSetView: View {
     private func calculateHeight() -> CGFloat {
         let iconHeight = 32.0
         let spacing = 16.0
-        let topPadding: CGFloat = timerSeconds > 0 ? 24.0 : 16.0
-        let bottomPadding: CGFloat = timerSeconds > 0 ? 32.0 : 16.0
+        let topPadding: CGFloat = viewModel.timerSeconds > 0 ? 24.0 : 16.0
+        let bottomPadding: CGFloat = viewModel.timerSeconds > 0 ? 32.0 : 16.0
         let verticalPadding = topPadding + bottomPadding
         let totalIconHeight = CGFloat(sets) * iconHeight
         let totalSpacing = CGFloat(max(0, sets - 1)) * spacing
-        let timerHeight: CGFloat = timerSeconds > 0 ? 24.0 : 0.0
+        let timerHeight: CGFloat = viewModel.timerSeconds > 0 ? 24.0 : 0.0
         return totalIconHeight + totalSpacing + verticalPadding + timerHeight
     }
     
