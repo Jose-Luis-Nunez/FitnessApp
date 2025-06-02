@@ -33,13 +33,17 @@ struct ExercisePickerView: View {
             backgroundColor
                 .ignoresSafeArea(edges: .bottom)
             
-            VStack(alignment: .center, spacing: 4) {
+            VStack(spacing: 0) {
+                Spacer()
+                    .frame(height: 12)
                 HStack {
                     Text(title)
                         .font(.title2)
                         .foregroundColor(textColor)
                         .fontWeight(.bold)
+                        .multilineTextAlignment(.center)
                         .padding(.bottom, 16)
+                        .frame(maxWidth: .infinity, alignment: .center)
                     
                     Spacer()
                     
