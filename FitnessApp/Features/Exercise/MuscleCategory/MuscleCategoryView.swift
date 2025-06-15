@@ -233,7 +233,12 @@ struct MuscleCategoryView: View {
                             }
                         },
                         isEditable: !isTrainingActive,
-                        analyticsViewModel: analyticsViewModel
+                        analyticsViewModel: analyticsViewModel,
+                        onStart: { selectedExercise in
+                            print("Individuelle Übung gestartet: \(selectedExercise.name)")
+                            viewModel.startTimer()
+                            viewModel.startSet(for: selectedExercise)
+                        }
                     )
                     .padding(.vertical, 6)
                     .transition(.move(edge: .top))
@@ -271,7 +276,12 @@ struct MuscleCategoryView: View {
                             }
                         },
                         isEditable: true,
-                        analyticsViewModel: analyticsViewModel
+                        analyticsViewModel: analyticsViewModel,
+                        onStart: { selectedExercise in
+                              print("Individuelle Übung gestartet: \(selectedExercise.name)")
+                              viewModel.startTimer()
+                              viewModel.startSet(for: selectedExercise)
+                          }
                     )
                     .padding(.vertical, 6)
                     .transition(.move(edge: .top))
@@ -300,7 +310,12 @@ struct MuscleCategoryView: View {
                             }
                         },
                         isEditable: true,
-                        analyticsViewModel: analyticsViewModel
+                        analyticsViewModel: analyticsViewModel,
+                        onStart: { selectedExercise in
+                              print("Individuelle Übung gestartet: \(selectedExercise.name)")
+                              viewModel.startTimer()
+                              viewModel.startSet(for: selectedExercise)
+                          }
                     )
                     .padding(.vertical, 6)
                     .transition(.move(edge: .bottom))

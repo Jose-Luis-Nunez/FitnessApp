@@ -10,6 +10,7 @@ struct ExerciseCardView: View {
     let onEdit: (Exercise) -> Void
     let isEditable: Bool
     @ObservedObject var analyticsViewModel: AnalyticsViewModel
+    let onStart: ((Exercise) -> Void)?
     
     var body: some View {
         VStack(spacing: 2) {
@@ -33,6 +34,21 @@ struct ExerciseCardView: View {
                 analyticsViewModel: analyticsViewModel
             )
             .padding(.top, 0)
+            if let onStart = onStart, isEditable {
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            onStart(viewModel.exercise)
+                        }) {
+                            Image(systemName: "play.circle.fill")
+                                 .resizable()
+                                 .scaledToFit()
+                                 .frame(width: 28, height: 28)
+                                 .foregroundColor(AppStyle.Color.green)
+                        }
+                    }
+                    .padding(.top, 8)
+                }
         }
         .padding(.horizontal, AppStyle.Padding.horizontal)
         .padding(.vertical, 6)
