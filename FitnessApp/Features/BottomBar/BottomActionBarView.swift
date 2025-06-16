@@ -56,84 +56,95 @@ struct FloatingActionButtonsView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             backgroundColor
-                .frame(height: buttonHeightRegular + 10)
+                .frame(height: buttonHeightRegular * 2 + 32)
                 .frame(maxWidth: UIScreen.main.bounds.width - 32)
-                .offset(y: -(buttonHeightRegular / 2 + extraOffset))
-            
-            HStack(spacing: 24) {
-                if viewModel.showAddExerciseButton {
-                    actionButtonLarge(
-                        text: "Add Exercise",
+
+            VStack(spacing: 8) {
+                if viewModel.showSetControls && viewModel.currentSet == 0 {
+                    actionButtonExtraLarge(
+                        text: "Quick done",
                         textFont: AppStyle.Font.bottomBarButtons,
-                        backgroundColor: AppStyle.Color.secondaryButton,
-                        fontColor: AppStyle.Color.white,
-                        action: onAddExercise
-                    )
-                }
-                
-                if viewModel.showStartButton {
-                    actionButtonLarge(
-                        text: viewModel.startButtonTitle,
-                        textFont: AppStyle.Font.bottomBarButtons,
-                        backgroundColor: AppStyle.Color.primaryButton,
-                        fontColor: AppStyle.Color.white,
-                        action: onStart
-                    )
-                }
-                
-                if viewModel.showSetControls {
-                    actionButtonSmall(
-                        text: " - ",
-                        textFont: AppStyle.Font.bottomBarButtons,
-                        backgroundColor: AppStyle.Color.greenLight,
-                        fontColor: AppStyle.Color.white,
-                        action: onEditLess
-                    )
-                    
-                    actionButtonLarge(
-                        text: "Done",
-                        textFont: AppStyle.Font.bottomBarButtons,
-                        backgroundColor: AppStyle.Color.green,
+                        backgroundColor: AppStyle.Color.grayDark,
                         fontColor: AppStyle.Color.white,
                         action: onCompleteSet
                     )
-                    
-                    actionButtonSmall(
-                        text: " + ",
-                        textFont: AppStyle.Font.bottomBarButtons,
-                        backgroundColor: AppStyle.Color.greenLight,
-                        fontColor: AppStyle.Color.white,
-                        action: onEditMore
-                    )
                 }
-                
-                if viewModel.showResetProgress {
-                    actionButtonLarge(
-                        text: "Reset",
-                        textFont: AppStyle.Font.bottomBarButtons,
-                        backgroundColor: AppStyle.Color.green,
-                        fontColor: AppStyle.Color.white,
-                        action: onReset
-                    )
+
+                HStack(spacing: 24) {
+                    if viewModel.showAddExerciseButton {
+                        actionButtonLarge(
+                            text: "Add Exercise",
+                            textFont: AppStyle.Font.bottomBarButtons,
+                            backgroundColor: AppStyle.Color.secondaryButton,
+                            fontColor: AppStyle.Color.white,
+                            action: onAddExercise
+                        )
+                    }
+
+                    if viewModel.showStartButton {
+                        actionButtonLarge(
+                            text: viewModel.startButtonTitle,
+                            textFont: AppStyle.Font.bottomBarButtons,
+                            backgroundColor: AppStyle.Color.primaryButton,
+                            fontColor: AppStyle.Color.white,
+                            action: onStart
+                        )
+                    }
+
+                    if viewModel.showSetControls {
+                        actionButtonSmall(
+                            text: " - ",
+                            textFont: AppStyle.Font.bottomBarButtons,
+                            backgroundColor: AppStyle.Color.greenLight,
+                            fontColor: AppStyle.Color.white,
+                            action: onEditLess
+                        )
+
+                        actionButtonLarge(
+                            text: "Done",
+                            textFont: AppStyle.Font.bottomBarButtons,
+                            backgroundColor: AppStyle.Color.green,
+                            fontColor: AppStyle.Color.white,
+                            action: onCompleteSet
+                        )
+
+                        actionButtonSmall(
+                            text: " + ",
+                            textFont: AppStyle.Font.bottomBarButtons,
+                            backgroundColor: AppStyle.Color.greenLight,
+                            fontColor: AppStyle.Color.white,
+                            action: onEditMore
+                        )
+                    }
+
+                    if viewModel.showResetProgress {
+                        actionButtonLarge(
+                            text: "Reset",
+                            textFont: AppStyle.Font.bottomBarButtons,
+                            backgroundColor: AppStyle.Color.green,
+                            fontColor: AppStyle.Color.white,
+                            action: onReset
+                        )
+                    }
+
+                    if viewModel.showFinishButton {
+                        actionButtonLarge(
+                            text: "Beenden",
+                            textFont: AppStyle.Font.bottomBarButtons,
+                            backgroundColor: AppStyle.Color.green,
+                            fontColor: AppStyle.Color.white,
+                            action: onFinish
+                        )
+                    }
                 }
-                
-                if viewModel.showFinishButton {
-                    actionButtonLarge(
-                        text: "Beenden",
-                        textFont: AppStyle.Font.bottomBarButtons,
-                        backgroundColor: AppStyle.Color.green,
-                        fontColor: AppStyle.Color.white,
-                        action: onFinish
-                    )
-                }
+                .frame(maxWidth: UIScreen.main.bounds.width - 32, alignment: .center)
+                .padding(.horizontal, AppStyle.Padding.horizontal)
             }
-            .frame(maxWidth: UIScreen.main.bounds.width - 32, alignment: .center)
-            .padding(.horizontal, AppStyle.Padding.horizontal)
-            .offset(y: -(buttonHeightRegular / 2 + extraOffset))
+            .padding(.bottom, 16)
         }
-        .frame(height: barHeight + buttonHeightRegular / 2 + extraOffset)
+        .frame(height: buttonHeightRegular * 2 + 32)
     }
-    
+
     @ViewBuilder
     private func actionButtonRegular(
         text: String,
@@ -151,7 +162,7 @@ struct FloatingActionButtonsView: View {
         .background(backgroundColor)
         .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
     }
-    
+
     @ViewBuilder
     private func actionButtonLarge(
         text: String,
@@ -169,7 +180,7 @@ struct FloatingActionButtonsView: View {
         .background(backgroundColor)
         .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
     }
-    
+
     @ViewBuilder
     private func actionButtonSmall(
         text: String,
@@ -183,6 +194,29 @@ struct FloatingActionButtonsView: View {
                 .font(textFont)
                 .foregroundColor(fontColor)
                 .frame(width: buttonWidthRegular / 2, height: buttonHeightRegular)
+        }
+        .background(backgroundColor)
+        .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
+    }
+
+    @ViewBuilder
+    private func actionButtonExtraLarge(
+        text: String,
+        textFont: Font,
+        backgroundColor: Color,
+        fontColor: Color,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(text)
+                .font(textFont)
+                .foregroundColor(fontColor)
+                .frame(
+                    maxWidth: buttonWidthRegular * 2.3,
+                    alignment: .center
+                )
+                .padding(.horizontal, 32)
+                .frame(height: buttonHeightRegular)
         }
         .background(backgroundColor)
         .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
