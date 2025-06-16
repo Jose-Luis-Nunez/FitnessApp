@@ -80,7 +80,7 @@ struct CardTopSectionView: View {
             .frame(width: 60)
             .accessibilityIdentifier(IDS.seatLabel)
             
-                if let onStart = onStart {
+                if let onStart = onStart, !exercise.isCompleted {
                     Button(action: {
                         onStart(exercise)
                     }) {
@@ -89,7 +89,8 @@ struct CardTopSectionView: View {
                             .scaledToFit()
                             .frame(width: 20, height: 20)
                             .foregroundColor(.white)
-                            .padding(6)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
                             .background(AppStyle.Color.black)
                             .cornerRadius(12)
                     }
