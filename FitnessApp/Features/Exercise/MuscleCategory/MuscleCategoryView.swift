@@ -52,14 +52,14 @@ struct MuscleCategoryView: View {
                             ActiveSetView(
                                 sets: exercise.sets,
                                 exercise: exercise,
-                                setProgress: activeSetViewModel.setProgress,
+                                setProgress: $activeSetViewModel.setProgress,
                                 viewModel: activeSetViewModel
                             )
                             .onAppear {
-                                if activeSetViewModel.isSetInProgress {
-                                    activeSetViewModel.startTimer()
+                                    if activeSetViewModel.isSetInProgress {
+                                        activeSetViewModel.startTimer()
+                                    }
                                 }
-                            }
                         }
                         .listRowInsets(EdgeInsets(top: 12, leading: 0, bottom: 8, trailing: 0))
                         .listRowBackground(AppStyle.Color.backgroundColor)
@@ -218,12 +218,10 @@ struct MuscleCategoryView: View {
         let isActiveSetVisible = activeSetViewModel.currentExercise != nil
         
         if isActiveSetVisible {
-            let incompleteExercises = viewModel.exercises.filter { !$0.isCompleted }
-            if let firstIncomplete = incompleteExercises.first {
-                let isTrainingActive = viewModel.isSetInProgress || viewModel.currentExercise != nil || viewModel.currentSet > 0
+            if let exercise = viewModel.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) {
                 return AnyView(
                     ExerciseCardView(
-                        viewModel: ExerciseCardViewModel(exercise: firstIncomplete) { updated in
+                        viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
                             viewModel.updateExercise(updated)
                         },
                         onEdit: { exercise in
@@ -232,7 +230,7 @@ struct MuscleCategoryView: View {
                                 formViewModel.toggleForm()
                             }
                         },
-                        isEditable: !isTrainingActive,
+                        isEditable: !(viewModel.isSetInProgress),
                         analyticsViewModel: analyticsViewModel,
                         onStart: { selectedExercise in
                             print("Individuelle Übung gestartet: \(selectedExercise.name)")

@@ -21,7 +21,8 @@ struct ExerciseCardView: View {
                 seatText: viewModel.displaySeatText,
                 onEdit: onEdit,
                 exercise: viewModel.exercise,
-                isEditable: isEditable
+                isEditable: isEditable,
+                onStart: onStart
             ).padding(.bottom, 6)
             
             Divider().background(AppStyle.Color.purpleGrey).padding(.horizontal, 4)
@@ -34,21 +35,6 @@ struct ExerciseCardView: View {
                 analyticsViewModel: analyticsViewModel
             )
             .padding(.top, 0)
-            if let onStart = onStart, isEditable {
-                    HStack {
-                        Spacer()
-                        Button(action: {
-                            onStart(viewModel.exercise)
-                        }) {
-                            Image(systemName: "play.circle.fill")
-                                 .resizable()
-                                 .scaledToFit()
-                                 .frame(width: 28, height: 28)
-                                 .foregroundColor(AppStyle.Color.green)
-                        }
-                    }
-                    .padding(.top, 8)
-                }
         }
         .padding(.horizontal, AppStyle.Padding.horizontal)
         .padding(.vertical, 6)
@@ -65,6 +51,7 @@ struct CardTopSectionView: View {
     let onEdit: (Exercise) -> Void
     let exercise: Exercise
     let isEditable: Bool
+    let onStart: ((Exercise) -> Void)?
 
     var body: some View {
         HStack(alignment: .top) {
@@ -92,6 +79,24 @@ struct CardTopSectionView: View {
             )
             .frame(width: 60)
             .accessibilityIdentifier(IDS.seatLabel)
+            
+                if let onStart = onStart {
+                    Button(action: {
+                        onStart(exercise)
+                    }) {
+                        Image(systemName: "play.circle.fill")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 20, height: 20)
+                            .foregroundColor(.white)
+                            // Padding aus AppChip.regular
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(AppStyle.Color.black)
+                            .cornerRadius(12)
+                    }
+                    .accessibilityIdentifier("id_button_start_exercise")
+                }
         }
     }
 }
