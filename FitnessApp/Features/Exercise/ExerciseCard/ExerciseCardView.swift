@@ -89,13 +89,12 @@ struct CardTopSectionView: View {
                             .scaledToFit()
                             .frame(width: 20, height: 20)
                             .foregroundColor(.white)
-                            // Padding aus AppChip.regular
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 4)
+                            .padding(6)
                             .background(AppStyle.Color.black)
                             .cornerRadius(12)
                     }
                     .accessibilityIdentifier("id_button_start_exercise")
+                    .buttonStyle(.plain)
                 }
         }
     }
