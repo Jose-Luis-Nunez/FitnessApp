@@ -35,7 +35,8 @@ struct MuscleCategoryView: View {
             currentExercise: viewModel.currentExercise,
             hasActiveExercise: viewModel.hasActiveExercise,
             exercises: viewModel.exercises,
-            isLastSetCompleted: viewModel.isLastSetCompleted
+            isLastSetCompleted: viewModel.isLastSetCompleted,
+            quickDoneModeActive: activeSetViewModel.quickDoneModeActive
         )
     }
     
@@ -96,6 +97,12 @@ struct MuscleCategoryView: View {
                         viewModel.stopTimer()
                         viewModel.completeCurrentSet()
                     },
+                    onQuickDone: {
+                         print("QuickDone clicked")
+                         if let activeExercise = viewModel.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) {
+                             activeSetViewModel.startQuickDone(for: activeExercise)
+                         }
+                     },
                     onReset: {
                         viewModel.stopTimer()
                         viewModel.showResetConfirmation = true
@@ -111,6 +118,7 @@ struct MuscleCategoryView: View {
                     onFinish: {
                         viewModel.stopTimer()
                         viewModel.finishExercise()
+                        activeSetViewModel.quickDoneModeActive = false
                     },
                     onAddExercise: {
                         withAnimation {

@@ -7,9 +7,10 @@ struct BottomActionBarViewModel {
     let hasActiveExercise: Bool
     let exercises: [Exercise]
     let isLastSetCompleted: Bool
-    
+    let quickDoneModeActive: Bool
+
     var shouldShow: Bool {
-        showStartButton || showSetControls || showResetProgress || showFinishButton || showAddExerciseButton
+        showStartButton || showSetControls || showResetProgress || showFinishButton || showAddExerciseButton || showQuickDoneBeendenButton
     }
 
     var showStartButton: Bool {
@@ -17,7 +18,11 @@ struct BottomActionBarViewModel {
     }
 
     var showSetControls: Bool {
-        isSetInProgress && hasActiveExercise && !isLastSetCompleted
+        isSetInProgress && hasActiveExercise && !isLastSetCompleted && !quickDoneModeActive
+    }
+    
+    var showQuickDoneBeendenButton: Bool {
+        quickDoneModeActive && currentExercise != nil
     }
 
     var showResetProgress: Bool {

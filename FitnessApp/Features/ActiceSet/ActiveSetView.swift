@@ -35,30 +35,37 @@ struct ActiveSetView: View {
                     .padding(.bottom, 8)
                 }
 
-                ForEach(setProgress, id: \.self) { progress in
-                    HStack(spacing: 12) {
-                        switch progress.status {
-                        case .completedDone:
-                            icon("checkmark.circle.fill", color: AppStyle.Color.green)
-                        case .completedLess:
-                            icon("minus.circle.fill", color: AppStyle.Color.yellow)
-                        case .completedMore:
-                            icon("flame.circle.fill", color: AppStyle.Color.greenGlow)
-                        case .notStarted, .inProgress:
-                            icon("circle.fill", plain: true)
+                if viewModel.quickDoneModeActive {
+                    Text("Quick Done aktiv – Sets abschließen")
+                        .font(AppStyle.Font.largeChip)
+                        .foregroundColor(AppStyle.Color.white)
+                        .padding(.vertical, 20)
+                } else {
+                    ForEach(setProgress, id: \.self) { progress in
+                        HStack(spacing: 12) {
+                            switch progress.status {
+                            case .completedDone:
+                                icon("checkmark.circle.fill", color: AppStyle.Color.green)
+                            case .completedLess:
+                                icon("minus.circle.fill", color: AppStyle.Color.yellow)
+                            case .completedMore:
+                                icon("flame.circle.fill", color: AppStyle.Color.greenGlow)
+                            case .notStarted, .inProgress:
+                                icon("circle.fill", plain: true)
+                            }
+
+                            Text("\(progress.weight) KG")
+                                .font(AppStyle.Font.largeChip)
+                                .foregroundColor(AppStyle.Color.white)
+
+                            Text("\(progress.currentReps)")
+                                .font(AppStyle.Font.largeChip)
+                                .foregroundColor(AppStyle.Color.green)
+
+                            Text("/ \(exercise.reps)")
+                                .font(AppStyle.Font.largeChip)
+                                .foregroundColor(AppStyle.Color.white)
                         }
-
-                        Text("\(progress.weight) KG")
-                            .font(AppStyle.Font.largeChip)
-                            .foregroundColor(AppStyle.Color.white)
-
-                        Text("\(progress.currentReps)")
-                            .font(AppStyle.Font.largeChip)
-                            .foregroundColor(AppStyle.Color.green)
-
-                        Text("/ \(exercise.reps)")
-                            .font(AppStyle.Font.largeChip)
-                            .foregroundColor(AppStyle.Color.white)
                     }
                 }
             }
@@ -69,8 +76,6 @@ struct ActiveSetView: View {
         .frame(height: calculateHeight())
         .cornerRadius(AppStyle.CornerRadius.card)
     }
-
-    // MARK: - Helpers
 
     private func icon(_ systemName: String, color: Color) -> some View {
         Image(systemName: systemName)

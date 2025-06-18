@@ -14,6 +14,7 @@ class ActiveSetViewModel: ObservableObject {
     @Published var repsInput: String = ""
     @Published var weightInput: String = ""
     @Published var editMode: SetEditingMode = .less
+    @Published var quickDoneModeActive: Bool = false
     
     var isInputValid: Bool {
         guard let newReps = Int(repsInput),
@@ -143,5 +144,15 @@ class ActiveSetViewModel: ObservableObject {
         editMode = mode
         repsInput = String(exercise.reps)
         weightInput = String(exercise.weight)
+    }
+    
+    func startQuickDone(for exercise: Exercise) {
+        currentExercise = exercise
+        currentSet = 0
+        setProgress = Array(repeating: .notStarted, count: exercise.sets)
+        isSetInProgress = false
+        isLastSetCompleted = false
+        quickDoneModeActive = true
+        timerService.resetAndStartTimer()
     }
 }
