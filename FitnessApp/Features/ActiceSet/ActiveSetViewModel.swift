@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 class ActiveSetViewModel: ObservableObject {
     @Published var currentExercise: Exercise?
@@ -42,8 +43,13 @@ class ActiveSetViewModel: ObservableObject {
         self.isLastSetCompleted = false
         
         timerService.$timerSeconds
-            .assign(to: &$timerSeconds)
+            .sink { [weak self] value in
+                self?.timerSeconds = value
+            }
+            .store(in: &cancellables)
     }
+
+    private var cancellables = Set<AnyCancellable>()
 
     func startSet(for exercise: Exercise) {
         currentExercise = exercise
@@ -164,7 +170,7 @@ class ActiveSetViewModel: ObservableObject {
     func processQuickDone(at index: Int) {
         guard let exercise = currentExercise, index < setProgress.count else { return }
         if setProgress[index].status == .completedDone {
-            return // Schon erledigt, nix tun
+            return
         }
         print("Processing set \(index) at time \(Date()) with trigger source: ViewModel")
         setProgress[index] = SetProgress(status: .completedDone, currentReps: exercise.reps, weight: exercise.weight)
@@ -172,4 +178,11 @@ class ActiveSetViewModel: ObservableObject {
             isLastSetCompleted = true
         }
     }
+
+    func formatTime(seconds: Int) -> String {
+        let minutes = seconds / 60
+        let remainingSeconds = seconds % 60
+        return String(format: "%02d:%02d", minutes, remainingSeconds)
+    }
 }
+

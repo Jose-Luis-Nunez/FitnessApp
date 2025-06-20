@@ -38,7 +38,8 @@ enum AppStyle {
         static let black = SwiftUI.Color.black
         static let yellow = SwiftUI.Color.yellow
         static let gray = SwiftUI.Color.gray
-        static let grayDark = SwiftUI.Color(hex: "##363636")
+        static let grayDark = SwiftUI.Color(hex: "#383838")
+        static let grayDark2 = SwiftUI.Color(hex: "##363636")
 
         static let purpleGrey = SwiftUI.Color(hex: "#544985")
         static let purpleLight = SwiftUI.Color(hex: "#E5D8FF")
