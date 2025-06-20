@@ -3,6 +3,7 @@ import Foundation
 class ActiveSetViewModel: ObservableObject {
     @Published var currentExercise: Exercise?
     @Published var setProgress: [SetProgress] = []
+    @Published var pendingSetIndex: Int? = nil
     @Published var currentSet: Int = 0
     @Published var isSetInProgress: Bool = false
     @Published var isLastSetCompleted: Bool = false
@@ -47,7 +48,9 @@ class ActiveSetViewModel: ObservableObject {
     func startSet(for exercise: Exercise) {
         currentExercise = exercise
         currentSet = 0
-        setProgress = Array(repeating: .notStarted, count: exercise.sets)
+        setProgress = (0..<exercise.sets).map { _ in
+            SetProgress(status: .notStarted, currentReps: exercise.reps, weight: exercise.weight)
+        }
         isSetInProgress = true
         isLastSetCompleted = false
         timerService.resetAndStartTimer()
@@ -115,6 +118,7 @@ class ActiveSetViewModel: ObservableObject {
         currentSet = 0
         isSetInProgress = false
         isLastSetCompleted = false
+        quickDoneModeActive = false
     }
     
     func resetProgress() {
@@ -149,10 +153,23 @@ class ActiveSetViewModel: ObservableObject {
     func startQuickDone(for exercise: Exercise) {
         currentExercise = exercise
         currentSet = 0
-        setProgress = Array(repeating: .notStarted, count: exercise.sets)
+        setProgress = (0..<exercise.sets).map { _ in
+            SetProgress(status: .notStarted, currentReps: exercise.reps, weight: exercise.weight)
+        }
+        quickDoneModeActive = true
         isSetInProgress = false
         isLastSetCompleted = false
-        quickDoneModeActive = true
-        timerService.resetAndStartTimer()
+    }
+
+    func processQuickDone(at index: Int) {
+        guard let exercise = currentExercise, index < setProgress.count else { return }
+        if setProgress[index].status == .completedDone {
+            return // Schon erledigt, nix tun
+        }
+        print("Processing set \(index) at time \(Date()) with trigger source: ViewModel")
+        setProgress[index] = SetProgress(status: .completedDone, currentReps: exercise.reps, weight: exercise.weight)
+        if setProgress.allSatisfy({ $0.status == .completedDone }) {
+            isLastSetCompleted = true
+        }
     }
 }

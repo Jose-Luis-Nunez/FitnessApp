@@ -57,10 +57,10 @@ struct MuscleCategoryView: View {
                                 viewModel: activeSetViewModel
                             )
                             .onAppear {
-                                    if activeSetViewModel.isSetInProgress {
-                                        activeSetViewModel.startTimer()
-                                    }
+                                if activeSetViewModel.isSetInProgress {
+                                    activeSetViewModel.startTimer()
                                 }
+                            }
                         }
                         .listRowInsets(EdgeInsets(top: 12, leading: 0, bottom: 8, trailing: 0))
                         .listRowBackground(AppStyle.Color.backgroundColor)
@@ -98,11 +98,11 @@ struct MuscleCategoryView: View {
                         viewModel.completeCurrentSet()
                     },
                     onQuickDone: {
-                         print("QuickDone clicked")
-                         if let activeExercise = viewModel.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) {
-                             activeSetViewModel.startQuickDone(for: activeExercise)
-                         }
-                     },
+                        print("QuickDone clicked")
+                        if let activeExercise = viewModel.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) {
+                            activeSetViewModel.startQuickDone(for: activeExercise)
+                        }
+                    },
                     onReset: {
                         viewModel.stopTimer()
                         viewModel.showResetConfirmation = true
@@ -117,7 +117,14 @@ struct MuscleCategoryView: View {
                     },
                     onFinish: {
                         viewModel.stopTimer()
-                        viewModel.finishExercise()
+                        if activeSetViewModel.isLastSetCompleted, let exercise = activeSetViewModel.currentExercise {
+                            var updatedExercise = exercise
+                            updatedExercise.isCompleted = true
+                            viewModel.updateExercise(updatedExercise) // Speichert über ExerciseStorageService
+                            viewModel.saveAnalytics() // Expliziter Aufruf von saveAnalytics
+                        }
+                        viewModel.finishExercise() // Aktualisiert exercises und speichert
+                        activeSetViewModel.finishExercise() // Setzt den lokalen Zustand zurück
                         activeSetViewModel.quickDoneModeActive = false
                     },
                     onAddExercise: {
@@ -185,7 +192,6 @@ struct MuscleCategoryView: View {
                 .transition(.move(edge: .bottom))
             }
         }
-        
         .toolbar(content: {
             ToolbarItem(placement: .principal) {
                 Text(group.displayName)
@@ -284,10 +290,10 @@ struct MuscleCategoryView: View {
                         isEditable: true,
                         analyticsViewModel: analyticsViewModel,
                         onStart: { selectedExercise in
-                              print("Individuelle Übung gestartet: \(selectedExercise.name)")
-                              viewModel.startTimer()
-                              viewModel.startSet(for: selectedExercise)
-                          }
+                            print("Individuelle Übung gestartet: \(selectedExercise.name)")
+                            viewModel.startTimer()
+                            viewModel.startSet(for: selectedExercise)
+                        }
                     )
                     .padding(.vertical, 6)
                     .transition(.move(edge: .top))
@@ -318,10 +324,10 @@ struct MuscleCategoryView: View {
                         isEditable: true,
                         analyticsViewModel: analyticsViewModel,
                         onStart: { selectedExercise in
-                              print("Individuelle Übung gestartet: \(selectedExercise.name)")
-                              viewModel.startTimer()
-                              viewModel.startSet(for: selectedExercise)
-                          }
+                            print("Individuelle Übung gestartet: \(selectedExercise.name)")
+                            viewModel.startTimer()
+                            viewModel.startSet(for: selectedExercise)
+                        }
                     )
                     .padding(.vertical, 6)
                     .transition(.move(edge: .bottom))

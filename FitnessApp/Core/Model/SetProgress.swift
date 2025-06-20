@@ -32,8 +32,8 @@ enum SetStatus: String, Codable {
 
 struct SetProgress: Codable, Hashable, Equatable {
     var status: SetStatus
-    let currentReps: Int
-    let weight: Int
+    var currentReps: Int
+    var weight: Int
 
     static let notStarted = SetProgress(
         status: .notStarted,

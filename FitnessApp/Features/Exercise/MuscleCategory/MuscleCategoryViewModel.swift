@@ -132,7 +132,7 @@ class MuscleCategoryViewModel: ObservableObject {
         }
     }
     
-    private func saveAnalytics() {
+    func saveAnalytics() {
         guard let exercise = activeSetViewModel.currentExercise else {
             print("No exercise to save for analytics")
             return
