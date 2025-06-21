@@ -277,7 +277,8 @@ struct MuscleCategoryView: View {
                         },
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)
-                        }
+                        },
+                        isActiveSetVisible: activeSetViewModel.currentExercise != nil
                     )
                     .padding(.vertical, 6)
                     .transition(.move(edge: .top))
@@ -324,7 +325,8 @@ struct MuscleCategoryView: View {
                         },
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)
-                        }
+                        },
+                        isActiveSetVisible: activeSetViewModel.currentExercise != nil
                     )
                     .padding(.vertical, 6)
                     .transition(.move(edge: .top))
@@ -362,8 +364,8 @@ struct MuscleCategoryView: View {
                         },
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)
-                        }
-                        
+                        },
+                        isActiveSetVisible: activeSetViewModel.currentExercise != nil
                     )
                     .padding(.vertical, 6)
                     .transition(.move(edge: .bottom))

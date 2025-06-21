@@ -12,6 +12,7 @@ struct ExerciseCardView: View {
     @ObservedObject var analyticsViewModel: AnalyticsViewModel
     let onStart: ((Exercise) -> Void)?
     let onReset: ((Exercise) -> Void)?
+    let isActiveSetVisible: Bool
 
     var body: some View {
         VStack(spacing: 2) {
@@ -24,7 +25,8 @@ struct ExerciseCardView: View {
                 exercise: viewModel.exercise,
                 isEditable: isEditable,
                 onStart: onStart,
-                onReset: onReset
+                onReset: onReset,
+                isActiveSetVisible: isActiveSetVisible
 
             ).padding(.bottom, 6)
             
@@ -56,6 +58,8 @@ struct CardTopSectionView: View {
     let isEditable: Bool
     let onStart: ((Exercise) -> Void)?
     let onReset: ((Exercise) -> Void)?
+    let isActiveSetVisible: Bool
+
     
     var body: some View {
         HStack(alignment: .top) {
@@ -104,7 +108,7 @@ struct CardTopSectionView: View {
                 .accessibilityIdentifier(IDS.seatLabel)
             }
             
-            if let onStart = onStart, !exercise.isCompleted {
+            if let onStart = onStart, !exercise.isCompleted, !isActiveSetVisible {
                 Button(action: {
                     onStart(exercise)
                 }) {
