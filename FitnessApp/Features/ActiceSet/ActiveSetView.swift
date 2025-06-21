@@ -100,6 +100,7 @@ private struct ActiveSetRowView: View {
 
     var body: some View {
         HStack(spacing: 12) {
+            // Linker Kreis
             ZStack {
                 Circle()
                     .fill(AppStyle.Color.black)
@@ -120,19 +121,31 @@ private struct ActiveSetRowView: View {
                 .font(AppStyle.Font.largeChip)
                 .foregroundColor(AppStyle.Color.white)
 
-            if progress.status != .notStarted {
-                Text("\(progress.currentReps)")
-                    .font(AppStyle.Font.largeChip)
-                    .foregroundColor(AppStyle.Color.greenGlow)
-            } else {
-                Text(" ")
-                    .font(AppStyle.Font.largeChip)
-                    .foregroundColor(.clear)
-            }
+            Spacer()
 
-            Text("/ \(exercise.reps)")
-                .font(AppStyle.Font.largeChip)
-                .foregroundColor(AppStyle.Color.white)
+            HStack(spacing: 4) {
+                Text("\(exercise.reps)")
+                    .font(AppStyle.Font.largeChip)
+                    .foregroundColor(AppStyle.Color.white)
+
+                Text("/")
+                    .font(AppStyle.Font.largeChip)
+                    .foregroundColor(AppStyle.Color.white)
+
+                if progress.status != .notStarted && progress.status != .inProgress {
+                    Text("\(progress.currentReps)")
+                        .font(AppStyle.Font.largeChip)
+                        .foregroundColor(AppStyle.Color.green)
+                } else {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 20, height: 20)
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(AppStyle.Color.green)
+                }
+                Spacer()
+            }
         }
     }
 }
