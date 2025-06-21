@@ -274,6 +274,9 @@ struct MuscleCategoryView: View {
                         onStart: { selectedExercise in
                             print("Individuelle Übung gestartet: \(selectedExercise.name)")
                             viewModel.startSet(for: selectedExercise)
+                        },
+                        onReset: { selectedExercise in
+                            viewModel.resetExercise(selectedExercise)
                         }
                     )
                     .padding(.vertical, 6)
@@ -292,75 +295,82 @@ struct MuscleCategoryView: View {
             )
         }
     }
-        
+    
     private var incompleteExercisesSection: some View {
-            let incompleteExercises = viewModel.exercises.filter { !$0.isCompleted }
-            
-            if incompleteExercises.isEmpty {
-                return AnyView(EmptyView())
-            } else {
-                return AnyView(
-                    ForEach(incompleteExercises, id: \.id) { exercise in
-                        ExerciseCardView(
-                            viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
-                                viewModel.updateExercise(updated)
-                            },
-                            onEdit: { exercise in
-                                withAnimation {
-                                    formViewModel.loadExercise(exercise)
-                                    formViewModel.toggleForm()
-                                    print("Edit exercise triggered: \(exercise.name)")
-                                }
-                            },
-                            isEditable: true,
-                            analyticsViewModel: analyticsViewModel,
-                            onStart: { selectedExercise in
-                                print("Individuelle Übung gestartet: \(selectedExercise.name)")
-                                viewModel.startTimer()
-                                viewModel.startSet(for: selectedExercise)
-                            }
-                        )
-                        .padding(.vertical, 6)
-                        .transition(.move(edge: .top))
-                        .listRowSeparator(.hidden)
-                    }
-                )
-            }
-        }
+        let incompleteExercises = viewModel.exercises.filter { !$0.isCompleted }
         
-        private var completedExercisesSection: some View {
-            let completedExercises = viewModel.exercises.filter { $0.isCompleted }
-            
-            if completedExercises.isEmpty {
-                return AnyView(EmptyView())
-            } else {
-                return AnyView(
-                    ForEach(completedExercises, id: \.id) { exercise in
-                        ExerciseCardView(
-                            viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
-                                viewModel.updateExercise(updated)
-                            },
-                            onEdit: { exercise in
-                                withAnimation {
-                                    formViewModel.loadExercise(exercise)
-                                    formViewModel.toggleForm()
-                                    print("Edit exercise triggered: \(exercise.name)")
-                                }
-                            },
-                            isEditable: true,
-                            analyticsViewModel: analyticsViewModel,
-                            onStart: { selectedExercise in
-                                print("Individuelle Übung gestartet: \(selectedExercise.name)")
-                                viewModel.startTimer()
-                                viewModel.startSet(for: selectedExercise)
+        if incompleteExercises.isEmpty {
+            return AnyView(EmptyView())
+        } else {
+            return AnyView(
+                ForEach(incompleteExercises, id: \.id) { exercise in
+                    ExerciseCardView(
+                        viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
+                            viewModel.updateExercise(updated)
+                        },
+                        onEdit: { exercise in
+                            withAnimation {
+                                formViewModel.loadExercise(exercise)
+                                formViewModel.toggleForm()
+                                print("Edit exercise triggered: \(exercise.name)")
                             }
-                        )
-                        .padding(.vertical, 6)
-                        .transition(.move(edge: .bottom))
-                        .listRowSeparator(.hidden)
-                    }
-                )
-            }
+                        },
+                        isEditable: true,
+                        analyticsViewModel: analyticsViewModel,
+                        onStart: { selectedExercise in
+                            print("Individuelle Übung gestartet: \(selectedExercise.name)")
+                            viewModel.startTimer()
+                            viewModel.startSet(for: selectedExercise)
+                        },
+                        onReset: { selectedExercise in
+                            viewModel.resetExercise(selectedExercise)
+                        }
+                    )
+                    .padding(.vertical, 6)
+                    .transition(.move(edge: .top))
+                    .listRowSeparator(.hidden)
+                }
+            )
         }
     }
+    
+    private var completedExercisesSection: some View {
+        let completedExercises = viewModel.exercises.filter { $0.isCompleted }
+        
+        if completedExercises.isEmpty {
+            return AnyView(EmptyView())
+        } else {
+            return AnyView(
+                ForEach(completedExercises, id: \.id) { exercise in
+                    ExerciseCardView(
+                        viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
+                            viewModel.updateExercise(updated)
+                        },
+                        onEdit: { exercise in
+                            withAnimation {
+                                formViewModel.loadExercise(exercise)
+                                formViewModel.toggleForm()
+                                print("Edit exercise triggered: \(exercise.name)")
+                            }
+                        },
+                        isEditable: true,
+                        analyticsViewModel: analyticsViewModel,
+                        onStart: { selectedExercise in
+                            print("Individuelle Übung gestartet: \(selectedExercise.name)")
+                            viewModel.startTimer()
+                            viewModel.startSet(for: selectedExercise)
+                        },
+                        onReset: { selectedExercise in
+                            viewModel.resetExercise(selectedExercise)
+                        }
+                        
+                    )
+                    .padding(.vertical, 6)
+                    .transition(.move(edge: .bottom))
+                    .listRowSeparator(.hidden)
+                }
+            )
+        }
+    }
+}
 

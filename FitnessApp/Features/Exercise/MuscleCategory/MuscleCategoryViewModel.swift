@@ -142,4 +142,14 @@ class MuscleCategoryViewModel: ObservableObject {
             setProgress: activeSetViewModel.setProgress
         )
     }
+    
+    func resetExercise(_ exercise: Exercise) {
+        var updatedExercise = exercise
+        updatedExercise.isCompleted = false
+        updatedExercise.sets = exercise.sets
+        updatedExercise.reps = exercise.reps
+        updatedExercise.weight = exercise.weight
+        updateExercise(updatedExercise)
+        print("Reset done for exercise: \(exercise.name)")
+    }
 }
