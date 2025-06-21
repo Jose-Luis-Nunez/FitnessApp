@@ -24,17 +24,44 @@ struct ActiveSetView: View {
                     ForEach(setProgress.indices, id: \.self) { index in
                         let progress = setProgress[index]
                         HStack(spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(AppStyle.Color.black)
+                                    .frame(width: iconSize, height: iconSize)
+
+                                Text("\(index + 1)")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(AppStyle.Color.white)
+                            }
+
+                            Text("\(progress.weight) KG")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(AppStyle.Color.white)
+
+                            HStack(spacing: 4) {
+                                Text("\(exercise.reps)")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(AppStyle.Color.white)
+
+                                Text(" / ")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(AppStyle.Color.white)
+
+                                if progress.status == .completedDone {
+                                    Text("\(progress.currentReps)")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(AppStyle.Color.green)
+                                }
+                            }
+
+                            Spacer()
+
                             if progress.status == .completedDone {
-                                icon("checkmark.circle.fill", color: AppStyle.Color.green)
-                                Text("\(progress.weight) KG")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(AppStyle.Color.white)
-                                Text("\(progress.currentReps)")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(AppStyle.Color.green)
-                                Text("/ \(progress.currentReps)")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(AppStyle.Color.white)
+                                Image(systemName: "checkmark.circle.fill")
+                                    .resizable()
+                                    .frame(width: iconSize, height: iconSize)
+                                    .symbolRenderingMode(.palette)
+                                    .foregroundStyle(.white, AppStyle.Color.green)
                             } else {
                                 Button(action: {
                                     print("Marking set \(index) as done at time \(Date()) with trigger source: Button \(index)")
@@ -80,14 +107,6 @@ struct ActiveSetView: View {
                 viewModel.pendingSetIndex = nil
             }
         }
-    }
-
-    private func icon(_ systemName: String, color: Color) -> some View {
-        Image(systemName: systemName)
-            .resizable()
-            .frame(width: iconSize, height: iconSize)
-            .symbolRenderingMode(.palette)
-            .foregroundStyle(.white, color)
     }
 }
 
