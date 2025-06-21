@@ -1,3 +1,4 @@
+import SwiftUICore
 import SwiftUI
 
 struct ActiveSetView: View {
@@ -7,8 +8,7 @@ struct ActiveSetView: View {
     @ObservedObject var viewModel: ActiveSetViewModel
 
     private let backgroundColor = AppStyle.Color.grayDark
-    private let iconSizeWidth: CGFloat = 32
-    private let iconSizeHeight: CGFloat = 32
+    private let iconSize: CGFloat = 32
     private let defaultPadding: CGFloat = AppStyle.Padding.horizontal
 
     var body: some View {
@@ -58,31 +58,14 @@ struct ActiveSetView: View {
 
                 // Normal Mode
                 else {
-                    ForEach(setProgress, id: \.self) { progress in
-                        HStack(spacing: 12) {
-                            switch progress.status {
-                            case .completedDone:
-                                icon("checkmark.circle.fill", color: AppStyle.Color.green)
-                            case .completedLess:
-                                icon("minus.circle.fill", color: AppStyle.Color.yellow)
-                            case .completedMore:
-                                icon("flame.circle.fill", color: AppStyle.Color.greenGlow)
-                            case .notStarted, .inProgress:
-                                icon("circle.fill", plain: true)
-                            }
-
-                            Text("\(progress.weight) KG")
-                                .font(AppStyle.Font.largeChip)
-                                .foregroundColor(AppStyle.Color.white)
-
-                            Text("\(progress.currentReps)")
-                                .font(AppStyle.Font.largeChip)
-                                .foregroundColor(AppStyle.Color.green)
-
-                            Text("/ \(exercise.reps)")
-                                .font(AppStyle.Font.largeChip)
-                                .foregroundColor(AppStyle.Color.white)
-                        }
+                    ForEach(Array(setProgress.enumerated()), id: \.offset) { index, progress in
+                        ActiveSetRowView(
+                            index: index,
+                            progress: progress,
+                            exercise: exercise,
+                            activeSetIndex: viewModel.activeSetIndex,
+                            iconSize: iconSize
+                        )
                     }
                 }
             }
@@ -102,15 +85,54 @@ struct ActiveSetView: View {
     private func icon(_ systemName: String, color: Color) -> some View {
         Image(systemName: systemName)
             .resizable()
-            .frame(width: iconSizeWidth, height: iconSizeHeight)
+            .frame(width: iconSize, height: iconSize)
             .symbolRenderingMode(.palette)
             .foregroundStyle(.white, color)
     }
+}
 
-    private func icon(_ systemName: String, plain: Bool) -> some View {
-        Image(systemName: systemName)
-            .resizable()
-            .frame(width: iconSizeWidth, height: iconSizeHeight)
-            .foregroundColor(.white)
+private struct ActiveSetRowView: View {
+    let index: Int
+    let progress: SetProgress
+    let exercise: Exercise
+    let activeSetIndex: Int
+    let iconSize: CGFloat
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(AppStyle.Color.black)
+                    .frame(width: iconSize, height: iconSize)
+
+                if index == activeSetIndex {
+                    Circle()
+                        .stroke(AppStyle.Color.greenGlow, lineWidth: 2)
+                        .frame(width: iconSize, height: iconSize)
+                }
+
+                Text("\(index + 1)")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(AppStyle.Color.white)
+            }
+
+            Text("\(progress.weight) KG")
+                .font(AppStyle.Font.largeChip)
+                .foregroundColor(AppStyle.Color.white)
+
+            if progress.status != .notStarted {
+                Text("\(progress.currentReps)")
+                    .font(AppStyle.Font.largeChip)
+                    .foregroundColor(AppStyle.Color.greenGlow)
+            } else {
+                Text(" ")
+                    .font(AppStyle.Font.largeChip)
+                    .foregroundColor(.clear)
+            }
+
+            Text("/ \(exercise.reps)")
+                .font(AppStyle.Font.largeChip)
+                .foregroundColor(AppStyle.Color.white)
+        }
     }
 }
