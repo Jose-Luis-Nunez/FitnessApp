@@ -8,7 +8,7 @@ struct ActiveSetView: View {
     @ObservedObject var viewModel: ActiveSetViewModel
 
     private let backgroundColor = AppStyle.Color.grayDark
-    private let iconSize: CGFloat = 32
+    private let iconSize: CGFloat = 26
     private let defaultPadding: CGFloat = AppStyle.Padding.horizontal
 
     var body: some View {
@@ -18,7 +18,7 @@ struct ActiveSetView: View {
                 .frame(maxWidth: .infinity)
                 .contentShape(Rectangle())
 
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 10) {
                 // Quick Done Mode
                 if viewModel.quickDoneModeActive {
                     ForEach(setProgress.indices, id: \.self) { index in
@@ -27,13 +27,13 @@ struct ActiveSetView: View {
                             if progress.status == .completedDone {
                                 icon("checkmark.circle.fill", color: AppStyle.Color.green)
                                 Text("\(progress.weight) KG")
-                                    .font(AppStyle.Font.largeChip)
+                                    .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(AppStyle.Color.white)
                                 Text("\(progress.currentReps)")
-                                    .font(AppStyle.Font.largeChip)
+                                    .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(AppStyle.Color.green)
                                 Text("/ \(progress.currentReps)")
-                                    .font(AppStyle.Font.largeChip)
+                                    .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(AppStyle.Color.white)
                             } else {
                                 Button(action: {
@@ -41,9 +41,9 @@ struct ActiveSetView: View {
                                     viewModel.pendingSetIndex = index
                                 }) {
                                     Text("Done")
-                                        .font(AppStyle.Font.bottomBarButtons)
+                                        .font(.system(size: 16, weight: .semibold))
                                         .foregroundColor(AppStyle.Color.white)
-                                        .frame(width: 80, height: 40)
+                                        .frame(width: 80, height: 36)
                                         .background(AppStyle.Color.primaryButton)
                                         .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
                                 }
@@ -70,7 +70,7 @@ struct ActiveSetView: View {
                 }
             }
             .padding(.horizontal, defaultPadding)
-            .padding(.vertical, defaultPadding)
+            .padding(.vertical, 8)
         }
         .cornerRadius(AppStyle.CornerRadius.card)
         .onChange(of: viewModel.pendingSetIndex) { index in
@@ -100,7 +100,6 @@ private struct ActiveSetRowView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Linker Kreis
             ZStack {
                 Circle()
                     .fill(AppStyle.Color.black)
@@ -113,28 +112,28 @@ private struct ActiveSetRowView: View {
                 }
 
                 Text("\(index + 1)")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(AppStyle.Color.white)
             }
 
-            Text("\(progress.weight) KG")
-                .font(AppStyle.Font.largeChip)
+            Text("\(progress.weight) kg")
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(AppStyle.Color.white)
 
             Spacer()
 
             HStack(spacing: 4) {
                 Text("\(exercise.reps)")
-                    .font(AppStyle.Font.largeChip)
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(AppStyle.Color.white)
 
-                Text("/")
-                    .font(AppStyle.Font.largeChip)
+                Text(" / ")
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(AppStyle.Color.white)
 
                 if progress.status != .notStarted && progress.status != .inProgress {
                     Text("\(progress.currentReps)")
-                        .font(AppStyle.Font.largeChip)
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(AppStyle.Color.green)
                 } else {
                     Image(systemName: "arrow.triangle.2.circlepath")
@@ -144,6 +143,7 @@ private struct ActiveSetRowView: View {
                         .symbolRenderingMode(.palette)
                         .foregroundStyle(AppStyle.Color.green)
                 }
+
                 Spacer()
             }
         }
