@@ -19,6 +19,8 @@ class ActiveSetViewModel: ObservableObject {
     @Published var editMode: SetEditingMode = .less
     @Published var quickDoneModeActive: Bool = false
     
+    @Published var quickDoneAllCompleted: Bool = false
+    
     var isInputValid: Bool {
         guard let newReps = Int(repsInput),
               let newWeight = Int(weightInput),
@@ -61,6 +63,7 @@ class ActiveSetViewModel: ObservableObject {
         }
         isSetInProgress = true
         isLastSetCompleted = false
+        quickDoneAllCompleted = false
         timerService.resetAndStartTimer()
     }
     
@@ -128,6 +131,7 @@ class ActiveSetViewModel: ObservableObject {
         isSetInProgress = false
         isLastSetCompleted = false
         quickDoneModeActive = false
+        quickDoneAllCompleted = false
     }
     
     func resetProgress() {
@@ -136,6 +140,7 @@ class ActiveSetViewModel: ObservableObject {
         currentSet = 0
         isSetInProgress = false
         isLastSetCompleted = false
+        quickDoneAllCompleted = false
     }
     
     func startTimer() {
@@ -166,6 +171,7 @@ class ActiveSetViewModel: ObservableObject {
             SetProgress(status: .notStarted, currentReps: exercise.reps, weight: exercise.weight)
         }
         quickDoneModeActive = true
+        quickDoneAllCompleted = false
         isSetInProgress = false
         isLastSetCompleted = false
     }
@@ -175,11 +181,20 @@ class ActiveSetViewModel: ObservableObject {
         if setProgress[index].status == .completedDone {
             return
         }
-        print("Processing set \(index) at time \(Date()) with trigger source: ViewModel")
+        print("Processing set \(index) at time \(Date()) from onChange")
         setProgress[index] = SetProgress(status: .completedDone, currentReps: exercise.reps, weight: exercise.weight)
         if setProgress.allSatisfy({ $0.status == .completedDone }) {
             isLastSetCompleted = true
         }
+    }
+    
+    func completeAllQuickDone() {
+        guard let exercise = currentExercise else { return }
+        for index in 0..<setProgress.count {
+            setProgress[index] = SetProgress(status: .completedDone, currentReps: exercise.reps, weight: exercise.weight)
+        }
+        quickDoneAllCompleted = true
+        isLastSetCompleted = true
     }
     
     func formatTime(seconds: Int) -> String {
@@ -188,4 +203,3 @@ class ActiveSetViewModel: ObservableObject {
         return String(format: "%02d:%02d", minutes, remainingSeconds)
     }
 }
-

@@ -5,6 +5,7 @@ struct BottomActionBarView: View {
     let onStart: () -> Void
     let onCompleteSet: () -> Void
     let onQuickDone: () -> Void
+    let onCompleteAllQuickDone: () -> Void
     let onReset: () -> Void
     let onEditLess: () -> Void
     let onEditMore: () -> Void
@@ -16,12 +17,13 @@ struct BottomActionBarView: View {
     
     var body: some View {
         ZStack(alignment: .bottom) {
-    
+            
             FloatingActionButtonsView(
                 viewModel: viewModel,
                 onStart: onStart,
                 onCompleteSet: onCompleteSet,
                 onQuickDone: onQuickDone,
+                onCompleteAllQuickDone: onCompleteAllQuickDone,
                 onReset: onReset,
                 onEditLess: onEditLess,
                 onEditMore: onEditMore,
@@ -40,6 +42,7 @@ struct FloatingActionButtonsView: View {
     let onStart: () -> Void
     let onCompleteSet: () -> Void
     let onQuickDone: () -> Void
+    let onCompleteAllQuickDone: () -> Void
     let onReset: () -> Void
     let onEditLess: () -> Void
     let onEditMore: () -> Void
@@ -47,21 +50,21 @@ struct FloatingActionButtonsView: View {
     let onAddExercise: () -> Void
     let barHeight: CGFloat
     let backgroundColor: Color
-
+    
     private let buttonWidthRegular: CGFloat = 110
     private let buttonHeightRegular: CGFloat = 40
-
+    
     private let buttonWidthLarge: CGFloat = 160
     private let buttonHeightLarge: CGFloat = 40
-
+    
     var body: some View {
         ZStack(alignment: .bottom) {
             backgroundColor
                 .frame(height: buttonHeightRegular * 2 + 32)
                 .frame(maxWidth: UIScreen.main.bounds.width - 32)
-
+            
             VStack(spacing: 8) {
-
+                
                 if viewModel.showQuickDoneBeendenButton {
                     actionButtonLarge(
                         text: "Beenden",
@@ -70,7 +73,16 @@ struct FloatingActionButtonsView: View {
                         fontColor: AppStyle.Color.white,
                         action: onFinish
                     )
-                } else {
+                } else if viewModel.showQuickDoneDoneButton {
+                    actionButtonLarge(
+                        text: "All Done",
+                        textFont: AppStyle.Font.bottomBarButtons,
+                        backgroundColor: AppStyle.Color.primaryButton,
+                        fontColor: AppStyle.Color.white,
+                        action: onCompleteAllQuickDone
+                    )
+                }
+                else {
                     if viewModel.showSetControls && viewModel.currentSet == 0 {
                         actionButtonExtraLarge(
                             text: "Quick done",
@@ -80,7 +92,7 @@ struct FloatingActionButtonsView: View {
                             action: onQuickDone
                         )
                     }
-
+                    
                     HStack(spacing: 24) {
                         if viewModel.showAddExerciseButton {
                             actionButtonLarge(
@@ -91,7 +103,7 @@ struct FloatingActionButtonsView: View {
                                 action: onAddExercise
                             )
                         }
-
+                        
                         if viewModel.showStartButton {
                             actionButtonLarge(
                                 text: viewModel.startButtonTitle,
@@ -101,7 +113,7 @@ struct FloatingActionButtonsView: View {
                                 action: onStart
                             )
                         }
-
+                        
                         if viewModel.showSetControls {
                             actionButtonSmall(
                                 text: " - ",
@@ -110,7 +122,7 @@ struct FloatingActionButtonsView: View {
                                 fontColor: AppStyle.Color.white,
                                 action: onEditLess
                             )
-
+                            
                             actionButtonLarge(
                                 text: "Done",
                                 textFont: AppStyle.Font.bottomBarButtons,
@@ -118,7 +130,7 @@ struct FloatingActionButtonsView: View {
                                 fontColor: AppStyle.Color.white,
                                 action: onCompleteSet
                             )
-
+                            
                             actionButtonSmall(
                                 text: " + ",
                                 textFont: AppStyle.Font.bottomBarButtons,
@@ -127,7 +139,7 @@ struct FloatingActionButtonsView: View {
                                 action: onEditMore
                             )
                         }
-
+                        
                         if viewModel.showResetProgress {
                             actionButtonLarge(
                                 text: "Reset",
@@ -137,7 +149,7 @@ struct FloatingActionButtonsView: View {
                                 action: onReset
                             )
                         }
-
+                        
                         if viewModel.showFinishButton {
                             actionButtonLarge(
                                 text: "Beenden",
@@ -156,7 +168,7 @@ struct FloatingActionButtonsView: View {
         }
         .frame(height: buttonHeightRegular * 2 + 32)
     }
-
+    
     @ViewBuilder
     private func actionButtonRegular(
         text: String,
@@ -174,7 +186,7 @@ struct FloatingActionButtonsView: View {
         .background(backgroundColor)
         .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
     }
-
+    
     @ViewBuilder
     private func actionButtonLarge(
         text: String,
@@ -192,7 +204,7 @@ struct FloatingActionButtonsView: View {
         .background(backgroundColor)
         .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
     }
-
+    
     @ViewBuilder
     private func actionButtonSmall(
         text: String,
@@ -210,7 +222,7 @@ struct FloatingActionButtonsView: View {
         .background(backgroundColor)
         .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
     }
-
+    
     @ViewBuilder
     private func actionButtonExtraLarge(
         text: String,
