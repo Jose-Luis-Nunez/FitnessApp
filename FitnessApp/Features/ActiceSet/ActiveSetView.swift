@@ -6,18 +6,18 @@ struct ActiveSetView: View {
     let exercise: Exercise
     @Binding var setProgress: [SetProgress]
     @ObservedObject var viewModel: ActiveSetViewModel
-
+    
     private let backgroundColor = AppStyle.Color.grayDark
     private let iconSize: CGFloat = 26
     private let defaultPadding: CGFloat = AppStyle.Padding.horizontal
-
+    
     var body: some View {
         ZStack(alignment: .leading) {
             Rectangle()
                 .fill(backgroundColor)
                 .frame(maxWidth: .infinity)
                 .contentShape(Rectangle())
-
+            
             VStack(alignment: .leading, spacing: 10) {
                 // Quick Done Mode
                 if viewModel.quickDoneModeActive {
@@ -28,28 +28,28 @@ struct ActiveSetView: View {
                                 Circle()
                                     .fill(AppStyle.Color.black)
                                     .frame(width: iconSize, height: iconSize)
-
+                                
                                 Text("\(index + 1)")
                                     .font(.system(size: 12, weight: .semibold))
                                     .foregroundColor(AppStyle.Color.white)
                             }
-
+                            
                             Text("\(progress.weight) kg")
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(AppStyle.Color.white)
                             
                             Spacer()
-
+                            
                             HStack(spacing: 4) {
                                 Text("\(exercise.reps)")
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(AppStyle.Color.white)
-
+                                
                                 Text(" / ")
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(AppStyle.Color.white)
                                 
-                                if progress.status == .completedDone {
+                                if progress.status != .notStarted && progress.status != .inProgress {
                                     Text("\(progress.currentReps)")
                                         .font(.system(size: 16, weight: .semibold))
                                         .foregroundColor(AppStyle.Color.green)
@@ -57,40 +57,39 @@ struct ActiveSetView: View {
                                             viewModel.pendingEditIndex = index
                                             viewModel.pendingEditMode = .edit
                                         }
+                                } else {
+                                    Button(action: {
+                                        print("Marking set \(index) as done")
+                                        viewModel.pendingSetIndex = index
+                                    }) {
+                                        Text("Done")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(AppStyle.Color.white)
+                                            .frame(width: 80, height: 28)
+                                            .background(AppStyle.Color.primaryButton)
+                                            .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
+                                    }
+                                    .contentShape(Rectangle())
+                                    .buttonStyle(PlainButtonStyle())
+                                    .disabled(progress.status == .completedDone || viewModel.isLastSetCompleted)
                                 }
                                 
                                 Spacer()
                             }
                             
-                            Spacer()
-
-                            if progress.status == .completedDone {
+                            if progress.status != .notStarted && progress.status != .inProgress {
                                 Image(systemName: "checkmark.circle.fill")
                                     .resizable()
                                     .frame(width: iconSize, height: iconSize)
                                     .symbolRenderingMode(.palette)
                                     .foregroundStyle(.white, AppStyle.Color.green)
-                            } else {
-                                Button(action: {
-                                    print("Marking set \(index) as done")
-                                    viewModel.pendingSetIndex = index
-                                }) {
-                                    Text("Done")
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(AppStyle.Color.white)
-                                        .frame(width: 80, height: 28)
-                                        .background(AppStyle.Color.primaryButton)
-                                        .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
-                                }
-                                .contentShape(Rectangle())
-                                .buttonStyle(PlainButtonStyle())
-                                .disabled(progress.status == .completedDone || viewModel.isLastSetCompleted)
                             }
                         }
                         .contentShape(Rectangle())
                     }
                 }
-
+                
+                
                 // Normal Mode
                 else {
                     ForEach(Array(setProgress.enumerated()), id: \.offset) { index, progress in
@@ -133,40 +132,40 @@ private struct ActiveSetRowView: View {
     let activeSetIndex: Int
     let iconSize: CGFloat
     let onEdit: () -> Void
-
+    
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()
                     .fill(AppStyle.Color.black)
                     .frame(width: iconSize, height: iconSize)
-
+                
                 if index == activeSetIndex {
                     Circle()
                         .stroke(AppStyle.Color.greenGlow, lineWidth: 2)
                         .frame(width: iconSize, height: iconSize)
                 }
-
+                
                 Text("\(index + 1)")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(AppStyle.Color.white)
             }
-
+            
             Text("\(progress.weight) kg")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(AppStyle.Color.white)
-
+            
             Spacer()
-
+            
             HStack(spacing: 4) {
                 Text("\(exercise.reps)")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(AppStyle.Color.white)
-
+                
                 Text(" / ")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(AppStyle.Color.white)
-
+                
                 if progress.status != .notStarted && progress.status != .inProgress {
                     Text("\(progress.currentReps)")
                         .font(.system(size: 16, weight: .semibold))
@@ -182,7 +181,7 @@ private struct ActiveSetRowView: View {
                         .symbolRenderingMode(.palette)
                         .foregroundStyle(AppStyle.Color.green)
                 }
-
+                
                 Spacer()
             }
         }

@@ -32,7 +32,7 @@ struct MuscleCategoryView: View {
             quickDoneModeActive: activeSetViewModel.quickDoneModeActive,
             quickDoneAllCompleted: activeSetViewModel.quickDoneAllCompleted,
             didEditCompleteSet: activeSetViewModel.didEditCompleteSet,
-            didJustEditSet: activeSetViewModel.didJustEditSet    // <--- NEU, hinzufügen
+            didJustEditSet: activeSetViewModel.didJustEditSet
 
         )
     }

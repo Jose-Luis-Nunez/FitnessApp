@@ -23,9 +23,9 @@ class ActiveSetViewModel: ObservableObject {
     @Published var pendingEditIndex: Int? = nil
     @Published var didEditCompleteSet: Bool = false
     
-    @Published var didJustEditSet: Bool = false    // <--- NEU
+    @Published var didJustEditSet: Bool = false
     @Published var pendingEditMode: SetEditingMode? = nil
-
+    
     
     var isInputValid: Bool {
         guard let newReps = Int(repsInput),
@@ -73,7 +73,7 @@ class ActiveSetViewModel: ObservableObject {
         isLastSetCompleted = false
         quickDoneAllCompleted = false
         didEditCompleteSet = false
-        didJustEditSet = false    // <--- NEU
+        didJustEditSet = false
         timerService.resetAndStartTimer()
     }
     
@@ -81,7 +81,7 @@ class ActiveSetViewModel: ObservableObject {
         guard let exercise = currentExercise, currentSet < exercise.sets else { return }
         activeSetIndex = currentSet
         isSetInProgress = true
-        didJustEditSet = false    // <--- NEU
+        didJustEditSet = false
         timerService.resetAndStartTimer()
     }
     
@@ -111,28 +111,27 @@ class ActiveSetViewModel: ObservableObject {
     
     func updateCurrentReps(_ newReps: Int, _ newWeight: Int) {
         guard let exercise = currentExercise else { return }
-
+        
         let indexToUpdate: Int
         if let editIndex = pendingEditIndex {
             indexToUpdate = editIndex
         } else {
             indexToUpdate = currentSet
         }
-
+        
         let status: SetStatus = newReps < exercise.reps ? .completedLess : .completedMore
         let progress = SetProgress(
             status: status,
             currentReps: newReps,
             weight: newWeight
         )
-
+        
         if setProgress.count <= indexToUpdate {
             setProgress.append(progress)
         } else {
             setProgress[indexToUpdate] = progress
         }
-
-        // Edit an aktuellem Set → Fortschritt erhöhen
+        
         if pendingEditIndex == nil || indexToUpdate == currentSet {
             currentSet += 1
             if currentSet >= exercise.sets {
@@ -141,22 +140,20 @@ class ActiveSetViewModel: ObservableObject {
             isSetInProgress = false
             didJustEditSet = false
         } else {
-            // Edit an früherem Set → KEIN currentSet += 1 !
             isSetInProgress = false
             didJustEditSet = true
         }
-
+        
         pendingEditIndex = nil
-
-        // Falls wirklich ALLE Sets fertig sind → Beenden sichtbar
+        
         if setProgress.allSatisfy({ $0.status != .notStarted && $0.status != .inProgress }) {
             isSetInProgress = false
             isLastSetCompleted = true
             didEditCompleteSet = true
         }
     }
-
-
+    
+    
     func finishExercise() {
         currentExercise = nil
         setProgress = []
@@ -166,7 +163,7 @@ class ActiveSetViewModel: ObservableObject {
         quickDoneModeActive = false
         quickDoneAllCompleted = false
         didEditCompleteSet = false
-        didJustEditSet = false    // <--- NEU
+        didJustEditSet = false
     }
     
     func resetProgress() {
@@ -176,7 +173,7 @@ class ActiveSetViewModel: ObservableObject {
         isSetInProgress = false
         isLastSetCompleted = false
         quickDoneAllCompleted = false
-        didJustEditSet = false    // <--- NEU
+        didJustEditSet = false
     }
     
     func startTimer() {
@@ -211,7 +208,7 @@ class ActiveSetViewModel: ObservableObject {
         isSetInProgress = false
         isLastSetCompleted = false
         didEditCompleteSet = false
-        didJustEditSet = false    // <--- NEU
+        didJustEditSet = false
     }
     
     func processQuickDone(at index: Int) {
@@ -221,7 +218,7 @@ class ActiveSetViewModel: ObservableObject {
         }
         setProgress[index] = SetProgress(status: .completedDone, currentReps: exercise.reps, weight: exercise.weight)
         
-        if setProgress.allSatisfy({ $0.status == .completedDone }) {
+        if setProgress.allSatisfy({ $0.status != .notStarted && $0.status != .inProgress }) {
             isLastSetCompleted = true
             quickDoneAllCompleted = true
         }
@@ -241,15 +238,14 @@ class ActiveSetViewModel: ObservableObject {
         let remainingSeconds = seconds % 60
         return String(format: "%02d:%02d", minutes, remainingSeconds)
     }
-
+    
     func startEditingSet(index: Int, mode: SetEditingMode) {
         pendingEditIndex = index
         pendingEditMode = mode
         isEditing = true
         editMode = mode
-
+        
         repsInput = String(setProgress[index].currentReps)
         weightInput = String(setProgress[index].weight)
     }
-
 }
