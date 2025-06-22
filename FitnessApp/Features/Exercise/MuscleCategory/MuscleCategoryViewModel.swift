@@ -82,9 +82,6 @@ class MuscleCategoryViewModel: ObservableObject {
     
     func completeCurrentSet() {
         activeSetViewModel.completeCurrentSet()
-        if activeSetViewModel.isLastSetCompleted {
-            saveAnalytics()
-        }
     }
     
     func finishExercise() {
@@ -108,9 +105,6 @@ class MuscleCategoryViewModel: ObservableObject {
     
     func updateCurrentReps(_ newReps: Int, _ newWeight: Int) {
         activeSetViewModel.updateCurrentReps(newReps, newWeight)
-        if activeSetViewModel.isLastSetCompleted {
-            saveAnalytics()
-        }
     }
     
     func resetProgress() {
