@@ -34,9 +34,11 @@ struct ActiveSetView: View {
                                     .foregroundColor(AppStyle.Color.white)
                             }
 
-                            Text("\(progress.weight) KG")
+                            Text("\(progress.weight) kg")
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(AppStyle.Color.white)
+                            
+                            Spacer()
 
                             HStack(spacing: 4) {
                                 Text("\(exercise.reps)")
@@ -46,14 +48,16 @@ struct ActiveSetView: View {
                                 Text(" / ")
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(AppStyle.Color.white)
+                                
 
                                 if progress.status == .completedDone {
                                     Text("\(progress.currentReps)")
                                         .font(.system(size: 16, weight: .semibold))
                                         .foregroundColor(AppStyle.Color.green)
                                 }
+                                Spacer()
+                                
                             }
-
                             Spacer()
 
                             if progress.status == .completedDone {
@@ -70,7 +74,7 @@ struct ActiveSetView: View {
                                     Text("Done")
                                         .font(.system(size: 16, weight: .semibold))
                                         .foregroundColor(AppStyle.Color.white)
-                                        .frame(width: 80, height: 36)
+                                        .frame(width: 80, height: 28)
                                         .background(AppStyle.Color.primaryButton)
                                         .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
                                 }
