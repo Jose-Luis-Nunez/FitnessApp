@@ -66,7 +66,7 @@ struct FloatingActionButtonsView: View {
             VStack(spacing: 8) {
                 
                 if viewModel.showQuickDoneBeendenButton {
-                    actionButtonLarge(
+                    actionButtonExtraLarge(
                         text: "Beenden",
                         textFont: AppStyle.Font.bottomBarButtons,
                         backgroundColor: AppStyle.Color.green,
@@ -74,7 +74,7 @@ struct FloatingActionButtonsView: View {
                         action: onFinish
                     )
                 } else if viewModel.showQuickDoneDoneButton {
-                    actionButtonLarge(
+                    actionButtonExtraLarge(
                         text: "All Done",
                         textFont: AppStyle.Font.bottomBarButtons,
                         backgroundColor: AppStyle.Color.primaryButton,
