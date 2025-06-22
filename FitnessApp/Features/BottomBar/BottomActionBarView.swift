@@ -93,7 +93,7 @@ struct FloatingActionButtonsView: View {
                         )
                     }
                     
-                    HStack(spacing: 24) {
+                    HStack(spacing: 12) {
                         if viewModel.showAddExerciseButton {
                             actionButtonLarge(
                                 text: "Add Exercise",
@@ -116,7 +116,7 @@ struct FloatingActionButtonsView: View {
                         
                         if viewModel.showSetControls {
                             actionButtonSmall(
-                                text: " - ",
+                                text: "Less",
                                 textFont: AppStyle.Font.bottomBarButtons,
                                 backgroundColor: AppStyle.Color.greenLight,
                                 fontColor: AppStyle.Color.white,
@@ -132,7 +132,7 @@ struct FloatingActionButtonsView: View {
                             )
                             
                             actionButtonSmall(
-                                text: " + ",
+                                text: "More",
                                 textFont: AppStyle.Font.bottomBarButtons,
                                 backgroundColor: AppStyle.Color.greenLight,
                                 fontColor: AppStyle.Color.white,
@@ -160,31 +160,13 @@ struct FloatingActionButtonsView: View {
                             )
                         }
                     }
-                    .frame(maxWidth: UIScreen.main.bounds.width - 32, alignment: .center)
+                    .frame(maxWidth: UIScreen.main.bounds.width - 2 * AppStyle.Layout.cardHorizontalPadding, alignment: .center)
                     .padding(.horizontal, AppStyle.Padding.horizontal)
                 }
             }
             .padding(.bottom, 16)
         }
         .frame(height: buttonHeightRegular * 2 + 32)
-    }
-    
-    @ViewBuilder
-    private func actionButtonRegular(
-        text: String,
-        textFont: Font,
-        backgroundColor: Color,
-        fontColor: Color,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            Text(text)
-                .font(textFont)
-                .foregroundColor(fontColor)
-                .frame(width: buttonWidthRegular, height: buttonHeightRegular)
-        }
-        .background(backgroundColor)
-        .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
     }
     
     @ViewBuilder
@@ -199,11 +181,13 @@ struct FloatingActionButtonsView: View {
             Text(text)
                 .font(textFont)
                 .foregroundColor(fontColor)
-                .frame(width: buttonWidthLarge, height: buttonHeightLarge)
+                .frame(minWidth: 0, maxWidth: .infinity, minHeight: buttonHeightLarge, maxHeight: buttonHeightLarge)
+                .padding(.horizontal, 12)
         }
         .background(backgroundColor)
         .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
     }
+
     
     @ViewBuilder
     private func actionButtonSmall(
@@ -217,7 +201,7 @@ struct FloatingActionButtonsView: View {
             Text(text)
                 .font(textFont)
                 .foregroundColor(fontColor)
-                .frame(width: buttonWidthRegular / 2, height: buttonHeightRegular)
+                .frame(width: buttonWidthRegular / 1.5, height: buttonHeightRegular)
         }
         .background(backgroundColor)
         .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
@@ -236,11 +220,10 @@ struct FloatingActionButtonsView: View {
                 .font(textFont)
                 .foregroundColor(fontColor)
                 .frame(
-                    maxWidth: buttonWidthRegular * 2.3,
-                    alignment: .center
+                    maxWidth: UIScreen.main.bounds.width - 2 * AppStyle.Layout.cardHorizontalPadding,
+                    minHeight: buttonHeightLarge,
+                    maxHeight: buttonHeightLarge
                 )
-                .padding(.horizontal, 32)
-                .frame(height: buttonHeightRegular)
         }
         .background(backgroundColor)
         .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
