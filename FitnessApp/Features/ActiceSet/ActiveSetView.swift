@@ -49,15 +49,19 @@ struct ActiveSetView: View {
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(AppStyle.Color.white)
                                 
-
                                 if progress.status == .completedDone {
                                     Text("\(progress.currentReps)")
                                         .font(.system(size: 16, weight: .semibold))
                                         .foregroundColor(AppStyle.Color.green)
+                                        .onTapGesture {
+                                            viewModel.pendingEditIndex = index
+                                            viewModel.pendingEditMode = .edit
+                                        }
                                 }
-                                Spacer()
                                 
+                                Spacer()
                             }
+                            
                             Spacer()
 
                             if progress.status == .completedDone {
@@ -68,7 +72,7 @@ struct ActiveSetView: View {
                                     .foregroundStyle(.white, AppStyle.Color.green)
                             } else {
                                 Button(action: {
-                                    print("Marking set \(index) as done at time \(Date()) with trigger source: Button \(index)")
+                                    print("Marking set \(index) as done")
                                     viewModel.pendingSetIndex = index
                                 }) {
                                     Text("Done")
@@ -95,7 +99,11 @@ struct ActiveSetView: View {
                             progress: progress,
                             exercise: exercise,
                             activeSetIndex: viewModel.activeSetIndex,
-                            iconSize: iconSize
+                            iconSize: iconSize,
+                            onEdit: {
+                                viewModel.pendingEditIndex = index
+                                viewModel.pendingEditMode = .edit
+                            }
                         )
                     }
                 }
@@ -106,9 +114,13 @@ struct ActiveSetView: View {
         .cornerRadius(AppStyle.CornerRadius.card)
         .onChange(of: viewModel.pendingSetIndex) { index in
             if let index = index {
-                print("Processing change for index \(index) at time \(Date()) from onChange")
                 viewModel.processQuickDone(at: index)
                 viewModel.pendingSetIndex = nil
+            }
+        }
+        .onChange(of: viewModel.pendingEditIndex) { index in
+            if let index = index, let mode = viewModel.pendingEditMode {
+                viewModel.startEditingSet(index: index, mode: mode)
             }
         }
     }
@@ -120,6 +132,7 @@ private struct ActiveSetRowView: View {
     let exercise: Exercise
     let activeSetIndex: Int
     let iconSize: CGFloat
+    let onEdit: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
@@ -158,6 +171,9 @@ private struct ActiveSetRowView: View {
                     Text("\(progress.currentReps)")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(AppStyle.Color.green)
+                        .onTapGesture {
+                            onEdit()
+                        }
                 } else {
                     Image(systemName: "arrow.triangle.2.circlepath")
                         .resizable()

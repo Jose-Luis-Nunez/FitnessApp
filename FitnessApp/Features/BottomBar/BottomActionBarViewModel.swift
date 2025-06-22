@@ -1,5 +1,3 @@
-import Foundation
-
 struct BottomActionBarViewModel {
     let isSetInProgress: Bool
     let currentSet: Int
@@ -9,23 +7,25 @@ struct BottomActionBarViewModel {
     let isLastSetCompleted: Bool
     let quickDoneModeActive: Bool
     let quickDoneAllCompleted: Bool
-    
+    let didEditCompleteSet: Bool
+    let didJustEditSet: Bool
+
     var shouldShow: Bool {
-        showStartButton || showSetControls || showResetProgress || showFinishButton || showAddExerciseButton || showQuickDoneBeendenButton || showQuickDoneDoneButton
+        showStartButton || showSetControls || showResetProgress || showFinishButton || showQuickDoneBeendenButton || showQuickDoneDoneButton
     }
 
     var showStartButton: Bool {
-        hasActiveExercise && !isSetInProgress && !isLastSetCompleted
+        hasActiveExercise && !isSetInProgress && !isLastSetCompleted && currentSet < (currentExercise?.sets ?? 0)
     }
 
     var showSetControls: Bool {
         isSetInProgress && hasActiveExercise && !isLastSetCompleted && !quickDoneModeActive
     }
-    
+
     var showQuickDoneBeendenButton: Bool {
         quickDoneModeActive && currentExercise != nil && quickDoneAllCompleted
     }
-    
+
     var showQuickDoneDoneButton: Bool {
         quickDoneModeActive && currentExercise != nil && !quickDoneAllCompleted
     }
@@ -35,15 +35,15 @@ struct BottomActionBarViewModel {
     }
 
     var showFinishButton: Bool {
-        isLastSetCompleted && currentExercise != nil
+        (isLastSetCompleted || didEditCompleteSet) && currentExercise != nil
     }
 
     var showAddExerciseButton: Bool {
-        (exercises.isEmpty || (showStartButton && currentSet == 0) || showResetProgress)
+        exercises.isEmpty || showResetProgress
     }
 
     var startButtonTitle: String {
-        if currentSet == 0 {
+        if currentSet == 0 && !didJustEditSet {
             return "Start Training"
         } else {
             return "Start set \(currentSet + 1)"

@@ -2,13 +2,6 @@ import SwiftUI
 
 private struct IDS {
     static let groupTitle = "id_title_group"
-    static let nameField = "id_field_name"
-    static let weightField = "id_field_weight"
-    static let repsField = "id_field_reps"
-    static let setsField = "id_field_sets"
-    static let seatField = "id_field_seat"
-    static let saveButton = "id_button_save"
-    static let cancelButton = "id_button_cancel"
     static let addExerciseButton = "id_button_add_exercise"
 }
 
@@ -30,14 +23,17 @@ struct MuscleCategoryView: View {
     
     private var bottomBarVM: BottomActionBarViewModel {
         BottomActionBarViewModel(
-            isSetInProgress: viewModel.isSetInProgress,
-            currentSet: viewModel.currentSet,
-            currentExercise: viewModel.currentExercise,
-            hasActiveExercise: viewModel.hasActiveExercise,
+            isSetInProgress: activeSetViewModel.isSetInProgress,
+            currentSet: activeSetViewModel.currentSet,
+            currentExercise: activeSetViewModel.currentExercise,
+            hasActiveExercise: activeSetViewModel.currentExercise != nil,
             exercises: viewModel.exercises,
-            isLastSetCompleted: viewModel.isLastSetCompleted,
+            isLastSetCompleted: activeSetViewModel.isLastSetCompleted,
             quickDoneModeActive: activeSetViewModel.quickDoneModeActive,
-            quickDoneAllCompleted: activeSetViewModel.quickDoneAllCompleted
+            quickDoneAllCompleted: activeSetViewModel.quickDoneAllCompleted,
+            didEditCompleteSet: activeSetViewModel.didEditCompleteSet,
+            didJustEditSet: activeSetViewModel.didJustEditSet    // <--- NEU, hinzufügen
+
         )
     }
     
@@ -59,10 +55,8 @@ struct MuscleCategoryView: View {
                                     viewModel: activeSetViewModel
                                 )
                                 .onAppear {
-                                    print("ActiveSetView appeared, isSetInProgress: \(activeSetViewModel.isSetInProgress)")
                                     if activeSetViewModel.isSetInProgress {
                                         activeSetViewModel.startTimer()
-                                        print("Timer started, timerSeconds: \(activeSetViewModel.timerSeconds)")
                                     }
                                 }
                                 
@@ -82,7 +76,6 @@ struct MuscleCategoryView: View {
                 .scrollContentBackground(.hidden)
                 .padding(.top, -2)
                 .padding(.bottom, formViewModel.showForm ? 340 : (activeSetViewModel.isEditing ? 240 : (bottomBarVM.shouldShow ? 70 : 40)))
-                
             }
             .background(AppStyle.Color.backgroundColor)
             
@@ -90,60 +83,49 @@ struct MuscleCategoryView: View {
                 BottomActionBarView(
                     viewModel: bottomBarVM,
                     onStart: {
-                        print("Start Training clicked")
-                        print("Exercises: \(viewModel.exercises.map { "\($0.name) - isCompleted: \($0.isCompleted)" })")
-                        if let activeExercise = viewModel.exercises.first(where: { !$0.isCompleted }) {
-                            if viewModel.currentExercise == nil || viewModel.currentExercise?.isCompleted == true {
-                                viewModel.startSet(for: activeExercise)
-                                print("Started set for: \(activeExercise.name)")
-                            } else {
-                                viewModel.startNextSet()
-                                print("Started next set")
-                            }
+                        guard let exercise = activeSetViewModel.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) else { return }
+                        
+                        if activeSetViewModel.currentSet == 0 && activeSetViewModel.setProgress.isEmpty {
+                            activeSetViewModel.startSet(for: exercise)
                         } else {
-                            print("No active exercise found")
+                            activeSetViewModel.startNextSet()
                         }
                     },
                     onCompleteSet: {
-                        viewModel.stopTimer()
-                        viewModel.completeCurrentSet()
-                        print("Completed set, isLastSetCompleted: \(viewModel.isLastSetCompleted)")
+                        activeSetViewModel.stopTimer()
+                        activeSetViewModel.completeCurrentSet()
                     },
                     onQuickDone: {
-                        print("QuickDone clicked")
-                        if let activeExercise = viewModel.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) {
+                        if let activeExercise = activeSetViewModel.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) {
                             activeSetViewModel.startQuickDone(for: activeExercise)
-                            print("QuickDone started for: \(activeExercise.name)")
                         }
                     },
                     onCompleteAllQuickDone: {
-                          activeSetViewModel.completeAllQuickDone()
-                          print("All Done clicked — all sets marked done")
-                      },
+                        activeSetViewModel.completeAllQuickDone()
+                    },
                     onReset: {
-                        viewModel.stopTimer()
+                        activeSetViewModel.stopTimer()
                         viewModel.showResetConfirmation = true
-                        print("Reset triggered")
                     },
                     onEditLess: {
-                        viewModel.stopTimer()
-                        activeSetViewModel.startEditing(mode: SetEditingMode.less)
-                        print("Edit Less triggered")
+                        activeSetViewModel.stopTimer()
+                        activeSetViewModel.startEditingSet(index: activeSetViewModel.currentSet, mode: .less)
                     },
                     onEditMore: {
-                        viewModel.stopTimer()
-                        activeSetViewModel.startEditing(mode: SetEditingMode.more)
-                        print("Edit More triggered")
+                        activeSetViewModel.stopTimer()
+                        activeSetViewModel.startEditingSet(index: activeSetViewModel.currentSet, mode: .more)
                     },
                     onFinish: {
-                        viewModel.stopTimer()
-                        if activeSetViewModel.isLastSetCompleted, let exercise = activeSetViewModel.currentExercise {
+                        activeSetViewModel.stopTimer()
+                        
+                        if activeSetViewModel.isLastSetCompleted,
+                           let exercise = activeSetViewModel.currentExercise {
                             var updatedExercise = exercise
                             updatedExercise.isCompleted = true
                             viewModel.updateExercise(updatedExercise)
                             viewModel.saveAnalytics()
-                            print("Finished exercise: \(exercise.name)")
                         }
+                        
                         viewModel.finishExercise()
                         activeSetViewModel.finishExercise()
                         activeSetViewModel.quickDoneModeActive = false
@@ -152,7 +134,6 @@ struct MuscleCategoryView: View {
                         withAnimation {
                             formViewModel.loadExercise(nil as Exercise?)
                             formViewModel.toggleForm()
-                            print("Add Exercise triggered")
                         }
                     }
                 )
@@ -161,19 +142,25 @@ struct MuscleCategoryView: View {
             
             if activeSetViewModel.isEditing {
                 ActiveSetEditPickerView(
-                    title: activeSetViewModel.editMode == SetEditingMode.less ? "Verschlechtert" : "Verbessert",
+                    title: {
+                        switch activeSetViewModel.editMode {
+                        case .less: "Verschlechtert"
+                        case .more: "Verbessert"
+                        case .edit: "Bearbeiten"
+                        }
+                    }(),
                     selectedReps: $activeSetViewModel.repsInput,
                     selectedWeight: $activeSetViewModel.weightInput,
                     repsRange: 1...30,
                     weightRange: 0...180,
                     onSave: { newReps, newWeight in
-                        viewModel.updateCurrentReps(newReps, newWeight)
+                        activeSetViewModel.updateCurrentReps(newReps, newWeight)
                         activeSetViewModel.isEditing = false
-                        print("Edit saved: \(newReps) reps, \(newWeight) kg")
+                        activeSetViewModel.pendingEditIndex = nil
                     },
                     onCancel: {
                         activeSetViewModel.isEditing = false
-                        print("Edit cancelled")
+                        activeSetViewModel.pendingEditIndex = nil
                     },
                     saveDisabled: !activeSetViewModel.isInputValid
                 )
@@ -198,12 +185,10 @@ struct MuscleCategoryView: View {
                             } else {
                                 viewModel.add(exercise, atTop: true)
                             }
-                            print("Exercise saved: \(exercise.name)")
                         }
                     },
                     onCancel: {
                         formViewModel.clearForm()
-                        print("Exercise creation cancelled")
                     },
                     saveDisabled: !formViewModel.isFormValid,
                     repsRange: 1...30,
@@ -230,7 +215,6 @@ struct MuscleCategoryView: View {
                     withAnimation {
                         formViewModel.loadExercise(nil as Exercise?)
                         formViewModel.toggleForm()
-                        print("Add exercise button clicked")
                     }
                 }) {
                     Image(systemName: formViewModel.showForm ? "minus" : "plus")
@@ -241,7 +225,6 @@ struct MuscleCategoryView: View {
         .onChange(of: activeSetViewModel.isEditing) { _, newValue in
             if !newValue {
                 activeSetViewModel.resetEditingState()
-                print("Editing state changed to: \(newValue)")
             }
         }
         .alert(isPresented: $viewModel.showResetConfirmation) {
@@ -250,7 +233,6 @@ struct MuscleCategoryView: View {
                 message: Text("Do you want to reset all exercise progress? This will allow you to start the sets again."),
                 primaryButton: .destructive(Text("Reset")) {
                     viewModel.resetProgress()
-                    print("Reset confirmed")
                 },
                 secondaryButton: .cancel()
             )
@@ -261,7 +243,7 @@ struct MuscleCategoryView: View {
         let isActiveSetVisible = activeSetViewModel.currentExercise != nil
         
         if isActiveSetVisible {
-            if let exercise = viewModel.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) {
+            if let exercise = activeSetViewModel.currentExercise {
                 return AnyView(
                     ExerciseCardView(
                         viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
@@ -271,19 +253,17 @@ struct MuscleCategoryView: View {
                             withAnimation {
                                 formViewModel.loadExercise(exercise)
                                 formViewModel.toggleForm()
-                                print("Edit exercise triggered: \(exercise.name)")
                             }
                         },
-                        isEditable: !(viewModel.isSetInProgress),
+                        isEditable: !activeSetViewModel.isSetInProgress,
                         analyticsViewModel: analyticsViewModel,
                         onStart: { selectedExercise in
-                            print("Individuelle Übung gestartet: \(selectedExercise.name)")
-                            viewModel.startSet(for: selectedExercise)
+                            activeSetViewModel.startSet(for: selectedExercise)
                         },
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)
                         },
-                        isActiveSetVisible: activeSetViewModel.currentExercise != nil
+                        isActiveSetVisible: isActiveSetVisible
                     )
                     .padding(.vertical, 6)
                     .transition(.move(edge: .top))
@@ -301,6 +281,8 @@ struct MuscleCategoryView: View {
             )
         }
     }
+
+
     
     private var incompleteExercisesSection: some View {
         let incompleteExercises = viewModel.exercises.filter { !$0.isCompleted }
@@ -318,15 +300,12 @@ struct MuscleCategoryView: View {
                             withAnimation {
                                 formViewModel.loadExercise(exercise)
                                 formViewModel.toggleForm()
-                                print("Edit exercise triggered: \(exercise.name)")
                             }
                         },
                         isEditable: true,
                         analyticsViewModel: analyticsViewModel,
                         onStart: { selectedExercise in
-                            print("Individuelle Übung gestartet: \(selectedExercise.name)")
-                            viewModel.startTimer()
-                            viewModel.startSet(for: selectedExercise)
+                            activeSetViewModel.startSet(for: selectedExercise)
                         },
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)
@@ -357,15 +336,12 @@ struct MuscleCategoryView: View {
                             withAnimation {
                                 formViewModel.loadExercise(exercise)
                                 formViewModel.toggleForm()
-                                print("Edit exercise triggered: \(exercise.name)")
                             }
                         },
                         isEditable: true,
                         analyticsViewModel: analyticsViewModel,
                         onStart: { selectedExercise in
-                            print("Individuelle Übung gestartet: \(selectedExercise.name)")
-                            viewModel.startTimer()
-                            viewModel.startSet(for: selectedExercise)
+                            activeSetViewModel.startSet(for: selectedExercise)
                         },
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)
@@ -380,4 +356,3 @@ struct MuscleCategoryView: View {
         }
     }
 }
-
