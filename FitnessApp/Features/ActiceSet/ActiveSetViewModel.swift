@@ -185,6 +185,7 @@ class ActiveSetViewModel: ObservableObject {
         setProgress[index] = SetProgress(status: .completedDone, currentReps: exercise.reps, weight: exercise.weight)
         if setProgress.allSatisfy({ $0.status == .completedDone }) {
             isLastSetCompleted = true
+            quickDoneAllCompleted = true
         }
     }
     
