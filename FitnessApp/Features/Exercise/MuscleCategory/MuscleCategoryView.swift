@@ -22,19 +22,20 @@ struct MuscleCategoryView: View {
     }
     
     private var bottomBarVM: BottomActionBarViewModel {
-        BottomActionBarViewModel(
+        let vm = BottomActionBarViewModel(
             isSetInProgress: activeSetViewModel.isSetInProgress,
             currentSet: activeSetViewModel.currentSet,
             currentExercise: activeSetViewModel.currentExercise,
-            hasActiveExercise: activeSetViewModel.currentExercise != nil,
+            hasActiveExercise: viewModel.hasActiveExercise,
             exercises: viewModel.exercises,
             isLastSetCompleted: activeSetViewModel.isLastSetCompleted,
             quickDoneModeActive: activeSetViewModel.quickDoneModeActive,
             quickDoneAllCompleted: activeSetViewModel.quickDoneAllCompleted,
             didEditCompleteSet: activeSetViewModel.didEditCompleteSet,
             didJustEditSet: activeSetViewModel.didJustEditSet
-
         )
+        print("Debug - bottomBarVM: isSetInProgress: \(vm.isSetInProgress), hasActiveExercise: \(vm.hasActiveExercise), exercises.allSatisfy(isCompleted): \(viewModel.exercises.allSatisfy { $0.isCompleted }), showStartButton: \(vm.showStartButton), showResetProgress: \(vm.showResetProgress)")
+        return vm
     }
     
     var body: some View {
@@ -281,8 +282,8 @@ struct MuscleCategoryView: View {
             )
         }
     }
-
-
+    
+    
     
     private var incompleteExercisesSection: some View {
         let incompleteExercises = viewModel.exercises.filter { !$0.isCompleted }

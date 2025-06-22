@@ -11,11 +11,11 @@ struct BottomActionBarViewModel {
     let didJustEditSet: Bool
 
     var shouldShow: Bool {
-        showStartButton || showSetControls || showResetProgress || showFinishButton || showQuickDoneBeendenButton || showQuickDoneDoneButton
+        showStartButton || showSetControls || showResetProgress || showFinishButton || showQuickDoneBeendenButton || showQuickDoneDoneButton || showAddExerciseButton
     }
 
     var showStartButton: Bool {
-        hasActiveExercise && !isSetInProgress && !isLastSetCompleted && currentSet < (currentExercise?.sets ?? 0)
+        hasActiveExercise && !isSetInProgress && !isLastSetCompleted && (currentExercise != nil ? currentSet < (currentExercise?.sets ?? 0) : true)
     }
 
     var showSetControls: Bool {
@@ -31,7 +31,7 @@ struct BottomActionBarViewModel {
     }
 
     var showResetProgress: Bool {
-        !hasActiveExercise && !isSetInProgress && !exercises.isEmpty
+        exercises.allSatisfy { $0.isCompleted } && !isSetInProgress && !exercises.isEmpty
     }
 
     var showFinishButton: Bool {
@@ -39,7 +39,7 @@ struct BottomActionBarViewModel {
     }
 
     var showAddExerciseButton: Bool {
-        exercises.isEmpty || showResetProgress
+        !isSetInProgress
     }
 
     var startButtonTitle: String {
