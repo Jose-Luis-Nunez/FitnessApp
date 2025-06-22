@@ -227,10 +227,12 @@ class ActiveSetViewModel: ObservableObject {
     func completeAllQuickDone() {
         guard let exercise = currentExercise else { return }
         for index in 0..<setProgress.count {
-            setProgress[index] = SetProgress(status: .completedDone, currentReps: exercise.reps, weight: exercise.weight)
+            if setProgress[index].status == .notStarted || setProgress[index].status == .inProgress {
+                setProgress[index] = SetProgress(status: .completedDone, currentReps: exercise.reps, weight: exercise.weight)
+            }
         }
-        quickDoneAllCompleted = true
-        isLastSetCompleted = true
+        quickDoneAllCompleted = setProgress.allSatisfy { $0.status != .notStarted && $0.status != .inProgress }
+        isLastSetCompleted = quickDoneAllCompleted
     }
     
     func formatTime(seconds: Int) -> String {
