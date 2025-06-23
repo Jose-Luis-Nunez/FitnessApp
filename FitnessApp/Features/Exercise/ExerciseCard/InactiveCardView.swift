@@ -36,12 +36,12 @@ struct InactiveCardView: View {
         .padding(.horizontal, AppStyle.Padding.horizontal)
         .padding(.vertical, 6)
         .frame(maxWidth: UIScreen.main.bounds.width - 2 * AppStyle.Padding.horizontal)
-        .background(AppStyle.Color.grayDark3)
+        .background(AppStyle.Color.exerciseCardBackgroundInactive)
         .cornerRadius(AppStyle.CornerRadius.card)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 4)
         .overlay(
             RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card)
-                .stroke(AppStyle.Color.green, lineWidth: 1)
+                .stroke(AppStyle.Color.green, lineWidth: 0.5)
         )
         .transition(.move(edge: .bottom))
         .animation(.easeInOut, value: viewModel.exercise.isCompleted)
@@ -93,7 +93,7 @@ struct InactiveCardBottomSectionView: View {
                 Spacer()
                 Circle()
                     .strokeBorder(AppStyle.Color.green, lineWidth: 5)
-                    .background(Circle().fill(AppStyle.Color.grayDark3))
+                    .background(Circle().fill(AppStyle.Color.exerciseCardBackgroundInactive))
                     .frame(width: 80, height: 80)
                     .overlay(
                         Text("DONE")

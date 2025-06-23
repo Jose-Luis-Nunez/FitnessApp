@@ -178,6 +178,7 @@ struct MuscleCategoryView: View {
                     reps: $formViewModel.reps,
                     weight: $formViewModel.weight,
                     sets: $formViewModel.sets,
+                    seat: $formViewModel.seat,
                     isPresented: $formViewModel.showForm,
                     onSave: {
                         if let exercise = formViewModel.createOrUpdateExercise() {

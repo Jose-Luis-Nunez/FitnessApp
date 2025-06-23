@@ -25,6 +25,7 @@ enum AppStyle {
         static let largeChip = SwiftUI.Font.system(size: 24, weight: .semibold)
         static let defaultFont = SwiftUI.Font.system(size: 12, weight: .semibold)
         static let bottomBarButtons = SwiftUI.Font.system(size: 16, weight: .semibold)
+        static let smallFont = SwiftUI.Font.system(size: 5, weight: .semibold)
         
         static let analyticsExerciseTitle = SwiftUI.Font.system(size: 20, weight: .bold)
         static let doneButton = SwiftUI.Font.system(size: 18, weight: .bold)
@@ -34,27 +35,21 @@ enum AppStyle {
     
     enum Color {
         static let backgroundColor = black
-        static let exerciseCardBackground = grayDark4
-        static let exerciseCardDoneBackGround = black
+        
         static let primaryButton = green
         static let secondaryButton = greenLight
+        
+        static let exerciseCardBackground = grayDark
+        static let exerciseCardBackgroundInactive = grayBlack
 
         static let white = SwiftUI.Color.white
         static let black = SwiftUI.Color.black
         static let yellow = SwiftUI.Color.yellow
         static let gray = SwiftUI.Color.gray
-        static let grayDark = SwiftUI.Color(hex: "#383838")
-        static let grayDark2 = SwiftUI.Color(hex: "##363636")
-        static let grayDark3 = SwiftUI.Color(hex: "0x151515")
-        static let grayDark4 = SwiftUI.Color(hex: "#3A3A3C")
+        static let grayDark =  SwiftUI.Color(hex: "#4D4E53")
+        static let grayBlack =  SwiftUI.Color(hex: "0x151515")
+        static let chipsBackground =  SwiftUI.Color(hex: "#383838")
         
-
-        static let purpleGrey = SwiftUI.Color(hex: "#544985")
-        static let purpleLight = SwiftUI.Color(hex: "#E5D8FF")
-        static let purple = SwiftUI.Color(hex: "#9575F4")
-        static let purpleDark = SwiftUI.Color(hex: "#291B66")
-        
-        static let greenCard = SwiftUI.Color(hex: "#003B39")
         static let greenBlack = SwiftUI.Color(hex: "#022123")
         static let greenDark = SwiftUI.Color(hex: "#013334")
         

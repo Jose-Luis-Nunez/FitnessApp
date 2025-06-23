@@ -6,6 +6,7 @@ struct ExercisePickerView: View {
     @Binding var reps: Int
     @Binding var weight: Int
     @Binding var sets: Int
+    @Binding var seat: String
     @Binding var isPresented: Bool
     let onSave: () -> Void
     let onCancel: () -> Void
@@ -15,6 +16,9 @@ struct ExercisePickerView: View {
     let setsRange: ClosedRange<Int>
     let viewModel: MuscleCategoryViewModel
     let editingExercise: Exercise?
+    
+    @State private var seatPart1: String = ""
+    @State private var seatPart2: String = ""
     
     let textColor: Color = AppStyle.Color.white
     let backgroundColor = AppStyle.Color.black
@@ -34,8 +38,8 @@ struct ExercisePickerView: View {
                 .ignoresSafeArea(edges: .bottom)
             
             VStack(spacing: 0) {
-                Spacer()
-                    .frame(height: 12)
+                Spacer().frame(height: 12)
+                
                 HStack {
                     Text(title)
                         .font(.title2)
@@ -49,7 +53,6 @@ struct ExercisePickerView: View {
                     
                     if let exercise = editingExercise {
                         Button(action: {
-                            
                             if let index = viewModel.exercises.firstIndex(where: { $0.id == exercise.id }) {
                                 viewModel.exercises.remove(at: index)
                             }
@@ -62,20 +65,70 @@ struct ExercisePickerView: View {
                         }
                         .padding(.trailing, 8)
                     }
-                    
                 }
                 .padding(.bottom, 16)
                 
-                TextField("Name der Übung", text: $name)
-                    .padding(12)
-                    .background(AppStyle.Color.backgroundColor)
-                    .cornerRadius(10)
-                    .foregroundColor(textColor)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(AppStyle.Color.gray, lineWidth: 1)
-                    )
-                    .padding(.bottom, 16)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Übung")
+                        .font(.headline)
+                        .foregroundColor(textColor)
+                    
+                    TextField("Name der Übung", text: $name)
+                        .padding(12)
+                        .background(AppStyle.Color.backgroundColor)
+                        .cornerRadius(10)
+                        .foregroundColor(textColor)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(AppStyle.Color.gray, lineWidth: 1)
+                        )
+                        .frame(maxWidth: UIScreen.main.bounds.width - 2 * AppStyle.Padding.horizontal)
+                }
+                .padding(.horizontal, AppStyle.Padding.horizontal)
+                .padding(.bottom, 16)
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Sitz")
+                        .font(.headline)
+                        .foregroundColor(textColor)
+                    
+                    HStack(spacing: 12) {
+                        TextField("Einstellung 1", text: Binding(
+                            get: { seatPart1 },
+                            set: { newValue in
+                                seatPart1 = newValue
+                                updateSeat()
+                            }
+                        ))
+                        .padding(12)
+                        .background(AppStyle.Color.backgroundColor)
+                        .cornerRadius(10)
+                        .foregroundColor(textColor)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(AppStyle.Color.gray, lineWidth: 1)
+                        )
+                        
+                        TextField("Einstellung 2", text: Binding(
+                            get: { seatPart2 },
+                            set: { newValue in
+                                seatPart2 = newValue
+                                updateSeat()
+                            }
+                        ))
+                        .padding(12)
+                        .background(AppStyle.Color.backgroundColor)
+                        .cornerRadius(10)
+                        .foregroundColor(textColor)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(AppStyle.Color.gray, lineWidth: 1)
+                        )
+                    }
+                    .frame(maxWidth: UIScreen.main.bounds.width - 2 * AppStyle.Padding.horizontal)
+                }
+                .padding(.horizontal, AppStyle.Padding.horizontal)
+                .padding(.bottom, 16)
                 
                 HStack(alignment: .top, spacing: 0) {
                     VStack {
@@ -162,5 +215,20 @@ struct ExercisePickerView: View {
             .padding(.top, 4)
         }
         .frame(maxWidth: .infinity)
+        .onAppear {
+            loadSeatParts()
+        }
+    }
+    
+    private func updateSeat() {
+        seat = [seatPart1, seatPart2]
+            .filter { !$0.isEmpty }
+            .joined(separator: " / ")
+    }
+    
+    private func loadSeatParts() {
+        let parts = seat.split(separator: "/").map { $0.trimmingCharacters(in: .whitespaces) }
+        seatPart1 = parts.count > 0 ? parts[0] : ""
+        seatPart2 = parts.count > 1 ? parts[1] : ""
     }
 }
