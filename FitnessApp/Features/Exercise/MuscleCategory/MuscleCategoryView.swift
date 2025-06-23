@@ -246,7 +246,7 @@ struct MuscleCategoryView: View {
         if isActiveSetVisible {
             if let exercise = activeSetViewModel.currentExercise {
                 return AnyView(
-                    ExerciseCardView(
+                    ExerciseCardContainerView(
                         viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
                             viewModel.updateExercise(updated)
                         },
@@ -264,7 +264,8 @@ struct MuscleCategoryView: View {
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)
                         },
-                        isActiveSetVisible: isActiveSetVisible
+                        isActiveSetVisible: isActiveSetVisible,
+                        isResetEnabled: exercise.isCompleted
                     )
                     .padding(.vertical, 6)
                     .transition(.move(edge: .top))
@@ -283,8 +284,6 @@ struct MuscleCategoryView: View {
         }
     }
     
-    
-    
     private var incompleteExercisesSection: some View {
         let incompleteExercises = viewModel.exercises.filter { !$0.isCompleted }
         
@@ -293,7 +292,7 @@ struct MuscleCategoryView: View {
         } else {
             return AnyView(
                 ForEach(incompleteExercises, id: \.id) { exercise in
-                    ExerciseCardView(
+                    ExerciseCardContainerView(
                         viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
                             viewModel.updateExercise(updated)
                         },
@@ -311,7 +310,8 @@ struct MuscleCategoryView: View {
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)
                         },
-                        isActiveSetVisible: activeSetViewModel.currentExercise != nil
+                        isActiveSetVisible: activeSetViewModel.currentExercise != nil,
+                        isResetEnabled: exercise.isCompleted
                     )
                     .padding(.vertical, 6)
                     .transition(.move(edge: .top))
@@ -329,7 +329,7 @@ struct MuscleCategoryView: View {
         } else {
             return AnyView(
                 ForEach(completedExercises, id: \.id) { exercise in
-                    ExerciseCardView(
+                    ExerciseCardContainerView(
                         viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
                             viewModel.updateExercise(updated)
                         },
@@ -347,7 +347,8 @@ struct MuscleCategoryView: View {
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)
                         },
-                        isActiveSetVisible: activeSetViewModel.currentExercise != nil
+                        isActiveSetVisible: activeSetViewModel.currentExercise != nil,
+                        isResetEnabled: exercise.isCompleted
                     )
                     .padding(.vertical, 6)
                     .transition(.move(edge: .bottom))

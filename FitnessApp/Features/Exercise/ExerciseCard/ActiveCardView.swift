@@ -5,7 +5,7 @@ private struct IDS {
     static let seatLabel = "id_label_exercise_seat"
 }
 
-struct ExerciseCardView: View {
+struct ActiveCardView: View {
     @ObservedObject var viewModel: ExerciseCardViewModel
     let onEdit: (Exercise) -> Void
     let isEditable: Bool
@@ -13,6 +13,7 @@ struct ExerciseCardView: View {
     let onStart: ((Exercise) -> Void)?
     let onReset: ((Exercise) -> Void)?
     let isActiveSetVisible: Bool
+    let isResetEnabled: Bool
 
     var body: some View {
         VStack(spacing: 2) {
@@ -26,7 +27,9 @@ struct ExerciseCardView: View {
                 isEditable: isEditable,
                 onStart: onStart,
                 onReset: onReset,
-                isActiveSetVisible: isActiveSetVisible
+                isActiveSetVisible: isActiveSetVisible,
+                isResetEnabled:isResetEnabled
+                
             ).padding(.bottom, 6)
             
             Divider().background(AppStyle.Color.purpleGrey).padding(.horizontal, 4)
@@ -43,15 +46,9 @@ struct ExerciseCardView: View {
         .padding(.horizontal, AppStyle.Padding.horizontal)
         .padding(.vertical, 6)
         .frame(maxWidth: UIScreen.main.bounds.width - 2 * AppStyle.Padding.horizontal)
-        .background(viewModel.exercise.isCompleted ? AppStyle.Color.exerciseCardDoneBackGround : AppStyle.Color.exerciseCardBackground)
+        .background(AppStyle.Color.exerciseCardBackground)
         .cornerRadius(AppStyle.CornerRadius.card)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 4)
-        .overlay(
-            viewModel.exercise.isCompleted ?
-                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card)
-                    .stroke(AppStyle.Color.green, lineWidth: 2) :
-                nil
-        )
     }
 }
 
@@ -64,8 +61,8 @@ struct CardTopSectionView: View {
     let onStart: ((Exercise) -> Void)?
     let onReset: ((Exercise) -> Void)?
     let isActiveSetVisible: Bool
+    let isResetEnabled: Bool
 
-    
     var body: some View {
         HStack(alignment: .top) {
             TextView(
@@ -86,7 +83,7 @@ struct CardTopSectionView: View {
             Spacer()
             
             HStack(spacing: 6) {
-                if isEditable, let onReset = onReset, exercise.isCompleted {
+                if isResetEnabled, let onReset = onReset {
                     Button(action: {
                         onReset(exercise)
                     }) {
@@ -133,8 +130,6 @@ struct CardTopSectionView: View {
         }
     }
 }
-
-
 
 struct CardBottomSectionView: View {
     @ObservedObject var viewModel: ExerciseCardViewModel
