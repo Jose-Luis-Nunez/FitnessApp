@@ -27,7 +27,9 @@ enum AppStyle {
         static let bottomBarButtons = SwiftUI.Font.system(size: 16, weight: .semibold)
         
         static let analyticsExerciseTitle = SwiftUI.Font.system(size: 20, weight: .bold)
+        static let doneButton = SwiftUI.Font.system(size: 18, weight: .bold)
         static let analyticsExerciseData = SwiftUI.Font.system(size: 16, weight: .semibold)
+        
     }
     
     enum Color {
@@ -43,6 +45,8 @@ enum AppStyle {
         static let gray = SwiftUI.Color.gray
         static let grayDark = SwiftUI.Color(hex: "#383838")
         static let grayDark2 = SwiftUI.Color(hex: "##363636")
+        static let grayDark3 = SwiftUI.Color(hex: "0x151515")
+        
 
         static let purpleGrey = SwiftUI.Color(hex: "#544985")
         static let purpleLight = SwiftUI.Color(hex: "#E5D8FF")
