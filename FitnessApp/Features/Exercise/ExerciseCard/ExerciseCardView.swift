@@ -27,7 +27,6 @@ struct ExerciseCardView: View {
                 onStart: onStart,
                 onReset: onReset,
                 isActiveSetVisible: isActiveSetVisible
-
             ).padding(.bottom, 6)
             
             Divider().background(AppStyle.Color.purpleGrey).padding(.horizontal, 4)
@@ -47,6 +46,12 @@ struct ExerciseCardView: View {
         .background(viewModel.exercise.isCompleted ? AppStyle.Color.exerciseCardDoneBackGround : AppStyle.Color.exerciseCardBackground)
         .cornerRadius(AppStyle.CornerRadius.card)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 4)
+        .overlay(
+            viewModel.exercise.isCompleted ?
+                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card)
+                    .stroke(AppStyle.Color.green, lineWidth: 2) :
+                nil
+        )
     }
 }
 
