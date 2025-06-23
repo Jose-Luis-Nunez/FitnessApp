@@ -34,7 +34,7 @@ enum AppStyle {
     
     enum Color {
         static let backgroundColor = black
-        static let exerciseCardBackground = grayDark
+        static let exerciseCardBackground = grayDark4
         static let exerciseCardDoneBackGround = black
         static let primaryButton = green
         static let secondaryButton = greenLight
@@ -46,6 +46,7 @@ enum AppStyle {
         static let grayDark = SwiftUI.Color(hex: "#383838")
         static let grayDark2 = SwiftUI.Color(hex: "##363636")
         static let grayDark3 = SwiftUI.Color(hex: "0x151515")
+        static let grayDark4 = SwiftUI.Color(hex: "#3A3A3C")
         
 
         static let purpleGrey = SwiftUI.Color(hex: "#544985")
@@ -53,6 +54,7 @@ enum AppStyle {
         static let purple = SwiftUI.Color(hex: "#9575F4")
         static let purpleDark = SwiftUI.Color(hex: "#291B66")
         
+        static let greenCard = SwiftUI.Color(hex: "#003B39")
         static let greenBlack = SwiftUI.Color(hex: "#022123")
         static let greenDark = SwiftUI.Color(hex: "#013334")
         

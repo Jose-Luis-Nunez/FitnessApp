@@ -28,7 +28,8 @@ struct ActiveCardView: View {
                 onStart: onStart,
                 onReset: onReset,
                 isActiveSetVisible: isActiveSetVisible,
-                isResetEnabled:isResetEnabled
+                isResetEnabled:isResetEnabled,
+                showSeatChip: true
                 
             ).padding(.bottom, 6)
             
@@ -62,6 +63,7 @@ struct CardTopSectionView: View {
     let onReset: ((Exercise) -> Void)?
     let isActiveSetVisible: Bool
     let isResetEnabled: Bool
+    let showSeatChip: Bool
 
     var body: some View {
         HStack(alignment: .top) {
@@ -79,50 +81,59 @@ struct CardTopSectionView: View {
                     onEdit(exercise)
                 }
             }
-            
+
             Spacer()
-            
+
             HStack(spacing: 6) {
                 if isResetEnabled, let onReset = onReset {
                     Button(action: {
                         onReset(exercise)
                     }) {
-                        Image(systemName: "eject.circle.fill")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 20, height: 20)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 4)
-                            .background(AppStyle.Color.black)
-                            .cornerRadius(12)
+                        ZStack {
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 28)
+
+                            Image(systemName: "eject.fill")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 10, height: 10)
+                                .foregroundColor(.black)
+                        }
                     }
                     .buttonStyle(.plain)
+                    .frame(width: 80, alignment: .trailing)
+                    .padding(.trailing, 8)
                     .accessibilityIdentifier("id_button_reset_exercise")
                 }
-                
-                AppChipView(
-                    styled: StyledExerciseField(field: .edit(.seatChip)),
-                    content: seatText,
-                    onTap: isEditable ? { onEdit(exercise) } : nil
-                )
-                .frame(width: 60)
-                .accessibilityIdentifier(IDS.seatLabel)
+
+                if showSeatChip {
+                    AppChipView(
+                        styled: StyledExerciseField(field: .edit(.seatChip)),
+                        content: seatText,
+                        onTap: isEditable ? { onEdit(exercise) } : nil
+                    )
+                    .frame(width: 60)
+                    .accessibilityIdentifier(IDS.seatLabel)
+                }
             }
-            
+
             if let onStart = onStart, !exercise.isCompleted, !isActiveSetVisible {
                 Button(action: {
                     onStart(exercise)
                 }) {
-                    Image(systemName: "play.circle.fill")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 20, height: 20)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(AppStyle.Color.black)
-                        .cornerRadius(12)
+                    ZStack {
+                        Circle()
+                            .fill(Color.black)
+                            .frame(width: 28)
+
+                        Image(systemName: "play.fill")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 10, height: 10)
+                            .foregroundColor(.white)
+                            .offset(x: 1.2, y: -1)
+                    }
                 }
                 .accessibilityIdentifier("id_button_start_exercise")
                 .buttonStyle(.plain)
@@ -130,6 +141,7 @@ struct CardTopSectionView: View {
         }
     }
 }
+
 
 struct CardBottomSectionView: View {
     @ObservedObject var viewModel: ExerciseCardViewModel

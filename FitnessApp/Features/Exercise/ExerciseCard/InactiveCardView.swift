@@ -21,7 +21,8 @@ struct InactiveCardView: View {
                 onStart: nil,
                 onReset: onReset,
                 isActiveSetVisible: false,
-                isResetEnabled: isResetEnabled
+                isResetEnabled: isResetEnabled,
+                showSeatChip: false
             ).padding(.bottom, 6)
             
          
