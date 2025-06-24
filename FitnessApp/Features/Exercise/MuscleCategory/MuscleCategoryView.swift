@@ -216,17 +216,6 @@ struct MuscleCategoryView: View {
                     .foregroundColor(AppStyle.Color.white)
                     .accessibilityIdentifier(IDS.groupTitle)
             }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    withAnimation {
-                        formViewModel.loadExercise(nil as Exercise?)
-                        formViewModel.toggleForm()
-                    }
-                }) {
-                    Image(systemName: formViewModel.showForm ? "minus" : "plus")
-                }
-                .accessibilityIdentifier(IDS.addExerciseButton)
-            }
         }
         .onChange(of: activeSetViewModel.isEditing) { _, newValue in
             if !newValue {
