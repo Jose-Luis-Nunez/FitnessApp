@@ -4,24 +4,36 @@ import Foundation
 class TimerService {
     @Published var timerSeconds: Int = 0
     private var timer: Timer?
+    private var startTime: Date?
+    private var isRunning: Bool = false
     
     func startTimer() {
+        guard !isRunning else { return }
         timer?.invalidate()
+        isRunning = true
+        startTime = Date()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            self?.timerSeconds += 1
-            print("Timer ticking, timerSeconds: \(self?.timerSeconds ?? 0)")
+            guard let self = self, let start = self.startTime else { return }
+            self.timerSeconds = Int(Date().timeIntervalSince(start))
         }
+        timer?.fire()
     }
     
     func resetAndStartTimer() {
         timerSeconds = 0
         startTimer()
-        print("Timer reset and started, timerSeconds: \(timerSeconds)")
     }
     
     func stopTimer() {
         timer?.invalidate()
         timer = nil
-        print("Timer stopped, timerSeconds: \(timerSeconds)")
+        isRunning = false
+        startTime = nil
+    }
+    
+    func updateTimer() {
+        if isRunning, let start = startTime {
+            timerSeconds = Int(Date().timeIntervalSince(start))
+        }
     }
 }

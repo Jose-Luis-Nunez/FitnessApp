@@ -26,7 +26,6 @@ class ActiveSetViewModel: ObservableObject {
     @Published var didJustEditSet: Bool = false
     @Published var pendingEditMode: SetEditingMode? = nil
     
-    
     var isInputValid: Bool {
         guard let newReps = Int(repsInput),
               let newWeight = Int(weightInput),
@@ -249,5 +248,12 @@ class ActiveSetViewModel: ObservableObject {
         
         repsInput = String(setProgress[index].currentReps)
         weightInput = String(setProgress[index].weight)
+    }
+    
+    func handleAppForeground() {
+        if isSetInProgress {
+            timerService.updateTimer()
+            timerService.startTimer()
+        }
     }
 }

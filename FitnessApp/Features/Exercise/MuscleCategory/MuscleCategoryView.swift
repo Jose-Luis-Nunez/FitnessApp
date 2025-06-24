@@ -243,6 +243,9 @@ struct MuscleCategoryView: View {
                 secondaryButton: .cancel()
             )
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            activeSetViewModel.handleAppForeground()
+        }
     }
     
     private var exerciseListSection: some View {
