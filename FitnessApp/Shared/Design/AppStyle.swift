@@ -40,6 +40,7 @@ enum AppStyle {
         static let secondaryButton = greenLight
         
         static let exerciseCardBackground = SwiftUI.Color(hex: "#282828")
+        static let exerciseCardDividingLine = SwiftUI.Color(hex: "#353535")
         static let exerciseCardBackgroundInactive = grayBlack
         static let chipsBackground = grayDark
         static let activeSetBackground = exerciseCardBackground

@@ -34,7 +34,7 @@ struct ActiveCardView: View {
             ).padding(.bottom, 6)
             
             Divider()
-                .background(AppStyle.Color.white)
+                .background(AppStyle.Color.exerciseCardDividingLine)
                 .padding(.horizontal, 4)
             
             CardBottomSectionView(
