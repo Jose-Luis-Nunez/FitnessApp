@@ -53,18 +53,32 @@ struct FloatingActionButtonsView: View {
     
     private let buttonWidthRegular: CGFloat = 110
     private let buttonHeightRegular: CGFloat = 40
-    
-    private let buttonWidthLarge: CGFloat = 160
     private let buttonHeightLarge: CGFloat = 40
+    private let verticalSpacing: CGFloat = 8
+    private let topPadding: CGFloat = 10
+    private let bottomPadding: CGFloat = 16
+    
+    private var rowCount: Int {
+        var rows = 1
+        if viewModel.showQuickDoneBeendenButton || viewModel.showQuickDoneDoneButton {
+            rows = 2
+        } else if viewModel.showSetControls && viewModel.currentSet == 0 {
+            rows = 2
+        }
+        return rows
+    }
+    
+    private var totalHeight: CGFloat {
+        (buttonHeightRegular * CGFloat(rowCount)) + (verticalSpacing * CGFloat(rowCount - 1)) + bottomPadding
+    }
     
     var body: some View {
         ZStack(alignment: .bottom) {
             backgroundColor
-                .frame(height: buttonHeightRegular * 2 + 32)
+                .frame(height: totalHeight)
                 .frame(maxWidth: UIScreen.main.bounds.width - 32)
             
-            VStack(spacing: 8) {
-                
+            VStack(spacing: verticalSpacing) {
                 if viewModel.showQuickDoneBeendenButton {
                     actionButtonExtraLarge(
                         text: "Beenden",
@@ -81,8 +95,7 @@ struct FloatingActionButtonsView: View {
                         fontColor: AppStyle.Color.white,
                         action: onCompleteAllQuickDone
                     )
-                }
-                else {
+                } else {
                     if viewModel.showSetControls && viewModel.currentSet == 0 {
                         actionButtonExtraLarge(
                             text: "Quick done",
@@ -164,9 +177,10 @@ struct FloatingActionButtonsView: View {
                     .padding(.horizontal, AppStyle.Padding.horizontal)
                 }
             }
-            .padding(.bottom, 16)
+            .padding(.top, topPadding)
+            .padding(.bottom, bottomPadding)
         }
-        .frame(height: buttonHeightRegular * 2 + 32)
+        .frame(height: totalHeight)
     }
     
     @ViewBuilder
@@ -188,7 +202,6 @@ struct FloatingActionButtonsView: View {
         .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
     }
 
-    
     @ViewBuilder
     private func actionButtonSmall(
         text: String,
