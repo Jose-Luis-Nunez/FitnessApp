@@ -87,7 +87,7 @@ struct FloatingActionButtonsView: View {
                         actionButtonExtraLarge(
                             text: "Quick done",
                             textFont: AppStyle.Font.bottomBarButtons,
-                            backgroundColor: AppStyle.Color.grayDark,
+                            backgroundColor: AppStyle.Color.gray,
                             fontColor: AppStyle.Color.white,
                             action: onQuickDone
                         )

@@ -40,6 +40,9 @@ struct MuscleCategoryView: View {
     
     var body: some View {
         ZStack(alignment: .bottom) {
+            Color(AppStyle.Color.backgroundColor)
+                .edgesIgnoringSafeArea(.all)
+            
             VStack(spacing: 0) {
                 List {
                     exerciseListSection
@@ -138,6 +141,7 @@ struct MuscleCategoryView: View {
                         }
                     }
                 )
+                .background(AppStyle.Color.backgroundColor)
                 .padding(.bottom, 40)
             }
             
@@ -205,7 +209,7 @@ struct MuscleCategoryView: View {
                 .transition(.move(edge: .bottom))
             }
         }
-        .toolbar(content: {
+        .toolbar {
             ToolbarItem(placement: .principal) {
                 Text(group.displayName)
                     .font(AppStyle.Font.navigationHeadline)
@@ -223,7 +227,7 @@ struct MuscleCategoryView: View {
                 }
                 .accessibilityIdentifier(IDS.addExerciseButton)
             }
-        })
+        }
         .onChange(of: activeSetViewModel.isEditing) { _, newValue in
             if !newValue {
                 activeSetViewModel.resetEditingState()

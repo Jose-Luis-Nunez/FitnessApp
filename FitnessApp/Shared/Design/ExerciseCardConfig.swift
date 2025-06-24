@@ -121,7 +121,7 @@ enum ExerciseCardConfig {
                     ChipStyle(
                         textValue: "",
                         textSuffix: "",
-                        backgroundColor: AppStyle.Color.grayBlack,
+                        backgroundColor: AppStyle.Color.chipsBackground,
                         labelColor: AppStyle.Color.white,
                         labelFont: AppStyle.Font.regularChip,
                         size: .regular,

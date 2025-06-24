@@ -10,7 +10,7 @@ struct WheelPickerView: View {
         VStack(spacing: 8) {
             Text(title)
                 .font(.subheadline)
-                .foregroundColor(AppStyle.Color.gray)
+                .foregroundColor(AppStyle.Color.greenGlow)
             
             Picker(title, selection: $selectedValue) {
                 ForEach(range, id: \.self) { value in
@@ -22,7 +22,7 @@ struct WheelPickerView: View {
             }
             .pickerStyle(.wheel)
             .frame(height: 120)
-            .background(AppStyle.Color.grayDark.opacity(0.2))
+            .background(AppStyle.Color.gray.opacity(0.2))
             .onAppear {
                 if !range.contains(selectedValue) {
                     selectedValue = range.lowerBound

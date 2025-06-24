@@ -7,7 +7,7 @@ struct ActiveSetView: View {
     @Binding var setProgress: [SetProgress]
     @ObservedObject var viewModel: ActiveSetViewModel
     
-    private let backgroundColor = AppStyle.Color.grayDark
+    private let backgroundColor = AppStyle.Color.activeSetBackground
     private let iconSize: CGFloat = 26
     private let defaultPadding: CGFloat = AppStyle.Padding.horizontal
     
@@ -88,7 +88,6 @@ struct ActiveSetView: View {
                         .contentShape(Rectangle())
                     }
                 }
-                
                 
                 // Normal Mode
                 else {

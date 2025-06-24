@@ -39,10 +39,7 @@ struct InactiveCardView: View {
         .background(AppStyle.Color.exerciseCardBackgroundInactive)
         .cornerRadius(AppStyle.CornerRadius.card)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 4)
-        .overlay(
-            RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card)
-                .stroke(AppStyle.Color.green, lineWidth: 0.5)
-        )
+     
         .transition(.move(edge: .bottom))
         .animation(.easeInOut, value: viewModel.exercise.isCompleted)
     }
