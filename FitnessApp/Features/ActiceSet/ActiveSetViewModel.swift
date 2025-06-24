@@ -152,7 +152,6 @@ class ActiveSetViewModel: ObservableObject {
         }
     }
     
-    
     func finishExercise() {
         currentExercise = nil
         setProgress = []
@@ -255,5 +254,25 @@ class ActiveSetViewModel: ObservableObject {
             timerService.updateTimer()
             timerService.startTimer()
         }
+    }
+    
+    func cancelActiveSet() {
+        guard isSetInProgress, let exercise = currentExercise else { return }
+        
+        currentExercise = nil
+        currentSet = 0
+        activeSetIndex = 0
+        setProgress = (0..<exercise.sets).map { _ in
+            SetProgress(status: .notStarted, currentReps: exercise.reps, weight: exercise.weight)
+        }
+        isSetInProgress = false
+        isLastSetCompleted = false
+        quickDoneModeActive = false
+        quickDoneAllCompleted = false
+        didEditCompleteSet = false
+        didJustEditSet = false
+        
+        timerService.stopTimer()
+        timerSeconds = 0
     }
 }

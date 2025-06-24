@@ -98,9 +98,9 @@ struct FloatingActionButtonsView: View {
                 } else {
                     if viewModel.showSetControls && viewModel.currentSet == 0 {
                         actionButtonExtraLarge(
-                            text: "Quick done",
+                            text: "Quick Done",
                             textFont: AppStyle.Font.bottomBarButtons,
-                            backgroundColor: AppStyle.Color.gray,
+                            backgroundColor: AppStyle.Color.exerciseCardBackground,
                             fontColor: AppStyle.Color.white,
                             action: onQuickDone
                         )
