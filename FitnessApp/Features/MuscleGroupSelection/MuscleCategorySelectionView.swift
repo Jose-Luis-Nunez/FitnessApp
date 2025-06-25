@@ -51,11 +51,11 @@ private struct CategoryTileView: View {
                 Text(group.displayName)
                     .font(AppStyle.Font.cardHeadline)
                     .foregroundColor(AppStyle.Color.white)
-                Text("\(active) von \(total)")
+                Text("\(active) von \(total) Übungen")
                     .font(AppStyle.Font.defaultFont)
-                    .foregroundColor(AppStyle.Color.white)
+                    .foregroundColor(SwiftUI.Color(hex: "#8a8580"))
             }
-            .padding(.vertical, 16)
+            .padding(.vertical, 20)
             .padding(.horizontal, 15)
 
             Spacer()
@@ -76,13 +76,12 @@ private struct CategoryTileView: View {
                     .foregroundColor(AppStyle.Color.white)
                     .imageScale(.medium)
             }
-            .padding(.vertical, 16)
+            .padding(.vertical, 20)
             .padding(.horizontal, 15)
         }
         .frame(maxWidth: .infinity)
         .background(AppStyle.Color.exerciseCardBackground)
         .cornerRadius(AppStyle.CornerRadius.card)
-        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
     }
 
     private struct CustomChip: View {
