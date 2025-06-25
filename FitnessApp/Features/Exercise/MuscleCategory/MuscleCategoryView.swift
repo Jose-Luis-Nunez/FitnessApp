@@ -11,14 +11,16 @@ struct MuscleCategoryView: View {
     @StateObject private var formViewModel: ExerciseFormViewModel
     @StateObject private var activeSetViewModel: ActiveSetViewModel
     @StateObject private var analyticsViewModel: AnalyticsViewModel
+    @Binding var navigationPath: NavigationPath
     
-    init(group: MuscleCategoryGroup) {
+    init(group: MuscleCategoryGroup, navigationPath: Binding<NavigationPath>) {
         self.group = group
         let muscleCategoryViewModel = MuscleCategoryViewModel(group: group)
         _viewModel = StateObject(wrappedValue: muscleCategoryViewModel)
         _formViewModel = StateObject(wrappedValue: muscleCategoryViewModel.formViewModel)
         _activeSetViewModel = StateObject(wrappedValue: muscleCategoryViewModel.activeSetViewModel)
         _analyticsViewModel = StateObject(wrappedValue: AnalyticsViewModel())
+        self._navigationPath = navigationPath
     }
     
     private var bottomBarVM: BottomActionBarViewModel {
@@ -78,7 +80,8 @@ struct MuscleCategoryView: View {
                 .listStyle(.plain)
                 .listSectionSpacing(0)
                 .scrollContentBackground(.hidden)
-                .padding(.top, -2)
+                .padding(.top, 0)
+                .offset(y: -10)
                 .padding(.bottom, formViewModel.showForm ? 340 : (activeSetViewModel.isEditing ? 240 : (bottomBarVM.shouldShow ? 70 : 40)))
             }
             .background(AppStyle.Color.backgroundColor)
@@ -88,7 +91,6 @@ struct MuscleCategoryView: View {
                     viewModel: bottomBarVM,
                     onStart: {
                         guard let exercise = activeSetViewModel.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) else { return }
-                        
                         if activeSetViewModel.currentSet == 0 && activeSetViewModel.setProgress.isEmpty {
                             activeSetViewModel.startSet(for: exercise)
                         } else {
@@ -121,7 +123,6 @@ struct MuscleCategoryView: View {
                     },
                     onFinish: {
                         activeSetViewModel.stopTimer()
-                        
                         if activeSetViewModel.isLastSetCompleted,
                            let exercise = activeSetViewModel.currentExercise {
                             var updatedExercise = exercise
@@ -129,7 +130,6 @@ struct MuscleCategoryView: View {
                             viewModel.updateExercise(updatedExercise)
                             viewModel.saveAnalytics()
                         }
-                        
                         viewModel.finishExercise()
                         activeSetViewModel.finishExercise()
                         activeSetViewModel.quickDoneModeActive = false
@@ -209,31 +209,10 @@ struct MuscleCategoryView: View {
                 .transition(.move(edge: .bottom))
             }
         }
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text(group.displayName)
-                    .font(AppStyle.Font.navigationHeadline)
-                    .foregroundColor(AppStyle.Color.white)
-                    .accessibilityIdentifier(IDS.groupTitle)
-            }
-        }
-        .onChange(of: activeSetViewModel.isEditing) { _, newValue in
-            if !newValue {
-                activeSetViewModel.resetEditingState()
-            }
-        }
-        .alert(isPresented: $viewModel.showResetConfirmation) {
-            Alert(
-                title: Text("Reset Progress"),
-                message: Text("Do you want to reset all exercise progress? This will allow you to start the sets again."),
-                primaryButton: .destructive(Text("Reset")) {
-                    viewModel.resetProgress()
-                },
-                secondaryButton: .cancel()
-            )
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-            activeSetViewModel.handleAppForeground()
+        .customToolbar(title: group.displayName, navigationPath: $navigationPath, showBackButton: true)
+        .navigationBarBackButtonHidden(true)
+        .onAppear {
+            print("MuscleCategoryView appeared - navigationPath.count: \(navigationPath.count)")
         }
     }
     

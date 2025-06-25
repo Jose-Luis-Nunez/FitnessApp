@@ -17,23 +17,30 @@ struct FitnessAppApp: App {
             ZStack(alignment: .bottom) {
                 NavigationStack(path: $navigationPath) {
                     MuscleCategorySelectionView()
+                        .navigationBarBackButtonHidden(true)
                         .navigationDestination(for: NavigationDestination.self) { destination in
-                            switch destination {
-                            case .home:
-                                MuscleCategorySelectionView()
-                                    .onAppear {
-                                        print("Navigated to MuscleCategorySelectionView (home)")
-                                    }
-                            case .profile:
-                                ProfileView()
-                                    .onAppear {
-                                        print("Navigated to ProfileView")
-                                    }
-                            case .muscleCategory(let group):
-                                MuscleCategoryView(group: group)
-                                    .onAppear {
-                                        print("Navigated to MuscleCategoryView for group: \(group.displayName)")
-                                    }
+                            Group {
+                                switch destination {
+                                case .home:
+                                    MuscleCategorySelectionView()
+                                        .navigationBarBackButtonHidden(true)
+                                case .profile:
+                                    ProfileView()
+                                        .navigationBarBackButtonHidden(true)
+                                case .muscleCategory(let group):
+                                    MuscleCategoryView(group: group, navigationPath: $navigationPath)
+                                        .navigationBarBackButtonHidden(true)
+                                }
+                            }
+                            .onAppear {
+                                if case .muscleCategory(let group) = destination {
+                                    print("Navigated to MuscleCategoryView for group: \(group.displayName)")
+                                } else if case .profile = destination {
+                                    print("Navigated to ProfileView")
+                                } else if case .home = destination {
+                                    print("Navigated to MuscleCategorySelectionView (home)")
+                                }
+                                print("Navigation path count: \(navigationPath.count)")
                             }
                         }
                         .onAppear {
