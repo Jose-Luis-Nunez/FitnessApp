@@ -1,94 +1,144 @@
 import SwiftUI
 
-private struct IDS {
-    static func label(for group: MuscleCategoryGroup) -> String { "id_label_\(group.id)" }
+private enum Constants {
+    static let horizontalPadding: CGFloat = 15
+    static let verticalSpacing: CGFloat = 10
+    static let titleTopPadding: CGFloat = 10
+    static let spacerHeight: CGFloat = 30
+    static let topPadding: CGFloat = 5
+    
+    enum CategoryTile {
+        static let barWidth: CGFloat = 120
+        static let chipVerticalPadding: CGFloat = 10
+        static let contentPadding: CGFloat = 15
+        static let itemSpacing: CGFloat = 12
+        static let verticalSpacing: CGFloat = 18
+        static let textSpacing: CGFloat = 10
+        static let verticalPadding: CGFloat = 20
+    }
+    
+    enum ProgressBar {
+        static let height: CGFloat = 10
+        static let strokeWidth: CGFloat = 1
+        static let cornerRadius: CGFloat = 8
+    }
+}
+
+private enum AccessibilityIDs {
+    static func categoryLabel(for group: MuscleCategoryGroup) -> String {
+        "id_label_\(group.id)"
+    }
+}
+
+private struct ExerciseInfo {
+    let total: Int
+    let active: Int
+    let isCompleted: Bool
+    let progress: Double
+    
+    init(total: Int, active: Int) {
+        self.total = total
+        self.active = active
+        self.isCompleted = (active == 0 && total > 0)
+        self.progress = total > 0 ? Double(total - active) / Double(total) : 0.0
+    }
 }
 
 struct MuscleCategorySelectionView: View {
     @StateObject private var viewModel = MuscleCategorySelectionViewModel()
-    
+
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 10) {
-                Text("Kategorien")
-                    .font(AppStyle.Font.cardHeadline)
-                    .foregroundColor(AppStyle.Color.white)
-                    .padding(.top, 10)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            LazyVStack(spacing: Constants.verticalSpacing) {
+                headerView
                 
-                Spacer().frame(height: 30)
+                Spacer().frame(height: Constants.spacerHeight)
                 
-                ForEach(MuscleCategoryGroup.allCases, id: \.self) { group in
-                    NavigationLink(value: NavigationDestination.muscleCategory(group)) {
-                        CategoryTileView(group: group, viewModel: viewModel)
-                    }
-                }
+                categoryList
             }
-            .padding(.horizontal, 15)
-            .padding(.top, 5)
+            .padding(.horizontal, Constants.horizontalPadding)
+            .padding(.top, Constants.topPadding)
         }
         .background(AppStyle.Color.backgroundColor)
         .navigationBarTitle("")
         .onAppear { viewModel.updateExerciseCounts() }
     }
+    
+    private var headerView: some View {
+        Text("Kategorien")
+            .font(AppStyle.Font.cardHeadline)
+            .foregroundColor(AppStyle.Color.white)
+            .padding(.top, Constants.titleTopPadding)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    private var categoryList: some View {
+        ForEach(MuscleCategoryGroup.allCases, id: \.self) { group in
+            NavigationLink(value: NavigationDestination.muscleCategory(group)) {
+                CategoryTileView(group: group, viewModel: viewModel)
+            }
+        }
+    }
 }
 
 private struct CategoryTileView: View {
-    
-    private let kBarWidth: CGFloat = 120
-    
     let group: MuscleCategoryGroup
     @ObservedObject var viewModel: MuscleCategorySelectionViewModel
-    
+
     var body: some View {
-        let (total, active, isCompleted, progress) = exerciseInfo
+        let exerciseInfo = createExerciseInfo()
         
         HStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 10) {
-                Text(group.displayName)
-                    .font(AppStyle.Font.cardHeadline)
-                    .foregroundColor(AppStyle.Color.white)
-                
-                Text("\(active) von \(total) Übungen")
-                    .font(AppStyle.Font.defaultFont)
-                    .foregroundColor(Color(hex: "#8a8580"))
-            }
-            .padding(.vertical, 20)
-            .padding(.horizontal, 15)
+            categoryInfoView(exerciseInfo: exerciseInfo)
             
             Spacer()
             
-            HStack(spacing: 12) {
-                VStack(alignment: .trailing, spacing: 18) {
-                    CustomChip(
-                        text: isCompleted ? "Completed" : "Active",
-                        isCompleted: isCompleted,
-                        width: kBarWidth
-                    )
-                    .accessibilityIdentifier(IDS.label(for: group))
-                    
-                    ProgressBar(progress: progress, totalWidth: kBarWidth)
-                }
-                
-                Image(systemName: "chevron.right")
-                    .foregroundColor(AppStyle.Color.white)
-                    .imageScale(.medium)
-            }
-            .padding(.vertical, 20)
-            .padding(.horizontal, 15)
+            progressSection(exerciseInfo: exerciseInfo)
         }
         .frame(maxWidth: .infinity)
         .background(AppStyle.Color.exerciseCardBackground)
         .cornerRadius(AppStyle.CornerRadius.card)
     }
     
-    private var exerciseInfo: (total: Int, active: Int, completed: Bool, progress: Double) {
-        let cnt   = viewModel.getExerciseCount(for: group) ?? (0, 0)
-        let total = cnt.total
-        let active = cnt.active
-        let completed = (active == 0 && total > 0)
-        let progress  = total > 0 ? Double(total - active) / Double(total) : 0.0
-        return (total, active, completed, progress)
+    private func categoryInfoView(exerciseInfo: ExerciseInfo) -> some View {
+        VStack(alignment: .leading, spacing: Constants.CategoryTile.textSpacing) {
+            Text(group.displayName)
+                .font(AppStyle.Font.cardHeadline)
+                .foregroundColor(AppStyle.Color.white)
+
+            Text("\(exerciseInfo.active) von \(exerciseInfo.total) Übungen")
+                .font(AppStyle.Font.defaultFont)
+                .foregroundColor(Color(hex: "#8a8580"))
+        }
+        .padding(.vertical, Constants.CategoryTile.verticalPadding)
+        .padding(.horizontal, Constants.CategoryTile.contentPadding)
+    }
+    
+    private func progressSection(exerciseInfo: ExerciseInfo) -> some View {
+        HStack(spacing: Constants.CategoryTile.itemSpacing) {
+            VStack(alignment: .trailing, spacing: Constants.CategoryTile.verticalSpacing) {
+                CustomChip(
+                    text: exerciseInfo.isCompleted ? "Completed" : "Active",
+                    isCompleted: exerciseInfo.isCompleted,
+                    width: Constants.CategoryTile.barWidth,
+                    verticalPadding: Constants.CategoryTile.chipVerticalPadding
+                )
+                .accessibilityIdentifier(AccessibilityIDs.categoryLabel(for: group))
+
+                ProgressBar(progress: exerciseInfo.progress, totalWidth: Constants.CategoryTile.barWidth)
+            }
+
+            Image(systemName: "chevron.right")
+                .foregroundColor(AppStyle.Color.white)
+                .imageScale(.medium)
+        }
+        .padding(.vertical, Constants.CategoryTile.verticalPadding)
+        .padding(.horizontal, Constants.CategoryTile.contentPadding)
+    }
+    
+    private func createExerciseInfo() -> ExerciseInfo {
+        let count = viewModel.getExerciseCount(for: group) ?? (0, 0)
+        return ExerciseInfo(total: count.total, active: count.active)
     }
 }
 
@@ -96,53 +146,65 @@ private struct CustomChip: View {
     let text: String
     let isCompleted: Bool
     let width: CGFloat
+    let verticalPadding: CGFloat
 
     var body: some View {
         Text(text)
             .font(AppStyle.Font.defaultFont)
             .foregroundColor(.white)
             .frame(width: width)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(isCompleted ? AppStyle.Color.green : AppStyle.Color.exerciseCardBackground)
-            )
-            .overlay(
-                isCompleted
-                ? nil
-                : RoundedRectangle(cornerRadius: 8)
+            .padding(.vertical, verticalPadding)
+            .background(chipBackground)
+            .overlay(chipOverlay)
+    }
+    
+    private var chipBackground: some View {
+        RoundedRectangle(cornerRadius: Constants.ProgressBar.cornerRadius)
+            .fill(isCompleted ? AppStyle.Color.green : AppStyle.Color.exerciseCardBackground)
+    }
+    
+    private var chipOverlay: some View {
+        Group {
+            if !isCompleted {
+                RoundedRectangle(cornerRadius: Constants.ProgressBar.cornerRadius)
                     .stroke(Color(hex: "#8a8580"), lineWidth: 1)
-            )
+            }
+        }
     }
 }
 
 private struct ProgressBar: View {
     let progress: Double
     let totalWidth: CGFloat
-    
-    private let height: CGFloat = 10
-    private let strokeWidth: CGFloat = 1
-    private let cornerRadius: CGFloat = 8
-    
-    private let fillColor  = AppStyle.Color.green
+
+    private let fillColor = AppStyle.Color.green
     private let trackColor = Color(hex: "#8a8580")
-    
+
     var body: some View {
         ZStack(alignment: .leading) {
-            Capsule()
-                .strokeBorder(trackColor, lineWidth: strokeWidth)
-                .background(
-                    Capsule()
-                        .fill(AppStyle.Color.exerciseCardBackground)
-                )
-                .frame(width: totalWidth, height: height)
-            
-            Capsule()
-                .fill(fillColor)
-                .frame(width: CGFloat(progress.clamped(to: 0...1)) * totalWidth,
-                       height: height)
+            trackView
+            progressView
         }
-        .frame(width: totalWidth, height: height)
+        .frame(width: totalWidth, height: Constants.ProgressBar.height)
+    }
+    
+    private var trackView: some View {
+        Capsule()
+            .strokeBorder(trackColor, lineWidth: Constants.ProgressBar.strokeWidth)
+            .background(
+                Capsule()
+                    .fill(AppStyle.Color.exerciseCardBackground)
+            )
+            .frame(width: totalWidth, height: Constants.ProgressBar.height)
+    }
+    
+    private var progressView: some View {
+        Capsule()
+            .fill(fillColor)
+            .frame(
+                width: CGFloat(progress.clamped(to: 0...1)) * totalWidth,
+                height: Constants.ProgressBar.height
+            )
     }
 }
 
