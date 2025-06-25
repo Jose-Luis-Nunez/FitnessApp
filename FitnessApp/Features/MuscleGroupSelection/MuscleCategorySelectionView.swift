@@ -11,16 +11,24 @@ struct MuscleCategorySelectionView: View {
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 10) {
+                Text("Kategorien")
+                    .font(AppStyle.Font.cardHeadline)
+                    .foregroundColor(AppStyle.Color.white)
+                    .padding(.top, 10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Spacer()
+                    .frame(height: 30)
                 ForEach(MuscleCategoryGroup.allCases, id: \.self) { group in
                     NavigationLink(value: NavigationDestination.muscleCategory(group)) {
                         CategoryTileView(group: group, viewModel: viewModel)
                     }
                 }
             }
-            .padding()
+            .padding(.horizontal, 15)
+            .padding(.top, 5)
         }
         .background(AppStyle.Color.backgroundColor)
-        .navigationTitle("Kategorien")
+        .navigationBarTitle("")
         .onAppear {
             viewModel.updateExerciseCounts()
         }
@@ -39,7 +47,7 @@ private struct CategoryTileView: View {
         let progress = total > 0 ? Double(total - active) / Double(total) : 0.0
 
         return HStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 10) {
                 Text(group.displayName)
                     .font(AppStyle.Font.cardHeadline)
                     .foregroundColor(AppStyle.Color.white)
@@ -47,16 +55,16 @@ private struct CategoryTileView: View {
                     .font(AppStyle.Font.defaultFont)
                     .foregroundColor(AppStyle.Color.white)
             }
-            .padding(.vertical, 6)
-            .padding(.horizontal, 10)
+            .padding(.vertical, 16)
+            .padding(.horizontal, 15)
 
             Spacer()
 
-            HStack(spacing: 8) {
-                VStack(alignment: .trailing, spacing: 8) {
+            HStack(spacing: 12) {
+                VStack(alignment: .trailing, spacing: 18) {
                     CustomChip(text: isCompleted ? "Completed" : "Active", isCompleted: isCompleted)
                         .accessibilityIdentifier(IDS.label(for: group))
-                    if total > 0 {
+                    if total >= 0 {
                         ProgressView(value: progress)
                             .tint(AppStyle.Color.green)
                             .scaleEffect(x: 1, y: 1.5, anchor: .center)
@@ -68,11 +76,11 @@ private struct CategoryTileView: View {
                     .foregroundColor(AppStyle.Color.white)
                     .imageScale(.medium)
             }
-            .padding(.vertical, 6)
-            .padding(.horizontal, 10)
+            .padding(.vertical, 16)
+            .padding(.horizontal, 15)
         }
         .frame(maxWidth: .infinity)
-        .background(AppStyle.Color.backgroundColor)
+        .background(AppStyle.Color.exerciseCardBackground)
         .cornerRadius(AppStyle.CornerRadius.card)
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
     }
@@ -88,13 +96,12 @@ private struct CategoryTileView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .frame(width: 100, height: 28)
-                .background(isCompleted ? AppStyle.Color.green : AppStyle.Color.backgroundColor)
+                .background(isCompleted ? AppStyle.Color.green : AppStyle.Color.exerciseCardBackground)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color(hex: "#CCCCCC"), lineWidth: 1)
+                    isCompleted ? nil : RoundedRectangle(cornerRadius: 8)
+                        .stroke(SwiftUI.Color(hex: "#8a8580"), lineWidth: 1)
                 )
                 .cornerRadius(8)
         }
     }
 }
-

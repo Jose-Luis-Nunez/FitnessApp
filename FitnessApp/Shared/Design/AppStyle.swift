@@ -44,7 +44,6 @@ enum AppStyle {
         static let exerciseCardBackgroundInactive = grayBlack
         static let chipsBackground = grayDark
         static let activeSetBackground = exerciseCardBackground
-        
 
         static let white = SwiftUI.Color.white
         static let black = SwiftUI.Color.black
