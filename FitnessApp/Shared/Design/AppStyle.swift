@@ -31,6 +31,10 @@ enum AppStyle {
         static let doneButton = SwiftUI.Font.system(size: 18, weight: .bold)
         static let analyticsExerciseData = SwiftUI.Font.system(size: 16, weight: .semibold)
         
+        static let categorySelectionChipFont = SwiftUI.Font.system(size: 14, weight: .semibold)
+        static let categorySelectionNameFont = SwiftUI.Font.system(size: 20, weight: .semibold)
+
+        
     }
     
     enum Color {

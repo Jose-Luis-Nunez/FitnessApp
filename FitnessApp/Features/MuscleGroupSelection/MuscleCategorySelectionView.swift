@@ -13,7 +13,7 @@ private enum Constants {
         static let contentPadding: CGFloat = 15
         static let itemSpacing: CGFloat = 12
         static let verticalSpacing: CGFloat = 18
-        static let textSpacing: CGFloat = 10
+        static let textSpacing: CGFloat = 28
         static let verticalPadding: CGFloat = 20
     }
     
@@ -103,7 +103,7 @@ private struct CategoryTileView: View {
     private func categoryInfoView(exerciseInfo: ExerciseInfo) -> some View {
         VStack(alignment: .leading, spacing: Constants.CategoryTile.textSpacing) {
             Text(group.displayName)
-                .font(AppStyle.Font.cardHeadline)
+                .font(AppStyle.Font.categorySelectionNameFont)
                 .foregroundColor(AppStyle.Color.white)
 
             Text("\(exerciseInfo.active) von \(exerciseInfo.total) Übungen")
@@ -150,7 +150,7 @@ private struct CustomChip: View {
 
     var body: some View {
         Text(text)
-            .font(AppStyle.Font.defaultFont)
+            .font(AppStyle.Font.categorySelectionChipFont)
             .foregroundColor(.white)
             .frame(width: width)
             .padding(.vertical, verticalPadding)
