@@ -9,37 +9,92 @@ struct MuscleCategorySelectionView: View {
     @State private var selectedGroup: MuscleCategoryGroup?
 
     var body: some View {
-        VStack {
-            List(MuscleCategoryGroup.allCases, id: \.self) { group in
-                NavigationLink(value: NavigationDestination.muscleCategory(group)) {
-                    HStack {
-                        Text(group.displayName)
-                            .font(AppStyle.Font.navigationHeadline)
-                            .foregroundColor(AppStyle.Color.white)
-                        Spacer()
-                        if let (total, active) = viewModel.getExerciseCount(for: group) {
-                            Text("(\(total)/\(active))")
-                                .font(AppStyle.Font.defaultFont)
-                                .foregroundColor(AppStyle.Color.white)
-                                .padding(.leading, 8)
-                        } else {
-                            Text("(0/0)")
-                                .font(AppStyle.Font.defaultFont)
-                                .foregroundColor(AppStyle.Color.white)
-                                .padding(.leading, 8)
-                        }
+        ScrollView {
+            LazyVStack(spacing: 10) {
+                ForEach(MuscleCategoryGroup.allCases, id: \.self) { group in
+                    NavigationLink(value: NavigationDestination.muscleCategory(group)) {
+                        CategoryTileView(group: group, viewModel: viewModel)
                     }
-                    .padding()
                 }
-                .listRowBackground(AppStyle.Color.backgroundColor)
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
+            .padding()
         }
         .background(AppStyle.Color.backgroundColor)
-        .navigationTitle("Muscle Categories")
+        .navigationTitle("Kategorien")
         .onAppear {
             viewModel.updateExerciseCounts()
         }
     }
 }
+
+private struct CategoryTileView: View {
+    let group: MuscleCategoryGroup
+    @ObservedObject var viewModel: MuscleCategorySelectionViewModel
+
+    var body: some View {
+        let exerciseCount = viewModel.getExerciseCount(for: group) ?? (0, 0)
+        let total = exerciseCount.total
+        let active = exerciseCount.active
+        let isCompleted = active == 0 && total > 0
+        let progress = total > 0 ? Double(total - active) / Double(total) : 0.0
+
+        return HStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(group.displayName)
+                    .font(AppStyle.Font.cardHeadline)
+                    .foregroundColor(AppStyle.Color.white)
+                Text("\(active) von \(total)")
+                    .font(AppStyle.Font.defaultFont)
+                    .foregroundColor(AppStyle.Color.white)
+            }
+            .padding(.vertical, 6)
+            .padding(.horizontal, 10)
+
+            Spacer()
+
+            HStack(spacing: 8) {
+                VStack(alignment: .trailing, spacing: 8) {
+                    CustomChip(text: isCompleted ? "Completed" : "Active", isCompleted: isCompleted)
+                        .accessibilityIdentifier(IDS.label(for: group))
+                    if total > 0 {
+                        ProgressView(value: progress)
+                            .tint(AppStyle.Color.green)
+                            .scaleEffect(x: 1, y: 1.5, anchor: .center)
+                            .frame(width: 100, height: 6, alignment: .trailing)
+                            .padding(.horizontal, 0)
+                    }
+                }
+                Image(systemName: "chevron.right")
+                    .foregroundColor(AppStyle.Color.white)
+                    .imageScale(.medium)
+            }
+            .padding(.vertical, 6)
+            .padding(.horizontal, 10)
+        }
+        .frame(maxWidth: .infinity)
+        .background(AppStyle.Color.backgroundColor)
+        .cornerRadius(AppStyle.CornerRadius.card)
+        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+    }
+
+    private struct CustomChip: View {
+        let text: String
+        let isCompleted: Bool
+
+        var body: some View {
+            Text(text)
+                .font(AppStyle.Font.defaultFont)
+                .foregroundColor(AppStyle.Color.white)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .frame(width: 100, height: 28)
+                .background(isCompleted ? AppStyle.Color.green : AppStyle.Color.backgroundColor)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color(hex: "#CCCCCC"), lineWidth: 1)
+                )
+                .cornerRadius(8)
+        }
+    }
+}
+
