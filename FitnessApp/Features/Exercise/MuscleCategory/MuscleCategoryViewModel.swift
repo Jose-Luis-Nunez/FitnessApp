@@ -53,6 +53,14 @@ class MuscleCategoryViewModel: ObservableObject {
         exercises.contains { !$0.isCompleted }
     }
     
+    var totalExercises: Int {
+        exercises.count
+    }
+    
+    var activeExercises: Int {
+        exercises.filter { !$0.isCompleted }.count
+    }
+    
     func add(_ exercise: Exercise, atTop: Bool) {
         if atTop {
             exercises.insert(exercise, at: 0)

@@ -5,16 +5,31 @@ private struct IDS {
 }
 
 struct MuscleCategorySelectionView: View {
+    @StateObject private var viewModel = MuscleCategorySelectionViewModel()
     @State private var selectedGroup: MuscleCategoryGroup?
 
     var body: some View {
         VStack {
             List(MuscleCategoryGroup.allCases, id: \.self) { group in
                 NavigationLink(value: NavigationDestination.muscleCategory(group)) {
-                    Text(group.displayName)
-                        .font(AppStyle.Font.navigationHeadline)
-                        .foregroundColor(AppStyle.Color.white)
-                        .padding()
+                    HStack {
+                        Text(group.displayName)
+                            .font(AppStyle.Font.navigationHeadline)
+                            .foregroundColor(AppStyle.Color.white)
+                        Spacer()
+                        if let (total, active) = viewModel.getExerciseCount(for: group) {
+                            Text("(\(total)/\(active))")
+                                .font(AppStyle.Font.defaultFont)
+                                .foregroundColor(AppStyle.Color.white)
+                                .padding(.leading, 8)
+                        } else {
+                            Text("(0/0)")
+                                .font(AppStyle.Font.defaultFont)
+                                .foregroundColor(AppStyle.Color.white)
+                                .padding(.leading, 8)
+                        }
+                    }
+                    .padding()
                 }
                 .listRowBackground(AppStyle.Color.backgroundColor)
             }
@@ -23,5 +38,8 @@ struct MuscleCategorySelectionView: View {
         }
         .background(AppStyle.Color.backgroundColor)
         .navigationTitle("Muscle Categories")
+        .onAppear {
+            viewModel.updateExerciseCounts()
+        }
     }
 }
