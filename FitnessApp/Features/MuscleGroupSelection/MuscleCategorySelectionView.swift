@@ -33,16 +33,19 @@ private enum AccessibilityIDs {
 private struct ExerciseInfo {
     let total: Int
     let active: Int
+    let completed: Int
     let isCompleted: Bool
     let progress: Double
 
     init(total: Int, active: Int) {
         self.total = total
         self.active = active
+        self.completed = max(0, total - active)
         self.isCompleted = (active == 0 && total > 0)
-        self.progress = total > 0 ? Double(total - active) / Double(total) : 0.0
+        self.progress = total > 0 ? Double(completed) / Double(total) : 0.0
     }
 }
+
 
 struct MuscleCategorySelectionView: View {
     @StateObject private var viewModel = MuscleCategorySelectionViewModel()
@@ -127,7 +130,7 @@ private struct CategoryTileView: View {
                 .font(AppStyle.Font.categorySelectionNameFont)
                 .foregroundColor(AppStyle.Color.white)
 
-            Text("\(exerciseInfo.active) von \(exerciseInfo.total) Übungen")
+            Text("\(exerciseInfo.completed) von \(exerciseInfo.total) Übungen abgeschlossen")
                 .font(AppStyle.Font.defaultFont)
                 .foregroundColor(Color(hex: "#8a8580"))
         }
