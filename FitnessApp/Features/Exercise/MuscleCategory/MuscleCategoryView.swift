@@ -34,7 +34,8 @@ struct MuscleCategoryView: View {
             quickDoneModeActive: activeSetViewModel.quickDoneModeActive,
             quickDoneAllCompleted: activeSetViewModel.quickDoneAllCompleted,
             didEditCompleteSet: activeSetViewModel.didEditCompleteSet,
-            didJustEditSet: activeSetViewModel.didJustEditSet
+            didJustEditSet: activeSetViewModel.didJustEditSet,
+            showResetAllExercisesButton: false
         )
         print("Debug - bottomBarVM: isSetInProgress: \(vm.isSetInProgress), hasActiveExercise: \(vm.hasActiveExercise), exercises.allSatisfy(isCompleted): \(viewModel.exercises.allSatisfy { $0.isCompleted }), showStartButton: \(vm.showStartButton), showResetProgress: \(vm.showResetProgress)")
         return vm
@@ -139,6 +140,8 @@ struct MuscleCategoryView: View {
                             formViewModel.loadExercise(nil as Exercise?)
                             formViewModel.toggleForm()
                         }
+                    },
+                    onResetAllExercises: {
                     }
                 )
                 .background(AppStyle.Color.backgroundColor)

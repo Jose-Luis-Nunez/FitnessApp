@@ -1,3 +1,5 @@
+import Foundation
+
 struct BottomActionBarViewModel {
     let isSetInProgress: Bool
     let currentSet: Int
@@ -10,8 +12,10 @@ struct BottomActionBarViewModel {
     let didEditCompleteSet: Bool
     let didJustEditSet: Bool
 
+    let showResetAllExercisesButton: Bool
+
     var shouldShow: Bool {
-        showStartButton || showSetControls || showResetProgress || showFinishButton || showQuickDoneBeendenButton || showQuickDoneDoneButton || showAddExerciseButton
+        showStartButton || showSetControls || showResetProgress || showFinishButton || showQuickDoneBeendenButton || showQuickDoneDoneButton || showAddExerciseButton || showResetAllExercisesButton
     }
 
     var showStartButton: Bool {
