@@ -93,7 +93,7 @@ struct MuscleCategoryView: View {
                     onStart: {
                         guard let exercise = activeSetViewModel.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) else { return }
                         if activeSetViewModel.currentSet == 0 && activeSetViewModel.setProgress.isEmpty {
-                            activeSetViewModel.startSet(for: exercise)
+                            activeSetViewModel.startSet(for: exercise, category: group)
                         } else {
                             activeSetViewModel.startNextSet()
                         }
@@ -104,7 +104,7 @@ struct MuscleCategoryView: View {
                     },
                     onQuickDone: {
                         if let activeExercise = activeSetViewModel.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) {
-                            activeSetViewModel.startQuickDone(for: activeExercise)
+                            activeSetViewModel.startQuickDone(for: activeExercise, category: group)
                         }
                     },
                     onCompleteAllQuickDone: {
@@ -238,7 +238,7 @@ struct MuscleCategoryView: View {
                         isEditable: !activeSetViewModel.isSetInProgress,
                         analyticsViewModel: analyticsViewModel,
                         onStart: { selectedExercise in
-                            activeSetViewModel.startSet(for: selectedExercise)
+                            activeSetViewModel.startSet(for: selectedExercise, category: group)
                         },
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)
@@ -284,7 +284,7 @@ struct MuscleCategoryView: View {
                         isEditable: true,
                         analyticsViewModel: analyticsViewModel,
                         onStart: { selectedExercise in
-                            activeSetViewModel.startSet(for: selectedExercise)
+                            activeSetViewModel.startSet(for: selectedExercise, category: group)
                         },
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)
@@ -321,7 +321,7 @@ struct MuscleCategoryView: View {
                         isEditable: true,
                         analyticsViewModel: analyticsViewModel,
                         onStart: { selectedExercise in
-                            activeSetViewModel.startSet(for: selectedExercise)
+                            activeSetViewModel.startSet(for: selectedExercise, category: group)
                         },
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)

@@ -25,7 +25,8 @@ class ActiveSetViewModel: ObservableObject {
     
     @Published var didJustEditSet: Bool = false
     @Published var pendingEditMode: SetEditingMode? = nil
-    
+    var category: MuscleCategoryGroup?
+
     var isInputValid: Bool {
         guard let newReps = Int(repsInput),
               let newWeight = Int(weightInput),
@@ -61,8 +62,9 @@ class ActiveSetViewModel: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     
-    func startSet(for exercise: Exercise) {
+    func startSet(for exercise: Exercise, category: MuscleCategoryGroup) {
         currentExercise = exercise
+        self.category = category
         currentSet = 0
         activeSetIndex = 0
         setProgress = (0..<exercise.sets).map { _ in
@@ -162,6 +164,7 @@ class ActiveSetViewModel: ObservableObject {
         quickDoneAllCompleted = false
         didEditCompleteSet = false
         didJustEditSet = false
+        category = nil
     }
     
     func resetProgress() {
@@ -172,6 +175,7 @@ class ActiveSetViewModel: ObservableObject {
         isLastSetCompleted = false
         quickDoneAllCompleted = false
         didJustEditSet = false
+        category = nil
     }
     
     func startTimer() {
@@ -195,8 +199,9 @@ class ActiveSetViewModel: ObservableObject {
         weightInput = String(exercise.weight)
     }
     
-    func startQuickDone(for exercise: Exercise) {
+    func startQuickDone(for exercise: Exercise, category: MuscleCategoryGroup) {
         currentExercise = exercise
+        self.category = category
         currentSet = 0
         setProgress = (0..<exercise.sets).map { _ in
             SetProgress(status: .notStarted, currentReps: exercise.reps, weight: exercise.weight)
@@ -271,6 +276,7 @@ class ActiveSetViewModel: ObservableObject {
         quickDoneAllCompleted = false
         didEditCompleteSet = false
         didJustEditSet = false
+        category = nil
         
         timerService.stopTimer()
         timerSeconds = 0

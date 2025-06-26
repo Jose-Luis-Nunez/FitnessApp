@@ -33,10 +33,6 @@ struct ActiveCardView: View {
                 
             ).padding(.bottom, 6)
             
-            Divider()
-                .background(AppStyle.Color.exerciseCardDividingLine)
-                .padding(.horizontal, 4)
-            
             CardBottomSectionView(
                 viewModel: viewModel,
                 currentReps: viewModel.exercise.reps,
@@ -51,7 +47,6 @@ struct ActiveCardView: View {
         .frame(maxWidth: UIScreen.main.bounds.width - 2 * AppStyle.Padding.horizontal)
         .background(AppStyle.Color.exerciseCardBackground)
         .cornerRadius(AppStyle.CornerRadius.card)
-        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 4)
     }
 }
 
@@ -142,7 +137,6 @@ struct CardTopSectionView: View {
         }
     }
 }
-
 
 struct CardBottomSectionView: View {
     @ObservedObject var viewModel: ExerciseCardViewModel

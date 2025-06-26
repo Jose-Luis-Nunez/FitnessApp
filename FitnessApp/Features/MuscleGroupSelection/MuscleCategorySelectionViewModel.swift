@@ -79,4 +79,8 @@ class MuscleCategorySelectionViewModel: ObservableObject {
             showResetAllExercisesButton: hasInactiveExercises()
         )
     }
+    
+    func hasActiveSetForCategory(_ group: MuscleCategoryGroup) -> Bool {
+        return SessionTrainingCache.shared.activeSetVMs.values.contains { $0.category == group && $0.isSetInProgress }
+    }
 }

@@ -12,7 +12,7 @@ private enum Constants {
         static let chipVerticalPadding: CGFloat = 10
         static let contentPadding: CGFloat = 15
         static let itemSpacing: CGFloat = 12
-        static let verticalSpacing: CGFloat = 18
+        static let verticalSpacing: CGFloat = 12
         static let textSpacing: CGFloat = 28
         static let verticalPadding: CGFloat = 20
     }
@@ -36,13 +36,15 @@ private struct ExerciseInfo {
     let completed: Int
     let isCompleted: Bool
     let progress: Double
+    let hasActiveSet: Bool
 
-    init(total: Int, active: Int) {
+    init(total: Int, active: Int, hasActiveSet: Bool) {
         self.total = total
         self.active = active
         self.completed = max(0, total - active)
-        self.isCompleted = (active == 0 && total > 0)
+        self.isCompleted = (active == 0 && total > 0 && !hasActiveSet)
         self.progress = total > 0 ? Double(completed) / Double(total) : 0.0
+        self.hasActiveSet = hasActiveSet
     }
 }
 
@@ -52,9 +54,9 @@ struct MuscleCategorySelectionView: View {
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
-                LazyVStack(spacing: 18) {
+                LazyVStack(spacing: Constants.CategoryTile.verticalSpacing) {
                     headerView
-                    Spacer().frame(height: 30)
+                    Spacer().frame(height: Constants.spacerHeight)
                     categoryList
                 }
                 .padding(.horizontal, Constants.horizontalPadding)
@@ -141,7 +143,7 @@ private struct CategoryTileView: View {
         HStack(spacing: Constants.CategoryTile.itemSpacing) {
             VStack(alignment: .trailing, spacing: Constants.CategoryTile.verticalSpacing) {
                 CustomChip(
-                    text: exerciseInfo.isCompleted ? "Completed" : "Active",
+                    text: getChipText(exerciseInfo),
                     isCompleted: exerciseInfo.isCompleted,
                     width: Constants.CategoryTile.barWidth,
                     verticalPadding: Constants.CategoryTile.chipVerticalPadding
@@ -161,7 +163,20 @@ private struct CategoryTileView: View {
 
     private func createExerciseInfo() -> ExerciseInfo {
         let count = viewModel.getExerciseCount(for: group) ?? (0, 0)
-        return ExerciseInfo(total: count.total, active: count.active)
+        let hasActiveSet = viewModel.hasActiveSetForCategory(group)
+        return ExerciseInfo(total: count.total, active: count.active, hasActiveSet: hasActiveSet)
+    }
+
+    private func getChipText(_ exerciseInfo: ExerciseInfo) -> String {
+        if exerciseInfo.total == 0 {
+            return "Not Set"
+        } else if exerciseInfo.completed == exerciseInfo.total && !exerciseInfo.hasActiveSet {
+            return "Completed"
+        } else if exerciseInfo.active == exerciseInfo.total && !exerciseInfo.hasActiveSet {
+            return "Not Started"
+        } else {
+            return "Active"
+        }
     }
 }
 
@@ -183,12 +198,20 @@ private struct CustomChip: View {
     
     private var chipBackground: some View {
         RoundedRectangle(cornerRadius: Constants.ProgressBar.cornerRadius)
-            .fill(isCompleted ? AppStyle.Color.green : AppStyle.Color.exerciseCardBackground)
+            .fill(getBackgroundColor())
+    }
+    
+    private func getBackgroundColor() -> Color {
+        if isCompleted {
+            return AppStyle.Color.green
+        } else {
+            return AppStyle.Color.exerciseCardBackground
+        }
     }
     
     private var chipOverlay: some View {
         Group {
-            if !isCompleted {
+            if text != "Completed" {
                 RoundedRectangle(cornerRadius: Constants.ProgressBar.cornerRadius)
                     .stroke(Color(hex: "#8a8580"), lineWidth: 1)
             }
