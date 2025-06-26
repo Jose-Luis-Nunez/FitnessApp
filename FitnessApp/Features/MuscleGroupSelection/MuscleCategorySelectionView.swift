@@ -46,7 +46,6 @@ private struct ExerciseInfo {
     }
 }
 
-
 struct MuscleCategorySelectionView: View {
     @StateObject private var viewModel = MuscleCategorySelectionViewModel()
 
@@ -130,7 +129,7 @@ private struct CategoryTileView: View {
                 .font(AppStyle.Font.categorySelectionNameFont)
                 .foregroundColor(AppStyle.Color.white)
 
-            Text("\(exerciseInfo.completed) von \(exerciseInfo.total) Übungen abgeschlossen")
+            Text("\(exerciseInfo.completed) von \(exerciseInfo.total) Übungen")
                 .font(AppStyle.Font.defaultFont)
                 .foregroundColor(Color(hex: "#8a8580"))
         }
