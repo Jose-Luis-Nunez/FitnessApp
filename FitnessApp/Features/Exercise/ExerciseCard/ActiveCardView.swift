@@ -25,8 +25,8 @@ struct ActiveCardView: View {
                 onEdit: onEdit,
                 exercise: viewModel.exercise,
                 isEditable: isEditable,
-                onStart: onStart,
-                onReset: onReset,
+                onSingleExerciseStart: onStart,
+                onSingleExerciseReset: onReset,
                 isActiveSetVisible: isActiveSetVisible,
                 isResetEnabled:isResetEnabled,
                 showSeatChip: true
@@ -56,8 +56,8 @@ struct CardTopSectionView: View {
     let onEdit: (Exercise) -> Void
     let exercise: Exercise
     let isEditable: Bool
-    let onStart: ((Exercise) -> Void)?
-    let onReset: ((Exercise) -> Void)?
+    let onSingleExerciseStart: ((Exercise) -> Void)?
+    let onSingleExerciseReset: ((Exercise) -> Void)?
     let isActiveSetVisible: Bool
     let isResetEnabled: Bool
     let showSeatChip: Bool
@@ -82,7 +82,7 @@ struct CardTopSectionView: View {
             Spacer()
             
             HStack(spacing: 6) {
-                if isResetEnabled, let onReset = onReset {
+                if isResetEnabled, let onReset = onSingleExerciseReset {
                     Button(action: {
                         onReset(exercise)
                     }) {
@@ -114,7 +114,7 @@ struct CardTopSectionView: View {
                 }
             }
             
-            if let onStart = onStart, !exercise.isCompleted, !isActiveSetVisible {
+            if let onStart = onSingleExerciseStart, !exercise.isCompleted, !isActiveSetVisible {
                 Button(action: {
                     onStart(exercise)
                 }) {

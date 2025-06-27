@@ -23,7 +23,7 @@ struct MuscleCategoryView: View {
         self._navigationPath = navigationPath
     }
     
-    private var bottomBarVM: BottomActionBarViewModel {
+    private var bottomActionbarViewModel: BottomActionBarViewModel {
         let vm = BottomActionBarViewModel(
             isSetInProgress: activeSetViewModel.isSetInProgress,
             currentSet: activeSetViewModel.currentSet,
@@ -37,7 +37,7 @@ struct MuscleCategoryView: View {
             didJustEditSet: activeSetViewModel.didJustEditSet,
             showResetAllExercisesButton: false
         )
-        print("Debug - bottomBarVM: isSetInProgress: \(vm.isSetInProgress), hasActiveExercise: \(vm.hasActiveExercise), exercises.allSatisfy(isCompleted): \(viewModel.exercises.allSatisfy { $0.isCompleted }), showStartButton: \(vm.showStartButton), showResetProgress: \(vm.showResetProgress)")
+        print("Debug - bottomBarVM: isSetInProgress: \(vm.isSetInProgress), hasActiveExercise: \(vm.hasActiveExercise), exercises.allSatisfy(isCompleted): \(viewModel.exercises.allSatisfy { $0.isCompleted }), showStartButton: \(vm.showStartButton), showResetProgress: \(vm.showCategoryResetButton)")
         return vm
     }
     
@@ -83,13 +83,13 @@ struct MuscleCategoryView: View {
                 .scrollContentBackground(.hidden)
                 .padding(.top, 0)
                 .offset(y: -10)
-                .padding(.bottom, formViewModel.showForm ? 340 : (activeSetViewModel.isEditing ? 240 : (bottomBarVM.shouldShow ? 70 : 40)))
+                .padding(.bottom, formViewModel.showForm ? 340 : (activeSetViewModel.isEditing ? 240 : (bottomActionbarViewModel.shouldShow ? 70 : 40)))
             }
             .background(AppStyle.Color.backgroundColor)
             
-            if bottomBarVM.shouldShow {
+            if bottomActionbarViewModel.shouldShow {
                 BottomActionBarView(
-                    viewModel: bottomBarVM,
+                    viewModel: bottomActionbarViewModel,
                     onStart: {
                         guard let exercise = activeSetViewModel.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) else { return }
                         if activeSetViewModel.currentSet == 0 && activeSetViewModel.setProgress.isEmpty {
@@ -110,7 +110,7 @@ struct MuscleCategoryView: View {
                     onCompleteAllQuickDone: {
                         activeSetViewModel.completeAllQuickDone()
                     },
-                    onReset: {
+                    onCategoryReset: {
                         activeSetViewModel.stopTimer()
                         viewModel.showResetConfirmation = true
                     },
@@ -215,7 +215,13 @@ struct MuscleCategoryView: View {
         .customToolbar(title: group.displayName, navigationPath: $navigationPath, showBackButton: true)
         .navigationBarBackButtonHidden(true)
         .onAppear {
-            print("MuscleCategoryView appeared - navigationPath.count: \(navigationPath.count)")
+        }.alert("Übungen zurücksetzen?", isPresented: $viewModel.showResetConfirmation) {
+            Button("Zurücksetzen", role: .destructive) {
+                viewModel.resetProgress()
+            }
+            Button("Abbrechen", role: .cancel) { }
+        } message: {
+            Text("Möchtest du wirklich alle Übungen in dieser Kategorie zurücksetzen?")
         }
     }
     

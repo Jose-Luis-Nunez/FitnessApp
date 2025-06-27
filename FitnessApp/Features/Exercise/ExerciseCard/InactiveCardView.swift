@@ -18,8 +18,8 @@ struct InactiveCardView: View {
                 onEdit: onEdit,
                 exercise: viewModel.exercise,
                 isEditable: isEditable,
-                onStart: nil,
-                onReset: onReset,
+                onSingleExerciseStart: nil,
+                onSingleExerciseReset: onReset,
                 isActiveSetVisible: false,
                 isResetEnabled: isResetEnabled,
                 showSeatChip: false

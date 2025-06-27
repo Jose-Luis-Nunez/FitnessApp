@@ -69,7 +69,7 @@ struct MuscleCategorySelectionView: View {
                 onCompleteSet: {},
                 onQuickDone: {},
                 onCompleteAllQuickDone: {},
-                onReset: {},
+                onCategoryReset: {},
                 onEditLess: {},
                 onEditMore: {},
                 onFinish: {},
@@ -88,7 +88,7 @@ struct MuscleCategorySelectionView: View {
     }
 
     private var headerView: some View {
-        Text("Kategorien")
+        Text("Dein Workout")
             .font(AppStyle.Font.cardHeadline)
             .foregroundColor(AppStyle.Color.white)
             .padding(.top, Constants.titleTopPadding)

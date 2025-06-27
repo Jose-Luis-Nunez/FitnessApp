@@ -6,7 +6,7 @@ struct BottomActionBarView: View {
     let onCompleteSet: () -> Void
     let onQuickDone: () -> Void
     let onCompleteAllQuickDone: () -> Void
-    let onReset: () -> Void
+    let onCategoryReset: () -> Void
     let onEditLess: () -> Void
     let onEditMore: () -> Void
     let onFinish: () -> Void
@@ -24,7 +24,7 @@ struct BottomActionBarView: View {
                 onCompleteSet: onCompleteSet,
                 onQuickDone: onQuickDone,
                 onCompleteAllQuickDone: onCompleteAllQuickDone,
-                onReset: onReset,
+                onCategoryReset: onCategoryReset,
                 onEditLess: onEditLess,
                 onEditMore: onEditMore,
                 onFinish: onFinish,
@@ -44,7 +44,7 @@ struct FloatingActionButtonsView: View {
     let onCompleteSet: () -> Void
     let onQuickDone: () -> Void
     let onCompleteAllQuickDone: () -> Void
-    let onReset: () -> Void
+    let onCategoryReset: () -> Void
     let onEditLess: () -> Void
     let onEditMore: () -> Void
     let onFinish: () -> Void
@@ -163,13 +163,13 @@ struct FloatingActionButtonsView: View {
                             )
                         }
 
-                        if viewModel.showResetProgress {
+                        if viewModel.showCategoryResetButton {
                             actionButtonLarge(
                                 text: "Reset",
                                 textFont: AppStyle.Font.bottomBarButtons,
                                 backgroundColor: AppStyle.Color.green,
                                 fontColor: AppStyle.Color.white,
-                                action: onReset
+                                action: onCategoryReset
                             )
                         }
 
