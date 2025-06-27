@@ -267,9 +267,7 @@ class ActiveSetViewModel: ObservableObject {
         currentExercise = nil
         currentSet = 0
         activeSetIndex = 0
-        setProgress = (0..<exercise.sets).map { _ in
-            SetProgress(status: .notStarted, currentReps: exercise.reps, weight: exercise.weight)
-        }
+        setProgress = []
         isSetInProgress = false
         isLastSetCompleted = false
         quickDoneModeActive = false
@@ -280,5 +278,7 @@ class ActiveSetViewModel: ObservableObject {
         
         timerService.stopTimer()
         timerSeconds = 0
+        
+        objectWillChange.send()
     }
 }

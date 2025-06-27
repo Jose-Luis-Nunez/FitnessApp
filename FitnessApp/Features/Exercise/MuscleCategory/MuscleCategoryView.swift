@@ -1,10 +1,5 @@
 import SwiftUI
 
-private struct IDS {
-    static let groupTitle = "id_title_group"
-    static let addExerciseButton = "id_button_add_exercise"
-}
-
 struct MuscleCategoryView: View {
     let group: MuscleCategoryGroup
     @StateObject private var viewModel: MuscleCategoryViewModel
@@ -37,7 +32,7 @@ struct MuscleCategoryView: View {
             didJustEditSet: activeSetViewModel.didJustEditSet,
             showResetAllExercisesButton: false
         )
-        print("Debug - bottomBarVM: isSetInProgress: \(vm.isSetInProgress), hasActiveExercise: \(vm.hasActiveExercise), exercises.allSatisfy(isCompleted): \(viewModel.exercises.allSatisfy { $0.isCompleted }), showStartButton: \(vm.showStartButton), showResetProgress: \(vm.showCategoryResetButton)")
+      
         return vm
     }
     
@@ -91,7 +86,10 @@ struct MuscleCategoryView: View {
                 BottomActionBarView(
                     viewModel: bottomActionbarViewModel,
                     onStart: {
-                        guard let exercise = activeSetViewModel.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) else { return }
+                        guard let exercise = activeSetViewModel.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) else {
+                            print("No valid exercise found for start")
+                            return
+                        }
                         if activeSetViewModel.currentSet == 0 && activeSetViewModel.setProgress.isEmpty {
                             activeSetViewModel.startSet(for: exercise, category: group)
                         } else {
@@ -215,7 +213,15 @@ struct MuscleCategoryView: View {
         .customToolbar(title: group.displayName, navigationPath: $navigationPath, showBackButton: true)
         .navigationBarBackButtonHidden(true)
         .onAppear {
-        }.alert("Übungen zurücksetzen?", isPresented: $viewModel.showResetConfirmation) {
+            updateBottomBarViewModel()
+        }
+        .onChange(of: activeSetViewModel.isSetInProgress) {
+            updateBottomBarViewModel()
+        }
+        .onChange(of: activeSetViewModel.currentExercise) {
+            updateBottomBarViewModel()
+        }
+        .alert("Übungen zurücksetzen?", isPresented: $viewModel.showResetConfirmation) {
             Button("Zurücksetzen", role: .destructive) {
                 viewModel.resetProgress()
             }
@@ -223,6 +229,10 @@ struct MuscleCategoryView: View {
         } message: {
             Text("Möchtest du wirklich alle Übungen in dieser Kategorie zurücksetzen?")
         }
+    }
+    
+    private func updateBottomBarViewModel() {
+        let _ = bottomActionbarViewModel
     }
     
     private var exerciseListSection: some View {
