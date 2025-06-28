@@ -139,7 +139,7 @@ enum ExerciseCardConfig {
                         icon: ChipIcon(
                             image: "analyticsEntry",
                             color: AppStyle.Color.greenGlow,
-                            size: .wide
+                            size: .large
                         ),
                         frame: CGSize(width: 52, height: 52),
                         offset: CGSize(width: 12, height: -12)

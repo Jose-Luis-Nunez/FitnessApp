@@ -253,6 +253,7 @@ struct MuscleCategoryView: View {
                         },
                         isEditable: !activeSetViewModel.isSetInProgress,
                         analyticsViewModel: analyticsViewModel,
+                        activeSetViewModel: activeSetViewModel,
                         onStart: { selectedExercise in
                             activeSetViewModel.startSet(for: selectedExercise, category: group)
                         },
@@ -299,6 +300,8 @@ struct MuscleCategoryView: View {
                         },
                         isEditable: true,
                         analyticsViewModel: analyticsViewModel,
+                        activeSetViewModel: activeSetViewModel,
+
                         onStart: { selectedExercise in
                             activeSetViewModel.startSet(for: selectedExercise, category: group)
                         },
@@ -336,6 +339,8 @@ struct MuscleCategoryView: View {
                         },
                         isEditable: true,
                         analyticsViewModel: analyticsViewModel,
+                        activeSetViewModel: activeSetViewModel,
+
                         onStart: { selectedExercise in
                             activeSetViewModel.startSet(for: selectedExercise, category: group)
                         },
