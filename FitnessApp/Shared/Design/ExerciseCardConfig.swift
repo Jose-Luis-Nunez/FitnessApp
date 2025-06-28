@@ -9,7 +9,7 @@ enum EditType: String {
 }
 
 enum ActionType: String {
-    case analyticsIcon, analyticsText, exerciseCardTitleText
+    case analyticsIcon, exerciseCardTitleText
 }
 
 enum InteractionField: Identifiable, Equatable {
@@ -137,25 +137,12 @@ enum ExerciseCardConfig {
                 display: .icon(
                     IconStyle(
                         icon: ChipIcon(
-                            image: "iconActivityIncrease",
+                            image: "analyticsEntry",
                             color: AppStyle.Color.greenGlow,
                             size: .wide
                         ),
                         frame: CGSize(width: 52, height: 52),
                         offset: CGSize(width: 12, height: -12)
-                    )
-                ),
-                column: .left,
-                frameHeight: nil
-            )
-            
-        case .action(.analyticsText):
-            return ExerciseFieldStyle(
-                display: .text(
-                    TextStyle(
-                        text: L10n.analyticsText,
-                        textFontSize: AppStyle.Font.defaultFont,
-                        textColor: AppStyle.Color.white
                     )
                 ),
                 column: .left,

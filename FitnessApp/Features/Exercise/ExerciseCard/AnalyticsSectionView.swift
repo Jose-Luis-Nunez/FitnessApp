@@ -14,8 +14,6 @@ struct AnalyticsSectionView: View {
             }
             .buttonStyle(PlainButtonStyle())
 
-            TextView(styled: StyledExerciseField(field: .action(.analyticsText)))
-                .offset(x: 10)
         }
         .navigationDestination(isPresented: $isActive) {
             AnalyticsView(exercise: exercise, viewModel: viewModel)
