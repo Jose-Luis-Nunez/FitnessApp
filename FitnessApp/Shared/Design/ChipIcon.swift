@@ -16,7 +16,7 @@ struct ChipIcon {
         self.color = color
         self.size = size
     }
-    
+
     @ViewBuilder
     var view: some View {
         image
@@ -31,6 +31,7 @@ struct ChipIcon {
         switch size {
         case .regular: return 20
         case .large: return 16
+        case .extraLarge: return 70
         case .wide: return 52
         }
     }

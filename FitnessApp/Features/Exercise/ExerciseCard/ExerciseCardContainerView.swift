@@ -35,12 +35,10 @@ struct ExerciseCardContainerView: View {
         } else {
             IdleActiveCardView(
                 viewModel: viewModel,
+                analyticsViewModel: analyticsViewModel,
                 onEdit: onEdit,
                 isEditable: isEditable,
-                analyticsViewModel: analyticsViewModel,
-                onStart: onStart,
-                isResetEnabled: isResetEnabled,
-                isActiveSetVisible: isActiveSetVisible
+                onStart: onStart
             )
         }
     }

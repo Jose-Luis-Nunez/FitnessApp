@@ -4,6 +4,7 @@ enum AppChipSize {
     case regular
     case large
     case wide
+    case extraLarge
 }
 
 struct AppChip: View {
@@ -37,8 +38,10 @@ struct AppChip: View {
                 .font(font)
                 .foregroundColor(fontColor)
                 .lineLimit(1)
-                .minimumScaleFactor(0.5)
+                .minimumScaleFactor(1.0)
+                .layoutPriority(1)
         }
+        .frame(width: 60)
         .padding(.horizontal, horizontalPadding)
         .padding(.vertical, verticalPadding)
         .background(backgroundColor)
@@ -53,6 +56,7 @@ struct AppChip: View {
         case .regular: return AppStyle.Font.regularChip
         case .large: return AppStyle.Font.largeChip
         case .wide: return AppStyle.Font.wideChip
+        case .extraLarge: return AppStyle.Font.extraLargeChip
         }
     }
     
@@ -61,6 +65,7 @@ struct AppChip: View {
         case .regular: return 10
         case .large: return 16
         case .wide: return 10
+        case .extraLarge: return 16
         }
     }
     
@@ -69,6 +74,7 @@ struct AppChip: View {
         case .regular: return 4
         case .large: return 11
         case .wide: return 11
+        case .extraLarge : return 11
         }
     }
 }

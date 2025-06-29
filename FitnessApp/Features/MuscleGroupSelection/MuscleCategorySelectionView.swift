@@ -89,7 +89,7 @@ struct MuscleCategorySelectionView: View {
 
     private var headerView: some View {
         Text("Dein Workout")
-            .font(AppStyle.Font.cardHeadline)
+            .font(AppStyle.Font.navigationHeadline)
             .foregroundColor(AppStyle.Color.white)
             .padding(.top, Constants.titleTopPadding)
             .frame(maxWidth: .infinity, alignment: .leading)
