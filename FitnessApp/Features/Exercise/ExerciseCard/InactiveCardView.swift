@@ -1,5 +1,9 @@
 import SwiftUI
 
+private enum GlobalConstants {
+    static let cardBackgroundColor = AppStyle.Color.exerciseCardBackground
+}
+
 struct InactiveCardView: View {
     @ObservedObject var viewModel: ExerciseCardViewModel
     let onEdit: (Exercise) -> Void
@@ -7,156 +11,228 @@ struct InactiveCardView: View {
     @ObservedObject var analyticsViewModel: AnalyticsViewModel
     let onReset: ((Exercise) -> Void)?
     let isResetEnabled: Bool
-
+    
+    @State private var isShowingAnalytics = false
+    
     var body: some View {
-        VStack(spacing: 2) {
-            Spacer().frame(height: 4)
-            
-            CardTopSectionView(
-                title: viewModel.exercise.name,
-                seatText: viewModel.displaySeatText,
-                onEdit: onEdit,
-                exercise: viewModel.exercise,
-                isEditable: isEditable,
-                onSingleExerciseStart: nil,
-                onSingleExerciseReset: onReset,
-                isActiveSetVisible: false,
-                isResetEnabled: isResetEnabled,
-                showSeatChip: false
-            ).padding(.bottom, 6)
-            
-         
-            
-            InactiveCardBottomSectionView(
-                viewModel: viewModel,
-                analyticsViewModel: analyticsViewModel
-            )
-            .padding(.top, 0)
-        }
-        .padding(.horizontal, AppStyle.Padding.horizontal)
-        .padding(.vertical, 6)
-        .frame(maxWidth: UIScreen.main.bounds.width - 2 * AppStyle.Padding.horizontal)
-        .background(AppStyle.Color.exerciseCardBackgroundInactive)
-        .cornerRadius(AppStyle.CornerRadius.card)
-        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 4)
-     
-        .transition(.move(edge: .bottom))
-        .animation(.easeInOut, value: viewModel.exercise.isCompleted)
-    }
-}
-
-struct InactiveCardBottomSectionView: View {
-    @ObservedObject var viewModel: ExerciseCardViewModel
-    @ObservedObject var analyticsViewModel: AnalyticsViewModel
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            
-            HStack {
-                Spacer().frame(width: 50)
-                headerText("Set", width: 40)
-                headerText("Reps", width: 40)
-                headerText("Weight", width: 50)
-            }
-            
-            HStack {
-                rowLabel("Goal:")
-                rowValue("\(viewModel.exercise.sets)", width: 40)
-                rowValue("\(viewModel.exercise.reps)", width: 40)
-                rowValue("\(viewModel.exercise.weight)", width: 50)
-            }
-            
-            HStack(alignment: .top) {
-                labelWithSpacer("You:")
-                
-                let entries = analyticsViewModel.loadAnalytics(for: viewModel.exercise.id)
-                if let lastEntry = entries.max(by: { $0.date < $1.date }) {
-                    let (sets, reps, weight) = calculateSummary(from: lastEntry.setProgress)
+        let latestEntry = analyticsViewModel.loadAnalytics(for: viewModel.exercise.id).max(by: { $0.date < $1.date })
+        let setProgress = latestEntry?.setProgress ?? []
+        
+        CardBackground {
+            VStack(spacing: 12) {
+                HStack {
+                    Text(viewModel.exercise.name)
+                        .font(AppStyle.Font.cardHeadline)
+                        .foregroundColor(.white)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.5)
+                        .frame(minWidth: 100, maxWidth: .infinity, alignment: .leading)
+                        .accessibilityIdentifier("id_label_exercise_name")
+                        .onTapGesture {
+                            if isEditable { onEdit(viewModel.exercise) }
+                        }
                     
-                    valueWithStar(text: "\(sets)", width: 40)
-                    valueWithStar(text: "\(reps)", width: 40)
-                    valueWithStar(text: "\(weight)", width: 50)
-                } else {
-                    valueWithStar(text: "N/A", width: 40, isNA: true)
-                    valueWithStar(text: "N/A", width: 40, isNA: true)
-                    valueWithStar(text: "N/A", width: 50, isNA: true)
+                    if isResetEnabled {
+                        AbgeschlossenChip {
+                            onReset?(viewModel.exercise)
+                        }
+                        .padding(.horizontal, 1)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                
+                HStack(alignment: .top, spacing: 8) {
+                    ExerciseSetSummaryView(setProgress: setProgress)
+                        .padding(.trailing, 3)
+                    
+                    Divider()
+                        .frame(height: CGFloat((setProgress.count + 1) * 16))
+                        .background(Color(hex: "#747055"))
+                    
+                    ExerciseRatingSummaryView(
+                        goalStars: 3,
+                        recordStars: 1,
+                        perfectStars: 1
+                    )
+                    .padding(.horizontal, 4)
+                    
+                    Divider()
+                        .frame(height: CGFloat((setProgress.count + 1) * 16))
+                        .background(Color(hex: "#747055"))
+                    
+                    Button(action: {
+                        isShowingAnalytics = true
+                    }) {
+                        ChipIcon(
+                            image: "analyticsEntry",
+                            color: AppStyle.Color.greenGlow,
+                            size: .extraLarge
+                        )
+                        .view
+                        .frame(maxWidth: 60, maxHeight: 60)
+                        .clipped()
+                        .padding(.leading, 4)
+                        .buttonStyle(.plain)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(maxWidth: .infinity) // Begrenzt die gesamte VStack
+            }
+            .sheet(isPresented: $isShowingAnalytics) {
+                AnalyticsView(exercise: viewModel.exercise, viewModel: analyticsViewModel)
+            }
+            .transition(.move(edge: .bottom))
+            .animation(.easeInOut, value: viewModel.exercise.isCompleted)
+        }
+    }
+    
+    struct AbgeschlossenChip: View {
+        let onTap: () -> Void
+        
+        private enum Constants {
+            static let fontSize: CGFloat = 12
+            static let horizontalPadding: CGFloat = 8
+            static let verticalPadding: CGFloat = 8
+            static let cornerRadius: CGFloat = AppStyle.CornerRadius.card
+            static let strokeColor = AppStyle.Color.greenGlow
+            static let backgroundColor = GlobalConstants.cardBackgroundColor.opacity(0.95)
+        }
+        
+        var body: some View {
+            Button(action: onTap) {
+                HStack(spacing: 2) {
+                    ZStack {
+                        Image("batchCompleted")
+                            .resizable()
+                            .frame(width: 14, height: 14)
+                            .foregroundColor(AppStyle.Color.greenGlow)
+                            .scaleEffect(1.4)
+                    }
+                    
+                    Text("Done")
+                        .foregroundColor(.white)
+                        .font(.system(size: Constants.fontSize, weight: .medium))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+                .padding(.horizontal, Constants.horizontalPadding)
+                .padding(.vertical, Constants.verticalPadding)
+                .background(Constants.backgroundColor)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Constants.cornerRadius)
+                        .stroke(Constants.strokeColor, lineWidth: 2)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
+            }
+            .buttonStyle(.plain)
+        }
+    }
+    
+    struct ExerciseSetSummaryView: View {
+        let setProgress: [SetProgress]
+        
+        var body: some View {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 0) {
+                    Text("Set").frame(width: 28, alignment: .leading)
+                    Text("Reps").frame(width: 36, alignment: .leading)
+                    Text("Weight").frame(width: 44, alignment: .leading)
+                }
+                .foregroundColor(.white)
+                .font(AppStyle.Font.defaultFont)
+                
+                ForEach(setProgress.indices, id: \.self) { index in
+                    let item = setProgress[index]
+                    HStack(spacing: 0) {
+                        Text("\(index + 1)").frame(width: 28, alignment: .leading)
+                        Text("\(item.currentReps)").frame(width: 36, alignment: .leading)
+                        Text("\(item.weight)").frame(width: 44, alignment: .leading)
+                    }
+                    .foregroundColor(.white)
+                    .font(AppStyle.Font.defaultFont)
                 }
             }
         }
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(
-            HStack {
-                Spacer()
-                Circle()
-                    .strokeBorder(AppStyle.Color.green, lineWidth: 5)
-                    .background(Circle().fill(AppStyle.Color.exerciseCardBackgroundInactive))
-                    .frame(width: 80, height: 80)
-                    .overlay(
-                        Text("DONE")
-                            .foregroundColor(AppStyle.Color.white)
-                            .font(AppStyle.Font.doneButton)
-                            .bold()
-                    )
+    }
+    
+    struct ExerciseRatingSummaryView: View {
+        let goalStars: Int
+        let recordStars: Int
+        let perfectStars: Int
+        
+        var body: some View {
+            VStack(alignment: .leading, spacing: 5) {
+                HStack { Spacer() }
+                    .frame(height: 10)
+                ratingRow(title: "Goal", stars: goalStars, isGoal: true, filledColor: .yellow)
+                ratingRow(title: "Record", stars: recordStars, isGoal: false, filledColor: Color(hex: "#747055"))
+                ratingRow(title: "Perfect", stars: perfectStars, isGoal: false, filledColor: Color(hex: "#747055"))
             }
-            .padding(.trailing, 8)
-            .padding(.top, 4),
-            alignment: .topTrailing
-        )
+        }
+        
+        @ViewBuilder
+        private func ratingRow(title: String, stars: Int, isGoal: Bool, filledColor: Color) -> some View {
+            HStack(spacing: 6) {
+                Circle()
+                    .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
+                    .frame(width: 14, height: 14)
+                    .overlay(
+                        Image(systemName: isGoal ? "checkmark" : "")
+                            .font(.system(size: 6.5, weight: .medium))
+                            .foregroundColor(AppStyle.Color.greenGlow)
+                    )
+                
+                Text(title)
+                    .foregroundColor(.white)
+                    .font(.system(size: 12))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .frame(width: 45, alignment: .leading)
+                
+                HStack(spacing: 2) {
+                    ForEach(0..<stars, id: \.self) { _ in
+                        Image(systemName: "star.fill")
+                            .resizable()
+                            .frame(width: 12, height: 12)
+                            .foregroundColor(filledColor)
+                    }
+                }
+            }
+        }
     }
     
-    private func headerText(_ text: String, width: CGFloat) -> some View {
-        Text(text)
-            .frame(width: width, alignment: .leading)
-            .multilineTextAlignment(.leading)
-            .foregroundColor(AppStyle.Color.white)
-            .font(AppStyle.Font.defaultFont)
-    }
-    
-    private func rowLabel(_ text: String) -> some View {
-        Text(text)
-            .frame(width: 50, alignment: .leading)
-            .multilineTextAlignment(.leading)
-            .foregroundColor(AppStyle.Color.white)
-            .font(AppStyle.Font.defaultFont)
-    }
-    
-    private func rowValue(_ text: String, width: CGFloat) -> some View {
-        Text(text)
-            .frame(width: width, alignment: .leading)
-            .multilineTextAlignment(.leading)
-            .foregroundColor(AppStyle.Color.white)
-            .font(AppStyle.Font.defaultFont)
-    }
-    
-    private func valueWithStar(text: String, width: CGFloat, isNA: Bool = false) -> some View {
-        VStack(spacing: 2) {
-            Text(text)
-                .frame(width: width, alignment: .leading)
-                .multilineTextAlignment(.leading)
-                .foregroundColor(isNA ? AppStyle.Color.greenGlow : AppStyle.Color.white)
-                .font(AppStyle.Font.defaultFont)
+    struct CardBackground<Content: View>: View {
+        let content: Content
+        let cornerRadius: CGFloat
+        let horizontalPadding: CGFloat
+        let verticalPadding: CGFloat
+        
+        let backgroundColor = GlobalConstants.cardBackgroundColor
+        
+        init(
+            cornerRadius: CGFloat = AppStyle.CornerRadius.card,
+            horizontalPadding: CGFloat = AppStyle.Padding.horizontal,
+            verticalPadding: CGFloat = AppStyle.Padding.vertical,
+            @ViewBuilder content: () -> Content
+        ) {
+            self.cornerRadius = cornerRadius
+            self.horizontalPadding = horizontalPadding
+            self.verticalPadding = verticalPadding
+            self.content = content()
+        }
+        
+        var body: some View {
+            content
+                .padding(.horizontal, horizontalPadding)
+                .padding(.vertical, verticalPadding)
+                .background(
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .fill(backgroundColor)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+                .containerShape(RoundedRectangle(cornerRadius: cornerRadius))
+                .clipped()
             
-            Image(systemName: "star.fill")
-                .resizable()
-                .frame(width: 14, height: 14)
-                .frame(width: width, alignment: .leading)
-                .padding(.top, 6)
-                .foregroundColor(.yellow)
         }
-    }
-    
-    private func labelWithSpacer(_ text: String) -> some View {
-        VStack(spacing: 2) {
-            rowLabel(text)
-            Spacer().frame(height: 20)
-        }
-    }
-    
-    private func calculateSummary(from setProgress: [SetProgress]) -> (sets: Int, reps: Int, weight: Int) {
-        let sets = setProgress.count
-        let reps = setProgress.last?.currentReps ?? 0
-        let weight = setProgress.last?.weight ?? 0
-        return (sets, reps, weight)
     }
 }

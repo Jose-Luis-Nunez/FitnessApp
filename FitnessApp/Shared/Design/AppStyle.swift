@@ -29,7 +29,7 @@ enum AppStyle {
         static let smallFont = SwiftUI.Font.system(size: 5, weight: .semibold)
         
         static let analyticsExerciseTitle = SwiftUI.Font.system(size: 20, weight: .bold)
-        static let doneButton = SwiftUI.Font.system(size: 18, weight: .bold)
+        static let doneButton = SwiftUI.Font.system(size: 16, weight: .bold)
         static let analyticsExerciseData = SwiftUI.Font.system(size: 16, weight: .semibold)
         
         static let categorySelectionChipFont = SwiftUI.Font.system(size: 14, weight: .semibold)
@@ -64,6 +64,8 @@ enum AppStyle {
         static let green = SwiftUI.Color(hex: "#088177")
         static let greenLight = SwiftUI.Color(hex: "#7EBBAF")
         static let greenGlow = SwiftUI.Color(hex: "#7CF5D6")
+        
+        static let newColor = SwiftUI.Color(hex: "#081214")
     }
     
     enum Dimensions {
