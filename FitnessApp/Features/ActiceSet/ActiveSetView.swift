@@ -12,12 +12,7 @@ struct ActiveSetView: View {
     private let defaultPadding: CGFloat = AppStyle.Padding.horizontal
     
     var body: some View {
-        ZStack(alignment: .leading) {
-            Rectangle()
-                .fill(backgroundColor)
-                .frame(maxWidth: .infinity)
-                .contentShape(Rectangle())
-            
+        CardBackground {
             VStack(alignment: .leading, spacing: 10) {
                 // Quick Done Mode
                 if viewModel.quickDoneModeActive {
@@ -59,7 +54,6 @@ struct ActiveSetView: View {
                                         }
                                 } else {
                                     Button(action: {
-                                        print("Marking set \(index) as done")
                                         viewModel.pendingSetIndex = index
                                     }) {
                                         Text("Done")
@@ -109,6 +103,7 @@ struct ActiveSetView: View {
             .padding(.horizontal, defaultPadding)
             .padding(.vertical, 8)
         }
+        .padding(.horizontal, AppStyle.Padding.card)
         .cornerRadius(AppStyle.CornerRadius.card)
         .onChange(of: viewModel.pendingSetIndex) { index in
             if let index = index {

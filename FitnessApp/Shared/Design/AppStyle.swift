@@ -4,6 +4,7 @@ enum AppStyle {
     enum Padding {
         static let horizontal: CGFloat = 18
         static let vertical: CGFloat = 12
+        static let card: CGFloat = 16
     }
     enum Layout {
         static let cardHorizontalPadding: CGFloat = 16

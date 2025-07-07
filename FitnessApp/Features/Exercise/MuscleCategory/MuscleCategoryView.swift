@@ -63,7 +63,6 @@ struct MuscleCategoryView: View {
                                 }
                                 
                                 TimerView(viewModel: activeSetViewModel)
-                                    .frame(maxWidth: UIScreen.main.bounds.width - 36, alignment: .center)
                             }
                             .padding(.vertical, 8)
                         }
@@ -72,7 +71,6 @@ struct MuscleCategoryView: View {
                         .listRowSeparator(.hidden)
                     }
                 }
-                .frame(maxWidth: UIScreen.main.bounds.width - 36, alignment: .center)
                 .listStyle(.plain)
                 .listSectionSpacing(0)
                 .scrollContentBackground(.hidden)
@@ -263,6 +261,7 @@ struct MuscleCategoryView: View {
                         isActiveSetVisible: isActiveSetVisible,
                         isResetEnabled: exercise.isCompleted
                     )
+                    .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
                     .transition(.move(edge: .top))
                     .listRowSeparator(.hidden)
@@ -311,6 +310,7 @@ struct MuscleCategoryView: View {
                         isActiveSetVisible: activeSetViewModel.currentExercise != nil,
                         isResetEnabled: exercise.isCompleted
                     )
+                    .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
                     .transition(.move(edge: .top))
                     .listRowSeparator(.hidden)
@@ -350,6 +350,7 @@ struct MuscleCategoryView: View {
                         isActiveSetVisible: activeSetViewModel.currentExercise != nil,
                         isResetEnabled: exercise.isCompleted
                     )
+                    .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
                     .transition(.move(edge: .bottom))
                     .listRowSeparator(.hidden)

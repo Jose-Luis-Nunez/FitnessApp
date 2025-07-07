@@ -39,26 +39,29 @@ struct InactiveCardView: View {
                         .padding(.horizontal, 1)
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
                 
-                HStack(alignment: .top, spacing: 8) {
+                HStack(alignment: .top, spacing: 3) {
                     ExerciseSetSummaryView(setProgress: setProgress)
-                        .padding(.trailing, 3)
+                        .padding(.trailing, 1)
+                        .layoutPriority(1)
                     
                     Divider()
                         .frame(height: CGFloat((setProgress.count + 1) * 16))
                         .background(Color(hex: "#747055"))
+                        .padding(.horizontal, 1)
                     
                     ExerciseRatingSummaryView(
                         goalStars: 3,
                         recordStars: 1,
                         perfectStars: 1
                     )
-                    .padding(.horizontal, 4)
+                    .padding(.horizontal, 3)
+                    .layoutPriority(1)
                     
                     Divider()
                         .frame(height: CGFloat((setProgress.count + 1) * 16))
                         .background(Color(hex: "#747055"))
+
                     
                     Button(action: {
                         isShowingAnalytics = true
@@ -69,22 +72,25 @@ struct InactiveCardView: View {
                             size: .extraLarge
                         )
                         .view
-                        .frame(maxWidth: 60, maxHeight: 60)
-                        .clipped()
-                        .padding(.leading, 4)
-                        .buttonStyle(.plain)
+                        .frame(width: 60, height: 60)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .buttonStyle(.plain)
                 }
-                .frame(maxWidth: .infinity) // Begrenzt die gesamte VStack
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .sheet(isPresented: $isShowingAnalytics) {
-                AnalyticsView(exercise: viewModel.exercise, viewModel: analyticsViewModel)
-            }
-            .transition(.move(edge: .bottom))
-            .animation(.easeInOut, value: viewModel.exercise.isCompleted)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, AppStyle.Padding.card)
+            .padding(.vertical, 8)
         }
+        .padding(.horizontal, 16)
+        .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
+        .sheet(isPresented: $isShowingAnalytics) {
+            AnalyticsView(exercise: viewModel.exercise, viewModel: analyticsViewModel)
+        }
+        .transition(.move(edge: .bottom))
+        .animation(.easeInOut, value: viewModel.exercise.isCompleted)
     }
+    
     
     struct AbgeschlossenChip: View {
         let onTap: () -> Void
@@ -93,7 +99,6 @@ struct InactiveCardView: View {
             static let fontSize: CGFloat = 12
             static let horizontalPadding: CGFloat = 8
             static let verticalPadding: CGFloat = 8
-            static let cornerRadius: CGFloat = AppStyle.CornerRadius.card
             static let strokeColor = AppStyle.Color.greenGlow
             static let backgroundColor = GlobalConstants.cardBackgroundColor.opacity(0.95)
         }
@@ -101,13 +106,11 @@ struct InactiveCardView: View {
         var body: some View {
             Button(action: onTap) {
                 HStack(spacing: 2) {
-                    ZStack {
-                        Image("batchCompleted")
-                            .resizable()
-                            .frame(width: 14, height: 14)
-                            .foregroundColor(AppStyle.Color.greenGlow)
-                            .scaleEffect(1.4)
-                    }
+                    Image("batchCompleted")
+                        .resizable()
+                        .frame(width: 14, height: 14)
+                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .scaleEffect(1.4)
                     
                     Text("Done")
                         .foregroundColor(.white)
@@ -119,10 +122,10 @@ struct InactiveCardView: View {
                 .padding(.vertical, Constants.verticalPadding)
                 .background(Constants.backgroundColor)
                 .overlay(
-                    RoundedRectangle(cornerRadius: Constants.cornerRadius)
+                    RoundedRectangle(cornerRadius: AppStyle.CornerRadius.defaultButton)
                         .stroke(Constants.strokeColor, lineWidth: 2)
                 )
-                .clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
+                .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.defaultButton))
             }
             .buttonStyle(.plain)
         }
@@ -139,7 +142,7 @@ struct InactiveCardView: View {
                     Text("Weight").frame(width: 44, alignment: .leading)
                 }
                 .foregroundColor(.white)
-                .font(AppStyle.Font.defaultFont)
+                .font(.system(size: 11))
                 
                 ForEach(setProgress.indices, id: \.self) { index in
                     let item = setProgress[index]
@@ -149,7 +152,7 @@ struct InactiveCardView: View {
                         Text("\(item.weight)").frame(width: 44, alignment: .leading)
                     }
                     .foregroundColor(.white)
-                    .font(AppStyle.Font.defaultFont)
+                    .font(.system(size: 11))
                 }
             }
         }
@@ -175,64 +178,32 @@ struct InactiveCardView: View {
             HStack(spacing: 6) {
                 Circle()
                     .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
-                    .frame(width: 14, height: 14)
+                    .frame(width: 13, height: 13)
                     .overlay(
                         Image(systemName: isGoal ? "checkmark" : "")
                             .font(.system(size: 6.5, weight: .medium))
                             .foregroundColor(AppStyle.Color.greenGlow)
                     )
-                
-                Text(title)
-                    .foregroundColor(.white)
-                    .font(.system(size: 12))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                    .frame(width: 45, alignment: .leading)
-                
-                HStack(spacing: 2) {
-                    ForEach(0..<stars, id: \.self) { _ in
-                        Image(systemName: "star.fill")
-                            .resizable()
-                            .frame(width: 12, height: 12)
-                            .foregroundColor(filledColor)
+                HStack(spacing: 1) {
+                    
+                    Text(title)
+                        .foregroundColor(.white)
+                        .font(.system(size: 11))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .frame(width: 45, alignment: .leading)
+                    
+                    HStack(spacing: 1) {
+                        ForEach(0..<stars, id: \.self) { _ in
+                            Image(systemName: "star.fill")
+                                .resizable()
+                                .frame(width: 12, height: 12)
+                                .foregroundColor(filledColor)
+                        }
                     }
                 }
+                
             }
-        }
-    }
-    
-    struct CardBackground<Content: View>: View {
-        let content: Content
-        let cornerRadius: CGFloat
-        let horizontalPadding: CGFloat
-        let verticalPadding: CGFloat
-        
-        let backgroundColor = GlobalConstants.cardBackgroundColor
-        
-        init(
-            cornerRadius: CGFloat = AppStyle.CornerRadius.card,
-            horizontalPadding: CGFloat = AppStyle.Padding.horizontal,
-            verticalPadding: CGFloat = AppStyle.Padding.vertical,
-            @ViewBuilder content: () -> Content
-        ) {
-            self.cornerRadius = cornerRadius
-            self.horizontalPadding = horizontalPadding
-            self.verticalPadding = verticalPadding
-            self.content = content()
-        }
-        
-        var body: some View {
-            content
-                .padding(.horizontal, horizontalPadding)
-                .padding(.vertical, verticalPadding)
-                .background(
-                    RoundedRectangle(cornerRadius: cornerRadius)
-                        .fill(backgroundColor)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-                .containerShape(RoundedRectangle(cornerRadius: cornerRadius))
-                .clipped()
-            
         }
     }
 }
