@@ -2,8 +2,13 @@ import SwiftUI
 
 struct CardBackground<Content: View>: View {
     let content: Content
+    let backgroundColor: Color
 
-    init(@ViewBuilder content: () -> Content) {
+    init(
+        backgroundColor: Color = AppStyle.Color.exerciseCardBackground,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.backgroundColor = backgroundColor
         self.content = content()
     }
 
@@ -11,7 +16,7 @@ struct CardBackground<Content: View>: View {
         content
             .padding(AppStyle.Padding.card)
             .frame(maxWidth: .infinity)
-            .background(AppStyle.Color.exerciseCardBackground)
+            .background(backgroundColor)
             .cornerRadius(AppStyle.CornerRadius.card)
     }
 }

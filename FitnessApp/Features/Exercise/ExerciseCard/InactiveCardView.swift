@@ -1,7 +1,7 @@
 import SwiftUI
 
 private enum GlobalConstants {
-    static let cardBackgroundColor = AppStyle.Color.exerciseCardBackground
+    static let cardBackgroundColor = SwiftUI.Color(hex: "#121212")
 }
 
 struct InactiveCardView: View {
@@ -19,7 +19,7 @@ struct InactiveCardView: View {
         let latestEntry = analyticsViewModel.loadAnalytics(for: viewModel.exercise.id).max(by: { $0.date < $1.date })
         let setProgress = latestEntry?.setProgress ?? []
         
-        CardBackground {
+        CardBackground(backgroundColor: GlobalConstants.cardBackgroundColor) {
             VStack(spacing: 12) {
                 HStack {
                     Text(viewModel.exercise.name)
@@ -34,7 +34,7 @@ struct InactiveCardView: View {
                         }
                     
                     if isResetEnabled {
-                        AbgeschlossenChip {
+                        DoneButton {
                             onReset?(viewModel.exercise)
                         }
                         .padding(.horizontal, 1)
@@ -80,7 +80,7 @@ struct InactiveCardView: View {
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, AppStyle.Padding.card)
+            .padding(.horizontal, 5)
             .padding(.vertical, 8)
         }
         .padding(.horizontal, 16)
@@ -94,26 +94,27 @@ struct InactiveCardView: View {
 }
 
 extension InactiveCardView {
-    struct AbgeschlossenChip: View {
+    
+    struct DoneButton: View {
         let onTap: () -> Void
-        
+
         private enum Constants {
-            static let fontSize: CGFloat = 12
+            static let fontSize: CGFloat = 14
             static let horizontalPadding: CGFloat = 10
             static let verticalPadding: CGFloat = 8
             static let strokeColor = AppStyle.Color.greenGlow
-            static let backgroundColor = GlobalConstants.cardBackgroundColor.opacity(0.95)
+            static let backgroundColor = GlobalConstants.cardBackgroundColor
         }
-        
+
         var body: some View {
             Button(action: onTap) {
-                HStack(spacing: 2) {
+                HStack(spacing: 6) {
                     Image("batchCompleted")
                         .resizable()
                         .frame(width: 14, height: 14)
-                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .foregroundColor(Constants.strokeColor)
                         .scaleEffect(1.4)
-                    
+
                     Text("Done")
                         .foregroundColor(.white)
                         .font(.system(size: Constants.fontSize, weight: .bold))
@@ -124,15 +125,15 @@ extension InactiveCardView {
                 .padding(.vertical, Constants.verticalPadding)
                 .background(Constants.backgroundColor)
                 .overlay(
-                    RoundedRectangle(cornerRadius: AppStyle.CornerRadius.defaultButton)
+                    Capsule()
                         .stroke(Constants.strokeColor, lineWidth: 2)
                 )
-                .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.defaultButton))
+                .clipShape(Capsule())
             }
             .buttonStyle(.plain)
         }
     }
-    
+
     struct ExerciseSetSummaryView: View {
         let setProgress: [SetProgress]
         
