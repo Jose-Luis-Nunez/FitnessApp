@@ -40,7 +40,7 @@ struct ActiveCardView: View {
                         text: viewModel.exercise.seatSetting ?? L10n.seatChipDefaultvalue,
                         fontColor: AppStyle.Color.white,
                         backgroundColor: AppStyle.Color.chipsBackground,
-                        size: .regular,
+                        size: AppChipSize.regular,
                         icon: ChipIcon(image: "chairSettings", color: .white),
                         onTap: isEditable ? { onEdit(viewModel.exercise) } : nil
                     )
@@ -52,7 +52,7 @@ struct ActiveCardView: View {
                     )
                 }
 
-                HStack(alignment: .center, spacing: 20) {
+                HStack(alignment: .center, spacing: 10) {
                     Button(action: { isShowingAnalytics = true }) {
                         ChipIcon(
                             image: "analyticsEntry",
@@ -68,8 +68,8 @@ struct ActiveCardView: View {
                         text: "\(viewModel.exercise.sets)x",
                         fontColor: AppStyle.Color.white,
                         backgroundColor: AppStyle.Color.exerciseCardBackground,
-                        size: .regular,
-                        icon: ChipIcon(image: "sets", color: .white),
+                        size: AppChipSize.regular,
+                        icon: ChipIcon(systemName: "bolt.fill", color: AppStyle.Color.yellow),
                         onTap: isEditable ? { onEdit(viewModel.exercise) } : nil
                     )
                     .frame(minWidth: 60)
@@ -83,8 +83,8 @@ struct ActiveCardView: View {
                         text: "\(viewModel.exercise.reps)",
                         fontColor: AppStyle.Color.white,
                         backgroundColor: AppStyle.Color.exerciseCardBackground,
-                        size: .regular,
-                        icon: ChipIcon(image: "repeat", color: .white),
+                        size: AppChipSize.regular,
+                        icon: ChipIcon(systemName: "arrow.triangle.2.circlepath", color: AppStyle.Color.green),
                         onTap: isEditable ? { onEdit(viewModel.exercise) } : nil
                     )
                     .frame(minWidth: 60)
@@ -98,16 +98,11 @@ struct ActiveCardView: View {
                         text: "\(viewModel.exercise.weight) kg",
                         fontColor: AppStyle.Color.white,
                         backgroundColor: AppStyle.Color.green,
-                        size: .regular,
-                        icon: ChipIcon(image: "weight", color: .white),
-                        onTap: isEditable ? { onEdit(viewModel.exercise) } : nil
+                        size: AppChipSize.regular,
+                        onTap: isEditable ? { onEdit(viewModel.exercise) } : nil,
                     )
                     .frame(minWidth: 60)
                     .frame(height: chipHeight)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color(hex: "#726E6A"), lineWidth: 1)
-                    )
                 }
 
                 HStack {

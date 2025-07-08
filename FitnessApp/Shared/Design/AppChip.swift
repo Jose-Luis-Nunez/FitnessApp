@@ -14,14 +14,16 @@ struct AppChip: View {
     var size: AppChipSize = .regular
     let icon: ChipIcon?
     let onTap: (() -> Void)?
-    
+    var borderColor: Color? = nil
+
     init(
         text: String,
         fontColor: Color,
         backgroundColor: Color,
         size: AppChipSize = .regular,
         icon: ChipIcon? = nil,
-        onTap: (() -> Void)? = nil
+        onTap: (() -> Void)? = nil,
+        borderColor: Color? = nil
     ) {
         self.text = text
         self.fontColor = fontColor
@@ -29,8 +31,9 @@ struct AppChip: View {
         self.size = size
         self.icon = icon
         self.onTap = onTap
+        self.borderColor = borderColor
     }
-    
+
     var body: some View {
         HStack(spacing: 6) {
             icon?.view
@@ -41,16 +44,20 @@ struct AppChip: View {
                 .minimumScaleFactor(1.0)
                 .layoutPriority(1)
         }
-        .frame(width: 60)
         .padding(.horizontal, horizontalPadding)
         .padding(.vertical, verticalPadding)
+        .frame(width: fixedWidth, height: fixedHeight)
         .background(backgroundColor)
         .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(borderColor ?? .clear, lineWidth: borderColor != nil ? 1 : 0)
+        )
         .onTapGesture {
             onTap?()
         }
     }
-    
+
     private var font: Font {
         switch size {
         case .regular: return AppStyle.Font.regularChip
@@ -59,7 +66,7 @@ struct AppChip: View {
         case .extraLarge: return AppStyle.Font.extraLargeChip
         }
     }
-    
+
     private var horizontalPadding: CGFloat {
         switch size {
         case .regular: return 10
@@ -68,13 +75,26 @@ struct AppChip: View {
         case .extraLarge: return 16
         }
     }
-    
+
     private var verticalPadding: CGFloat {
         switch size {
         case .regular: return 4
         case .large: return 11
         case .wide: return 11
-        case .extraLarge : return 11
+        case .extraLarge: return 11
         }
+    }
+
+    private var fixedHeight: CGFloat {
+        switch size {
+        case .regular: return 32
+        case .large: return 44
+        case .wide: return 32
+        case .extraLarge: return 70
+        }
+    }
+    
+    private var fixedWidth: CGFloat {
+        return 80
     }
 }
