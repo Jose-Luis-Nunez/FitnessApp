@@ -13,6 +13,7 @@ struct InactiveCardView: View {
     let isResetEnabled: Bool
     
     @State private var isShowingAnalytics = false
+    @State private var ratingRowsHeight: CGFloat = 0
     
     var body: some View {
         let latestEntry = analyticsViewModel.loadAnalytics(for: viewModel.exercise.id).max(by: { $0.date < $1.date })
@@ -40,28 +41,29 @@ struct InactiveCardView: View {
                     }
                 }
                 
-                HStack(alignment: .top, spacing: 3) {
+                HStack(alignment: .top, spacing: 0) {
                     ExerciseSetSummaryView(setProgress: setProgress)
-                        .padding(.trailing, 1)
-                        .layoutPriority(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.trailing, 4)
                     
                     Divider()
-                        .frame(height: CGFloat((setProgress.count + 1) * 16))
+                        .frame(width: 1, height: ratingRowsHeight)
                         .background(Color(hex: "#747055"))
-                        .padding(.horizontal, 1)
+                        .padding(.horizontal, 4)
                     
                     ExerciseRatingSummaryView(
                         goalStars: 3,
                         recordStars: 1,
-                        perfectStars: 1
+                        perfectStars: 1,
+                        ratingRowsHeight: $ratingRowsHeight
                     )
-                    .padding(.horizontal, 3)
-                    .layoutPriority(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 4)
                     
                     Divider()
-                        .frame(height: CGFloat((setProgress.count + 1) * 16))
+                        .frame(width: 1, height: ratingRowsHeight)
                         .background(Color(hex: "#747055"))
-
+                        .padding(.horizontal, 4)
                     
                     Button(action: {
                         isShowingAnalytics = true
@@ -73,12 +75,11 @@ struct InactiveCardView: View {
                         )
                         .view
                         .frame(width: 60, height: 60)
+                        .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.plain)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity)
             .padding(.horizontal, AppStyle.Padding.card)
             .padding(.vertical, 8)
         }
@@ -90,14 +91,15 @@ struct InactiveCardView: View {
         .transition(.move(edge: .bottom))
         .animation(.easeInOut, value: viewModel.exercise.isCompleted)
     }
-    
-    
+}
+
+extension InactiveCardView {
     struct AbgeschlossenChip: View {
         let onTap: () -> Void
         
         private enum Constants {
             static let fontSize: CGFloat = 12
-            static let horizontalPadding: CGFloat = 8
+            static let horizontalPadding: CGFloat = 10
             static let verticalPadding: CGFloat = 8
             static let strokeColor = AppStyle.Color.greenGlow
             static let backgroundColor = GlobalConstants.cardBackgroundColor.opacity(0.95)
@@ -114,7 +116,7 @@ struct InactiveCardView: View {
                     
                     Text("Done")
                         .foregroundColor(.white)
-                        .font(.system(size: Constants.fontSize, weight: .medium))
+                        .font(.system(size: Constants.fontSize, weight: .bold))
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                 }
@@ -163,13 +165,23 @@ struct InactiveCardView: View {
         let recordStars: Int
         let perfectStars: Int
         
+        @Binding var ratingRowsHeight: CGFloat
+        
         var body: some View {
             VStack(alignment: .leading, spacing: 5) {
-                HStack { Spacer() }
-                    .frame(height: 10)
-                ratingRow(title: "Goal", stars: goalStars, isGoal: true, filledColor: .yellow)
-                ratingRow(title: "Record", stars: recordStars, isGoal: false, filledColor: Color(hex: "#747055"))
-                ratingRow(title: "Perfect", stars: perfectStars, isGoal: false, filledColor: Color(hex: "#747055"))
+                VStack(alignment: .leading, spacing: 5) {
+                    ratingRow(title: "Goal", stars: goalStars, isGoal: true, filledColor: .yellow)
+                    ratingRow(title: "Record", stars: recordStars, isGoal: false, filledColor: Color(hex: "#747055"))
+                    ratingRow(title: "Perfect", stars: perfectStars, isGoal: false, filledColor: Color(hex: "#747055"))
+                }
+                .background(
+                    GeometryReader { geo in
+                        Color.clear
+                            .onAppear {
+                                ratingRowsHeight = geo.size.height
+                            }
+                    }
+                )
             }
         }
         
@@ -185,7 +197,6 @@ struct InactiveCardView: View {
                             .foregroundColor(AppStyle.Color.greenGlow)
                     )
                 HStack(spacing: 1) {
-                    
                     Text(title)
                         .foregroundColor(.white)
                         .font(.system(size: 11))
@@ -202,7 +213,6 @@ struct InactiveCardView: View {
                         }
                     }
                 }
-                
             }
         }
     }
