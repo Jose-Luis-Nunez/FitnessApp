@@ -1,6 +1,7 @@
 import SwiftUI
 
 enum AppChipSize {
+    case small
     case regular
     case large
     case wide
@@ -60,7 +61,7 @@ struct AppChip: View {
 
     private var font: Font {
         switch size {
-        case .regular: return AppStyle.Font.regularChip
+        case .small, .regular: return AppStyle.Font.regularChip
         case .large: return AppStyle.Font.largeChip
         case .wide: return AppStyle.Font.wideChip
         case .extraLarge: return AppStyle.Font.extraLargeChip
@@ -69,6 +70,7 @@ struct AppChip: View {
 
     private var horizontalPadding: CGFloat {
         switch size {
+        case .small: return 4
         case .regular: return 10
         case .large: return 16
         case .wide: return 10
@@ -78,7 +80,7 @@ struct AppChip: View {
 
     private var verticalPadding: CGFloat {
         switch size {
-        case .regular: return 4
+        case .small, .regular:return 4
         case .large: return 11
         case .wide: return 11
         case .extraLarge: return 11
@@ -87,7 +89,7 @@ struct AppChip: View {
 
     private var fixedHeight: CGFloat {
         switch size {
-        case .regular: return 32
+        case .small, .regular: return 32
         case .large: return 44
         case .wide: return 32
         case .extraLarge: return 70

@@ -1,9 +1,5 @@
-enum MuscleCategoryGroup: String, CaseIterable, Identifiable {
-    case arms
-    case chest
-    case back
-    case legs
-    case abs
+enum MuscleCategoryGroup: String, CaseIterable, Identifiable, Codable {
+    case arms, chest, back, legs, abs
 
     var id: String { rawValue }
 
@@ -15,5 +11,19 @@ enum MuscleCategoryGroup: String, CaseIterable, Identifiable {
         case .legs: return L10n.muscleCategoryOptionLegs
         case .abs: return L10n.muscleCategoryOptionAbs
         }
+    }
+
+    var availableIcons: [String] {
+        switch self {
+        case .arms:  return ["defaultArmsIcon", "bicepsIcon", "tricepsIcon"]
+        case .chest: return ["defaultChestIcon", "chestPressIcon", "chestFlyIcon"]
+        case .back:  return ["defaultBackIcon", "latPullIcon", "rowIcon"]
+        case .legs:  return ["defaultLegsIcon", "squatIcon", "legPressIcon"]
+        case .abs:   return ["defaultAbsIcon", "crunchIcon", "plankIcon"]
+        }
+    }
+
+    var defaultIconName: String {
+        availableIcons.first!
     }
 }

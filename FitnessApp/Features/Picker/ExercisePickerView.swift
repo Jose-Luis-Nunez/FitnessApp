@@ -1,12 +1,9 @@
 import SwiftUI
 
 struct ExercisePickerView: View {
+    @ObservedObject var formViewModel: ExerciseFormViewModel
+
     let title: String
-    @Binding var name: String
-    @Binding var reps: Int
-    @Binding var weight: Int
-    @Binding var sets: Int
-    @Binding var seat: String
     @Binding var isPresented: Bool
     let onSave: () -> Void
     let onCancel: () -> Void
@@ -16,30 +13,22 @@ struct ExercisePickerView: View {
     let setsRange: ClosedRange<Int>
     let viewModel: MuscleCategoryViewModel
     let editingExercise: Exercise?
-    
+
     @State private var seatPart1: String = ""
     @State private var seatPart2: String = ""
-    
+
     let textColor: Color = AppStyle.Color.white
     let backgroundColor = AppStyle.Color.black
     let pickerColor: Color = AppStyle.Color.greenLight
-    
-    let cancelButtonTextColor: Color = AppStyle.Color.white
-    
-    let saveButtonTextDisabledColor: Color = AppStyle.Color.white
-    let saveButtonBackgroundDisabledColor: Color = AppStyle.Color.green.opacity(0.15)
-    
-    let saveButtonTextEnabledColor: Color = AppStyle.Color.white
-    let saveButtonBackgroundEnabledColor: Color = AppStyle.Color.green
-    
+
     var body: some View {
         ZStack {
             backgroundColor
                 .ignoresSafeArea(edges: .bottom)
-            
+
             VStack(spacing: 0) {
                 Spacer().frame(height: 12)
-                
+
                 HStack {
                     Text(title)
                         .font(.title2)
@@ -48,9 +37,9 @@ struct ExercisePickerView: View {
                         .multilineTextAlignment(.center)
                         .padding(.bottom, 16)
                         .frame(maxWidth: .infinity, alignment: .center)
-                    
+
                     Spacer()
-                    
+
                     if let exercise = editingExercise {
                         Button(action: {
                             if let index = viewModel.exercises.firstIndex(where: { $0.id == exercise.id }) {
@@ -67,13 +56,13 @@ struct ExercisePickerView: View {
                     }
                 }
                 .padding(.bottom, 16)
-                
+
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Übung")
                         .font(.headline)
                         .foregroundColor(textColor)
-                    
-                    TextField("Name der Übung", text: $name)
+
+                    TextField("Name der Übung", text: $formViewModel.name)
                         .padding(12)
                         .background(AppStyle.Color.backgroundColor)
                         .cornerRadius(10)
@@ -86,12 +75,12 @@ struct ExercisePickerView: View {
                 }
                 .padding(.horizontal, AppStyle.Padding.horizontal)
                 .padding(.bottom, 16)
-                
+
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Sitz")
                         .font(.headline)
                         .foregroundColor(textColor)
-                    
+
                     HStack(spacing: 12) {
                         TextField("Einstellung 1", text: Binding(
                             get: { seatPart1 },
@@ -108,7 +97,7 @@ struct ExercisePickerView: View {
                             RoundedRectangle(cornerRadius: 10)
                                 .stroke(AppStyle.Color.gray, lineWidth: 1)
                         )
-                        
+
                         TextField("Einstellung 2", text: Binding(
                             get: { seatPart2 },
                             set: { newValue in
@@ -129,14 +118,22 @@ struct ExercisePickerView: View {
                 }
                 .padding(.horizontal, AppStyle.Padding.horizontal)
                 .padding(.bottom, 16)
-                
+
+                Divider().padding(.vertical, 8)
+
+                IconPickerView(
+                    selectedIcon: $formViewModel.selectedIconName,
+                    icons: formViewModel.selectedCategory.availableIcons
+                )
+                .padding(.horizontal)
+
                 HStack(alignment: .top, spacing: 0) {
                     VStack {
                         Text("Sätze")
                             .font(.headline)
                             .foregroundColor(textColor)
                             .frame(maxWidth: .infinity)
-                        Picker("Sets", selection: $sets) {
+                        Picker("Sets", selection: $formViewModel.sets) {
                             ForEach(setsRange, id: \.self) { value in
                                 Text("\(value)").tag(value).foregroundColor(pickerColor)
                             }
@@ -145,13 +142,13 @@ struct ExercisePickerView: View {
                         .frame(maxWidth: .infinity)
                         .clipped()
                     }
-                    
+
                     VStack {
                         Text("Wiederholung")
                             .font(.headline)
                             .foregroundColor(textColor)
                             .frame(maxWidth: .infinity)
-                        Picker("Reps", selection: $reps) {
+                        Picker("Reps", selection: $formViewModel.reps) {
                             ForEach(repsRange, id: \.self) { value in
                                 Text("\(value)").tag(value).foregroundColor(pickerColor)
                             }
@@ -160,13 +157,13 @@ struct ExercisePickerView: View {
                         .frame(maxWidth: .infinity)
                         .clipped()
                     }
-                    
+
                     VStack {
                         Text("Gewicht")
                             .font(.headline)
                             .foregroundColor(textColor)
                             .frame(maxWidth: .infinity)
-                        Picker("Weight", selection: $weight) {
+                        Picker("Weight", selection: $formViewModel.weight) {
                             ForEach(weightRange, id: \.self) { value in
                                 Text("\(value) kg").tag(value).foregroundColor(pickerColor)
                             }
@@ -177,12 +174,12 @@ struct ExercisePickerView: View {
                     }
                 }
                 .frame(height: 120)
-                
+
                 HStack {
                     Spacer()
-                    
+
                     Text("Abbrechen")
-                        .foregroundColor(cancelButtonTextColor)
+                        .foregroundColor(.white)
                         .font(.system(size: 14))
                         .padding(5)
                         .frame(width: 120)
@@ -192,22 +189,22 @@ struct ExercisePickerView: View {
                             isPresented = false
                         }
                         .frame(maxWidth: .infinity, alignment: .center)
-                    
+
                     Spacer()
-                    
+
                     Button("Speichern") {
                         onSave()
                         isPresented = false
                     }
-                    .foregroundColor(saveDisabled ? saveButtonTextDisabledColor : saveButtonTextEnabledColor)
+                    .foregroundColor(saveDisabled ? Color.white : Color.white)
                     .font(.system(size: 14))
                     .padding(5)
                     .frame(width: 140, height: 40)
-                    .background(saveDisabled ? saveButtonBackgroundDisabledColor : saveButtonBackgroundEnabledColor)
+                    .background(saveDisabled ? AppStyle.Color.green.opacity(0.15) : AppStyle.Color.green)
                     .cornerRadius(AppStyle.CornerRadius.editPickerViewButton)
                     .disabled(saveDisabled)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    
+
                     Spacer()
                 }
                 .padding(.horizontal, 5)
@@ -219,15 +216,15 @@ struct ExercisePickerView: View {
             loadSeatParts()
         }
     }
-    
+
     private func updateSeat() {
-        seat = [seatPart1, seatPart2]
+        formViewModel.seat = [seatPart1, seatPart2]
             .filter { !$0.isEmpty }
             .joined(separator: " / ")
     }
-    
+
     private func loadSeatParts() {
-        let parts = seat.split(separator: "/").map { $0.trimmingCharacters(in: .whitespaces) }
+        let parts = formViewModel.seat.split(separator: "/").map { $0.trimmingCharacters(in: .whitespaces) }
         seatPart1 = parts.count > 0 ? parts[0] : ""
         seatPart2 = parts.count > 1 ? parts[1] : ""
     }

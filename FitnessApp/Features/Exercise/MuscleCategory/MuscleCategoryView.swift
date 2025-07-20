@@ -133,7 +133,7 @@ struct MuscleCategoryView: View {
                     },
                     onAddExercise: {
                         withAnimation {
-                            formViewModel.loadExercise(nil as Exercise?)
+                            formViewModel.loadExercise(nil, category: group)
                             formViewModel.toggleForm()
                         }
                     },
@@ -176,12 +176,8 @@ struct MuscleCategoryView: View {
             
             if formViewModel.showForm {
                 ExercisePickerView(
+                    formViewModel: formViewModel,
                     title: formViewModel.editingExercise != nil ? "Übung bearbeiten" : L10n.cardCreationTitle,
-                    name: $formViewModel.name,
-                    reps: $formViewModel.reps,
-                    weight: $formViewModel.weight,
-                    sets: $formViewModel.sets,
-                    seat: $formViewModel.seat,
                     isPresented: $formViewModel.showForm,
                     onSave: {
                         if let exercise = formViewModel.createOrUpdateExercise() {
@@ -200,7 +196,7 @@ struct MuscleCategoryView: View {
                     weightRange: 0...180,
                     setsRange: 1...10,
                     viewModel: viewModel,
-                    editingExercise: formViewModel.editingExercise
+                    editingExercise: formViewModel.editingExercise,
                 )
                 .frame(maxWidth: .infinity, maxHeight: 300, alignment: .bottom)
                 .offset(y: -50)
@@ -245,7 +241,7 @@ struct MuscleCategoryView: View {
                         },
                         onEdit: { exercise in
                             withAnimation {
-                                formViewModel.loadExercise(exercise)
+                                formViewModel.loadExercise(exercise, category: group)
                                 formViewModel.toggleForm()
                             }
                         },
@@ -293,7 +289,7 @@ struct MuscleCategoryView: View {
                         },
                         onEdit: { exercise in
                             withAnimation {
-                                formViewModel.loadExercise(exercise)
+                                formViewModel.loadExercise(exercise, category: group)
                                 formViewModel.toggleForm()
                             }
                         },
@@ -333,7 +329,7 @@ struct MuscleCategoryView: View {
                         },
                         onEdit: { exercise in
                             withAnimation {
-                                formViewModel.loadExercise(exercise)
+                                formViewModel.loadExercise(exercise, category: group)
                                 formViewModel.toggleForm()
                             }
                         },
