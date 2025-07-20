@@ -21,12 +21,14 @@ struct CardBackground<Content: View>: View {
                     backgroundColor.opacity(0.85)
                     LinearGradient(
                         gradient: Gradient(colors: [
-                            Color.white.opacity(0.03),
                             Color.clear,
-                            Color.white.opacity(0.03)
+                            Color.white.opacity(0.04),
+                            Color.clear,
+                            Color.white.opacity(0.04),
+                            Color.clear,
                         ]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+                        startPoint: .bottomLeading,
+                        endPoint: .topTrailing
                     )
                 }
             )
@@ -36,9 +38,6 @@ struct CardBackground<Content: View>: View {
                     .stroke(AppStyle.Color.exerciseCardBackground.opacity(0.03), lineWidth: 1.5)
                     .blur(radius: 0.6)
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
-                    .stroke(Color.white.opacity(0.03), lineWidth: 1)
-            )
+          
     }
 }
