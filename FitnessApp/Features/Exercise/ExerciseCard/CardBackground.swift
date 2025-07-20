@@ -33,12 +33,12 @@ struct CardBackground<Content: View>: View {
             .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
-                    .stroke(AppStyle.Color.exerciseCardBackground.opacity(0.08), lineWidth: 2)
-                    .blur(radius: 1.5)
+                    .stroke(AppStyle.Color.exerciseCardBackground.opacity(0.03), lineWidth: 1.5)
+                    .blur(radius: 0.6)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    .stroke(Color.white.opacity(0.03), lineWidth: 1)
             )
     }
 }
