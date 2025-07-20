@@ -21,9 +21,9 @@ struct CardBackground<Content: View>: View {
                     backgroundColor.opacity(0.85)
                     LinearGradient(
                         gradient: Gradient(colors: [
-                            Color.white.opacity(0.10),
+                            Color.white.opacity(0.03),
                             Color.clear,
-                            Color.white.opacity(0.06)
+                            Color.white.opacity(0.03)
                         ]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
