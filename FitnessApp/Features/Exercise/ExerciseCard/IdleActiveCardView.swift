@@ -60,7 +60,7 @@ struct IdleActiveCardView: View {
                         AppChip(
                             text: "\(viewModel.exercise.weight) kg",
                             fontColor: AppStyle.Color.white,
-                            backgroundColor: AppStyle.Color.exerciseCardBackground,
+                            backgroundColor: AppStyle.Color.chipsBackground,
                             size: .regular,
                             onTap: isEditable ? { onEdit(viewModel.exercise) } : nil
                         )
