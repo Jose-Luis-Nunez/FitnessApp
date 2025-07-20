@@ -1,6 +1,6 @@
 import Foundation
 
-struct Exercise: Identifiable, Codable,Equatable {
+struct Exercise: Identifiable, Codable, Equatable {
     let id: UUID
     var name: String
     var weight: Int
@@ -10,7 +10,31 @@ struct Exercise: Identifiable, Codable,Equatable {
     var isCompleted: Bool
     var iconName: String
     var category: MuscleCategoryGroup
-
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        weight = try container.decode(Int.self, forKey: .weight)
+        reps = try container.decode(Int.self, forKey: .reps)
+        sets = try container.decode(Int.self, forKey: .sets)
+        seatSetting = try container.decodeIfPresent(String.self, forKey: .seatSetting)
+        isCompleted = try container.decodeIfPresent(Bool.self, forKey: .isCompleted) ?? false
+        
+        if let icon = try container.decodeIfPresent(String.self, forKey: .iconName) {
+            iconName = icon
+        } else {
+            iconName = "defaultArmsIcon"
+        }
+        
+        if let cat = try container.decodeIfPresent(MuscleCategoryGroup.self, forKey: .category) {
+            category = cat
+        } else {
+            category = .arms
+        }
+    }
+    
     init(
         id: UUID = UUID(),
         name: String,
@@ -34,7 +58,7 @@ struct Exercise: Identifiable, Codable,Equatable {
     }
     
     static func == (lhs: Exercise, rhs: Exercise) -> Bool {
-        return lhs.id == rhs.id
+        lhs.id == rhs.id
     }
 }
 

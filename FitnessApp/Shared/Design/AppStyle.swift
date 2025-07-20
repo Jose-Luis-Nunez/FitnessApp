@@ -15,7 +15,6 @@ enum AppStyle {
         static let bottomBarButton: CGFloat = 12
         static let editPickerViewButton: CGFloat = 12
         static let defaultButton: CGFloat = 12
-
     }
 
     enum Font {
@@ -35,8 +34,6 @@ enum AppStyle {
         
         static let categorySelectionChipFont = SwiftUI.Font.system(size: 14, weight: .semibold)
         static let categorySelectionNameFont = SwiftUI.Font.system(size: 20, weight: .semibold)
-
-        
     }
     
     enum Color {

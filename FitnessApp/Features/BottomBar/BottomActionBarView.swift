@@ -85,7 +85,7 @@ struct FloatingActionButtonsView: View {
                     actionButtonExtraLarge(
                         text: "Alle zurücksetzen",
                         textFont: AppStyle.Font.bottomBarButtons,
-                        backgroundColor: AppStyle.Color.green,
+                        backgroundColor: AppStyle.Color.exerciseCardBackground,
                         fontColor: AppStyle.Color.white,
                         action: onResetAllExercises
                     )
