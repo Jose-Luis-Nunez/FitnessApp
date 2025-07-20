@@ -34,6 +34,8 @@ struct TimerView: View {
                             .background(AppStyle.Color.exerciseCardBackground)
                             .cornerRadius(12)
                     }
+                    .contentShape(Rectangle())
+                    .buttonStyle(PlainButtonStyle())
                 }
                 .frame(width: timerCircleSize, height: timerCircleSize)
             }
