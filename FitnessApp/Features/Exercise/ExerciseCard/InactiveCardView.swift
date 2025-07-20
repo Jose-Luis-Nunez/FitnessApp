@@ -100,7 +100,7 @@ extension InactiveCardView {
 
         private enum Constants {
             static let fontSize: CGFloat = 14
-            static let horizontalPadding: CGFloat = 10
+            static let horizontalPadding: CGFloat = 20
             static let verticalPadding: CGFloat = 8
             static let strokeColor = AppStyle.Color.greenGlow
             static let backgroundColor = GlobalConstants.cardBackgroundColor
@@ -108,13 +108,7 @@ extension InactiveCardView {
 
         var body: some View {
             Button(action: onTap) {
-                HStack(spacing: 6) {
-                    Image("batchCompleted")
-                        .resizable()
-                        .frame(width: 14, height: 14)
-                        .foregroundColor(Constants.strokeColor)
-                        .scaleEffect(1.4)
-
+                HStack(spacing: 10) {
                     Text("Done")
                         .foregroundColor(.white)
                         .font(.system(size: Constants.fontSize, weight: .bold))
@@ -138,7 +132,7 @@ extension InactiveCardView {
         let setProgress: [SetProgress]
         
         var body: some View {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 0) {
                     Text("Set").frame(width: 28, alignment: .leading)
                     Text("Reps").frame(width: 36, alignment: .leading)
@@ -154,7 +148,7 @@ extension InactiveCardView {
                         Text("\(item.currentReps)").frame(width: 36, alignment: .leading)
                         Text("\(item.weight)").frame(width: 44, alignment: .leading)
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(AppStyle.Color.white)
                     .font(.system(size: 11))
                 }
             }
@@ -171,6 +165,7 @@ extension InactiveCardView {
         var body: some View {
             VStack(alignment: .leading, spacing: 5) {
                 VStack(alignment: .leading, spacing: 5) {
+                    Spacer()
                     ratingRow(title: "Goal", stars: goalStars, isGoal: true, filledColor: .yellow)
                     ratingRow(title: "Record", stars: recordStars, isGoal: false, filledColor: Color(hex: "#747055"))
                     ratingRow(title: "Perfect", stars: perfectStars, isGoal: false, filledColor: Color(hex: "#747055"))

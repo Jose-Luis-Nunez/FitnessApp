@@ -83,7 +83,7 @@ struct FloatingActionButtonsView: View {
             VStack(spacing: verticalSpacing) {
                 if viewModel.showResetAllExercisesButton {
                     actionButtonExtraLarge(
-                        text: "Alle zurücksetzen",
+                        text: "Reset all",
                         textFont: AppStyle.Font.bottomBarButtons,
                         backgroundColor: AppStyle.Color.exerciseCardBackground,
                         fontColor: AppStyle.Color.white,

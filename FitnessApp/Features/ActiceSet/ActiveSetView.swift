@@ -21,7 +21,7 @@ struct ActiveSetView: View {
                         HStack(spacing: 12) {
                             ZStack {
                                 Circle()
-                                    .fill(AppStyle.Color.black)
+                                    .fill(AppStyle.Color.backgroundColor)
                                     .frame(width: iconSize, height: iconSize)
                                 
                                 Text("\(index + 1)")
@@ -131,7 +131,7 @@ private struct ActiveSetRowView: View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(AppStyle.Color.black)
+                    .fill(AppStyle.Color.backgroundColor)
                     .frame(width: iconSize, height: iconSize)
                 
                 if index == activeSetIndex {

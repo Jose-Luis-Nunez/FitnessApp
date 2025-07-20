@@ -131,7 +131,7 @@ private struct CategoryTileView: View {
                 .font(AppStyle.Font.categorySelectionNameFont)
                 .foregroundColor(AppStyle.Color.white)
 
-            Text("\(exerciseInfo.completed) von \(exerciseInfo.total) Übungen")
+            Text("\(exerciseInfo.completed) von \(exerciseInfo.total) completed")
                 .font(AppStyle.Font.defaultFont)
                 .foregroundColor(Color(hex: "#8a8580"))
         }
