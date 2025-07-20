@@ -16,7 +16,29 @@ struct CardBackground<Content: View>: View {
         content
             .padding(AppStyle.Padding.card)
             .frame(maxWidth: .infinity)
-            .background(backgroundColor)
-            .cornerRadius(AppStyle.CornerRadius.card)
+            .background(
+                ZStack {
+                    backgroundColor.opacity(0.85)
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color.white.opacity(0.10),
+                            Color.clear,
+                            Color.white.opacity(0.06)
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                }
+            )
+            .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
+                    .stroke(AppStyle.Color.exerciseCardBackground.opacity(0.08), lineWidth: 2)
+                    .blur(radius: 1.5)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
+                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            )
     }
 }
