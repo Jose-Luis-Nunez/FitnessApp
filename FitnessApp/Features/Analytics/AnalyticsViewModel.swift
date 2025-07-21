@@ -40,4 +40,16 @@ class AnalyticsViewModel: ObservableObject {
         print("Loaded \(filteredEntries.count) analytics entries for exercise \(exerciseId) on \(date)")
         return filteredEntries
     }
+    
+    func allDatesWithData(for exerciseId: UUID) -> Set<Date> {
+        let entries = loadAnalytics(for: exerciseId)
+        let calendar = Calendar.current
+        let uniqueDates = entries.map { calendar.startOfDay(for: $0.date) }
+        return Set(uniqueDates)
+    }
+    
+    func loadAnalyticsDates(for exerciseId: UUID) -> [Date] {
+        let entries = storageService.load(for: exerciseId)
+        return entries.map { $0.date }
+    }
 }

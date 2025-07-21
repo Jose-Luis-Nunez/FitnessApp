@@ -18,6 +18,8 @@ struct AnalyticsView: View {
     @State private var showGoalWeightDialog = false
     @State private var goalWeight: Int = 0
     @State private var milestoneHeight: CGFloat = 0
+    @State private var datesWithData: Set<Date> = []
+
     
     private let paddingAmount: CGFloat = 16
     
@@ -35,6 +37,13 @@ struct AnalyticsView: View {
             }
         }
     }
+    
+    private var trainingDates: Set<Date> {
+        let allEntries = viewModel.loadAnalytics(for: exercise.id)
+        let calendar = Calendar.current
+        return Set(allEntries.map { calendar.startOfDay(for: $0.date) })
+    }
+
     
     private func mainContent(geometry: GeometryProxy) -> some View {
         ScrollView {
@@ -67,6 +76,8 @@ struct AnalyticsView: View {
         }
         .onAppear {
             originalDate = selectedDate
+            datesWithData = viewModel.allDatesWithData(for: exercise.id)
+
             if let savedGoal = UserDefaults.standard.value(forKey: "goalWeight_\(exercise.id)") as? Int {
                 goalWeight = savedGoal
             }
@@ -171,23 +182,20 @@ struct AnalyticsView: View {
             if showCalendarDialog {
                 VStack(spacing: 16) {
                     VStack {
-                        Text("Wähle ein Datum")
+                        Text("Monthly training")
                             .font(.headline)
                             .foregroundColor(AppStyle.Color.white)
                             .padding(.top, 12)
                             .padding(.horizontal, 16)
                         
-                        DatePicker(
-                            "",
-                            selection: $tempDate,
-                            displayedComponents: [.date]
+                        Spacer().frame(height: 12)
+
+                        CalendarGridView(
+                            selectedDate: $tempDate,
+                            highlightedDates: viewModel.loadAnalyticsDates(for: exercise.id)
                         )
-                        .datePickerStyle(.graphical)
-                        .accentColor(AppStyle.Color.green)
-                        .background(AppStyle.Color.greenBlack)
-                        .cornerRadius(12)
-                        .padding([.top, .bottom], 2)
-                        .padding(.horizontal, 16)
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal)
                         
                         actionButtons
                     }
