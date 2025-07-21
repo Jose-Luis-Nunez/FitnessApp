@@ -22,9 +22,9 @@ struct CardBackground<Content: View>: View {
                     LinearGradient(
                         gradient: Gradient(colors: [
                             Color.clear,
-                            Color.white.opacity(0.04),
+                            Color.white.opacity(0.02),
                             Color.clear,
-                            Color.white.opacity(0.04),
+                            Color.white.opacity(0.02),
                             Color.clear,
                         ]),
                         startPoint: .bottomLeading,

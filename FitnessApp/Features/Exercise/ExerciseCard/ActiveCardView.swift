@@ -52,11 +52,19 @@ struct ActiveCardView: View {
                     let iconSize = min(max(min(geo.size.width, 500) * 0.30, 70), 120)
                     
                     VStack {
-                        Image(viewModel.exercise.displayIconName)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: iconSize, height: iconSize, alignment: viewModel.exercise.iconAlignment)
-                            .clipped()
+                        ZStack {
+                            Circle()
+                                .fill(AppStyle.Color.greenBlack)
+                                .frame(width: iconSize * 0.9, height: iconSize * 0.9)
+                                .blur(radius: 15)
+                                .opacity(0.5)
+                            
+                            Image(viewModel.exercise.displayIconName)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: iconSize, height: iconSize, alignment: viewModel.exercise.iconAlignment)
+                                .clipped()
+                        }
                     }
                     .frame(width: iconSize)
                 }
