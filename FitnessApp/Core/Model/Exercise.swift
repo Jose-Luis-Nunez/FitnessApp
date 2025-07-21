@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUICore
 
 struct Exercise: Identifiable, Codable, Equatable {
     let id: UUID
@@ -64,10 +65,17 @@ struct Exercise: Identifiable, Codable, Equatable {
 
 extension Exercise {
     var displayIconName: String {
-        if category.availableIcons.contains(iconName) {
-            return iconName
-        } else {
-            return category.defaultIconName
+        category.availableIcons.contains(iconName)
+        ? iconName
+        : category.defaultIconName
+    }
+    
+    var iconAlignment: Alignment {
+        switch category {
+        case .legs:
+            return .bottom
+        default:
+            return .top
         }
     }
 }
