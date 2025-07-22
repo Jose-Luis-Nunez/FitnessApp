@@ -19,7 +19,6 @@ struct AnalyticsView: View {
     @State private var goalWeight: Int = 0
     @State private var milestoneHeight: CGFloat = 0
     @State private var datesWithData: Set<Date> = []
-
     
     private let paddingAmount: CGFloat = 16
     
@@ -43,7 +42,6 @@ struct AnalyticsView: View {
         let calendar = Calendar.current
         return Set(allEntries.map { calendar.startOfDay(for: $0.date) })
     }
-
     
     private func mainContent(geometry: GeometryProxy) -> some View {
         ScrollView {
@@ -77,7 +75,7 @@ struct AnalyticsView: View {
         .onAppear {
             originalDate = selectedDate
             datesWithData = viewModel.allDatesWithData(for: exercise.id)
-
+            
             if let savedGoal = UserDefaults.standard.value(forKey: "goalWeight_\(exercise.id)") as? Int {
                 goalWeight = savedGoal
             }
@@ -137,9 +135,9 @@ struct AnalyticsView: View {
                         entryView(entry)
                     }
                 }
-                .padding(.vertical, 10)
-                .padding(.top, 10)
-                .background(AppStyle.Color.backgroundColor)
+                    .padding(.vertical, 10)
+                    .padding(.top, 10)
+                    .background(AppStyle.Color.backgroundColor)
             )
         }
     }
@@ -188,7 +186,7 @@ struct AnalyticsView: View {
                             .padding(.top, 12)
                             .padding(.horizontal, 16)
                         
-                        Spacer().frame(height: 12)
+                        Spacer().frame(height: 20)
 
                         CalendarGridView(
                             selectedDate: $tempDate,
@@ -364,25 +362,25 @@ struct AnalyticsView: View {
                     }
                 }
             }
-
+            
             let current = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight
-
+            
             if goalWeight > current {
                 let isMultipleOfTen = current % 10 == 0
                 let firstMilestone = isMultipleOfTen ? current + 5 : Int(ceil(Double(current) / 10.0)) * 10
                 let secondMilestone = firstMilestone + 5
-
+                
                 let filteredMilestones = [secondMilestone, firstMilestone]
                     .filter { $0 < goalWeight }
                     .sorted(by: >)
-
+                
                 VStack(spacing: 32) {
                     ForEach(filteredMilestones, id: \.self) { milestone in
                         ZStack {
                             Circle()
                                 .fill(AppStyle.Color.greenGlow)
                                 .frame(width: 12, height: 12)
-
+                            
                             Text("\(milestone)")
                                 .font(.system(size: 14, weight: .bold))
                                 .foregroundColor(AppStyle.Color.greenGlow)
@@ -390,7 +388,7 @@ struct AnalyticsView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .center)
                     }
-
+                    
                     Circle()
                         .fill(AppStyle.Color.greenGlow.opacity(0.2))
                         .frame(width: 6, height: 6)
@@ -419,7 +417,7 @@ struct AnalyticsView: View {
                         alignment: .center
                     )
             }
-
+            
             VStack(spacing: -4) {
                 Text("\(exercise.weight)")
                     .font(.system(size: 18, weight: .bold))
