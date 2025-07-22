@@ -42,6 +42,7 @@ struct MuscleCategoryView: View {
                 .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 0) {
+                Spacer().frame(height: 16)
                 List {
                     exerciseListSection
                         .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))

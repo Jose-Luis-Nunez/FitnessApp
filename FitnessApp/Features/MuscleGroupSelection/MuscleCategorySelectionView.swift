@@ -3,9 +3,10 @@ import SwiftUI
 private enum Constants {
     static let horizontalPadding: CGFloat = 15
     static let verticalSpacing: CGFloat = 10
-    static let titleTopPadding: CGFloat = 10
-    static let spacerHeight: CGFloat = 30
-    static let topPadding: CGFloat = 5
+    static let titleTopPadding: CGFloat = 0
+    static let spacerHeight: CGFloat = 5
+    static let topPadding: CGFloat = 1
+    static let titleBottomSpacing: CGFloat = 5
 
     enum CategoryTile {
         static let barWidth: CGFloat = 120
@@ -56,7 +57,6 @@ struct MuscleCategorySelectionView: View {
             ScrollView {
                 LazyVStack(spacing: Constants.CategoryTile.verticalSpacing) {
                     headerView
-                    Spacer().frame(height: Constants.spacerHeight)
                     categoryList
                 }
                 .padding(.horizontal, Constants.horizontalPadding)
@@ -92,6 +92,7 @@ struct MuscleCategorySelectionView: View {
             .font(AppStyle.Font.navigationHeadline)
             .foregroundColor(AppStyle.Color.white)
             .padding(.top, Constants.titleTopPadding)
+            .padding(.bottom, Constants.titleBottomSpacing)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
