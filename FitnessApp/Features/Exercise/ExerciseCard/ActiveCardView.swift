@@ -41,7 +41,7 @@ struct ActiveCardView: View {
                             AppChip(
                                 text: "\(viewModel.exercise.weight) kg",
                                 fontColor: AppStyle.Color.white,
-                                backgroundColor: AppStyle.Color.green,
+                                backgroundColor: AppStyle.Color.chipsBackground,
                                 size: .regular
                             ).frame(height: chipHeight)
                         }
