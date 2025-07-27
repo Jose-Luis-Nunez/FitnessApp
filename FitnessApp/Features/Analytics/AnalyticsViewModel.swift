@@ -53,3 +53,24 @@ class AnalyticsViewModel: ObservableObject {
         return entries.map { $0.date }
     }
 }
+
+extension AnalyticsViewModel {
+    
+    func trainingDaysInCurrentMonth(for exerciseId: UUID) -> Int {
+        let dates = loadAnalyticsDates(for: exerciseId)
+        let calendar = Calendar.current
+        
+        let monthDates = dates
+            .filter { calendar.isDate($0, equalTo: Date(), toGranularity: .month) }
+            .map { calendar.startOfDay(for: $0) }
+        
+        return Set(monthDates).count
+    }
+
+    func currentMonthName() -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "de_DE")
+        formatter.dateFormat = "LLLL"
+        return formatter.string(from: Date()).capitalized
+    }
+}
