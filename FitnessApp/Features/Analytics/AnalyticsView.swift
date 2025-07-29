@@ -187,7 +187,7 @@ struct AnalyticsView: View {
                             .padding(.horizontal, 16)
                         
                         Spacer().frame(height: 20)
-
+                        
                         CalendarGridView(
                             selectedDate: $tempDate,
                             highlightedDates: viewModel.loadAnalyticsDates(for: exercise.id)
@@ -242,6 +242,146 @@ struct AnalyticsView: View {
     
     private func saveGoalWeight() {
         UserDefaults.standard.set(goalWeight, forKey: "goalWeight_\(exercise.id)")
+    }
+    
+    private var weightMilestoneView: some View {
+        HStack(alignment: .top, spacing: 12) {
+            AnalyticsTileView(
+                number: "\(viewModel.weightIncreasesInCurrentMonth(for: exercise.id))",
+                label: "Steigerungen KG",
+                icon: "arrow.up.right",
+                iconColor: .yellow
+            )
+            
+            AnalyticsTileView(
+                number: "\(viewModel.trainingDaysInCurrentMonth(for: exercise.id))",
+                label: "Training \(viewModel.currentMonthName())",
+                icon: "arrow.up.right",
+                iconColor: .clear
+            )
+            
+            goalWeightArea()
+        }
+        .padding(.horizontal, AppStyle.Padding.horizontal)
+        .padding(.vertical, 8)
+    }
+    
+    private func goalWeightArea() -> some View {
+        VStack(spacing: 3) {
+            Group {
+                if goalWeight == 0 {
+                    ZStack {
+                        Circle()
+                            .stroke(style: StrokeStyle(lineWidth: 1.5, dash: [4]))
+                            .foregroundColor(AppStyle.Color.greenGlow)
+                        
+                        VStack(spacing: 2) {
+                            Text("ZIEL")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(AppStyle.Color.greenGlow)
+                            Text("HINZUFÜGEN")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(AppStyle.Color.greenGlow)
+                        }
+                    }
+                    .frame(width: 77, height: 77)
+                    .onTapGesture {
+                        showGoalWeightDialog = true
+                    }
+                } else {
+                    VStack(spacing: -2) {
+                        Spacer(minLength: 16)
+                        Text("\(goalWeight)")
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundColor(AppStyle.Color.greenDark)
+                        
+                        Text("kg")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(AppStyle.Color.greenDark)
+                        Spacer(minLength: 0)
+                    }
+                    .frame(width: 49, height: 49)
+                    .background(AppStyle.Color.greenGlow)
+                    .clipShape(Circle())
+                    .onTapGesture {
+                        showGoalWeightDialog = true
+                    }
+                }
+            }
+            
+            let current = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight
+            
+            if goalWeight > current {
+                let isMultipleOfTen = current % 10 == 0
+                let firstMilestone = isMultipleOfTen ? current + 5 : Int(ceil(Double(current) / 10.0)) * 10
+                let secondMilestone = firstMilestone + 5
+                
+                let filteredMilestones = [secondMilestone, firstMilestone]
+                    .filter { $0 < goalWeight }
+                    .sorted(by: >)
+                
+                VStack(spacing: 22) {
+                    ForEach(filteredMilestones, id: \.self) { milestone in
+                        ZStack {
+                            Circle()
+                                .fill(AppStyle.Color.greenGlow)
+                                .frame(width: 8, height: 8)
+                            
+                            Text("\(milestone)")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(AppStyle.Color.greenGlow)
+                                .offset(x: 20)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    }
+                    
+                    Circle()
+                        .fill(AppStyle.Color.greenGlow.opacity(0.2))
+                        .frame(width: 4, height: 4)
+                }
+                .overlay(
+                    Rectangle()
+                        .fill(LinearGradient(
+                            gradient: Gradient(colors: [AppStyle.Color.greenGlow.opacity(0.4), .clear]),
+                            startPoint: .top,
+                            endPoint: .bottom
+                        ))
+                        .frame(width: 3),
+                    alignment: .center
+                )
+            } else if goalWeight == 0 {
+                VStack {}
+                    .frame(height: 40)
+                    .overlay(
+                        Rectangle()
+                            .fill(LinearGradient(
+                                gradient: Gradient(colors: [AppStyle.Color.greenGlow.opacity(0.4), .clear]),
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ))
+                            .frame(width: 3),
+                        alignment: .center
+                    )
+            }
+            
+            VStack(spacing: -2) {
+                Text("\(exercise.weight)")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(AppStyle.Color.greenGlow)
+                Text("kg")
+                    .font(.system(size: 9))
+                    .foregroundColor(AppStyle.Color.greenGlow)
+            }
+            .frame(width: 32, height: 32)
+            .background(AppStyle.Color.black)
+            .overlay(
+                Circle()
+                    .stroke(AppStyle.Color.greenGlow, lineWidth: 1.5)
+            )
+            .clipShape(Circle())
+            .padding(.top, -20)
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
     }
     
     private var goalWeightDialog: some View {
@@ -319,182 +459,56 @@ struct AnalyticsView: View {
             }
         }
     }
+}
+
+
+struct AnalyticsTileView: View {
+    let number: String
+    let label: String
+    let icon: String?
+    let iconColor: Color
     
-    private var weightMilestoneView: some View {
-        HStack(alignment: .top, spacing: 12) {
-            
-            // Area 1
-            VStack {
-                Text("Bereich 1")
-                    .font(.caption2)
-                    .foregroundColor(.gray)
-                Spacer()
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            // Area 2
-            ZStack {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                AppStyle.Color.black,
-                                AppStyle.Color.greenBlack
-                            ]),
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    ) .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color(hex: "#171F22"), lineWidth: 1.2)
-                    )
-
-                VStack(spacing: 8) {
-                    let currentMonthDates = viewModel
-                        .loadAnalyticsDates(for: exercise.id)
-                        .filter { Calendar.current.isDate($0, equalTo: Date(), toGranularity: .month) }
-                        .map { Calendar.current.startOfDay(for: $0) }
-
-                    let monthTrainingCount = viewModel.trainingDaysInCurrentMonth(for: exercise.id)
-                    let currentMonthName = viewModel.currentMonthName()
-
-                    Text("\(monthTrainingCount)")
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(AppStyle.Color.greenGlow)
-
-                    Text("Training \(currentMonthName)")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(AppStyle.Color.greenGlow)
-                        .padding(.vertical, 6)
-                        .padding(.horizontal, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
-                        )
-                }
-                .padding(12)
-            }
-            .frame(width: 110, height: 110)
-
-
-            // Area 3
-            VStack(spacing: 8) {
-                Group {
-                    if goalWeight == 0 {
-                        ZStack {
-                            Circle()
-                                .stroke(style: StrokeStyle(lineWidth: 1.5, dash: [4]))
-                                .foregroundColor(AppStyle.Color.greenGlow)
-                            
-                            VStack(spacing: 2) {
-                                Text("ZIEL")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundColor(AppStyle.Color.greenGlow)
-                                Text("HINZUFÜGEN")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundColor(AppStyle.Color.greenGlow)
-                            }
-                        }
-                        .frame(width: 77, height: 77)
-                        .onTapGesture {
-                            showGoalWeightDialog = true
-                        }
-                    } else {
-                        VStack(spacing: -2) {
-                            Spacer(minLength: 16)
-                            Text("\(goalWeight)")
-                                .font(.system(size: 17, weight: .bold))
-                                .foregroundColor(AppStyle.Color.greenDark)
-                            
-                            Text("kg")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(AppStyle.Color.greenDark)
-                            Spacer(minLength: 0)
-                        }
-                        .frame(width: 49, height: 49)
-                        .background(AppStyle.Color.greenGlow)
-                        .clipShape(Circle())
-                        .onTapGesture {
-                            showGoalWeightDialog = true
-                        }
-                    }
-                }
-
-                let current = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight
-                
-                if goalWeight > current {
-                    let isMultipleOfTen = current % 10 == 0
-                    let firstMilestone = isMultipleOfTen ? current + 5 : Int(ceil(Double(current) / 10.0)) * 10
-                    let secondMilestone = firstMilestone + 5
-                    
-                    let filteredMilestones = [secondMilestone, firstMilestone]
-                        .filter { $0 < goalWeight }
-                        .sorted(by: >)
-                    
-                    VStack(spacing: 22) {
-                        ForEach(filteredMilestones, id: \.self) { milestone in
-                            ZStack {
-                                Circle()
-                                    .fill(AppStyle.Color.greenGlow)
-                                    .frame(width: 8, height: 8)
-                                
-                                Text("\(milestone)")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundColor(AppStyle.Color.greenGlow)
-                                    .offset(x: 20)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .center)
-                        }
-                        
-                        Circle()
-                            .fill(AppStyle.Color.greenGlow.opacity(0.2))
-                            .frame(width: 4, height: 4)
-                    }
-                    .overlay(
-                        Rectangle()
-                            .fill(LinearGradient(
-                                gradient: Gradient(colors: [AppStyle.Color.greenGlow.opacity(0.4), .clear]),
-                                startPoint: .top,
-                                endPoint: .bottom
-                            ))
-                            .frame(width: 3),
-                        alignment: .center
-                    )
-                } else if goalWeight == 0 {
-                    VStack {}
-                        .frame(height: 40)
-                        .overlay(
-                            Rectangle()
-                                .fill(LinearGradient(
-                                    gradient: Gradient(colors: [AppStyle.Color.greenGlow.opacity(0.4), .clear]),
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                ))
-                                .frame(width: 3),
-                            alignment: .center
-                        )
-                }
-
-                VStack(spacing: -2) {
-                    Text("\(exercise.weight)")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(AppStyle.Color.white)
-                    Text("kg")
-                        .font(.system(size: 9))
-                        .foregroundColor(AppStyle.Color.white)
-                }
-                .frame(width: 32, height: 32)
-                .background(AppStyle.Color.black)
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(LinearGradient(
+                    gradient: Gradient(colors: [
+                        AppStyle.Color.black,
+                        AppStyle.Color.greenBlack
+                    ]),
+                    startPoint: .top,
+                    endPoint: .bottom
+                ))
                 .overlay(
-                    Circle()
-                        .stroke(AppStyle.Color.greenGlow, lineWidth: 1.5)
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color(hex: "#171F22"), lineWidth: 1.2)
                 )
-                .clipShape(Circle())
+            
+            VStack(spacing: 8) {
+                if let icon = icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(iconColor)
+                }
+                
+                Text(number)
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundColor(AppStyle.Color.greenGlow)
+                
+                Text(label)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(AppStyle.Color.greenGlow)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
+                    )
             }
-            .frame(maxWidth: .infinity, alignment: .trailing)
+            .padding(12)
         }
-        .padding(.horizontal, AppStyle.Padding.horizontal)
-        .padding(.vertical, 8)
+        .frame(width: 120, height: 120, alignment: .center)
     }
 }
 

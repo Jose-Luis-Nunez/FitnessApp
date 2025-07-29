@@ -73,4 +73,45 @@ extension AnalyticsViewModel {
         formatter.dateFormat = "LLLL"
         return formatter.string(from: Date()).capitalized
     }
+    
+    func weightIncreasesInCurrentMonth(for exerciseId: UUID) -> Int {
+        let calendar = Calendar.current
+        let entries = loadAnalytics(for: exerciseId)
+        
+        // Ffilter current month
+        let currentMonthEntries = entries
+            .filter { calendar.isDate($0.date, equalTo: Date(), toGranularity: .month) }
+            .sorted(by: { $0.date < $1.date }) // chronologisch sortieren
+        
+        // Extract the average weight per day (first set of the day)
+        let dailyWeights: [(date: Date, weight: Int)] = currentMonthEntries.compactMap { entry in
+            guard let weight = entry.setProgress.first?.weight else { return nil }
+            let day = calendar.startOfDay(for: entry.date)
+            return (date: day, weight: weight)
+        }
+        
+        // Group by date, select the highest value of the day (multiple entries per day possible)
+        let maxWeightPerDay: [(date: Date, weight: Int)] = Dictionary(grouping: dailyWeights, by: { $0.date })
+            .compactMap { (date, values) in
+                let maxWeight = values.map(\.weight).max() ?? 0
+                return (date, maxWeight)
+            }
+            .sorted(by: { $0.date < $1.date })
+
+        // Count the real increases
+        var increases = 0
+        var lastWeight: Int? = nil
+        
+        for (_, weight) in maxWeightPerDay {
+            if let previous = lastWeight {
+                if weight > previous {
+                    increases += 1
+                }
+            }
+            lastWeight = weight
+        }
+
+        return increases
+    }
+
 }
