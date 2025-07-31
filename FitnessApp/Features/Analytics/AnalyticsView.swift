@@ -19,6 +19,7 @@ struct AnalyticsView: View {
     @State private var goalWeight: Int = 0
     @State private var milestoneHeight: CGFloat = 0
     @State private var datesWithData: Set<Date> = []
+    @State private var showAddDataSheet: Bool = false
     
     private let paddingAmount: CGFloat = 16
     
@@ -35,7 +36,25 @@ struct AnalyticsView: View {
                 calendarDialog
             }
         }
+        .sheet(isPresented: $showAddDataSheet) {
+            AddAnalyticsEntryView(
+                date: selectedDate,
+                exercise: exercise,
+                onSave: { newEntry in
+                    viewModel.saveOrReplaceAnalyticsEntry(
+                        exerciseId: exercise.id,
+                        setProgress: newEntry.setProgress,
+                        date: selectedDate
+                    )
+                    showAddDataSheet = false
+                },
+                onCancel: {
+                    showAddDataSheet = false
+                }
+            )
+        }
     }
+    
     
     private var trainingDates: Set<Date> {
         let allEntries = viewModel.loadAnalytics(for: exercise.id)
@@ -119,12 +138,34 @@ struct AnalyticsView: View {
         
         if entries.isEmpty {
             return AnyView(
-                Text("Keine Daten für das ausgewählte Datum verfügbar")
-                    .font(AppStyle.Font.defaultFont)
-                    .foregroundColor(AppStyle.Color.gray)
-                    .padding(.horizontal, AppStyle.Padding.horizontal)
+                VStack(spacing: 12) {
+                    Text("Keine Daten für das ausgewählte Datum verfügbar")
+                        .font(AppStyle.Font.defaultFont)
+                        .foregroundColor(AppStyle.Color.gray)
+                        .padding(.horizontal, AppStyle.Padding.horizontal)
+                    
+                    Button(action: {
+                        showAddDataSheet = true
+                    }) {
+                        HStack {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 22, weight: .bold))
+                            Text("Daten hinzufügen")
+                                .font(.body)
+                                .fontWeight(.bold)
+                        }
+                        .foregroundColor(AppStyle.Color.green)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 24)
+                        .background(
+                            Capsule()
+                                .fill(AppStyle.Color.greenBlack)
+                        )
+                    }
+                }
             )
-        } else {
+        }
+        else {
             return AnyView(
                 VStack(alignment: .leading, spacing: 16) {
                     ForEach(entries.reversed()) { entry in
@@ -512,8 +553,136 @@ struct AnalyticsTileView: View {
     }
 }
 
-extension Array where Element: Hashable {
-    func uniqued() -> [Element] {
-        Array(Set(self))
+
+struct AddAnalyticsEntryView: View {
+    let date: Date
+    let exercise: Exercise
+    var onSave: (AnalyticsEntry) -> Void
+    var onCancel: () -> Void
+
+    @State private var sets: [SetProgressInput] = []
+    
+    struct SetProgressInput: Identifiable {
+        let id = UUID()
+        var weight: Int
+        var reps: Int
+    }
+    
+    init(date: Date, exercise: Exercise, onSave: @escaping (AnalyticsEntry) -> Void, onCancel: @escaping () -> Void) {
+        self.date = date
+        self.exercise = exercise
+        self.onSave = onSave
+        self.onCancel = onCancel
+        _sets = State(initialValue: [
+            SetProgressInput(weight: exercise.weight, reps: exercise.reps)
+        ])
+    }
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("Daten hinzufügen für \(formattedDate(date))")
+                .font(.headline)
+                .padding(.top, 14)
+
+            ForEach($sets) { $set in
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Gewicht")
+                            .font(.caption)
+                        TextField("kg", value: $set.weight, formatter: NumberFormatter())
+                            .keyboardType(.numberPad)
+                            .frame(width: 60)
+                            .padding(6)
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(8)
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Wiederh.")
+                            .font(.caption)
+                        TextField("Reps", value: $set.reps, formatter: NumberFormatter())
+                            .keyboardType(.numberPad)
+                            .frame(width: 60)
+                            .padding(6)
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(8)
+                    }
+                    Spacer()
+                    if sets.count > 1 {
+                        Button(action: {
+                            withAnimation { sets.removeAll { $0.id == set.id } }
+                        }) {
+                            Image(systemName: "minus.circle.fill")
+                                .foregroundColor(.red)
+                                .font(.system(size: 24))
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+
+            Button(action: {
+                withAnimation {
+                    sets.append(SetProgressInput(weight: exercise.weight, reps: exercise.reps))
+                }
+            }) {
+                HStack {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Set hinzufügen")
+                }
+                .foregroundColor(AppStyle.Color.green)
+                .padding(.vertical, 6)
+            }
+
+            HStack {
+                Button("Abbrechen") {
+                    onCancel()
+                }
+                .foregroundColor(.red)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 18)
+
+                Spacer()
+
+                Button("Speichern") {
+                    let entry = AnalyticsEntry(
+                        exerciseId: exercise.id,
+                        date: date,
+                        setProgress: sets.map { input in
+                            SetProgress(
+                                status: .completedDone,
+                                currentReps: input.reps,
+                                weight: input.weight
+                            )
+                        }
+                    )
+                    onSave(entry)
+                }
+                .disabled(sets.contains(where: { $0.weight == 0 || $0.reps == 0 }))
+                .foregroundColor(.white)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 22)
+                .background(
+                    sets.allSatisfy { $0.weight > 0 && $0.reps > 0 }
+                    ? AppStyle.Color.green
+                    : AppStyle.Color.green.opacity(0.15)
+                )
+                .cornerRadius(12)
+            }
+            .padding(.horizontal, 12)
+            .padding(.top, 12)
+            Spacer()
+        }
+        .padding(.horizontal, 18)
+        .padding(.top, 10)
+        .background(AppStyle.Color.greenBlack)
+        .cornerRadius(18)
+        .frame(maxWidth: 370, maxHeight: 380)
+    }
+
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.locale = Locale(identifier: "de_DE")
+        return formatter.string(from: date)
     }
 }

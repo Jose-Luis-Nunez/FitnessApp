@@ -52,6 +52,33 @@ class AnalyticsViewModel: ObservableObject {
         let entries = storageService.load(for: exerciseId)
         return entries.map { $0.date }
     }
+    
+    func saveOrReplaceAnalyticsEntry(
+        exerciseId: UUID,
+        setProgress: [SetProgress],
+        date: Date
+    ) {
+        guard !setProgress.isEmpty else {
+            print("No set progress to save for analytics")
+            return
+        }
+
+        let analyticsEntry = AnalyticsEntry(
+            exerciseId: exerciseId,
+            date: date,
+            setProgress: setProgress
+        )
+
+        var existingEntries = storageService.load(for: exerciseId)
+        let calendar = Calendar.current
+        if let idx = existingEntries.firstIndex(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
+            existingEntries[idx] = analyticsEntry
+        } else {
+            existingEntries.append(analyticsEntry)
+        }
+        storageService.save(existingEntries, for: exerciseId)
+        print("Saved or replaced analytics entry for exercise \(exerciseId) on \(date)")
+    }
 }
 
 extension AnalyticsViewModel {
@@ -113,5 +140,4 @@ extension AnalyticsViewModel {
 
         return increases
     }
-
 }
