@@ -62,13 +62,13 @@ class AnalyticsViewModel: ObservableObject {
             print("No set progress to save for analytics")
             return
         }
-
+        
         let analyticsEntry = AnalyticsEntry(
             exerciseId: exerciseId,
             date: date,
             setProgress: setProgress
         )
-
+        
         var existingEntries = storageService.load(for: exerciseId)
         let calendar = Calendar.current
         if let idx = existingEntries.firstIndex(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
@@ -77,7 +77,10 @@ class AnalyticsViewModel: ObservableObject {
             existingEntries.append(analyticsEntry)
         }
         storageService.save(existingEntries, for: exerciseId)
-        print("Saved or replaced analytics entry for exercise \(exerciseId) on \(date)")
+
+        DispatchQueue.main.async {
+            self.objectWillChange.send()
+        }
     }
 }
 
@@ -93,7 +96,7 @@ extension AnalyticsViewModel {
         
         return Set(monthDates).count
     }
-
+    
     func currentMonthName() -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "de_DE")
@@ -124,7 +127,7 @@ extension AnalyticsViewModel {
                 return (date, maxWeight)
             }
             .sorted(by: { $0.date < $1.date })
-
+        
         // Count the real increases
         var increases = 0
         var lastWeight: Int? = nil
@@ -137,7 +140,7 @@ extension AnalyticsViewModel {
             }
             lastWeight = weight
         }
-
+        
         return increases
     }
 }
