@@ -36,7 +36,9 @@ struct AnalyticsView: View {
                 calendarDialog
             }
         }
-        .sheet(isPresented: $showAddDataSheet) {
+        .sheet(isPresented: $showAddDataSheet, onDismiss: {
+            self.datesWithData = viewModel.allDatesWithData(for: exercise.id)
+        }) {
             AddAnalyticsEntryView(
                 date: selectedDate,
                 exercise: exercise,
@@ -54,7 +56,6 @@ struct AnalyticsView: View {
             )
         }
     }
-    
     
     private var trainingDates: Set<Date> {
         let allEntries = viewModel.loadAnalytics(for: exercise.id)
@@ -559,7 +560,7 @@ struct AddAnalyticsEntryView: View {
     let exercise: Exercise
     var onSave: (AnalyticsEntry) -> Void
     var onCancel: () -> Void
-
+    
     @State private var sets: [SetProgressInput] = []
     
     struct SetProgressInput: Identifiable {
@@ -577,13 +578,13 @@ struct AddAnalyticsEntryView: View {
             SetProgressInput(weight: exercise.weight, reps: exercise.reps)
         ])
     }
-
+    
     var body: some View {
         VStack(spacing: 16) {
             Text("Daten hinzufügen für \(formattedDate(date))")
                 .font(.headline)
                 .padding(.top, 14)
-
+            
             ForEach($sets) { $set in
                 HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
@@ -619,7 +620,7 @@ struct AddAnalyticsEntryView: View {
                 }
                 .padding(.vertical, 4)
             }
-
+            
             Button(action: {
                 withAnimation {
                     sets.append(SetProgressInput(weight: exercise.weight, reps: exercise.reps))
@@ -632,7 +633,7 @@ struct AddAnalyticsEntryView: View {
                 .foregroundColor(AppStyle.Color.green)
                 .padding(.vertical, 6)
             }
-
+            
             HStack {
                 Button("Abbrechen") {
                     onCancel()
@@ -640,9 +641,9 @@ struct AddAnalyticsEntryView: View {
                 .foregroundColor(.red)
                 .padding(.vertical, 10)
                 .padding(.horizontal, 18)
-
+                
                 Spacer()
-
+                
                 Button("Speichern") {
                     let entry = AnalyticsEntry(
                         exerciseId: exercise.id,
@@ -678,7 +679,7 @@ struct AddAnalyticsEntryView: View {
         .cornerRadius(18)
         .frame(maxWidth: 370, maxHeight: 380)
     }
-
+    
     private func formattedDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
