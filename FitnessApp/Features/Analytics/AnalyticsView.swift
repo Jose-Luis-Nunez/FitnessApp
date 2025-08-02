@@ -20,6 +20,9 @@ struct AnalyticsView: View {
     @State private var milestoneHeight: CGFloat = 0
     @State private var datesWithData: Set<Date> = []
     @State private var showAddDataSheet: Bool = false
+    @State private var showEditSetSheet: Bool = false
+    @State private var editingEntry: AnalyticsEntry?
+    @State private var editingSetIndex: Int?
     
     private let paddingAmount: CGFloat = 16
     
@@ -34,27 +37,11 @@ struct AnalyticsView: View {
             ZStack {
                 mainContent(geometry: geometry)
                 calendarDialog
+                editSetOverlay
+                addDataOverlay
             }
         }
-        .sheet(isPresented: $showAddDataSheet, onDismiss: {
-            self.datesWithData = viewModel.allDatesWithData(for: exercise.id)
-        }) {
-            AddAnalyticsEntryView(
-                date: selectedDate,
-                exercise: exercise,
-                onSave: { newEntry in
-                    viewModel.saveOrReplaceAnalyticsEntry(
-                        exerciseId: exercise.id,
-                        setProgress: newEntry.setProgress,
-                        date: selectedDate
-                    )
-                    showAddDataSheet = false
-                },
-                onCancel: {
-                    showAddDataSheet = false
-                }
-            )
-        }
+        
     }
     
     private var trainingDates: Set<Date> {
@@ -186,65 +173,165 @@ struct AnalyticsView: View {
     
     private func entryView(_ entry: AnalyticsEntry) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            ForEach(entry.setProgress, id: \.self) { progress in
-                HStack {
-                    Text("Set")
-                        .font(.system(size: 24))
-                        .foregroundColor(AppStyle.Color.white)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    
-                    Text("\(progress.weight)")
-                        .font(.system(size: 30))
-                        .foregroundColor(AppStyle.Color.greenGlow)
-                    
-                    Text("kg")
-                        .font(AppStyle.Font.analyticsExerciseData)
-                        .font(.system(size: 35))
-                        .foregroundColor(AppStyle.Color.green)
-                    
-                    Text("\(progress.currentReps) / \(initialReps)")
-                        .font(.system(size: 24))
-                        .foregroundColor(AppStyle.Color.white)
+            List {
+                ForEach(Array(entry.setProgress.enumerated()), id: \.offset) { index, progress in
+                    setRowView(entry: entry, index: index, progress: progress)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets())
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button {
+                                viewModel.deleteSetFromEntry(
+                                    exerciseId: exercise.id,
+                                    entryId: entry.id,
+                                    setIndex: index
+                                )
+                            } label: {
+                                Label("Löschen", systemImage: "trash")
+                            }
+                            .tint(.red)
+                        }
                 }
-                .padding(.horizontal, AppStyle.Padding.horizontal)
-                .padding(.vertical, 20)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(AppStyle.Color.greenDark)
-                .cornerRadius(AppStyle.CornerRadius.defaultButton)
-                .padding(.top, 4)
             }
+            .listStyle(PlainListStyle())
+            .frame(height: CGFloat(entry.setProgress.count * 90))
+            .background(Color.clear)
         }
         .padding(.horizontal, AppStyle.Padding.horizontal)
+    }
+    
+    private func setRowView(entry: AnalyticsEntry, index: Int, progress: SetProgress) -> some View {
+        HStack {
+            Text("Set")
+                .font(.system(size: 24))
+                .foregroundColor(AppStyle.Color.white)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            Text(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ","))
+                .font(.system(size: 30))
+                .foregroundColor(AppStyle.Color.greenGlow)
+            
+            Text("kg")
+                .font(AppStyle.Font.analyticsExerciseData)
+                .font(.system(size: 35))
+                .foregroundColor(AppStyle.Color.green)
+            
+            Text("\(progress.currentReps) / \(initialReps)")
+                .font(.system(size: 24))
+                .foregroundColor(AppStyle.Color.white)
+        }
+        .padding(.horizontal, AppStyle.Padding.horizontal)
+        .padding(.vertical, 20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AppStyle.Color.greenDark)
+        .cornerRadius(AppStyle.CornerRadius.defaultButton)
+        .padding(.top, 4)
+        .onTapGesture {
+            editingEntry = entry
+            editingSetIndex = index
+            showEditSetSheet = true
+        }
     }
     
     private var calendarDialog: some View {
         Group {
             if showCalendarDialog {
-                VStack(spacing: 16) {
-                    VStack {
-                        Text("Monthly training")
-                            .font(.headline)
-                            .foregroundColor(AppStyle.Color.white)
-                            .padding(.top, 12)
-                            .padding(.horizontal, 16)
-                        
-                        Spacer().frame(height: 20)
-                        
-                        CalendarGridView(
-                            selectedDate: $tempDate,
-                            highlightedDates: viewModel.loadAnalyticsDates(for: exercise.id)
-                        )
-                        .frame(maxWidth: .infinity)
-                        .padding(.horizontal)
-                        
-                        actionButtons
+                VStack {
+                    Spacer()
+                    
+                    VStack(spacing: 16) {
+                        VStack {
+                            Text("Monthly training")
+                                .font(.headline)
+                                .foregroundColor(AppStyle.Color.white)
+                                .padding(.top, 12)
+                                .padding(.horizontal, 16)
+                            
+                            Spacer().frame(height: 20)
+                            
+                            CalendarGridView(
+                                selectedDate: $tempDate,
+                                highlightedDates: viewModel.loadAnalyticsDates(for: exercise.id)
+                            )
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal)
+                            
+                            actionButtons
+                        }
+                        .background(AppStyle.Color.greenBlack)
+                        .cornerRadius(AppStyle.CornerRadius.defaultButton)
+                        .padding(16)
                     }
-                    .background(AppStyle.Color.greenBlack)
-                    .cornerRadius(AppStyle.CornerRadius.defaultButton)
-                    .padding(16)
+                    .frame(maxWidth: 400, maxHeight: 250)
+                    
+                    Spacer()
                 }
-                .frame(maxWidth: 400, maxHeight: 250)
-                .transition(.move(edge: .bottom))
+                .background(Color.black.opacity(0.5))
+                .transition(.opacity)
+            }
+        }
+    }
+    
+    private var editSetOverlay: some View {
+        Group {
+            if showEditSetSheet, let entry = editingEntry, let setIndex = editingSetIndex {
+                VStack {
+                    Spacer()
+                    
+                    EditSetView(
+                        entry: entry,
+                        setIndex: setIndex,
+                        exercise: exercise,
+                        onSave: { updatedSetProgress in
+                            viewModel.updateSetInEntry(
+                                exerciseId: exercise.id,
+                                entryId: entry.id,
+                                setIndex: setIndex,
+                                newSetProgress: updatedSetProgress
+                            )
+                            showEditSetSheet = false
+                            datesWithData = viewModel.allDatesWithData(for: exercise.id)
+                        },
+                        onCancel: {
+                            showEditSetSheet = false
+                        }
+                    )
+                    
+                    Spacer()
+                }
+                .background(Color.black.opacity(0.5))
+                .transition(.opacity)
+            }
+        }
+    }
+    
+    private var addDataOverlay: some View {
+        Group {
+            if showAddDataSheet {
+                VStack {
+                    Spacer()
+                    
+                    AddAnalyticsEntryView(
+                        date: selectedDate,
+                        exercise: exercise,
+                        onSave: { newEntry in
+                            viewModel.saveOrReplaceAnalyticsEntry(
+                                exerciseId: exercise.id,
+                                setProgress: newEntry.setProgress,
+                                date: selectedDate
+                            )
+                            showAddDataSheet = false
+                            datesWithData = viewModel.allDatesWithData(for: exercise.id)
+                        },
+                        onCancel: {
+                            showAddDataSheet = false
+                        }
+                    )
+                    
+                    Spacer()
+                }
+                .background(Color.black.opacity(0.5))
+                .transition(.opacity)
             }
         }
     }
@@ -352,10 +439,11 @@ struct AnalyticsView: View {
             }
             
             let current = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight
+            let currentInt = Int(current)
             
-            if goalWeight > current {
-                let isMultipleOfTen = current % 10 == 0
-                let firstMilestone = isMultipleOfTen ? current + 5 : Int(ceil(Double(current) / 10.0)) * 10
+            if goalWeight > currentInt {
+                let isMultipleOfTen = currentInt % 10 == 0
+                let firstMilestone = isMultipleOfTen ? currentInt + 5 : Int(ceil(Double(currentInt) / 10.0)) * 10
                 let secondMilestone = firstMilestone + 5
                 
                 let filteredMilestones = [secondMilestone, firstMilestone]
@@ -407,7 +495,7 @@ struct AnalyticsView: View {
             }
             
             VStack(spacing: -2) {
-                Text("\(exercise.weight)")
+                Text(exercise.weight == floor(exercise.weight) ? "\(Int(exercise.weight))" : String(exercise.weight).replacingOccurrences(of: ".", with: ","))
                     .font(.system(size: 13, weight: .bold))
                     .foregroundColor(AppStyle.Color.greenGlow)
                 Text("kg")
@@ -436,7 +524,7 @@ struct AnalyticsView: View {
                         .padding(.top, 12)
                         .padding(.horizontal, 16)
                     
-                    Text("Minimum weight: \(exercise.weight + 15) kg")
+                    Text("Minimum weight: \(Int(exercise.weight) + 15) kg")
                         .font(.subheadline)
                         .foregroundColor(AppStyle.Color.white)
                         .padding(.horizontal, 16)
@@ -462,7 +550,7 @@ struct AnalyticsView: View {
                     )
                     .keyboardType(.numberPad)
                     
-                    Text("Current: \(exercise.weight) kg")
+                    Text("Current: \(exercise.weight == floor(exercise.weight) ? "\(Int(exercise.weight))" : String(exercise.weight).replacingOccurrences(of: ".", with: ",")) kg")
                         .font(.subheadline)
                         .foregroundColor(AppStyle.Color.white)
                         .padding(.horizontal, 16)
@@ -486,11 +574,11 @@ struct AnalyticsView: View {
                         .foregroundColor(AppStyle.Color.white)
                         .padding(.vertical, 8)
                         .padding(.horizontal, 16)
-                        .background(goalWeight >= exercise.weight + 15
+                        .background(goalWeight >= Int(exercise.weight) + 15
                                     ? AppStyle.Color.green
                                     : AppStyle.Color.green.opacity(0.15))
                         .cornerRadius(AppStyle.CornerRadius.defaultButton)
-                        .disabled(goalWeight < exercise.weight + 15)
+                        .disabled(goalWeight < Int(exercise.weight) + 15)
                     }
                     .padding(.bottom, 12)
                 }
@@ -500,6 +588,205 @@ struct AnalyticsView: View {
                 .padding(16)
             }
         }
+    }
+}
+
+
+struct EditSetView: View {
+    let entry: AnalyticsEntry
+    let setIndex: Int
+    let exercise: Exercise
+    var onSave: (SetProgress) -> Void
+    var onCancel: () -> Void
+    
+    @State private var weight: Double
+    @State private var reps: Int
+    @State private var showNumberPad = false
+    @State private var editingField: EditingField?
+    
+    enum EditingField {
+        case weight, reps
+    }
+    
+    init(entry: AnalyticsEntry, setIndex: Int, exercise: Exercise, onSave: @escaping (SetProgress) -> Void, onCancel: @escaping () -> Void) {
+        self.entry = entry
+        self.setIndex = setIndex
+        self.exercise = exercise
+        self.onSave = onSave
+        self.onCancel = onCancel
+        
+        let currentSet = entry.setProgress[setIndex]
+        _weight = State(initialValue: currentSet.weight)
+        _reps = State(initialValue: currentSet.currentReps)
+    }
+    
+    var body: some View {
+        ZStack {
+            VStack {
+                Spacer()
+                
+                VStack(spacing: 24) {
+                Text("Set bearbeiten")
+                    .font(.headline)
+                    .foregroundColor(AppStyle.Color.white)
+                    .padding(.top, 14)
+                
+                Text("Datum: \(formattedDate(entry.date))")
+                    .font(.subheadline)
+                    .foregroundColor(AppStyle.Color.gray)
+                
+                HStack(spacing: 24) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Gewicht")
+                            .font(.caption)
+                            .foregroundColor(AppStyle.Color.white)
+                        Button(action: {
+                            editingField = .weight
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                showNumberPad = true
+                            }
+                        }) {
+                            Text(weight == floor(weight) ? "\(Int(weight))" : String(weight).replacingOccurrences(of: ".", with: ","))
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(AppStyle.Color.white)
+                                .frame(width: 80, height: 48)
+                                .background(AppStyle.Color.greenBlack)
+                                .cornerRadius(8)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
+                                )
+                        }
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Wiederholungen")
+                            .font(.caption)
+                            .foregroundColor(AppStyle.Color.white)
+                        Button(action: {
+                            editingField = .reps
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                showNumberPad = true
+                            }
+                        }) {
+                            Text("\(reps)")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(AppStyle.Color.white)
+                                .frame(width: 80, height: 48)
+                                .background(AppStyle.Color.greenBlack)
+                                .cornerRadius(8)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
+                                )
+                        }
+                    }
+                }
+                
+                HStack(spacing: 16) {
+                    Button("Abbrechen") {
+                        onCancel()
+                    }
+                    .foregroundColor(.red)
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 24)
+                    .background(AppStyle.Color.greenBlack)
+                    .cornerRadius(12)
+                    
+                    Button("Speichern") {
+                        let updatedSet = SetProgress(
+                            status: .completedDone,
+                            currentReps: reps,
+                            weight: weight
+                        )
+                        onSave(updatedSet)
+                    }
+                    .disabled(weight <= 0 || reps <= 0)
+                    .foregroundColor(.white)
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 24)
+                    .background(
+                        weight > 0 && reps > 0
+                        ? AppStyle.Color.green
+                        : AppStyle.Color.green.opacity(0.15)
+                    )
+                    .cornerRadius(12)
+                }
+                .padding(.top, 12)
+                .padding(.bottom, 24)
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 16)
+                .background(AppStyle.Color.greenBlack)
+                .cornerRadius(18)
+                .frame(maxWidth: 320, maxHeight: 280)
+                
+                Spacer()
+            }
+            
+            if showNumberPad {
+                GeometryReader { geometry in
+                    VStack {
+                        // Tappable background area
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    showNumberPad = false
+                                }
+                                editingField = nil
+                            }
+                        
+                        CustomNumberPadView(
+                            currentValue: getCurrentValue(),
+                            isWeight: editingField == .weight,
+                            valueType: editingField == .weight ? .decimal : .integer,
+                            onValueChange: { newValue in
+                                updateCurrentValue(newValue)
+                            },
+                            onDismiss: {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    showNumberPad = false
+                                }
+                                editingField = nil
+                            }
+                        )
+                        .frame(maxHeight: geometry.size.height * 0.5)
+                    }
+                    .background(Color.black.opacity(0.5))
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+        }
+    }
+    
+    private func getCurrentValue() -> Double {
+        switch editingField {
+        case .weight:
+            return weight
+        case .reps:
+            return Double(reps)
+        case .none:
+            return 0.0
+        }
+    }
+    
+    private func updateCurrentValue(_ newValue: Double) {
+        switch editingField {
+        case .weight:
+            weight = newValue
+        case .reps:
+            reps = Int(newValue)
+        case .none:
+            break
+        }
+    }
+    
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.locale = Locale(identifier: "de_DE")
+        return formatter.string(from: date)
     }
 }
 
@@ -565,7 +852,7 @@ struct AddAnalyticsEntryView: View {
     
     struct SetProgressInput: Identifiable {
         let id = UUID()
-        var weight: Int
+        var weight: Double
         var reps: Int
     }
     
@@ -579,38 +866,79 @@ struct AddAnalyticsEntryView: View {
         ])
     }
     
+        @State private var showNumberPad = false
+    @State private var editingField: EditingField?
+    @State private var editingSetIndex: Int?
+    
+    enum EditingField {
+        case weight, reps
+    }
+    
     var body: some View {
-        VStack(spacing: 16) {
-            Text("Daten hinzufügen für \(formattedDate(date))")
-                .font(.headline)
-                .padding(.top, 14)
-            
-            ForEach($sets) { $set in
+        ZStack {
+            VStack(spacing: 16) {
+                Text("Daten hinzufügen für \(formattedDate(date))")
+                    .font(.headline)
+                    .foregroundColor(AppStyle.Color.white)
+                    .padding(.top, 14)
+                
+                ForEach(Array(sets.enumerated()), id: \.element.id) { index, set in
                 HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Gewicht")
                             .font(.caption)
-                        TextField("kg", value: $set.weight, formatter: NumberFormatter())
-                            .keyboardType(.numberPad)
-                            .frame(width: 60)
-                            .padding(6)
-                            .background(Color(.secondarySystemBackground))
-                            .cornerRadius(8)
+                            .foregroundColor(AppStyle.Color.white)
+                        Button(action: {
+                            editingSetIndex = index
+                            editingField = .weight
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                showNumberPad = true
+                            }
+                        }) {
+                            let weightValue = index < sets.count ? sets[index].weight : 0.0
+                            Text(weightValue == floor(weightValue) ? "\(Int(weightValue))" : String(weightValue).replacingOccurrences(of: ".", with: ","))
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(AppStyle.Color.white)
+                                .frame(width: 60, height: 38)
+                                .background(AppStyle.Color.greenBlack)
+                                .cornerRadius(8)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
+                                )
+                        }
                     }
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Wiederh.")
                             .font(.caption)
-                        TextField("Reps", value: $set.reps, formatter: NumberFormatter())
-                            .keyboardType(.numberPad)
-                            .frame(width: 60)
-                            .padding(6)
-                            .background(Color(.secondarySystemBackground))
-                            .cornerRadius(8)
+                            .foregroundColor(AppStyle.Color.white)
+                        Button(action: {
+                            editingSetIndex = index
+                            editingField = .reps
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                showNumberPad = true
+                            }
+                        }) {
+                            Text("\(index < sets.count ? sets[index].reps : 0)")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(AppStyle.Color.white)
+                                .frame(width: 60, height: 38)
+                                .background(AppStyle.Color.greenBlack)
+                                .cornerRadius(8)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
+                                )
+                        }
                     }
                     Spacer()
                     if sets.count > 1 {
                         Button(action: {
-                            withAnimation { sets.removeAll { $0.id == set.id } }
+                            if index < sets.count {
+                                withAnimation {
+                                    sets.remove(at: index)
+                                }
+                            }
                         }) {
                             Image(systemName: "minus.circle.fill")
                                 .foregroundColor(.red)
@@ -641,6 +969,8 @@ struct AddAnalyticsEntryView: View {
                 .foregroundColor(.red)
                 .padding(.vertical, 10)
                 .padding(.horizontal, 18)
+                .background(AppStyle.Color.greenBlack)
+                .cornerRadius(12)
                 
                 Spacer()
                 
@@ -671,19 +1001,82 @@ struct AddAnalyticsEntryView: View {
             }
             .padding(.horizontal, 12)
             .padding(.top, 12)
-            Spacer()
+                Spacer()
+            }
+            .padding(.horizontal, 18)
+            .padding(.top, 10)
+            .padding(.bottom, 14)
+            .background(AppStyle.Color.greenBlack)
+            .cornerRadius(18)
+            .frame(maxWidth: 370, maxHeight: 380)
+            
+            if showNumberPad {
+                GeometryReader { geometry in
+                    VStack {
+                        // Tappable background area
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    showNumberPad = false
+                                }
+                                editingField = nil
+                                editingSetIndex = nil
+                            }
+                        
+                        CustomNumberPadView(
+                            currentValue: getCurrentValue(),
+                            isWeight: editingField == .weight,
+                            valueType: editingField == .weight ? .decimal : .integer,
+                            onValueChange: { newValue in
+                                updateCurrentValue(newValue)
+                            },
+                            onDismiss: {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    showNumberPad = false
+                                }
+                                editingField = nil
+                                editingSetIndex = nil
+                            }
+                        )
+                        .frame(maxHeight: geometry.size.height * 0.5)
+                    }
+                    .background(Color.black.opacity(0.5))
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
         }
-        .padding(.horizontal, 18)
-        .padding(.top, 10)
-        .background(AppStyle.Color.greenBlack)
-        .cornerRadius(18)
-        .frame(maxWidth: 370, maxHeight: 380)
     }
     
-    private func formattedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.locale = Locale(identifier: "de_DE")
-        return formatter.string(from: date)
+    private func getCurrentValue() -> Double {
+        guard let setIndex = editingSetIndex, setIndex < sets.count else { return 0.0 }
+        switch editingField {
+        case .weight:
+            return sets[setIndex].weight
+        case .reps:
+            return Double(sets[setIndex].reps)
+        case .none:
+            return 0.0
+        }
+    }
+    
+    private func updateCurrentValue(_ newValue: Double) {
+        guard let setIndex = editingSetIndex, setIndex < sets.count else { return }
+        switch editingField {
+        case .weight:
+            sets[setIndex].weight = newValue
+        case .reps:
+            sets[setIndex].reps = Int(newValue)
+        case .none:
+            break
+        }
     }
 }
+
+private func formattedDate(_ date: Date) -> String {
+    let formatter = DateFormatter()
+    formatter.dateStyle = .medium
+    formatter.locale = Locale(identifier: "de_DE")
+    return formatter.string(from: date)
+}
+

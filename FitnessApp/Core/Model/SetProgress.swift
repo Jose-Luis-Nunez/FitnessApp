@@ -33,12 +33,12 @@ enum SetStatus: String, Codable {
 struct SetProgress: Codable, Hashable, Equatable {
     var status: SetStatus
     var currentReps: Int
-    var weight: Int
+    var weight: Double
 
     static let notStarted = SetProgress(
         status: .notStarted,
         currentReps: 0,
-        weight: 0
+        weight: 0.0
     )
 
     func isCompleted(with expectedAction: SetAction) -> Bool {

@@ -23,10 +23,10 @@ extension EditType {
             return EditTypeMetadata(
                 title: L10n.sheetTitleWeight,
                 placeholder: L10n.sheetPlaceholderWeight,
-                keyboardType: .numberPad,
-                validate: { Int($0) != nil },
+                keyboardType: .decimalPad,
+                validate: { Double($0) != nil },
                 save: { value, vm in
-                    if let val = Int(value) {
+                    if let val = Double(value) {
                         vm.updateWeight(val)
                     }
                 }

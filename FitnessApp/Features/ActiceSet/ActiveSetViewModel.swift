@@ -29,7 +29,7 @@ class ActiveSetViewModel: ObservableObject {
 
     var isInputValid: Bool {
         guard let newReps = Int(repsInput),
-              let newWeight = Int(weightInput),
+              let newWeight = Double(weightInput),
               let exercise = currentExercise else { return false }
         
         let currentReps = exercise.reps
@@ -110,7 +110,7 @@ class ActiveSetViewModel: ObservableObject {
         timerService.stopTimer()
     }
     
-    func updateCurrentReps(_ newReps: Int, _ newWeight: Int) {
+    func updateCurrentReps(_ newReps: Int, _ newWeight: Double) {
         guard let exercise = currentExercise else { return }
         
         let indexToUpdate: Int
@@ -196,7 +196,7 @@ class ActiveSetViewModel: ObservableObject {
         isEditing = true
         editMode = mode
         repsInput = String(exercise.reps)
-        weightInput = String(exercise.weight)
+        weightInput = exercise.weight == floor(exercise.weight) ? String(Int(exercise.weight)) : String(exercise.weight)
     }
     
     func startQuickDone(for exercise: Exercise, category: MuscleCategoryGroup) {
@@ -250,8 +250,10 @@ class ActiveSetViewModel: ObservableObject {
         isEditing = true
         editMode = mode
         
-        repsInput = String(setProgress[index].currentReps)
-        weightInput = String(setProgress[index].weight)
+        let reps = setProgress[index].currentReps
+        let weight = setProgress[index].weight
+        repsInput = String(reps)
+        weightInput = weight == floor(weight) ? String(Int(weight)) : String(weight)
     }
     
     func handleAppForeground() {

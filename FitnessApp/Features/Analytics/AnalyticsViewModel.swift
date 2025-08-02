@@ -82,6 +82,87 @@ class AnalyticsViewModel: ObservableObject {
             self.objectWillChange.send()
         }
     }
+    
+    func deleteSetFromEntry(
+        exerciseId: UUID,
+        entryId: UUID,
+        setIndex: Int
+    ) {
+        var existingEntries = storageService.load(for: exerciseId)
+        
+        guard let entryIndex = existingEntries.firstIndex(where: { $0.id == entryId }) else {
+            print("Entry not found for deletion")
+            return
+        }
+        
+        let entry = existingEntries[entryIndex]
+        guard setIndex < entry.setProgress.count else {
+            print("Set index out of bounds")
+            return
+        }
+        
+        // Create new array without the set at the specified index
+        var updatedSetProgress = entry.setProgress
+        updatedSetProgress.remove(at: setIndex)
+        
+        // If no sets left, remove the entire entry
+        if updatedSetProgress.isEmpty {
+            existingEntries.remove(at: entryIndex)
+        } else {
+            // Create new entry with remaining sets
+            let updatedEntry = AnalyticsEntry(
+                id: entry.id,
+                exerciseId: entry.exerciseId,
+                date: entry.date,
+                setProgress: updatedSetProgress
+            )
+            existingEntries[entryIndex] = updatedEntry
+        }
+        
+        storageService.save(existingEntries, for: exerciseId)
+        
+        DispatchQueue.main.async {
+            self.objectWillChange.send()
+        }
+    }
+    
+    func updateSetInEntry(
+        exerciseId: UUID,
+        entryId: UUID,
+        setIndex: Int,
+        newSetProgress: SetProgress
+    ) {
+        var existingEntries = storageService.load(for: exerciseId)
+        
+        guard let entryIndex = existingEntries.firstIndex(where: { $0.id == entryId }) else {
+            print("Entry not found for update")
+            return
+        }
+        
+        let entry = existingEntries[entryIndex]
+        guard setIndex < entry.setProgress.count else {
+            print("Set index out of bounds")
+            return
+        }
+        
+        // Create new array with updated set
+        var updatedSetProgress = entry.setProgress
+        updatedSetProgress[setIndex] = newSetProgress
+        
+        let updatedEntry = AnalyticsEntry(
+            id: entry.id,
+            exerciseId: entry.exerciseId,
+            date: entry.date,
+            setProgress: updatedSetProgress
+        )
+        
+        existingEntries[entryIndex] = updatedEntry
+        storageService.save(existingEntries, for: exerciseId)
+        
+        DispatchQueue.main.async {
+            self.objectWillChange.send()
+        }
+    }
 }
 
 extension AnalyticsViewModel {
@@ -114,23 +195,23 @@ extension AnalyticsViewModel {
             .sorted(by: { $0.date < $1.date }) // chronologisch sortieren
         
         // Extract the average weight per day (first set of the day)
-        let dailyWeights: [(date: Date, weight: Int)] = currentMonthEntries.compactMap { entry in
+        let dailyWeights: [(date: Date, weight: Double)] = currentMonthEntries.compactMap { entry in
             guard let weight = entry.setProgress.first?.weight else { return nil }
             let day = calendar.startOfDay(for: entry.date)
             return (date: day, weight: weight)
         }
         
         // Group by date, select the highest value of the day (multiple entries per day possible)
-        let maxWeightPerDay: [(date: Date, weight: Int)] = Dictionary(grouping: dailyWeights, by: { $0.date })
+        let maxWeightPerDay: [(date: Date, weight: Double)] = Dictionary(grouping: dailyWeights, by: { $0.date })
             .compactMap { (date, values) in
-                let maxWeight = values.map(\.weight).max() ?? 0
+                let maxWeight = values.map(\.weight).max() ?? 0.0
                 return (date, maxWeight)
             }
             .sorted(by: { $0.date < $1.date })
         
         // Count the real increases
         var increases = 0
-        var lastWeight: Int? = nil
+        var lastWeight: Double? = nil
         
         for (_, weight) in maxWeightPerDay {
             if let previous = lastWeight {

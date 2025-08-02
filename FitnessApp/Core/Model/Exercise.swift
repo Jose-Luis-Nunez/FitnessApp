@@ -1,10 +1,10 @@
 import Foundation
-import SwiftUICore
+import SwiftUI
 
 struct Exercise: Identifiable, Codable, Equatable {
     let id: UUID
     var name: String
-    var weight: Int
+    var weight: Double
     var reps: Int
     var sets: Int
     var seatSetting: String?
@@ -17,7 +17,7 @@ struct Exercise: Identifiable, Codable, Equatable {
         
         id = try container.decode(UUID.self, forKey: .id)
         name = try container.decode(String.self, forKey: .name)
-        weight = try container.decode(Int.self, forKey: .weight)
+        weight = try container.decode(Double.self, forKey: .weight)
         reps = try container.decode(Int.self, forKey: .reps)
         sets = try container.decode(Int.self, forKey: .sets)
         seatSetting = try container.decodeIfPresent(String.self, forKey: .seatSetting)
@@ -39,7 +39,7 @@ struct Exercise: Identifiable, Codable, Equatable {
     init(
         id: UUID = UUID(),
         name: String,
-        weight: Int,
+        weight: Double,
         reps: Int,
         sets: Int,
         seatSetting: String? = nil,

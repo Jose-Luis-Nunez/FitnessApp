@@ -146,7 +146,7 @@ extension InactiveCardView {
                     HStack(spacing: 0) {
                         Text("\(index + 1)").frame(width: 28, alignment: .leading)
                         Text("\(item.currentReps)").frame(width: 36, alignment: .leading)
-                        Text("\(item.weight)").frame(width: 44, alignment: .leading)
+                        Text("\(item.weight == floor(item.weight) ? "\(Int(item.weight))" : String(item.weight).replacingOccurrences(of: ".", with: ","))").frame(width: 44, alignment: .leading)
                     }
                     .foregroundColor(AppStyle.Color.white)
                     .font(.system(size: 11))

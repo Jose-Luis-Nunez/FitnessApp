@@ -157,7 +157,7 @@ struct MuscleCategoryView: View {
                     selectedReps: $activeSetViewModel.repsInput,
                     selectedWeight: $activeSetViewModel.weightInput,
                     repsRange: 1...30,
-                    weightRange: 0...180,
+                    weightOptions: generateWeightOptions(),
                     onSave: { newReps, newWeight in
                         activeSetViewModel.updateCurrentReps(newReps, newWeight)
                         activeSetViewModel.isEditing = false
@@ -194,7 +194,7 @@ struct MuscleCategoryView: View {
                     },
                     saveDisabled: !formViewModel.isFormValid,
                     repsRange: 1...30,
-                    weightRange: 0...180,
+                    weightOptions: generateWeightOptions(),
                     setsRange: 1...10,
                     viewModel: viewModel,
                     editingExercise: formViewModel.editingExercise,
@@ -228,6 +228,20 @@ struct MuscleCategoryView: View {
     
     private func updateBottomBarViewModel() {
         let _ = bottomActionbarViewModel
+    }
+    
+    private func generateWeightOptions() -> [String] {
+        var options: [String] = []
+        for i in 0...180 {
+            // Add whole numbers
+            options.append(String(i))
+            // Add half numbers (except for the last one to avoid 180.5)
+            if i < 180 {
+                let halfValue = Double(i) + 0.5
+                options.append(String(halfValue).replacingOccurrences(of: ".", with: ","))
+            }
+        }
+        return options
     }
     
     private var exerciseListSection: some View {

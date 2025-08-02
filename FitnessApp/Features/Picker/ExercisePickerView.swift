@@ -9,7 +9,7 @@ struct ExercisePickerView: View {
     let onCancel: () -> Void
     let saveDisabled: Bool
     let repsRange: ClosedRange<Int>
-    let weightRange: ClosedRange<Int>
+    let weightOptions: [String]
     let setsRange: ClosedRange<Int>
     let viewModel: MuscleCategoryViewModel
     let editingExercise: Exercise?
@@ -163,8 +163,23 @@ struct ExercisePickerView: View {
                             .font(.headline)
                             .foregroundColor(textColor)
                             .frame(maxWidth: .infinity)
-                        Picker("Weight", selection: $formViewModel.weight) {
-                            ForEach(weightRange, id: \.self) { value in
+                        Picker("Weight", selection: Binding<String>(
+                            get: {
+                                // Convert Double to String with comma formatting
+                                let weight = formViewModel.weight
+                                return weight == floor(weight) ? 
+                                    String(Int(weight)) : 
+                                    String(weight).replacingOccurrences(of: ".", with: ",")
+                            },
+                            set: { newValue in
+                                // Convert String back to Double
+                                let weightString = newValue.replacingOccurrences(of: ",", with: ".")
+                                if let weight = Double(weightString) {
+                                    formViewModel.weight = weight
+                                }
+                            }
+                        )) {
+                            ForEach(weightOptions, id: \.self) { value in
                                 Text("\(value) kg").tag(value).foregroundColor(pickerColor)
                             }
                         }

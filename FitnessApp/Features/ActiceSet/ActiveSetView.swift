@@ -1,4 +1,4 @@
-import SwiftUICore
+import SwiftUI
 import SwiftUI
 
 struct ActiveSetView: View {
@@ -29,11 +29,11 @@ struct ActiveSetView: View {
                                     .foregroundColor(AppStyle.Color.white)
                             }
                             
-                            Text("\(progress.weight) kg")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(AppStyle.Color.white)
-                            
-                            Spacer()
+                                        Text("\(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ",")) kg")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(AppStyle.Color.white)
+            
+            Spacer()
                             
                             HStack(spacing: 4) {
                                 Text("\(exercise.reps)")
@@ -145,7 +145,7 @@ private struct ActiveSetRowView: View {
                     .foregroundColor(AppStyle.Color.white)
             }
             
-            Text("\(progress.weight) kg")
+            Text("\(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ",")) kg")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(AppStyle.Color.white)
             

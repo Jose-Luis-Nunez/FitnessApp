@@ -111,7 +111,7 @@ class MuscleCategoryViewModel: ObservableObject {
         activeSetViewModel.stopTimer()
     }
     
-    func updateCurrentReps(_ newReps: Int, _ newWeight: Int) {
+    func updateCurrentReps(_ newReps: Int, _ newWeight: Double) {
         activeSetViewModel.updateCurrentReps(newReps, newWeight)
     }
     

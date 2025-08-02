@@ -3,7 +3,7 @@ import Foundation
 class ExerciseFormViewModel: ObservableObject {
     @Published var showForm: Bool = false
     @Published var name: String = ""
-    @Published var weight: Int = 0
+    @Published var weight: Double = 0.0
     @Published var reps: Int = 1
     @Published var sets: Int = 1
     @Published var seat: String = ""
@@ -17,7 +17,7 @@ class ExerciseFormViewModel: ObservableObject {
     
     func clearForm() {
         name = ""
-        weight = 0
+        weight = 0.0
         reps = 1
         sets = 1
         seat = ""

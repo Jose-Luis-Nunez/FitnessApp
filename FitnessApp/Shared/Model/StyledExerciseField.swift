@@ -8,7 +8,7 @@ struct StyledExerciseField: Identifiable {
 }
 
 extension StyledExerciseField {
-    init(field: InteractionField, value: Int = 0) {
+    init(field: InteractionField, value: Double = 0.0) {
         self.data = ExerciseFieldData(field: field, value: value)
         self.style = ExerciseCardConfig.config(for: field)
     }

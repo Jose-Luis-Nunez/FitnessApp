@@ -5,8 +5,8 @@ struct ActiveSetEditPickerView: View {
     @Binding var selectedReps: String
     @Binding var selectedWeight: String
     let repsRange: ClosedRange<Int>
-    let weightRange: ClosedRange<Int>
-    let onSave: (Int, Int) -> Void
+    let weightOptions: [String]
+    let onSave: (Int, Double) -> Void
     let onCancel: () -> Void
     let saveDisabled: Bool
     
@@ -57,7 +57,7 @@ struct ActiveSetEditPickerView: View {
                         .clipped()
                         
                         Picker("Weight", selection: $selectedWeight) {
-                            ForEach(weightRange.map(String.init), id: \.self) { value in
+                            ForEach(weightOptions, id: \.self) { value in
                                 Text("\(value) kg").tag(value).foregroundColor(pickerColor)
                             }
                         }
@@ -85,8 +85,12 @@ struct ActiveSetEditPickerView: View {
                     Spacer()
                     
                     Button("Speichern") {
-                        if let reps = Int(selectedReps), let weight = Int(selectedWeight) {
-                            onSave(reps, weight)
+                        if let reps = Int(selectedReps) {
+                            // Convert weight string to double, handling comma decimal separator
+                            let weightString = selectedWeight.replacingOccurrences(of: ",", with: ".")
+                            if let weight = Double(weightString) {
+                                onSave(reps, weight)
+                            }
                         }
                     }
                     .foregroundColor(saveDisabled ? saveButtonTextDisabledColor : saveButtonTextEnabledColor)

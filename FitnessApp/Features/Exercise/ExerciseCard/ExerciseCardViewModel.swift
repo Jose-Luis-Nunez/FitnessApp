@@ -19,7 +19,7 @@ final class ExerciseCardViewModel: ObservableObject {
         onUpdate(exercise)
     }
 
-    func updateWeight(_ newWeight: Int) {
+    func updateWeight(_ newWeight: Double) {
         exercise.weight = newWeight
         onUpdate(exercise)
     }
@@ -37,8 +37,8 @@ final class ExerciseCardViewModel: ObservableObject {
     func generateStyledFieldData() -> [StyledExerciseField] {
         let rawFields: [ExerciseFieldData] = [
              ExerciseFieldData(field: .edit(.weightChip), value: exercise.weight),
-             ExerciseFieldData(field: .edit(.setsChip), value: exercise.sets),
-             ExerciseFieldData(field: .edit(.repsChip), value: exercise.reps)
+             ExerciseFieldData(field: .edit(.setsChip), value: Double(exercise.sets)),
+             ExerciseFieldData(field: .edit(.repsChip), value: Double(exercise.reps))
          ]
          
          return rawFields.map { data in

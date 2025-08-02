@@ -58,7 +58,7 @@ struct IdleActiveCardView: View {
                         .frame(height: chipHeight)
 
                         AppChip(
-                            text: "\(viewModel.exercise.weight) kg",
+                            text: "\(viewModel.exercise.weight == floor(viewModel.exercise.weight) ? "\(Int(viewModel.exercise.weight))" : String(viewModel.exercise.weight).replacingOccurrences(of: ".", with: ",")) kg",
                             fontColor: AppStyle.Color.white,
                             backgroundColor: AppStyle.Color.chipsBackground,
                             size: .regular,
