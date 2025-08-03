@@ -11,44 +11,14 @@ struct CustomNumberPadView: View {
     let onValueChange: (Double) -> Void
     let onDismiss: () -> Void
     
-    @State private var currentDoubleValue: Double
-    @State private var shakeOffset: CGFloat = 0
-    @State private var centeredPickerValue: String = ""
+    @State private var inputValue: Double
     @State private var showComma: Bool = false
+    @State private var shakeOffset: CGFloat = 0
     
-    private var displayString: String {
-        if valueType == .integer {
-            let result = String(Int(currentDoubleValue))
-            return result
-        } else {
-            if currentDoubleValue == floor(currentDoubleValue) && !showComma {
-                let result = String(Int(currentDoubleValue))
-                return result
-            } else if currentDoubleValue == floor(currentDoubleValue) && showComma {
-                let result = String(Int(currentDoubleValue)) + ","
-                return result
-            } else {
-                let result = String(currentDoubleValue).replacingOccurrences(of: ".", with: ",")
-                return result
-            }
-        }
-    }
+    @State private var displayText: String = "0"
+    @State private var isUserScrolling: Bool = false
+    @State private var isInitialized: Bool = false
     
-    private var statusText: String {
-        if currentDoubleValue >= 999.0 {
-            return "Maximum reached"
-        } else {
-            return isWeight ? "kg" : "Reps"
-        }
-    }
-    
-    private var statusTextColor: Color {
-        if currentDoubleValue >= 999.0 {
-            return AppStyle.Color.greenGlow
-        } else {
-            return AppStyle.Color.gray
-        }
-    }
     
     init(currentValue: Double, isWeight: Bool, valueType: NumberPadValueType = .decimal, onValueChange: @escaping (Double) -> Void, onDismiss: @escaping () -> Void) {
         self.currentValue = currentValue
@@ -57,20 +27,62 @@ struct CustomNumberPadView: View {
         self.onValueChange = onValueChange
         self.onDismiss = onDismiss
         
-        _currentDoubleValue = State(initialValue: currentValue)
-        _showComma = State(initialValue: currentValue != floor(currentValue) && String(currentValue).contains("."))
+        _inputValue = State(wrappedValue: currentValue)
+        _showComma = State(wrappedValue: currentValue != floor(currentValue))
+        
+        let hasDecimal = currentValue != floor(currentValue)
+        if hasDecimal {
+            _displayText = State(wrappedValue: String(currentValue).replacingOccurrences(of: ".", with: ","))
+        } else {
+            _displayText = State(wrappedValue: String(Int(currentValue)))
+        }
+    }
+    
+    private var displayString: String {
+        if valueType == .integer {
+            return String(Int(inputValue))
+        } else {
+            if inputValue == floor(inputValue) && !showComma {
+                return String(Int(inputValue))
+            } else if inputValue == floor(inputValue) && showComma {
+                return String(Int(inputValue)) + ","
+            } else {
+                return String(inputValue).replacingOccurrences(of: ".", with: ",")
+            }
+        }
+    }
+    
+    private var statusText: String {
+        if inputValue >= 999.0 {
+            return "Maximum reached"
+        } else {
+            return isWeight ? "kg" : "Wiederholungen"
+        }
+    }
+    
+    private var statusTextColor: Color {
+        inputValue >= 999.0 ? AppStyle.Color.green : AppStyle.Color.white
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            topDisplayArea
-            numberPadSection
+        ZStack {
+            VStack(spacing: 0) {
+                topDisplayArea
+                numberPadSection
+            }
+            .background(AppStyle.Color.black)
+            .cornerRadius(20)
+            .shadow(radius: 20)
+            .offset(x: shakeOffset)
         }
-        .background(AppStyle.Color.black)
-        .cornerRadius(20)
-        .shadow(radius: 20)
-
-        .offset(x: shakeOffset)
+        .onAppear {
+            DispatchQueue.main.async {
+                inputValue = currentValue
+                showComma = currentValue != floor(currentValue)
+                updateDisplayText()
+                isInitialized = false
+            }
+        }
     }
     
     private var topDisplayArea: some View {
@@ -85,7 +97,78 @@ struct CustomNumberPadView: View {
                 
                 Spacer()
                 
-                scrollablePicker
+                ScrollViewReader { proxy in
+                    ScrollView(.vertical, showsIndicators: false) {
+                        LazyVStack(spacing: 8) {
+                            ForEach(getExtendedPickerRange(), id: \.self) { option in
+                                Text(option)
+                                    .font(.system(size: option == displayText ? 48 : 24, weight: option == displayText ? .bold : .regular))
+                                    .foregroundColor(AppStyle.Color.white)
+                                    .opacity(option == displayText ? 1.0 : 0.3)
+                                    .onTapGesture {
+                                        if let value = Double(option.replacingOccurrences(of: ",", with: ".")) {
+                                            inputValue = value
+                                            showComma = option.contains(",") && option.hasSuffix(",")
+                                            updateDisplayText()
+                                            
+                                            withAnimation(.easeInOut(duration: 0.3)) {
+                                                proxy.scrollTo(option, anchor: .center)
+                                            }
+                                        }
+                                    }
+                                    .background(
+                                        GeometryReader { geo in
+                                            Color.clear
+                                                .onAppear {
+                                                    if isInitialized {
+                                                        checkIfCentered(option: option, geometry: geo)
+                                                    }
+                                                }
+                                                .onChange(of: geo.frame(in: .named("picker")).midY) { _, _ in
+                                                    if isUserScrolling && isInitialized {
+                                                        checkIfCentered(option: option, geometry: geo)
+                                                    }
+                                                }
+                                        }
+                                    )
+                                    .id(option)
+                            }
+                        }
+                        .padding(.vertical, 60)
+                    }
+                    .coordinateSpace(name: "picker")
+                    .frame(height: 120)
+                    .clipped()
+                    .simultaneousGesture(
+                        DragGesture()
+                            .onChanged { _ in
+                                isUserScrolling = true
+                            }
+                            .onEnded { _ in
+                                isUserScrolling = false
+                            }
+                    )
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                proxy.scrollTo(displayText, anchor: .center)
+                            }
+                            
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                isInitialized = true
+                            }
+                        }
+                    }
+                    .onChange(of: displayText) { _, newValue in
+                        if !isUserScrolling {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    proxy.scrollTo(newValue, anchor: .center)
+                                }
+                            }
+                        }
+                    }
+                }
                 
                 Spacer()
                 
@@ -105,74 +188,6 @@ struct CustomNumberPadView: View {
         }
         .padding(.vertical, 16)
         .background(Color(hex: "#141518").opacity(0.85))
-    }
-    
-    private var scrollablePicker: some View {
-        ZStack {
-            ScrollViewReader { proxy in
-                                    ScrollView(.vertical, showsIndicators: false) {
-                        LazyVStack(spacing: 6) {
-                        ForEach(generatePickerOptions(), id: \.self) { option in
-                            Text(option)
-                                .font(.system(size: 48, weight: (option == centeredPickerValue || option == displayString) ? .bold : .regular))
-                                .foregroundColor(AppStyle.Color.white)
-                                .opacity((option == centeredPickerValue || option == displayString) ? 1.0 : 0.3)
-                                .onTapGesture {
-                                    let newValue = Double(option.replacingOccurrences(of: ",", with: ".")) ?? 0.0
-                                    withAnimation(.interpolatingSpring(stiffness: 300, damping: 30)) {
-                                        currentDoubleValue = newValue
-                                        proxy.scrollTo(option, anchor: UnitPoint.center)
-                                    }
-                                }
-                                .background(
-                                    GeometryReader { geo in
-                                        Color.clear
-                                            .onAppear {
-                                                updateCenteredValue(option: option, geometry: geo)
-                                            }
-                                            .onChange(of: geo.frame(in: .named("scroll")).midY) { oldValue, newValue in
-                                                updateCenteredValue(option: option, geometry: geo)
-                                            }
-                                    }
-                                )
-                                .id(option)
-                        }
-                    }
-                    .padding(.vertical, 50)
-                }
-                .coordinateSpace(name: "scroll")
-                .frame(height: 100)
-                .clipped()
-                .onAppear {
-                    centeredPickerValue = displayString
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            proxy.scrollTo(displayString, anchor: UnitPoint.center)
-                        }
-                    }
-                }
-                .onChange(of: currentDoubleValue) { oldValue, newValue in
-                    // Update centered value to match current display
-                    centeredPickerValue = displayString
-                    
-                    // Auto-scroll to new value
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        proxy.scrollTo(displayString, anchor: UnitPoint.center)
-                    }
-                }
-                .onChange(of: displayString) { oldValue, newValue in
-                    // Also update when displayString changes (e.g., comma added)
-                    centeredPickerValue = newValue
-                    
-                    // Auto-scroll to new display string
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        proxy.scrollTo(newValue, anchor: UnitPoint.center)
-                    }
-                }
-            }
-            
-
-        }
     }
     
     private var numberPadSection: some View {
@@ -210,14 +225,13 @@ struct CustomNumberPadView: View {
                 Button("Abbrechen") {
                     onDismiss()
                 }
-                .font(.system(size: 18, weight: .semibold))
+                .font(.system(size: 18, weight: .medium))
                 .foregroundColor(AppStyle.Color.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
-                .cornerRadius(12)
                 
                 Button("Übernehmen") {
-                    onValueChange(currentDoubleValue)
+                    onValueChange(inputValue)
                     onDismiss()
                 }
                 .font(.system(size: 18, weight: .semibold))
@@ -233,23 +247,6 @@ struct CustomNumberPadView: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 80)
         .background(Color(hex: "#222025"))
-    }
-    
-    // MARK: - Actions
-    
-    private func adjustValue(_ delta: Int) {
-        let newValue = max(0.0, min(999.0, currentDoubleValue + Double(delta)))
-        
-        if newValue == currentDoubleValue && delta > 0 {
-            // At maximum, give feedback
-            triggerMaximumFeedback()
-        } else if newValue == currentDoubleValue && delta < 0 {
-            // At minimum, give light feedback
-            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-            impactFeedback.impactOccurred()
-        } else {
-            currentDoubleValue = newValue
-        }
     }
     
     private func numberButton(_ digit: String) -> some View {
@@ -271,160 +268,188 @@ struct CustomNumberPadView: View {
                 if valueType == .decimal {
                     appendComma()
                 } else {
-                    currentDoubleValue = 0.0
-                    showComma = false
+                    clearValue()
                 }
             }
     }
     
     private func deleteButton() -> some View {
         Image(systemName: "delete.left")
-            .font(.system(size: 28, weight: .bold))
+            .font(.system(size: 24, weight: .regular))
             .foregroundColor(AppStyle.Color.white)
             .frame(maxWidth: .infinity, minHeight: 70)
             .onTapGesture {
                 deleteLastDigit()
             }
     }
-    
-    // MARK: - Helper Functions
-    
-
-    
-    private func updateCenteredValue(option: String, geometry: GeometryProxy) {
-        let frame = geometry.frame(in: .named("scroll"))
-        let centerY: CGFloat = 50  // Half of scroll view height (100/2)
         
-        // Update visual highlighting for any option near center
-        if abs(frame.midY - centerY) < 6 {
-            // Haptic feedback when a new value gets centered
-            if centeredPickerValue != option {
-                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                impactFeedback.impactOccurred()
+    private func getExtendedPickerRange() -> [String] {
+        let currentInt = Int(inputValue)
+        var options: [String] = []
+        
+        let start = max(0, currentInt - 50)
+        let end = min(999, currentInt + 50)
+        
+        for i in start...end {
+            if valueType == .decimal {
+                options.append(String(i))
+                if i < 999 {
+                    options.append("\(i),5")
+                }
+            } else {
+                options.append(String(i))
             }
-            
-            centeredPickerValue = option
+        }
+        
+        if !options.contains(displayText) {
+            options.append(displayText)
+        }
+        
+        options.sort { (a, b) in
+            let aVal = Double(a.replacingOccurrences(of: ",", with: ".")) ?? 0
+            let bVal = Double(b.replacingOccurrences(of: ",", with: ".")) ?? 0
+            return aVal < bVal
+        }
+        
+        return options
+    }
+    
+    private func checkIfCentered(option: String, geometry: GeometryProxy) {
+        guard isInitialized && isUserScrolling else { return }
+        
+        let frame = geometry.frame(in: .named("picker"))
+        let pickerHeight: CGFloat = 120
+        let center = pickerHeight / 2 + 15
+        
+        if abs(frame.midY - center) < 12 {
+            if option != displayText {
+                if let value = Double(option.replacingOccurrences(of: ",", with: ".")) {
+                    inputValue = value
+                    showComma = option.contains(",") && option.hasSuffix(",")
+                    updateDisplayText()
+                    
+                    let impact = UIImpactFeedbackGenerator(style: .light)
+                    impact.impactOccurred()
+                }
+            }
         }
     }
     
     private func appendDigit(_ digit: String) {
-        let currentString = displayString
+        let currentString = displayText
         
         if valueType == .integer {
-            // Integer mode: max 3 digits
             if currentString.count < 3 {
                 let newString = currentString == "0" ? digit : currentString + digit
-                currentDoubleValue = Double(newString) ?? 0.0
+                inputValue = Double(newString) ?? 0.0
             } else {
-                // Jump to maximum
-                currentDoubleValue = 999.0
+                inputValue = 999.0
                 triggerMaximumFeedback()
             }
         } else {
-            // Decimal mode
             let parts = currentString.components(separatedBy: ",")
             if parts.count == 1 {
-                // No comma yet
                 if parts[0].count < 3 {
                     let newString = currentString == "0" ? digit : currentString + digit
-                    currentDoubleValue = Double(newString) ?? 0.0
+                    inputValue = Double(newString) ?? 0.0
                     showComma = false
                 } else {
-                    // Jump to maximum when 4th digit
-                    currentDoubleValue = 999.0
+                    inputValue = 999.0
                     showComma = false
                     triggerMaximumFeedback()
                 }
             } else {
-                // Has comma
                 if parts[1].count < 2 {
                     let newString = currentString + digit
-                    currentDoubleValue = Double(newString.replacingOccurrences(of: ",", with: ".")) ?? 0.0
-                    showComma = false // Will be handled by displayString logic
+                    inputValue = Double(newString.replacingOccurrences(of: ",", with: ".")) ?? 0.0
+                    showComma = false
                 } else {
-                    // Max decimal places reached - give full feedback
                     triggerMaximumFeedback()
                 }
             }
         }
+        updateDisplayText()
     }
     
     private func appendComma() {
-        let currentString = displayString
-        print("🔗 appendComma called:")
-        print("   currentString: '\(currentString)'")
-        print("   contains comma: \(currentString.contains(","))")
-        print("   is zero: \(currentString == "0")")
-        
-        if !currentString.contains(",") && currentString != "0" {
-            print("   → Setting showComma = true")
-            showComma = true
-        } else {
-            print("   → NOT setting showComma (conditions not met)")
+        if valueType == .decimal {
+            let currentString = displayText
+            if !currentString.contains(",") && currentString != "0" {
+                showComma = true
+                updateDisplayText()
+            }
         }
     }
     
     private func deleteLastDigit() {
-        let currentString = displayString
+        let currentString = displayText
         if currentString.count > 1 {
             var newString = String(currentString.dropLast())
             if newString.hasSuffix(",") {
                 newString = String(newString.dropLast())
                 showComma = false
             }
-            currentDoubleValue = Double(newString.replacingOccurrences(of: ",", with: ".")) ?? 0.0
+            inputValue = Double(newString.replacingOccurrences(of: ",", with: ".")) ?? 0.0
             showComma = newString.contains(",") || showComma
         } else {
-            currentDoubleValue = 0.0
+            inputValue = 0.0
             showComma = false
         }
+        updateDisplayText()
     }
+    
+    private func clearValue() {
+        inputValue = 0.0
+        showComma = false
+        updateDisplayText()
+    }
+    
+    private func adjustValue(_ delta: Int) {
+        let newValue = max(0.0, min(999.0, inputValue + Double(delta)))
+        
+        if newValue == inputValue && delta > 0 {
+            triggerMaximumFeedback()
+        } else if newValue == inputValue && delta < 0 {
+            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+            impactFeedback.impactOccurred()
+        } else {
+            inputValue = newValue
+            showComma = false
+            updateDisplayText()
+        }
+    }
+    
+    private func setPickerValue(_ option: String) {
+        let newValue = Double(option.replacingOccurrences(of: ",", with: ".")) ?? 0.0
+        inputValue = newValue
+        showComma = option.contains(",") && option.hasSuffix(",")
+        updateDisplayText()
+    }
+    
+    private func updateDisplayText() {
+        displayText = displayString
+    }
+    
+    private func shouldAutoScroll() -> Bool {
+        if valueType == .decimal && displayText.hasSuffix(",") {
+            return false
+        }
+        return true
+    }
+    
     
     private func triggerMaximumFeedback() {
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+        let impactFeedback = UIImpactFeedbackGenerator(style: .heavy)
         impactFeedback.impactOccurred()
         
-        withAnimation(.interpolatingSpring(stiffness: 500, damping: 5)) {
-            shakeOffset = -10
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.3)) {
+            shakeOffset = 10
         }
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            withAnimation(.interpolatingSpring(stiffness: 500, damping: 5)) {
-                shakeOffset = 10
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                shakeOffset = 0
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                withAnimation(.interpolatingSpring(stiffness: 500, damping: 5)) {
-                    shakeOffset = 0
-                }
-            }
-        }
-    }
-    
-    private func generatePickerOptions() -> [String] {
-        var options: [String] = []
-        
-        if valueType == .integer {
-            for i in 0...999 {
-                options.append(String(i))
-            }
-        } else {
-            for i in 0...999 {
-                options.append(String(i))
-                if i < 999 {
-                    let halfValue = Double(i) + 0.5
-                    options.append(String(halfValue).replacingOccurrences(of: ".", with: ","))
-                }
-            }
-        }
-        
-        // Always include the current displayString if it's not already in the list
-        if !options.contains(displayString) {
-            options.append(displayString)
-        }
-        
-        return options.sorted { a, b in
-            let aValue = Double(a.replacingOccurrences(of: ",", with: ".")) ?? 0
-            let bValue = Double(b.replacingOccurrences(of: ",", with: ".")) ?? 0
-            return aValue < bValue
         }
     }
 }
