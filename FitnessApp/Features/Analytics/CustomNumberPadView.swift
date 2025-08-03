@@ -12,35 +12,33 @@ struct CustomNumberPadView: View {
     let onDismiss: () -> Void
     
     @State private var currentDoubleValue: Double
-    @State private var cursorOpacity: Double = 1.0
     @State private var shakeOffset: CGFloat = 0
-    @State private var isScrolling = false
     @State private var centeredPickerValue: String = ""
+    @State private var showComma: Bool = false
     
-    // Single source of truth: convert double to display string
     private var displayString: String {
         if valueType == .integer {
-            return String(Int(currentDoubleValue))
+            let result = String(Int(currentDoubleValue))
+            return result
         } else {
-            if currentDoubleValue == floor(currentDoubleValue) {
-                return String(Int(currentDoubleValue))
+            if currentDoubleValue == floor(currentDoubleValue) && !showComma {
+                let result = String(Int(currentDoubleValue))
+                return result
+            } else if currentDoubleValue == floor(currentDoubleValue) && showComma {
+                let result = String(Int(currentDoubleValue)) + ","
+                return result
             } else {
-                return String(currentDoubleValue).replacingOccurrences(of: ".", with: ",")
+                let result = String(currentDoubleValue).replacingOccurrences(of: ".", with: ",")
+                return result
             }
         }
     }
     
-    private var cursorXOffset: CGFloat {
-        let charWidth: CGFloat = 16
-        let textWidth = CGFloat(displayString.count) * charWidth
-        return textWidth / 2 + 4
-    }
-    
     private var statusText: String {
         if currentDoubleValue >= 999.0 {
-            return "Maximum erreicht"
+            return "Maximum reached"
         } else {
-            return isWeight ? "kg" : "Wiederholungen"
+            return isWeight ? "kg" : "Reps"
         }
     }
     
@@ -60,6 +58,7 @@ struct CustomNumberPadView: View {
         self.onDismiss = onDismiss
         
         _currentDoubleValue = State(initialValue: currentValue)
+        _showComma = State(initialValue: currentValue != floor(currentValue) && String(currentValue).contains("."))
     }
     
     var body: some View {
@@ -70,9 +69,7 @@ struct CustomNumberPadView: View {
         .background(AppStyle.Color.black)
         .cornerRadius(20)
         .shadow(radius: 20)
-        .onAppear {
-            cursorOpacity = 0.0
-        }
+
         .offset(x: shakeOffset)
     }
     
@@ -81,8 +78,8 @@ struct CustomNumberPadView: View {
             HStack {
                 Button(action: { adjustValue(-1) }) {
                     Image(systemName: "minus")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(AppStyle.Color.white)
+                        .font(.system(size: 24, weight: .regular))
+                        .foregroundColor(Color(hex: "#555555"))
                         .frame(width: 50, height: 50)
                 }
                 
@@ -94,8 +91,8 @@ struct CustomNumberPadView: View {
                 
                 Button(action: { adjustValue(1) }) {
                     Image(systemName: "plus")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(AppStyle.Color.white)
+                        .font(.system(size: 24, weight: .regular))
+                        .foregroundColor(Color(hex: "#555555"))
                         .frame(width: 50, height: 50)
                 }
             }
@@ -107,14 +104,14 @@ struct CustomNumberPadView: View {
                 .animation(.easeInOut(duration: 0.3), value: statusText)
         }
         .padding(.vertical, 16)
-        .background(Color(hex: "#141518"))
+        .background(Color(hex: "#141518").opacity(0.85))
     }
     
     private var scrollablePicker: some View {
         ZStack {
             ScrollViewReader { proxy in
                                     ScrollView(.vertical, showsIndicators: false) {
-                        LazyVStack(spacing: 12) {
+                        LazyVStack(spacing: 6) {
                         ForEach(generatePickerOptions(), id: \.self) { option in
                             Text(option)
                                 .font(.system(size: 48, weight: (option == centeredPickerValue || option == displayString) ? .bold : .regular))
@@ -133,7 +130,7 @@ struct CustomNumberPadView: View {
                                             .onAppear {
                                                 updateCenteredValue(option: option, geometry: geo)
                                             }
-                                            .onChange(of: geo.frame(in: .named("scroll")).midY) { _ in
+                                            .onChange(of: geo.frame(in: .named("scroll")).midY) { oldValue, newValue in
                                                 updateCenteredValue(option: option, geometry: geo)
                                             }
                                     }
@@ -146,17 +143,6 @@ struct CustomNumberPadView: View {
                 .coordinateSpace(name: "scroll")
                 .frame(height: 100)
                 .clipped()
-                .simultaneousGesture(
-                    DragGesture()
-                        .onChanged { _ in
-                            isScrolling = true
-                        }
-                        .onEnded { _ in
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                isScrolling = false
-                            }
-                        }
-                )
                 .onAppear {
                     centeredPickerValue = displayString
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -165,29 +151,27 @@ struct CustomNumberPadView: View {
                         }
                     }
                 }
-                .onChange(of: currentDoubleValue) { _ in
+                .onChange(of: currentDoubleValue) { oldValue, newValue in
                     // Update centered value to match current display
                     centeredPickerValue = displayString
                     
-                    // Only auto-scroll if user is not currently scrolling
-                    if !isScrolling {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            proxy.scrollTo(displayString, anchor: UnitPoint.center)
-                        }
+                    // Auto-scroll to new value
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        proxy.scrollTo(displayString, anchor: UnitPoint.center)
+                    }
+                }
+                .onChange(of: displayString) { oldValue, newValue in
+                    // Also update when displayString changes (e.g., comma added)
+                    centeredPickerValue = newValue
+                    
+                    // Auto-scroll to new display string
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        proxy.scrollTo(newValue, anchor: UnitPoint.center)
                     }
                 }
             }
             
-            // Cursor
-            if !isScrolling {
-                Rectangle()
-                    .fill(AppStyle.Color.white)
-                    .frame(width: 2, height: 24)
-                    .opacity(cursorOpacity)
-                    .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: cursorOpacity)
-                    .offset(x: cursorXOffset)
-                    .allowsHitTesting(false)
-            }
+
         }
     }
     
@@ -288,6 +272,7 @@ struct CustomNumberPadView: View {
                     appendComma()
                 } else {
                     currentDoubleValue = 0.0
+                    showComma = false
                 }
             }
     }
@@ -304,25 +289,21 @@ struct CustomNumberPadView: View {
     
     // MARK: - Helper Functions
     
+
+    
     private func updateCenteredValue(option: String, geometry: GeometryProxy) {
         let frame = geometry.frame(in: .named("scroll"))
         let centerY: CGFloat = 50  // Half of scroll view height (100/2)
         
         // Update visual highlighting for any option near center
         if abs(frame.midY - centerY) < 6 {
-            centeredPickerValue = option
-            
-            // Only update actual value when user is actively scrolling
-            if isScrolling {
-                let newValue = Double(option.replacingOccurrences(of: ",", with: ".")) ?? 0.0
-                if currentDoubleValue != newValue {
-                    currentDoubleValue = newValue
-                    
-                    // Light haptic feedback for value change
-                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                    impactFeedback.impactOccurred()
-                }
+            // Haptic feedback when a new value gets centered
+            if centeredPickerValue != option {
+                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                impactFeedback.impactOccurred()
             }
+            
+            centeredPickerValue = option
         }
     }
     
@@ -347,9 +328,11 @@ struct CustomNumberPadView: View {
                 if parts[0].count < 3 {
                     let newString = currentString == "0" ? digit : currentString + digit
                     currentDoubleValue = Double(newString) ?? 0.0
+                    showComma = false
                 } else {
                     // Jump to maximum when 4th digit
                     currentDoubleValue = 999.0
+                    showComma = false
                     triggerMaximumFeedback()
                 }
             } else {
@@ -357,6 +340,7 @@ struct CustomNumberPadView: View {
                 if parts[1].count < 2 {
                     let newString = currentString + digit
                     currentDoubleValue = Double(newString.replacingOccurrences(of: ",", with: ".")) ?? 0.0
+                    showComma = false // Will be handled by displayString logic
                 } else {
                     // Max decimal places reached - give full feedback
                     triggerMaximumFeedback()
@@ -367,8 +351,16 @@ struct CustomNumberPadView: View {
     
     private func appendComma() {
         let currentString = displayString
+        print("🔗 appendComma called:")
+        print("   currentString: '\(currentString)'")
+        print("   contains comma: \(currentString.contains(","))")
+        print("   is zero: \(currentString == "0")")
+        
         if !currentString.contains(",") && currentString != "0" {
-            currentDoubleValue = Double(currentString + ".0") ?? currentDoubleValue
+            print("   → Setting showComma = true")
+            showComma = true
+        } else {
+            print("   → NOT setting showComma (conditions not met)")
         }
     }
     
@@ -378,10 +370,13 @@ struct CustomNumberPadView: View {
             var newString = String(currentString.dropLast())
             if newString.hasSuffix(",") {
                 newString = String(newString.dropLast())
+                showComma = false
             }
             currentDoubleValue = Double(newString.replacingOccurrences(of: ",", with: ".")) ?? 0.0
+            showComma = newString.contains(",") || showComma
         } else {
             currentDoubleValue = 0.0
+            showComma = false
         }
     }
     
