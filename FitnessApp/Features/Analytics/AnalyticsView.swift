@@ -89,8 +89,8 @@ struct AnalyticsView: View {
                         Spacer()
                     }
                 }
-                .padding(.top, 8)
-                .padding(.leading, 8)
+                .padding(.top, 16)
+                .padding(.leading, 16)
                 .padding(.trailing, AppStyle.Padding.horizontal)
                 
                 headerView
@@ -231,7 +231,7 @@ struct AnalyticsView: View {
                 }
                     .padding(.vertical, 10)
                     .padding(.top, 10)
-                    .background(AppStyle.Color.black)
+                    .background(AppStyle.Color.backgroundColor)
             )
         }
     }
