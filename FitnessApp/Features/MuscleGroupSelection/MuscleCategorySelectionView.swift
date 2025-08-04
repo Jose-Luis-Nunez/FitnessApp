@@ -7,6 +7,8 @@ private enum Constants {
     static let spacerHeight: CGFloat = 5
     static let topPadding: CGFloat = 1
     static let titleBottomSpacing: CGFloat = 5
+    
+    static let secondaryTextColor = Color(hex: "#46474B")
 
     enum CategoryTile {
         static let barWidth: CGFloat = 120
@@ -134,7 +136,7 @@ private struct CategoryTileView: View {
 
             Text("\(exerciseInfo.completed) of \(exerciseInfo.total) completed")
                 .font(AppStyle.Font.defaultFont)
-                .foregroundColor(Color(hex: "#8a8580"))
+                .foregroundColor(Constants.secondaryTextColor)
         }
         .padding(.vertical, Constants.CategoryTile.verticalPadding)
         .padding(.horizontal, Constants.CategoryTile.contentPadding)
@@ -214,7 +216,7 @@ private struct CustomChip: View {
         Group {
             if text != "Completed" {
                 RoundedRectangle(cornerRadius: Constants.ProgressBar.cornerRadius)
-                    .stroke(Color(hex: "#8a8580"), lineWidth: 1)
+                    .stroke(Constants.secondaryTextColor, lineWidth: 1)
             }
         }
     }
@@ -225,7 +227,7 @@ private struct ProgressBar: View {
     let totalWidth: CGFloat
 
     private let fillColor = AppStyle.Color.green
-    private let trackColor = Color(hex: "#8a8580")
+    private let trackColor = Constants.secondaryTextColor
 
     var body: some View {
         ZStack(alignment: .leading) {

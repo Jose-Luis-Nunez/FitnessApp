@@ -11,6 +11,7 @@ struct AnalyticsView: View {
     let exercise: Exercise
     @ObservedObject var viewModel: AnalyticsViewModel
     private let initialReps: Int
+    @Environment(\.dismiss) private var dismiss
     @State private var selectedDate: Date = Date()
     @State private var originalDate: Date = Date()
     @State private var tempDate: Date = Date()
@@ -34,7 +35,7 @@ struct AnalyticsView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            ZStack(alignment: .top) {
+            ZStack {
                 mainContent(geometry: geometry)
                 calendarDialog
                 editSetOverlay
@@ -52,7 +53,46 @@ struct AnalyticsView: View {
     
     private func mainContent(geometry: GeometryProxy) -> some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 0) {
+                // Top bar with close button and drag indicator
+                ZStack {
+                    // Drag indicator - centered on screen
+                    HStack {
+                        Spacer()
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(AppStyle.Color.gray.opacity(0.4))
+                            .frame(width: 36, height: 5)
+                        Spacer()
+                    }
+                    
+                    // Close button - positioned on left
+                    HStack {
+                        Button(action: {
+                            dismiss()
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(AppStyle.Color.gray.opacity(0.15))
+                                    .frame(width: 32, height: 32)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(AppStyle.Color.gray.opacity(0.3), lineWidth: 1)
+                                    )
+                                
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(AppStyle.Color.white)
+                            }
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        
+                        Spacer()
+                    }
+                }
+                .padding(.top, 8)
+                .padding(.leading, 8)
+                .padding(.trailing, AppStyle.Padding.horizontal)
+                
                 headerView
                 weightMilestoneView
                     .background(
@@ -69,7 +109,7 @@ struct AnalyticsView: View {
                 milestoneHeight = height
             }
         }
-        .background(AppStyle.Color.black)
+        .background(Color(hex: "#0A090E"))
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -79,6 +119,16 @@ struct AnalyticsView: View {
                     .foregroundColor(AppStyle.Color.white)
             }
         }
+        .gesture(
+            DragGesture()
+                .onEnded { value in
+                    // Swipe down to close (drag distance > 100 and mostly downward)
+                    if value.translation.height > 100 && abs(value.translation.width) < abs(value.translation.height) {
+                        // This would typically dismiss the view - depends on how it's presented
+                        // For now, we'll just add the visual indicator
+                    }
+                }
+        )
         .onAppear {
             originalDate = selectedDate
             datesWithData = viewModel.allDatesWithData(for: exercise.id)
@@ -91,34 +141,43 @@ struct AnalyticsView: View {
     }
     
     private var headerView: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        HStack(alignment: .center, spacing: 12) {
             Text(exercise.name)
                 .font(AppStyle.Font.analyticsExerciseTitle)
                 .foregroundColor(AppStyle.Color.white)
                 .fixedSize()
             
-            HStack(spacing: 8) {
-                Image(systemName: "calendar")
-                    .foregroundColor(AppStyle.Color.greenGlow)
-                    .imageScale(.medium)
-                    .onTapGesture {
-                        showCalendarDialog = true
-                    }
-                
-                Text(formattedDate(selectedDate))
-                    .font(.body)
-                    .foregroundColor(AppStyle.Color.white)
-                    .onTapGesture {
-                        showCalendarDialog = true
-                    }
+            Spacer()
+            
+            Button(action: {
+                showCalendarDialog = true
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "calendar")
+                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .imageScale(.medium)
+                    
+                    Text(formattedDate(selectedDate))
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(AppStyle.Color.white)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(AppStyle.Color.greenDark)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(AppStyle.Color.greenGlow.opacity(0.3), lineWidth: 1)
+                        )
+                        .shadow(color: AppStyle.Color.greenGlow.opacity(0.2), radius: 2, x: 0, y: 1)
+                )
             }
-            .padding(.horizontal, 8)
-            .frame(height: 32)
-            .background(AppStyle.Color.greenDark)
-            .cornerRadius(AppStyle.CornerRadius.defaultButton)
+            .buttonStyle(PlainButtonStyle())
         }
         .padding(.horizontal, AppStyle.Padding.horizontal)
-        .padding(.top, 32)
+        .padding(.top, 4)
+        .padding(.bottom, 10)
     }
     
     private var resultsView: some View {
@@ -314,28 +373,38 @@ struct AnalyticsView: View {
     private var addDataOverlay: some View {
         Group {
             if showAddDataSheet {
-                VStack {
-                    AddAnalyticsEntryView(
-                        date: selectedDate,
-                        exercise: exercise,
-                        onSave: { newEntry in
-                            viewModel.saveOrReplaceAnalyticsEntry(
-                                exerciseId: exercise.id,
-                                setProgress: newEntry.setProgress,
-                                date: selectedDate
-                            )
-                            showAddDataSheet = false
-                            datesWithData = viewModel.allDatesWithData(for: exercise.id)
-                        },
-                        onCancel: {
+                ZStack {
+                    // Tappable background area
+                    Color.black.opacity(0.5)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
                             showAddDataSheet = false
                         }
-                    )
-                    .padding(.top, 10)
                     
-                    Spacer()
+                    // Overlay content
+                    VStack {
+                        Spacer()
+                        
+                        AddAnalyticsEntryView(
+                            date: selectedDate,
+                            exercise: exercise,
+                            onSave: { newEntry in
+                                viewModel.saveOrReplaceAnalyticsEntry(
+                                    exerciseId: exercise.id,
+                                    setProgress: newEntry.setProgress,
+                                    date: selectedDate
+                                )
+                                showAddDataSheet = false
+                                datesWithData = viewModel.allDatesWithData(for: exercise.id)
+                            },
+                            onCancel: {
+                                showAddDataSheet = false
+                            }
+                        )
+                        
+                        Spacer()
+                    }
                 }
-                .background(Color.black.opacity(0.5))
                 .transition(.opacity)
             }
         }
@@ -631,97 +700,97 @@ struct EditSetView: View {
                 Spacer()
                 
                 VStack(spacing: 24) {
-                Text("Set bearbeiten")
-                    .font(.headline)
-                    .foregroundColor(AppStyle.Color.white)
-                    .padding(.top, 14)
-                
-                Text("Datum: \(formattedDate(entry.date))")
-                    .font(.subheadline)
-                    .foregroundColor(AppStyle.Color.gray)
-                
-                HStack(spacing: 24) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Gewicht")
-                            .font(.caption)
-                            .foregroundColor(AppStyle.Color.white)
-                        Button(action: {
-                            editingField = .weight
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                showNumberPad = true
-                            }
-                        }) {
-                            Text(weight == floor(weight) ? "\(Int(weight))" : String(weight).replacingOccurrences(of: ".", with: ","))
-                                .font(.system(size: 16, weight: .medium))
+                    Text("Set bearbeiten")
+                        .font(.headline)
+                        .foregroundColor(AppStyle.Color.white)
+                        .padding(.top, 14)
+                    
+                    Text("Datum: \(formattedDate(entry.date))")
+                        .font(.subheadline)
+                        .foregroundColor(AppStyle.Color.gray)
+                    
+                    HStack(spacing: 24) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Gewicht")
+                                .font(.caption)
                                 .foregroundColor(AppStyle.Color.white)
-                                .frame(width: 80, height: 48)
-                                .background(AppStyle.Color.greenBlack)
-                                .cornerRadius(8)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
-                                )
+                            Button(action: {
+                                editingField = .weight
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    showNumberPad = true
+                                }
+                            }) {
+                                Text(weight == floor(weight) ? "\(Int(weight))" : String(weight).replacingOccurrences(of: ".", with: ","))
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(AppStyle.Color.white)
+                                    .frame(width: 80, height: 48)
+                                    .background(AppStyle.Color.greenBlack)
+                                    .cornerRadius(8)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
+                                    )
+                            }
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Wiederholungen")
+                                .font(.caption)
+                                .foregroundColor(AppStyle.Color.white)
+                            Button(action: {
+                                editingField = .reps
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    showNumberPad = true
+                                }
+                            }) {
+                                Text("\(reps)")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(AppStyle.Color.white)
+                                    .frame(width: 80, height: 48)
+                                    .background(AppStyle.Color.greenBlack)
+                                    .cornerRadius(8)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
+                                    )
+                            }
                         }
                     }
                     
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Wiederholungen")
-                            .font(.caption)
-                            .foregroundColor(AppStyle.Color.white)
-                        Button(action: {
-                            editingField = .reps
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                showNumberPad = true
-                            }
-                        }) {
-                            Text("\(reps)")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(AppStyle.Color.white)
-                                .frame(width: 80, height: 48)
-                                .background(AppStyle.Color.greenBlack)
-                                .cornerRadius(8)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
-                                )
+                    HStack(spacing: 16) {
+                        Button("Abbrechen") {
+                            onCancel()
                         }
-                    }
-                }
-                
-                HStack(spacing: 16) {
-                    Button("Abbrechen") {
-                        onCancel()
-                    }
-                    .foregroundColor(.red)
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 24)
-                    .background(AppStyle.Color.greenBlack)
-                    .cornerRadius(12)
-                    
-                    Button("Speichern") {
-                        let updatedSet = SetProgress(
-                            status: .completedDone,
-                            currentReps: reps,
-                            weight: weight
+                        .foregroundColor(.red)
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 24)
+                        .background(AppStyle.Color.greenBlack)
+                        .cornerRadius(12)
+                        
+                        Button("Speichern") {
+                            let updatedSet = SetProgress(
+                                status: .completedDone,
+                                currentReps: reps,
+                                weight: weight
+                            )
+                            onSave(updatedSet)
+                        }
+                        .disabled(weight <= 0 || reps <= 0)
+                        .foregroundColor(.white)
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 24)
+                        .background(
+                            weight > 0 && reps > 0
+                            ? AppStyle.Color.green
+                            : AppStyle.Color.green.opacity(0.15)
                         )
-                        onSave(updatedSet)
+                        .cornerRadius(12)
                     }
-                    .disabled(weight <= 0 || reps <= 0)
-                    .foregroundColor(.white)
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 24)
-                    .background(
-                        weight > 0 && reps > 0
-                        ? AppStyle.Color.green
-                        : AppStyle.Color.green.opacity(0.15)
-                    )
-                    .cornerRadius(12)
+                    .padding(.top, 12)
+                    .padding(.bottom, 24)
                 }
-                .padding(.top, 12)
-                .padding(.bottom, 24)
-            }
-            .padding(.horizontal, 24)
-            .padding(.top, 16)
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
                 .background(AppStyle.Color.greenBlack)
                 .cornerRadius(18)
                 .frame(maxWidth: 320, maxHeight: 280)
@@ -870,7 +939,7 @@ struct AddAnalyticsEntryView: View {
         ])
     }
     
-        @State private var showNumberPad = false
+    @State private var showNumberPad = false
     @State private var editingField: EditingField?
     @State private var editingSetIndex: Int?
     
@@ -881,7 +950,7 @@ struct AddAnalyticsEntryView: View {
     var body: some View {
         ZStack {
             VStack(spacing: 16) {
-                Text("Add data for \(formattedDate(date))")
+                Text("Add your data for \(formattedDate(date))")
                     .font(.headline)
                     .foregroundColor(AppStyle.Color.white)
                     .padding(.top, 14)
@@ -903,127 +972,127 @@ struct AddAnalyticsEntryView: View {
                 .padding(.bottom, 4)
                 
                 ForEach(Array(sets.enumerated()), id: \.element.id) { index, set in
-                HStack(spacing: 12) {
+                    HStack(spacing: 12) {
+                        Button(action: {
+                            editingSetIndex = index
+                            editingField = .weight
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                showNumberPad = true
+                            }
+                        }) {
+                            let weightValue = index < sets.count ? sets[index].weight : 0.0
+                            Text(weightValue == floor(weightValue) ? "\(Int(weightValue))" : String(weightValue).replacingOccurrences(of: ".", with: ","))
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(AppStyle.Color.white)
+                                .frame(width: 60, height: 38)
+                                .background(AppStyle.Color.greenBlack)
+                                .cornerRadius(8)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
+                                )
+                        }
+                        
+                        Button(action: {
+                            editingSetIndex = index
+                            editingField = .reps
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                showNumberPad = true
+                            }
+                        }) {
+                            Text("\(index < sets.count ? sets[index].reps : 0)")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(AppStyle.Color.white)
+                                .frame(width: 60, height: 38)
+                                .background(AppStyle.Color.greenBlack)
+                                .cornerRadius(8)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
+                                )
+                        }
+                        
+                        Spacer()
+                        
+                        if sets.count > 1 {
+                            Button(action: {
+                                if index < sets.count {
+                                    withAnimation {
+                                        sets.remove(at: index)
+                                    }
+                                }
+                            }) {
+                                Image(systemName: "minus.circle.fill")
+                                    .foregroundColor(Color(AppStyle.Color.greenGlow))
+                                    .font(.system(size: 24))
+                            }
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+                
+                HStack {
                     Button(action: {
-                        editingSetIndex = index
-                        editingField = .weight
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            showNumberPad = true
+                        withAnimation {
+                            sets.append(SetProgressInput(weight: exercise.weight, reps: exercise.reps))
                         }
                     }) {
-                        let weightValue = index < sets.count ? sets[index].weight : 0.0
-                        Text(weightValue == floor(weightValue) ? "\(Int(weightValue))" : String(weightValue).replacingOccurrences(of: ".", with: ","))
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(AppStyle.Color.white)
-                            .frame(width: 60, height: 38)
-                            .background(AppStyle.Color.greenBlack)
-                            .cornerRadius(8)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
-                            )
-                    }
-                    
-                    Button(action: {
-                        editingSetIndex = index
-                        editingField = .reps
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            showNumberPad = true
+                        HStack {
+                            Image(systemName: "plus.circle.fill")
+                            Text("add more sets")
                         }
-                    }) {
-                        Text("\(index < sets.count ? sets[index].reps : 0)")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(AppStyle.Color.white)
-                            .frame(width: 60, height: 38)
-                            .background(AppStyle.Color.greenBlack)
-                            .cornerRadius(8)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
-                            )
+                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .padding(.vertical, 6)
                     }
+                    Spacer()
+                }
+                
+                HStack {
+                    Button("Abbrechen") {
+                        onCancel()
+                    }
+                    .foregroundColor(.white)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 18)
+                    .background(AppStyle.Color.greenBlack)
+                    .cornerRadius(12)
                     
                     Spacer()
                     
-                    if sets.count > 1 {
-                        Button(action: {
-                            if index < sets.count {
-                                withAnimation {
-                                    sets.remove(at: index)
-                                }
+                    Button("Speichern") {
+                        let entry = AnalyticsEntry(
+                            exerciseId: exercise.id,
+                            date: date,
+                            setProgress: sets.map { input in
+                                SetProgress(
+                                    status: .completedDone,
+                                    currentReps: input.reps,
+                                    weight: input.weight
+                                )
                             }
-                        }) {
-                            Image(systemName: "minus.circle.fill")
-                                .foregroundColor(Color(AppStyle.Color.greenGlow))
-                                .font(.system(size: 24))
-                        }
+                        )
+                        onSave(entry)
                     }
-                }
-                .padding(.vertical, 4)
-            }
-            
-            HStack {
-                Button(action: {
-                    withAnimation {
-                        sets.append(SetProgressInput(weight: exercise.weight, reps: exercise.reps))
-                    }
-                }) {
-                    HStack {
-                        Image(systemName: "plus.circle.fill")
-                        Text("add more sets")
-                    }
-                    .foregroundColor(AppStyle.Color.greenGlow)
-                    .padding(.vertical, 6)
-                }
-                Spacer()
-            }
-            
-            HStack {
-                Button("Abbrechen") {
-                    onCancel()
-                }
-                .foregroundColor(.white)
-                .padding(.vertical, 10)
-                .padding(.horizontal, 18)
-                .background(AppStyle.Color.greenBlack)
-                .cornerRadius(12)
-                
-                Spacer()
-                
-                Button("Speichern") {
-                    let entry = AnalyticsEntry(
-                        exerciseId: exercise.id,
-                        date: date,
-                        setProgress: sets.map { input in
-                            SetProgress(
-                                status: .completedDone,
-                                currentReps: input.reps,
-                                weight: input.weight
-                            )
-                        }
+                    .disabled(sets.contains(where: { $0.weight == 0 || $0.reps == 0 }))
+                    .foregroundColor(.white)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 22)
+                    .background(
+                        sets.allSatisfy { $0.weight > 0 && $0.reps > 0 }
+                        ? AppStyle.Color.green
+                        : AppStyle.Color.green.opacity(0.15)
                     )
-                    onSave(entry)
+                    .cornerRadius(12)
                 }
-                .disabled(sets.contains(where: { $0.weight == 0 || $0.reps == 0 }))
-                .foregroundColor(.white)
-                .padding(.vertical, 10)
-                .padding(.horizontal, 22)
-                .background(
-                    sets.allSatisfy { $0.weight > 0 && $0.reps > 0 }
-                    ? AppStyle.Color.green
-                    : AppStyle.Color.green.opacity(0.15)
-                )
-                .cornerRadius(12)
-            }
-            .padding(.horizontal, 12)
-            .padding(.top, 12)
+                .padding(.horizontal, 12)
+                .padding(.top, 12)
             }
             .padding(.horizontal, 18)
             .padding(.top, 10)
             .padding(.bottom, 22)
             .background(AppStyle.Color.greenBlack)
             .cornerRadius(18)
-            .frame(maxWidth: 370, maxHeight: 380)
+            .frame(maxWidth: 370)
             
             if showNumberPad {
                 GeometryReader { geometry in

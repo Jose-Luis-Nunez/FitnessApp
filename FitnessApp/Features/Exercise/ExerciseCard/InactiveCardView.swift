@@ -1,7 +1,7 @@
 import SwiftUI
 
 private enum GlobalConstants {
-    static let cardBackgroundColor = SwiftUI.Color(hex: "#121212")
+    static let cardBackgroundColor = AppStyle.Color.exerciseCardBackgroundInactive
 }
 
 struct InactiveCardView: View {
