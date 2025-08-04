@@ -127,7 +127,7 @@ struct AnalyticsView: View {
         if entries.isEmpty {
             return AnyView(
                 VStack(spacing: 12) {
-                    Text("Keine Daten für das ausgewählte Datum verfügbar")
+                    Text("No data available")
                         .font(AppStyle.Font.defaultFont)
                         .foregroundColor(AppStyle.Color.gray)
                         .padding(.horizontal, AppStyle.Padding.horizontal)
@@ -138,7 +138,7 @@ struct AnalyticsView: View {
                         HStack {
                             Image(systemName: "plus.circle.fill")
                                 .font(.system(size: 22, weight: .bold))
-                            Text("Daten hinzufügen")
+                            Text("Add data")
                                 .font(.body)
                                 .fontWeight(.bold)
                         }
@@ -377,7 +377,7 @@ struct AnalyticsView: View {
         HStack(alignment: .top, spacing: 12) {
             AnalyticsTileView(
                 number: "\(viewModel.weightIncreasesInCurrentMonth(for: exercise.id))",
-                label: "Steigerungen KG",
+                label: "Increase in KG",
                 icon: "arrow.up.right",
                 iconColor: .yellow
             )
