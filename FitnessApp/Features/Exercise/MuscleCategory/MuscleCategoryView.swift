@@ -233,9 +233,7 @@ struct MuscleCategoryView: View {
     private func generateWeightOptions() -> [String] {
         var options: [String] = []
         for i in 0...180 {
-            // Add whole numbers
             options.append(String(i))
-            // Add half numbers (except for the last one to avoid 180.5)
             if i < 180 {
                 let halfValue = Double(i) + 0.5
                 options.append(String(halfValue).replacingOccurrences(of: ".", with: ","))

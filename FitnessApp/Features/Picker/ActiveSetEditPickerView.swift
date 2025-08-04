@@ -86,7 +86,6 @@ struct ActiveSetEditPickerView: View {
                     
                     Button("Speichern") {
                         if let reps = Int(selectedReps) {
-                            // Convert weight string to double, handling comma decimal separator
                             let weightString = selectedWeight.replacingOccurrences(of: ",", with: ".")
                             if let weight = Double(weightString) {
                                 onSave(reps, weight)

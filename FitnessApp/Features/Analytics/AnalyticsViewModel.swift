@@ -101,15 +101,12 @@ class AnalyticsViewModel: ObservableObject {
             return
         }
         
-        // Create new array without the set at the specified index
         var updatedSetProgress = entry.setProgress
         updatedSetProgress.remove(at: setIndex)
         
-        // If no sets left, remove the entire entry
         if updatedSetProgress.isEmpty {
             existingEntries.remove(at: entryIndex)
         } else {
-            // Create new entry with remaining sets
             let updatedEntry = AnalyticsEntry(
                 id: entry.id,
                 exerciseId: entry.exerciseId,
@@ -145,7 +142,6 @@ class AnalyticsViewModel: ObservableObject {
             return
         }
         
-        // Create new array with updated set
         var updatedSetProgress = entry.setProgress
         updatedSetProgress[setIndex] = newSetProgress
         
@@ -189,19 +185,16 @@ extension AnalyticsViewModel {
         let calendar = Calendar.current
         let entries = loadAnalytics(for: exerciseId)
         
-        // Ffilter current month
         let currentMonthEntries = entries
             .filter { calendar.isDate($0.date, equalTo: Date(), toGranularity: .month) }
             .sorted(by: { $0.date < $1.date }) // chronologisch sortieren
         
-        // Extract the average weight per day (first set of the day)
         let dailyWeights: [(date: Date, weight: Double)] = currentMonthEntries.compactMap { entry in
             guard let weight = entry.setProgress.first?.weight else { return nil }
             let day = calendar.startOfDay(for: entry.date)
             return (date: day, weight: weight)
         }
         
-        // Group by date, select the highest value of the day (multiple entries per day possible)
         let maxWeightPerDay: [(date: Date, weight: Double)] = Dictionary(grouping: dailyWeights, by: { $0.date })
             .compactMap { (date, values) in
                 let maxWeight = values.map(\.weight).max() ?? 0.0
@@ -209,7 +202,6 @@ extension AnalyticsViewModel {
             }
             .sorted(by: { $0.date < $1.date })
         
-        // Count the real increases
         var increases = 0
         var lastWeight: Double? = nil
         

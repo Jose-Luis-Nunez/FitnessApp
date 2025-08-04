@@ -220,7 +220,6 @@ struct CustomNumberPadView: View {
                 deleteButton()
             }
             
-            // Action buttons
             HStack(spacing: 16) {
                 Button("Abbrechen") {
                     onDismiss()

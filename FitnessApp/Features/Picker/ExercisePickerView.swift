@@ -165,14 +165,12 @@ struct ExercisePickerView: View {
                             .frame(maxWidth: .infinity)
                         Picker("Weight", selection: Binding<String>(
                             get: {
-                                // Convert Double to String with comma formatting
                                 let weight = formViewModel.weight
                                 return weight == floor(weight) ? 
                                     String(Int(weight)) : 
                                     String(weight).replacingOccurrences(of: ".", with: ",")
                             },
                             set: { newValue in
-                                // Convert String back to Double
                                 let weightString = newValue.replacingOccurrences(of: ",", with: ".")
                                 if let weight = Double(weightString) {
                                     formViewModel.weight = weight

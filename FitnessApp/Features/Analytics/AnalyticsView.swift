@@ -34,7 +34,7 @@ struct AnalyticsView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            ZStack {
+            ZStack(alignment: .top) {
                 mainContent(geometry: geometry)
                 calendarDialog
                 editSetOverlay
@@ -126,30 +126,36 @@ struct AnalyticsView: View {
         
         if entries.isEmpty {
             return AnyView(
-                VStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 12) {
                     Text("No data available")
                         .font(AppStyle.Font.defaultFont)
                         .foregroundColor(AppStyle.Color.gray)
                         .padding(.horizontal, AppStyle.Padding.horizontal)
                     
-                    Button(action: {
-                        showAddDataSheet = true
-                    }) {
-                        HStack {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 22, weight: .bold))
-                            Text("Add data")
-                                .font(.body)
-                                .fontWeight(.bold)
+                    HStack(alignment: .top, spacing: 12) {
+                        Button(action: {
+                            showAddDataSheet = true
+                        }) {
+                            HStack {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.system(size: 22, weight: .bold))
+                                Text("Add data")
+                                    .font(.body)
+                                    .fontWeight(.bold)
+                            }
+                            .foregroundColor(AppStyle.Color.greenGlow)
+                            .padding(.vertical, 12)
+                            .padding(.horizontal, 24)
+                            .frame(width: 120, height: 120)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(AppStyle.Color.greenBlack)
+                            )
                         }
-                        .foregroundColor(AppStyle.Color.green)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 24)
-                        .background(
-                            Capsule()
-                                .fill(AppStyle.Color.greenBlack)
-                        )
+                        
+                        Spacer()
                     }
+                    .padding(.horizontal, AppStyle.Padding.horizontal)
                 }
             )
         }
@@ -309,8 +315,6 @@ struct AnalyticsView: View {
         Group {
             if showAddDataSheet {
                 VStack {
-                    Spacer()
-                    
                     AddAnalyticsEntryView(
                         date: selectedDate,
                         exercise: exercise,
@@ -327,6 +331,7 @@ struct AnalyticsView: View {
                             showAddDataSheet = false
                         }
                     )
+                    .padding(.top, 10)
                     
                     Spacer()
                 }
@@ -727,7 +732,6 @@ struct EditSetView: View {
             if showNumberPad {
                 GeometryReader { geometry in
                     VStack {
-                        // Tappable background area
                         Color.clear
                             .contentShape(Rectangle())
                             .onTapGesture {
@@ -877,61 +881,70 @@ struct AddAnalyticsEntryView: View {
     var body: some View {
         ZStack {
             VStack(spacing: 16) {
-                Text("Daten hinzufügen für \(formattedDate(date))")
+                Text("Add data for \(formattedDate(date))")
                     .font(.headline)
                     .foregroundColor(AppStyle.Color.white)
                     .padding(.top, 14)
                 
+                HStack(spacing: 12) {
+                    Text("Weight")
+                        .font(.caption)
+                        .foregroundColor(AppStyle.Color.white)
+                        .frame(width: 60, alignment: .leading)
+                    
+                    Text("Reps.")
+                        .font(.caption)
+                        .foregroundColor(AppStyle.Color.white)
+                        .frame(width: 60, alignment: .leading)
+                    
+                    Spacer()
+                }
+                .padding(.horizontal, 0)
+                .padding(.bottom, 4)
+                
                 ForEach(Array(sets.enumerated()), id: \.element.id) { index, set in
                 HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Gewicht")
-                            .font(.caption)
-                            .foregroundColor(AppStyle.Color.white)
-                        Button(action: {
-                            editingSetIndex = index
-                            editingField = .weight
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                showNumberPad = true
-                            }
-                        }) {
-                            let weightValue = index < sets.count ? sets[index].weight : 0.0
-                            Text(weightValue == floor(weightValue) ? "\(Int(weightValue))" : String(weightValue).replacingOccurrences(of: ".", with: ","))
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(AppStyle.Color.white)
-                                .frame(width: 60, height: 38)
-                                .background(AppStyle.Color.greenBlack)
-                                .cornerRadius(8)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
-                                )
+                    Button(action: {
+                        editingSetIndex = index
+                        editingField = .weight
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            showNumberPad = true
                         }
-                    }
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Wiederh.")
-                            .font(.caption)
+                    }) {
+                        let weightValue = index < sets.count ? sets[index].weight : 0.0
+                        Text(weightValue == floor(weightValue) ? "\(Int(weightValue))" : String(weightValue).replacingOccurrences(of: ".", with: ","))
+                            .font(.system(size: 16, weight: .medium))
                             .foregroundColor(AppStyle.Color.white)
-                        Button(action: {
-                            editingSetIndex = index
-                            editingField = .reps
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                showNumberPad = true
-                            }
-                        }) {
-                            Text("\(index < sets.count ? sets[index].reps : 0)")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(AppStyle.Color.white)
-                                .frame(width: 60, height: 38)
-                                .background(AppStyle.Color.greenBlack)
-                                .cornerRadius(8)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
-                                )
-                        }
+                            .frame(width: 60, height: 38)
+                            .background(AppStyle.Color.greenBlack)
+                            .cornerRadius(8)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
+                            )
                     }
+                    
+                    Button(action: {
+                        editingSetIndex = index
+                        editingField = .reps
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            showNumberPad = true
+                        }
+                    }) {
+                        Text("\(index < sets.count ? sets[index].reps : 0)")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(AppStyle.Color.white)
+                            .frame(width: 60, height: 38)
+                            .background(AppStyle.Color.greenBlack)
+                            .cornerRadius(8)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
+                            )
+                    }
+                    
                     Spacer()
+                    
                     if sets.count > 1 {
                         Button(action: {
                             if index < sets.count {
@@ -941,7 +954,7 @@ struct AddAnalyticsEntryView: View {
                             }
                         }) {
                             Image(systemName: "minus.circle.fill")
-                                .foregroundColor(.red)
+                                .foregroundColor(Color(AppStyle.Color.greenGlow))
                                 .font(.system(size: 24))
                         }
                     }
@@ -949,24 +962,27 @@ struct AddAnalyticsEntryView: View {
                 .padding(.vertical, 4)
             }
             
-            Button(action: {
-                withAnimation {
-                    sets.append(SetProgressInput(weight: exercise.weight, reps: exercise.reps))
+            HStack {
+                Button(action: {
+                    withAnimation {
+                        sets.append(SetProgressInput(weight: exercise.weight, reps: exercise.reps))
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                        Text("add more sets")
+                    }
+                    .foregroundColor(AppStyle.Color.greenGlow)
+                    .padding(.vertical, 6)
                 }
-            }) {
-                HStack {
-                    Image(systemName: "plus.circle.fill")
-                    Text("Set hinzufügen")
-                }
-                .foregroundColor(AppStyle.Color.green)
-                .padding(.vertical, 6)
+                Spacer()
             }
             
             HStack {
                 Button("Abbrechen") {
                     onCancel()
                 }
-                .foregroundColor(.red)
+                .foregroundColor(.white)
                 .padding(.vertical, 10)
                 .padding(.horizontal, 18)
                 .background(AppStyle.Color.greenBlack)
@@ -1001,11 +1017,10 @@ struct AddAnalyticsEntryView: View {
             }
             .padding(.horizontal, 12)
             .padding(.top, 12)
-                Spacer()
             }
             .padding(.horizontal, 18)
             .padding(.top, 10)
-            .padding(.bottom, 14)
+            .padding(.bottom, 22)
             .background(AppStyle.Color.greenBlack)
             .cornerRadius(18)
             .frame(maxWidth: 370, maxHeight: 380)
@@ -1013,7 +1028,6 @@ struct AddAnalyticsEntryView: View {
             if showNumberPad {
                 GeometryReader { geometry in
                     VStack {
-                        // Tappable background area
                         Color.clear
                             .contentShape(Rectangle())
                             .onTapGesture {

@@ -9,7 +9,6 @@ struct ExerciseFieldData: Identifiable {
     }
 
     var prefilledValue: String {
-        // Show integers without decimal point, show decimals with comma
         if value == floor(value) {
             return "\(Int(value))"
         } else {
