@@ -16,14 +16,11 @@ struct AnalyticsView: View {
     @State private var originalDate: Date = Date()
     @State private var tempDate: Date = Date()
     @State private var showCalendarDialog: Bool = false
-    @State private var showGoalWeightDialog = false
-    @State private var goalWeight: Int = 0
+
     @State private var milestoneHeight: CGFloat = 0
     @State private var datesWithData: Set<Date> = []
     @State private var showAddDataSheet: Bool = false
-    @State private var showEditSetSheet: Bool = false
     @State private var editingEntry: AnalyticsEntry?
-    @State private var editingSetIndex: Int?
     
     private let paddingAmount: CGFloat = 16
     
@@ -38,7 +35,6 @@ struct AnalyticsView: View {
             ZStack {
                 mainContent(geometry: geometry)
                 calendarDialog
-                editSetOverlay
                 addDataOverlay
             }
         }
@@ -138,17 +134,11 @@ struct AnalyticsView: View {
         .onAppear {
             originalDate = selectedDate
             datesWithData = viewModel.allDatesWithData(for: exercise.id)
-            
-            if let savedGoal = UserDefaults.standard.value(forKey: "goalWeight_\(exercise.id)") as? Int {
-                goalWeight = savedGoal
-            }
         }
-        .overlay(goalWeightDialog)
     }
     
     private var progressChartView: some View {
         let currentWeight = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight
-        let progress = goalWeight > 0 ? currentWeight / Double(goalWeight) : 0
         
         return VStack(spacing: 8) {
             // Hill chart - always displayed
@@ -277,19 +267,6 @@ struct AnalyticsView: View {
                 }
             }
             .frame(height: 80)
-            
-            // Progress labels
-            HStack {
-                Text("0 kg")
-                    .font(.caption)
-                    .foregroundColor(AppStyle.Color.greenGlow)
-                
-                Spacer()
-                
-                Text(goalWeight > 0 ? "Goal: \(goalWeight) kg" : "No goal set")
-                    .font(.caption)
-                    .foregroundColor(AppStyle.Color.greenGlow)
-            }
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 12)
@@ -383,17 +360,17 @@ struct AnalyticsView: View {
         }
         else {
             return AnyView(
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 11) {
                     ForEach(entries.reversed()) { entry in
                         Text("Results today")
                             .font(AppStyle.Font.analyticsExerciseData)
-                            .foregroundColor(AppStyle.Color.gray)
+                            .foregroundColor(AppStyle.Color.white)
                             .padding(.horizontal, AppStyle.Padding.horizontal)
                         entryView(entry)
                     }
                 }
                     .padding(.vertical, 10)
-                    .padding(.top, 10)
+                    .padding(.top, 5)
                     .background(AppStyle.Color.backgroundColor)
             )
         }
@@ -459,11 +436,10 @@ struct AnalyticsView: View {
                         .stroke(AppStyle.Color.greenGlow.opacity(0.2), lineWidth: 1)
                 )
         )
-        .padding(.top, 4)
+        .padding(.top, 9)
         .onTapGesture {
             editingEntry = entry
-            editingSetIndex = index
-            showEditSetSheet = true
+            showAddDataSheet = true
         }
     }
     
@@ -506,38 +482,7 @@ struct AnalyticsView: View {
         }
     }
     
-    private var editSetOverlay: some View {
-        Group {
-            if showEditSetSheet, let entry = editingEntry, let setIndex = editingSetIndex {
-                VStack {
-                    Spacer()
-                    
-                    EditSetView(
-                        entry: entry,
-                        setIndex: setIndex,
-                        exercise: exercise,
-                        onSave: { updatedSetProgress in
-                            viewModel.updateSetInEntry(
-                                exerciseId: exercise.id,
-                                entryId: entry.id,
-                                setIndex: setIndex,
-                                newSetProgress: updatedSetProgress
-                            )
-                            showEditSetSheet = false
-                            datesWithData = viewModel.allDatesWithData(for: exercise.id)
-                        },
-                        onCancel: {
-                            showEditSetSheet = false
-                        }
-                    )
-                    
-                    Spacer()
-                }
-                .background(Color.black.opacity(0.5))
-                .transition(.opacity)
-            }
-        }
-    }
+
     
     private var addDataOverlay: some View {
         Group {
@@ -557,6 +502,7 @@ struct AnalyticsView: View {
                         AddAnalyticsEntryView(
                             date: selectedDate,
                             exercise: exercise,
+                            existingEntry: editingEntry,
                             onSave: { newEntry in
                                 viewModel.saveOrReplaceAnalyticsEntry(
                                     exerciseId: exercise.id,
@@ -564,10 +510,12 @@ struct AnalyticsView: View {
                                     date: selectedDate
                                 )
                                 showAddDataSheet = false
+                                editingEntry = nil
                                 datesWithData = viewModel.allDatesWithData(for: exercise.id)
                             },
                             onCancel: {
                                 showAddDataSheet = false
+                                editingEntry = nil
                             }
                         )
                         
@@ -612,18 +560,16 @@ struct AnalyticsView: View {
         return formatter.string(from: date)
     }
     
-    private func saveGoalWeight() {
-        UserDefaults.standard.set(goalWeight, forKey: "goalWeight_\(exercise.id)")
-    }
-    
     private var weightMilestoneView: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: 0) {
             AnalyticsTileView(
                 number: "\(viewModel.weightIncreasesInCurrentMonth(for: exercise.id))",
-                label: "Increase in KG",
+                label: "Increase by weight",
                 icon: "arrow.up.right",
                 iconColor: .yellow
             )
+            
+            Spacer()
             
             AnalyticsTileView(
                 number: "\(viewModel.trainingDaysInCurrentMonth(for: exercise.id))",
@@ -632,405 +578,26 @@ struct AnalyticsView: View {
                 iconColor: .clear
             )
             
-            goalWeightArea()
+            Spacer()
+            
+            AnalyticsTileView(
+                number: "\(viewModel.trainingSessionsUntilWeightIncrease(for: exercise.id))",
+                label: "trainings to increase weight",
+                icon: "arrow.up.circle",
+                iconColor: AppStyle.Color.greenGlow
+            )
         }
-        .padding(.horizontal, AppStyle.Padding.horizontal)
+        .padding(.horizontal, 16)
         .padding(.vertical, 8)
     }
     
-    private func goalWeightArea() -> some View {
-        VStack(spacing: 3) {
-            Group {
-                if goalWeight == 0 {
-                    ZStack {
-                        Circle()
-                            .stroke(style: StrokeStyle(lineWidth: 1.5, dash: [4]))
-                            .foregroundColor(AppStyle.Color.greenGlow)
-                        
-                        VStack(spacing: 2) {
-                            Text("ZIEL")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(AppStyle.Color.greenGlow)
-                            Text("HINZUFÜGEN")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(AppStyle.Color.greenGlow)
-                        }
-                    }
-                    .frame(width: 77, height: 77)
-                    .onTapGesture {
-                        showGoalWeightDialog = true
-                    }
-                } else {
-                    VStack(spacing: -2) {
-                        Spacer(minLength: 16)
-                        Text("\(goalWeight)")
-                            .font(.system(size: 17, weight: .bold))
-                            .foregroundColor(AppStyle.Color.greenGlow)
-                        
-                        Text("kg")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(AppStyle.Color.greenGlow)
-                        Spacer(minLength: 0)
-                    }
-                    .frame(width: 49, height: 49)
-                    .background(AppStyle.Color.black)
-                    .overlay(
-                        Circle()
-                            .stroke(AppStyle.Color.greenGlow, lineWidth: 1.5)
-                    )
-                    .clipShape(Circle())
-                    .onTapGesture {
-                        showGoalWeightDialog = true
-                    }
-                }
-            }
-            
-            let current = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight
-            let currentInt = Int(current)
-            
-            if goalWeight > currentInt {
-                let isMultipleOfTen = currentInt % 10 == 0
-                let firstMilestone = isMultipleOfTen ? currentInt + 5 : Int(ceil(Double(currentInt) / 10.0)) * 10
-                let secondMilestone = firstMilestone + 5
-                
-                let filteredMilestones = [secondMilestone, firstMilestone]
-                    .filter { $0 < goalWeight }
-                    .sorted(by: >)
-                
-                VStack(spacing: 22) {
-                    ForEach(filteredMilestones, id: \.self) { milestone in
-                        ZStack {
-                            Circle()
-                                .fill(AppStyle.Color.greenGlow)
-                                .frame(width: 8, height: 8)
-                            
-                            Text("\(milestone)")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(AppStyle.Color.greenGlow)
-                                .offset(x: 20)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                    }
-                    
-                    Circle()
-                        .fill(AppStyle.Color.greenGlow.opacity(0.2))
-                        .frame(width: 4, height: 4)
-                }
-                .overlay(
-                    Rectangle()
-                        .fill(LinearGradient(
-                            gradient: Gradient(colors: [AppStyle.Color.greenGlow.opacity(0.4), .clear]),
-                            startPoint: .top,
-                            endPoint: .bottom
-                        ))
-                        .frame(width: 3),
-                    alignment: .center
-                )
-            } else if goalWeight == 0 {
-                VStack {}
-                    .frame(height: 40)
-                    .overlay(
-                        Rectangle()
-                            .fill(LinearGradient(
-                                gradient: Gradient(colors: [AppStyle.Color.greenGlow.opacity(0.4), .clear]),
-                                startPoint: .top,
-                                endPoint: .bottom
-                            ))
-                            .frame(width: 3),
-                        alignment: .center
-                    )
-            }
-            
-            VStack(spacing: -2) {
-                Text(exercise.weight == floor(exercise.weight) ? "\(Int(exercise.weight))" : String(exercise.weight).replacingOccurrences(of: ".", with: ","))
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(AppStyle.Color.greenDark)
-                Text("kg")
-                    .font(.system(size: 9))
-                    .foregroundColor(AppStyle.Color.greenDark)
-            }
-            .frame(width: 32, height: 32)
-            .background(AppStyle.Color.greenGlow)
-            .clipShape(Circle())
-            .padding(.top, -20)
-        }
-        .frame(maxWidth: .infinity, alignment: .trailing)
-    }
+
     
-    private var goalWeightDialog: some View {
-        Group {
-            if showGoalWeightDialog {
-                VStack(spacing: 16) {
-                    Text("Set Goal Weight")
-                        .font(.headline)
-                        .foregroundColor(AppStyle.Color.white)
-                        .padding(.top, 12)
-                        .padding(.horizontal, 16)
-                    
-                    Text("Minimum weight: \(Int(exercise.weight) + 15) kg")
-                        .font(.subheadline)
-                        .foregroundColor(AppStyle.Color.white)
-                        .padding(.horizontal, 16)
-                    
-                    TextField("Enter goal weight (kg)", text: Binding(
-                        get: { String(goalWeight) },
-                        set: { if let value = NumberFormatter().number(from: $0) {
-                            goalWeight = value.intValue
-                        }}
-                    ))
-                    .multilineTextAlignment(.center)
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.vertical, 12)
-                    .frame(width: 220, height: 60)
-                    .background(
-                        AppStyle.Color.greenBlack
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(AppStyle.Color.white, lineWidth: 1)
-                    )
-                    .keyboardType(.numberPad)
-                    
-                    Text("Current: \(exercise.weight == floor(exercise.weight) ? "\(Int(exercise.weight))" : String(exercise.weight).replacingOccurrences(of: ".", with: ",")) kg")
-                        .font(.subheadline)
-                        .foregroundColor(AppStyle.Color.white)
-                        .padding(.horizontal, 16)
-                    
-                    HStack(spacing: 16) {
-                        Button("Cancel") {
-                            showGoalWeightDialog = false
-                        }
-                        .font(.body)
-                        .foregroundColor(AppStyle.Color.white)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 16)
-                        .background(AppStyle.Color.greenBlack)
-                        .cornerRadius(AppStyle.CornerRadius.defaultButton)
-                        
-                        Button("Save") {
-                            saveGoalWeight()
-                            showGoalWeightDialog = false
-                        }
-                        .font(.body)
-                        .foregroundColor(AppStyle.Color.white)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 16)
-                        .background(goalWeight >= Int(exercise.weight) + 15
-                                    ? AppStyle.Color.green
-                                    : AppStyle.Color.green.opacity(0.15))
-                        .cornerRadius(AppStyle.CornerRadius.defaultButton)
-                        .disabled(goalWeight < Int(exercise.weight) + 15)
-                    }
-                    .padding(.bottom, 12)
-                }
-                .frame(width: 280, height: 250)
-                .background(AppStyle.Color.greenBlack)
-                .cornerRadius(AppStyle.CornerRadius.defaultButton)
-                .padding(16)
-            }
-        }
-    }
+
 }
 
 
-struct EditSetView: View {
-    let entry: AnalyticsEntry
-    let setIndex: Int
-    let exercise: Exercise
-    var onSave: (SetProgress) -> Void
-    var onCancel: () -> Void
-    
-    @State private var weight: Double
-    @State private var reps: Int
-    @State private var showNumberPad = false
-    @State private var editingField: EditingField?
-    
-    enum EditingField {
-        case weight, reps
-    }
-    
-    init(entry: AnalyticsEntry, setIndex: Int, exercise: Exercise, onSave: @escaping (SetProgress) -> Void, onCancel: @escaping () -> Void) {
-        self.entry = entry
-        self.setIndex = setIndex
-        self.exercise = exercise
-        self.onSave = onSave
-        self.onCancel = onCancel
-        
-        let currentSet = entry.setProgress[setIndex]
-        _weight = State(initialValue: currentSet.weight)
-        _reps = State(initialValue: currentSet.currentReps)
-    }
-    
-    var body: some View {
-        ZStack {
-            VStack {
-                Spacer()
-                
-                VStack(spacing: 24) {
-                    Text("Set bearbeiten")
-                        .font(.headline)
-                        .foregroundColor(AppStyle.Color.white)
-                        .padding(.top, 14)
-                    
-                    Text("Datum: \(formattedDate(entry.date))")
-                        .font(.subheadline)
-                        .foregroundColor(AppStyle.Color.gray)
-                    
-                    HStack(spacing: 24) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Gewicht")
-                                .font(.caption)
-                                .foregroundColor(AppStyle.Color.white)
-                            Button(action: {
-                                editingField = .weight
-                                withAnimation(.easeInOut(duration: 0.3)) {
-                                    showNumberPad = true
-                                }
-                            }) {
-                                Text(weight == floor(weight) ? "\(Int(weight))" : String(weight).replacingOccurrences(of: ".", with: ","))
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(AppStyle.Color.white)
-                                    .frame(width: 80, height: 48)
-                                    .background(AppStyle.Color.greenBlack)
-                                    .cornerRadius(8)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
-                                    )
-                            }
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Wiederholungen")
-                                .font(.caption)
-                                .foregroundColor(AppStyle.Color.white)
-                            Button(action: {
-                                editingField = .reps
-                                withAnimation(.easeInOut(duration: 0.3)) {
-                                    showNumberPad = true
-                                }
-                            }) {
-                                Text("\(reps)")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(AppStyle.Color.white)
-                                    .frame(width: 80, height: 48)
-                                    .background(AppStyle.Color.greenBlack)
-                                    .cornerRadius(8)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
-                                    )
-                            }
-                        }
-                    }
-                    
-                    HStack(spacing: 16) {
-                        Button("Abbrechen") {
-                            onCancel()
-                        }
-                        .foregroundColor(.red)
-                        .padding(.vertical, 12)
-                        .padding(.horizontal, 24)
-                        .background(AppStyle.Color.greenBlack)
-                        .cornerRadius(12)
-                        
-                        Button("Speichern") {
-                            let updatedSet = SetProgress(
-                                status: .completedDone,
-                                currentReps: reps,
-                                weight: weight
-                            )
-                            onSave(updatedSet)
-                        }
-                        .disabled(weight <= 0 || reps <= 0)
-                        .foregroundColor(.white)
-                        .padding(.vertical, 12)
-                        .padding(.horizontal, 24)
-                        .background(
-                            weight > 0 && reps > 0
-                            ? AppStyle.Color.green
-                            : AppStyle.Color.green.opacity(0.15)
-                        )
-                        .cornerRadius(12)
-                    }
-                    .padding(.top, 12)
-                    .padding(.bottom, 24)
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 16)
-                .background(AppStyle.Color.greenBlack)
-                .cornerRadius(18)
-                .frame(maxWidth: 320, maxHeight: 280)
-                
-                Spacer()
-            }
-            
-            if showNumberPad {
-                GeometryReader { geometry in
-                    VStack {
-                        Color.clear
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                withAnimation(.easeInOut(duration: 0.3)) {
-                                    showNumberPad = false
-                                }
-                                editingField = nil
-                            }
-                        
-                        CustomNumberPadView(
-                            currentValue: getCurrentValue(),
-                            isWeight: editingField == .weight,
-                            valueType: editingField == .weight ? .decimal : .integer,
-                            onValueChange: { newValue in
-                                updateCurrentValue(newValue)
-                            },
-                            onDismiss: {
-                                withAnimation(.easeInOut(duration: 0.3)) {
-                                    showNumberPad = false
-                                }
-                                editingField = nil
-                            }
-                        )
-                        .frame(maxHeight: geometry.size.height * 0.5)
-                    }
-                    .background(Color.black.opacity(0.5))
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-            }
-        }
-    }
-    
-    private func getCurrentValue() -> Double {
-        switch editingField {
-        case .weight:
-            return weight
-        case .reps:
-            return Double(reps)
-        case .none:
-            return 0.0
-        }
-    }
-    
-    private func updateCurrentValue(_ newValue: Double) {
-        switch editingField {
-        case .weight:
-            weight = newValue
-        case .reps:
-            reps = Int(newValue)
-        case .none:
-            break
-        }
-    }
-    
-    private func formattedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.locale = Locale(identifier: "de_DE")
-        return formatter.string(from: date)
-    }
-}
+
 
 
 struct AnalyticsTileView: View {
@@ -1062,13 +629,10 @@ struct AnalyticsTileView: View {
                 Text(label)
                     .font(.system(size: 10, weight: .medium))
                     .foregroundColor(AppStyle.Color.greenGlow)
-                    .fixedSize(horizontal: true, vertical: false)
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
-                    )
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: 96)
             }
             .padding(12)
         }
@@ -1080,6 +644,7 @@ struct AnalyticsTileView: View {
 struct AddAnalyticsEntryView: View {
     let date: Date
     let exercise: Exercise
+    let existingEntry: AnalyticsEntry?
     var onSave: (AnalyticsEntry) -> Void
     var onCancel: () -> Void
     
@@ -1091,14 +656,22 @@ struct AddAnalyticsEntryView: View {
         var reps: Int
     }
     
-    init(date: Date, exercise: Exercise, onSave: @escaping (AnalyticsEntry) -> Void, onCancel: @escaping () -> Void) {
+    init(date: Date, exercise: Exercise, existingEntry: AnalyticsEntry? = nil, onSave: @escaping (AnalyticsEntry) -> Void, onCancel: @escaping () -> Void) {
         self.date = date
         self.exercise = exercise
+        self.existingEntry = existingEntry
         self.onSave = onSave
         self.onCancel = onCancel
-        _sets = State(initialValue: [
-            SetProgressInput(weight: exercise.weight, reps: exercise.reps)
-        ])
+        
+        if let existingEntry = existingEntry {
+            _sets = State(initialValue: existingEntry.setProgress.map { setProgress in
+                SetProgressInput(weight: setProgress.weight, reps: setProgress.currentReps)
+            })
+        } else {
+            _sets = State(initialValue: [
+                SetProgressInput(weight: exercise.weight, reps: exercise.reps)
+            ])
+        }
     }
     
     @State private var showNumberPad = false
@@ -1112,7 +685,7 @@ struct AddAnalyticsEntryView: View {
     var body: some View {
         ZStack {
             VStack(spacing: 16) {
-                Text("Add your data for \(formattedDate(date))")
+                Text(existingEntry != nil ? "Edit your data for \(formattedDate(date))" : "Add your data for \(formattedDate(date))")
                     .font(.headline)
                     .foregroundColor(AppStyle.Color.white)
                     .padding(.top, 14)

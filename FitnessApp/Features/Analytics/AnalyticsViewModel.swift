@@ -216,4 +216,53 @@ extension AnalyticsViewModel {
         
         return increases
     }
+    
+    func trainingSessionsUntilWeightIncrease(for exerciseId: UUID) -> Int {
+        let entries = loadAnalytics(for: exerciseId)
+        let calendar = Calendar.current
+        
+        // Sortiere alle Einträge chronologisch
+        let sortedEntries = entries.sorted(by: { $0.date < $1.date })
+        
+        // Gruppiere nach Tagen und finde das maximale Gewicht pro Tag
+        let dailyMaxWeights: [(date: Date, weight: Double)] = Dictionary(grouping: sortedEntries, by: { calendar.startOfDay(for: $0.date) })
+            .compactMap { (date, dayEntries) in
+                let maxWeight = dayEntries.flatMap { $0.setProgress.map { $0.weight } }.max() ?? 0.0
+                return maxWeight > 0 ? (date, maxWeight) : nil
+            }
+            .sorted(by: { $0.date < $1.date })
+        
+        guard dailyMaxWeights.count >= 3 else {
+            return 0 // Nicht genug Daten für Analyse
+        }
+        
+        var patterns: [Int] = []
+        var currentWeight = dailyMaxWeights[0].weight
+        var sessionsAtCurrentWeight = 1
+        
+        // Analysiere Pattern: Nach wie vielen Sessions wird das Gewicht erhöht?
+        for i in 1..<dailyMaxWeights.count {
+            let (_, weight) = dailyMaxWeights[i]
+            
+            if weight > currentWeight {
+                // Gewicht wurde erhöht
+                patterns.append(sessionsAtCurrentWeight)
+                currentWeight = weight
+                sessionsAtCurrentWeight = 1
+            } else {
+                // Gleiches Gewicht
+                sessionsAtCurrentWeight += 1
+            }
+        }
+        
+        // Finde den häufigsten Pattern (Modus)
+        guard !patterns.isEmpty else { return 0 }
+        
+        let patternFrequency = Dictionary(grouping: patterns, by: { $0 })
+            .mapValues { $0.count }
+        
+        let mostCommonPattern = patternFrequency.max(by: { $0.value < $1.value })?.key ?? 0
+        
+        return mostCommonPattern
+    }
 }
