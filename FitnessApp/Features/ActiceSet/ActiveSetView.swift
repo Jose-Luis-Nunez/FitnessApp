@@ -30,10 +30,10 @@ struct ActiveSetView: View {
                             }
                             
                                         Text("\(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ",")) kg")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(AppStyle.Color.white)
-            
-            Spacer()
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(AppStyle.Color.white)
+                            
+                            Spacer()
                             
                             HStack(spacing: 4) {
                                 Text("\(exercise.reps)")
