@@ -141,193 +141,9 @@ struct AnalyticsView: View {
     }
     
     private var progressChartView: some View {
-        let currentWeight = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight
-        
-        return VStack(spacing: 8) {
-            // Hill chart - always displayed
-            GeometryReader { geometry in
-                ZStack {
-                    // Hill shape with gradient fill
-                    Path { path in
-                        let width = geometry.size.width
-                        let height = geometry.size.height
-                        let bottomY = height * 0.8
-                        let topY = height * 0.3
-                        
-                        // Start from bottom left
-                        path.move(to: CGPoint(x: 0, y: bottomY))
-                        
-                        // Flat start - stays low for a while
-                        path.addCurve(
-                            to: CGPoint(x: width * 0.3, y: bottomY - 5),
-                            control1: CGPoint(x: width * 0.1, y: bottomY),
-                            control2: CGPoint(x: width * 0.2, y: bottomY - 3)
-                        )
-                        
-                        // Steep rise to peak
-                        path.addCurve(
-                            to: CGPoint(x: width * 0.5, y: topY),
-                            control1: CGPoint(x: width * 0.35, y: bottomY - 8),
-                            control2: CGPoint(x: width * 0.45, y: topY + 5)
-                        )
-                        
-                        // Small plateau at top
-                        path.addCurve(
-                            to: CGPoint(x: width * 0.6, y: topY + 3),
-                            control1: CGPoint(x: width * 0.53, y: topY - 2),
-                            control2: CGPoint(x: width * 0.57, y: topY + 1)
-                        )
-                        
-                        // Gentle fall down
-                        path.addCurve(
-                            to: CGPoint(x: width, y: bottomY),
-                            control1: CGPoint(x: width * 0.7, y: topY + 10),
-                            control2: CGPoint(x: width * 0.85, y: bottomY - 5)
-                        )
-                        
-                        // Close the path for fill
-                        path.addLine(to: CGPoint(x: width, y: height))
-                        path.addLine(to: CGPoint(x: 0, y: height))
-                        path.closeSubpath()
-                    }
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                AppStyle.Color.greenGlow.opacity(0.3),
-                                AppStyle.Color.greenGlow.opacity(0.05)
-                            ]),
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    
-                    // Hill outline
-                    Path { path in
-                        let width = geometry.size.width
-                        let height = geometry.size.height
-                        let bottomY = height * 0.8
-                        let topY = height * 0.3
-                        
-                        // Start from bottom left
-                        path.move(to: CGPoint(x: 0, y: bottomY))
-                        
-                        // Flat start - stays low for a while
-                        path.addCurve(
-                            to: CGPoint(x: width * 0.3, y: bottomY - 5),
-                            control1: CGPoint(x: width * 0.1, y: bottomY),
-                            control2: CGPoint(x: width * 0.2, y: bottomY - 3)
-                        )
-                        
-                        // Steep rise to peak
-                        path.addCurve(
-                            to: CGPoint(x: width * 0.5, y: topY),
-                            control1: CGPoint(x: width * 0.35, y: bottomY - 8),
-                            control2: CGPoint(x: width * 0.45, y: topY + 5)
-                        )
-                        
-                        // Small plateau at top
-                        path.addCurve(
-                            to: CGPoint(x: width * 0.6, y: topY + 3),
-                            control1: CGPoint(x: width * 0.53, y: topY - 2),
-                            control2: CGPoint(x: width * 0.57, y: topY + 1)
-                        )
-                        
-                        // Gentle fall down
-                        path.addCurve(
-                            to: CGPoint(x: width, y: bottomY),
-                            control1: CGPoint(x: width * 0.7, y: topY + 10),
-                            control2: CGPoint(x: width * 0.85, y: bottomY - 5)
-                        )
-                    }
-                    .stroke(AppStyle.Color.greenGlow, lineWidth: 3)
-                    .shadow(color: AppStyle.Color.greenGlow.opacity(0.5), radius: 4, x: 0, y: 0)
-                    
-                    // Current position at peak with dotted line down
-                    let peakX = geometry.size.width * 0.5
-                    let peakY = geometry.size.height * 0.3
-                    
-                    // Dotted line from peak down to bottom
-                    Path { path in
-                        path.move(to: CGPoint(x: peakX, y: peakY + 8))
-                        path.addLine(to: CGPoint(x: peakX, y: geometry.size.height))
-                    }
-                    .stroke(AppStyle.Color.greenGlow.opacity(0.6), 
-                           style: StrokeStyle(lineWidth: 2, dash: [4, 4]))
-                    
-                    // Peak indicator
-                    Circle()
-                        .fill(AppStyle.Color.greenGlow)
-                        .frame(width: 10, height: 10)
-                        .position(x: peakX, y: peakY)
-                        .shadow(color: AppStyle.Color.greenGlow.opacity(0.7), radius: 6, x: 0, y: 0)
-                    
-                    // Current weight label at peak
-                    Text(currentWeight == floor(currentWeight) ? "\(Int(currentWeight))" : String(currentWeight).replacingOccurrences(of: ".", with: ","))
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(AppStyle.Color.greenGlow)
-                        .position(x: peakX, y: peakY - 15)
-                        .shadow(color: AppStyle.Color.greenGlow.opacity(0.3), radius: 8, x: 0, y: 0)
-                }
-            }
-            .frame(height: 80)
-            
-            // Labels row - below the chart
-            HStack {
-                // Left: 0 kg (single line)
-                Text("0 kg")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(AppStyle.Color.greenGlow)
-                
-                Spacer()
-                
-                // Center: Calendar Entry Point
-                Button(action: {
-                    showCalendarDialog = true
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "calendar")
-                            .font(.system(size: 12, weight: .medium))
-                        Text(formattedDateShort(selectedDate))
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                    .foregroundColor(AppStyle.Color.greenGlow)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(AppStyle.Color.greenBlack.opacity(0.3))
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(AppStyle.Color.greenGlow.opacity(0.2), lineWidth: 1)
-                    )
-                }
-                .buttonStyle(PlainButtonStyle())
-                
-                Spacer()
-                
-                // Right: Goal (single line)
-                Button(action: {
-                    tempGoal = exercise.goal != nil ? formatGoalForInput(exercise.goal!) : ""
-                    showGoalSheet = true
-                }) {
-                    if let goal = exercise.goal {
-                        Text("Goal: \(goal == floor(goal) ? "\(Int(goal))" : String(goal).replacingOccurrences(of: ".", with: ",")) kg")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(AppStyle.Color.greenGlow)
-                    } else {
-                        Text("Set Goal")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(AppStyle.Color.greenGlow)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 3)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 4)
-                                    .stroke(AppStyle.Color.greenGlow.opacity(0.5), lineWidth: 1)
-                            )
-                    }
-                }
-                .buttonStyle(PlainButtonStyle())
-            }
-            .padding(.horizontal, 12)
+        VStack(spacing: 8) {
+            hillChartView
+            chartLabelsView
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 12)
@@ -339,9 +155,165 @@ struct AnalyticsView: View {
                         .stroke(AppStyle.Color.greenGlow.opacity(0.2), lineWidth: 1)
                 )
         )
-         }
-     
-     private var headerView: some View {
+    }
+    
+    private var hillChartView: some View {
+        GeometryReader { geometry in
+            ZStack {
+                hillShapeView(geometry: geometry)
+                hillOutlineView(geometry: geometry)
+                milestonesView(geometry: geometry)
+            }
+        }
+        .frame(height: 80)
+    }
+    
+    private func hillShapeView(geometry: GeometryProxy) -> some View {
+        let milestones = viewModel.getWeightProgressionMilestones(for: exercise.id)
+        let currentWeight = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight
+        
+        let chartPoints = ProgressChartCalculator.calculateDynamicMilestones(
+            milestones: milestones,
+            currentWeight: currentWeight,
+            geometry: geometry
+        )
+        
+        return ProgressChartCalculator.generateCurvePathForFill(
+            chartPoints: chartPoints,
+            geometry: geometry
+        )
+        .fill(
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    AppStyle.Color.greenGlow.opacity(0.3),
+                    AppStyle.Color.greenGlow.opacity(0.05)
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+    }
+    
+    private func hillOutlineView(geometry: GeometryProxy) -> some View {
+        let milestones = viewModel.getWeightProgressionMilestones(for: exercise.id)
+        let currentWeight = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight
+        
+        let chartPoints = ProgressChartCalculator.calculateDynamicMilestones(
+            milestones: milestones,
+            currentWeight: currentWeight,
+            geometry: geometry
+        )
+        
+        return ProgressChartCalculator.generateCurvePath(
+            chartPoints: chartPoints,
+            geometry: geometry
+        )
+        .stroke(AppStyle.Color.greenGlow, lineWidth: 3)
+        .shadow(color: AppStyle.Color.greenGlow.opacity(0.5), radius: 4, x: 0, y: 0)
+    }
+    
+    private func milestonesView(geometry: GeometryProxy) -> some View {
+        let milestones = viewModel.getWeightProgressionMilestones(for: exercise.id)
+        let currentWeight = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight
+        
+        let chartPoints = ProgressChartCalculator.calculateDynamicMilestones(
+            milestones: milestones,
+            currentWeight: currentWeight,
+            geometry: geometry
+        )
+        
+        return ForEach(Array(chartPoints.enumerated()), id: \.offset) { index, point in
+            dynamicMilestonePointView(point: point, geometry: geometry)
+        }
+    }
+    
+    private func dynamicMilestonePointView(point: ProgressChartCalculator.ChartPoint, geometry: GeometryProxy) -> some View {
+        ZStack {
+            // Dotted line from point down to bottom
+            Path { path in
+                path.move(to: CGPoint(x: point.xPosition, y: point.yPosition + 8))
+                path.addLine(to: CGPoint(x: point.xPosition, y: geometry.size.height))
+            }
+            .stroke(AppStyle.Color.greenGlow.opacity(point.isCurrentWeight ? 0.8 : 0.4), 
+                   style: StrokeStyle(lineWidth: point.isCurrentWeight ? 2 : 1, dash: [4, 4]))
+            
+            // Milestone point
+            Circle()
+                .fill(AppStyle.Color.greenGlow)
+                .frame(width: point.isCurrentWeight ? 10 : 6, height: point.isCurrentWeight ? 10 : 6)
+                .position(x: point.xPosition, y: point.yPosition)
+                .shadow(color: AppStyle.Color.greenGlow.opacity(0.7), radius: point.isCurrentWeight ? 6 : 3, x: 0, y: 0)
+            
+            // Weight label
+            Text(point.weight == floor(point.weight) ? "\(Int(point.weight))" : String(point.weight).replacingOccurrences(of: ".", with: ","))
+                .font(.system(size: point.isCurrentWeight ? 20 : 14, weight: .bold))
+                .foregroundColor(AppStyle.Color.greenGlow)
+                .position(x: point.xPosition, y: point.yPosition - (point.isCurrentWeight ? 15 : 12))
+                .shadow(color: AppStyle.Color.greenGlow.opacity(0.3), radius: point.isCurrentWeight ? 8 : 4, x: 0, y: 0)
+        }
+    }
+    
+    private var chartLabelsView: some View {
+        // Labels row - below the chart
+        HStack {
+            // Left: 0 kg (single line)
+            Text("0 kg")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(AppStyle.Color.greenGlow)
+            
+            Spacer()
+            
+            // Center: Calendar Entry Point
+            Button(action: {
+                showCalendarDialog = true
+            }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 12, weight: .medium))
+                    Text(formattedDateShort(selectedDate))
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .foregroundColor(AppStyle.Color.greenGlow)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(AppStyle.Color.greenBlack.opacity(0.3))
+                .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(AppStyle.Color.greenGlow.opacity(0.2), lineWidth: 1)
+                )
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            Spacer()
+            
+            // Right: Goal (single line)
+            Button(action: {
+                tempGoal = exercise.goal != nil ? formatGoalForInput(exercise.goal!) : ""
+                showGoalSheet = true
+            }) {
+                if let goal = exercise.goal {
+                    Text("Goal: \(goal == floor(goal) ? "\(Int(goal))" : String(goal).replacingOccurrences(of: ".", with: ",")) kg")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(AppStyle.Color.greenGlow)
+                } else {
+                    Text("Set Goal")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(AppStyle.Color.greenGlow.opacity(0.5), lineWidth: 1)
+                        )
+                }
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+        .padding(.horizontal, 12)
+    }
+    
+    private var headerView: some View {
         HStack(alignment: .center, spacing: 12) {
             Text(exercise.name)
                 .font(AppStyle.Font.analyticsExerciseTitle)

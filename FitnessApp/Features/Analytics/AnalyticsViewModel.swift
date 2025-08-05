@@ -266,6 +266,46 @@ extension AnalyticsViewModel {
         return mostCommonPattern
     }
     
+    func getWeightProgressionMilestones(for exerciseId: UUID) -> [(date: Date, weight: Double)] {
+        let calendar = Calendar.current
+        let entries = loadAnalytics(for: exerciseId)
+        
+        let currentMonthEntries = entries
+            .filter { calendar.isDate($0.date, equalTo: Date(), toGranularity: .month) }
+            .sorted(by: { $0.date < $1.date })
+        
+        let dailyWeights: [(date: Date, weight: Double)] = currentMonthEntries.compactMap { entry in
+            guard let weight = entry.setProgress.first?.weight else { return nil }
+            let day = calendar.startOfDay(for: entry.date)
+            return (date: day, weight: weight)
+        }
+        
+        let maxWeightPerDay: [(date: Date, weight: Double)] = Dictionary(grouping: dailyWeights, by: { $0.date })
+            .compactMap { (date, values) in
+                let maxWeight = values.map(\.weight).max() ?? 0.0
+                return (date, maxWeight)
+            }
+            .sorted(by: { $0.date < $1.date })
+        
+        // Return only the weight progression milestones (when weight actually increased)
+        var milestones: [(date: Date, weight: Double)] = []
+        var lastWeight: Double? = nil
+        
+        for (date, weight) in maxWeightPerDay {
+            if let previous = lastWeight {
+                if weight > previous {
+                    milestones.append((date: date, weight: weight))
+                }
+            } else {
+                // First entry is always a milestone
+                milestones.append((date: date, weight: weight))
+            }
+            lastWeight = weight
+        }
+        
+        return milestones
+    }
+    
     func updateExerciseGoal(exercise: inout Exercise, newGoal: Double?) {
         exercise.goal = newGoal
         // Note: The caller should save the exercise using their storage service
