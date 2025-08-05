@@ -136,7 +136,7 @@ private struct CategoryTileView: View {
 
             Text("\(exerciseInfo.completed) of \(exerciseInfo.total) completed")
                 .font(AppStyle.Font.defaultFont)
-                .foregroundColor(Constants.secondaryTextColor)
+                .foregroundColor(AppStyle.Color.white)
         }
         .padding(.vertical, Constants.CategoryTile.verticalPadding)
         .padding(.horizontal, Constants.CategoryTile.contentPadding)

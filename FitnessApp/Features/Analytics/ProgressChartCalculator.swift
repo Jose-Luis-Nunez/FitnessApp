@@ -17,14 +17,17 @@ class ProgressChartCalculator {
     ) -> [ChartPoint] {
         guard !milestones.isEmpty else { return [] }
         
+        // Limit to maximum 5 milestones with smart filtering
+        let filteredMilestones = limitToFiveMilestones(milestones)
+        
         let width = geometry.size.width
         let height = geometry.size.height
-        let chartTopY = height * 0.15    // 15% from top (highest point)
-        let chartBottomY = height * 0.85  // 85% from top (lowest point)
+        let chartTopY = height * 0.25    // 25% from top (more margin)
+        let chartBottomY = height * 0.75  // 75% from top (more margin)
         let chartRange = chartBottomY - chartTopY
         
         // Find min and max weights for proper scaling
-        let weights = milestones.map { $0.weight }
+        let weights = filteredMilestones.map { $0.weight }
         let minWeight = weights.min() ?? 0
         let maxWeight = weights.max() ?? minWeight + 1
         let weightRange = maxWeight - minWeight
@@ -43,9 +46,9 @@ class ProgressChartCalculator {
         
         var chartPoints: [ChartPoint] = []
         
-        for (index, milestone) in milestones.enumerated() {
+        for (index, milestone) in filteredMilestones.enumerated() {
             // X position: distribute evenly across chart width (15% to 85%)
-            let xProgress = milestones.count == 1 ? 0.5 : CGFloat(index) / CGFloat(milestones.count - 1)
+            let xProgress = filteredMilestones.count == 1 ? 0.5 : CGFloat(index) / CGFloat(filteredMilestones.count - 1)
             let xPosition = width * (0.15 + xProgress * 0.7)
             
             // Y position: proportional to actual weight value
@@ -63,6 +66,20 @@ class ProgressChartCalculator {
         return chartPoints
     }
     
+    private static func limitToFiveMilestones(_ milestones: [(date: Date, weight: Double)]) -> [(date: Date, weight: Double)] {
+        // If 5 or fewer milestones, return all
+        guard milestones.count > 5 else { return milestones }
+        
+        // Behalte ersten Meilenstein (Startwert)
+        let firstMilestone = milestones[0]
+
+        // Behalte die letzten 4 Meilensteine (neueste Fortschritte)  
+        let lastFourMilestones = Array(milestones.suffix(4))
+
+        // Kombiniere: [Startwert] + [neueste 4]
+        return [firstMilestone] + lastFourMilestones
+    }
+    
     static func generateCurvePath(
         chartPoints: [ChartPoint],
         geometry: GeometryProxy
@@ -70,7 +87,7 @@ class ProgressChartCalculator {
         Path { path in
             let width = geometry.size.width
             let height = geometry.size.height
-            let bottomY = height * 0.85
+            let bottomY = height * 0.75  // Match chartBottomY
             
             if chartPoints.isEmpty {
                 // Fallback: simple horizontal line
@@ -120,7 +137,7 @@ class ProgressChartCalculator {
         Path { path in
             let width = geometry.size.width
             let height = geometry.size.height
-            let bottomY = height * 0.85
+            let bottomY = height * 0.75  // Match chartBottomY
             
             if chartPoints.isEmpty {
                 // Fallback: simple horizontal line with fill

@@ -165,7 +165,7 @@ struct AnalyticsView: View {
                 milestonesView(geometry: geometry)
             }
         }
-        .frame(height: 80)
+        .frame(height: 90)
     }
     
     private func hillShapeView(geometry: GeometryProxy) -> some View {
@@ -352,7 +352,7 @@ struct AnalyticsView: View {
                             .foregroundColor(AppStyle.Color.greenGlow)
                             .padding(.vertical, 12)
                             .padding(.horizontal, 24)
-                            .frame(width: 120, height: 120)
+                            .frame(width: 75, height: 75)
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
                                     .fill(AppStyle.Color.greenBlack)
@@ -693,33 +693,36 @@ struct AnalyticsView: View {
     }
     
     private var weightMilestoneView: some View {
-        HStack(alignment: .top, spacing: 0) {
+        HStack(alignment: .top, spacing: 8) {
             AnalyticsTileView(
                 number: "\(viewModel.weightIncreasesInCurrentMonth(for: exercise.id))",
-                label: "Increase by weight",
-                icon: "arrow.up.right",
-                iconColor: .yellow
+                label: "Weight increase",
+                icon: nil,
+                iconColor: .clear
             )
-            
-            Spacer()
             
             AnalyticsTileView(
                 number: "\(viewModel.trainingDaysInCurrentMonth(for: exercise.id))",
                 label: "Training \(viewModel.currentMonthName())",
-                icon: "arrow.up.right",
+                icon: nil,
                 iconColor: .clear
             )
             
-            Spacer()
-            
             AnalyticsTileView(
                 number: "\(viewModel.trainingSessionsUntilWeightIncrease(for: exercise.id))",
-                label: "trainings to increase weight",
-                icon: "arrow.up.circle",
-                iconColor: AppStyle.Color.greenGlow
+                label: "Training to increase kg",
+                icon: nil,
+                iconColor: .clear
+            )
+            
+            AnalyticsTileView(
+                number: "\(viewModel.loadAnalytics(for: exercise.id).count)",
+                label: "Total workouts",
+                icon: nil,
+                iconColor: .clear
             )
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, AppStyle.Padding.horizontal)
         .padding(.vertical, 8)
     }
     
@@ -739,36 +742,29 @@ struct AnalyticsTileView: View {
     let iconColor: Color
     
     var body: some View {
-        ZStack {
+        VStack(spacing: 4) {
+            Text(number)
+                .font(.system(size: 26, weight: .bold))
+                .foregroundColor(AppStyle.Color.greenGlow)
+            
+            Text(label)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(AppStyle.Color.greenGlow)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(8)
+        .frame(height: 85)
+        .frame(maxWidth: .infinity)
+        .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(AppStyle.Color.greenBlack.opacity(0.3))
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
                         .stroke(AppStyle.Color.greenGlow.opacity(0.2), lineWidth: 1)
                 )
-            
-            VStack(spacing: 8) {
-                if let icon = icon {
-                    Image(systemName: icon)
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(iconColor)
-                }
-                
-                Text(number)
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(AppStyle.Color.greenGlow)
-                
-                Text(label)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(AppStyle.Color.greenGlow)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: 96)
-            }
-            .padding(12)
-        }
-        .frame(width: 120, height: 120, alignment: .center)
+        )
     }
 }
 
