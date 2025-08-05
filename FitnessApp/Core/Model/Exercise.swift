@@ -11,6 +11,7 @@ struct Exercise: Identifiable, Codable, Equatable {
     var isCompleted: Bool
     var iconName: String
     var category: MuscleCategoryGroup
+    var goal: Double? // Goal weight for this exercise
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -22,6 +23,7 @@ struct Exercise: Identifiable, Codable, Equatable {
         sets = try container.decode(Int.self, forKey: .sets)
         seatSetting = try container.decodeIfPresent(String.self, forKey: .seatSetting)
         isCompleted = try container.decodeIfPresent(Bool.self, forKey: .isCompleted) ?? false
+        goal = try container.decodeIfPresent(Double.self, forKey: .goal)
         
         if let icon = try container.decodeIfPresent(String.self, forKey: .iconName) {
             iconName = icon
@@ -45,7 +47,8 @@ struct Exercise: Identifiable, Codable, Equatable {
         seatSetting: String? = nil,
         isCompleted: Bool = false,
         iconName: String,
-        category: MuscleCategoryGroup
+        category: MuscleCategoryGroup,
+        goal: Double? = nil
     ) {
         self.id = id
         self.name = name
@@ -56,6 +59,7 @@ struct Exercise: Identifiable, Codable, Equatable {
         self.isCompleted = isCompleted
         self.iconName = iconName
         self.category = category
+        self.goal = goal
     }
     
     static func == (lhs: Exercise, rhs: Exercise) -> Bool {

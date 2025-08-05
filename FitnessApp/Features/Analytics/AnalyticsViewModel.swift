@@ -265,4 +265,21 @@ extension AnalyticsViewModel {
         
         return mostCommonPattern
     }
+    
+    func updateExerciseGoal(exercise: inout Exercise, newGoal: Double?) {
+        exercise.goal = newGoal
+        // Note: The caller should save the exercise using their storage service
+        DispatchQueue.main.async {
+            self.objectWillChange.send()
+        }
+    }
+    
+    func setGoal(for exerciseId: UUID, goal: String) {
+        // This is a simplified implementation
+        // In a real app, you'd need access to the exercise storage service
+        // For now, we'll just trigger a UI update
+        DispatchQueue.main.async {
+            self.objectWillChange.send()
+        }
+    }
 }
