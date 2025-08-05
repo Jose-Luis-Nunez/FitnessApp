@@ -280,23 +280,47 @@ struct AnalyticsView: View {
                 
                 Spacer()
                 
+                // Center: Calendar Entry Point
+                Button(action: {
+                    showCalendarDialog = true
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "calendar")
+                            .font(.system(size: 12, weight: .medium))
+                        Text(formattedDateShort(selectedDate))
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .foregroundColor(AppStyle.Color.greenGlow)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(AppStyle.Color.greenBlack.opacity(0.3))
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(AppStyle.Color.greenGlow.opacity(0.2), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                Spacer()
+                
                 // Right: Goal (single line)
                 Button(action: {
-                    tempGoal = exercise.goal != nil ? "\(exercise.goal!)" : ""
+                    tempGoal = exercise.goal != nil ? formatGoalForInput(exercise.goal!) : ""
                     showGoalSheet = true
                 }) {
                     if let goal = exercise.goal {
                         Text("Goal: \(goal == floor(goal) ? "\(Int(goal))" : String(goal).replacingOccurrences(of: ".", with: ",")) kg")
-                            .font(.system(size: 16, weight: .bold))
+                            .font(.system(size: 14, weight: .bold))
                             .foregroundColor(AppStyle.Color.greenGlow)
                     } else {
                         Text("Set Goal")
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.system(size: 12, weight: .medium))
                             .foregroundColor(AppStyle.Color.greenGlow)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 6)
+                                RoundedRectangle(cornerRadius: 4)
                                     .stroke(AppStyle.Color.greenGlow.opacity(0.5), lineWidth: 1)
                             )
                     }
@@ -325,34 +349,9 @@ struct AnalyticsView: View {
                 .fixedSize()
             
             Spacer()
-            
-            Button(action: {
-                showCalendarDialog = true
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "calendar")
-                        .foregroundColor(AppStyle.Color.greenGlow)
-                        .imageScale(.medium)
-                    
-                    Text(formattedDate(selectedDate))
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(AppStyle.Color.white)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(AppStyle.Color.greenBlack.opacity(0.3))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(AppStyle.Color.greenGlow.opacity(0.2), lineWidth: 1)
-                        )
-                )
-            }
-            .buttonStyle(PlainButtonStyle())
         }
         .padding(.horizontal, AppStyle.Padding.horizontal)
-        .padding(.top, 4)
+        .padding(.top, 15)
         .padding(.bottom, 10)
     }
     
@@ -482,37 +481,45 @@ struct AnalyticsView: View {
     private var calendarDialog: some View {
         Group {
             if showCalendarDialog {
-                VStack {
-                    Spacer()
-                    
-                    VStack(spacing: 16) {
-                        VStack {
-                            Text("Monthly training")
-                                .font(.headline)
-                                .foregroundColor(AppStyle.Color.white)
-                                .padding(.top, 12)
-                                .padding(.horizontal, 16)
-                            
-                            Spacer().frame(height: 20)
-                            
-                            CalendarGridView(
-                                selectedDate: $tempDate,
-                                highlightedDates: viewModel.loadAnalyticsDates(for: exercise.id)
-                            )
-                            .frame(maxWidth: .infinity)
-                            .padding(.horizontal)
-                            
-                            actionButtons
+                ZStack {
+                    // Tappable background area
+                    Color.black.opacity(0.5)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            showCalendarDialog = false
                         }
-                        .background(AppStyle.Color.greenBlack)
-                        .cornerRadius(AppStyle.CornerRadius.defaultButton)
-                        .padding(16)
-                    }
-                    .frame(maxWidth: 400, maxHeight: 250)
                     
-                    Spacer()
+                    VStack {
+                        Spacer()
+                        
+                        VStack(spacing: 16) {
+                            VStack {
+                                Text("Monthly training")
+                                    .font(.headline)
+                                    .foregroundColor(AppStyle.Color.white)
+                                    .padding(.top, 12)
+                                    .padding(.horizontal, 16)
+                                
+                                Spacer().frame(height: 20)
+                                
+                                CalendarGridView(
+                                    selectedDate: $tempDate,
+                                    highlightedDates: viewModel.loadAnalyticsDates(for: exercise.id)
+                                )
+                                .frame(maxWidth: .infinity)
+                                .padding(.horizontal)
+                                
+                                actionButtons
+                            }
+                            .background(AppStyle.Color.greenBlack)
+                            .cornerRadius(AppStyle.CornerRadius.defaultButton)
+                            .padding(16)
+                        }
+                        .frame(maxWidth: 400, maxHeight: 250)
+                        
+                        Spacer()
+                    }
                 }
-                .background(Color.black.opacity(0.5))
                 .transition(.opacity)
             }
         }
@@ -585,18 +592,29 @@ struct AnalyticsView: View {
                                 .padding(.top, 16)
                             
                             ZStack(alignment: .trailing) {
-                                TextField("Enter goal weight", text: $tempGoal)
-                                    .keyboardType(.decimalPad)
-                                    .font(.system(size: 18, weight: .medium))
-                                    .foregroundColor(AppStyle.Color.white)
-                                    .padding()
-                                    .padding(.trailing, exercise.goal != nil ? 40 : 0) // Make space for X button
-                                    .background(AppStyle.Color.greenBlack)
-                                    .cornerRadius(12)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(AppStyle.Color.greenGlow.opacity(0.3), lineWidth: 1)
-                                    )
+                                ZStack(alignment: .leading) {
+                                    TextField("", text: $tempGoal)
+                                        .keyboardType(.decimalPad)
+                                        .font(.system(size: 18, weight: .medium))
+                                        .foregroundColor(AppStyle.Color.white)
+                                        .padding()
+                                        .padding(.trailing, exercise.goal != nil ? 40 : 0) // Make space for X button
+                                        .background(AppStyle.Color.greenBlack)
+                                        .cornerRadius(12)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(AppStyle.Color.greenGlow.opacity(0.3), lineWidth: 1)
+                                        )
+                                    
+                                    // Custom placeholder text in greenGlow
+                                    if tempGoal.isEmpty {
+                                        Text("Enter goal weight")
+                                            .font(.system(size: 18, weight: .medium))
+                                            .foregroundColor(AppStyle.Color.greenGlow.opacity(0.6))
+                                            .padding(.leading, 16)
+                                            .allowsHitTesting(false)
+                                    }
+                                }
                                 
                                 // X button to clear goal - only show when editing existing goal
                                 if exercise.goal != nil && !tempGoal.isEmpty {
@@ -654,7 +672,7 @@ struct AnalyticsView: View {
     
     private var actionButtons: some View {
         HStack(spacing: 16) {
-            Button("Abbrechen") {
+            Button("Cancel") {
                 showCalendarDialog = false
             }
             .font(.body)
@@ -663,7 +681,7 @@ struct AnalyticsView: View {
             .padding(.horizontal, 16)
             .cornerRadius(AppStyle.CornerRadius.defaultButton)
             
-            Button("Auswählen") {
+            Button("Select") {
                 selectedDate = tempDate
                 showCalendarDialog = false
             }
@@ -683,6 +701,23 @@ struct AnalyticsView: View {
         formatter.dateStyle = .medium
         formatter.locale = Locale(identifier: "de_DE")
         return formatter.string(from: date)
+    }
+    
+    private func formattedDateShort(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd.MM.yyyy"
+        formatter.locale = Locale(identifier: "de_DE")
+        return formatter.string(from: date)
+    }
+    
+    private func formatGoalForInput(_ goal: Double) -> String {
+        if goal == floor(goal) {
+            // Ganze Zahl - keine Dezimalstellen
+            return "\(Int(goal))"
+        } else {
+            // Dezimalzahl - mit deutschem Komma
+            return String(goal).replacingOccurrences(of: ".", with: ",")
+        }
     }
     
     private var weightMilestoneView: some View {
