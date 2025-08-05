@@ -95,12 +95,10 @@ struct AnalyticsView: View {
                 
                 headerView
                 
-                // Progress Chart - only shown when goal is set
-                if goalWeight > 0 {
-                    progressChartView
-                        .padding(.horizontal, AppStyle.Padding.horizontal)
-                        .padding(.vertical, 12)
-                }
+                // Progress Chart - always shown
+                progressChartView
+                    .padding(.horizontal, AppStyle.Padding.horizontal)
+                    .padding(.vertical, 12)
                 
                 weightMilestoneView
                     .background(
@@ -150,10 +148,10 @@ struct AnalyticsView: View {
     
     private var progressChartView: some View {
         let currentWeight = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight
-        let progress = currentWeight / Double(goalWeight)
+        let progress = goalWeight > 0 ? currentWeight / Double(goalWeight) : 0
         
         return VStack(spacing: 8) {
-            // Rounded hill chart
+            // Hill chart - always displayed
             GeometryReader { geometry in
                 ZStack {
                     // Hill shape with gradient fill
@@ -254,8 +252,6 @@ struct AnalyticsView: View {
                     // Current position at peak with dotted line down
                     let peakX = geometry.size.width * 0.5
                     let peakY = geometry.size.height * 0.3
-                    let startX: CGFloat = 0
-                    let startY = geometry.size.height * 0.8
                     
                     // Dotted line from peak down to bottom
                     Path { path in
@@ -273,7 +269,7 @@ struct AnalyticsView: View {
                         .shadow(color: AppStyle.Color.greenGlow.opacity(0.7), radius: 6, x: 0, y: 0)
                     
                     // Current weight label at peak
-                    Text("\(Int(currentWeight))")
+                    Text(currentWeight == floor(currentWeight) ? "\(Int(currentWeight))" : String(currentWeight).replacingOccurrences(of: ".", with: ","))
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(AppStyle.Color.greenGlow)
                         .position(x: peakX, y: peakY - 25)
@@ -290,7 +286,7 @@ struct AnalyticsView: View {
                 
                 Spacer()
                 
-                Text("Goal: \(goalWeight) kg")
+                Text(goalWeight > 0 ? "Goal: \(goalWeight) kg" : "No goal set")
                     .font(.caption)
                     .foregroundColor(AppStyle.Color.greenGlow)
             }
@@ -669,15 +665,19 @@ struct AnalyticsView: View {
                         Spacer(minLength: 16)
                         Text("\(goalWeight)")
                             .font(.system(size: 17, weight: .bold))
-                            .foregroundColor(AppStyle.Color.greenDark)
+                            .foregroundColor(AppStyle.Color.greenGlow)
                         
                         Text("kg")
                             .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(AppStyle.Color.greenDark)
+                            .foregroundColor(AppStyle.Color.greenGlow)
                         Spacer(minLength: 0)
                     }
                     .frame(width: 49, height: 49)
-                    .background(AppStyle.Color.greenGlow)
+                    .background(AppStyle.Color.black)
+                    .overlay(
+                        Circle()
+                            .stroke(AppStyle.Color.greenGlow, lineWidth: 1.5)
+                    )
                     .clipShape(Circle())
                     .onTapGesture {
                         showGoalWeightDialog = true
@@ -744,17 +744,13 @@ struct AnalyticsView: View {
             VStack(spacing: -2) {
                 Text(exercise.weight == floor(exercise.weight) ? "\(Int(exercise.weight))" : String(exercise.weight).replacingOccurrences(of: ".", with: ","))
                     .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(AppStyle.Color.greenGlow)
+                    .foregroundColor(AppStyle.Color.greenDark)
                 Text("kg")
                     .font(.system(size: 9))
-                    .foregroundColor(AppStyle.Color.greenGlow)
+                    .foregroundColor(AppStyle.Color.greenDark)
             }
             .frame(width: 32, height: 32)
-            .background(AppStyle.Color.black)
-            .overlay(
-                Circle()
-                    .stroke(AppStyle.Color.greenGlow, lineWidth: 1.5)
-            )
+            .background(AppStyle.Color.greenGlow)
             .clipShape(Circle())
             .padding(.top, -20)
         }
