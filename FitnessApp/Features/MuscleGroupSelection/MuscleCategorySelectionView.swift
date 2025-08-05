@@ -18,6 +18,8 @@ private enum Constants {
         static let verticalSpacing: CGFloat = 12
         static let textSpacing: CGFloat = 28
         static let verticalPadding: CGFloat = 20
+        static let circleSize: CGFloat = 80
+        static let circleLineWidth: CGFloat = 6
     }
 
     enum ProgressBar {
@@ -144,17 +146,12 @@ private struct CategoryTileView: View {
 
     private func progressSection(exerciseInfo: ExerciseInfo) -> some View {
         HStack(spacing: Constants.CategoryTile.itemSpacing) {
-            VStack(alignment: .trailing, spacing: Constants.CategoryTile.verticalSpacing) {
-                CustomChip(
-                    text: getChipText(exerciseInfo),
-                    isCompleted: exerciseInfo.isCompleted,
-                    width: Constants.CategoryTile.barWidth,
-                    verticalPadding: Constants.CategoryTile.chipVerticalPadding
-                )
-                .accessibilityIdentifier(AccessibilityIDs.categoryLabel(for: group))
-
-                ProgressBar(progress: exerciseInfo.progress, totalWidth: Constants.CategoryTile.barWidth)
-            }
+            CircularProgressView(
+                progress: exerciseInfo.progress,
+                statusText: getChipText(exerciseInfo),
+                isCompleted: exerciseInfo.isCompleted
+            )
+            .accessibilityIdentifier(AccessibilityIDs.categoryLabel(for: group))
 
             Image(systemName: "chevron.right")
                 .foregroundColor(AppStyle.Color.white)
@@ -179,6 +176,52 @@ private struct CategoryTileView: View {
             return "Not Started"
         } else {
             return "Active"
+        }
+    }
+}
+
+private struct CircularProgressView: View {
+    let progress: Double
+    let statusText: String
+    let isCompleted: Bool
+    
+    var body: some View {
+        ZStack {
+            // Background circle
+            Circle()
+                .stroke(
+                    Constants.secondaryTextColor,
+                    lineWidth: Constants.CategoryTile.circleLineWidth
+                )
+            
+            // Progress circle
+            Circle()
+                .trim(from: 0, to: CGFloat(progress.clamped(to: 0...1)))
+                .stroke(
+                    progressColor,
+                    style: StrokeStyle(
+                        lineWidth: Constants.CategoryTile.circleLineWidth,
+                        lineCap: .round
+                    )
+                )
+                .rotationEffect(.degrees(-90))
+            
+            // Status text in center
+            Text(statusText)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .frame(maxWidth: Constants.CategoryTile.circleSize - 20)
+        }
+        .frame(width: Constants.CategoryTile.circleSize, height: Constants.CategoryTile.circleSize)
+    }
+    
+    private var progressColor: Color {
+        if isCompleted {
+            return AppStyle.Color.green
+        } else {
+            return AppStyle.Color.green
         }
     }
 }
