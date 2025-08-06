@@ -27,9 +27,15 @@ struct AnalyticsView: View {
     private let paddingAmount: CGFloat = 16
     
     init(exercise: Exercise, viewModel: AnalyticsViewModel) {
-        self._exercise = State(initialValue: exercise)
+        let storageService = ExerciseStorageService()
+        let category = exercise.category
+        let workoutId = WorkoutStorageService.shared.currentWorkout?.id ?? UUID()
+        let exercises = storageService.loadForWorkout(workoutId: workoutId, category: category)
+        let latestExercise = exercises.first(where: { $0.id == exercise.id }) ?? exercise
+        
+        self._exercise = State(initialValue: latestExercise)
         self.viewModel = viewModel
-        self.initialReps = exercise.reps
+        self.initialReps = latestExercise.reps
     }
     
     var body: some View {
@@ -41,7 +47,7 @@ struct AnalyticsView: View {
                 goalSetterOverlay
             }
         }
-        
+
     }
     
     private var trainingDates: Set<Date> {
@@ -546,101 +552,157 @@ struct AnalyticsView: View {
         Group {
             if showGoalSheet {
                 ZStack {
-                    // Tappable background area
-                    Color.black.opacity(0.5)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            showGoalSheet = false
-                        }
-                    
-                    // Overlay content
-                    VStack {
-                        Spacer()
-                        
-                        VStack(spacing: 16) {
-                            Text("Set Weight Goal")
-                                .font(.headline)
-                                .foregroundColor(AppStyle.Color.white)
-                                .padding(.top, 16)
-                            
-                            ZStack(alignment: .trailing) {
-                                ZStack(alignment: .leading) {
-                                    TextField("", text: $tempGoal)
-                                        .keyboardType(.decimalPad)
-                                        .font(.system(size: 18, weight: .medium))
-                                        .foregroundColor(AppStyle.Color.white)
-                                        .padding()
-                                        .padding(.trailing, exercise.goal != nil ? 40 : 0) // Make space for X button
-                                        .background(AppStyle.Color.greenBlack)
-                                        .cornerRadius(12)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .stroke(AppStyle.Color.greenGlow.opacity(0.3), lineWidth: 1)
-                                        )
-                                    
-                                    // Custom placeholder text in greenGlow
-                                    if tempGoal.isEmpty {
-                                        Text("Enter goal weight")
-                                            .font(.system(size: 18, weight: .medium))
-                                            .foregroundColor(AppStyle.Color.greenGlow.opacity(0.6))
-                                            .padding(.leading, 16)
-                                            .allowsHitTesting(false)
-                                    }
-                                }
-                                
-                                // X button to clear goal - only show when editing existing goal
-                                if exercise.goal != nil && !tempGoal.isEmpty {
-                                    Button(action: {
-                                        tempGoal = ""
-                                    }) {
-                                        Image(systemName: "xmark.circle.fill")
-                                            .foregroundColor(AppStyle.Color.gray)
-                                            .font(.system(size: 20))
-                                    }
-                                    .padding(.trailing, 12)
-                                }
-                            }
-                            
-                            HStack(spacing: 16) {
-                                Button("Abbrechen") {
-                                    showGoalSheet = false
-                                }
-                                .font(.body)
-                                .foregroundColor(AppStyle.Color.white)
-                                .padding(.vertical, 12)
-                                .padding(.horizontal, 24)
-                                .background(AppStyle.Color.greenBlack)
-                                .cornerRadius(12)
-                                
-                                Button("Speichern") {
-                                    if tempGoal.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                        exercise.goal = nil
-                                    } else if let goalValue = Double(tempGoal.replacingOccurrences(of: ",", with: ".")) {
-                                        exercise.goal = goalValue
-                                    }
-                                    showGoalSheet = false
-                                }
-                                .font(.body)
-                                .foregroundColor(AppStyle.Color.white)
-                                .padding(.vertical, 12)
-                                .padding(.horizontal, 24)
-                                .background(AppStyle.Color.green)
-                                .cornerRadius(12)
-                            }
-                            .padding(.bottom, 16)
-                        }
-                        .padding(.horizontal, 24)
-                        .background(AppStyle.Color.greenBlack)
-                        .cornerRadius(16)
-                        .padding(.horizontal, 32)
-                        
-                        Spacer()
-                    }
+                    goalSheetBackground
+                    goalSheetContent
                 }
                 .transition(.opacity)
             }
         }
     }
+    
+    private var goalSheetBackground: some View {
+        Color.black.opacity(0.5)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                showGoalSheet = false
+            }
+    }
+    
+    private var goalSheetContent: some View {
+        VStack {
+            Spacer()
+            goalSheetModal
+            Spacer()
+        }
+    }
+    
+    private var goalSheetModal: some View {
+        VStack(spacing: 16) {
+            goalSheetHeader
+            goalInputField
+            goalActionButtons
+        }
+        .padding(.horizontal, 24)
+        .background(AppStyle.Color.greenBlack)
+        .cornerRadius(16)
+        .padding(.horizontal, 32)
+    }
+    
+    private var goalSheetHeader: some View {
+        Text("Set Weight Goal")
+            .font(.headline)
+            .foregroundColor(AppStyle.Color.white)
+            .padding(.top, 16)
+    }
+    
+    private var goalInputField: some View {
+        ZStack(alignment: .trailing) {
+            goalTextField
+            goalClearButton
+        }
+    }
+    
+    private var goalTextField: some View {
+        ZStack(alignment: .leading) {
+            TextField("", text: $tempGoal)
+                .keyboardType(.decimalPad)
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(AppStyle.Color.white)
+                .padding()
+                .padding(.trailing, exercise.goal != nil ? 40 : 0)
+                .background(AppStyle.Color.greenBlack)
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(AppStyle.Color.greenGlow.opacity(0.3), lineWidth: 1)
+                )
+            
+            goalPlaceholder
+        }
+    }
+    
+    private var goalPlaceholder: some View {
+        Group {
+            if tempGoal.isEmpty {
+                Text("Enter goal weight")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(AppStyle.Color.greenGlow.opacity(0.6))
+                    .padding(.leading, 16)
+                    .allowsHitTesting(false)
+            }
+        }
+    }
+    
+    private var goalClearButton: some View {
+        Group {
+            if exercise.goal != nil && !tempGoal.isEmpty {
+                Button(action: {
+                    tempGoal = ""
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(AppStyle.Color.gray)
+                        .font(.system(size: 20))
+                }
+                .padding(.trailing, 12)
+            }
+        }
+    }
+    
+    private var goalActionButtons: some View {
+        HStack(spacing: 16) {
+            goalCancelButton
+            goalSaveButton
+        }
+        .padding(.bottom, 16)
+    }
+    
+    private var goalCancelButton: some View {
+        Button("Abbrechen") {
+            showGoalSheet = false
+        }
+        .font(.body)
+        .foregroundColor(AppStyle.Color.white)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 24)
+        .background(AppStyle.Color.greenBlack)
+        .cornerRadius(12)
+    }
+    
+    private var goalSaveButton: some View {
+        Button("Speichern") {
+            saveGoal()
+        }
+        .font(.body)
+        .foregroundColor(AppStyle.Color.white)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 24)
+        .background(AppStyle.Color.green)
+        .cornerRadius(12)
+    }
+    
+    private func saveGoal() {
+        // Update the goal value
+        if tempGoal.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            exercise.goal = nil
+        } else if let goalValue = Double(tempGoal.replacingOccurrences(of: ",", with: ".")) {
+            exercise.goal = goalValue
+        }
+        
+        // Save the exercise with updated goal to storage
+        let storageService = ExerciseStorageService()
+        let category = exercise.category
+        let workoutId = WorkoutStorageService.shared.currentWorkout?.id ?? UUID()
+        var exercises = storageService.loadForWorkout(workoutId: workoutId, category: category)
+        
+        if let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
+            exercises[index] = exercise
+            storageService.saveForWorkout(exercises, workoutId: workoutId, category: category)
+        }
+        
+        showGoalSheet = false
+    }
+    
+
     
     private var actionButtons: some View {
         HStack(spacing: 16) {
