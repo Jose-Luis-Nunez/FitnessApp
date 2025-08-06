@@ -134,4 +134,16 @@ class WorkoutsViewModel: ObservableObject {
     func removeAsDefault() {
         storageService.removeAsDefaultWorkout()
     }
+    
+    func getExerciseCount(for workout: Workout) -> Int {
+        let exerciseService = ExerciseStorageService()
+        var totalCount = 0
+        
+        for category in MuscleCategoryGroup.allCases {
+            let exercises = exerciseService.loadForWorkout(workoutId: workout.id, category: category)
+            totalCount += exercises.count
+        }
+        
+        return totalCount
+    }
 } 

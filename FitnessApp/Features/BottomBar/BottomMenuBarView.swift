@@ -16,6 +16,7 @@ struct BottomMenuBarView: View {
             HStack(spacing: AppStyle.Padding.horizontal) {
                 Button(action: {
                     navigationPath = NavigationPath()
+                    navigationPath.append(NavigationDestination.workouts)
                 }) {
                     Image(systemName: "house")
                         .resizable()

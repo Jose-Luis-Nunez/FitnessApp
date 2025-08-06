@@ -411,7 +411,7 @@ struct AnalyticsView: View {
                                     setIndex: index
                                 )
                             } label: {
-                                Label("Löschen", systemImage: "trash")
+                                Label("Delete", systemImage: "trash")
                             }
                             .tint(.red)
                         }

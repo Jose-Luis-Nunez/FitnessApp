@@ -55,7 +55,7 @@ struct RenameWorkoutView: View {
             
             Spacer()
             
-            Text("Workout umbenennen")
+            Text("Rename Workout")
                 .font(AppStyle.Font.navigationHeadline)
                 .foregroundColor(AppStyle.Color.white)
             

@@ -100,6 +100,7 @@ struct WorkoutsScreen: View {
                 WorkoutTileView(
                     workout: workout,
                     isDefault: viewModel.isDefaultWorkout(workout),
+                    exerciseCount: viewModel.getExerciseCount(for: workout),
                     onTap: {
                         viewModel.selectWorkout(workout)
                         navigationPath.append(NavigationDestination.home)
@@ -185,7 +186,7 @@ struct WorkoutsScreen: View {
                         VStack(spacing: 0) {
                             // Header
                             VStack(spacing: 8) {
-                                Text(viewModel.showingDeleteConfirmation ? "Löschen" : "Settings")
+                                Text(viewModel.showingDeleteConfirmation ? "Delete" : "Settings")
                                     .font(AppStyle.Font.navigationHeadline)
                                     .foregroundColor(AppStyle.Color.greenGlow)
                                     .padding(.top, 16)
@@ -203,7 +204,7 @@ struct WorkoutsScreen: View {
                                 VStack(spacing: 4) {
                                     settingsOption(
                                         icon: "",
-                                        title: "Löschen bestätigen",
+                                        title: "Confirm deletion",
                                         action: {
                                             viewModel.confirmDelete()
                                         }
@@ -211,7 +212,7 @@ struct WorkoutsScreen: View {
                                     
                                     settingsOption(
                                         icon: "",
-                                        title: "Abbrechen",
+                                        title: "Cancel",
                                         action: {
                                             viewModel.cancelDelete()
                                         }
@@ -222,7 +223,7 @@ struct WorkoutsScreen: View {
                                 VStack(spacing: 4) {
                                     settingsOption(
                                         icon: "doc.on.doc",
-                                        title: "Duplizieren",
+                                        title: "duplicate",
                                         action: {
                                             if let workout = viewModel.selectedWorkoutForAction {
                                                 viewModel.duplicateWorkout(workout)
@@ -233,7 +234,7 @@ struct WorkoutsScreen: View {
                                     
                                     settingsOption(
                                         icon: "pencil",
-                                        title: "Umbenennen",
+                                        title: "Rename",
                                         action: {
                                             if let workout = viewModel.selectedWorkoutForAction {
                                                 viewModel.showRenameWorkout(for: workout)
@@ -266,7 +267,7 @@ struct WorkoutsScreen: View {
                                     if viewModel.canDeleteWorkout {
                                         settingsOption(
                                             icon: "trash",
-                                            title: "Löschen",
+                                            title: "Delete",
                                             isDestructive: true,
                                             action: {
                                                 viewModel.showDeleteConfirmation()
@@ -309,6 +310,7 @@ struct WorkoutsScreen: View {
 private struct WorkoutTileView: View {
     let workout: Workout
     let isDefault: Bool
+    let exerciseCount: Int
     let onTap: () -> Void
     let onLongPress: () -> Void
     let onSettingsTap: () -> Void
@@ -328,22 +330,16 @@ private struct WorkoutTileView: View {
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
+                .padding(.top, 6)
                 
                 Spacer()
                 
                 // Workout Name zentriert
-                VStack(spacing: 4) {
-                    Text(workout.name)
-                        .font(AppStyle.Font.categorySelectionNameFont)
-                        .foregroundColor(AppStyle.Color.white)
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                    
-                    Text(formattedDate(workout.lastModified))
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(Color(hex: "#46474B"))
-                        .multilineTextAlignment(.center)
-                }
+                Text(workout.name)
+                    .font(AppStyle.Font.categorySelectionNameFont)
+                    .foregroundColor(AppStyle.Color.white)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
                 
                 Spacer()
             }
@@ -358,16 +354,42 @@ private struct WorkoutTileView: View {
                             .stroke(isDefault ? AppStyle.Color.green : Color.clear, lineWidth: 2)
                     )
             )
+            .overlay(
+                // Exercise Count Circle - top left overlay
+                VStack {
+                    HStack {
+                        ZStack {
+                            // Äußerer Ring (dicker)
+                            Circle()
+                                .stroke(
+                                    isDefault ? AppStyle.Color.green : Color.white.opacity(0.6),
+                                    lineWidth: 3
+                                )
+                                .frame(width: 34, height: 34)
+                            
+                            // Innerer Ring (dünner)
+                            Circle()
+                                .stroke(
+                                    isDefault ? AppStyle.Color.green.opacity(0.4) : Color.white.opacity(0.3),
+                                    lineWidth: 1
+                                )
+                                .frame(width: 26, height: 26)
+                            
+                            Text("\(exerciseCount)")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(isDefault ? AppStyle.Color.green : Color.white)
+                        }
+                        .padding(.leading, 20)
+                        .padding(.top, 20)
+                        
+                        Spacer()
+                    }
+                    Spacer()
+                }
+            )
         }
         .onLongPressGesture {
             onLongPress()
         }
-    }
-    
-    private func formattedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .short
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
     }
 } 
