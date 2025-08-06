@@ -20,6 +20,8 @@ private enum Constants {
         static let verticalPadding: CGFloat = 20
         static let circleSize: CGFloat = 80
         static let circleLineWidth: CGFloat = 6
+        static let iconSize: CGFloat = 80
+        static let iconSpacing: CGFloat = 16
     }
 
     enum ProgressBar {
@@ -131,14 +133,22 @@ private struct CategoryTileView: View {
     }
 
     private func categoryInfoView(exerciseInfo: ExerciseInfo) -> some View {
-        VStack(alignment: .leading, spacing: Constants.CategoryTile.textSpacing) {
-            Text(group.displayName)
-                .font(AppStyle.Font.categorySelectionNameFont)
+        HStack(spacing: Constants.CategoryTile.iconSpacing) {
+            Image(group.defaultIconName)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: Constants.CategoryTile.iconSize, height: Constants.CategoryTile.iconSize)
                 .foregroundColor(AppStyle.Color.white)
+            
+            VStack(alignment: .leading, spacing: Constants.CategoryTile.textSpacing) {
+                Text(group.displayName)
+                    .font(AppStyle.Font.categorySelectionNameFont)
+                    .foregroundColor(AppStyle.Color.white)
 
-            Text("\(exerciseInfo.completed) of \(exerciseInfo.total) completed")
-                .font(AppStyle.Font.defaultFont)
-                .foregroundColor(AppStyle.Color.white)
+                Text("\(exerciseInfo.completed) of \(exerciseInfo.total) completed")
+                    .font(AppStyle.Font.defaultFont)
+                    .foregroundColor(AppStyle.Color.white)
+            }
         }
         .padding(.vertical, Constants.CategoryTile.verticalPadding)
         .padding(.horizontal, Constants.CategoryTile.contentPadding)
