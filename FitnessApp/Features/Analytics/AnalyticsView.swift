@@ -403,7 +403,7 @@ struct AnalyticsView: View {
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
                         .listRowInsets(EdgeInsets())
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button {
                                 viewModel.deleteSetFromEntry(
                                     exerciseId: exercise.id,
@@ -418,6 +418,7 @@ struct AnalyticsView: View {
                 }
             }
             .listStyle(PlainListStyle())
+            .scrollDisabled(true)
             .frame(height: CGFloat(entry.setProgress.count * 90))
             .background(Color.clear)
         }
