@@ -9,6 +9,7 @@ class WorkoutsViewModel: ObservableObject {
     @Published var showingCreateWorkout = false
     @Published var showingCreateWorkoutFullScreen = false
     @Published var showingRenameWorkout = false
+    @Published var showingDeleteConfirmation = false
     @Published var selectedWorkoutForAction: Workout?
     @Published var newWorkoutName = ""
     @Published var renameWorkoutName = ""
@@ -89,7 +90,23 @@ class WorkoutsViewModel: ObservableObject {
     
     func hideFABOptions() {
         showingFABOptions = false
+        showingDeleteConfirmation = false
         selectedWorkoutForAction = nil
+    }
+    
+    func showDeleteConfirmation() {
+        showingDeleteConfirmation = true
+    }
+    
+    func confirmDelete() {
+        if let workout = selectedWorkoutForAction {
+            deleteWorkout(workout)
+        }
+        hideFABOptions()
+    }
+    
+    func cancelDelete() {
+        showingDeleteConfirmation = false
     }
     
     // MARK: - Computed Properties

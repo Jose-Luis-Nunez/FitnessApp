@@ -171,8 +171,8 @@ struct WorkoutsScreen: View {
         Group {
             if viewModel.showingFABOptions {
                 ZStack {
-                    // Neblig/blasser Hintergrund
-                    Color.white.opacity(0.3)
+                    // Dunkel-transparenter Hintergrund
+                    Color.black.opacity(0.4)
                         .ignoresSafeArea()
                         .onTapGesture {
                             viewModel.hideFABOptions()
@@ -184,78 +184,103 @@ struct WorkoutsScreen: View {
                         // Settings Modal
                         VStack(spacing: 0) {
                             // Header
-                            Text("Settings")
-                                .font(AppStyle.Font.navigationHeadline)
-                                .foregroundColor(AppStyle.Color.white)
-                                .padding(.top, 20)
-                                .padding(.bottom, 20)
+                            VStack(spacing: 8) {
+                                Text(viewModel.showingDeleteConfirmation ? "Löschen" : "Settings")
+                                    .font(AppStyle.Font.navigationHeadline)
+                                    .foregroundColor(AppStyle.Color.greenGlow)
+                                    .padding(.top, 16)
+                                
+                                Rectangle()
+                                    .fill(AppStyle.Color.greenGlow.opacity(0.3))
+                                    .frame(height: 1)
+                                    .padding(.horizontal, 85)
+                            }
+                            .padding(.bottom, 12)
                             
                             // Optionen
-                            VStack(spacing: 0) {
-                                settingsOption(
-                                    icon: "doc.on.doc",
-                                    title: "Duplizieren",
-                                    action: {
-                                        if let workout = viewModel.selectedWorkoutForAction {
-                                            viewModel.duplicateWorkout(workout)
-                                            viewModel.hideFABOptions()
-                                        }
-                                    }
-                                )
-                                
-                                settingsOption(
-                                    icon: "pencil",
-                                    title: "Umbenennen",
-                                    action: {
-                                        if let workout = viewModel.selectedWorkoutForAction {
-                                            viewModel.showRenameWorkout(for: workout)
-                                        }
-                                    }
-                                )
-                                
-                                // Show either "Set as Default" or "Remove as Default"
-                                if let workout = viewModel.selectedWorkoutForAction {
-                                    if viewModel.isDefaultWorkout(workout) {
-                                        settingsOption(
-                                            icon: "star.slash",
-                                            title: "Remove as Default",
-                                            action: {
-                                                viewModel.removeAsDefault()
-                                                viewModel.hideFABOptions()
-                                            }
-                                        )
-                                    } else {
-                                        settingsOption(
-                                            icon: "star",
-                                            title: "Set as Default",
-                                            action: {
-                                                viewModel.setAsDefault(workout)
-                                                viewModel.hideFABOptions()
-                                            }
-                                        )
-                                    }
-                                }
-                                
-                                if viewModel.canDeleteWorkout {
+                            if viewModel.showingDeleteConfirmation {
+                                // Lösch-Bestätigung
+                                VStack(spacing: 4) {
                                     settingsOption(
-                                        icon: "trash",
-                                        title: "Löschen",
-                                        isDestructive: true,
+                                        icon: "",
+                                        title: "Löschen bestätigen",
+                                        action: {
+                                            viewModel.confirmDelete()
+                                        }
+                                    )
+                                    
+                                    settingsOption(
+                                        icon: "",
+                                        title: "Abbrechen",
+                                        action: {
+                                            viewModel.cancelDelete()
+                                        }
+                                    )
+                                }
+                            } else {
+                                // Normal Settings
+                                VStack(spacing: 4) {
+                                    settingsOption(
+                                        icon: "doc.on.doc",
+                                        title: "Duplizieren",
                                         action: {
                                             if let workout = viewModel.selectedWorkoutForAction {
-                                                viewModel.deleteWorkout(workout)
+                                                viewModel.duplicateWorkout(workout)
                                                 viewModel.hideFABOptions()
                                             }
                                         }
                                     )
+                                    
+                                    settingsOption(
+                                        icon: "pencil",
+                                        title: "Umbenennen",
+                                        action: {
+                                            if let workout = viewModel.selectedWorkoutForAction {
+                                                viewModel.showRenameWorkout(for: workout)
+                                            }
+                                        }
+                                    )
+                                    
+                                    if let workout = viewModel.selectedWorkoutForAction {
+                                        if viewModel.isDefaultWorkout(workout) {
+                                            settingsOption(
+                                                icon: "star.slash",
+                                                title: "Remove as Default",
+                                                action: {
+                                                    viewModel.removeAsDefault()
+                                                    viewModel.hideFABOptions()
+                                                }
+                                            )
+                                        } else {
+                                            settingsOption(
+                                                icon: "star",
+                                                title: "Set as Default",
+                                                action: {
+                                                    viewModel.setAsDefault(workout)
+                                                    viewModel.hideFABOptions()
+                                                }
+                                            )
+                                        }
+                                    }
+                                    
+                                    if viewModel.canDeleteWorkout {
+                                        settingsOption(
+                                            icon: "trash",
+                                            title: "Löschen",
+                                            isDestructive: true,
+                                            action: {
+                                                viewModel.showDeleteConfirmation()
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
-                        .background(AppStyle.Color.backgroundColor)
-                        .cornerRadius(20)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, safeAreaInset + 20)
-                        .padding(.top, 20)
+                        .background(AppStyle.Color.greenDark)
+                        .cornerRadius(16)
+                        .padding(.horizontal, 32)
+                        .padding(.bottom, safeAreaInset + 16)
+                        .padding(.top, 16)
                     }
                 }
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
@@ -265,29 +290,15 @@ struct WorkoutsScreen: View {
     }
     
     private func settingsOption(icon: String, title: String, isDestructive: Bool = false, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 16) {
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(isDestructive ? .red : AppStyle.Color.white)
-                    .frame(width: 24, height: 24)
-                
-                Text(title)
-                    .font(AppStyle.Font.bottomBarButtons)
-                    .foregroundColor(isDestructive ? .red : AppStyle.Color.white)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                
-                Spacer()
+        Text(title)
+            .font(.system(size: 16, weight: .medium))
+            .foregroundColor(AppStyle.Color.greenGlow)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                action()
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
-            .background(
-                Rectangle()
-                    .fill(Color.clear)
-                    .contentShape(Rectangle())
-            )
-        }
-        .buttonStyle(PlainButtonStyle())
     }
     
     private var safeAreaInset: CGFloat {
@@ -312,7 +323,7 @@ private struct WorkoutTileView: View {
                         Image("settingsIconMenu")
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .frame(width: 20, height: 20)
+                            .frame(width: 30, height: 30)
                             .foregroundColor(AppStyle.Color.white.opacity(0.8))
                     }
                     .buttonStyle(PlainButtonStyle())

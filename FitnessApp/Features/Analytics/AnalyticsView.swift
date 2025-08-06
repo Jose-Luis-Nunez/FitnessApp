@@ -341,14 +341,15 @@ struct AnalyticsView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("No data available")
                         .font(AppStyle.Font.defaultFont)
-                        .foregroundColor(AppStyle.Color.gray)
+                        .foregroundColor(AppStyle.Color.white)
                         .padding(.horizontal, AppStyle.Padding.horizontal)
                     
-                    HStack(alignment: .top, spacing: 12) {
+                    HStack(alignment: .top, spacing: 8) {
+                        // Add data button spanning width of 2 tiles
                         Button(action: {
                             showAddDataSheet = true
                         }) {
-                            HStack {
+                            HStack(spacing: 8) {
                                 Image(systemName: "plus.circle.fill")
                                     .font(.system(size: 22, weight: .bold))
                                 Text("Add data")
@@ -357,15 +358,20 @@ struct AnalyticsView: View {
                             }
                             .foregroundColor(AppStyle.Color.greenGlow)
                             .padding(.vertical, 12)
-                            .padding(.horizontal, 24)
-                            .frame(width: 75, height: 75)
+                            .padding(.horizontal, 16)
+                            .frame(height: 75)
+                            .frame(maxWidth: .infinity)
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
                                     .fill(AppStyle.Color.greenBlack)
                             )
                         }
                         
+                        // Match the spacing of the tiles above (2 empty tile spaces)
                         Spacer()
+                            .frame(maxWidth: .infinity)
+                        Spacer()
+                            .frame(maxWidth: .infinity)
                     }
                     .padding(.horizontal, AppStyle.Padding.horizontal)
                 }
