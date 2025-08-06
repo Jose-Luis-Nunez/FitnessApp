@@ -19,7 +19,12 @@ struct CustomToolbarModifier: ViewModifier {
                 if showBackButton {
                     ToolbarItem(placement: .navigationBarLeading) {
                         Button(action: {
-                            navigationPath.removeLast()
+                            if !navigationPath.isEmpty {
+                                navigationPath.removeLast()
+                            } else {
+                                // If navigation path is empty, navigate to workouts screen
+                                navigationPath.append(NavigationDestination.workouts)
+                            }
                         }) {
                             Image(systemName: "chevron.left")
                                 .foregroundColor(AppStyle.Color.white)

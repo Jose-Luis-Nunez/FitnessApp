@@ -5,7 +5,7 @@ private enum Constants {
     static let verticalSpacing: CGFloat = 10
     static let titleTopPadding: CGFloat = 0
     static let spacerHeight: CGFloat = 5
-    static let topPadding: CGFloat = 1
+    static let topPadding: CGFloat = 16
     static let titleBottomSpacing: CGFloat = 5
     
     static let secondaryTextColor = Color(hex: "#46474B")
@@ -57,12 +57,16 @@ private struct ExerciseInfo {
 
 struct MuscleCategorySelectionView: View {
     @StateObject private var viewModel = MuscleCategorySelectionViewModel()
+    @Binding var navigationPath: NavigationPath
+    
+    init(navigationPath: Binding<NavigationPath> = .constant(NavigationPath())) {
+        self._navigationPath = navigationPath
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
                 LazyVStack(spacing: Constants.CategoryTile.verticalSpacing) {
-                    headerView
                     categoryList
                 }
                 .padding(.horizontal, Constants.horizontalPadding)
@@ -87,7 +91,14 @@ struct MuscleCategorySelectionView: View {
             .padding(.bottom, safeAreaInset)
         }
         .background(AppStyle.Color.backgroundColor)
-        .navigationBarTitle("")
+        .modifier(
+            CustomToolbarModifier(
+                navigationPath: $navigationPath,
+                title: viewModel.currentWorkoutName,
+                showBackButton: true
+            )
+        )
+        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             viewModel.updateExerciseCounts()
         }

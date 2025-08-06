@@ -1,11 +1,15 @@
 import Foundation
+import Combine
 
 class MuscleCategorySelectionViewModel: ObservableObject {
     @Published var categories: [MuscleCategoryGroup] = MuscleCategoryGroup.allCases
     @Published var bottomBarViewModel: BottomActionBarViewModel
+    @Published var currentWorkoutName: String = "Dein Workout"
 
     private let storageService = ExerciseStorageService()
-
+    private let workoutStorageService = WorkoutStorageService.shared
+    private var cancellables = Set<AnyCancellable>()
+    
     @Published private var exerciseCounts: [MuscleCategoryGroup: (total: Int, active: Int)] = [:]
 
     init() {
@@ -23,28 +27,41 @@ class MuscleCategorySelectionViewModel: ObservableObject {
             showResetAllExercisesButton: false
         )
         updateExerciseCountsAndViewModel()
+        updateWorkoutName(workoutStorageService.currentWorkout)
+        
+        // Listen to workout changes
+        workoutStorageService.$currentWorkout
+            .sink { [weak self] currentWorkout in
+                self?.updateExerciseCountsAndViewModel()
+                self?.updateWorkoutName(currentWorkout)
+            }
+            .store(in: &cancellables)
     }
 
     func resetAllExercises() {
+        guard let currentWorkout = workoutStorageService.currentWorkout else { return }
+        
         for (_, activeSetVM) in SessionTrainingCache.shared.activeSetVMs {
             activeSetVM.cancelActiveSet()
         }
 
         for group in MuscleCategoryGroup.allCases {
-            let exercises = storageService.load(for: group)
+            let exercises = storageService.loadForWorkout(workoutId: currentWorkout.id, category: group)
             let updatedExercises = exercises.map { exercise in
                 var updatedExercise = exercise
                 updatedExercise.isCompleted = false
                 return updatedExercise
             }
-            storageService.save(updatedExercises, for: group)
+            storageService.saveForWorkout(updatedExercises, workoutId: currentWorkout.id, category: group)
         }
         updateExerciseCountsAndViewModel()
     }
 
     func updateExerciseCounts() {
+        guard let currentWorkout = workoutStorageService.currentWorkout else { return }
+        
         for group in MuscleCategoryGroup.allCases {
-            let exercises = storageService.load(for: group)
+            let exercises = storageService.loadForWorkout(workoutId: currentWorkout.id, category: group)
             exerciseCounts[group] = (total: exercises.count, active: exercises.filter { !$0.isCompleted }.count)
         }
     }
@@ -54,8 +71,10 @@ class MuscleCategorySelectionViewModel: ObservableObject {
     }
 
     private func hasInactiveExercises() -> Bool {
+        guard let currentWorkout = workoutStorageService.currentWorkout else { return false }
+        
         for group in MuscleCategoryGroup.allCases {
-            let exercises = storageService.load(for: group)
+            let exercises = storageService.loadForWorkout(workoutId: currentWorkout.id, category: group)
             if exercises.contains(where: { !$0.isCompleted }) {
                 return true
             }
@@ -82,5 +101,9 @@ class MuscleCategorySelectionViewModel: ObservableObject {
     
     func hasActiveSetForCategory(_ group: MuscleCategoryGroup) -> Bool {
         return SessionTrainingCache.shared.activeSetVMs.values.contains { $0.category == group && $0.isSetInProgress }
+    }
+    
+    private func updateWorkoutName(_ workout: Workout?) {
+        currentWorkoutName = workout?.name ?? "Dein Workout"
     }
 }

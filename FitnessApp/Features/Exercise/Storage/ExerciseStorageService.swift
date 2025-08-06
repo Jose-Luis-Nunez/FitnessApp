@@ -3,6 +3,8 @@ import Foundation
 protocol ExerciseStoring {
     func load(for group: MuscleCategoryGroup) -> [Exercise]
     func save(_ exercises: [Exercise], for group: MuscleCategoryGroup)
+    func loadForWorkout(workoutId: UUID, category: MuscleCategoryGroup) -> [Exercise]
+    func saveForWorkout(_ exercises: [Exercise], workoutId: UUID, category: MuscleCategoryGroup)
 }
 
 final class ExerciseStorageService: ExerciseStoring {
@@ -24,6 +26,11 @@ final class ExerciseStorageService: ExerciseStoring {
     private func fileURL(for group: MuscleCategoryGroup) -> URL {
         let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
         return documentsDirectory.appendingPathComponent("exercises_\(group.rawValue)_\(userId).json")
+    }
+    
+    private func workoutFileURL(workoutId: UUID, category: MuscleCategoryGroup) -> URL {
+        let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        return documentsDirectory.appendingPathComponent("workout_\(workoutId.uuidString)_\(category.rawValue)_\(userId).json")
     }
     
     func load(for group: MuscleCategoryGroup) -> [Exercise] {
@@ -55,6 +62,54 @@ final class ExerciseStorageService: ExerciseStoring {
             print("Exercises saved to \(fileURL.path)")
         } catch {
             print("Failed to save exercises: \(error)")
+        }
+    }
+    
+    // MARK: - Workout-specific Methods
+    
+    func loadForWorkout(workoutId: UUID, category: MuscleCategoryGroup) -> [Exercise] {
+        let fileURL = workoutFileURL(workoutId: workoutId, category: category)
+        
+        // If workout-specific file doesn't exist, try to migrate from old format ONLY for the first workout
+        if !fileManager.fileExists(atPath: fileURL.path) {
+            // Check if this is the first workout by checking if it's the only workout or oldest one
+            let workoutService = WorkoutStorageService.shared
+            let isFirstWorkout = workoutService.workouts.first?.id == workoutId
+            
+            if isFirstWorkout {
+                let oldExercises = load(for: category)
+                if !oldExercises.isEmpty {
+                    print("Migrating \(oldExercises.count) exercises from old format to first workout \(workoutId)")
+                    saveForWorkout(oldExercises, workoutId: workoutId, category: category)
+                    return oldExercises
+                }
+            }
+            print("No workout exercises file found at \(fileURL.path)")
+            return []
+        }
+        
+        do {
+            let data = try Data(contentsOf: fileURL)
+            let decoder = JSONDecoder()
+            let exercises = try decoder.decode([Exercise].self, from: data)
+            print("Loaded \(exercises.count) workout exercises from \(fileURL.path)")
+            return exercises
+        } catch {
+            print("Failed to load workout exercises: \(error)")
+            return []
+        }
+    }
+    
+    func saveForWorkout(_ exercises: [Exercise], workoutId: UUID, category: MuscleCategoryGroup) {
+        let fileURL = workoutFileURL(workoutId: workoutId, category: category)
+        do {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            let data = try encoder.encode(exercises)
+            try data.write(to: fileURL, options: .atomic)
+            print("Workout exercises saved to \(fileURL.path)")
+        } catch {
+            print("Failed to save workout exercises: \(error)")
         }
     }
 }

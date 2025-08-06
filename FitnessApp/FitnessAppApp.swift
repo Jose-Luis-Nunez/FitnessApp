@@ -1,6 +1,7 @@
 import SwiftUI
 
 enum NavigationDestination: Hashable {
+    case workouts
     case home
     case profile
     case muscleCategory(MuscleCategoryGroup)
@@ -9,6 +10,7 @@ enum NavigationDestination: Hashable {
 @main
 struct FitnessAppApp: App {
     @State private var navigationPath = NavigationPath()
+    @StateObject private var workoutStorageService = WorkoutStorageService.shared
     
     private let backgroundColor = AppStyle.Color.backgroundColor
 
@@ -16,13 +18,25 @@ struct FitnessAppApp: App {
         WindowGroup {
             ZStack(alignment: .bottom) {
                 NavigationStack(path: $navigationPath) {
-                    MuscleCategorySelectionView()
-                        .navigationBarBackButtonHidden(true)
+                    Group {
+                        if let defaultWorkout = workoutStorageService.defaultWorkout {
+                            MuscleCategorySelectionView(navigationPath: $navigationPath)
+                                .onAppear {
+                                    workoutStorageService.setCurrentWorkout(defaultWorkout)
+                                }
+                        } else {
+                            WorkoutsScreen(navigationPath: $navigationPath)
+                        }
+                    }
+                    .navigationBarBackButtonHidden(true)
                         .navigationDestination(for: NavigationDestination.self) { destination in
                             Group {
                                 switch destination {
+                                case .workouts:
+                                    WorkoutsScreen(navigationPath: $navigationPath)
+                                        .navigationBarBackButtonHidden(true)
                                 case .home:
-                                    MuscleCategorySelectionView()
+                                    MuscleCategorySelectionView(navigationPath: $navigationPath)
                                         .navigationBarBackButtonHidden(true)
                                 case .profile:
                                     ProfileView()

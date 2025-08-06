@@ -9,13 +9,20 @@ class MuscleCategoryViewModel: ObservableObject {
     let activeSetViewModel: ActiveSetViewModel
     private let storageService: ExerciseStorageService
     private let analyticsViewModel: AnalyticsViewModel
+    private let workoutStorageService = WorkoutStorageService.shared
     
     init(group: MuscleCategoryGroup) {
         self.group = group
         self.formViewModel = ExerciseFormViewModel()
         self.storageService = ExerciseStorageService()
         self.analyticsViewModel = AnalyticsViewModel()
-        self.exercises = storageService.load(for: group)
+        
+        // Load workout-specific exercises
+        if let currentWorkout = WorkoutStorageService.shared.currentWorkout {
+            self.exercises = storageService.loadForWorkout(workoutId: currentWorkout.id, category: group)
+        } else {
+            self.exercises = storageService.load(for: group)
+        }
         if let existing = SessionTrainingCache.shared.activeSetVMs[group] {
             self.activeSetViewModel = existing
         } else {
@@ -128,7 +135,11 @@ class MuscleCategoryViewModel: ObservableObject {
     
     private func saveExercises() {
         if storageService.hasUserId {
-            storageService.save(exercises, for: group)
+            if let currentWorkout = workoutStorageService.currentWorkout {
+                storageService.saveForWorkout(exercises, workoutId: currentWorkout.id, category: group)
+            } else {
+                storageService.save(exercises, for: group)
+            }
         } else {
             print("No userId available, skipping save")
         }
