@@ -114,7 +114,7 @@ struct MuscleCategorySelectionView: View {
     }
 
     private var categoryList: some View {
-        ForEach(MuscleCategoryGroup.allCases, id: \.self) { group in
+        ForEach(viewModel.categories, id: \.self) { group in
             NavigationLink(value: NavigationDestination.muscleCategory(group)) {
                 CategoryTileView(group: group, viewModel: viewModel)
             }
@@ -145,11 +145,21 @@ private struct CategoryTileView: View {
 
     private func categoryInfoView(exerciseInfo: ExerciseInfo) -> some View {
         HStack(spacing: Constants.CategoryTile.iconSpacing) {
-            Image(group.defaultIconName)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: Constants.CategoryTile.iconSize, height: Constants.CategoryTile.iconSize)
-                .foregroundColor(AppStyle.Color.white)
+            ZStack {
+                Circle()
+                    .fill(AppStyle.Color.greenBlack)
+                    .frame(width: Constants.CategoryTile.iconSize * 0.9, height: Constants.CategoryTile.iconSize * 0.9)
+                    .blur(radius: 15)
+                    .opacity(0.5)
+                
+                Image(group.defaultIconName)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: Constants.CategoryTile.iconSize, height: Constants.CategoryTile.iconSize, alignment: group.iconAlignment)
+                    .clipped()
+                    .foregroundColor(AppStyle.Color.white)
+            }
+            .frame(width: Constants.CategoryTile.iconSize, height: Constants.CategoryTile.iconSize)
             
             VStack(alignment: .leading, spacing: Constants.CategoryTile.textSpacing) {
                 Text(group.displayName)

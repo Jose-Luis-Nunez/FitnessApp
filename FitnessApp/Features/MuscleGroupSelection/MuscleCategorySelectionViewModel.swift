@@ -2,7 +2,7 @@ import Foundation
 import Combine
 
 class MuscleCategorySelectionViewModel: ObservableObject {
-    @Published var categories: [MuscleCategoryGroup] = MuscleCategoryGroup.allCases
+    @Published var categories: [MuscleCategoryGroup] = []
     @Published var bottomBarViewModel: BottomActionBarViewModel
     @Published var currentWorkoutName: String = "Dein Workout"
 
@@ -32,10 +32,14 @@ class MuscleCategorySelectionViewModel: ObservableObject {
         // Listen to workout changes
         workoutStorageService.$currentWorkout
             .sink { [weak self] currentWorkout in
+                self?.updateCategories(for: currentWorkout)
                 self?.updateExerciseCountsAndViewModel()
                 self?.updateWorkoutName(currentWorkout)
             }
             .store(in: &cancellables)
+        
+        // Initialize categories for current workout
+        updateCategories(for: workoutStorageService.currentWorkout)
     }
 
     func resetAllExercises() {
@@ -101,6 +105,14 @@ class MuscleCategorySelectionViewModel: ObservableObject {
     
     func hasActiveSetForCategory(_ group: MuscleCategoryGroup) -> Bool {
         return SessionTrainingCache.shared.activeSetVMs.values.contains { $0.category == group && $0.isSetInProgress }
+    }
+    
+    private func updateCategories(for workout: Workout?) {
+        if let workout = workout {
+            categories = Array(workout.selectedCategories).sorted { $0.rawValue < $1.rawValue }
+        } else {
+            categories = []
+        }
     }
     
     private func updateWorkoutName(_ workout: Workout?) {

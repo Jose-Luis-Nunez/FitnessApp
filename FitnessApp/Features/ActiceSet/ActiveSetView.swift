@@ -13,7 +13,7 @@ struct ActiveSetView: View {
     
     var body: some View {
         CardBackground {
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 6) {
                 // Quick Done Mode
                 if viewModel.quickDoneModeActive {
                     ForEach(setProgress.indices, id: \.self) { index in
@@ -36,14 +36,6 @@ struct ActiveSetView: View {
                             Spacer()
                             
                             HStack(spacing: 4) {
-                                Text("\(exercise.reps)")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(AppStyle.Color.white)
-                                
-                                Text(" / ")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(AppStyle.Color.white)
-                                
                                 if progress.status != .notStarted && progress.status != .inProgress {
                                     Text("\(progress.currentReps)")
                                         .font(.system(size: 16, weight: .semibold))
@@ -53,6 +45,23 @@ struct ActiveSetView: View {
                                             viewModel.pendingEditMode = .edit
                                         }
                                 } else {
+                                    Image(systemName: "arrow.triangle.2.circlepath")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 16, height: 16)
+                                        .symbolRenderingMode(.palette)
+                                        .foregroundStyle(AppStyle.Color.green)
+                                }
+                                
+                                Text("of")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(AppStyle.Color.white)
+                                
+                                Text("\(exercise.reps)")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(AppStyle.Color.white)
+                                
+                                if progress.status == .notStarted || progress.status == .inProgress {
                                     Button(action: {
                                         viewModel.pendingSetIndex = index
                                     }) {
@@ -100,8 +109,8 @@ struct ActiveSetView: View {
                     }
                 }
             }
-            .padding(.horizontal, defaultPadding)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 0)
+            .padding(.vertical, 6)
         }
         .padding(.horizontal, AppStyle.Padding.card)
         .cornerRadius(AppStyle.CornerRadius.card)
@@ -152,14 +161,6 @@ private struct ActiveSetRowView: View {
             Spacer()
             
             HStack(spacing: 4) {
-                Text("\(exercise.reps)")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(AppStyle.Color.white)
-                
-                Text(" / ")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(AppStyle.Color.white)
-                
                 if progress.status != .notStarted && progress.status != .inProgress {
                     Text("\(progress.currentReps)")
                         .font(.system(size: 16, weight: .semibold))
@@ -171,10 +172,18 @@ private struct ActiveSetRowView: View {
                     Image(systemName: "arrow.triangle.2.circlepath")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 20, height: 20)
+                        .frame(width: 16, height: 16)
                         .symbolRenderingMode(.palette)
                         .foregroundStyle(AppStyle.Color.green)
                 }
+                
+                Text("of")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(AppStyle.Color.white)
+                
+                Text("\(exercise.reps)")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(AppStyle.Color.white)
                 
                 Spacer()
             }

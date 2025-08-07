@@ -6,21 +6,24 @@ struct Workout: Identifiable, Codable {
     var createdDate: Date
     var lastModified: Date
     var exerciseData: [String: Any] // Stores exercise-specific data for each muscle category
+    var selectedCategories: Set<MuscleCategoryGroup> // Selected muscle categories for this workout
     
-    init(name: String) {
+    init(name: String, selectedCategories: Set<MuscleCategoryGroup> = Set(MuscleCategoryGroup.allCases)) {
         self.id = UUID()
         self.name = name
         self.createdDate = Date()
         self.lastModified = Date()
         self.exerciseData = [:]
+        self.selectedCategories = selectedCategories
     }
     
-    init(id: UUID, name: String, createdDate: Date, lastModified: Date, exerciseData: [String: Any] = [:]) {
+    init(id: UUID, name: String, createdDate: Date, lastModified: Date, exerciseData: [String: Any] = [:], selectedCategories: Set<MuscleCategoryGroup> = Set(MuscleCategoryGroup.allCases)) {
         self.id = id
         self.name = name
         self.createdDate = createdDate
         self.lastModified = lastModified
         self.exerciseData = exerciseData
+        self.selectedCategories = selectedCategories
     }
     
     mutating func updateLastModified() {
@@ -29,7 +32,7 @@ struct Workout: Identifiable, Codable {
     
     // Custom Codable implementation to handle [String: Any]
     enum CodingKeys: CodingKey {
-        case id, name, createdDate, lastModified, exerciseData
+        case id, name, createdDate, lastModified, exerciseData, selectedCategories
     }
     
     init(from decoder: Decoder) throws {
@@ -46,6 +49,14 @@ struct Workout: Identifiable, Codable {
         } else {
             exerciseData = [:]
         }
+        
+        // Handle selectedCategories with backwards compatibility
+        if let categories = try? container.decode(Set<MuscleCategoryGroup>.self, forKey: .selectedCategories) {
+            selectedCategories = categories
+        } else {
+            // Default to all categories for backwards compatibility
+            selectedCategories = Set(MuscleCategoryGroup.allCases)
+        }
     }
     
     func encode(to encoder: Encoder) throws {
@@ -54,6 +65,7 @@ struct Workout: Identifiable, Codable {
         try container.encode(name, forKey: .name)
         try container.encode(createdDate, forKey: .createdDate)
         try container.encode(lastModified, forKey: .lastModified)
+        try container.encode(selectedCategories, forKey: .selectedCategories)
         
         // Convert exerciseData to Data for encoding
         if let data = try? JSONSerialization.data(withJSONObject: exerciseData) {
@@ -69,7 +81,8 @@ extension Workout {
             name: newName ?? "\(self.name) Copy",
             createdDate: Date(),
             lastModified: Date(),
-            exerciseData: self.exerciseData
+            exerciseData: self.exerciseData,
+            selectedCategories: self.selectedCategories
         )
     }
 } 

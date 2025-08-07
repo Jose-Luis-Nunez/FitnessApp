@@ -47,7 +47,8 @@ struct WorkoutsScreen: View {
                 isPresented: $viewModel.showingCreateWorkoutFullScreen,
                 onSave: {
                     viewModel.createNewWorkout()
-                }
+                },
+                viewModel: viewModel
             )
         }
         .fullScreenCover(isPresented: $viewModel.showingRenameWorkout) {

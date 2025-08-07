@@ -13,6 +13,7 @@ class WorkoutsViewModel: ObservableObject {
     @Published var selectedWorkoutForAction: Workout?
     @Published var newWorkoutName = ""
     @Published var renameWorkoutName = ""
+    @Published var selectedMuscleGroups: Set<MuscleCategoryGroup> = []
     
     private let storageService = WorkoutStorageService.shared
     
@@ -36,10 +37,11 @@ class WorkoutsViewModel: ObservableObject {
     func createNewWorkout() {
         guard !newWorkoutName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         
-        let workout = storageService.createWorkout(name: newWorkoutName)
+        let workout = storageService.createWorkout(name: newWorkoutName, selectedCategories: selectedMuscleGroups)
         storageService.setCurrentWorkout(workout)
         
         newWorkoutName = ""
+        selectedMuscleGroups = []
         showingCreateWorkoutFullScreen = false
     }
     
@@ -78,7 +80,20 @@ class WorkoutsViewModel: ObservableObject {
     
     func showCreateWorkout() {
         newWorkoutName = "Workout \(workouts.count + 1)"
+        selectedMuscleGroups = [] // Default: no categories selected
         showingCreateWorkoutFullScreen = true
+    }
+    
+    func toggleMuscleGroup(_ group: MuscleCategoryGroup) {
+        if selectedMuscleGroups.contains(group) {
+            selectedMuscleGroups.remove(group)
+        } else {
+            selectedMuscleGroups.insert(group)
+        }
+    }
+    
+    func isMuscleGroupSelected(_ group: MuscleCategoryGroup) -> Bool {
+        selectedMuscleGroups.contains(group)
     }
     
     func showRenameWorkout(for workout: Workout) {

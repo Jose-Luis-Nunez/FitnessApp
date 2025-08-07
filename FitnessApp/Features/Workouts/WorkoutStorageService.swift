@@ -31,8 +31,8 @@ class WorkoutStorageService: ObservableObject {
     
     // MARK: - Workout Management
     
-    func createWorkout(name: String) -> Workout {
-        let newWorkout = Workout(name: name)
+    func createWorkout(name: String, selectedCategories: Set<MuscleCategoryGroup> = Set(MuscleCategoryGroup.allCases)) -> Workout {
+        let newWorkout = Workout(name: name, selectedCategories: selectedCategories)
         workouts.append(newWorkout)
         saveWorkouts()
         return newWorkout

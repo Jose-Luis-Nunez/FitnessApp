@@ -1,3 +1,4 @@
+import SwiftUI
 enum MuscleCategoryGroup: String, CaseIterable, Identifiable, Codable {
     case arms, chest, back, legs, abs
 
@@ -25,5 +26,14 @@ enum MuscleCategoryGroup: String, CaseIterable, Identifiable, Codable {
 
     var defaultIconName: String {
         availableIcons.first!
+    }
+    
+    var iconAlignment: Alignment {
+        switch self {
+        case .legs:
+            return .bottom
+        default:
+            return .top
+        }
     }
 }
