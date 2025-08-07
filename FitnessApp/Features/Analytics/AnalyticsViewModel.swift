@@ -2,9 +2,11 @@ import Foundation
 
 class AnalyticsViewModel: ObservableObject {
     private let storageService: AnalyticsStorageService
+    private let exerciseStorageService: ExerciseStorageService
     
-    init(storageService: AnalyticsStorageService = AnalyticsStorageService()) {
+    init(storageService: AnalyticsStorageService = AnalyticsStorageService(), exerciseStorageService: ExerciseStorageService = ExerciseStorageService()) {
         self.storageService = storageService
+        self.exerciseStorageService = exerciseStorageService
     }
     
     func saveAnalytics(exerciseId: UUID, setProgress: [SetProgress], date: Date = Date()) {
@@ -118,6 +120,11 @@ class AnalyticsViewModel: ObservableObject {
         
         storageService.save(existingEntries, for: exerciseId)
         
+        // If no analytics entries left, mark exercise as not completed in exercise storage
+        if existingEntries.isEmpty {
+            updateExerciseCompletionStatus(exerciseId: exerciseId, isCompleted: false)
+        }
+        
         DispatchQueue.main.async {
             self.objectWillChange.send()
         }
@@ -215,6 +222,27 @@ extension AnalyticsViewModel {
         }
         
         return increases
+    }
+    
+    private func updateExerciseCompletionStatus(exerciseId: UUID, isCompleted: Bool) {
+        guard let currentWorkout = WorkoutStorageService.shared.currentWorkout else { 
+            print("No current workout found")
+            return 
+        }
+        
+        // Load exercises from all categories to find the exercise
+        for category in MuscleCategoryGroup.allCases {
+            var exercises = exerciseStorageService.loadForWorkout(workoutId: currentWorkout.id, category: category)
+            
+            if let exerciseIndex = exercises.firstIndex(where: { $0.id == exerciseId }) {
+                exercises[exerciseIndex].isCompleted = isCompleted
+                exerciseStorageService.saveForWorkout(exercises, workoutId: currentWorkout.id, category: category)
+                print("Updated exercise \(exerciseId) completion status to \(isCompleted)")
+                return
+            }
+        }
+        
+        print("Exercise \(exerciseId) not found in any category")
     }
     
     func trainingSessionsUntilWeightIncrease(for exerciseId: UUID) -> Int {

@@ -42,8 +42,10 @@ struct ExercisePickerView: View {
 
                     if let exercise = editingExercise {
                         Button(action: {
+                            // Delete from both local array and persistent storage
                             if let index = viewModel.exercises.firstIndex(where: { $0.id == exercise.id }) {
                                 viewModel.exercises.remove(at: index)
+                                viewModel.saveExercises() // Save to persistent storage
                             }
                             onCancel()
                             isPresented = false

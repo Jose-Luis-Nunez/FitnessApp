@@ -133,7 +133,7 @@ class MuscleCategoryViewModel: ObservableObject {
         saveExercises()
     }
     
-    private func saveExercises() {
+    func saveExercises() {
         if storageService.hasUserId {
             if let currentWorkout = workoutStorageService.currentWorkout {
                 storageService.saveForWorkout(exercises, workoutId: currentWorkout.id, category: group)
