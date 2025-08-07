@@ -65,15 +65,15 @@ struct MuscleCategoryView: View {
                                 
                                 TimerView(viewModel: activeSetViewModel)
                             }
-                            .padding(.vertical, 8)
+                            .padding(.vertical, 0)
                         }
-                        .listRowInsets(EdgeInsets(top: 12, leading: 0, bottom: 0, trailing: 0))
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                         .listRowBackground(AppStyle.Color.backgroundColor)
                         .listRowSeparator(.hidden)
                     }
                 }
                 .listStyle(.plain)
-                .listSectionSpacing(0)
+                .listSectionSpacing(4)
                 .scrollContentBackground(.hidden)
                 .padding(.top, 0)
                 .offset(y: -10)

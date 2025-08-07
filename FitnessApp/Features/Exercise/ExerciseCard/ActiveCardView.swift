@@ -10,68 +10,83 @@ struct ActiveCardView: View {
     let isActiveSetVisible: Bool
     let isResetEnabled: Bool
     
+    @State private var isShowingAnalytics = false
     private let chipHeight: CGFloat = 32
     
     var body: some View {
         CardBackground {
-            GeometryReader { geo in
-                HStack(alignment: .center) {
-                    VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .center, spacing: 8) {
+                // Bereich A: Titel + Analytics Icon oben, 3 Chips unten
+                VStack(spacing: 6) {
+                    // Zeile 1: Titel + Analytics Icon
+                    HStack(alignment: .center) {
                         Text(viewModel.exercise.name)
                             .font(AppStyle.Font.cardHeadline)
                             .foregroundColor(.white)
-                            .frame(minWidth: 100, maxWidth: .infinity, alignment: .leading)
-                            .frame(minWidth: 100, maxWidth: .infinity, alignment: .leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         
-                        HStack(spacing: 10) {
-                            AppChip(
-                                text: "\(viewModel.exercise.sets)x",
-                                fontColor: AppStyle.Color.white,
-                                backgroundColor: AppStyle.Color.chipsBackground,
-                                icon: ChipIcon(systemName: "bolt.fill", color: AppStyle.Color.yellow)
-                            ).frame(height: chipHeight)
-                            
-                            AppChip(
-                                text: "\(viewModel.exercise.reps)",
-                                fontColor: AppStyle.Color.white,
-                                backgroundColor: AppStyle.Color.chipsBackground,
-                                icon: ChipIcon(systemName: "arrow.triangle.2.circlepath", color: AppStyle.Color.green)
-                            ).frame(height: chipHeight)
-                            
-                            AppChip(
-                                text: "\(viewModel.exercise.weight == floor(viewModel.exercise.weight) ? "\(Int(viewModel.exercise.weight))" : String(viewModel.exercise.weight).replacingOccurrences(of: ".", with: ",")) kg",
-                                fontColor: AppStyle.Color.white,
-                                backgroundColor: AppStyle.Color.chipsBackground,
-                                size: .regular
-                            ).frame(height: chipHeight)
+                        Button(action: {
+                            isShowingAnalytics = true
+                        }) {
+                            ChipIcon(
+                                image: "analyticsEntry",
+                                color: AppStyle.Color.white,
+                                size: .extraLarge
+                            )
+                            .view
                         }
+                        .buttonStyle(PlainButtonStyle())
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    Spacer(minLength: 0)
                     
-                    let iconSize = min(max(min(geo.size.width, 500) * 0.30, 70), 120)
-                    
-                    VStack {
-                        ZStack {
-                            Circle()
-                                .fill(AppStyle.Color.greenBlack)
-                                .frame(width: iconSize * 0.9, height: iconSize * 0.9)
-                                .blur(radius: 15)
-                                .opacity(0.5)
-                            
-                            Image(viewModel.exercise.displayIconName)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: iconSize, height: iconSize, alignment: viewModel.exercise.iconAlignment)
-                                .clipped()
-                        }
+                    // Zeile 2: 3 Chips
+                    HStack(spacing: 6) {
+                        AppChip(
+                            text: "\(viewModel.exercise.sets)x",
+                            fontColor: AppStyle.Color.white,
+                            backgroundColor: AppStyle.Color.chipsBackground,
+                            icon: ChipIcon(systemName: "bolt.fill", color: AppStyle.Color.yellow)
+                        ).frame(height: chipHeight)
+                        
+                        AppChip(
+                            text: "\(viewModel.exercise.reps)",
+                            fontColor: AppStyle.Color.white,
+                            backgroundColor: AppStyle.Color.chipsBackground,
+                            icon: ChipIcon(systemName: "arrow.triangle.2.circlepath", color: AppStyle.Color.green)
+                        ).frame(height: chipHeight)
+                        
+                        AppChip(
+                            text: "\(viewModel.exercise.weight == floor(viewModel.exercise.weight) ? "\(Int(viewModel.exercise.weight))" : String(viewModel.exercise.weight).replacingOccurrences(of: ".", with: ",")) kg",
+                            fontColor: AppStyle.Color.white,
+                            backgroundColor: AppStyle.Color.chipsBackground,
+                            size: .regular
+                        ).frame(height: chipHeight)
                     }
-                    .frame(width: iconSize)
                 }
-                .frame(maxWidth: .infinity, alignment: .center)
+                
+                // Bereich B: Icon mit gleicher Breite wie Active Set View
+                VStack {
+                    ZStack {
+                        Circle()
+                            .fill(AppStyle.Color.greenBlack)
+                            .frame(width: 110 * 0.9, height: 110 * 0.9)
+                            .blur(radius: 15)
+                            .opacity(0.5)
+                        
+                        Image(viewModel.exercise.displayIconName)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 110, height: 110, alignment: viewModel.exercise.iconAlignment)
+                            .clipped()
+                    }
+                }
+                .frame(width: 80)
+                .frame(maxHeight: .infinity)
             }
             .frame(height: 100)
         }
-        .padding(.horizontal, AppStyle.Padding.card)
+        .padding(.horizontal, 16)
+        .sheet(isPresented: $isShowingAnalytics) {
+            AnalyticsView(exercise: viewModel.exercise, viewModel: analyticsViewModel)
+        }
     }
 }

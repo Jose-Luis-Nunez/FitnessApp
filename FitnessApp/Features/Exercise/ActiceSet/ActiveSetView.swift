@@ -53,7 +53,7 @@ struct ActiveSetView: View {
                                         .foregroundStyle(AppStyle.Color.green)
                                 }
                                 
-                                Text("of")
+                                Text(" of ")
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(AppStyle.Color.white)
                                 
@@ -177,7 +177,7 @@ private struct ActiveSetRowView: View {
                         .foregroundStyle(AppStyle.Color.green)
                 }
                 
-                Text("of")
+                Text(" of ")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(AppStyle.Color.white)
                 
