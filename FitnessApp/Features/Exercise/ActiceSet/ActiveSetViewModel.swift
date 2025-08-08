@@ -29,8 +29,10 @@ class ActiveSetViewModel: ObservableObject {
 
     var isInputValid: Bool {
         guard let newReps = Int(repsInput),
-              let newWeight = Double(weightInput),
               let exercise = currentExercise else { return false }
+        // Accept comma as decimal separator (e.g., "54,5")
+        let normalizedWeightString = weightInput.replacingOccurrences(of: ",", with: ".")
+        guard let newWeight = Double(normalizedWeightString) else { return false }
         
         let currentReps = exercise.reps
         let currentWeight = exercise.weight
@@ -196,7 +198,10 @@ class ActiveSetViewModel: ObservableObject {
         isEditing = true
         editMode = mode
         repsInput = String(exercise.reps)
-        weightInput = exercise.weight == floor(exercise.weight) ? String(Int(exercise.weight)) : String(exercise.weight)
+        // Display decimals with comma to match picker options
+        weightInput = exercise.weight == floor(exercise.weight)
+            ? String(Int(exercise.weight))
+            : String(exercise.weight).replacingOccurrences(of: ".", with: ",")
     }
     
     func startQuickDone(for exercise: Exercise, category: MuscleCategoryGroup) {
@@ -253,7 +258,10 @@ class ActiveSetViewModel: ObservableObject {
         let reps = setProgress[index].currentReps
         let weight = setProgress[index].weight
         repsInput = String(reps)
-        weightInput = weight == floor(weight) ? String(Int(weight)) : String(weight)
+        // Display decimals with comma to match picker options
+        weightInput = weight == floor(weight)
+            ? String(Int(weight))
+            : String(weight).replacingOccurrences(of: ".", with: ",")
     }
     
     func handleAppForeground() {

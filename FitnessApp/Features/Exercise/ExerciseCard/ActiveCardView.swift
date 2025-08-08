@@ -30,7 +30,7 @@ struct ActiveCardView: View {
                         }) {
                             ChipIcon(
                                 image: "analyticsEntry",
-                                color: AppStyle.Color.white,
+                                color: Color(hex:"#077484"),
                                 size: .extraLarge
                             )
                             .view
