@@ -221,7 +221,7 @@ struct CustomNumberPadView: View {
             }
             
             HStack(spacing: 16) {
-                Button("Abbrechen") {
+                Button("Cancel") {
                     onDismiss()
                 }
                 .font(.system(size: 18, weight: .medium))

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct ActiveSetEditPickerView: View {
     let title: String
@@ -21,18 +22,49 @@ struct ActiveSetEditPickerView: View {
     
     let saveButtonTextEnabledColor: Color = AppStyle.Color.white
     let saveButtonBackgroundEnabledColor: Color = AppStyle.Color.green
+
+    // Default: deaktiviert; wird im onAppear anhand der aktuellen Auswahl ggf. aktiviert
+    @State private var showDecimal: Bool = false
+    private var filteredWeightOptions: [String] {
+        showDecimal ? weightOptions : weightOptions.filter { !$0.contains(",") && !$0.contains(".") }
+    }
     
     var body: some View {
         ZStack {
-            backgroundColor
-                .ignoresSafeArea(edges: .bottom)
-            
-            VStack(alignment: .center, spacing: 4) {
-                Text(title)
-                    .font(.title2)
-                    .foregroundColor(textColor)
-                    .fontWeight(.bold)
-                    .padding(.bottom, 16)
+            // Dimmed backdrop to capture outside taps and keep picker on top
+            Color.black.opacity(0.55)
+                .ignoresSafeArea()
+                .onTapGesture { onCancel() }
+
+            // Panel (bottom sheet)
+            VStack(alignment: .center, spacing: 8) {
+                Capsule()
+                    .fill(Color.white.opacity(0.35))
+                    .frame(width: 44, height: 5)
+                    .padding(.top, 8)
+                    .padding(.bottom, 10)
+                VStack(spacing: 8) {
+                    // Titel eine Ebene höher, zentriert
+                    Text(title)
+                        .font(.title2)
+                        .foregroundColor(textColor)
+                        .fontWeight(.bold)
+                        .frame(maxWidth: .infinity)
+
+                    // Darunter: Switch rechts ausgerichtet
+                    HStack {
+                        Spacer()
+                        HStack(spacing: 6) {
+                            Text("Dezimal")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(textColor.opacity(0.85))
+                            Toggle("", isOn: $showDecimal)
+                                .labelsHidden()
+                                .toggleStyle(CapsuleToggleStyle(onColor: AppStyle.Color.greenGlow, offColor: Color.gray.opacity(0.4)))
+                        }
+                    }
+                }
+                .padding(.bottom, 18)
                 
                 VStack(spacing: 0) {
                     HStack {
@@ -57,7 +89,7 @@ struct ActiveSetEditPickerView: View {
                         .clipped()
                         
                         Picker("Weight", selection: $selectedWeight) {
-                            ForEach(weightOptions, id: \.self) { value in
+                            ForEach(filteredWeightOptions, id: \.self) { value in
                                 Text("\(value) kg").tag(value).foregroundColor(pickerColor)
                             }
                         }
@@ -71,10 +103,10 @@ struct ActiveSetEditPickerView: View {
                 HStack() {
                     Spacer()
                     
-                    Text("Abbrechen")
+                    Text("Cancel")
                         .foregroundColor(cancelButtonTextColor)
                         .font(.system(size: 14))
-                        .padding(5)
+                        .padding(.vertical, 8)
                         .frame(width: 120)
                         .cornerRadius(AppStyle.CornerRadius.editPickerViewButton)
                         .onTapGesture {
@@ -84,7 +116,7 @@ struct ActiveSetEditPickerView: View {
                     
                     Spacer()
                     
-                    Button("Speichern") {
+                    Button("Save") {
                         if let reps = Int(selectedReps) {
                             let weightString = selectedWeight.replacingOccurrences(of: ",", with: ".")
                             if let weight = Double(weightString) {
@@ -94,7 +126,7 @@ struct ActiveSetEditPickerView: View {
                     }
                     .foregroundColor(saveDisabled ? saveButtonTextDisabledColor : saveButtonTextEnabledColor)
                     .font(.system(size: 14))
-                    .padding(5)
+                    .padding(.vertical, 8)
                     .frame(width: 140,height: 40)
                     .background(saveDisabled ? saveButtonBackgroundDisabledColor : saveButtonBackgroundEnabledColor)
                     .cornerRadius(AppStyle.CornerRadius.editPickerViewButton)
@@ -103,10 +135,55 @@ struct ActiveSetEditPickerView: View {
                     
                     Spacer()
                 }
-                .padding(.horizontal, 5)
+                .padding(.horizontal, 12)
             }
-            .padding(.top, 4)
+            .padding(.horizontal, 20)
+            .padding(.top, 6)   // etwas höher, damit mehr vertikaler Raum entsteht
+            .padding(.bottom, 28)
+            .background(
+                RoundedCorner(radius: 22, corners: [.topLeft, .topRight])
+                    .fill(Color(hex: "#222025"))
+                    .shadow(color: .black.opacity(0.35), radius: 20, x: 0, y: -4)
+            )
+            .overlay(
+                RoundedCorner(radius: 22, corners: [.topLeft, .topRight])
+                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            )
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: 420, alignment: .bottom)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+            .padding(.horizontal, 0)
+            .padding(.bottom, 0)
+            .gesture(
+                DragGesture().onEnded { value in
+                    if value.translation.height > 80 {
+                        onCancel()
+                    }
+                }
+            )
         }
         .frame(maxWidth: .infinity)
+        .onAppear {
+            // Aktivieren, wenn bereits eine Dezimalzahl vorliegt
+            if selectedWeight.contains(",") || selectedWeight.contains(".") {
+                showDecimal = true
+            }
+        }
     }
 }
+
+// Utility shape for top-only rounded corners (bottom sheet)
+private struct RoundedCorner: Shape {
+    var radius: CGFloat = .infinity
+    var corners: UIRectCorner = .allCorners
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(
+            roundedRect: rect,
+            byRoundingCorners: corners,
+            cornerRadii: CGSize(width: radius, height: radius)
+        )
+        return Path(path.cgPath)
+    }
+}
+
+// Uses shared CapsuleToggleStyle (defined in Shared/View)

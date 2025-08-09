@@ -48,7 +48,7 @@ struct ProfileView: View {
                     HStack {
                         Spacer()
                         
-                        Text("Abbrechen")
+                        Text("Cancel")
                             .foregroundColor(cancelButtonTextColor)
                             .font(.system(size: 14))
                             .padding(5)
@@ -72,7 +72,7 @@ struct ProfileView: View {
                                 print("Nickname saved successfully")
                             }
                         }) {
-                            Text("Speichern")
+                            Text("Save")
                                 .foregroundColor(inputNickname.isEmpty ? saveButtonTextDisabledColor : saveButtonTextEnabledColor)
                                 .font(.system(size: 14))
                                 .padding(5)

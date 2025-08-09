@@ -10,6 +10,7 @@ enum NavigationDestination: Hashable {
 @main
 struct FitnessAppApp: App {
     @State private var navigationPath = NavigationPath()
+    @StateObject private var overlayState = UIOverlayState()
     @StateObject private var workoutStorageService = WorkoutStorageService.shared
     
     private let backgroundColor = AppStyle.Color.backgroundColor
@@ -64,13 +65,18 @@ struct FitnessAppApp: App {
                             print("Navigation path changed from \(oldPath) to \(newPath)")
                         }
                 }
+                .zIndex(overlayState.isEditingSheetVisible ? 2 : 0)
                 BottomMenuBarView(
                     barHeight: 40,
                     onAddExercise: {},
                     backgroundColor: backgroundColor,
                     navigationPath: $navigationPath
                 )
+                .zIndex(overlayState.isEditingSheetVisible ? 0 : 1)
+                .opacity(overlayState.isEditingSheetVisible ? 0 : 1)
+                .allowsHitTesting(!overlayState.isEditingSheetVisible)
             }
+            .environmentObject(overlayState)
         }
     }
 }

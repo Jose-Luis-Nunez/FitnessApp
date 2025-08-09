@@ -664,7 +664,7 @@ struct AnalyticsView: View {
     }
     
     private var goalCancelButton: some View {
-        Button("Abbrechen") {
+        Button("Cancel") {
             showGoalSheet = false
         }
         .font(.body)
@@ -676,7 +676,7 @@ struct AnalyticsView: View {
     }
     
     private var goalSaveButton: some View {
-        Button("Speichern") {
+        Button("Save") {
             saveGoal()
         }
         .font(.body)
@@ -980,7 +980,7 @@ struct AddAnalyticsEntryView: View {
                 }
                 
                 HStack {
-                    Button("Abbrechen") {
+                    Button("Cancel") {
                         onCancel()
                     }
                     .foregroundColor(.white)
@@ -991,7 +991,7 @@ struct AddAnalyticsEntryView: View {
                     
                     Spacer()
                     
-                    Button("Speichern") {
+                    Button("Save") {
                         let entry = AnalyticsEntry(
                             exerciseId: exercise.id,
                             date: date,

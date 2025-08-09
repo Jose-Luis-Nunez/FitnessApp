@@ -64,31 +64,39 @@ struct MuscleCategorySelectionView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        ZStack(alignment: .bottom) {
+            AppStyle.Color.backgroundColor.ignoresSafeArea()
             ScrollView {
                 LazyVStack(spacing: Constants.CategoryTile.verticalSpacing) {
                     categoryList
                 }
                 .padding(.horizontal, Constants.horizontalPadding)
                 .padding(.top, Constants.topPadding)
+                // small spacer so last tile isn't glued to gesture area
+                .padding(.bottom, safeAreaInset + 24)
             }
-
-            BottomActionBarView(
-                viewModel: viewModel.bottomBarViewModel,
-                onStart: {},
-                onCompleteSet: {},
-                onQuickDone: {},
-                onCompleteAllQuickDone: {},
-                onCategoryReset: {},
-                onEditLess: {},
-                onEditMore: {},
-                onFinish: {},
-                onAddExercise: {},
-                onResetAllExercises: {
-                    viewModel.resetAllExercises()
-                }
-            )
-            .padding(.bottom, safeAreaInset)
+            
+            // Floating Action Bar: only Reset all when available
+            if viewModel.bottomBarViewModel.showResetAllExercisesButton {
+                BottomActionBarView(
+                    viewModel: viewModel.bottomBarViewModel,
+                    onStart: {},
+                    onCompleteSet: {},
+                    onQuickDone: {},
+                    onCompleteAllQuickDone: {},
+                    onCategoryReset: {},
+                    onEditLess: {},
+                    onEditMore: {},
+                    onFinish: {},
+                    onAddExercise: {},
+                    onResetAllExercises: {
+                        viewModel.resetAllExercises()
+                    }
+                )
+                .padding(.horizontal, 16)
+                .padding(.bottom, safeAreaInset + 12)
+                .allowsHitTesting(true)
+            }
         }
         .background(AppStyle.Color.backgroundColor)
         .modifier(

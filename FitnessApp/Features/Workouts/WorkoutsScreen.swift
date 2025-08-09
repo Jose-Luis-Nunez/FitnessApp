@@ -158,7 +158,7 @@ struct WorkoutsScreen: View {
             .navigationTitle("Neues Workout")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(
-                leading: Button("Abbrechen") {
+                leading: Button("Cancel") {
                     viewModel.showingCreateWorkout = false
                 },
                 trailing: Button("Erstellen") {

@@ -1,13 +1,14 @@
 enum L10n {
     
-    static let cardCreationTitle = "Neue Übung"
+    static let cardCreationTitle = "Add Exercise"
+    static let cardEditTitle = "Edit Exercise"
     static let cardCreationPlaceholderTextName = "Name"
     static let cardCreationPlaceholderTextWeight = "Gewicht (kg)"
     static let cardCreationPlaceholderTextRepetitions = "Wiederholungen"
     static let cardCreationPlaceholderTextSets = "Sätze"
     static let cardCreationPlaceholderTextSeat = "Sitz"
-    static let cardCreationSave = "Speichern"
-    static let cardCreationCancel = "Abbrechen"
+    static let cardCreationSave = "Save"
+    static let cardCreationCancel = "Cancel"
     
     static let seatChipDefaultvalue = "+"
     static let analyticsText = "STEIGEND"

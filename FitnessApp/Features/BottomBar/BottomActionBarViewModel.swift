@@ -43,7 +43,10 @@ struct BottomActionBarViewModel {
     }
 
     var showAddExerciseButton: Bool {
-        !isSetInProgress
+        // Hide "Add Exercise" when we are in the state that shows "Start set X"
+        // i.e., when a start button is visible and it's not the initial "Start Training" state
+        let isStartSetState = showStartButton && (currentSet != 0 || didJustEditSet)
+        return !isSetInProgress && !isStartSetState
     }
 
     var startButtonTitle: String {

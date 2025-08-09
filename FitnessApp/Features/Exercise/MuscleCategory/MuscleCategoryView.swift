@@ -36,20 +36,32 @@ struct MuscleCategoryView: View {
         return vm
     }
     
+    private var bottomListPadding: CGFloat {
+        if formViewModel.showForm { return 340 }
+        if activeSetViewModel.isEditing { return 240 }
+        if bottomActionbarViewModel.shouldShow { return safeAreaBottomInset + 100 }
+        return safeAreaBottomInset + 40
+    }
+
+    private var safeAreaBottomInset: CGFloat {
+        UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
+    }
+
+    @EnvironmentObject private var overlayState: UIOverlayState
+
     var body: some View {
         ZStack(alignment: .bottom) {
-            Color(AppStyle.Color.backgroundColor)
-                .edgesIgnoringSafeArea(.all)
+            AppStyle.Color.backgroundColor
+                .ignoresSafeArea()
             
             VStack(spacing: 0) {
                 Spacer().frame(height: 16)
-                List {
-                    exerciseListSection
-                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-                        .listRowBackground(AppStyle.Color.backgroundColor)
-                    
-                    if let exercise = activeSetViewModel.currentExercise {
-                        Section {
+                ScrollView {
+                    LazyVStack(spacing: 4) {
+                        exerciseListSection
+                            .padding(.horizontal, 0)
+
+                        if let exercise = activeSetViewModel.currentExercise {
                             VStack(spacing: 16) {
                                 ActiveSetView(
                                     sets: exercise.sets,
@@ -62,26 +74,21 @@ struct MuscleCategoryView: View {
                                         activeSetViewModel.startTimer()
                                     }
                                 }
-                                
+
                                 TimerView(viewModel: activeSetViewModel)
                             }
                             .padding(.vertical, 0)
                         }
-                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                        .listRowBackground(AppStyle.Color.backgroundColor)
-                        .listRowSeparator(.hidden)
                     }
+                    .padding(.horizontal, 0)
+                    .padding(.top, 0)
+                    .padding(.bottom, bottomListPadding)
                 }
-                .listStyle(.plain)
-                .listSectionSpacing(4)
-                .scrollContentBackground(.hidden)
-                .padding(.top, 0)
                 .offset(y: -10)
-                .padding(.bottom, formViewModel.showForm ? 340 : (activeSetViewModel.isEditing ? 240 : (bottomActionbarViewModel.shouldShow ? 70 : 40)))
             }
             .background(AppStyle.Color.backgroundColor)
             
-            if bottomActionbarViewModel.shouldShow {
+            if bottomActionbarViewModel.shouldShow && !activeSetViewModel.isEditing {
                 BottomActionBarView(
                     viewModel: bottomActionbarViewModel,
                     onStart: {
@@ -141,11 +148,15 @@ struct MuscleCategoryView: View {
                     onResetAllExercises: {
                     }
                 )
-                .background(AppStyle.Color.backgroundColor)
-                .padding(.bottom, 40)
+                .background(Color.clear)
+                .padding(.horizontal, 16)
+                .padding(.bottom, safeAreaBottomInset + 12)
             }
             
             if activeSetViewModel.isEditing {
+                // Signal: bring sheet to front, hide menu bar
+                Color.clear
+                    .onAppear { overlayState.isEditingSheetVisible = true }
                 ActiveSetEditPickerView(
                     title: {
                         switch activeSetViewModel.editMode {
@@ -169,16 +180,20 @@ struct MuscleCategoryView: View {
                     },
                     saveDisabled: !activeSetViewModel.isInputValid
                 )
-                .frame(maxWidth: .infinity, maxHeight: 200, alignment: .bottom)
-                .offset(y: -50)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                 .shadow(radius: 5)
                 .transition(.move(edge: .bottom))
+                .zIndex(3)
+                .ignoresSafeArea(edges: .bottom)
+                .onDisappear { overlayState.isEditingSheetVisible = false }
             }
             
             if formViewModel.showForm {
+                // Signal: bring sheet to front, hide menu bar
+                Color.clear.onAppear { overlayState.isEditingSheetVisible = true }
                 ExercisePickerView(
                     formViewModel: formViewModel,
-                    title: formViewModel.editingExercise != nil ? "Übung bearbeiten" : L10n.cardCreationTitle,
+                    title: formViewModel.editingExercise != nil ? L10n.cardEditTitle : L10n.cardCreationTitle,
                     isPresented: $formViewModel.showForm,
                     onSave: {
                         if let exercise = formViewModel.createOrUpdateExercise() {
@@ -199,10 +214,12 @@ struct MuscleCategoryView: View {
                     viewModel: viewModel,
                     editingExercise: formViewModel.editingExercise,
                 )
-                .frame(maxWidth: .infinity, maxHeight: 300, alignment: .bottom)
-                .offset(y: -50)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                 .shadow(radius: 5)
                 .transition(.move(edge: .bottom))
+                .zIndex(3)
+                .ignoresSafeArea(edges: .bottom)
+                .onDisappear { overlayState.isEditingSheetVisible = false }
             }
         }
         .customToolbar(title: group.displayName, navigationPath: $navigationPath, showBackButton: true)
@@ -220,7 +237,7 @@ struct MuscleCategoryView: View {
             Button("Zurücksetzen", role: .destructive) {
                 viewModel.resetProgress()
             }
-            Button("Abbrechen", role: .cancel) { }
+            Button("Cancel", role: .cancel) { }
         } message: {
             Text("Möchtest du wirklich alle Übungen in dieser Kategorie zurücksetzen?")
         }

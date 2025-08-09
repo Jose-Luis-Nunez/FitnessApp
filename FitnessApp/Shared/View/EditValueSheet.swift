@@ -19,11 +19,11 @@ struct EditValueSheet: View {
                 .textFieldStyle(.roundedBorder)
                 .padding()
 
-            Button("Speichern", action: onSave)
+            Button("Save", action: onSave)
                 .buttonStyle(.borderedProminent)
                 .disabled(saveDisabled)
 
-            Button("Abbrechen", action: onCancel)
+            Button("Cancel", action: onCancel)
                 .foregroundColor(.red)
         }
         .padding()

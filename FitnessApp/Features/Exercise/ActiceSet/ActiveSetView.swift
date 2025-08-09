@@ -125,6 +125,7 @@ struct ActiveSetView: View {
                 viewModel.startEditingSet(index: index, mode: mode)
             }
         }
+        // Keep base zIndex; picker will manage its own stacking in parent
     }
 }
 

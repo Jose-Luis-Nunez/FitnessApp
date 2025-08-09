@@ -1,17 +1,34 @@
 import SwiftUI
+import UIKit
 
 struct IconPickerView: View {
     @Binding var selectedIcon: String
     let icons: [String]
 
+    private let tileCornerRadius: CGFloat = 10
+    private let tileBorderWidth: CGFloat = 1
+    private let sheetBackground = Color(hex: "#222025")
+
+    private var filteredIcons: [String] {
+        icons.filter { name in
+            guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+            return UIImage(named: name) != nil
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Icon wählen")
+            Text("Select icon")
                 .font(.headline)
                 .foregroundColor(.white)
 
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
-                ForEach(icons, id: \.self) { iconName in
+            // Gleiche 3-Spalten-Struktur wie im CreateWorkoutView
+            LazyVGrid(columns: [
+                GridItem(.flexible(), spacing: 12),
+                GridItem(.flexible(), spacing: 12),
+                GridItem(.flexible(), spacing: 12)
+            ], spacing: 12) {
+                ForEach(filteredIcons, id: \.self) { iconName in
                     iconCell(for: iconName)
                 }
             }
@@ -21,15 +38,31 @@ struct IconPickerView: View {
 
     @ViewBuilder
     private func iconCell(for iconName: String) -> some View {
-        Image(iconName)
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(width: 44, height: 44)
-            .padding(6)
-            .background(selectedIcon == iconName ? Color.gray.opacity(0.3) : Color.clear)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .onTapGesture {
-                selectedIcon = iconName
+        Button(action: { selectedIcon = iconName }) {
+            VStack(spacing: 8) {
+                Image(iconName)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 60, height: 60, alignment: iconAlignment(for: iconName))
+                    .clipped()
             }
+            .padding(8)
+            .frame(maxWidth: .infinity)
+            .frame(height: 84)
+            .background(selectedIcon == iconName ? AppStyle.Color.green.opacity(0.1) : sheetBackground)
+            .cornerRadius(tileCornerRadius)
+            .overlay(
+                RoundedRectangle(cornerRadius: tileCornerRadius)
+                    .stroke(selectedIcon == iconName ? AppStyle.Color.green : AppStyle.Color.gray, lineWidth: tileBorderWidth)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: tileCornerRadius))
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+
+    private func iconAlignment(for iconName: String) -> Alignment {
+        // Greift gleiche Logik wie bei MuscleCategoryGroup.iconAlignment (top außer legs -> bottom)
+        if iconName.lowercased().contains("leg") { return .bottom }
+        return .top
     }
 }

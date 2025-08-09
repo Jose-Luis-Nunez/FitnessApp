@@ -34,7 +34,8 @@ struct BottomActionBarView: View {
                 backgroundColor: backgroundColor
             )
         }
-        .background(backgroundColor)
+        .background(Color.clear)
+        .zIndex(2)
     }
 }
 
@@ -56,6 +57,8 @@ struct FloatingActionButtonsView: View {
     private let buttonWidthRegular: CGFloat = 110
     private let buttonHeightRegular: CGFloat = 40
     private let buttonHeightLarge: CGFloat = 40
+    // Narrower small buttons so the centered "Done" can breathe and align nicer
+    private let smallButtonFixedWidth: CGFloat = 100
     private let verticalSpacing: CGFloat = 8
     private let topPadding: CGFloat = 10
     private let bottomPadding: CGFloat = 16
@@ -75,11 +78,14 @@ struct FloatingActionButtonsView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            backgroundColor
-                .frame(height: totalHeight)
-                .frame(maxWidth: UIScreen.main.bounds.width - 32)
+        let containerWidth = UIScreen.main.bounds.width - (2 * AppStyle.Layout.cardHorizontalPadding)
 
+        let hstackWidth = containerWidth - 2 * AppStyle.Layout.cardHorizontalPadding
+        // Standardbreite großer CTA (wie "Add Exercise"/"Beenden" wenn zwei nebeneinander)
+        let standardCTAWidth = (hstackWidth - 12) / 2
+
+        return ZStack(alignment: .bottom) {
+            // No background pill here – only floating buttons
             VStack(spacing: verticalSpacing) {
                 if viewModel.showResetAllExercisesButton {
                     actionButtonExtraLarge(
@@ -138,7 +144,8 @@ struct FloatingActionButtonsView: View {
                         }
 
                         if viewModel.showSetControls {
-                            actionButtonSmall(
+                            // Less / More flexibel; Done feste Standard-CTA-Breite
+                            actionButtonLarge(
                                 text: "Less",
                                 textFont: AppStyle.Font.bottomBarButtons,
                                 backgroundColor: AppStyle.Color.greenLight,
@@ -146,15 +153,16 @@ struct FloatingActionButtonsView: View {
                                 action: onEditLess
                             )
 
-                            actionButtonLarge(
+                            actionButtonFixedLarge(
                                 text: "Done",
                                 textFont: AppStyle.Font.bottomBarButtons,
                                 backgroundColor: AppStyle.Color.green,
                                 fontColor: AppStyle.Color.white,
-                                action: onCompleteSet
+                                action: onCompleteSet,
+                                width: standardCTAWidth
                             )
 
-                            actionButtonSmall(
+                            actionButtonLarge(
                                 text: "More",
                                 textFont: AppStyle.Font.bottomBarButtons,
                                 backgroundColor: AppStyle.Color.greenLight,
@@ -183,12 +191,13 @@ struct FloatingActionButtonsView: View {
                             )
                         }
                     }
-                    .frame(maxWidth: UIScreen.main.bounds.width - 2 * AppStyle.Layout.cardHorizontalPadding, alignment: .center)
-                    .padding(.horizontal, AppStyle.Padding.horizontal)
+                    // Align left/right insets symmetrically with the overall container
+                    .frame(width: hstackWidth, alignment: .center)
                 }
             }
             .padding(.top, topPadding)
             .padding(.bottom, bottomPadding)
+            .frame(width: containerWidth)
         }
         .frame(height: totalHeight)
     }
@@ -213,6 +222,25 @@ struct FloatingActionButtonsView: View {
     }
 
     @ViewBuilder
+    private func actionButtonFixedLarge(
+        text: String,
+        textFont: Font,
+        backgroundColor: Color,
+        fontColor: Color,
+        action: @escaping () -> Void,
+        width: CGFloat
+    ) -> some View {
+        Button(action: action) {
+            Text(text)
+                .font(textFont)
+                .foregroundColor(fontColor)
+                .frame(width: width, height: buttonHeightLarge)
+        }
+        .background(backgroundColor)
+        .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
+    }
+
+    @ViewBuilder
     private func actionButtonSmall(
         text: String,
         textFont: Font,
@@ -225,6 +253,25 @@ struct FloatingActionButtonsView: View {
                 .font(textFont)
                 .foregroundColor(fontColor)
                 .frame(width: buttonWidthRegular / 1.5, height: buttonHeightRegular)
+        }
+        .background(backgroundColor)
+        .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
+    }
+
+    @ViewBuilder
+    private func actionButtonFixedSmall(
+        text: String,
+        textFont: Font,
+        backgroundColor: Color,
+        fontColor: Color,
+        action: @escaping () -> Void,
+        width: CGFloat
+    ) -> some View {
+        Button(action: action) {
+            Text(text)
+                .font(textFont)
+                .foregroundColor(fontColor)
+                .frame(width: width, height: buttonHeightRegular)
         }
         .background(backgroundColor)
         .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
