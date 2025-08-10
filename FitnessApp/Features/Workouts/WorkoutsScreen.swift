@@ -232,8 +232,10 @@ struct WorkoutsScreen: View {
                             )
                             .padding(.trailing, 16)
                         }
-                        .padding(.bottom, safeAreaInset + 8)
+                        .padding(.bottom, safeAreaInset - 50)
                     }
+                    .onAppear { overlayState.showWorkoutsMiniMenu = true }
+                    .onDisappear { overlayState.showWorkoutsMiniMenu = false }
                 }
                 .transition(.opacity)
                 .zIndex(3)
