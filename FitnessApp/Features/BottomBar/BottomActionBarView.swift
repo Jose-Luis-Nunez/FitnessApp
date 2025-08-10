@@ -78,15 +78,16 @@ struct FloatingActionButtonsView: View {
     }
 
     var body: some View {
-        let containerWidth = UIScreen.main.bounds.width - (2 * AppStyle.Layout.cardHorizontalPadding)
+        GeometryReader { geometry in
+            // Use available width provided by parent instead of full screen
+            let containerWidth = geometry.size.width - (2 * AppStyle.Layout.cardHorizontalPadding)
+            let hstackWidth = containerWidth - 2 * AppStyle.Layout.cardHorizontalPadding
+            // Standardbreite großer CTA (wie "Add Exercise"/"Beenden" wenn zwei nebeneinander)
+            let standardCTAWidth = (hstackWidth - 12) / 2
 
-        let hstackWidth = containerWidth - 2 * AppStyle.Layout.cardHorizontalPadding
-        // Standardbreite großer CTA (wie "Add Exercise"/"Beenden" wenn zwei nebeneinander)
-        let standardCTAWidth = (hstackWidth - 12) / 2
-
-        return ZStack(alignment: .bottom) {
-            // No background pill here – only floating buttons
-            VStack(spacing: verticalSpacing) {
+            ZStack(alignment: .bottom) {
+                // No background pill here – only floating buttons
+                VStack(spacing: verticalSpacing) {
                 if viewModel.showResetAllExercisesButton {
                     actionButtonExtraLarge(
                         text: "Reset all",
@@ -194,10 +195,12 @@ struct FloatingActionButtonsView: View {
                     // Align left/right insets symmetrically with the overall container
                     .frame(width: hstackWidth, alignment: .center)
                 }
+                }
+                .padding(.top, topPadding)
+                .padding(.bottom, bottomPadding)
+                .frame(width: containerWidth)
             }
-            .padding(.top, topPadding)
-            .padding(.bottom, bottomPadding)
-            .frame(width: containerWidth)
+            .frame(width: geometry.size.width, height: totalHeight, alignment: .bottom)
         }
         .frame(height: totalHeight)
     }

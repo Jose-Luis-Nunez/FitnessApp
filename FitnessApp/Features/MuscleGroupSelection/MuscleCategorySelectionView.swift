@@ -103,7 +103,7 @@ struct MuscleCategorySelectionView: View {
             CustomToolbarModifier(
                 navigationPath: $navigationPath,
                 title: viewModel.currentWorkoutName,
-                showBackButton: true
+                showBackButton: false
             )
         )
         .navigationBarTitleDisplayMode(.inline)

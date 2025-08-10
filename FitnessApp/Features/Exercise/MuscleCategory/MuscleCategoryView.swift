@@ -149,7 +149,9 @@ struct MuscleCategoryView: View {
                     }
                 )
                 .background(Color.clear)
-                .padding(.horizontal, 16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 16)
+                .padding(.trailing, 0)
                 .padding(.bottom, safeAreaBottomInset + 12)
             }
             
@@ -222,7 +224,7 @@ struct MuscleCategoryView: View {
                 .onDisappear { overlayState.isEditingSheetVisible = false }
             }
         }
-        .customToolbar(title: group.displayName, navigationPath: $navigationPath, showBackButton: true)
+        .customToolbar(title: group.displayName, navigationPath: $navigationPath, showBackButton: false)
         .navigationBarBackButtonHidden(true)
         .onAppear {
             updateBottomBarViewModel()

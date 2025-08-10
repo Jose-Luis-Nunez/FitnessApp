@@ -12,6 +12,8 @@ struct FitnessAppApp: App {
     @State private var navigationPath = NavigationPath()
     @StateObject private var overlayState = UIOverlayState()
     @StateObject private var workoutStorageService = WorkoutStorageService.shared
+    @State private var isShowingWorkoutsRoot: Bool = false
+    @State private var didAutoNavigateToHome: Bool = false
     
     private let backgroundColor = AppStyle.Color.backgroundColor
 
@@ -19,16 +21,21 @@ struct FitnessAppApp: App {
         WindowGroup {
             ZStack(alignment: .bottom) {
                 NavigationStack(path: $navigationPath) {
-                    Group {
-                        if let defaultWorkout = workoutStorageService.defaultWorkout {
-                            MuscleCategorySelectionView(navigationPath: $navigationPath)
-                                .onAppear {
-                                    workoutStorageService.setCurrentWorkout(defaultWorkout)
-                                }
-                        } else {
-                            WorkoutsScreen(navigationPath: $navigationPath)
+                    // Always start on Workouts as the root. If a default workout exists,
+                    // we automatically push to Category Selection to preserve correct back animation.
+                    WorkoutsScreen(navigationPath: $navigationPath)
+                        .onAppear {
+                            if let defaultWorkout = workoutStorageService.defaultWorkout,
+                               navigationPath.isEmpty,
+                               didAutoNavigateToHome == false {
+                                workoutStorageService.setCurrentWorkout(defaultWorkout)
+                                navigationPath.append(NavigationDestination.home)
+                                didAutoNavigateToHome = true
+                                isShowingWorkoutsRoot = false
+                            } else {
+                                isShowingWorkoutsRoot = navigationPath.isEmpty
+                            }
                         }
-                    }
                     .navigationBarBackButtonHidden(true)
                         .navigationDestination(for: NavigationDestination.self) { destination in
                             Group {
@@ -36,15 +43,19 @@ struct FitnessAppApp: App {
                                 case .workouts:
                                     WorkoutsScreen(navigationPath: $navigationPath)
                                         .navigationBarBackButtonHidden(true)
+                                        .onAppear { isShowingWorkoutsRoot = true }
                                 case .home:
                                     MuscleCategorySelectionView(navigationPath: $navigationPath)
                                         .navigationBarBackButtonHidden(true)
+                                        .onAppear { isShowingWorkoutsRoot = false }
                                 case .profile:
                                     ProfileView()
                                         .navigationBarBackButtonHidden(true)
+                                        .onAppear { isShowingWorkoutsRoot = false }
                                 case .muscleCategory(let group):
                                     MuscleCategoryView(group: group, navigationPath: $navigationPath)
                                         .navigationBarBackButtonHidden(true)
+                                        .onAppear { isShowingWorkoutsRoot = false }
                                 }
                             }
                             .onAppear {
@@ -70,7 +81,9 @@ struct FitnessAppApp: App {
                     barHeight: 40,
                     onAddExercise: {},
                     backgroundColor: backgroundColor,
-                    navigationPath: $navigationPath
+                    navigationPath: $navigationPath,
+                    showBackButton: !navigationPath.isEmpty,
+                    narrowBy: 80
                 )
                 .zIndex(overlayState.isEditingSheetVisible ? 0 : 1)
                 .opacity(overlayState.isEditingSheetVisible ? 0 : 1)

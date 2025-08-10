@@ -26,10 +26,17 @@ struct CustomToolbarModifier: ViewModifier {
                                 navigationPath.append(NavigationDestination.workouts)
                             }
                         }) {
-                            Image(systemName: "chevron.left")
-                                .foregroundColor(AppStyle.Color.white)
-                                .imageScale(.large)
+                            ZStack(alignment: .center) {
+                                Image(systemName: "chevron.left")
+                                    .foregroundColor(AppStyle.Color.white)
+                                    .imageScale(.large)
+                            }
+                            // Reduce horizontal padding by another 2px
+                            .frame(width: 37, height: 44, alignment: .center)
+                            .contentShape(Rectangle())
+                            .accessibilityLabel("Back")
                         }
+                        .buttonStyle(.plain)
                     }
                 }
             }
