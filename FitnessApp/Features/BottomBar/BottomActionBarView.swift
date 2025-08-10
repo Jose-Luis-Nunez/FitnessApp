@@ -80,11 +80,13 @@ struct FloatingActionButtonsView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            // Use available width provided by parent instead of full screen
-            let containerWidth = geometry.size.width - (2 * AppStyle.Layout.cardHorizontalPadding)
-            let hstackWidth = containerWidth - 2 * AppStyle.Layout.cardHorizontalPadding
-            // Standardbreite großer CTA (wie "Add Exercise"/"Beenden" wenn zwei nebeneinander)
-            let standardCTAWidth = (hstackWidth - 12) / 2
+            // Content-Breite exakt wie die ActiveSetView: Bildschirmbreite minus Karten-Padding
+            let contentWidth = geometry.size.width - (2 * AppStyle.Padding.card)
+            let interItemSpacing: CGFloat = 12
+            // Minimalbreite für Less/More, gut lesbar aber kompakt (kleiner, damit "Done" dominanter wird)
+            let smallMinWidth: CGFloat = 84
+            // Dominanter Done füllt die Restbreite exakt auf, sodass die Summe = contentWidth ist
+            let doneComputedWidth = max(160, contentWidth - (2 * smallMinWidth) - (2 * interItemSpacing))
 
             ZStack(alignment: .bottom) {
                 // No background pill here – only floating buttons
@@ -95,7 +97,8 @@ struct FloatingActionButtonsView: View {
                         textFont: AppStyle.Font.bottomBarButtons,
                         backgroundColor: AppStyle.Color.green,
                         fontColor: AppStyle.Color.white,
-                        action: onFinish
+                        action: onFinish,
+                        width: contentWidth
                     )
                 } else if viewModel.showQuickDoneDoneButton {
                     actionButtonExtraLarge(
@@ -103,7 +106,8 @@ struct FloatingActionButtonsView: View {
                         textFont: AppStyle.Font.bottomBarButtons,
                         backgroundColor: AppStyle.Color.primaryButton,
                         fontColor: AppStyle.Color.white,
-                        action: onCompleteAllQuickDone
+                        action: onCompleteAllQuickDone,
+                        width: contentWidth
                     )
                 } else {
                     if viewModel.showSetControls && viewModel.currentSet == 0 {
@@ -112,11 +116,12 @@ struct FloatingActionButtonsView: View {
                             textFont: AppStyle.Font.bottomBarButtons,
                             backgroundColor: AppStyle.Color.exerciseCardBackground,
                             fontColor: AppStyle.Color.white,
-                            action: onQuickDone
+                            action: onQuickDone,
+                            width: contentWidth
                         )
                     }
 
-                    HStack(spacing: 12) {
+                    HStack(spacing: interItemSpacing) {
                         // Add Exercise button removed from FAB bar; moved to mini menu
 
                         // Do not show initial "Start Training" in Category View context; only show for subsequent sets
@@ -131,30 +136,34 @@ struct FloatingActionButtonsView: View {
                         }
 
                         if viewModel.showSetControls {
-                            // Less / More flexibel; Done feste Standard-CTA-Breite
-                            actionButtonLarge(
+                            // Less links mit Minimalbreite
+                            actionButtonFixedLarge(
                                 text: "Less",
                                 textFont: AppStyle.Font.bottomBarButtons,
                                 backgroundColor: AppStyle.Color.greenLight,
                                 fontColor: AppStyle.Color.white,
-                                action: onEditLess
+                                action: onEditLess,
+                                width: smallMinWidth
                             )
 
+                            // Done füllt exakt die verbleibende Breite
                             actionButtonFixedLarge(
                                 text: "Done",
                                 textFont: AppStyle.Font.bottomBarButtons,
                                 backgroundColor: AppStyle.Color.green,
                                 fontColor: AppStyle.Color.white,
                                 action: onCompleteSet,
-                                width: standardCTAWidth
+                                width: doneComputedWidth
                             )
 
-                            actionButtonLarge(
+                            // More rechts mit Minimalbreite
+                            actionButtonFixedLarge(
                                 text: "More",
                                 textFont: AppStyle.Font.bottomBarButtons,
                                 backgroundColor: AppStyle.Color.greenLight,
                                 fontColor: AppStyle.Color.white,
-                                action: onEditMore
+                                action: onEditMore,
+                                width: smallMinWidth
                             )
                         }
 
@@ -170,13 +179,14 @@ struct FloatingActionButtonsView: View {
                             )
                         }
                     }
-                    // Align left/right insets symmetrically with the overall container
-                    .frame(width: hstackWidth, alignment: .center)
+                    // Gleiche Breite wie "Quick Done" darüber
+                    .frame(width: contentWidth, alignment: .center)
                 }
                 }
                 .padding(.top, topPadding)
                 .padding(.bottom, bottomPadding)
-                .frame(width: containerWidth)
+                .frame(width: contentWidth)
+                .frame(maxWidth: .infinity, alignment: .center)
             }
             .frame(width: geometry.size.width, height: totalHeight, alignment: .bottom)
         }
@@ -216,6 +226,46 @@ struct FloatingActionButtonsView: View {
                 .font(textFont)
                 .foregroundColor(fontColor)
                 .frame(width: width, height: buttonHeightLarge)
+        }
+        .background(backgroundColor)
+        .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
+    }
+    @ViewBuilder
+    private func actionButtonIntrinsicLarge(
+        text: String,
+        textFont: Font,
+        backgroundColor: Color,
+        fontColor: Color,
+        action: @escaping () -> Void,
+        minHorizontalPadding: CGFloat
+    ) -> some View {
+        Button(action: action) {
+            Text(text)
+                .font(textFont)
+                .foregroundColor(fontColor)
+                .padding(.horizontal, minHorizontalPadding)
+                .frame(minHeight: buttonHeightLarge, maxHeight: buttonHeightLarge)
+                .fixedSize()
+        }
+        .background(backgroundColor)
+        .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
+    }
+
+    @ViewBuilder
+    private func actionButtonMinimal(
+        text: String,
+        textFont: Font,
+        backgroundColor: Color,
+        fontColor: Color,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(text)
+                .font(textFont)
+                .foregroundColor(fontColor)
+                .padding(.horizontal, 12)
+                .frame(minHeight: buttonHeightLarge, maxHeight: buttonHeightLarge)
+                .fixedSize()
         }
         .background(backgroundColor)
         .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
@@ -264,17 +314,15 @@ struct FloatingActionButtonsView: View {
         textFont: Font,
         backgroundColor: Color,
         fontColor: Color,
-        action: @escaping () -> Void
+        action: @escaping () -> Void,
+        width: CGFloat
     ) -> some View {
         Button(action: action) {
             Text(text)
                 .font(textFont)
                 .foregroundColor(fontColor)
-                .frame(
-                    maxWidth: UIScreen.main.bounds.width - 2 * AppStyle.Layout.cardHorizontalPadding,
-                    minHeight: buttonHeightLarge,
-                    maxHeight: buttonHeightLarge
-                )
+                .frame(width: width)
+                .frame(minHeight: buttonHeightLarge, maxHeight: buttonHeightLarge)
         }
         .background(backgroundColor)
         .cornerRadius(AppStyle.CornerRadius.bottomBarButton)

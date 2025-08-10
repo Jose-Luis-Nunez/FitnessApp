@@ -205,16 +205,18 @@ class ActiveSetViewModel: ObservableObject {
     }
     
     func startQuickDone(for exercise: Exercise, category: MuscleCategoryGroup) {
+        // Skip intermediate quick-done UI; directly mark all sets as completed
         currentExercise = exercise
         self.category = category
-        currentSet = 0
+        currentSet = exercise.sets
         setProgress = (0..<exercise.sets).map { _ in
-            SetProgress(status: .notStarted, currentReps: exercise.reps, weight: exercise.weight)
+            SetProgress(status: .completedDone, currentReps: exercise.reps, weight: exercise.weight)
         }
-        quickDoneModeActive = true
-        quickDoneAllCompleted = false
+        // Ensure final state with summary and "Beenden" CTA
+        quickDoneModeActive = false
+        quickDoneAllCompleted = true
         isSetInProgress = false
-        isLastSetCompleted = false
+        isLastSetCompleted = true
         didEditCompleteSet = false
         didJustEditSet = false
     }

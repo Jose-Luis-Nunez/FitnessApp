@@ -149,9 +149,8 @@ struct MuscleCategoryView: View {
                     }
                 )
                 .background(Color.clear)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.leading, 16)
-                .padding(.trailing, 0)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.horizontal, 0)
                 .padding(.bottom, safeAreaBottomInset + 12)
             }
             
