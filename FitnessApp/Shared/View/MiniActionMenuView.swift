@@ -12,19 +12,21 @@ struct MiniActionMenuView: View {
     let title: String?
     let items: [MiniActionMenuItem]
     var width: CGFloat = min(UIScreen.main.bounds.width * 0.55, 320)
-    var minHeight: CGFloat = 140
-    private let rowHeight: CGFloat = 56 // visual height per item including inner paddings
+    var minHeight: CGFloat = 140 // legacy default; final height computed below
+    private let rowHeight: CGFloat = 52
 
     private var visibleItemCount: Int {
         items.filter { !($0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && $0.icon == nil) }.count
     }
 
-    // Ensures: at least 2 rows worth of height; grows by one row per extra item
+    // Ensures: at least 2 rows worth of height; grows by exact row increments
     private var effectiveMinHeight: CGFloat {
         let rows = max(visibleItemCount, 2)
-        let extraRows = max(0, rows - 2)
-        return minHeight + CGFloat(extraRows) * rowHeight
+        return headerHeight + CGFloat(rows) * rowHeight + (contentVerticalPadding * 2)
     }
+
+    private var contentVerticalPadding: CGFloat { 14 }
+    private var headerHeight: CGFloat { title == nil ? 0 : 56 }
 
     var body: some View {
         ZStack {
@@ -35,7 +37,8 @@ struct MiniActionMenuView: View {
                 headerView
                 itemsView
             }
-            .padding(14) // internal padding so bottom edge stays fixed
+            .padding(.horizontal, 14)
+            .padding(.vertical, contentVerticalPadding) // internal padding so bottom edge stays fixed
         }
         .frame(width: width)
         .frame(height: effectiveMinHeight, alignment: .bottom)
@@ -92,7 +95,7 @@ struct MiniActionMenuView: View {
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal, 8)
-                .padding(.vertical, 10)
+                .frame(height: rowHeight)
             }
             .buttonStyle(.plain)
         }
