@@ -33,7 +33,7 @@ struct BottomMenuBarView: View {
     private let barTintOpacity: Double = 0.02
     // Selection pill sizing (larger area like in reference)
     private var selectionHeight: CGFloat { capsuleHeight - 2 }
-    private var selectionWidth: CGFloat { selectionHeight * 1.6 }
+    private var selectionWidth: CGFloat { max(selectionHeight, selectionHeight * 1.6 - 10) }
     private let selectionFill = Color.white.opacity(0.12)
     private let iconSize: CGFloat = 22
     private let iconBoost: CGFloat = 10 // increase all icons uniformly by +10pt

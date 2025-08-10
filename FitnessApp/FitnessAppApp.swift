@@ -95,7 +95,7 @@ struct FitnessAppApp: App {
                     backgroundColor: backgroundColor,
                     navigationPath: $navigationPath,
                     showBackButton: showBack,
-                    narrowBy: 80,
+                    narrowBy: 90,
                     rightActionStyle: rightStyle,
                     onRightAction: {
                         switch currentScene {
