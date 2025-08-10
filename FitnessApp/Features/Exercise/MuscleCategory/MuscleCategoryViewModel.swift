@@ -59,6 +59,25 @@ class MuscleCategoryViewModel: ObservableObject {
     var hasActiveExercise: Bool {
         exercises.contains { !$0.isCompleted }
     }
+
+    // MARK: - Mini menu visibility helpers
+    var isTrainingInProgress: Bool {
+        activeSetViewModel.currentExercise != nil || activeSetViewModel.isSetInProgress
+    }
+
+    var hasActiveExercises: Bool {
+        exercises.contains { !$0.isCompleted }
+    }
+
+    var hasCompletedExercises: Bool {
+        exercises.contains { $0.isCompleted }
+    }
+
+    var showCancel: Bool { isTrainingInProgress }
+    // User can always add a new exercise when kein Training aktiv ist
+    var showNewExercise: Bool { !isTrainingInProgress }
+    var showStartTraining: Bool { !isTrainingInProgress && hasActiveExercises }
+    var showReset: Bool { !isTrainingInProgress && hasCompletedExercises }
     
     var totalExercises: Int {
         exercises.count

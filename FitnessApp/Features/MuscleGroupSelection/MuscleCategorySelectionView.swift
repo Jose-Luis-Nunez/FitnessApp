@@ -87,35 +87,27 @@ struct MuscleCategorySelectionView: View {
                     Spacer()
                     HStack {
                         Spacer()
-                        VStack(spacing: 8) {
-                            if viewModel.hasInactiveExercises() {
-                                Button(action: {
-                                    overlayState.showSelectionMiniMenu = false
-                                    viewModel.resetAllExercises()
-                                }) {
-                                    HStack(spacing: 12) {
-                                        Image(systemName: "xmark")
-                                            .font(.system(size: 16, weight: .semibold))
-                                            .foregroundColor(.white)
-                                        Text("Reset all")
-                                            .font(.system(size: 16, weight: .semibold))
-                                            .foregroundColor(.white)
-                                        Spacer(minLength: 0)
+                        MiniActionMenuView(
+                            title: nil,
+                            items: [
+                                MiniActionMenuItem(
+                                    icon: viewModel.hasInactiveExercises() ? "xmark" : nil,
+                                    title: viewModel.hasInactiveExercises() ? "Reset all" : "",
+                                    isDestructive: false,
+                                    action: {
+                                        overlayState.showSelectionMiniMenu = false
+                                        if viewModel.hasInactiveExercises() {
+                                            viewModel.resetAllExercises()
+                                        }
                                     }
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 10)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(14)
-                        .background(.ultraThinMaterial)
-                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
-                        .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 10)
+                                )
+                            ],
+                            width: min(UIScreen.main.bounds.width * 0.55, 320),
+                            minHeight: 140
+                        )
                         .padding(.trailing, 16)
                     }
-                    .padding(.bottom, safeAreaInset + 56)
+                    .padding(.bottom, safeAreaInset - 50)
                 }
                 .transition(.opacity)
                 .zIndex(3)

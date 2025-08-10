@@ -9,6 +9,8 @@ final class UIOverlayState: ObservableObject {
     @Published var showCategoryMiniMenu: Bool = false
     // Controls the small action menu in Category Selection View
     @Published var showSelectionMiniMenu: Bool = false
+    // Controls the small action menu in Workouts View
+    @Published var showWorkoutsMiniMenu: Bool = false
 }
 
 

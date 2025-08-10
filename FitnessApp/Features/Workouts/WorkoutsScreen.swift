@@ -29,6 +29,7 @@ private enum Constants {
 struct WorkoutsScreen: View {
     @StateObject private var viewModel = WorkoutsViewModel()
     @Binding var navigationPath: NavigationPath
+    @EnvironmentObject private var overlayState: UIOverlayState
     
     init(navigationPath: Binding<NavigationPath> = .constant(NavigationPath())) {
         self._navigationPath = navigationPath
@@ -37,7 +38,32 @@ struct WorkoutsScreen: View {
     var body: some View {
         ZStack {
             mainContent
-            fabButtons
+            // Mini menu for creating a new workout, opened from the ellipsis in bottom bar
+            if overlayState.showWorkoutsMiniMenu {
+                Color.black.opacity(0.001)
+                    .ignoresSafeArea()
+                    .onTapGesture { overlayState.showWorkoutsMiniMenu = false }
+
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        MiniActionMenuView(
+                            title: nil,
+                            items: [
+                                MiniActionMenuItem(icon: "plus", title: "New workout", isDestructive: false) {
+                                    overlayState.showWorkoutsMiniMenu = false
+                                    viewModel.showCreateWorkout()
+                                }
+                            ]
+                        )
+                        .padding(.trailing, 16)
+                    }
+                    .padding(.bottom, safeAreaInset - 50)
+                }
+                .transition(.opacity)
+                .zIndex(3)
+            }
         }
         .background(AppStyle.Color.backgroundColor)
         .navigationBarTitle("")
@@ -62,7 +88,7 @@ struct WorkoutsScreen: View {
                         )
         }
         .overlay(
-            workoutSettingsModal
+            settingsMiniMenu
         )
 
       }
@@ -117,33 +143,7 @@ struct WorkoutsScreen: View {
         }
     }
     
-    private var fabButtons: some View {
-        VStack {
-            Spacer()
-            HStack {
-                Spacer()
-                VStack(spacing: Constants.FAB.fabSpacing) {
-                    // Add Workout FAB (Plus)
-                    addWorkoutFAB
-                }
-                .padding(.bottom, safeAreaInset + Constants.FAB.bottomPadding)
-                .padding(.trailing, Constants.FAB.trailingPadding)
-            }
-        }
-    }
-    
-    private var addWorkoutFAB: some View {
-        Button(action: {
-            viewModel.showCreateWorkout()
-        }) {
-            Image(systemName: "plus")
-                .font(.system(size: 24, weight: .medium))
-                .foregroundColor(.white)
-                .frame(width: Constants.FAB.mainSize, height: Constants.FAB.mainSize)
-                .background(AppStyle.Color.green)
-                .clipShape(Circle())
-        }
-    }
+    // Removed legacy FAB; creation is handled via mini menu
     
     private var createWorkoutSheet: some View {
         NavigationView {
@@ -169,124 +169,74 @@ struct WorkoutsScreen: View {
         }
     }
     
-    private var workoutSettingsModal: some View {
+    private var settingsMiniMenu: some View {
         Group {
             if viewModel.showingFABOptions {
                 ZStack {
-                    // Dunkel-transparenter Hintergrund
-                    Color.black.opacity(0.4)
+                    Color.black.opacity(0.001)
                         .ignoresSafeArea()
-                        .onTapGesture {
-                            viewModel.hideFABOptions()
-                        }
-                    
-                    VStack(spacing: 0) {
+                        .onTapGesture { viewModel.hideFABOptions() }
+
+                    VStack {
                         Spacer()
-                        
-                        // Settings Modal
-                        VStack(spacing: 0) {
-                            // Header
-                            VStack(spacing: 8) {
-                                Text(viewModel.showingDeleteConfirmation ? "Delete" : "Settings")
-                                    .font(AppStyle.Font.navigationHeadline)
-                                    .foregroundColor(AppStyle.Color.greenGlow)
-                                    .padding(.top, 16)
-                                
-                                Rectangle()
-                                    .fill(AppStyle.Color.greenGlow.opacity(0.3))
-                                    .frame(height: 1)
-                                    .padding(.horizontal, 85)
-                            }
-                            .padding(.bottom, 12)
-                            
-                            // Optionen
-                            if viewModel.showingDeleteConfirmation {
-                                // Lösch-Bestätigung
-                                VStack(spacing: 4) {
-                                    settingsOption(
-                                        icon: "",
-                                        title: "Confirm deletion",
-                                        action: {
+                        HStack {
+                            Spacer()
+                            let items: [MiniActionMenuItem] = {
+                                if viewModel.showingDeleteConfirmation {
+                                    return [
+                                        MiniActionMenuItem(icon: nil, title: "Confirm deletion", isDestructive: true) {
                                             viewModel.confirmDelete()
-                                        }
-                                    )
-                                    
-                                    settingsOption(
-                                        icon: "",
-                                        title: "Cancel",
-                                        action: {
+                                        },
+                                        MiniActionMenuItem(icon: nil, title: "Cancel", isDestructive: false) {
                                             viewModel.cancelDelete()
                                         }
-                                    )
-                                }
-                            } else {
-                                // Normal Settings
-                                VStack(spacing: 4) {
-                                    settingsOption(
-                                        icon: "doc.on.doc",
-                                        title: "duplicate",
-                                        action: {
-                                            if let workout = viewModel.selectedWorkoutForAction {
-                                                viewModel.duplicateWorkout(workout)
-                                                viewModel.hideFABOptions()
-                                            }
+                                    ]
+                                } else {
+                                    var list: [MiniActionMenuItem] = []
+                                    list.append(MiniActionMenuItem(icon: nil, title: "duplicate", isDestructive: false) {
+                                        if let workout = viewModel.selectedWorkoutForAction {
+                                            viewModel.duplicateWorkout(workout)
+                                            viewModel.hideFABOptions()
                                         }
-                                    )
-                                    
-                                    settingsOption(
-                                        icon: "pencil",
-                                        title: "Rename",
-                                        action: {
-                                            if let workout = viewModel.selectedWorkoutForAction {
-                                                viewModel.showRenameWorkout(for: workout)
-                                            }
+                                    })
+                                    list.append(MiniActionMenuItem(icon: nil, title: "Rename", isDestructive: false) {
+                                        if let workout = viewModel.selectedWorkoutForAction {
+                                            viewModel.showRenameWorkout(for: workout)
                                         }
-                                    )
-                                    
+                                    })
                                     if let workout = viewModel.selectedWorkoutForAction {
                                         if viewModel.isDefaultWorkout(workout) {
-                                            settingsOption(
-                                                icon: "star.slash",
-                                                title: "Remove as Default",
-                                                action: {
-                                                    viewModel.removeAsDefault()
-                                                    viewModel.hideFABOptions()
-                                                }
-                                            )
+                                            list.append(MiniActionMenuItem(icon: nil, title: "Remove as Default", isDestructive: false) {
+                                                viewModel.removeAsDefault()
+                                                viewModel.hideFABOptions()
+                                            })
                                         } else {
-                                            settingsOption(
-                                                icon: "star",
-                                                title: "Set as Default",
-                                                action: {
-                                                    viewModel.setAsDefault(workout)
-                                                    viewModel.hideFABOptions()
-                                                }
-                                            )
+                                            list.append(MiniActionMenuItem(icon: nil, title: "Set as Default", isDestructive: false) {
+                                                viewModel.setAsDefault(workout)
+                                                viewModel.hideFABOptions()
+                                            })
                                         }
                                     }
-                                    
                                     if viewModel.canDeleteWorkout {
-                                        settingsOption(
-                                            icon: "trash",
-                                            title: "Delete",
-                                            isDestructive: true,
-                                            action: {
-                                                viewModel.showDeleteConfirmation()
-                                            }
-                                        )
+                                        list.append(MiniActionMenuItem(icon: nil, title: "Delete", isDestructive: true) {
+                                            viewModel.showDeleteConfirmation()
+                                        })
                                     }
+                                    return list
                                 }
-                            }
+                            }()
+
+                            MiniActionMenuView(
+                                title: viewModel.selectedWorkoutForAction?.name,
+                                items: items
+                            )
+                            .padding(.trailing, 16)
                         }
-                        .background(AppStyle.Color.greenDark)
-                        .cornerRadius(16)
-                        .padding(.horizontal, 32)
-                        .padding(.bottom, safeAreaInset + 16)
-                        .padding(.top, 16)
+                        .padding(.bottom, safeAreaInset + 8)
                     }
                 }
-                .transition(.opacity.combined(with: .move(edge: .bottom)))
-                .animation(.easeInOut(duration: 0.3), value: viewModel.showingFABOptions)
+                .transition(.opacity)
+                .zIndex(3)
             }
         }
     }

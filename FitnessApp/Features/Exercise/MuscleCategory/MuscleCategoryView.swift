@@ -235,74 +235,8 @@ struct MuscleCategoryView: View {
         .onChange(of: activeSetViewModel.currentExercise) {
             updateBottomBarViewModel()
         }
-        // Mini menu overlay restored with Add Exercise and Start Training
-        .overlay(
-            Group {
-                if overlayState.showCategoryMiniMenu {
-                    // Backdrop to dismiss on outside tap
-                    Color.black.opacity(0.001)
-                        .ignoresSafeArea()
-                        .onTapGesture { overlayState.showCategoryMiniMenu = false }
-
-                    // Floating menu panel
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            // Panel positioned above the right bar area, aligned to trailing
-                            VStack(spacing: 8) {
-                                let isTraining = (activeSetViewModel.currentExercise != nil || activeSetViewModel.isSetInProgress)
-                                let hasCompletedExercises = viewModel.exercises.contains { $0.isCompleted }
-                                let hasActiveExercises = viewModel.exercises.contains { !$0.isCompleted }
-
-                                if isTraining {
-                                    menuRow(icon: "xmark", title: "Cancel") {
-                                        activeSetViewModel.cancelActiveSet()
-                                        overlayState.showCategoryMiniMenu = false
-                                    }
-                                } else {
-                                    if hasActiveExercises {
-                                        menuRow(icon: "plus", title: "New Exercise") {
-                                            withAnimation {
-                                                formViewModel.loadExercise(nil, category: group)
-                                                formViewModel.toggleForm()
-                                                overlayState.showCategoryMiniMenu = false
-                                            }
-                                        }
-                                        menuRow(icon: "play.fill", title: "Start Training") {
-                                            if let exercise = activeSetViewModel.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) {
-                                                activeSetViewModel.startSet(for: exercise, category: group)
-                                            }
-                                            overlayState.showCategoryMiniMenu = false
-                                        }
-                                    }
-
-                                    if hasCompletedExercises {
-                                        menuRow(icon: "arrow.counterclockwise", title: "Reset") {
-                                            viewModel.showResetConfirmation = true
-                                            overlayState.showCategoryMiniMenu = false
-                                        }
-                                    }
-                                }
-                            }
-                            .frame(width: min(UIScreen.main.bounds.width * 0.55, 320))
-                            .padding(14)
-                            .background(.ultraThinMaterial)
-                            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                    .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
-                            )
-                            .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 10)
-                            .padding(.trailing, 16)
-                        }
-                        .padding(.bottom, safeAreaBottomInset + 56)
-                    }
-                    .transition(.opacity)
-                    .zIndex(4)
-                }
-            }
-        )
+        // Mini menu overlay extracted for compiler performance
+        .overlay(miniMenuOverlay)
         .alert("Übungen zurücksetzen?", isPresented: $viewModel.showResetConfirmation) {
             Button("Zurücksetzen", role: .destructive) {
                 viewModel.resetProgress()
@@ -347,6 +281,17 @@ struct MuscleCategoryView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func menuSlot(icon: String, title: String, isVisible: Bool, action: @escaping () -> Void) -> some View {
+        if isVisible {
+            menuRow(icon: icon, title: title, action: action)
+        } else {
+            // Keep vertical rhythm even when item is not visible
+            HStack { Spacer(minLength: 0) }
+                .padding(.vertical, 10)
+        }
     }
     
     private var exerciseListSection: some View {
@@ -472,6 +417,63 @@ struct MuscleCategoryView: View {
                     .listRowSeparator(.hidden)
                 }
             )
+        }
+    }
+}
+
+// MARK: - Extracted overlays
+private extension MuscleCategoryView {
+    var miniMenuOverlay: some View {
+        ZStack {
+            if overlayState.showCategoryMiniMenu {
+                // Backdrop to dismiss on outside tap
+                Color.black.opacity(0.001)
+                    .ignoresSafeArea(.all)
+                    .onTapGesture { overlayState.showCategoryMiniMenu = false }
+
+                // Floating menu panel
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        MiniActionMenuView(
+                            title: nil,
+                            items: [
+                                // Top: New Exercise
+                                MiniActionMenuItem(icon: viewModel.showNewExercise ? "plus" : nil, title: viewModel.showNewExercise ? "New Exercise" : "", isDestructive: false) {
+                                    withAnimation {
+                                        formViewModel.loadExercise(nil, category: group)
+                                        formViewModel.toggleForm()
+                                        overlayState.showCategoryMiniMenu = false
+                                    }
+                                },
+                                // Middle: Start Training
+                                MiniActionMenuItem(icon: viewModel.showStartTraining ? "play.fill" : nil, title: viewModel.showStartTraining ? "Start Training" : "", isDestructive: false) {
+                                    if let exercise = activeSetViewModel.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) {
+                                        activeSetViewModel.startSet(for: exercise, category: group)
+                                    }
+                                    overlayState.showCategoryMiniMenu = false
+                                },
+                                // Bottom: Reset or Cancel
+                                MiniActionMenuItem(icon: (viewModel.showCancel ? "xmark" : (viewModel.showReset ? "arrow.counterclockwise" : nil)), title: (viewModel.showCancel ? "Cancel" : (viewModel.showReset ? "Reset" : "")), isDestructive: false) {
+                                    if viewModel.showCancel {
+                                        activeSetViewModel.cancelActiveSet()
+                                    } else if viewModel.showReset {
+                                        viewModel.showResetConfirmation = true
+                                    }
+                                    overlayState.showCategoryMiniMenu = false
+                                }
+                            ],
+                            width: min(UIScreen.main.bounds.width * 0.55, 320),
+                            minHeight: 140
+                        )
+                        .padding(.trailing, 12)
+                    }
+            .padding(.bottom, safeAreaBottomInset - 50)
+                }
+                .transition(.opacity)
+                .zIndex(4)
+            }
         }
     }
 }

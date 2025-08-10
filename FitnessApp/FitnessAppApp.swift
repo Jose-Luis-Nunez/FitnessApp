@@ -103,14 +103,16 @@ struct FitnessAppApp: App {
                             overlayState.showSelectionMiniMenu.toggle()
                         case .category:
                             overlayState.showCategoryMiniMenu.toggle()
-                        case .workouts, .profile:
+                        case .workouts:
+                            overlayState.showWorkoutsMiniMenu.toggle()
+                        case .profile:
                             break
                         }
                     }
                 )
-                .zIndex((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu) ? 0 : 1)
-                .opacity((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu) ? 0 : 1)
-                .allowsHitTesting(!(overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu))
+                .zIndex((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu) ? 0 : 1)
+                .opacity((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu) ? 0 : 1)
+                .allowsHitTesting(!(overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu))
             }
             .environmentObject(overlayState)
         }
