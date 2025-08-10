@@ -15,7 +15,7 @@ struct BottomMenuBarView: View {
     let backgroundColor: Color
     @Binding var navigationPath: NavigationPath
     var showBackButton: Bool = true
-    var narrowBy: CGFloat = 80 // reduce overall bar width by this many points
+    var narrowBy: CGFloat = 50 // reduce overall bar width by this many points (made 10pt narrower)
     var rightActionStyle: BottomBarRightActionStyle = .reset
     var onRightAction: () -> Void = {}
 
@@ -39,28 +39,33 @@ struct BottomMenuBarView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            HStack(spacing: 12) {
-                if showBackButton {
-                    Button(action: {
-                        if !navigationPath.isEmpty {
+            HStack(spacing: 6) {
+                let shouldShowBackButton = showBackButton && !navigationPath.isEmpty
+                Group {
+                    if shouldShowBackButton {
+                        Button(action: {
                             navigationPath.removeLast()
-                        } else {
-                            navigationPath.append(NavigationDestination.workouts)
-                        }
-                    }) {
-                        ZStack {
-                            Circle()
-                                .fill(AppStyle.Color.backgroundColor.opacity(0.6))
-                            Circle()
-                                .stroke(AppStyle.Color.white.opacity(0.10), lineWidth: 1)
-                            Image(systemName: "chevron.left")
-                                .foregroundColor(AppStyle.Color.white)
-                                .imageScale(.large)
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(AppStyle.Color.backgroundColor.opacity(0.6))
+                                Circle()
+                                    .stroke(AppStyle.Color.white.opacity(0.10), lineWidth: 1)
+                                Image(systemName: "chevron.left")
+                                    .foregroundColor(AppStyle.Color.white)
+                                    .imageScale(.large)
+                            }
                         }
                         .frame(width: 44, height: 44)
                         .contentShape(Circle())
+                        .buttonStyle(.plain)
+                    } else {
+                        // Placeholder to keep bar and right action in identical horizontal positions
+                        Circle()
+                            .fill(Color.clear)
+                            .frame(width: 44, height: 44)
+                            .allowsHitTesting(false)
                     }
-                    .buttonStyle(.plain)
                 }
 
                 // Glass bar
@@ -95,8 +100,9 @@ struct BottomMenuBarView: View {
                     HStack(spacing: 18) {
                         menuItem(icon: "house", tab: .home) {
                             selectedTab = .home
+                            // Reset to root (Workouts) without pushing a destination,
+                            // so the back button stays hidden on the root screen
                             navigationPath = NavigationPath()
-                            navigationPath.append(NavigationDestination.workouts)
                         }
 
                         menuItem(icon: "chart.bar", tab: .chart) {
@@ -136,6 +142,8 @@ struct BottomMenuBarView: View {
                 }
                 .buttonStyle(.plain)
             }
+            // Zusätzlicher seitlicher Abstand, damit runde Buttons nicht am Rand schneiden
+            .padding(.horizontal, 8)
             // Position näher am unteren Rand
             .padding(.bottom, bottomOffset)
         }
