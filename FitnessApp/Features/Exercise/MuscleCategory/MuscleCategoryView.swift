@@ -235,6 +235,74 @@ struct MuscleCategoryView: View {
         .onChange(of: activeSetViewModel.currentExercise) {
             updateBottomBarViewModel()
         }
+        // Mini menu overlay restored with Add Exercise and Start Training
+        .overlay(
+            Group {
+                if overlayState.showCategoryMiniMenu {
+                    // Backdrop to dismiss on outside tap
+                    Color.black.opacity(0.001)
+                        .ignoresSafeArea()
+                        .onTapGesture { overlayState.showCategoryMiniMenu = false }
+
+                    // Floating menu panel
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            // Panel positioned above the right bar area, aligned to trailing
+                            VStack(spacing: 8) {
+                                let isTraining = (activeSetViewModel.currentExercise != nil || activeSetViewModel.isSetInProgress)
+                                let hasCompletedExercises = viewModel.exercises.contains { $0.isCompleted }
+                                let hasActiveExercises = viewModel.exercises.contains { !$0.isCompleted }
+
+                                if isTraining {
+                                    menuRow(icon: "xmark", title: "Cancel") {
+                                        activeSetViewModel.cancelActiveSet()
+                                        overlayState.showCategoryMiniMenu = false
+                                    }
+                                } else {
+                                    if hasActiveExercises {
+                                        menuRow(icon: "plus", title: "New Exercise") {
+                                            withAnimation {
+                                                formViewModel.loadExercise(nil, category: group)
+                                                formViewModel.toggleForm()
+                                                overlayState.showCategoryMiniMenu = false
+                                            }
+                                        }
+                                        menuRow(icon: "play.fill", title: "Start Training") {
+                                            if let exercise = activeSetViewModel.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) {
+                                                activeSetViewModel.startSet(for: exercise, category: group)
+                                            }
+                                            overlayState.showCategoryMiniMenu = false
+                                        }
+                                    }
+
+                                    if hasCompletedExercises {
+                                        menuRow(icon: "arrow.counterclockwise", title: "Reset") {
+                                            viewModel.showResetConfirmation = true
+                                            overlayState.showCategoryMiniMenu = false
+                                        }
+                                    }
+                                }
+                            }
+                            .frame(width: min(UIScreen.main.bounds.width * 0.55, 320))
+                            .padding(14)
+                            .background(.ultraThinMaterial)
+                            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                    .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
+                            )
+                            .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 10)
+                            .padding(.trailing, 16)
+                        }
+                        .padding(.bottom, safeAreaBottomInset + 56)
+                    }
+                    .transition(.opacity)
+                    .zIndex(4)
+                }
+            }
+        )
         .alert("Übungen zurücksetzen?", isPresented: $viewModel.showResetConfirmation) {
             Button("Zurücksetzen", role: .destructive) {
                 viewModel.resetProgress()
@@ -259,6 +327,26 @@ struct MuscleCategoryView: View {
             }
         }
         return options
+    }
+
+    @ViewBuilder
+    private func menuRow(icon: String, title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .frame(width: 24, height: 24)
+                    .foregroundColor(.white)
+                Text(title)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 10)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
     
     private var exerciseListSection: some View {

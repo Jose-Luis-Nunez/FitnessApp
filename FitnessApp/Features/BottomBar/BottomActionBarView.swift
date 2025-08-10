@@ -12,6 +12,7 @@ struct BottomActionBarView: View {
     let onFinish: () -> Void
     let onAddExercise: () -> Void
     let onResetAllExercises: () -> Void
+    // Note: Add/Reset are no longer rendered here; only core training controls remain
 
     private let barHeight: CGFloat = 0
     private let backgroundColor = AppStyle.Color.backgroundColor
@@ -88,15 +89,7 @@ struct FloatingActionButtonsView: View {
             ZStack(alignment: .bottom) {
                 // No background pill here – only floating buttons
                 VStack(spacing: verticalSpacing) {
-                if viewModel.showResetAllExercisesButton {
-                    actionButtonExtraLarge(
-                        text: "Reset all",
-                        textFont: AppStyle.Font.bottomBarButtons,
-                        backgroundColor: AppStyle.Color.exerciseCardBackground,
-                        fontColor: AppStyle.Color.white,
-                        action: onResetAllExercises
-                    )
-                } else if viewModel.showQuickDoneBeendenButton {
+                if viewModel.showQuickDoneBeendenButton {
                     actionButtonExtraLarge(
                         text: "Beenden",
                         textFont: AppStyle.Font.bottomBarButtons,
@@ -124,17 +117,10 @@ struct FloatingActionButtonsView: View {
                     }
 
                     HStack(spacing: 12) {
-                        if viewModel.showAddExerciseButton {
-                            actionButtonLarge(
-                                text: "Add Exercise",
-                                textFont: AppStyle.Font.bottomBarButtons,
-                                backgroundColor: AppStyle.Color.secondaryButton,
-                                fontColor: AppStyle.Color.white,
-                                action: onAddExercise
-                            )
-                        }
+                        // Add Exercise button removed from FAB bar; moved to mini menu
 
-                        if viewModel.showStartButton {
+                        // Do not show initial "Start Training" in Category View context; only show for subsequent sets
+                        if viewModel.showStartButton && (viewModel.currentSet != 0 || viewModel.didJustEditSet) {
                             actionButtonLarge(
                                 text: viewModel.startButtonTitle,
                                 textFont: AppStyle.Font.bottomBarButtons,
@@ -172,15 +158,7 @@ struct FloatingActionButtonsView: View {
                             )
                         }
 
-                        if viewModel.showCategoryResetButton {
-                            actionButtonLarge(
-                                text: "Reset",
-                                textFont: AppStyle.Font.bottomBarButtons,
-                                backgroundColor: AppStyle.Color.green,
-                                fontColor: AppStyle.Color.white,
-                                action: onCategoryReset
-                            )
-                        }
+                        // Reset button removed from FAB bar; moved to mini menu
 
                         if viewModel.showFinishButton {
                             actionButtonLarge(

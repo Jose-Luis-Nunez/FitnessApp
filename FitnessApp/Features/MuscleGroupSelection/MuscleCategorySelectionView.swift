@@ -58,6 +58,7 @@ private struct ExerciseInfo {
 struct MuscleCategorySelectionView: View {
     @StateObject private var viewModel = MuscleCategorySelectionViewModel()
     @Binding var navigationPath: NavigationPath
+    @EnvironmentObject private var overlayState: UIOverlayState
     
     init(navigationPath: Binding<NavigationPath> = .constant(NavigationPath())) {
         self._navigationPath = navigationPath
@@ -76,26 +77,48 @@ struct MuscleCategorySelectionView: View {
                 .padding(.bottom, safeAreaInset + 24)
             }
             
-            // Floating Action Bar: only Reset all when available
-            if viewModel.bottomBarViewModel.showResetAllExercisesButton {
-                BottomActionBarView(
-                    viewModel: viewModel.bottomBarViewModel,
-                    onStart: {},
-                    onCompleteSet: {},
-                    onQuickDone: {},
-                    onCompleteAllQuickDone: {},
-                    onCategoryReset: {},
-                    onEditLess: {},
-                    onEditMore: {},
-                    onFinish: {},
-                    onAddExercise: {},
-                    onResetAllExercises: {
-                        viewModel.resetAllExercises()
+            // Selection mini menu overlay
+            if overlayState.showSelectionMiniMenu {
+                Color.black.opacity(0.001)
+                    .ignoresSafeArea()
+                    .onTapGesture { overlayState.showSelectionMiniMenu = false }
+
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        VStack(spacing: 8) {
+                            if viewModel.hasInactiveExercises() {
+                                Button(action: {
+                                    overlayState.showSelectionMiniMenu = false
+                                    viewModel.resetAllExercises()
+                                }) {
+                                    HStack(spacing: 12) {
+                                        Image(systemName: "xmark")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(.white)
+                                        Text("Reset all")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(.white)
+                                        Spacer(minLength: 0)
+                                    }
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 10)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(14)
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
+                        .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 10)
+                        .padding(.trailing, 16)
                     }
-                )
-                .padding(.horizontal, 16)
-                .padding(.bottom, safeAreaInset + 12)
-                .allowsHitTesting(true)
+                    .padding(.bottom, safeAreaInset + 56)
+                }
+                .transition(.opacity)
+                .zIndex(3)
             }
         }
         .background(AppStyle.Color.backgroundColor)

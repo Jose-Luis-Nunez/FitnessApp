@@ -20,7 +20,7 @@ enum MuscleCategoryGroup: String, CaseIterable, Identifiable, Codable {
         case .chest: return ["defaultChestIcon", "chestPressIcon", "chestFlyIcon"]
         case .back:  return ["defaultBackIcon", "latPullIcon", "rowIcon"]
         case .legs:  return ["defaultLegsIcon", "squatIcon", "legPressIcon"]
-        case .abs:   return ["defaultAbsIcon", "crunchIcon", "plankIcon"]
+        case .abs:   return ["defaultAbsIcon", "fullAbsIcon", "plankIcon"]
         }
     }
 

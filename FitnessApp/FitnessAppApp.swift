@@ -14,6 +14,8 @@ struct FitnessAppApp: App {
     @StateObject private var workoutStorageService = WorkoutStorageService.shared
     @State private var isShowingWorkoutsRoot: Bool = false
     @State private var didAutoNavigateToHome: Bool = false
+    private enum CurrentScene { case workouts, home, profile, category }
+    @State private var currentScene: CurrentScene = .workouts
     
     private let backgroundColor = AppStyle.Color.backgroundColor
 
@@ -32,8 +34,10 @@ struct FitnessAppApp: App {
                                 navigationPath.append(NavigationDestination.home)
                                 didAutoNavigateToHome = true
                                 isShowingWorkoutsRoot = false
+                                currentScene = .home
                             } else {
                                 isShowingWorkoutsRoot = navigationPath.isEmpty
+                                currentScene = .workouts
                             }
                         }
                     .navigationBarBackButtonHidden(true)
@@ -43,19 +47,19 @@ struct FitnessAppApp: App {
                                 case .workouts:
                                     WorkoutsScreen(navigationPath: $navigationPath)
                                         .navigationBarBackButtonHidden(true)
-                                        .onAppear { isShowingWorkoutsRoot = true }
+                                        .onAppear { isShowingWorkoutsRoot = true; currentScene = .workouts }
                                 case .home:
                                     MuscleCategorySelectionView(navigationPath: $navigationPath)
                                         .navigationBarBackButtonHidden(true)
-                                        .onAppear { isShowingWorkoutsRoot = false }
+                                        .onAppear { isShowingWorkoutsRoot = false; currentScene = .home }
                                 case .profile:
                                     ProfileView()
                                         .navigationBarBackButtonHidden(true)
-                                        .onAppear { isShowingWorkoutsRoot = false }
+                                        .onAppear { isShowingWorkoutsRoot = false; currentScene = .profile }
                                 case .muscleCategory(let group):
                                     MuscleCategoryView(group: group, navigationPath: $navigationPath)
                                         .navigationBarBackButtonHidden(true)
-                                        .onAppear { isShowingWorkoutsRoot = false }
+                                        .onAppear { isShowingWorkoutsRoot = false; currentScene = .category }
                                 }
                             }
                             .onAppear {
@@ -77,17 +81,36 @@ struct FitnessAppApp: App {
                         }
                 }
                 .zIndex(overlayState.isEditingSheetVisible ? 2 : 0)
+                let showBack = !navigationPath.isEmpty
+                let rightStyle: BottomBarRightActionStyle = {
+                    switch currentScene {
+                    case .home: return .menu
+                    case .category, .workouts, .profile: return .menu
+                    }
+                }()
+
                 BottomMenuBarView(
                     barHeight: 40,
                     onAddExercise: {},
                     backgroundColor: backgroundColor,
                     navigationPath: $navigationPath,
-                    showBackButton: !navigationPath.isEmpty,
-                    narrowBy: 80
+                    showBackButton: showBack,
+                    narrowBy: 80,
+                    rightActionStyle: rightStyle,
+                    onRightAction: {
+                        switch currentScene {
+                        case .home:
+                            overlayState.showSelectionMiniMenu.toggle()
+                        case .category:
+                            overlayState.showCategoryMiniMenu.toggle()
+                        case .workouts, .profile:
+                            break
+                        }
+                    }
                 )
-                .zIndex(overlayState.isEditingSheetVisible ? 0 : 1)
-                .opacity(overlayState.isEditingSheetVisible ? 0 : 1)
-                .allowsHitTesting(!overlayState.isEditingSheetVisible)
+                .zIndex((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu) ? 0 : 1)
+                .opacity((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu) ? 0 : 1)
+                .allowsHitTesting(!(overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu))
             }
             .environmentObject(overlayState)
         }

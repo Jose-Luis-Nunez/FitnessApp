@@ -74,7 +74,7 @@ class MuscleCategorySelectionViewModel: ObservableObject {
         exerciseCounts[group]
     }
 
-    private func hasInactiveExercises() -> Bool {
+    func hasInactiveExercises() -> Bool {
         guard let currentWorkout = workoutStorageService.currentWorkout else { return false }
         
         for group in MuscleCategoryGroup.allCases {

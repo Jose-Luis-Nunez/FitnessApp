@@ -4,6 +4,11 @@ private enum BottomTab {
     case home, chart, calendar, profile
 }
 
+enum BottomBarRightActionStyle {
+    case reset
+    case menu
+}
+
 struct BottomMenuBarView: View {
     let barHeight: CGFloat
     let onAddExercise: () -> Void
@@ -11,6 +16,10 @@ struct BottomMenuBarView: View {
     @Binding var navigationPath: NavigationPath
     var showBackButton: Bool = true
     var narrowBy: CGFloat = 80 // reduce overall bar width by this many points
+    var rightActionStyle: BottomBarRightActionStyle = .reset
+    var onRightAction: () -> Void = {}
+
+    @EnvironmentObject private var overlayState: UIOverlayState
 
     @State private var selectedTab: BottomTab = .home
 
@@ -23,7 +32,7 @@ struct BottomMenuBarView: View {
     // Liquid Glass tuning
     private let barTintOpacity: Double = 0.02
     private let selectionHeight: CGFloat = 36
-    private let iconSize: CGFloat = 24
+    private let iconSize: CGFloat = 22
     // Position tweak: negative moves the bar closer to the device bottom edge
     private let bottomOffset: CGFloat = -40
     private let calendarIconScale: CGFloat = 1.18
@@ -83,7 +92,7 @@ struct BottomMenuBarView: View {
                         }
                     }
 
-                    HStack(spacing: 24) {
+                    HStack(spacing: 18) {
                         menuItem(icon: "house", tab: .home) {
                             selectedTab = .home
                             navigationPath = NavigationPath()
@@ -107,6 +116,25 @@ struct BottomMenuBarView: View {
                     .frame(width: capsuleWidth - 2 * AppStyle.Layout.cardHorizontalPadding)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous))
+                
+                // Right circular action for context dependent actions
+                Button(action: {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    onRightAction()
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(AppStyle.Color.backgroundColor.opacity(0.6))
+                        Circle()
+                            .stroke(AppStyle.Color.white.opacity(0.10), lineWidth: 1)
+                        Image(systemName: rightActionStyle == .reset ? "arrow.counterclockwise" : "ellipsis")
+                            .foregroundColor(AppStyle.Color.white)
+                            .imageScale(.medium)
+                    }
+                    .frame(width: 44, height: 44)
+                    .contentShape(Circle())
+                }
+                .buttonStyle(.plain)
             }
             // Position näher am unteren Rand
             .padding(.bottom, bottomOffset)
