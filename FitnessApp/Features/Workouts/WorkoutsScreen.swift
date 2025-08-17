@@ -234,11 +234,12 @@ struct WorkoutsScreen: View {
                         }
                         .padding(.bottom, safeAreaInset - 50)
                     }
-                    .onAppear { overlayState.showWorkoutsMiniMenu = true }
-                    .onDisappear { overlayState.showWorkoutsMiniMenu = false }
+
                 }
                 .transition(.opacity)
                 .zIndex(3)
+                .onAppear { overlayState.showWorkoutSettingsMenu = true }
+                .onDisappear { overlayState.showWorkoutSettingsMenu = false }
             }
         }
     }

@@ -42,7 +42,12 @@ struct AnalyticsView: View {
         GeometryReader { geometry in
             ZStack {
                 mainContent(geometry: geometry)
-                calendarDialog
+                CalendarDialogView(
+                    isPresented: $showCalendarDialog,
+                    selectedDate: $selectedDate,
+                    highlightedDates: viewModel.loadAnalyticsDates(for: exercise.id),
+                    title: "Monthly training"
+                )
                 addDataOverlay
                 goalSetterOverlay
             }
@@ -120,16 +125,8 @@ struct AnalyticsView: View {
                 milestoneHeight = height
             }
         }
-        .background(Color(hex: "#0A090E"))
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text("Analytics")
-                    .font(AppStyle.Font.navigationHeadline)
-                    .foregroundColor(AppStyle.Color.white)
-            }
-        }
+        .background(AppStyle.Color.backgroundColor)
+        .standardToolbar(title: "Analytics")
         .gesture(
             DragGesture()
                 .onEnded { value in
@@ -276,7 +273,7 @@ struct AnalyticsView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "calendar")
                         .font(.system(size: 12, weight: .medium))
-                    Text(formattedDateShort(selectedDate))
+                    Text(DateFormatter.germanShort.string(from: selectedDate))
                         .font(.system(size: 12, weight: .medium))
                 }
                 .foregroundColor(AppStyle.Color.greenGlow)
@@ -463,52 +460,7 @@ struct AnalyticsView: View {
         }
     }
     
-    private var calendarDialog: some View {
-        Group {
-            if showCalendarDialog {
-                ZStack {
-                    // Tappable background area
-                    Color.black.opacity(0.5)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            showCalendarDialog = false
-                        }
-                    
-                    VStack {
-                        Spacer()
-                        
-                        VStack(spacing: 16) {
-                            VStack {
-                                Text("Monthly training")
-                                    .font(.headline)
-                                    .foregroundColor(AppStyle.Color.white)
-                                    .padding(.top, 12)
-                                    .padding(.horizontal, 16)
-                                
-                                Spacer().frame(height: 20)
-                                
-                                CalendarGridView(
-                                    selectedDate: $tempDate,
-                                    highlightedDates: viewModel.loadAnalyticsDates(for: exercise.id)
-                                )
-                                .frame(maxWidth: .infinity)
-                                .padding(.horizontal)
-                                
-                                actionButtons
-                            }
-                            .background(AppStyle.Color.greenBlack)
-                            .cornerRadius(AppStyle.CornerRadius.defaultButton)
-                            .padding(16)
-                        }
-                        .frame(maxWidth: 400, maxHeight: 250)
-                        
-                        Spacer()
-                    }
-                }
-                .transition(.opacity)
-            }
-        }
-    }
+
     
 
     
@@ -711,54 +663,12 @@ struct AnalyticsView: View {
     
 
     
-    private var actionButtons: some View {
-        HStack(spacing: 16) {
-            Button("Cancel") {
-                showCalendarDialog = false
-            }
-            .font(.body)
-            .foregroundColor(AppStyle.Color.white)
-            .padding(.vertical, 8)
-            .padding(.horizontal, 16)
-            .cornerRadius(AppStyle.CornerRadius.defaultButton)
-            
-            Button("Select") {
-                selectedDate = tempDate
-                showCalendarDialog = false
-            }
-            .font(.body)
-            .foregroundColor(AppStyle.Color.white)
-            .padding(.vertical, 8)
-            .padding(.horizontal, 16)
-            .background(AppStyle.Color.green)
-            .cornerRadius(AppStyle.CornerRadius.defaultButton)
-        }
-        .padding(.horizontal)
-        .padding(.bottom, 12)
-    }
+
     
-    private func formattedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.locale = Locale(identifier: "de_DE")
-        return formatter.string(from: date)
-    }
-    
-    private func formattedDateShort(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd.MM.yyyy"
-        formatter.locale = Locale(identifier: "de_DE")
-        return formatter.string(from: date)
-    }
+
     
     private func formatGoalForInput(_ goal: Double) -> String {
-        if goal == floor(goal) {
-            // Ganze Zahl - keine Dezimalstellen
-            return "\(Int(goal))"
-        } else {
-            // Dezimalzahl - mit deutschem Komma
-            return String(goal).replacingOccurrences(of: ".", with: ",")
-        }
+        return WeightFormatter.formatGoalForInput(goal)
     }
     
     private var weightMilestoneView: some View {
@@ -916,7 +826,7 @@ struct AddAnalyticsEntryView: View {
     var body: some View {
         ZStack {
             VStack(spacing: 16) {
-                Text(existingEntry != nil ? "Edit your data for \(formattedDate(date))" : "Add your data for \(formattedDate(date))")
+                Text(existingEntry != nil ? "Edit your data for \(DateFormatter.germanMedium.string(from: date))" : "Add your data for \(DateFormatter.germanMedium.string(from: date))")
                     .font(.headline)
                     .foregroundColor(AppStyle.Color.white)
                     .padding(.top, 14)
@@ -1122,10 +1032,5 @@ struct AddAnalyticsEntryView: View {
     }
 }
 
-private func formattedDate(_ date: Date) -> String {
-    let formatter = DateFormatter()
-    formatter.dateStyle = .medium
-    formatter.locale = Locale(identifier: "de_DE")
-    return formatter.string(from: date)
-}
+
 

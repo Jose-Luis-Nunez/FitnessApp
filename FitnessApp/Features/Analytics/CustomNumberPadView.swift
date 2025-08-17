@@ -30,12 +30,7 @@ struct CustomNumberPadView: View {
         _inputValue = State(wrappedValue: currentValue)
         _showComma = State(wrappedValue: currentValue != floor(currentValue))
         
-        let hasDecimal = currentValue != floor(currentValue)
-        if hasDecimal {
-            _displayText = State(wrappedValue: String(currentValue).replacingOccurrences(of: ".", with: ","))
-        } else {
-            _displayText = State(wrappedValue: String(Int(currentValue)))
-        }
+        _displayText = State(wrappedValue: WeightFormatter.format(currentValue))
     }
     
     private var displayString: String {
@@ -47,7 +42,7 @@ struct CustomNumberPadView: View {
             } else if inputValue == floor(inputValue) && showComma {
                 return String(Int(inputValue)) + ","
             } else {
-                return String(inputValue).replacingOccurrences(of: ".", with: ",")
+                return WeightFormatter.format(inputValue)
             }
         }
     }
@@ -360,7 +355,7 @@ struct CustomNumberPadView: View {
             } else {
                 if parts[1].count < 2 {
                     let newString = currentString + digit
-                    inputValue = Double(newString.replacingOccurrences(of: ",", with: ".")) ?? 0.0
+                    inputValue = WeightFormatter.parse(newString) ?? 0.0
                     showComma = false
                 } else {
                     triggerMaximumFeedback()

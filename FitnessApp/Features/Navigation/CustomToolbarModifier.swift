@@ -2,8 +2,23 @@ import SwiftUI
 
 struct CustomToolbarModifier: ViewModifier {
     @Binding var navigationPath: NavigationPath
-    let title: String
+    let title: String?
+    let customTitleView: AnyView?
     let showBackButton: Bool
+
+    init(navigationPath: Binding<NavigationPath>, title: String, showBackButton: Bool = true) {
+        self._navigationPath = navigationPath
+        self.title = title
+        self.customTitleView = nil
+        self.showBackButton = showBackButton
+    }
+    
+    init(navigationPath: Binding<NavigationPath>, customTitleView: AnyView, showBackButton: Bool = true) {
+        self._navigationPath = navigationPath
+        self.title = nil
+        self.customTitleView = customTitleView
+        self.showBackButton = showBackButton
+    }
 
     func body(content: Content) -> some View {
         content
@@ -12,9 +27,13 @@ struct CustomToolbarModifier: ViewModifier {
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text(title)
-                        .font(AppStyle.Font.navigationHeadline)
-                        .foregroundColor(AppStyle.Color.white)
+                    if let customTitleView = customTitleView {
+                        customTitleView
+                    } else if let title = title {
+                        Text(title)
+                            .font(AppStyle.Font.navigationHeadline)
+                            .foregroundColor(AppStyle.Color.white)
+                    }
                 }
                 if showBackButton {
                     ToolbarItem(placement: .navigationBarLeading) {

@@ -11,6 +11,10 @@ final class UIOverlayState: ObservableObject {
     @Published var showSelectionMiniMenu: Bool = false
     // Controls the small action menu in Workouts View
     @Published var showWorkoutsMiniMenu: Bool = false
+    // Controls the workout dropdown picker
+    @Published var showWorkoutDropdown: Bool = false
+    // Controls the workout settings mini menu (FAB options in WorkoutsScreen)
+    @Published var showWorkoutSettingsMenu: Bool = false
 }
 
 

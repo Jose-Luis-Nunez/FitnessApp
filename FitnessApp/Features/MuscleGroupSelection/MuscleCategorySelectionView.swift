@@ -77,6 +77,21 @@ struct MuscleCategorySelectionView: View {
                 .padding(.bottom, safeAreaInset + 24)
             }
             
+            // Workout picker overlay
+            if overlayState.showWorkoutDropdown {
+                Color.black.opacity(0.001)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            overlayState.showWorkoutDropdown = false
+                        }
+                    }
+                    .overlay {
+                        WorkoutPickerView(viewModel: viewModel)
+                    }
+                    .zIndex(4)
+            }
+            
             // Selection mini menu overlay
             if overlayState.showSelectionMiniMenu {
                 Color.black.opacity(0.001)
@@ -117,7 +132,7 @@ struct MuscleCategorySelectionView: View {
         .modifier(
             CustomToolbarModifier(
                 navigationPath: $navigationPath,
-                title: viewModel.currentWorkoutName,
+                customTitleView: AnyView(WorkoutDropdownView(viewModel: viewModel)),
                 showBackButton: false
             )
         )

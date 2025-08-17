@@ -118,4 +118,10 @@ class MuscleCategorySelectionViewModel: ObservableObject {
     private func updateWorkoutName(_ workout: Workout?) {
         currentWorkoutName = workout?.name ?? "Dein Workout"
     }
+    
+    // MARK: - Workout Selection
+    
+    func selectWorkout(_ workout: Workout) {
+        workoutStorageService.setCurrentWorkout(workout)
+    }
 }

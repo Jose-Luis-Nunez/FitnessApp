@@ -119,10 +119,7 @@ struct CalendarGridView: View {
     }
 
     private func formattedMonthYear(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "de_DE")
-        formatter.dateFormat = "LLLL yyyy"
-        return formatter.string(from: date).capitalized
+        return DateFormatter.germanMonthYear.string(from: date).capitalized
     }
 
     private func changeMonth(by offset: Int) {

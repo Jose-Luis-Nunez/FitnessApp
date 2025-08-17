@@ -1,11 +1,31 @@
 import SwiftUI
 
+// MARK: - Analytics Tile Data Model
+
+struct AnalyticsTileData: Identifiable {
+    let id = UUID()
+    let type: TileType
+    let value: String
+    let label: String
+    let icon: String?
+    let iconColor: Color
+    
+    enum TileType {
+        case number
+        case text
+    }
+}
+
+
+
 struct TotalAnalyticsView: View {
     @ObservedObject var viewModel: TotalAnalyticsViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var selectedDate: Date = Date()
     @State private var showCalendarDialog: Bool = false
-    @State private var tempDate: Date = Date()
+    @State private var showWorkoutDetail: Bool = false
+    @State private var showRhythmDetail: Bool = false
+
     @State private var datesWithData: Set<Date> = []
     
     private let paddingAmount: CGFloat = 16
@@ -18,19 +38,16 @@ struct TotalAnalyticsView: View {
         GeometryReader { geometry in
             ZStack {
                 mainContent(geometry: geometry)
-                calendarDialog
+                CalendarDialogView(
+                    isPresented: $showCalendarDialog,
+                    selectedDate: $selectedDate,
+                    highlightedDates: Array(datesWithData),
+                    title: "Training Calendar"
+                )
             }
         }
-        .background(Color(hex: "#0A090E"))
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text("Total Analytics")
-                    .font(AppStyle.Font.navigationHeadline)
-                    .foregroundColor(AppStyle.Color.white)
-            }
-        }
+        .background(AppStyle.Color.backgroundColor)
+        .standardToolbar(title: "Total Analytics")
         .onAppear {
             datesWithData = viewModel.allDatesWithData()
         }
@@ -53,6 +70,18 @@ struct TotalAnalyticsView: View {
                 Spacer()
             }
             .frame(minHeight: geometry.size.height)
+        }
+        .onTapGesture {
+            // Close detail views if shown and tap is outside
+            if showWorkoutDetail {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    showWorkoutDetail = false
+                }
+            } else if showRhythmDetail {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    showRhythmDetail = false
+                }
+            }
         }
     }
     
@@ -82,7 +111,7 @@ struct TotalAnalyticsView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "calendar")
                             .font(.system(size: 12, weight: .medium))
-                        Text(formattedDateShort(selectedDate))
+                        Text(DateFormatter.germanShort.string(from: selectedDate))
                             .font(.system(size: 12, weight: .medium))
                     }
                     .foregroundColor(AppStyle.Color.greenGlow)
@@ -103,62 +132,466 @@ struct TotalAnalyticsView: View {
         .padding(.bottom, 10)
     }
     
+    private var analyticsTiles: [AnalyticsTileData] {
+        let mostTrained = viewModel.getMostTrainedCategory()
+        let leastTrained = viewModel.getLeastTrainedCategory()
+        let mostImproved = viewModel.getCategoryWithMostImprovements()
+        let completionRate = viewModel.getLastTrainingDayCompletionRate()
+        
+        return [
+            AnalyticsTileData(
+                type: .number,
+                value: "\(viewModel.totalWorkoutDaysInCurrentMonth())",
+                label: "Training \(viewModel.currentMonthName())",
+                icon: nil,
+                iconColor: .clear
+            ),
+            AnalyticsTileData(
+                type: .number,
+                value: "\(viewModel.totalWorkoutDaysInYear())",
+                label: "Training 2025",
+                icon: nil,
+                iconColor: .clear
+            ),
+            AnalyticsTileData(
+                type: .number,
+                value: "\(completionRate.percentage)%",
+                label: "Last Workout Completion",
+                icon: nil,
+                iconColor: .clear
+            ),
+            AnalyticsTileData(
+                type: .text,
+                value: "\(viewModel.getTrainingRhythm())",
+                label: "Training Rhythm",
+                icon: nil,
+                iconColor: .clear
+            ),
+            AnalyticsTileData(
+                type: .text,
+                value: "\(mostTrained.category.displayName)",
+                label: "Category with most exercise",
+                icon: nil,
+                iconColor: .clear
+            ),
+            AnalyticsTileData(
+                type: .text,
+                value: "\(leastTrained.category.displayName)",
+                label: "Category with least exercise",
+                icon: nil,
+                iconColor: .clear
+            ),
+            AnalyticsTileData(
+                type: .text,
+                value: "\(mostImproved.category.displayName)",
+                label: "Category with most Improvements",
+                icon: nil,
+                iconColor: .clear
+            )
+        ]
+    }
+    
+    @ViewBuilder
     private var overallStatsView: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // First row - 3 tiles
-            HStack(alignment: .top, spacing: 8) {
-                AnalyticsTileNumberView(
-                    number: "\(viewModel.totalWorkoutDaysInCurrentMonth())",
-                    label: "Training \(viewModel.currentMonthName())",
-                    icon: nil,
-                    iconColor: .clear
-                )
-                
-                AnalyticsTileNumberView(
-                    number: "\(viewModel.totalWorkoutDaysInYear())",
-                    label: "Training 2025",
-                    icon: nil,
-                    iconColor: .clear
-                )
-                
-                let mostTrained = viewModel.getMostTrainedCategory()
-                AnalyticsTileTextView(
-                    text: "\(mostTrained.category.displayName)",
-                    label: "Category with most exercise",
-                    icon: nil,
-                    iconColor: .clear
-                )
-            }
-            
-            // Second row - 3 tiles
-            HStack(alignment: .top, spacing: 8) {
-                let leastTrained = viewModel.getLeastTrainedCategory()
-                AnalyticsTileTextView(
-                    text: "\(leastTrained.category.displayName)",
-                    label: "Category with least exercise",
-                    icon: nil,
-                    iconColor: .clear
-                )
-                
-                let mostImproved = viewModel.getCategoryWithMostImprovements()
-                AnalyticsTileNumberView(
-                    number: "\(mostImproved.improvements)",
-                    label: "Häufigste Steigerungen: \(mostImproved.category.displayName)",
-                    icon: nil,
-                    iconColor: .clear
-                )
-                
-                let mostWeightGains = viewModel.getCategoryWithMostWeightGains()
-                AnalyticsTileNumberView(
-                    number: "\(formatWeight(mostWeightGains.totalGains))kg",
-                    label: "Größte Steigerungen: \(mostWeightGains.category.displayName)",
-                    icon: nil,
-                    iconColor: .clear
-                )
+        if showWorkoutDetail {
+            workoutDetailView
+        } else if showRhythmDetail {
+            rhythmDetailView
+        } else {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 8) {
+                ForEach(analyticsTiles) { tile in
+                    analyticsTileView(for: tile)
+                }
             }
         }
     }
     
+    @ViewBuilder
+    private func analyticsTileView(for tile: AnalyticsTileData) -> some View {
+        let tileView = Group {
+            switch tile.type {
+            case .number:
+                AnalyticsTileNumberView(
+                    number: tile.value,
+                    label: tile.label,
+                    icon: tile.icon,
+                    iconColor: tile.iconColor
+                )
+            case .text:
+                AnalyticsTileTextView(
+                    text: tile.value,
+                    label: tile.label,
+                    icon: tile.icon,
+                    iconColor: tile.iconColor
+                )
+            }
+        }
+        
+        // Add tap gestures for specific tiles
+        if tile.label == "Last Workout Completion" {
+            tileView
+                .onTapGesture {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        showWorkoutDetail = true
+                    }
+                }
+        } else if tile.label == "Training Rhythm" {
+            tileView
+                .onTapGesture {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        showRhythmDetail = true
+                    }
+                }
+        } else {
+            tileView
+        }
+    }
+    
+    private var workoutDetailView: some View {
+        VStack(spacing: 0) {
+            // Header
+            workoutDetailHeader
+            
+            // Scrollable content with indicator
+            ZStack(alignment: .bottom) {
+                ScrollView {
+                    workoutDetailContent
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 30) // Extra space for scroll indicator
+                }
+                
+                // Scroll indicator if content overflows
+                if shouldShowScrollIndicator() {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(AppStyle.Color.greenGlow.opacity(0.6))
+                                .padding(.bottom, 8)
+                            Spacer()
+                        }
+                    }
+                    .allowsHitTesting(false) // Don't intercept scroll gestures
+                }
+            }
+        }
+        .frame(height: 255 + 16) // 3 rows * 85px + spacing to match tiles height
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(AppStyle.Color.greenBlack.opacity(0.3))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(AppStyle.Color.greenGlow.opacity(0.2), lineWidth: 1)
+                )
+        )
+        .transition(.opacity.combined(with: .scale))
+        .onTapGesture {
+            // Prevent event bubbling - taps inside detail view should not close it
+        }
+    }
+    
+    private var workoutDetailHeader: some View {
+        HStack {
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    showWorkoutDetail = false
+                }
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 14, weight: .medium))
+                    Text("Back")
+                        .font(.system(size: 14, weight: .medium))
+                }
+                .foregroundColor(AppStyle.Color.greenGlow)
+            }
+            
+            Spacer()
+            
+            VStack(spacing: 2) {
+                Text("Last Workout")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(AppStyle.Color.greenGlow)
+                
+                if let workoutDetail = viewModel.getLastTrainingDayWorkoutDetail() {
+                    Text(DateFormatter.germanShort.string(from: workoutDetail.date))
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(AppStyle.Color.greenGlow)
+                }
+            }
+            
+            Spacer()
+            
+            // Empty space to center the title
+            HStack(spacing: 6) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 14, weight: .medium))
+                Text("Back")
+                    .font(.system(size: 14, weight: .medium))
+            }
+            .opacity(0) // Invisible but maintains spacing
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+    
+    private var workoutDetailContent: some View {
+        LazyVStack(alignment: .leading, spacing: 12) {
+            if let workoutDetail = viewModel.getLastTrainingDayWorkoutDetail() {
+                ForEach(workoutDetail.categories, id: \.category) { categoryDetail in
+                    categoryDetailSection(categoryDetail: categoryDetail)
+                }
+            } else {
+                Text("No workout data available")
+                    .font(.system(size: 14))
+                    .foregroundColor(AppStyle.Color.white.opacity(0.6))
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, 20)
+            }
+        }
+        .padding(.top, 8)
+    }
+    
+    @ViewBuilder
+    private func categoryDetailSection(categoryDetail: CategoryDetailData) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            // Category name - same style as tiles
+            Text(categoryDetail.category.displayName)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(AppStyle.Color.greenGlow)
+            
+            // Exercises
+            ForEach(categoryDetail.exercises, id: \.exercise.id) { exerciseDetail in
+                exerciseDetailRow(exerciseDetail: exerciseDetail)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func exerciseDetailRow(exerciseDetail: ExerciseDetailData) -> some View {
+        HStack {
+            Text(exerciseDetail.exercise.name)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(AppStyle.Color.greenGlow)
+            
+            Spacer()
+            
+            Text(exerciseDetail.isCompleted ? "Done" : "Not Started")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(exerciseDetail.isCompleted ? AppStyle.Color.greenGlow : AppStyle.Color.greenGlow.opacity(0.6))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(exerciseDetail.isCompleted ? AppStyle.Color.greenGlow.opacity(0.2) : AppStyle.Color.greenGlow.opacity(0.1))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(AppStyle.Color.greenGlow.opacity(0.3), lineWidth: 1)
+                        )
+                )
+        }
+        .padding(.leading, 12)
+    }
+    
+    private func shouldShowScrollIndicator() -> Bool {
+        guard let workoutDetail = viewModel.getLastTrainingDayWorkoutDetail() else { return false }
+        
+        // Show indicator if there are many exercises (more than 4 total)
+        let totalExercises = workoutDetail.categories.reduce(0) { total, category in
+            total + category.exercises.count
+        }
+        
+        return totalExercises > 4
+    }
+    
+    private var rhythmDetailView: some View {
+        VStack(spacing: 0) {
+            // Header
+            rhythmDetailHeader
+            
+            // Scrollable content with indicator
+            ZStack(alignment: .bottom) {
+                ScrollView {
+                    rhythmDetailContent
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 30) // Extra space for scroll indicator
+                }
+                
+                // Scroll indicator if content overflows
+                if shouldShowRhythmScrollIndicator() {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(AppStyle.Color.greenGlow.opacity(0.6))
+                                .padding(.bottom, 8)
+                            Spacer()
+                        }
+                    }
+                    .allowsHitTesting(false) // Don't intercept scroll gestures
+                }
+            }
+        }
+        .frame(height: 255 + 16) // 3 rows * 85px + spacing to match tiles height
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(AppStyle.Color.greenBlack.opacity(0.3))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(AppStyle.Color.greenGlow.opacity(0.2), lineWidth: 1)
+                )
+        )
+        .transition(.opacity.combined(with: .scale))
+        .onTapGesture {
+            // Prevent event bubbling - taps inside detail view should not close it
+        }
+    }
+    
+    private var rhythmDetailHeader: some View {
+        HStack {
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    showRhythmDetail = false
+                }
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 14, weight: .medium))
+                    Text("Back")
+                        .font(.system(size: 14, weight: .medium))
+                }
+                .foregroundColor(AppStyle.Color.greenGlow)
+            }
+            
+            Spacer()
+            
+            VStack(spacing: 2) {
+                Text("Training Rhythm")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(AppStyle.Color.greenGlow)
+                
+                if let rhythmDetail = viewModel.getTrainingRhythmDetail() {
+                    Text(rhythmDetail.rhythmLabel)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(AppStyle.Color.greenGlow)
+                }
+            }
+            
+            Spacer()
+            
+            // Empty space to center the title
+            HStack(spacing: 6) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 14, weight: .medium))
+                Text("Back")
+                    .font(.system(size: 14, weight: .medium))
+            }
+            .opacity(0) // Invisible but maintains spacing
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+    
+    private var rhythmDetailContent: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if let rhythmDetail = viewModel.getTrainingRhythmDetail() {
+                
+                // Training dates section
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Letzte 5 Trainingstage")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(AppStyle.Color.greenGlow)
+                    
+                    ForEach(Array(rhythmDetail.trainingDates.enumerated()), id: \.offset) { index, date in
+                        HStack {
+                            Text(DateFormatter.germanMedium.string(from: date))
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(AppStyle.Color.greenGlow)
+                            
+                            Spacer()
+                            
+                            if index < rhythmDetail.gaps.count - 1 { // Exclude the last gap (days since today)
+                                let gap = rhythmDetail.gaps[index]
+                                let dayText = gap == 1 ? "Day" : "Days"
+                                Text("\(gap) \(dayText)")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(AppStyle.Color.greenGlow.opacity(0.7))
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 2)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .fill(AppStyle.Color.greenGlow.opacity(0.15))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 6)
+                                                    .stroke(AppStyle.Color.greenGlow.opacity(0.3), lineWidth: 1)
+                                            )
+                                    )
+                            }
+                        }
+                        .padding(.leading, 12)
+                    }
+                    
+                    // Add "Today" row with days since last training
+                    if rhythmDetail.gaps.count > rhythmDetail.trainingDates.count - 1 {
+                        HStack {
+                            Text("Heute (\(DateFormatter.germanMedium.string(from: Date())))")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(AppStyle.Color.greenGlow)
+                            
+                            Spacer()
+                            
+                            let daysSinceLastTraining = rhythmDetail.gaps.last ?? 0
+                            let dayText = daysSinceLastTraining == 1 ? "day" : "days"
+                            Text("Last training \(daysSinceLastTraining) \(dayText) ago")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(daysSinceLastTraining > 7 ? AppStyle.Color.yellow : AppStyle.Color.greenGlow.opacity(0.7))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 2)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .fill((daysSinceLastTraining > 7 ? AppStyle.Color.yellow : AppStyle.Color.greenGlow).opacity(0.15))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 6)
+                                                .stroke((daysSinceLastTraining > 7 ? AppStyle.Color.yellow : AppStyle.Color.greenGlow).opacity(0.3), lineWidth: 1)
+                                        )
+                                )
+                        }
+                        .padding(.leading, 12)
+                    }
+                }
+                
+                // Explanation section
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Berechnung")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(AppStyle.Color.greenGlow)
+                    
+                    Text(rhythmDetail.explanation)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .padding(.leading, 12)
+                        .lineSpacing(4)
+                }
+                
+            } else {
+                Text("Nicht genügend Trainingsdaten")
+                    .font(.system(size: 14))
+                    .foregroundColor(AppStyle.Color.greenGlow.opacity(0.6))
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, 20)
+            }
+        }
+        .padding(.top, 8)
+    }
+    
+    private func shouldShowRhythmScrollIndicator() -> Bool {
+        guard let rhythmDetail = viewModel.getTrainingRhythmDetail() else { return false }
+        return rhythmDetail.trainingDates.count > 3 // Show if more than 3 dates
+    }
 
     
     private var categoryProgressView: some View {
@@ -352,100 +785,14 @@ struct TotalAnalyticsView: View {
 
 
     
-    private var calendarDialog: some View {
-        Group {
-            if showCalendarDialog {
-                ZStack {
-                    // Tappable background area
-                    Color.black.opacity(0.5)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            showCalendarDialog = false
-                        }
-                    
-                    VStack {
-                        Spacer()
-                        
-                        VStack(spacing: 16) {
-                            VStack {
-                                Text("Training Calendar")
-                                    .font(.headline)
-                                    .foregroundColor(AppStyle.Color.white)
-                                    .padding(.top, 12)
-                                    .padding(.horizontal, 16)
-                                
-                                Spacer().frame(height: 20)
-                                
-                                CalendarGridView(
-                                    selectedDate: $tempDate,
-                                    highlightedDates: Array(datesWithData)
-                                )
-                                .frame(maxWidth: .infinity)
-                                .padding(.horizontal)
-                                
-                                actionButtons
-                            }
-                            .background(AppStyle.Color.greenBlack)
-                            .cornerRadius(AppStyle.CornerRadius.defaultButton)
-                            .padding(16)
-                        }
-                        .frame(maxWidth: 400, maxHeight: 250)
-                        
-                        Spacer()
-                    }
-                }
-                .transition(.opacity)
-            }
-        }
-    }
-    
-    private var actionButtons: some View {
-        HStack(spacing: 16) {
-            Button("Cancel") {
-                showCalendarDialog = false
-            }
-            .font(.body)
-            .foregroundColor(AppStyle.Color.white)
-            .padding(.vertical, 8)
-            .padding(.horizontal, 16)
-            .cornerRadius(AppStyle.CornerRadius.defaultButton)
-            
-            Button("Select") {
-                selectedDate = tempDate
-                showCalendarDialog = false
-            }
-            .font(.body)
-            .foregroundColor(AppStyle.Color.white)
-            .padding(.vertical, 8)
-            .padding(.horizontal, 16)
-            .background(AppStyle.Color.green)
-            .cornerRadius(AppStyle.CornerRadius.defaultButton)
-        }
-        .padding(.horizontal)
-        .padding(.bottom, 12)
-    }
+
     
     // MARK: - Helper Functions
     
-    private func formattedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.locale = Locale(identifier: "de_DE")
-        return formatter.string(from: date)
-    }
-    
-    private func formattedDateShort(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd.MM.yyyy"
-        formatter.locale = Locale(identifier: "de_DE")
-        return formatter.string(from: date)
-    }
+
     
     private func formatDateShort(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd.MM"
-        formatter.locale = Locale(identifier: "de_DE")
-        return formatter.string(from: date)
+        return DateFormatter.germanVeryShort.string(from: date)
     }
 
     
@@ -460,19 +807,13 @@ struct TotalAnalyticsView: View {
             if days <= 7 {
                 return "\(days) day\(days == 1 ? "" : "s") ago"
             } else {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "dd.MM.yy"
-                return formatter.string(from: date)
+                return DateFormatter.germanCompact.string(from: date)
             }
         }
     }
     
     private func formatWeight(_ weight: Double) -> String {
-        if weight == floor(weight) {
-            return "\(Int(weight))"
-        } else {
-            return String(weight).replacingOccurrences(of: ".", with: ",")
-        }
+        return WeightFormatter.format(weight)
     }
     
     private func getCategoryDisplayName(_ category: MuscleCategoryGroup) -> String {

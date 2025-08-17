@@ -180,14 +180,10 @@ struct ExercisePickerView: View {
                             .frame(maxWidth: .infinity)
                         Picker("Weight", selection: Binding<String>(
                             get: {
-                                let weight = formViewModel.weight
-                                return weight == floor(weight) ? 
-                                    String(Int(weight)) : 
-                                    String(weight).replacingOccurrences(of: ".", with: ",")
+                                return WeightFormatter.format(formViewModel.weight)
                             },
                             set: { newValue in
-                                let weightString = newValue.replacingOccurrences(of: ",", with: ".")
-                                if let weight = Double(weightString) {
+                                if let weight = WeightFormatter.parse(newValue) {
                                     formViewModel.weight = weight
                                 }
                             }

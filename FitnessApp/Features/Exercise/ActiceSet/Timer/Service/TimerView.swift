@@ -19,7 +19,7 @@ struct TimerView: View {
                         .font(.system(size: 34, weight: .bold))
                         .foregroundColor(AppStyle.Color.white)
                     
-                    Text("Satz \(viewModel.currentSet + 1)")
+                    Text(viewModel.quickDoneAllCompleted ? "Quick Done" : "Satz \(viewModel.currentSet + 1)")
                         .font(.system(size: 20, weight: .regular))
                         .foregroundColor(AppStyle.Color.white)
                     

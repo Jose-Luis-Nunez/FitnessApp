@@ -31,8 +31,7 @@ class ActiveSetViewModel: ObservableObject {
         guard let newReps = Int(repsInput),
               let exercise = currentExercise else { return false }
         // Accept comma as decimal separator (e.g., "54,5")
-        let normalizedWeightString = weightInput.replacingOccurrences(of: ",", with: ".")
-        guard let newWeight = Double(normalizedWeightString) else { return false }
+        guard let newWeight = WeightFormatter.parse(weightInput) else { return false }
         
         let currentReps = exercise.reps
         let currentWeight = exercise.weight
@@ -205,20 +204,23 @@ class ActiveSetViewModel: ObservableObject {
     }
     
     func startQuickDone(for exercise: Exercise, category: MuscleCategoryGroup) {
-        // Skip intermediate quick-done UI; directly mark all sets as completed
+        // Set up the exercise and category
         currentExercise = exercise
         self.category = category
-        currentSet = exercise.sets
+        currentSet = 0 // Start from first set for timer display
         setProgress = (0..<exercise.sets).map { _ in
             SetProgress(status: .completedDone, currentReps: exercise.reps, weight: exercise.weight)
         }
-        // Ensure final state with summary and "Beenden" CTA
+        // Set up state for timer display with cancel functionality
         quickDoneModeActive = false
         quickDoneAllCompleted = true
-        isSetInProgress = false
+        isSetInProgress = true  // Enable timer display
         isLastSetCompleted = true
         didEditCompleteSet = false
         didJustEditSet = false
+        
+        // Start timer so user can see time and cancel if needed
+        timerService.resetAndStartTimer()
     }
     
     func processQuickDone(at index: Int) {
@@ -274,7 +276,7 @@ class ActiveSetViewModel: ObservableObject {
     }
     
     func cancelActiveSet() {
-        guard isSetInProgress, let exercise = currentExercise else { return }
+        guard let exercise = currentExercise else { return }
         
         currentExercise = nil
         currentSet = 0

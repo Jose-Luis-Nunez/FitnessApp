@@ -1,5 +1,32 @@
 import Foundation
 
+// MARK: - Workout Detail Data Models
+
+struct WorkoutDetailData {
+    let date: Date
+    let categories: [CategoryDetailData]
+}
+
+struct CategoryDetailData {
+    let category: MuscleCategoryGroup
+    let exercises: [ExerciseDetailData]
+}
+
+struct ExerciseDetailData {
+    let exercise: Exercise
+    let isCompleted: Bool
+}
+
+// MARK: - Training Rhythm Detail Data Models
+
+struct TrainingRhythmDetailData {
+    let trainingDates: [Date]
+    let gaps: [Int] // Days between training sessions
+    let averageGap: Double
+    let rhythmLabel: String
+    let explanation: String
+}
+
 class TotalAnalyticsViewModel: ObservableObject {
     private let storageService: TotalAnalyticsStorageService
     
@@ -270,6 +297,211 @@ class TotalAnalyticsViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Workout Completion Analysis
+    
+    func getLastTrainingDayCompletionRate() -> (completed: Int, total: Int, percentage: Int) {
+        let trainingDays = getTrainingDays()
+        guard let lastTrainingDay = trainingDays.last else {
+            return (completed: 0, total: 0, percentage: 0)
+        }
+        
+        return getWorkoutCompletionRate(for: lastTrainingDay)
+    }
+    
+    private func getWorkoutCompletionRate(for date: Date) -> (completed: Int, total: Int, percentage: Int) {
+        guard let currentWorkout = WorkoutStorageService.shared.currentWorkout else {
+            return (completed: 0, total: 0, percentage: 0)
+        }
+        
+        // Get all exercises for the current workout
+        var allExercises: [Exercise] = []
+        let exerciseStorage = ExerciseStorageService()
+        
+        for category in MuscleCategoryGroup.allCases {
+            let categoryExercises = exerciseStorage.loadForWorkout(workoutId: currentWorkout.id, category: category)
+            allExercises.append(contentsOf: categoryExercises)
+        }
+        
+        guard !allExercises.isEmpty else {
+            return (completed: 0, total: 0, percentage: 0)
+        }
+        
+        // Get exercises that were completed on the specific date
+        let calendar = Calendar.current
+        let completedExercises = allExercises.filter { exercise in
+            let entries = storageService.analyticsStorage.load(for: exercise.id)
+            return entries.contains { entry in
+                calendar.isDate(entry.date, inSameDayAs: date)
+            }
+        }
+        
+        let totalCount = allExercises.count
+        let completedCount = completedExercises.count
+        let percentage = totalCount > 0 ? Int(round(Double(completedCount) / Double(totalCount) * 100)) : 0
+        
+        return (completed: completedCount, total: totalCount, percentage: percentage)
+    }
+    
+    func getLastTrainingDayWorkoutDetail() -> WorkoutDetailData? {
+        let trainingDays = getTrainingDays()
+        guard let lastTrainingDay = trainingDays.last else { return nil }
+        
+        return getWorkoutDetail(for: lastTrainingDay)
+    }
+    
+    private func getWorkoutDetail(for date: Date) -> WorkoutDetailData? {
+        guard let currentWorkout = WorkoutStorageService.shared.currentWorkout else { return nil }
+        
+        let exerciseStorage = ExerciseStorageService()
+        let calendar = Calendar.current
+        var categoryDetails: [CategoryDetailData] = []
+        
+        for category in MuscleCategoryGroup.allCases {
+            let categoryExercises = exerciseStorage.loadForWorkout(workoutId: currentWorkout.id, category: category)
+            
+            // Skip categories with no exercises
+            guard !categoryExercises.isEmpty else { continue }
+            
+            let exerciseDetails = categoryExercises.map { exercise in
+                let entries = storageService.analyticsStorage.load(for: exercise.id)
+                let isCompleted = entries.contains { entry in
+                    calendar.isDate(entry.date, inSameDayAs: date)
+                }
+                return ExerciseDetailData(exercise: exercise, isCompleted: isCompleted)
+            }
+            
+            categoryDetails.append(CategoryDetailData(category: category, exercises: exerciseDetails))
+        }
+        
+        return WorkoutDetailData(date: date, categories: categoryDetails)
+    }
+
+    // MARK: - Training Rhythm Analysis
+    
+    func getTrainingRhythm() -> String {
+        let trainingDays = getTrainingDays()
+        return calculateTrainingRhythm(from: trainingDays)
+    }
+    
+    func getTrainingRhythmDetail() -> TrainingRhythmDetailData? {
+        let trainingDays = getTrainingDays()
+        guard trainingDays.count >= 2 else { return nil }
+        
+        // Take last 5 training days for detailed analysis
+        let recentTrainingDays = Array(trainingDays.suffix(5))
+        guard recentTrainingDays.count >= 2 else { return nil }
+        
+        // Calculate gaps between consecutive training days
+        let gaps = calculateDayGaps(between: recentTrainingDays)
+        guard !gaps.isEmpty else { return nil }
+        
+        // Add gap from last training day to today
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let lastTrainingDay = recentTrainingDays.last!
+        let daysSinceLastTraining = calendar.dateComponents([.day], from: lastTrainingDay, to: today).day ?? 0
+        
+        // Extended gaps include gap to today
+        let extendedGaps = gaps + [daysSinceLastTraining]
+        
+        // Calculate average gap (only for historical gaps, not including today)
+        let averageGap = Double(gaps.reduce(0, +)) / Double(gaps.count)
+        let rhythmLabel = formatTrainingRhythm(averageGap: averageGap)
+        
+        // Create explanation
+        let explanation = createRhythmExplanation(
+            gaps: gaps, 
+            daysSinceLastTraining: daysSinceLastTraining,
+            averageGap: averageGap, 
+            rhythmLabel: rhythmLabel
+        )
+        
+        return TrainingRhythmDetailData(
+            trainingDates: recentTrainingDays,
+            gaps: extendedGaps, // Now includes gap to today
+            averageGap: averageGap,
+            rhythmLabel: rhythmLabel,
+            explanation: explanation
+        )
+    }
+    
+    private func createRhythmExplanation(gaps: [Int], daysSinceLastTraining: Int, averageGap: Double, rhythmLabel: String) -> String {
+        let gapsText = gaps.map { "\($0)" }.joined(separator: ", ")
+        let roundedAverage = String(format: "%.1f", averageGap)
+        
+        return "Historische Abstände: \(gapsText) Days\nDurchschnitt: \(roundedAverage) Days\nSeit letztem Training: \(daysSinceLastTraining) Days (nicht in Berechnung)\nErgebnis: \(rhythmLabel)"
+    }
+    
+    private func getTrainingDays() -> [Date] {
+        let allEntries = loadAllAnalytics()
+        let calendar = Calendar.current
+        
+        // Group entries by date and count completed exercises per day
+        let dailyExerciseCounts = Dictionary(grouping: allEntries, by: { calendar.startOfDay(for: $0.date) })
+            .compactMap { (date, entries) -> (date: Date, exerciseCount: Int) in
+                let uniqueExercises = Set(entries.map { $0.exerciseId })
+                return (date: date, exerciseCount: uniqueExercises.count)
+            }
+        
+        // Filter days with 3+ exercises (training days)
+        let trainingDays = dailyExerciseCounts
+            .filter { $0.exerciseCount >= 3 }
+            .map { $0.date }
+            .sorted()
+        
+        return trainingDays
+    }
+    
+    private func calculateTrainingRhythm(from trainingDays: [Date]) -> String {
+        guard trainingDays.count >= 2 else {
+            return "Not enough data"
+        }
+        
+        // Take last 5 training days for rhythm calculation
+        let recentTrainingDays = Array(trainingDays.suffix(5))
+        guard recentTrainingDays.count >= 2 else {
+            return "Not enough data"
+        }
+        
+        // Calculate gaps between consecutive training days
+        let gaps = calculateDayGaps(between: recentTrainingDays)
+        guard !gaps.isEmpty else {
+            return "Not enough data"
+        }
+        
+        // Calculate average gap
+        let averageGap = Double(gaps.reduce(0, +)) / Double(gaps.count)
+        
+        return formatTrainingRhythm(averageGap: averageGap)
+    }
+    
+    private func calculateDayGaps(between dates: [Date]) -> [Int] {
+        guard dates.count >= 2 else { return [] }
+        
+        let calendar = Calendar.current
+        var gaps: [Int] = []
+        
+        for i in 1..<dates.count {
+            let previousDate = dates[i - 1]
+            let currentDate = dates[i]
+            let daysBetween = calendar.dateComponents([.day], from: previousDate, to: currentDate).day ?? 0
+            gaps.append(daysBetween)
+        }
+        
+        return gaps
+    }
+    
+    private func formatTrainingRhythm(averageGap: Double) -> String {
+        if averageGap <= 7.0 {
+            return "Weekly"
+        } else if averageGap <= 14.0 {
+            return "Biweekly"
+        } else {
+            let weeks = Int(round(averageGap / 7.0))
+            return "\(weeks) weeks"
+        }
+    }
+
     // MARK: - Helper Functions
     
     private func calculateWeightProgress(entries: [AnalyticsEntry]) -> (increments: Int, totalGains: Double) {
@@ -284,11 +516,8 @@ class TotalAnalyticsViewModel: ObservableObject {
             if let weight = entry.setProgress.first?.weight {
                 if previousWeight > 0 && weight > previousWeight {
                     let weightGain = weight - previousWeight
-                    // Ignore unrealistic jumps (more than 50kg at once)
-                    if weightGain <= 50.0 {
-                        increments += 1
-                        totalGains += weightGain
-                    }
+                    increments += 1
+                    totalGains += weightGain
                 }
                 previousWeight = weight
             }

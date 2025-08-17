@@ -1,6 +1,6 @@
 import Foundation
 
-struct Workout: Identifiable, Codable {
+struct Workout: Identifiable, Codable, Hashable, Equatable {
     let id: UUID
     var name: String
     var createdDate: Date
@@ -71,6 +71,17 @@ struct Workout: Identifiable, Codable {
         if let data = try? JSONSerialization.data(withJSONObject: exerciseData) {
             try container.encode(data, forKey: .exerciseData)
         }
+    }
+}
+
+// MARK: - Hashable & Equatable
+extension Workout {
+    static func == (lhs: Workout, rhs: Workout) -> Bool {
+        return lhs.id == rhs.id
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 }
 
