@@ -763,28 +763,28 @@ struct AnalyticsView: View {
     
     private var weightMilestoneView: some View {
         HStack(alignment: .top, spacing: 8) {
-            AnalyticsTileView(
+            AnalyticsTileNumberView(
                 number: "\(viewModel.weightIncreasesInCurrentMonth(for: exercise.id))",
                 label: "Weight increase",
                 icon: nil,
                 iconColor: .clear
             )
             
-            AnalyticsTileView(
+            AnalyticsTileNumberView(
                 number: "\(viewModel.trainingDaysInCurrentMonth(for: exercise.id))",
                 label: "Training \(viewModel.currentMonthName())",
                 icon: nil,
                 iconColor: .clear
             )
             
-            AnalyticsTileView(
+            AnalyticsTileNumberView(
                 number: "\(viewModel.trainingSessionsUntilWeightIncrease(for: exercise.id))",
                 label: "Training to increase kg",
                 icon: nil,
                 iconColor: .clear
             )
             
-            AnalyticsTileView(
+            AnalyticsTileNumberView(
                 number: "\(viewModel.loadAnalytics(for: exercise.id).count)",
                 label: "Total workouts",
                 icon: nil,
@@ -804,7 +804,7 @@ struct AnalyticsView: View {
 
 
 
-struct AnalyticsTileView: View {
+struct AnalyticsTileNumberView: View {
     let number: String
     let label: String
     let icon: String?
@@ -815,6 +815,40 @@ struct AnalyticsTileView: View {
             Text(number)
                 .font(.system(size: 26, weight: .bold))
                 .foregroundColor(AppStyle.Color.greenGlow)
+            
+            Text(label)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(AppStyle.Color.greenGlow)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(8)
+        .frame(height: 85)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(AppStyle.Color.greenBlack.opacity(0.3))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(AppStyle.Color.greenGlow.opacity(0.2), lineWidth: 1)
+                )
+        )
+    }
+}
+
+struct AnalyticsTileTextView: View {
+    let text: String
+    let label: String
+    let icon: String?
+    let iconColor: Color
+    
+    var body: some View {
+        VStack(spacing: 6) {
+            Text(text)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(AppStyle.Color.greenGlow)
+                .lineLimit(1)
             
             Text(label)
                 .font(.system(size: 10, weight: .medium))

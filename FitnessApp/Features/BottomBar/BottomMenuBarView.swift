@@ -130,6 +130,8 @@ struct BottomMenuBarView: View {
                         // Analytics uses custom asset
                         menuItemImage(imageName: "analyticsEntry", tab: .chart) {
                             selectedTab = .chart
+                            navigationPath = NavigationPath()
+                            navigationPath.append(NavigationDestination.totalAnalytics)
                         }
 
                         menuItemImage(imageName: "menuCalenderIcon", tab: .calendar) {

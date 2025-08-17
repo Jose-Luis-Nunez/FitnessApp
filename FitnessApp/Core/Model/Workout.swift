@@ -5,8 +5,8 @@ struct Workout: Identifiable, Codable {
     var name: String
     var createdDate: Date
     var lastModified: Date
-    var exerciseData: [String: Any] // Stores exercise-specific data for each muscle category
-    var selectedCategories: Set<MuscleCategoryGroup> // Selected muscle categories for this workout
+    var exerciseData: [String: Any]
+    var selectedCategories: Set<MuscleCategoryGroup>
     
     init(name: String, selectedCategories: Set<MuscleCategoryGroup> = Set(MuscleCategoryGroup.allCases)) {
         self.id = UUID()

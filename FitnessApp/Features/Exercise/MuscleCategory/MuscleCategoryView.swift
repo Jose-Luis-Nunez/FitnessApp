@@ -86,7 +86,6 @@ struct MuscleCategoryView: View {
                 }
                 .offset(y: -10)
             }
-            .background(AppStyle.Color.backgroundColor)
             
             if bottomActionbarViewModel.shouldShow && !activeSetViewModel.isEditing {
                 BottomActionBarView(
@@ -418,6 +417,8 @@ struct MuscleCategoryView: View {
             )
         }
     }
+    
+
 }
 
 // MARK: - Extracted overlays
