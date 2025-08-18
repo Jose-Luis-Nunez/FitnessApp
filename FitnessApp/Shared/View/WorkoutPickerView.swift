@@ -11,6 +11,10 @@ struct WorkoutPickerView: View {
         ZStack {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(Color.gray.opacity(0.4))
+                )
             
             VStack(spacing: 16) {
                 // Title

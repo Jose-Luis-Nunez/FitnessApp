@@ -49,7 +49,7 @@ struct IdleActiveCardView: View {
                         AppChip(
                             text: viewModel.exercise.seatSetting ?? L10n.seatChipDefaultvalue,
                             fontColor: AppStyle.Color.white,
-                            backgroundColor: AppStyle.Color.chipsBackground,
+                            backgroundColor: Color.white.opacity(0.12),
                             size: .regular,
                             icon: ChipIcon(image: "chairSettings", color: .white),
                             onTap: isEditable ? { onEdit(viewModel.exercise) } : nil
@@ -60,7 +60,7 @@ struct IdleActiveCardView: View {
                         AppChip(
                             text: "\(viewModel.exercise.weight == floor(viewModel.exercise.weight) ? "\(Int(viewModel.exercise.weight))" : String(viewModel.exercise.weight).replacingOccurrences(of: ".", with: ",")) kg",
                             fontColor: AppStyle.Color.white,
-                            backgroundColor: AppStyle.Color.chipsBackground,
+                            backgroundColor: Color.white.opacity(0.12),
                             size: .regular,
                             onTap: isEditable ? { onEdit(viewModel.exercise) } : nil
                         )
