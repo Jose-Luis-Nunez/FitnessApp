@@ -322,7 +322,6 @@ struct MuscleCategoryView: View {
                     )
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
-                    .transition(.move(edge: .top))
                     .listRowSeparator(.hidden)
                 )
             } else {
@@ -371,7 +370,6 @@ struct MuscleCategoryView: View {
                     )
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
-                    .transition(.move(edge: .top))
                     .listRowSeparator(.hidden)
                 }
             )
@@ -411,7 +409,6 @@ struct MuscleCategoryView: View {
                     )
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
-                    .transition(.move(edge: .bottom))
                     .listRowSeparator(.hidden)
                 }
             )
