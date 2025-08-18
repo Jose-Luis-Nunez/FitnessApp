@@ -34,6 +34,7 @@ struct WorkoutPickerView: View {
                                 .tag(workout as Workout?)
                         }
                     }
+                    .allowsHitTesting(true)
                     
                     // Arrow overlay on the right side
                     HStack {
@@ -63,11 +64,6 @@ struct WorkoutPickerView: View {
                 }
                 .pickerStyle(.wheel)
                 .frame(height: 150)
-                .onChange(of: selectedWorkout) { _, newWorkout in
-                    if let workout = newWorkout {
-                        selectWorkout(workout)
-                    }
-                }
 
             }
         }
@@ -80,6 +76,9 @@ struct WorkoutPickerView: View {
         .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 10)
         .onAppear {
             selectedWorkout = storageService.currentWorkout
+        }
+        .onChange(of: storageService.currentWorkout) { _, newWorkout in
+            selectedWorkout = newWorkout
         }
     }
     
