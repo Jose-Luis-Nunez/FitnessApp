@@ -14,7 +14,7 @@ struct ActiveCardView: View {
     private let chipHeight: CGFloat = 32
     
     var body: some View {
-        CardBackground {
+        CardBackground(useGlassEffect: true) {
             HStack(alignment: .center, spacing: 8) {
                 // Bereich A: Titel + Analytics Icon oben, 3 Chips unten
                 VStack(spacing: 6) {

@@ -12,7 +12,7 @@ struct ActiveSetView: View {
     private let defaultPadding: CGFloat = AppStyle.Padding.horizontal
     
     var body: some View {
-        CardBackground {
+        CardBackground(useGlassEffect: true) {
             VStack(alignment: .leading, spacing: 6) {
                 // Quick Done Mode
                 if viewModel.quickDoneModeActive {

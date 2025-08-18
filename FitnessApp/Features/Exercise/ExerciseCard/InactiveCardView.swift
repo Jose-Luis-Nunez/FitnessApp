@@ -19,7 +19,7 @@ struct InactiveCardView: View {
         let latestEntry = analyticsViewModel.loadAnalytics(for: viewModel.exercise.id).max(by: { $0.date < $1.date })
         let setProgress = latestEntry?.setProgress ?? []
         
-        CardBackground(backgroundColor: GlobalConstants.cardBackgroundColor) {
+        CardBackground(backgroundColor: GlobalConstants.cardBackgroundColor, useGlassEffect: true) {
             VStack(spacing: 12) {
                 HStack {
                     Text(viewModel.exercise.name)

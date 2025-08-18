@@ -9,7 +9,7 @@ private enum Constants {
     static let titleBottomSpacing: CGFloat = 5
     
     static let secondaryTextColor = Color(hex: "#46474B")
-
+    
     enum CategoryTile {
         static let barWidth: CGFloat = 120
         static let chipVerticalPadding: CGFloat = 10
@@ -23,7 +23,7 @@ private enum Constants {
         static let iconSize: CGFloat = 80
         static let iconSpacing: CGFloat = 16
     }
-
+    
     enum ProgressBar {
         static let height: CGFloat = 10
         static let strokeWidth: CGFloat = 1
@@ -44,7 +44,7 @@ private struct ExerciseInfo {
     let isCompleted: Bool
     let progress: Double
     let hasActiveSet: Bool
-
+    
     init(total: Int, active: Int, hasActiveSet: Bool) {
         self.total = total
         self.active = active
@@ -63,7 +63,7 @@ struct MuscleCategorySelectionView: View {
     init(navigationPath: Binding<NavigationPath> = .constant(NavigationPath())) {
         self._navigationPath = navigationPath
     }
-
+    
     var body: some View {
         ZStack(alignment: .bottom) {
             AppStyle.Color.backgroundColor.ignoresSafeArea()
@@ -97,7 +97,7 @@ struct MuscleCategorySelectionView: View {
                 Color.black.opacity(0.001)
                     .ignoresSafeArea()
                     .onTapGesture { overlayState.showSelectionMiniMenu = false }
-
+                
                 VStack {
                     Spacer()
                     HStack {
@@ -141,7 +141,7 @@ struct MuscleCategorySelectionView: View {
             viewModel.updateExerciseCounts()
         }
     }
-
+    
     private var headerView: some View {
         Text("Dein Workout")
             .font(AppStyle.Font.navigationHeadline)
@@ -150,7 +150,7 @@ struct MuscleCategorySelectionView: View {
             .padding(.bottom, Constants.titleBottomSpacing)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
-
+    
     private var categoryList: some View {
         ForEach(viewModel.categories, id: \.self) { group in
             NavigationLink(value: NavigationDestination.muscleCategory(group)) {
@@ -158,7 +158,7 @@ struct MuscleCategorySelectionView: View {
             }
         }
     }
-
+    
     private var safeAreaInset: CGFloat {
         UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
     }
@@ -167,20 +167,24 @@ struct MuscleCategorySelectionView: View {
 private struct CategoryTileView: View {
     let group: MuscleCategoryGroup
     @ObservedObject var viewModel: MuscleCategorySelectionViewModel
-
+    
     var body: some View {
         let exerciseInfo = createExerciseInfo()
-
-        HStack(spacing: 0) {
-            categoryInfoView(exerciseInfo: exerciseInfo)
-            Spacer()
-            progressSection(exerciseInfo: exerciseInfo)
+        
+        CardBackground(
+            backgroundColor: AppStyle.Color.exerciseCardBackground,
+            useGlassEffect: true,
+            addPadding: false
+        ) {
+            HStack(spacing: 0) {
+                categoryInfoView(exerciseInfo: exerciseInfo)
+                Spacer()
+                progressSection(exerciseInfo: exerciseInfo)
+            }
+            .frame(maxWidth: .infinity)
         }
-        .frame(maxWidth: .infinity)
-        .background(AppStyle.Color.exerciseCardBackground)
-        .cornerRadius(AppStyle.CornerRadius.card)
     }
-
+    
     private func categoryInfoView(exerciseInfo: ExerciseInfo) -> some View {
         HStack(spacing: Constants.CategoryTile.iconSpacing) {
             ZStack {
@@ -203,7 +207,7 @@ private struct CategoryTileView: View {
                 Text(group.displayName)
                     .font(AppStyle.Font.categorySelectionNameFont)
                     .foregroundColor(AppStyle.Color.white)
-
+                
                 Text("\(exerciseInfo.completed) of \(exerciseInfo.total) completed")
                     .font(AppStyle.Font.defaultFont)
                     .foregroundColor(AppStyle.Color.white)
@@ -212,7 +216,7 @@ private struct CategoryTileView: View {
         .padding(.vertical, Constants.CategoryTile.verticalPadding)
         .padding(.horizontal, Constants.CategoryTile.contentPadding)
     }
-
+    
     private func progressSection(exerciseInfo: ExerciseInfo) -> some View {
         HStack(spacing: Constants.CategoryTile.itemSpacing) {
             CircularProgressView(
@@ -221,7 +225,7 @@ private struct CategoryTileView: View {
                 isCompleted: exerciseInfo.isCompleted
             )
             .accessibilityIdentifier(AccessibilityIDs.categoryLabel(for: group))
-
+            
             Image(systemName: "chevron.right")
                 .foregroundColor(AppStyle.Color.white)
                 .imageScale(.medium)
@@ -229,13 +233,13 @@ private struct CategoryTileView: View {
         .padding(.vertical, Constants.CategoryTile.verticalPadding)
         .padding(.horizontal, Constants.CategoryTile.contentPadding)
     }
-
+    
     private func createExerciseInfo() -> ExerciseInfo {
         let count = viewModel.getExerciseCount(for: group) ?? (0, 0)
         let hasActiveSet = viewModel.hasActiveSetForCategory(group)
         return ExerciseInfo(total: count.total, active: count.active, hasActiveSet: hasActiveSet)
     }
-
+    
     private func getChipText(_ exerciseInfo: ExerciseInfo) -> String {
         if exerciseInfo.total == 0 {
             return "Not Set"
@@ -300,7 +304,7 @@ private struct CustomChip: View {
     let isCompleted: Bool
     let width: CGFloat
     let verticalPadding: CGFloat
-
+    
     var body: some View {
         Text(text)
             .font(AppStyle.Font.categorySelectionChipFont)
@@ -337,10 +341,10 @@ private struct CustomChip: View {
 private struct ProgressBar: View {
     let progress: Double
     let totalWidth: CGFloat
-
+    
     private let fillColor = AppStyle.Color.green
     private let trackColor = Constants.secondaryTextColor
-
+    
     var body: some View {
         ZStack(alignment: .leading) {
             trackView

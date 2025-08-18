@@ -19,7 +19,7 @@ struct IdleActiveCardView: View {
     }
 
     var body: some View {
-        CardBackground {
+        CardBackground(useGlassEffect: true) {
             HStack(alignment: .center, spacing: 16) {
                 Text(viewModel.exercise.name)
                     .font(AppStyle.Font.cardHeadline)
