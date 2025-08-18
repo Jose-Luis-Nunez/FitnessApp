@@ -13,12 +13,12 @@ enum L10n {
     static let seatChipDefaultvalue = "+"
     static let analyticsText = "STEIGEND"
 
-    static let muscleCategoryMuscleGroupsTitle = "Muskelgruppen"
-    static let muscleCategoryOptionArms = "Arme"
-    static let muscleCategoryOptionChest = "Brust"
-    static let muscleCategoryOptionBack = "Rücken"
-    static let muscleCategoryOptionLegs = "Beine"
-    static let muscleCategoryOptionAbs = "Bauch"
+    static let muscleCategoryMuscleGroupsTitle = "Muscle Groups"
+    static let muscleCategoryOptionArms = "Arm"
+    static let muscleCategoryOptionChest = "Chest"
+    static let muscleCategoryOptionBack = "Back"
+    static let muscleCategoryOptionLegs = "Legs"
+    static let muscleCategoryOptionAbs = "Abs"
     
     static let sheetTitleWeight = "Gewicht ändern"
     static let sheetTitleSets = "Sätze ändern"

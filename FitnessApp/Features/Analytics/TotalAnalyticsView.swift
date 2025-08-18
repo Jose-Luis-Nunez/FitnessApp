@@ -815,19 +815,4 @@ struct TotalAnalyticsView: View {
     private func formatWeight(_ weight: Double) -> String {
         return WeightFormatter.format(weight)
     }
-    
-    private func getCategoryDisplayName(_ category: MuscleCategoryGroup) -> String {
-        switch category {
-        case .arms:
-            return "Arme"
-        case .abs:
-            return "Bauch"
-        case .back:
-            return "Rücken"
-        case .legs:
-            return "Beine"
-        case .chest:
-            return "Brust"
-        }
-    }
 }
