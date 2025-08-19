@@ -151,10 +151,10 @@ struct MuscleCategorySelectionView: View {
                             }
                         } else {
                             // Show all exercises list
-                            LazyVStack(spacing: 12) {
+                            LazyVStack(spacing: 4) {
                                 allExercisesList
                             }
-                            .padding(.horizontal, Constants.horizontalPadding)
+                            .padding(.horizontal, 0)
                             .padding(.top, 16)
                         }
                     }
@@ -309,7 +309,7 @@ struct MuscleCategorySelectionView: View {
     
     private var filterToggleView: some View {
         HStack(spacing: 0) {
-            // Übersicht Option
+            // Category Option
             Button(action: {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     currentViewMode = .overview
@@ -320,7 +320,7 @@ struct MuscleCategorySelectionView: View {
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 20, height: 20)
+                        .frame(width: 28, height: 28)
                         .foregroundColor(currentViewMode == .overview ? .white : .white.opacity(0.6))
                     
                     Text("Category")
@@ -328,16 +328,15 @@ struct MuscleCategorySelectionView: View {
                         .foregroundColor(currentViewMode == .overview ? .white : .white.opacity(0.6))
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 44)
+                .frame(height: 36)
                 .background(
-                    currentViewMode == .overview ? 
-                    Color.white.opacity(0.12) : Color.clear
+                    currentViewMode == .overview ? Color.white.opacity(0.12) : Color.clear
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
             .buttonStyle(.plain)
             
-            // Liste Option  
+            // Exercise Option
             Button(action: {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     currentViewMode = .list
@@ -353,10 +352,9 @@ struct MuscleCategorySelectionView: View {
                         .foregroundColor(currentViewMode == .list ? .white : .white.opacity(0.6))
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 44)
+                .frame(height: 36)
                 .background(
-                    currentViewMode == .list ? 
-                    Color.white.opacity(0.12) : Color.clear
+                    currentViewMode == .list ? Color.white.opacity(0.12) : Color.clear
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
@@ -364,13 +362,24 @@ struct MuscleCategorySelectionView: View {
         }
         .padding(4)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color.gray.opacity(0.4))
-                )
+            Group {
+                if #available(iOS 26.0, *) {
+                    Color.clear
+                        .glassEffect(in: .rect(cornerRadius: 16))
+                } else {
+                    LiquidGlassBackground(
+                        cornerRadius: 16,
+                        material: .ultraThinMaterial,
+                        tintOpacity: 0.0,
+                        showsEdgeStroke: false,
+                        showsCaustic: false,
+                        shadowOpacity: 0.20,
+                        lightnessBoostOpacity: 0.12
+                    )
+                }
+            }
         )
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
     
     private var allExercisesList: some View {
@@ -406,7 +415,7 @@ struct MuscleCategorySelectionView: View {
                             isActiveSetVisible: activeSetViewModel.currentExercise != nil,
                             isResetEnabled: exercise.isCompleted
                         )
-                        .padding(.vertical, 3)
+                        .padding(.vertical, 6)
                     }
                 } header: {
                     HStack {
