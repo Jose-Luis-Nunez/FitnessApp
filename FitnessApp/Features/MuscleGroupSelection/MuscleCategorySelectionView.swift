@@ -55,10 +55,17 @@ private struct ExerciseInfo {
     }
 }
 
+private enum ViewMode {
+    case overview  // Kategorien als Kacheln
+    case list      // Alle Übungen in Liste
+}
+
 struct MuscleCategorySelectionView: View {
     @StateObject private var viewModel = MuscleCategorySelectionViewModel()
+    @StateObject private var activeSetViewModel = ActiveSetViewModel()
     @Binding var navigationPath: NavigationPath
     @EnvironmentObject private var overlayState: UIOverlayState
+    @State private var currentViewMode: ViewMode = .overview
     
     init(navigationPath: Binding<NavigationPath> = .constant(NavigationPath())) {
         self._navigationPath = navigationPath
@@ -67,14 +74,155 @@ struct MuscleCategorySelectionView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             AppStyle.Color.backgroundColor.ignoresSafeArea()
-            ScrollView {
-                LazyVStack(spacing: Constants.CategoryTile.verticalSpacing) {
-                    categoryList
+            
+            VStack(spacing: 0) {
+                // Filter Toggle - only show when not training
+                if activeSetViewModel.currentExercise == nil {
+                    filterToggleView
+                        .padding(.horizontal, Constants.horizontalPadding)
+                        .padding(.top, Constants.topPadding)
                 }
-                .padding(.horizontal, Constants.horizontalPadding)
-                .padding(.top, Constants.topPadding)
-                // small spacer so last tile isn't glued to gesture area
-                .padding(.bottom, safeAreaInset + 24)
+                
+                ScrollView {
+                    if currentViewMode == .overview {
+                        LazyVStack(spacing: Constants.CategoryTile.verticalSpacing) {
+                            categoryList
+                        }
+                        .padding(.horizontal, Constants.horizontalPadding)
+                        .padding(.top, 16)
+                    } else {
+                        // List mode - check if training is active
+                        let isActiveSetVisible = activeSetViewModel.currentExercise != nil
+                        
+                        if isActiveSetVisible {
+                            // Show only active exercise (like in MuscleCategoryView)
+                            if let exercise = activeSetViewModel.currentExercise {
+                                LazyVStack(spacing: 12) {
+                                    ExerciseCardContainerView(
+                                        viewModel: ExerciseCardViewModel(exercise: exercise) { updatedExercise in
+                                            // Update exercise for its category
+                                            if let category = findCategoryForExercise(exercise) {
+                                                viewModel.updateExercise(updatedExercise, category: category)
+                                            }
+                                        },
+                                        onEdit: { exerciseToEdit in
+                                            // Navigate to category for editing
+                                            if let category = findCategoryForExercise(exerciseToEdit) {
+                                                navigationPath.append(NavigationDestination.muscleCategory(category))
+                                            }
+                                        },
+                                        isEditable: !activeSetViewModel.isSetInProgress,
+                                        analyticsViewModel: AnalyticsViewModel(),
+                                        activeSetViewModel: activeSetViewModel,
+                                        onStart: { exerciseToStart in
+                                            // Already active, this shouldn't happen
+                                        },
+                                        onReset: { exerciseToReset in
+                                            if let category = findCategoryForExercise(exerciseToReset) {
+                                                viewModel.resetExercise(exerciseToReset, category: category)
+                                            }
+                                        },
+                                        isActiveSetVisible: isActiveSetVisible,
+                                        isResetEnabled: exercise.isCompleted
+                                    )
+                                    .padding(.horizontal, Constants.horizontalPadding)
+                                    
+                                    // Add ActiveSetView with same padding as ActiveCardView
+                                    if let currentExercise = activeSetViewModel.currentExercise {
+                                        VStack(spacing: 16) {
+                                            ActiveSetView(
+                                                sets: currentExercise.sets,
+                                                exercise: currentExercise,
+                                                setProgress: .constant(activeSetViewModel.setProgress),
+                                                viewModel: activeSetViewModel
+                                            )
+                                            .onAppear {
+                                                if activeSetViewModel.isSetInProgress {
+                                                    activeSetViewModel.startTimer()
+                                                }
+                                            }
+                                            
+                                            // Add TimerView like in MuscleCategoryView
+                                            TimerView(viewModel: activeSetViewModel)
+                                        }
+                                    }
+                                }
+                                .padding(.top, 16)
+                            }
+                        } else {
+                            // Show all exercises list
+                            LazyVStack(spacing: 12) {
+                                allExercisesList
+                            }
+                            .padding(.horizontal, Constants.horizontalPadding)
+                            .padding(.top, 16)
+                        }
+                    }
+                    // small spacer so last tile isn't glued to gesture area
+                    Spacer(minLength: safeAreaInset + 24)
+                }
+            }
+            
+            // Bottom Action Bar for active training (like in MuscleCategoryView)
+            if currentViewMode == .list && activeSetViewModel.currentExercise != nil {
+                BottomActionBarView(
+                    viewModel: createBottomActionBarViewModel(),
+                    onStart: {
+                        guard let exercise = activeSetViewModel.currentExercise else { return }
+                        if activeSetViewModel.currentSet == 0 && activeSetViewModel.setProgress.isEmpty {
+                            activeSetViewModel.startSet(for: exercise, category: findCategoryForExercise(exercise) ?? .arms)
+                        } else {
+                            activeSetViewModel.startNextSet()
+                        }
+                    },
+                    onCompleteSet: {
+                        activeSetViewModel.stopTimer()
+                        activeSetViewModel.completeCurrentSet()
+                    },
+                    onQuickDone: {
+                        if let activeExercise = activeSetViewModel.currentExercise {
+                            activeSetViewModel.startQuickDone(for: activeExercise, category: findCategoryForExercise(activeExercise) ?? .arms)
+                        }
+                    },
+                    onCompleteAllQuickDone: {
+                        activeSetViewModel.completeAllQuickDone()
+                    },
+                                                        onCategoryReset: {
+                        activeSetViewModel.stopTimer()
+                        // Reset the current exercise
+                        if let exercise = activeSetViewModel.currentExercise,
+                           let category = findCategoryForExercise(exercise) {
+                            viewModel.resetExercise(exercise, category: category)
+                        }
+                    },
+                    onEditLess: {
+                        activeSetViewModel.stopTimer()
+                        activeSetViewModel.startEditingSet(index: activeSetViewModel.currentSet, mode: .less)
+                    },
+                    onEditMore: {
+                        activeSetViewModel.stopTimer()
+                        activeSetViewModel.startEditingSet(index: activeSetViewModel.currentSet, mode: .more)
+                    },
+                    onFinish: {
+                        // Finish exercise when last set is completed - use shared service
+                        activeSetViewModel.stopTimer()
+                        if activeSetViewModel.isLastSetCompleted,
+                           let exercise = activeSetViewModel.currentExercise,
+                           let category = findCategoryForExercise(exercise) {
+                            // Complete exercise with analytics saving
+                            viewModel.completeExercise(exercise, category: category, setProgress: activeSetViewModel.setProgress)
+                        }
+                        activeSetViewModel.finishExercise()
+                    },
+                    onAddExercise: {
+                        // Navigate to add exercise - not used in list view
+                    },
+                    onResetAllExercises: {
+                        // Reset all exercises - not used in this context
+                    }
+                )
+                .offset(y: -10)
+                .zIndex(5)
             }
             
             // Workout picker overlay
@@ -157,6 +305,161 @@ struct MuscleCategorySelectionView: View {
                 CategoryTileView(group: group, viewModel: viewModel)
             }
         }
+    }
+    
+    private var filterToggleView: some View {
+        HStack(spacing: 0) {
+            // Übersicht Option
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    currentViewMode = .overview
+                }
+            }) {
+                HStack(spacing: 8) {
+                    Image("filterIconBody")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 20, height: 20)
+                        .foregroundColor(currentViewMode == .overview ? .white : .white.opacity(0.6))
+                    
+                    Text("Category")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(currentViewMode == .overview ? .white : .white.opacity(0.6))
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 44)
+                .background(
+                    currentViewMode == .overview ? 
+                    Color.white.opacity(0.12) : Color.clear
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            
+            // Liste Option  
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    currentViewMode = .list
+                }
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "list.bullet")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(currentViewMode == .list ? .white : .white.opacity(0.6))
+                    
+                    Text("Exercise")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(currentViewMode == .list ? .white : .white.opacity(0.6))
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 44)
+                .background(
+                    currentViewMode == .list ? 
+                    Color.white.opacity(0.12) : Color.clear
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(4)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color.gray.opacity(0.4))
+                )
+        )
+    }
+    
+    private var allExercisesList: some View {
+        ForEach(MuscleCategoryGroup.allCases, id: \.id) { category in
+            let exercises = viewModel.getExercises(for: category)
+            if !exercises.isEmpty {
+                Section {
+                    ForEach(exercises, id: \.id) { exercise in
+                        ExerciseCardContainerView(
+                            viewModel: ExerciseCardViewModel(exercise: exercise) { updatedExercise in
+                                // Update exercise and save
+                                viewModel.updateExercise(updatedExercise, category: category)
+                            },
+                            onEdit: { exerciseToEdit in
+                                // Navigate to category and trigger edit
+                                navigationPath.append(NavigationDestination.muscleCategory(category))
+                            },
+                            isEditable: true,
+                            analyticsViewModel: AnalyticsViewModel(),
+                            activeSetViewModel: activeSetViewModel,
+                            onStart: { exerciseToStart in
+                                // Add haptic feedback
+                                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                                impactFeedback.impactOccurred()
+                                
+                                // Start exercise training directly - stay in list view
+                                activeSetViewModel.startSet(for: exerciseToStart, category: category)
+                            },
+                            onReset: { exerciseToReset in
+                                // Reset exercise
+                                viewModel.resetExercise(exerciseToReset, category: category)
+                            },
+                            isActiveSetVisible: activeSetViewModel.currentExercise != nil,
+                            isResetEnabled: exercise.isCompleted
+                        )
+                        .padding(.vertical, 3)
+                    }
+                } header: {
+                    HStack {
+                        Text(category.displayName)
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                        
+                        Spacer()
+                        
+                        Text("\(exercises.count) Übungen")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
+    }
+    
+    private func findCategoryForExercise(_ exercise: Exercise) -> MuscleCategoryGroup? {
+        for category in MuscleCategoryGroup.allCases {
+            let exercises = viewModel.getExercises(for: category)
+            if exercises.contains(where: { $0.id == exercise.id }) {
+                return category
+            }
+        }
+        return nil
+    }
+    
+
+    
+    private func createBottomActionBarViewModel() -> BottomActionBarViewModel {
+        // Get all exercises across all categories for comprehensive view
+        var allExercises: [Exercise] = []
+        for category in MuscleCategoryGroup.allCases {
+            allExercises.append(contentsOf: viewModel.getExercises(for: category))
+        }
+        
+        return BottomActionBarViewModel(
+            isSetInProgress: activeSetViewModel.isSetInProgress,
+            currentSet: activeSetViewModel.currentSet,
+            currentExercise: activeSetViewModel.currentExercise,
+            hasActiveExercise: allExercises.contains { !$0.isCompleted },
+            exercises: allExercises,
+            isLastSetCompleted: activeSetViewModel.isLastSetCompleted,
+            quickDoneModeActive: activeSetViewModel.quickDoneModeActive,
+            quickDoneAllCompleted: activeSetViewModel.quickDoneAllCompleted,
+            didEditCompleteSet: activeSetViewModel.didEditCompleteSet,
+            didJustEditSet: activeSetViewModel.didJustEditSet,
+            showResetAllExercisesButton: false
+        )
     }
     
     private var safeAreaInset: CGFloat {

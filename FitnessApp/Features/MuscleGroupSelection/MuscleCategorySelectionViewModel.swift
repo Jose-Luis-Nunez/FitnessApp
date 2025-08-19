@@ -6,7 +6,7 @@ class MuscleCategorySelectionViewModel: ObservableObject {
     @Published var bottomBarViewModel: BottomActionBarViewModel
     @Published var currentWorkoutName: String = "Dein Workout"
 
-    private let storageService = ExerciseStorageService()
+    private let exerciseManagementService = ExerciseManagementService()
     private let workoutStorageService = WorkoutStorageService.shared
     private var cancellables = Set<AnyCancellable>()
     
@@ -49,25 +49,12 @@ class MuscleCategorySelectionViewModel: ObservableObject {
             activeSetVM.cancelActiveSet()
         }
 
-        for group in MuscleCategoryGroup.allCases {
-            let exercises = storageService.loadForWorkout(workoutId: currentWorkout.id, category: group)
-            let updatedExercises = exercises.map { exercise in
-                var updatedExercise = exercise
-                updatedExercise.isCompleted = false
-                return updatedExercise
-            }
-            storageService.saveForWorkout(updatedExercises, workoutId: currentWorkout.id, category: group)
-        }
+        exerciseManagementService.resetAllExercises(for: MuscleCategoryGroup.allCases)
         updateExerciseCountsAndViewModel()
     }
 
     func updateExerciseCounts() {
-        guard let currentWorkout = workoutStorageService.currentWorkout else { return }
-        
-        for group in MuscleCategoryGroup.allCases {
-            let exercises = storageService.loadForWorkout(workoutId: currentWorkout.id, category: group)
-            exerciseCounts[group] = (total: exercises.count, active: exercises.filter { !$0.isCompleted }.count)
-        }
+        exerciseCounts = exerciseManagementService.getAllExerciseCounts(for: MuscleCategoryGroup.allCases)
     }
     
     func getExerciseCount(for group: MuscleCategoryGroup) -> (total: Int, active: Int)? {
@@ -75,15 +62,7 @@ class MuscleCategorySelectionViewModel: ObservableObject {
     }
 
     func hasInactiveExercises() -> Bool {
-        guard let currentWorkout = workoutStorageService.currentWorkout else { return false }
-        
-        for group in MuscleCategoryGroup.allCases {
-            let exercises = storageService.loadForWorkout(workoutId: currentWorkout.id, category: group)
-            if exercises.contains(where: { !$0.isCompleted }) {
-                return true
-            }
-        }
-        return false
+        return exerciseManagementService.hasInactiveExercises(for: MuscleCategoryGroup.allCases)
     }
 
     private func updateExerciseCountsAndViewModel() {
@@ -117,6 +96,28 @@ class MuscleCategorySelectionViewModel: ObservableObject {
     
     private func updateWorkoutName(_ workout: Workout?) {
         currentWorkoutName = workout?.name ?? "Dein Workout"
+    }
+    
+    // MARK: - Exercise Access
+    
+    func getExercises(for category: MuscleCategoryGroup) -> [Exercise] {
+        return exerciseManagementService.getExercises(for: category)
+    }
+    
+    func updateExercise(_ updatedExercise: Exercise, category: MuscleCategoryGroup) {
+        exerciseManagementService.updateExercise(updatedExercise, category: category)
+        // Trigger UI update by updating exercise counts
+        updateExerciseCounts()
+    }
+    
+    func completeExercise(_ exercise: Exercise, category: MuscleCategoryGroup, setProgress: [SetProgress]) {
+        exerciseManagementService.completeExercise(exercise, category: category, setProgress: setProgress)
+        updateExerciseCounts()
+    }
+    
+    func resetExercise(_ exercise: Exercise, category: MuscleCategoryGroup) {
+        exerciseManagementService.resetExercise(exercise, category: category)
+        updateExerciseCounts()
     }
     
     // MARK: - Workout Selection
