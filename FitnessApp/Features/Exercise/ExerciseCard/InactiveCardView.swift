@@ -1,9 +1,5 @@
 import SwiftUI
 
-private enum GlobalConstants {
-    static let cardBackgroundColor = AppStyle.Color.exerciseCardBackgroundInactive
-}
-
 struct InactiveCardView: View {
     @ObservedObject var viewModel: ExerciseCardViewModel
     let onEdit: (Exercise) -> Void
@@ -19,7 +15,7 @@ struct InactiveCardView: View {
         let latestEntry = analyticsViewModel.loadAnalytics(for: viewModel.exercise.id).max(by: { $0.date < $1.date })
         let setProgress = latestEntry?.setProgress ?? []
         
-        CardBackground(backgroundColor: GlobalConstants.cardBackgroundColor, useGlassEffect: true) {
+        CardBackground(backgroundColor: AppStyle.Color.exerciseCardBackground, useGlassEffect: true, addPadding: true) {
             VStack(spacing: 12) {
                 HStack {
                     Text(viewModel.exercise.name)
@@ -103,7 +99,7 @@ extension InactiveCardView {
             static let horizontalPadding: CGFloat = 20
             static let verticalPadding: CGFloat = 8
             static let strokeColor = AppStyle.Color.greenGlow
-            static let backgroundColor = GlobalConstants.cardBackgroundColor
+            static let backgroundColor = AppStyle.Color.exerciseCardBackground
         }
 
         var body: some View {

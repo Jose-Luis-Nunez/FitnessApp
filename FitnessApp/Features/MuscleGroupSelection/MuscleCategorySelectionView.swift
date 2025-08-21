@@ -151,7 +151,7 @@ struct MuscleCategorySelectionView: View {
                             }
                         } else {
                             // Show all exercises list
-                            LazyVStack(spacing: 4) {
+                            LazyVStack(spacing: Constants.CategoryTile.verticalSpacing) {
                                 allExercisesList
                             }
                             .padding(.horizontal, 0)
@@ -415,23 +415,7 @@ struct MuscleCategorySelectionView: View {
                             isActiveSetVisible: activeSetViewModel.currentExercise != nil,
                             isResetEnabled: exercise.isCompleted
                         )
-                        .padding(.vertical, 6)
                     }
-                } header: {
-                    HStack {
-                        Text(category.displayName)
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
-                        
-                        Spacer()
-                        
-                        Text("\(exercises.count) Übungen")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white.opacity(0.7))
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
         }

@@ -10,42 +10,32 @@ struct IdleActiveCardView: View {
 
     @State private var isShowingAnalytics = false
 
-    private let maxChipWidth: CGFloat = 88
     private let chipHeight: CGFloat = 32
-    private let chipSpacing: CGFloat = 6
-
-    private var totalChipHeight: CGFloat {
-        chipHeight * 2 + chipSpacing
-    }
 
     var body: some View {
-        CardBackground(useGlassEffect: true) {
-            HStack(alignment: .center, spacing: 16) {
-                Text(viewModel.exercise.name)
-                    .font(AppStyle.Font.cardHeadline)
-                    .foregroundColor(.white)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(minWidth: 100, maxWidth: .infinity, alignment: .leading)
-                    .onTapGesture {
-                        if isEditable {
-                            onEdit(viewModel.exercise)
+        CardBackground(backgroundColor: AppStyle.Color.exerciseCardBackground, useGlassEffect: true, addPadding: true) {
+            HStack(alignment: .center, spacing: 8) {
+                // Left area: Category Icon
+                categoryIconView
+                
+                // Middle area: Title and chips (Takes remaining space)
+                VStack(alignment: .leading, spacing: 8) {
+                    // Level 1: Exercise title
+                    Text(viewModel.exercise.name)
+                        .font(AppStyle.Font.cardHeadline)
+                        .foregroundColor(.white)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .onTapGesture {
+                            if isEditable {
+                                onEdit(viewModel.exercise)
+                            }
                         }
-                    }
-
-                HStack(alignment: .center, spacing: 28) {
-                    Button(action: { isShowingAnalytics = true }) {
-                        ChipIcon(
-                            image: "analyticsEntry",
-                            color: AppStyle.Color.greenGlow,
-                            size: .extraLarge
-                        )
-                        .view
-                        .frame(width: 36, height: totalChipHeight)
-                    }
-                    .buttonStyle(.plain)
-
-                    VStack(spacing: chipSpacing) {
+                    
+                    // Level 2: Sets chip, Weight chip, and Analytics icon
+                    HStack(alignment: .center, spacing: 6) {
+                        // Sets chip
                         AppChip(
                             text: viewModel.exercise.seatSetting ?? L10n.seatChipDefaultvalue,
                             fontColor: AppStyle.Color.white,
@@ -54,9 +44,9 @@ struct IdleActiveCardView: View {
                             icon: ChipIcon(image: "chairSettings", color: .white),
                             onTap: isEditable ? { onEdit(viewModel.exercise) } : nil
                         )
-                        .frame(minWidth: 60)
                         .frame(height: chipHeight)
-
+                        
+                        // Weight chip
                         AppChip(
                             text: "\(viewModel.exercise.weight == floor(viewModel.exercise.weight) ? "\(Int(viewModel.exercise.weight))" : String(viewModel.exercise.weight).replacingOccurrences(of: ".", with: ",")) kg",
                             fontColor: AppStyle.Color.white,
@@ -64,11 +54,27 @@ struct IdleActiveCardView: View {
                             size: .regular,
                             onTap: isEditable ? { onEdit(viewModel.exercise) } : nil
                         )
-                        .frame(minWidth: 60)
                         .frame(height: chipHeight)
+                        
+                        // Analytics icon
+                        Button(action: { isShowingAnalytics = true }) {
+                            Image("analyticsEntry")
+                                .renderingMode(.template)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 46, height: 46)
+                                .foregroundColor(AppStyle.Color.greenGlow)
+                        }
+                        .buttonStyle(.plain)
+                        .frame(height: chipHeight) // Align with chips
+                        .padding(.leading, -4) // Compensate for chip's internal padding
+                        
+                        Spacer()
                     }
                 }
-
+                .frame(maxWidth: .infinity) // Takes remaining space intelligently
+                
+                // Right area: Start button
                 if let onStart = onStart, !viewModel.exercise.isCompleted {
                     Button(action: { onStart(viewModel.exercise) }) {
                         ZStack {
@@ -79,13 +85,14 @@ struct IdleActiveCardView: View {
                             Image(systemName: "play.fill")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 12, height: 12)
+                                .frame(width: 16, height: 16)
                                 .foregroundColor(.white)
-                                .offset(x: 1, y: -1)
+                                .offset(x: 2, y: 0)
                         }
                     }
                     .accessibilityIdentifier("id_button_start_exercise")
                     .buttonStyle(.plain)
+
                 }
             }
             .sheet(isPresented: $isShowingAnalytics) {
@@ -95,5 +102,14 @@ struct IdleActiveCardView: View {
         .padding(.horizontal, 16)
         .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
 
+    }
+    
+    private var categoryIconView: some View {
+        Image(viewModel.exercise.category.defaultIconName)
+            .resizable()
+            .scaledToFill()
+            .frame(width: 64, height: 64, alignment: viewModel.exercise.category.iconAlignment)
+            .clipped()
+            .foregroundColor(AppStyle.Color.white)
     }
 }
