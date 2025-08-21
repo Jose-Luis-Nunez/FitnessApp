@@ -67,6 +67,12 @@ struct MuscleCategorySelectionView: View {
     @EnvironmentObject private var overlayState: UIOverlayState
     @State private var currentViewMode: ViewMode = .overview
     
+    // Exercise Picker State
+    @State private var isShowingExercisePicker = false
+    @State private var editingExercise: Exercise?
+    @State private var editingCategory: MuscleCategoryGroup?
+    @StateObject private var exerciseFormViewModel = ExerciseFormViewModel()
+    
     init(navigationPath: Binding<NavigationPath> = .constant(NavigationPath())) {
         self._navigationPath = navigationPath
     }
@@ -74,6 +80,27 @@ struct MuscleCategorySelectionView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             AppStyle.Color.backgroundColor.ignoresSafeArea()
+            
+            // Bottom gradient starting below menu bar and going down
+            VStack {
+                Spacer()
+                
+                LinearGradient(
+                    gradient: Gradient(stops: [
+                        .init(color: Color.clear, location: 0.0),
+                        .init(color: Color.black.opacity(0.6), location: 0.4),
+                        .init(color: Color.black.opacity(0.8), location: 0.7),
+                        .init(color: Color.black.opacity(0.9), location: 0.9),
+                        .init(color: Color.black, location: 1.0)
+                    ]),
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: safeAreaInset + 44)
+                .allowsHitTesting(false)
+                .offset(y: 34)
+            }
+            .zIndex(2)
             
             VStack(spacing: 0) {
                 // Filter Toggle - only show when not training
@@ -156,6 +183,7 @@ struct MuscleCategorySelectionView: View {
                             }
                             .padding(.horizontal, 0)
                             .padding(.top, 16)
+
                         }
                     }
                     // small spacer so last tile isn't glued to gesture area
@@ -275,6 +303,47 @@ struct MuscleCategorySelectionView: View {
                 .transition(.opacity)
                 .zIndex(3)
             }
+            
+            // Exercise picker overlay (like in MuscleCategoryView)
+            if isShowingExercisePicker {
+                if let editingExercise = editingExercise,
+                   let editingCategory = editingCategory {
+                    Color.clear.onAppear { overlayState.isEditingSheetVisible = true }
+                    ExercisePickerView(
+                        formViewModel: exerciseFormViewModel,
+                        title: "Edit Exercise",
+                        isPresented: $isShowingExercisePicker,
+                        onSave: {
+                            // Handle save logic - same as in MuscleCategoryView
+                            if let exercise = exerciseFormViewModel.createOrUpdateExercise() {
+                                if exerciseFormViewModel.editingExercise != nil {
+                                    // Update existing exercise
+                                    viewModel.updateExercise(exercise, category: editingCategory)
+                                } else {
+                                    // Add new exercise (shouldn't happen in edit mode)
+                                    viewModel.updateExercise(exercise, category: editingCategory)
+                                }
+                            }
+                            resetEditingState()
+                        },
+                        onCancel: {
+                            resetEditingState()
+                        },
+                        saveDisabled: !exerciseFormViewModel.isFormValid,
+                        repsRange: 1...50,
+                        weightOptions: generateWeightOptions(),
+                        setsRange: 1...10,
+                        viewModel: MuscleCategoryViewModel(group: editingCategory),
+                        editingExercise: editingExercise
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                    .shadow(radius: 5)
+                    .transition(.move(edge: .bottom).combined(with: .opacity).animation(.easeOut(duration: 0.25)))
+                    .zIndex(5)
+                    .ignoresSafeArea(edges: .bottom)
+                    .onDisappear { overlayState.isEditingSheetVisible = false }
+                }
+            }
         }
         .background(AppStyle.Color.backgroundColor)
         .modifier(
@@ -288,6 +357,7 @@ struct MuscleCategorySelectionView: View {
         .onAppear {
             viewModel.updateExerciseCounts()
         }
+
     }
     
     private var headerView: some View {
@@ -394,8 +464,17 @@ struct MuscleCategorySelectionView: View {
                                 viewModel.updateExercise(updatedExercise, category: category)
                             },
                             onEdit: { exerciseToEdit in
-                                // Navigate to category and trigger edit
-                                navigationPath.append(NavigationDestination.muscleCategory(category))
+                                // In list view, open ExercisePickerView instead of navigating
+                                if currentViewMode == .list {
+                                    editingExercise = exerciseToEdit
+                                    editingCategory = category
+                                    // Configure the form view model
+                                    exerciseFormViewModel.loadExercise(exerciseToEdit, category: category)
+                                    isShowingExercisePicker = true
+                                } else {
+                                    // Navigate to category and trigger edit (original behavior for overview)
+                                    navigationPath.append(NavigationDestination.muscleCategory(category))
+                                }
                             },
                             isEditable: true,
                             analyticsViewModel: AnalyticsViewModel(),
@@ -457,6 +536,29 @@ struct MuscleCategorySelectionView: View {
     
     private var safeAreaInset: CGFloat {
         UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
+    }
+    
+    private func resetEditingState() {
+        editingExercise = nil
+        editingCategory = nil
+    }
+    
+
+    
+
+    
+    private func generateWeightOptions() -> [String] {
+        // Generate weight options from 0 to 300 with 0.5 increments
+        var options: [String] = []
+        for i in 0...600 {
+            let weight = Double(i) * 0.5
+            if weight == floor(weight) {
+                options.append("\(Int(weight))")
+            } else {
+                options.append(String(format: "%.1f", weight).replacingOccurrences(of: ".", with: ","))
+            }
+        }
+        return options
     }
 }
 
