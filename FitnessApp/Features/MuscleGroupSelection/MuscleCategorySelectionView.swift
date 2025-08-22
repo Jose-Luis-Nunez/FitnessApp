@@ -152,7 +152,6 @@ struct MuscleCategorySelectionView: View {
                                         isActiveSetVisible: isActiveSetVisible,
                                         isResetEnabled: exercise.isCompleted
                                     )
-                                    .padding(.horizontal, Constants.horizontalPadding)
                                     
                                     // Add ActiveSetView with same padding as ActiveCardView
                                     if let currentExercise = activeSetViewModel.currentExercise {
@@ -537,6 +536,8 @@ struct MuscleCategorySelectionView: View {
     private var safeAreaInset: CGFloat {
         UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
     }
+    
+
     
     private func resetEditingState() {
         editingExercise = nil
