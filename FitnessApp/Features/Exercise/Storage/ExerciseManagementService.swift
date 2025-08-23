@@ -108,7 +108,7 @@ class ExerciseManagementService: ObservableObject {
     func hasInactiveExercises(for categories: [MuscleCategoryGroup]) -> Bool {
         for category in categories {
             let exercises = getExercises(for: category)
-            if exercises.contains(where: { !$0.isCompleted }) {
+            if exercises.contains(where: { $0.isCompleted }) {
                 return true
             }
         }
