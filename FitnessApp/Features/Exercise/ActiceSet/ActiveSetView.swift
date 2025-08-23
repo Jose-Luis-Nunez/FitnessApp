@@ -158,6 +158,7 @@ private struct ActiveSetRowView: View {
             Text("\(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ",")) kg")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(abs(progress.weight - exercise.weight) > 0.0001 ? AppStyle.Color.green : AppStyle.Color.white)
+
             
             Spacer()
             

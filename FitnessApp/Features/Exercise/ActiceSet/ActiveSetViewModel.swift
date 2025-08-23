@@ -90,16 +90,26 @@ class ActiveSetViewModel: ObservableObject {
     func completeCurrentSet() {
         guard let exercise = currentExercise else { return }
         
+        // Prevent completing sets beyond the defined number
+        guard currentSet < exercise.sets else {
+
+            return
+        }
+        
+        // Ensure setProgress array has the correct size (should not be needed if properly initialized)
+        guard currentSet < setProgress.count else {
+
+            return
+        }
+        
         let progress = SetProgress(
             status: .completedDone,
             currentReps: exercise.reps,
             weight: exercise.weight
         )
-        if setProgress.count <= currentSet {
-            setProgress.append(progress)
-        } else {
-            setProgress[currentSet] = progress
-        }
+        
+        // Update the existing set progress entry
+        setProgress[currentSet] = progress
         
         currentSet += 1
         
@@ -112,14 +122,21 @@ class ActiveSetViewModel: ObservableObject {
     }
     
     func updateCurrentReps(_ newReps: Int, _ newWeight: Double) {
-        guard let exercise = currentExercise else { return }
+        guard let exercise = currentExercise else { 
+
+            return 
+        }
         
         let indexToUpdate: Int
         if let editIndex = pendingEditIndex {
             indexToUpdate = editIndex
+
         } else {
             indexToUpdate = currentSet
+
         }
+        
+
         
         let status: SetStatus = newReps < exercise.reps ? .completedLess : .completedMore
         let progress = SetProgress(
@@ -130,11 +147,16 @@ class ActiveSetViewModel: ObservableObject {
         
         if setProgress.count <= indexToUpdate {
             setProgress.append(progress)
+
         } else {
             setProgress[indexToUpdate] = progress
+
         }
         
-        if pendingEditIndex == nil || indexToUpdate == currentSet {
+
+        
+        if pendingEditIndex == nil {
+            // Only increment currentSet if we're completing a new set, not editing an old one
             currentSet += 1
             if currentSet >= exercise.sets {
                 isLastSetCompleted = true
@@ -142,6 +164,15 @@ class ActiveSetViewModel: ObservableObject {
             isSetInProgress = false
             didJustEditSet = false
         } else {
+            // We're editing an existing set - BUT if it's the active set, increment currentSet like "Done"
+            if pendingEditIndex == activeSetIndex {
+                currentSet += 1
+                if currentSet >= exercise.sets {
+                    isLastSetCompleted = true
+
+                }
+
+            }
             isSetInProgress = false
             didJustEditSet = true
         }

@@ -120,6 +120,26 @@ class MuscleCategorySelectionViewModel: ObservableObject {
         updateExerciseCounts()
     }
     
+    // MARK: - Exercise Finding
+    
+    func findCategoryForExercise(_ exercise: Exercise) -> MuscleCategoryGroup? {
+        for category in MuscleCategoryGroup.allCases {
+            let exercises = getExercises(for: category)
+            if exercises.contains(where: { $0.id == exercise.id }) {
+                return category
+            }
+        }
+        return nil
+    }
+    
+    func allExercises() -> [Exercise] {
+        var allExercises: [Exercise] = []
+        for category in MuscleCategoryGroup.allCases {
+            allExercises.append(contentsOf: getExercises(for: category))
+        }
+        return allExercises
+    }
+    
     // MARK: - Workout Selection
     
     func selectWorkout(_ workout: Workout) {

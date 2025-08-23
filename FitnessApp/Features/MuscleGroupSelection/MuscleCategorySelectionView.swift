@@ -62,7 +62,7 @@ private enum ViewMode {
 
 struct MuscleCategorySelectionView: View {
     @StateObject private var viewModel = MuscleCategorySelectionViewModel()
-    @StateObject private var activeSetViewModel = ActiveSetViewModel()
+    @StateObject private var trainingCoordinator: TrainingCoordinator
     @Binding var navigationPath: NavigationPath
     @EnvironmentObject private var overlayState: UIOverlayState
     @State private var currentViewMode: ViewMode = .overview
@@ -72,14 +72,39 @@ struct MuscleCategorySelectionView: View {
     @State private var editingExercise: Exercise?
     @State private var editingCategory: MuscleCategoryGroup?
     @StateObject private var exerciseFormViewModel = ExerciseFormViewModel()
+    @State private var isProcessingSaveCancel = false  // Prevent multiple calls
+    
+
+    
+
     
     init(navigationPath: Binding<NavigationPath> = .constant(NavigationPath())) {
         self._navigationPath = navigationPath
+        let selectionViewModel = MuscleCategorySelectionViewModel()
+        
+        _trainingCoordinator = StateObject(wrappedValue: TrainingCoordinator(
+            findCategory: { exercise in
+                return selectionViewModel.findCategoryForExercise(exercise)
+            },
+            onExerciseUpdate: { exercise, category in
+                selectionViewModel.updateExercise(exercise, category: category)
+            },
+            onExerciseReset: { exercise, category in
+                selectionViewModel.resetExercise(exercise, category: category)
+            },
+            onAddExercise: {},
+            onResetAllExercises: {}
+        ))
+        
+        _viewModel = StateObject(wrappedValue: selectionViewModel)
     }
     
     var body: some View {
         ZStack(alignment: .bottom) {
             AppStyle.Color.backgroundColor.ignoresSafeArea()
+            
+            // Force observation of activeSetViewModel changes
+            let _ = trainingCoordinator.activeSetViewModel.objectWillChange
             
             // Bottom gradient starting below menu bar and going down
             VStack {
@@ -104,7 +129,7 @@ struct MuscleCategorySelectionView: View {
             
             VStack(spacing: 0) {
                 // Filter Toggle - only show when not training
-                if activeSetViewModel.currentExercise == nil {
+                if !trainingCoordinator.isTrainingActive {
                     filterToggleView
                         .padding(.horizontal, Constants.horizontalPadding)
                         .padding(.top, Constants.topPadding)
@@ -119,33 +144,33 @@ struct MuscleCategorySelectionView: View {
                         .padding(.top, 16)
                     } else {
                         // List mode - check if training is active
-                        let isActiveSetVisible = activeSetViewModel.currentExercise != nil
+                        let isActiveSetVisible = trainingCoordinator.isTrainingActive
                         
                         if isActiveSetVisible {
                             // Show only active exercise (like in MuscleCategoryView)
-                            if let exercise = activeSetViewModel.currentExercise {
-                                LazyVStack(spacing: 12) {
+                            if let exercise = trainingCoordinator.currentExercise {
+                                LazyVStack(spacing: 16) {
                                     ExerciseCardContainerView(
                                         viewModel: ExerciseCardViewModel(exercise: exercise) { updatedExercise in
                                             // Update exercise for its category
-                                            if let category = findCategoryForExercise(exercise) {
+                                            if let category = viewModel.findCategoryForExercise(exercise) {
                                                 viewModel.updateExercise(updatedExercise, category: category)
                                             }
                                         },
                                         onEdit: { exerciseToEdit in
                                             // Navigate to category for editing
-                                            if let category = findCategoryForExercise(exerciseToEdit) {
+                                            if let category = viewModel.findCategoryForExercise(exerciseToEdit) {
                                                 navigationPath.append(NavigationDestination.muscleCategory(category))
                                             }
                                         },
-                                        isEditable: !activeSetViewModel.isSetInProgress,
+                                        isEditable: !trainingCoordinator.activeSetViewModel.isSetInProgress,
                                         analyticsViewModel: AnalyticsViewModel(),
-                                        activeSetViewModel: activeSetViewModel,
+                                        activeSetViewModel: trainingCoordinator.activeSetViewModel,
                                         onStart: { exerciseToStart in
                                             // Already active, this shouldn't happen
                                         },
                                         onReset: { exerciseToReset in
-                                            if let category = findCategoryForExercise(exerciseToReset) {
+                                            if let category = viewModel.findCategoryForExercise(exerciseToReset) {
                                                 viewModel.resetExercise(exerciseToReset, category: category)
                                             }
                                         },
@@ -153,25 +178,10 @@ struct MuscleCategorySelectionView: View {
                                         isResetEnabled: exercise.isCompleted
                                     )
                                     
-                                    // Add ActiveSetView with same padding as ActiveCardView
-                                    if let currentExercise = activeSetViewModel.currentExercise {
-                                        VStack(spacing: 16) {
-                                            ActiveSetView(
-                                                sets: currentExercise.sets,
-                                                exercise: currentExercise,
-                                                setProgress: .constant(activeSetViewModel.setProgress),
-                                                viewModel: activeSetViewModel
-                                            )
-                                            .onAppear {
-                                                if activeSetViewModel.isSetInProgress {
-                                                    activeSetViewModel.startTimer()
-                                                }
-                                            }
-                                            
-                                            // Add TimerView like in MuscleCategoryView
-                                            TimerView(viewModel: activeSetViewModel)
-                                        }
-                                    }
+                                    TrainingSessionComponent(
+                                        coordinator: trainingCoordinator,
+                                        analyticsViewModel: AnalyticsViewModel()
+                                    )
                                 }
                                 .padding(.top, 16)
                             }
@@ -191,66 +201,12 @@ struct MuscleCategorySelectionView: View {
             }
             
             // Bottom Action Bar for active training (like in MuscleCategoryView)
-            if currentViewMode == .list && activeSetViewModel.currentExercise != nil {
-                BottomActionBarView(
-                    viewModel: createBottomActionBarViewModel(),
-                    onStart: {
-                        guard let exercise = activeSetViewModel.currentExercise else { return }
-                        if activeSetViewModel.currentSet == 0 && activeSetViewModel.setProgress.isEmpty {
-                            activeSetViewModel.startSet(for: exercise, category: findCategoryForExercise(exercise) ?? .arms)
-                        } else {
-                            activeSetViewModel.startNextSet()
-                        }
-                    },
-                    onCompleteSet: {
-                        activeSetViewModel.stopTimer()
-                        activeSetViewModel.completeCurrentSet()
-                    },
-                    onQuickDone: {
-                        if let activeExercise = activeSetViewModel.currentExercise {
-                            activeSetViewModel.startQuickDone(for: activeExercise, category: findCategoryForExercise(activeExercise) ?? .arms)
-                        }
-                    },
-                    onCompleteAllQuickDone: {
-                        activeSetViewModel.completeAllQuickDone()
-                    },
-                                                        onCategoryReset: {
-                        activeSetViewModel.stopTimer()
-                        // Reset the current exercise
-                        if let exercise = activeSetViewModel.currentExercise,
-                           let category = findCategoryForExercise(exercise) {
-                            viewModel.resetExercise(exercise, category: category)
-                        }
-                    },
-                    onEditLess: {
-                        activeSetViewModel.stopTimer()
-                        activeSetViewModel.startEditingSet(index: activeSetViewModel.currentSet, mode: .less)
-                    },
-                    onEditMore: {
-                        activeSetViewModel.stopTimer()
-                        activeSetViewModel.startEditingSet(index: activeSetViewModel.currentSet, mode: .more)
-                    },
-                    onFinish: {
-                        // Finish exercise when last set is completed - use shared service
-                        activeSetViewModel.stopTimer()
-                        if activeSetViewModel.isLastSetCompleted,
-                           let exercise = activeSetViewModel.currentExercise,
-                           let category = findCategoryForExercise(exercise) {
-                            // Complete exercise with analytics saving
-                            viewModel.completeExercise(exercise, category: category, setProgress: activeSetViewModel.setProgress)
-                        }
-                        activeSetViewModel.finishExercise()
-                    },
-                    onAddExercise: {
-                        // Navigate to add exercise - not used in list view
-                    },
-                    onResetAllExercises: {
-                        // Reset all exercises - not used in this context
-                    }
-                )
-                .offset(y: -10)
-                .zIndex(5)
-            }
+            TrainingActionBarComponent(
+                coordinator: trainingCoordinator,
+                exercises: viewModel.allExercises(),
+                hasActiveExercise: trainingCoordinator.isTrainingActive
+            )
+            .offset(y: -10)
             
             // Workout picker overlay
             if overlayState.showWorkoutDropdown {
@@ -345,6 +301,7 @@ struct MuscleCategorySelectionView: View {
             }
         }
         .background(AppStyle.Color.backgroundColor)
+        .id("picker-\(trainingCoordinator.activeSetViewModel.isEditing)")
         .modifier(
             CustomToolbarModifier(
                 navigationPath: $navigationPath,
@@ -356,6 +313,101 @@ struct MuscleCategorySelectionView: View {
         .onAppear {
             viewModel.updateExerciseCounts()
         }
+        // ActiveSetEditPickerView - SIMPLE: Direct isEditing condition
+        .overlay(
+            Group {
+                if trainingCoordinator.activeSetViewModel.isEditing {
+
+                    ActiveSetEditPickerView(
+                        title: {
+                            switch trainingCoordinator.activeSetViewModel.editMode {
+                            case .less: "Verschlechtert"
+                            case .more: "Verbessert"
+                            case .edit: "Bearbeiten"
+                            }
+                        }(),
+                        selectedReps: $trainingCoordinator.activeSetViewModel.repsInput,
+                        selectedWeight: $trainingCoordinator.activeSetViewModel.weightInput,
+                        repsRange: 1...30,
+                        weightOptions: generateWeightOptions(),
+                        onSave: { newReps, newWeight in
+                            guard !isProcessingSaveCancel else { 
+                                return 
+                            }
+                            isProcessingSaveCancel = true
+                            
+                            // Save the edited values
+                            
+                            trainingCoordinator.activeSetViewModel.updateCurrentReps(newReps, newWeight)
+                            
+
+                            trainingCoordinator.activeSetViewModel.isEditing = false
+                            trainingCoordinator.activeSetViewModel.pendingEditIndex = nil
+                            
+
+                            
+                            // Force ActiveSetViewModel refresh
+                            trainingCoordinator.activeSetViewModel.objectWillChange.send()
+                            
+                            // updateCurrentReps already incremented currentSet for active set
+                            // Start timer for next set if not completed
+                            if !trainingCoordinator.activeSetViewModel.isLastSetCompleted {
+                                trainingCoordinator.activeSetViewModel.startNextSet()
+
+                            } else {
+
+                            }
+                            
+                            // Force UI refresh
+                            trainingCoordinator.objectWillChange.send()
+                            
+
+                            
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                // Additional UI refresh after short delay
+                                trainingCoordinator.objectWillChange.send()
+
+                            }
+                            
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                isProcessingSaveCancel = false
+
+                            }
+                        },
+                        onCancel: {
+                            guard !isProcessingSaveCancel else { 
+                                return 
+                            }
+                            isProcessingSaveCancel = true
+                            
+
+                            
+                            // ONLY reset editing state - DON'T touch timer or training state
+                            trainingCoordinator.activeSetViewModel.isEditing = false
+                            trainingCoordinator.activeSetViewModel.pendingEditIndex = nil
+                            
+                            // Force UI refresh to show FABs again
+                            trainingCoordinator.objectWillChange.send()
+                            
+
+                            
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                isProcessingSaveCancel = false
+
+                            }
+                        },
+                        saveDisabled: {
+                            let isValid = trainingCoordinator.activeSetViewModel.isInputValid
+                            let repsInput = trainingCoordinator.activeSetViewModel.repsInput
+                            let weightInput = trainingCoordinator.activeSetViewModel.weightInput
+
+                            return !isValid
+                        }()
+                    )
+                    .zIndex(999)
+                }
+            }
+        )
 
     }
     
@@ -477,20 +529,20 @@ struct MuscleCategorySelectionView: View {
                             },
                             isEditable: true,
                             analyticsViewModel: AnalyticsViewModel(),
-                            activeSetViewModel: activeSetViewModel,
+                            activeSetViewModel: trainingCoordinator.activeSetViewModel,
                             onStart: { exerciseToStart in
                                 // Add haptic feedback
                                 let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                                 impactFeedback.impactOccurred()
                                 
                                 // Start exercise training directly - stay in list view
-                                activeSetViewModel.startSet(for: exerciseToStart, category: category)
+                                trainingCoordinator.startTraining(for: exerciseToStart)
                             },
                             onReset: { exerciseToReset in
                                 // Reset exercise
                                 viewModel.resetExercise(exerciseToReset, category: category)
                             },
-                            isActiveSetVisible: activeSetViewModel.currentExercise != nil,
+                            isActiveSetVisible: trainingCoordinator.isTrainingActive,
                             isResetEnabled: exercise.isCompleted
                         )
                     }
@@ -499,39 +551,11 @@ struct MuscleCategorySelectionView: View {
         }
     }
     
-    private func findCategoryForExercise(_ exercise: Exercise) -> MuscleCategoryGroup? {
-        for category in MuscleCategoryGroup.allCases {
-            let exercises = viewModel.getExercises(for: category)
-            if exercises.contains(where: { $0.id == exercise.id }) {
-                return category
-            }
-        }
-        return nil
-    }
+
     
 
     
-    private func createBottomActionBarViewModel() -> BottomActionBarViewModel {
-        // Get all exercises across all categories for comprehensive view
-        var allExercises: [Exercise] = []
-        for category in MuscleCategoryGroup.allCases {
-            allExercises.append(contentsOf: viewModel.getExercises(for: category))
-        }
-        
-        return BottomActionBarViewModel(
-            isSetInProgress: activeSetViewModel.isSetInProgress,
-            currentSet: activeSetViewModel.currentSet,
-            currentExercise: activeSetViewModel.currentExercise,
-            hasActiveExercise: allExercises.contains { !$0.isCompleted },
-            exercises: allExercises,
-            isLastSetCompleted: activeSetViewModel.isLastSetCompleted,
-            quickDoneModeActive: activeSetViewModel.quickDoneModeActive,
-            quickDoneAllCompleted: activeSetViewModel.quickDoneAllCompleted,
-            didEditCompleteSet: activeSetViewModel.didEditCompleteSet,
-            didJustEditSet: activeSetViewModel.didJustEditSet,
-            showResetAllExercisesButton: false
-        )
-    }
+
     
     private var safeAreaInset: CGFloat {
         UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0

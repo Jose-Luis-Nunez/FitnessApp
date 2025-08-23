@@ -13,6 +13,10 @@ struct BottomActionBarView: View {
     let onAddExercise: () -> Void
     let onResetAllExercises: () -> Void
     // Note: Add/Reset are no longer rendered here; only core training controls remain
+    
+    // CENTRAL PICKER STATE
+    @State private var isShowingEditPicker = false
+    @State private var editMode: SetEditingMode = .less
 
     private let barHeight: CGFloat = 0
     private let backgroundColor = AppStyle.Color.backgroundColor
@@ -142,7 +146,9 @@ struct FloatingActionButtonsView: View {
                                 textFont: AppStyle.Font.bottomBarButtons,
                                 backgroundColor: AppStyle.Color.greenLight,
                                 fontColor: AppStyle.Color.white,
-                                action: onEditLess,
+                                action: {
+                                    onEditLess()
+                                },
                                 width: smallMinWidth
                             )
 
@@ -162,7 +168,9 @@ struct FloatingActionButtonsView: View {
                                 textFont: AppStyle.Font.bottomBarButtons,
                                 backgroundColor: AppStyle.Color.greenLight,
                                 fontColor: AppStyle.Color.white,
-                                action: onEditMore,
+                                action: {
+                                    onEditMore()
+                                },
                                 width: smallMinWidth
                             )
                         }
