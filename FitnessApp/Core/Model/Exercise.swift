@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-struct Exercise: Identifiable, Codable, Equatable {
+struct Exercise: Identifiable, Codable, Equatable, Hashable {
     let id: UUID
     var name: String
     var weight: Double
@@ -64,6 +64,10 @@ struct Exercise: Identifiable, Codable, Equatable {
     
     static func == (lhs: Exercise, rhs: Exercise) -> Bool {
         lhs.id == rhs.id
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 }
 

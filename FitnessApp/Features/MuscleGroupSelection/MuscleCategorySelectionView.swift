@@ -72,7 +72,7 @@ struct MuscleCategorySelectionView: View {
     @State private var editingExercise: Exercise?
     @State private var editingCategory: MuscleCategoryGroup?
     @StateObject private var exerciseFormViewModel = ExerciseFormViewModel()
-    @State private var isProcessingSaveCancel = false  // Prevent multiple calls
+
     
 
     
@@ -167,7 +167,14 @@ struct MuscleCategorySelectionView: View {
                                         analyticsViewModel: AnalyticsViewModel(),
                                         activeSetViewModel: trainingCoordinator.activeSetViewModel,
                                         onStart: { exerciseToStart in
-                                            // Already active, this shouldn't happen
+                                            // Navigate to TrainingView
+                                            if let category = viewModel.findCategoryForExercise(exerciseToStart) {
+                                                TrainingNavigationHelper.navigateToTraining(
+                                                    exercise: exerciseToStart,
+                                                    category: category,
+                                                    navigationPath: &navigationPath
+                                                )
+                                            }
                                         },
                                         onReset: { exerciseToReset in
                                             if let category = viewModel.findCategoryForExercise(exerciseToReset) {
@@ -206,7 +213,11 @@ struct MuscleCategorySelectionView: View {
                 exercises: viewModel.allExercises(),
                 hasActiveExercise: trainingCoordinator.isTrainingActive
             )
-            .offset(y: -10)
+            .padding(.bottom, safeAreaInset + 12)
+            
+            // Training Picker Component - Centralized picker logic (moved inside ZStack)
+            TrainingPickerComponent(coordinator: trainingCoordinator)
+                .zIndex(1001)  // Ensure it's above everything including bottom menu bar
             
             // Workout picker overlay
             if overlayState.showWorkoutDropdown {
@@ -286,7 +297,7 @@ struct MuscleCategorySelectionView: View {
                         },
                         saveDisabled: !exerciseFormViewModel.isFormValid,
                         repsRange: 1...50,
-                        weightOptions: generateWeightOptions(),
+                        weightOptions: WeightOptionsGenerator.generateExerciseWeightOptions(),
                         setsRange: 1...10,
                         viewModel: MuscleCategoryViewModel(group: editingCategory),
                         editingExercise: editingExercise
@@ -313,111 +324,21 @@ struct MuscleCategorySelectionView: View {
         .onAppear {
             viewModel.updateExerciseCounts()
         }
-        // ActiveSetEditPickerView - SIMPLE: Direct isEditing condition
-        .overlay(
-            Group {
-                if trainingCoordinator.activeSetViewModel.isEditing {
 
-                    ActiveSetEditPickerView(
-                        title: {
-                            switch trainingCoordinator.activeSetViewModel.editMode {
-                            case .less: "Verschlechtert"
-                            case .more: "Verbessert"
-                            case .edit: "Bearbeiten"
-                            }
-                        }(),
-                        selectedReps: $trainingCoordinator.activeSetViewModel.repsInput,
-                        selectedWeight: $trainingCoordinator.activeSetViewModel.weightInput,
-                        repsRange: 1...30,
-                        weightOptions: generateWeightOptions(),
-                        onSave: { newReps, newWeight in
-                            guard !isProcessingSaveCancel else { 
-                                return 
-                            }
-                            isProcessingSaveCancel = true
-                            
-                            // Save the edited values
-                            
-                            trainingCoordinator.activeSetViewModel.updateCurrentReps(newReps, newWeight)
-                            
-
-                            trainingCoordinator.activeSetViewModel.isEditing = false
-                            trainingCoordinator.activeSetViewModel.pendingEditIndex = nil
-                            
-
-                            
-                            // Force ActiveSetViewModel refresh
-                            trainingCoordinator.activeSetViewModel.objectWillChange.send()
-                            
-                            // updateCurrentReps already incremented currentSet for active set
-                            // Start timer for next set if not completed
-                            if !trainingCoordinator.activeSetViewModel.isLastSetCompleted {
-                                trainingCoordinator.activeSetViewModel.startNextSet()
-
-                            } else {
-
-                            }
-                            
-                            // Force UI refresh
-                            trainingCoordinator.objectWillChange.send()
-                            
-
-                            
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                // Additional UI refresh after short delay
-                                trainingCoordinator.objectWillChange.send()
-
-                            }
-                            
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                isProcessingSaveCancel = false
-
-                            }
-                        },
-                        onCancel: {
-                            guard !isProcessingSaveCancel else { 
-                                return 
-                            }
-                            isProcessingSaveCancel = true
-                            
-
-                            
-                            // ONLY reset editing state - DON'T touch timer or training state
-                            trainingCoordinator.activeSetViewModel.isEditing = false
-                            trainingCoordinator.activeSetViewModel.pendingEditIndex = nil
-                            
-                            // Force UI refresh to show FABs again
-                            trainingCoordinator.objectWillChange.send()
-                            
-
-                            
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                isProcessingSaveCancel = false
-
-                            }
-                        },
-                        saveDisabled: {
-                            let isValid = trainingCoordinator.activeSetViewModel.isInputValid
-                            let repsInput = trainingCoordinator.activeSetViewModel.repsInput
-                            let weightInput = trainingCoordinator.activeSetViewModel.weightInput
-
-                            return !isValid
-                        }()
-                    )
-                    .zIndex(999)
-                }
-            }
-        )
 
     }
     
     private var headerView: some View {
-        Text("Dein Workout")
-            .font(AppStyle.Font.navigationHeadline)
-            .foregroundColor(AppStyle.Color.white)
-            .padding(.top, Constants.titleTopPadding)
-            .padding(.bottom, Constants.titleBottomSpacing)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        HStack {
+            Text("Dein Workout")
+                .font(AppStyle.Font.navigationHeadline)
+                .foregroundColor(AppStyle.Color.white)
+                .padding(.top, Constants.titleTopPadding)
+                .padding(.bottom, Constants.titleBottomSpacing)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+
+        }
     }
     
     private var categoryList: some View {
@@ -535,8 +456,12 @@ struct MuscleCategorySelectionView: View {
                                 let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                                 impactFeedback.impactOccurred()
                                 
-                                // Start exercise training directly - stay in list view
-                                trainingCoordinator.startTraining(for: exerciseToStart)
+                                // Navigate to TrainingView
+                                TrainingNavigationHelper.navigateToTraining(
+                                    exercise: exerciseToStart,
+                                    category: category,
+                                    navigationPath: &navigationPath
+                                )
                             },
                             onReset: { exerciseToReset in
                                 // Reset exercise
@@ -548,6 +473,10 @@ struct MuscleCategorySelectionView: View {
                     }
                 }
             }
+        }
+        .onAppear {
+            // Refresh exercise data when view appears (e.g., returning from TrainingView)
+            viewModel.updateExerciseCounts()
         }
     }
     
@@ -572,19 +501,7 @@ struct MuscleCategorySelectionView: View {
     
 
     
-    private func generateWeightOptions() -> [String] {
-        // Generate weight options from 0 to 300 with 0.5 increments
-        var options: [String] = []
-        for i in 0...600 {
-            let weight = Double(i) * 0.5
-            if weight == floor(weight) {
-                options.append("\(Int(weight))")
-            } else {
-                options.append(String(format: "%.1f", weight).replacingOccurrences(of: ".", with: ","))
-            }
-        }
-        return options
-    }
+
 }
 
 private struct CategoryTileView: View {

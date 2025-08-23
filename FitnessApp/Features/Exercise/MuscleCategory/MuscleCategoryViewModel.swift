@@ -164,6 +164,15 @@ class MuscleCategoryViewModel: ObservableObject {
         }
     }
     
+    func refreshExercises() {
+        // Reload exercises from storage to reflect any changes (e.g., after training completion)
+        if let currentWorkout = workoutStorageService.currentWorkout {
+            exercises = storageService.loadForWorkout(workoutId: currentWorkout.id, category: group)
+        } else {
+            exercises = storageService.load(for: group)
+        }
+    }
+    
     func saveAnalytics() {
         guard let exercise = activeSetViewModel.currentExercise else {
             print("No exercise to save for analytics")

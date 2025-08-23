@@ -50,7 +50,7 @@ struct MuscleCategoryView: View {
     }
 
     @EnvironmentObject private var overlayState: UIOverlayState
-    @State private var isEditPickerVisible = false  // Manual picker control
+
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -92,66 +92,8 @@ struct MuscleCategoryView: View {
             )
             .padding(.bottom, safeAreaBottomInset + 12)
             
-            if trainingCoordinator.activeSetViewModel.isEditing || isEditPickerVisible {
-                // Signal: bring sheet to front, hide menu bar
-                Color.clear
-                    .onAppear { 
-                        overlayState.isEditingSheetVisible = true 
-                    }
-                ActiveSetEditPickerView(
-                    title: {
-                        switch trainingCoordinator.activeSetViewModel.editMode {
-                        case .less: "Verschlechtert"
-                        case .more: "Verbessert"
-                        case .edit: "Bearbeiten"
-                        }
-                    }(),
-                    selectedReps: $trainingCoordinator.activeSetViewModel.repsInput,
-                    selectedWeight: $trainingCoordinator.activeSetViewModel.weightInput,
-                    repsRange: 1...30,
-                    weightOptions: generateWeightOptions(),
-                    onSave: { newReps, newWeight in
-
-                        
-                        // Save the edited values
-                        trainingCoordinator.activeSetViewModel.updateCurrentReps(newReps, newWeight)
-                        trainingCoordinator.activeSetViewModel.isEditing = false
-                        trainingCoordinator.activeSetViewModel.pendingEditIndex = nil
-                        isEditPickerVisible = false  // Force picker to close
-                        
-                        // Force ActiveSetViewModel refresh
-                        trainingCoordinator.activeSetViewModel.objectWillChange.send()
-                        
-                        // updateCurrentReps already incremented currentSet for active set
-                        // Start timer for next set if not completed
-                        if !trainingCoordinator.activeSetViewModel.isLastSetCompleted {
-                            trainingCoordinator.activeSetViewModel.startNextSet()
-
-                        } else {
-
-                        }
-                        
-                        // Force UI refresh
-                        trainingCoordinator.objectWillChange.send()
-                        
-
-                    },
-                    onCancel: {
-
-                        trainingCoordinator.activeSetViewModel.isEditing = false
-                        trainingCoordinator.activeSetViewModel.pendingEditIndex = nil
-                        isEditPickerVisible = false  // Force picker to close
-
-                    },
-                    saveDisabled: !trainingCoordinator.activeSetViewModel.isInputValid
-                )
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                .shadow(radius: 5)
-                .transition(.move(edge: .bottom))
-                .zIndex(3)
-                .ignoresSafeArea(edges: .bottom)
-                .onDisappear { overlayState.isEditingSheetVisible = false }
-            }
+            // Training Picker Component - Centralized picker logic
+            TrainingPickerComponent(coordinator: trainingCoordinator)
             
             if formViewModel.showForm {
                 // Signal: bring sheet to front, hide menu bar
@@ -174,7 +116,7 @@ struct MuscleCategoryView: View {
                     },
                     saveDisabled: !formViewModel.isFormValid,
                     repsRange: 1...30,
-                    weightOptions: generateWeightOptions(),
+                    weightOptions: WeightOptionsGenerator.generateExerciseWeightOptions(),
                     setsRange: 1...10,
                     viewModel: viewModel,
                     editingExercise: formViewModel.editingExercise,
@@ -190,13 +132,10 @@ struct MuscleCategoryView: View {
         .customToolbar(title: group.displayName, navigationPath: $navigationPath, showBackButton: false)
         .navigationBarBackButtonHidden(true)
         .onAppear {
-            // Initialization if needed
+            // Refresh exercises when view appears (e.g., returning from TrainingView)
+            viewModel.refreshExercises()
         }
-        .onChange(of: trainingCoordinator.activeSetViewModel.isEditing) { isEditing in
-            if isEditing && !isEditPickerVisible {
-                isEditPickerVisible = true
-            }
-        }
+
         // Mini menu overlay extracted for compiler performance
         .overlay(miniMenuOverlay)
         .alert("Übungen zurücksetzen?", isPresented: $viewModel.showResetConfirmation) {
@@ -210,17 +149,7 @@ struct MuscleCategoryView: View {
     }
 
     
-    private func generateWeightOptions() -> [String] {
-        var options: [String] = []
-        for i in 0...180 {
-            options.append(String(i))
-            if i < 180 {
-                let halfValue = Double(i) + 0.5
-                options.append(String(halfValue).replacingOccurrences(of: ".", with: ","))
-            }
-        }
-        return options
-    }
+
 
     @ViewBuilder
     private func menuRow(icon: String, title: String, action: @escaping () -> Void) -> some View {
@@ -273,7 +202,12 @@ struct MuscleCategoryView: View {
                         analyticsViewModel: analyticsViewModel,
                         activeSetViewModel: trainingCoordinator.activeSetViewModel,
                         onStart: { selectedExercise in
-                            trainingCoordinator.startTraining(for: selectedExercise)
+                            // Navigate to TrainingView
+                            TrainingNavigationHelper.navigateToTraining(
+                                exercise: selectedExercise,
+                                category: group,
+                                navigationPath: &navigationPath
+                            )
                         },
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)
@@ -321,7 +255,12 @@ struct MuscleCategoryView: View {
                         activeSetViewModel: trainingCoordinator.activeSetViewModel,
 
                         onStart: { selectedExercise in
-                            trainingCoordinator.startTraining(for: selectedExercise)
+                            // Navigate to TrainingView
+                            TrainingNavigationHelper.navigateToTraining(
+                                exercise: selectedExercise,
+                                category: group,
+                                navigationPath: &navigationPath
+                            )
                         },
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)
@@ -360,7 +299,12 @@ struct MuscleCategoryView: View {
                         activeSetViewModel: trainingCoordinator.activeSetViewModel,
 
                         onStart: { selectedExercise in
-                            trainingCoordinator.startTraining(for: selectedExercise)
+                            // Navigate to TrainingView
+                            TrainingNavigationHelper.navigateToTraining(
+                                exercise: selectedExercise,
+                                category: group,
+                                navigationPath: &navigationPath
+                            )
                         },
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)
@@ -408,7 +352,12 @@ private extension MuscleCategoryView {
                                 // Middle: Start Training
                                 MiniActionMenuItem(icon: viewModel.showStartTraining ? "play.fill" : nil, title: viewModel.showStartTraining ? "Start Training" : "", isDestructive: false) {
                                     if let exercise = trainingCoordinator.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) {
-                                        trainingCoordinator.startTraining(for: exercise)
+                                        // Navigate to TrainingView
+                                        TrainingNavigationHelper.navigateToTraining(
+                                            exercise: exercise,
+                                            category: group,
+                                            navigationPath: &navigationPath
+                                        )
                                     }
                                     overlayState.showCategoryMiniMenu = false
                                 },

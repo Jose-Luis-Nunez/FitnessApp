@@ -6,6 +6,7 @@ enum NavigationDestination: Hashable {
     case profile
     case totalAnalytics
     case muscleCategory(MuscleCategoryGroup)
+    case training(Exercise, MuscleCategoryGroup)
 }
 
 @main
@@ -63,6 +64,10 @@ struct FitnessAppApp: App {
                                         .onAppear { isShowingWorkoutsRoot = false; currentScene = .home }
                                 case .muscleCategory(let group):
                                     MuscleCategoryView(group: group, navigationPath: $navigationPath)
+                                        .navigationBarBackButtonHidden(true)
+                                        .onAppear { isShowingWorkoutsRoot = false; currentScene = .category }
+                                case .training(let exercise, let category):
+                                    TrainingView(exercise: exercise, category: category, navigationPath: $navigationPath)
                                         .navigationBarBackButtonHidden(true)
                                         .onAppear { isShowingWorkoutsRoot = false; currentScene = .category }
                                 }
