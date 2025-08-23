@@ -16,7 +16,7 @@ struct FitnessAppApp: App {
     @StateObject private var workoutStorageService = WorkoutStorageService.shared
     @State private var isShowingWorkoutsRoot: Bool = false
     @State private var didAutoNavigateToHome: Bool = false
-    private enum CurrentScene { case workouts, home, profile, category }
+    private enum CurrentScene { case workouts, home, profile, category, training }
     @State private var currentScene: CurrentScene = .workouts
     
     private let backgroundColor = AppStyle.Color.backgroundColor
@@ -69,7 +69,7 @@ struct FitnessAppApp: App {
                                 case .training(let exercise, let category):
                                     TrainingView(exercise: exercise, category: category, navigationPath: $navigationPath)
                                         .navigationBarBackButtonHidden(true)
-                                        .onAppear { isShowingWorkoutsRoot = false; currentScene = .category }
+                                        .onAppear { isShowingWorkoutsRoot = false; currentScene = .training }
                                 }
                             }
                             .onAppear {
@@ -96,6 +96,7 @@ struct FitnessAppApp: App {
                     switch currentScene {
                     case .home: return .menu
                     case .category, .workouts, .profile: return .menu
+                    case .training: return .menu  // TrainingView has no mini menu, but keep menu icon
                     }
                 }()
 
@@ -117,12 +118,14 @@ struct FitnessAppApp: App {
                             overlayState.showWorkoutsMiniMenu.toggle()
                         case .profile:
                             break
+                        case .training:
+                            overlayState.showTrainingMiniMenu.toggle()
                         }
                     }
                 )
-                .zIndex((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu) ? 0 : 1)
-                .opacity((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu) ? 0 : 1)
-                .allowsHitTesting(!(overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu))
+                .zIndex((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu) ? 0 : 1)
+                .opacity((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu) ? 0 : 1)
+                .allowsHitTesting(!(overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu))
             }
             .environmentObject(overlayState)
         }

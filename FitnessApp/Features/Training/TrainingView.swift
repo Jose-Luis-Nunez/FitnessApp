@@ -102,6 +102,43 @@ struct TrainingView: View {
                 // Training Picker Component
                 TrainingPickerComponent(coordinator: trainingCoordinator)
             }
+            
+            // Training Mini Menu Overlay
+            if overlayState.showTrainingMiniMenu {
+                // Backdrop to dismiss on outside tap
+                Color.black.opacity(0.001)
+                    .ignoresSafeArea(.all)
+                    .onTapGesture { overlayState.showTrainingMiniMenu = false }
+
+                // Floating menu panel
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        MiniActionMenuView(
+                            title: nil,
+                            items: [
+                                // Cancel Training
+                                MiniActionMenuItem(
+                                    icon: "xmark", 
+                                    title: "Cancel", 
+                                    isDestructive: true
+                                ) {
+                                    // Cancel the active training
+                                    trainingCoordinator.activeSetViewModel.cancelActiveSet()
+                                    overlayState.showTrainingMiniMenu = false
+                                }
+                            ],
+                            width: min(UIScreen.main.bounds.width * 0.55, 320),
+                            minHeight: 140
+                        )
+                        .padding(.trailing, 12)
+                    }
+                    .padding(.bottom, safeAreaBottomInset - 50)
+                }
+                .transition(.opacity)
+                .zIndex(4)
+            }
         }
         .customToolbar(title: exercise.name, navigationPath: $navigationPath, showBackButton: false)
         .navigationBarTitleDisplayMode(.inline)
@@ -118,6 +155,9 @@ struct TrainingView: View {
             // Auto-navigate back when training is finished (ANY reason: completed, cancelled, reset)
             if !isActive && !hasFinishedTraining && !isInitialLoad && !navigationPath.isEmpty {
                 hasFinishedTraining = true
+                // Hide any overlay states before navigating back
+                overlayState.showTrainingMiniMenu = false
+                
                 // Always navigate back when training becomes inactive
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     // Double check that we're still on the TrainingView before navigating back
@@ -133,6 +173,9 @@ struct TrainingView: View {
                 // Save analytics before leaving
                 trainingCoordinator.finishExercise()
             }
+            
+            // Always clean up overlay states when leaving TrainingView
+            overlayState.showTrainingMiniMenu = false
         }
     }
     
