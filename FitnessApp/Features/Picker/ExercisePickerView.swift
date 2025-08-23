@@ -54,7 +54,7 @@ struct ExercisePickerView: View {
                         .fontWeight(.bold)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity, alignment: .center)
-
+                    
                     HStack {
                         if let exercise = editingExercise {
                             Button(action: {
@@ -74,7 +74,7 @@ struct ExercisePickerView: View {
                         Spacer()
 
                         HStack(spacing: 6) {
-                            Text("Dezimal")
+                            Text("Decimal")
                                 .font(.system(size: 12, weight: .semibold))
                                 .foregroundColor(textColor.opacity(0.85))
                             Toggle("", isOn: $showDecimal)
@@ -87,17 +87,30 @@ struct ExercisePickerView: View {
                 .padding(.bottom, 18)
 
                 VStack(alignment: .leading, spacing: 6) {
+                    Text("Category")
+                        .font(.headline)
+                        .foregroundColor(textColor)
+                    
+                    Text(formViewModel.selectedCategory.displayName)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(AppStyle.Color.green)
+                        .padding(.leading, 2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, AppStyle.Padding.horizontal)
+                .padding(.bottom, 16)
+
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Name of Exercise")
                         .font(.headline)
                         .foregroundColor(textColor)
 
                     clearableInputField(text: $formViewModel.name)
-                        .frame(maxWidth: UIScreen.main.bounds.width - 2 * AppStyle.Padding.horizontal)
                 }
                 .padding(.horizontal, AppStyle.Padding.horizontal)
-                .padding(.bottom, 16)
+                .padding(.bottom, 20)
 
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Seat Settings")
                         .font(.headline)
                         .foregroundColor(textColor)
@@ -119,10 +132,9 @@ struct ExercisePickerView: View {
                             }
                         ))
                     }
-                    .frame(maxWidth: UIScreen.main.bounds.width - 2 * AppStyle.Padding.horizontal)
                 }
                 .padding(.horizontal, AppStyle.Padding.horizontal)
-                .padding(.bottom, 16)
+                .padding(.bottom, 20)
 
                 // Icon selection only if more than one VALID icon exists (after filtering missing assets)
                 let iconOptionsRaw = formViewModel.selectedCategory.availableIcons
@@ -264,7 +276,6 @@ struct ExercisePickerView: View {
         .frame(maxWidth: .infinity)
         .onAppear {
             loadSeatParts()
-            // Dezimal-Switch automatisch aktivieren, wenn bestehendes Gewicht Dezimal ist
             let w = formViewModel.weight
             if w != floor(w) { showDecimal = true }
             // Defaults im Add-Flow setzen
@@ -301,13 +312,14 @@ struct ExercisePickerView: View {
 private struct InputFieldStyle: ViewModifier {
     func body(content: Content) -> some View {
         return content
-            .padding(12)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
             .foregroundColor(AppStyle.Color.white)
             .background(Color(hex: "#141518"))
-            .cornerRadius(16)
+            .cornerRadius(12)
             .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.clear, lineWidth: 0)
             )
     }
 }
@@ -317,6 +329,7 @@ private func clearableInputField(text: Binding<String>) -> some View {
         TextField("", text: text)
             .accentColor(AppStyle.Color.white)
             .foregroundColor(AppStyle.Color.white)
+            .textFieldStyle(PlainTextFieldStyle())
 
         if !text.wrappedValue.isEmpty {
             Button(action: { text.wrappedValue = "" }) {
@@ -339,6 +352,7 @@ private func clearableInputField(prompt: String, text: Binding<String>) -> some 
             TextField("", text: text)
                 .accentColor(AppStyle.Color.white)
                 .foregroundColor(AppStyle.Color.white)
+                .textFieldStyle(PlainTextFieldStyle())
         }
 
         if !text.wrappedValue.isEmpty {

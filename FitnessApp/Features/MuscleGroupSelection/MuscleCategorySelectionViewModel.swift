@@ -110,6 +110,12 @@ class MuscleCategorySelectionViewModel: ObservableObject {
         updateExerciseCounts()
     }
     
+    func addExercise(_ exercise: Exercise, category: MuscleCategoryGroup) {
+        exerciseManagementService.addExercise(exercise, category: category, atTop: true)
+        // Trigger UI update by updating exercise counts
+        updateExerciseCounts()
+    }
+    
     func completeExercise(_ exercise: Exercise, category: MuscleCategoryGroup, setProgress: [SetProgress]) {
         exerciseManagementService.completeExercise(exercise, category: category, setProgress: setProgress)
         updateExerciseCounts()

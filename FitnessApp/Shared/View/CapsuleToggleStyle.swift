@@ -20,7 +20,7 @@ struct CapsuleToggleStyle: ToggleStyle {
                 )
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Dezimal umschalten")
+        .accessibilityLabel("DecimalSwitch")
     }
 }
 

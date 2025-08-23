@@ -72,6 +72,9 @@ struct MuscleCategorySelectionView: View {
     @State private var editingExercise: Exercise?
     @State private var editingCategory: MuscleCategoryGroup?
     @StateObject private var exerciseFormViewModel = ExerciseFormViewModel()
+    
+    // Mini Menu State
+    @State private var showCategorySelection = false
 
     
 
@@ -238,29 +241,20 @@ struct MuscleCategorySelectionView: View {
             if overlayState.showSelectionMiniMenu {
                 Color.black.opacity(0.001)
                     .ignoresSafeArea()
-                    .onTapGesture { overlayState.showSelectionMiniMenu = false }
+                    .onTapGesture { 
+                        overlayState.showSelectionMiniMenu = false
+                        showCategorySelection = false
+                    }
                 
                 VStack {
                     Spacer()
                     HStack {
                         Spacer()
                         MiniActionMenuView(
-                            title: nil,
-                            items: [
-                                MiniActionMenuItem(
-                                    icon: viewModel.hasInactiveExercises() ? "xmark" : nil,
-                                    title: viewModel.hasInactiveExercises() ? "Reset all" : "",
-                                    isDestructive: false,
-                                    action: {
-                                        overlayState.showSelectionMiniMenu = false
-                                        if viewModel.hasInactiveExercises() {
-                                            viewModel.resetAllExercises()
-                                        }
-                                    }
-                                )
-                            ],
+                            title: currentViewMode == .list && showCategorySelection ? "New Exercise" : nil,
+                            items: currentViewMode == .list ? (showCategorySelection ? categoryMenuItems : newExerciseMenuItems) : resetMenuItems,
                             width: min(UIScreen.main.bounds.width * 0.55, 320),
-                            minHeight: 140
+                            minHeight: currentViewMode == .list && showCategorySelection ? 280 : 140
                         )
                         .padding(.trailing, 16)
                     }
@@ -272,22 +266,21 @@ struct MuscleCategorySelectionView: View {
             
             // Exercise picker overlay (like in MuscleCategoryView)
             if isShowingExercisePicker {
-                if let editingExercise = editingExercise,
-                   let editingCategory = editingCategory {
+                if let editingCategory = editingCategory {
                     Color.clear.onAppear { overlayState.isEditingSheetVisible = true }
                     ExercisePickerView(
                         formViewModel: exerciseFormViewModel,
-                        title: "Edit Exercise",
+                        title: editingExercise != nil ? "Edit Exercise" : "New Exercise",
                         isPresented: $isShowingExercisePicker,
                         onSave: {
                             // Handle save logic - same as in MuscleCategoryView
                             if let exercise = exerciseFormViewModel.createOrUpdateExercise() {
-                                if exerciseFormViewModel.editingExercise != nil {
+                                if editingExercise != nil {
                                     // Update existing exercise
                                     viewModel.updateExercise(exercise, category: editingCategory)
                                 } else {
-                                    // Add new exercise (shouldn't happen in edit mode)
-                                    viewModel.updateExercise(exercise, category: editingCategory)
+                                    // Add new exercise
+                                    viewModel.addExercise(exercise, category: editingCategory)
                                 }
                             }
                             resetEditingState()
@@ -339,6 +332,65 @@ struct MuscleCategorySelectionView: View {
             
 
         }
+    }
+    
+    // MARK: - Mini Menu Items
+    
+    private var newExerciseMenuItems: [MiniActionMenuItem] {
+        [
+            MiniActionMenuItem(
+                icon: "plus",
+                title: "New Exercise",
+                isDestructive: false
+            ) {
+                showCategorySelection = true
+            }
+        ]
+    }
+    
+    private var categoryMenuItems: [MiniActionMenuItem] {
+        MuscleCategoryGroup.allCases.map { category in
+            MiniActionMenuItem(
+                icon: category.defaultIconName,
+                title: category.displayName,
+                isDestructive: false
+            ) {
+                overlayState.showSelectionMiniMenu = false
+                showCategorySelection = false
+                openExercisePickerForCategory(category)
+            }
+        }
+    }
+    
+    private var resetMenuItems: [MiniActionMenuItem] {
+        [
+            MiniActionMenuItem(
+                icon: viewModel.hasInactiveExercises() ? "xmark" : nil,
+                title: viewModel.hasInactiveExercises() ? "Reset all" : "",
+                isDestructive: false,
+                action: {
+                    overlayState.showSelectionMiniMenu = false
+                    showCategorySelection = false
+                    if viewModel.hasInactiveExercises() {
+                        viewModel.resetAllExercises()
+                    }
+                }
+            )
+        ]
+    }
+    
+    private func openExercisePickerForCategory(_ category: MuscleCategoryGroup) {
+        editingCategory = category
+        editingExercise = nil // New exercise
+        exerciseFormViewModel.loadExercise(nil, category: category)
+        isShowingExercisePicker = true
+    }
+    
+    private func resetEditingState() {
+        isShowingExercisePicker = false
+        editingExercise = nil
+        editingCategory = nil
+        exerciseFormViewModel.clearForm()
     }
     
     private var categoryList: some View {
@@ -488,13 +540,6 @@ struct MuscleCategorySelectionView: View {
     
     private var safeAreaInset: CGFloat {
         UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
-    }
-    
-
-    
-    private func resetEditingState() {
-        editingExercise = nil
-        editingCategory = nil
     }
     
 
