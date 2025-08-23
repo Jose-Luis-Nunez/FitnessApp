@@ -160,7 +160,7 @@ class MuscleCategoryViewModel: ObservableObject {
                 storageService.save(exercises, for: group)
             }
         } else {
-            print("No userId available, skipping save")
+            // No userId available, skipping analytics save
         }
     }
     
@@ -175,7 +175,7 @@ class MuscleCategoryViewModel: ObservableObject {
     
     func saveAnalytics() {
         guard let exercise = activeSetViewModel.currentExercise else {
-            print("No exercise to save for analytics")
+            // No exercise to save for analytics
             return
         }
         analyticsViewModel.saveAnalytics(
@@ -191,6 +191,6 @@ class MuscleCategoryViewModel: ObservableObject {
         updatedExercise.reps = exercise.reps
         updatedExercise.weight = exercise.weight
         updateExercise(updatedExercise)
-        print("Reset done for exercise: \(exercise.name)")
+        // Exercise reset completed
     }
 }

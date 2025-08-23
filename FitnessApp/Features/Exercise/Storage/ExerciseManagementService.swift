@@ -86,7 +86,7 @@ class ExerciseManagementService: ObservableObject {
         if storageService.hasUserId {
             storageService.saveForWorkout(exercises, workoutId: workoutId, category: category)
         } else {
-            print("No userId available, skipping save")
+            // No userId available, skipping save
         }
     }
     

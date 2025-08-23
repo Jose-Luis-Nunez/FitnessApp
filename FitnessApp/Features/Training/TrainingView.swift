@@ -11,6 +11,7 @@ struct TrainingView: View {
     
     @State private var hasFinishedTraining = false
     @State private var isInitialLoad = true
+    @State private var isManuallyNavigatingBack = false
     
     init(exercise: Exercise, category: MuscleCategoryGroup, navigationPath: Binding<NavigationPath>) {
         self.exercise = exercise
@@ -152,15 +153,15 @@ struct TrainingView: View {
             }
         }
         .onReceive(trainingCoordinator.$isTrainingActive) { isActive in
-            // Auto-navigate back when training is finished (ANY reason: completed, cancelled, reset)
-            if !isActive && !hasFinishedTraining && !isInitialLoad && !navigationPath.isEmpty {
+            // Only auto-navigate back when training is finished programmatically (completed, cancelled)
+            // NOT when user manually navigates back with back button
+            if !isActive && !hasFinishedTraining && !isInitialLoad && !isManuallyNavigatingBack {
                 hasFinishedTraining = true
-                // Hide any overlay states before navigating back
+                // Hide any overlay states
                 overlayState.showTrainingMiniMenu = false
                 
-                // Always navigate back when training becomes inactive
+                // Navigate back only if training was finished programmatically
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    // Double check that we're still on the TrainingView before navigating back
                     if !navigationPath.isEmpty {
                         navigationPath.removeLast()
                     }
@@ -168,6 +169,9 @@ struct TrainingView: View {
             }
         }
         .onDisappear {
+            // Mark that we're manually navigating back (back button pressed)
+            isManuallyNavigatingBack = true
+            
             // Clean up when leaving training view manually (back button, etc.)
             if trainingCoordinator.isTrainingActive {
                 // Save analytics before leaving

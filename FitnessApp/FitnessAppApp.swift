@@ -73,21 +73,14 @@ struct FitnessAppApp: App {
                                 }
                             }
                             .onAppear {
-                                if case .muscleCategory(let group) = destination {
-                                    print("Navigated to MuscleCategoryView for group: \(group.displayName)")
-                                } else if case .profile = destination {
-                                    print("Navigated to ProfileView")
-                                } else if case .home = destination {
-                                    print("Navigated to MuscleCategorySelectionView (home)")
-                                }
-                                print("Navigation path count: \(navigationPath.count)")
+                                // Navigation tracking - no debug prints needed in production
                             }
                         }
                         .onAppear {
-                            print("Root NavigationStack appeared - path: \(navigationPath)")
+                            // Root navigation setup - no debug prints needed
                         }
                         .onChange(of: navigationPath) { oldPath, newPath in
-                            print("Navigation path changed from \(oldPath) to \(newPath)")
+                            // Navigation path tracking - no debug prints needed
                         }
                 }
                 .zIndex(overlayState.isEditingSheetVisible ? 2 : 0)

@@ -218,7 +218,7 @@ class TrainingCoordinator: ObservableObject {
                 self?.handleQuickDone()
             },
             onCompleteAllQuickDone: { [weak self] in
-                // All Done button removed - no action needed
+                // Legacy callback - no longer used
             },
             onCategoryReset: { [weak self] in
                 self?.resetExercise()
@@ -245,7 +245,7 @@ class TrainingCoordinator: ObservableObject {
     
     private func saveAnalytics() {
         guard let exercise = activeSetViewModel.currentExercise else {
-            print("No exercise to save for analytics")
+            // No exercise to save for analytics
             return
         }
         analyticsViewModel.saveAnalytics(
@@ -278,10 +278,5 @@ class TrainingCoordinator: ObservableObject {
             }
             .store(in: &cancellables)
     }
-    
-    private func findNextAvailableExercise() -> Exercise? {
-        // This should be implemented by the parent view
-        // For now, return nil
-        return nil
-    }
+
 }
