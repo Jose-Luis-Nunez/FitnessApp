@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TimerView: View {
     @ObservedObject var viewModel: ActiveSetViewModel
+    let onCancel: (() -> Void)?
     
     private let timerCircleSize: CGFloat = 200.0
     private let strokeWidth: CGFloat = 8.0
@@ -24,7 +25,12 @@ struct TimerView: View {
                         .foregroundColor(AppStyle.Color.white)
                     
                     Button(action: {
-                        viewModel.cancelActiveSet()
+                        print("🔴 TIMER CANCEL CLICKED!")
+                        if let onCancel = onCancel {
+                            onCancel()
+                        } else {
+                            viewModel.cancelActiveSet()
+                        }
                     }) {
                         Text("Cancel")
                             .font(.system(size: 16, weight: .medium))

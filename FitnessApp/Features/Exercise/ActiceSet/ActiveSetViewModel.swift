@@ -26,6 +26,8 @@ class ActiveSetViewModel: ObservableObject {
     @Published var didJustEditSet: Bool = false
     @Published var pendingEditMode: SetEditingMode? = nil
     var category: MuscleCategoryGroup?
+    var originalStartSource: TrainingStartSource = .categoryView
+    var originalCategory: MuscleCategoryGroup?
 
     var isInputValid: Bool {
         guard let newReps = Int(repsInput),
@@ -63,9 +65,25 @@ class ActiveSetViewModel: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     
-    func startSet(for exercise: Exercise, category: MuscleCategoryGroup) {
+    func startSet(for exercise: Exercise, category: MuscleCategoryGroup, startSource: TrainingStartSource = .categoryView) {
+        print("🟢 startSet called:")
+        print("🟢 Exercise: \(exercise.name)")
+        print("🟢 Category: \(category.rawValue)")
+        print("🟢 StartSource: \(startSource)")
+        print("🟢 Current originalCategory: \(originalCategory?.rawValue ?? "nil")")
+        
         currentExercise = exercise
         self.category = category
+        
+        // Only set original values if this is a new training (not a restart)
+        if originalCategory == nil {
+            originalStartSource = startSource
+            originalCategory = category
+            print("🟢 SET originalCategory to: \(category.rawValue)")
+        } else {
+            print("🟢 KEEPING originalCategory: \(originalCategory!.rawValue)")
+        }
+        
         currentSet = 0
         activeSetIndex = 0
         setProgress = (0..<exercise.sets).map { _ in
@@ -320,6 +338,8 @@ class ActiveSetViewModel: ObservableObject {
         didEditCompleteSet = false
         didJustEditSet = false
         category = nil
+        originalStartSource = .categoryView  // Reset to default
+        originalCategory = nil  // Reset to nil
         
         timerService.stopTimer()
         timerSeconds = 0

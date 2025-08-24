@@ -17,6 +17,8 @@ final class UIOverlayState: ObservableObject {
     @Published var showWorkoutSettingsMenu: Bool = false
     // Controls the mini menu in Training View
     @Published var showTrainingMiniMenu: Bool = false
+    // Prevents customBackAction when cancelling training
+    @Published var isCancellingTraining: Bool = false
 }
 
 

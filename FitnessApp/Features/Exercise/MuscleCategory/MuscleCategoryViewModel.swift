@@ -107,7 +107,7 @@ class MuscleCategoryViewModel: ObservableObject {
     }
     
     func startSet(for exercise: Exercise) {
-        activeSetViewModel.startSet(for: exercise, category: group) 
+        activeSetViewModel.startSet(for: exercise, category: group, startSource: .categoryView) 
     }
     
     func startNextSet() {

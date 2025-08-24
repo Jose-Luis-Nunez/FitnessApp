@@ -5,17 +5,20 @@ struct TrainingSessionComponent: View {
     @ObservedObject var coordinator: TrainingCoordinator
     let onEdit: ((Exercise) -> Void)?
     let onReset: ((Exercise) -> Void)?
+    let onCancel: (() -> Void)?
     let analyticsViewModel: AnalyticsViewModel
     
     init(
         coordinator: TrainingCoordinator,
         onEdit: ((Exercise) -> Void)? = nil,
         onReset: ((Exercise) -> Void)? = nil,
+        onCancel: (() -> Void)? = nil,
         analyticsViewModel: AnalyticsViewModel = AnalyticsViewModel()
     ) {
         self.coordinator = coordinator
         self.onEdit = onEdit
         self.onReset = onReset
+        self.onCancel = onCancel
         self.analyticsViewModel = analyticsViewModel
     }
     
@@ -34,7 +37,7 @@ struct TrainingSessionComponent: View {
                     }
                 }
                 
-                TimerView(viewModel: coordinator.activeSetViewModel)
+                TimerView(viewModel: coordinator.activeSetViewModel, onCancel: onCancel)
             }
             .padding(.vertical, 0)
         }

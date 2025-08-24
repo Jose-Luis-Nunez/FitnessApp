@@ -364,7 +364,19 @@ private extension MuscleCategoryView {
                                 // Bottom: Reset or Cancel
                                 MiniActionMenuItem(icon: (viewModel.showCancel ? "xmark" : (viewModel.showReset ? "arrow.counterclockwise" : nil)), title: (viewModel.showCancel ? "Cancel" : (viewModel.showReset ? "Reset" : "")), isDestructive: false) {
                                     if viewModel.showCancel {
+                                        print("🔴 CANCEL CLICKED IN CATEGORYVIEW!")
+                                        
                                         trainingCoordinator.activeSetViewModel.cancelActiveSet()
+                                        
+                                        // EINFACH: Cancel führt IMMER zur ursprünglichen CategoryView
+                                        let targetCategory = trainingCoordinator.activeSetViewModel.originalCategory ?? group
+                                        print("🔴 Navigating to CategoryView: \(targetCategory.rawValue)")
+                                        
+                                        if targetCategory != group {
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                                navigationPath.append(NavigationDestination.muscleCategory(targetCategory))
+                                            }
+                                        }
                                     } else if viewModel.showReset {
                                         viewModel.showResetConfirmation = true
                                     }

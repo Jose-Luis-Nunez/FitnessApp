@@ -6,7 +6,7 @@ enum NavigationDestination: Hashable {
     case profile
     case totalAnalytics
     case muscleCategory(MuscleCategoryGroup)
-    case training(Exercise, MuscleCategoryGroup)
+    case training(Exercise, MuscleCategoryGroup, TrainingReturnDestination)
 }
 
 @main
@@ -66,10 +66,16 @@ struct FitnessAppApp: App {
                                     MuscleCategoryView(group: group, navigationPath: $navigationPath)
                                         .navigationBarBackButtonHidden(true)
                                         .onAppear { isShowingWorkoutsRoot = false; currentScene = .category }
-                                case .training(let exercise, let category):
-                                    TrainingView(exercise: exercise, category: category, navigationPath: $navigationPath)
+                                case .training(let exercise, let category, let returnDestination):
+                                    TrainingView(exercise: exercise, category: category, returnDestination: returnDestination, navigationPath: $navigationPath)
                                         .navigationBarBackButtonHidden(true)
-                                        .onAppear { isShowingWorkoutsRoot = false; currentScene = .training }
+                                        .onAppear { 
+                                            print("🎯 NAVIGATED TO DEDICATED TRAININGVIEW!")
+                                            print("🎯 Exercise: \(exercise.name)")
+                                            print("🎯 Category: \(category)")
+                                            isShowingWorkoutsRoot = false
+                                            currentScene = .training 
+                                        }
                                 }
                             }
                             .onAppear {
@@ -116,10 +122,21 @@ struct FitnessAppApp: App {
                         }
                     },
                     customBackAction: currentScene == .training ? {
-                        // Direct navigation to CategorySelectionView when in training
+                        print("🟡 CUSTOM BACK ACTION TRIGGERED!")
+                        print("🟡 isCancellingTraining: \(overlayState.isCancellingTraining)")
+                        
+                        // Don't override navigation if training is being cancelled
+                        if overlayState.isCancellingTraining {
+                            print("🟡 SKIPPING customBackAction - cancel in progress")
+                            return // Let TrainingView handle cancel navigation
+                        }
+                        
+                        print("🟡 EXECUTING customBackAction - normal back navigation")
+                        // Normal back navigation: direct jump to CategorySelectionView
                         var newPath = NavigationPath()
                         newPath.append(NavigationDestination.home)
                         navigationPath = newPath
+                        print("🟡 customBackAction completed!")
                     } : nil
                 )
                 .zIndex((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu) ? 0 : 1)

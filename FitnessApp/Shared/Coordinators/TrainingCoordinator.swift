@@ -54,29 +54,43 @@ class TrainingCoordinator: ObservableObject {
     
     // MARK: - Training Actions
     
-    func startTraining(for exercise: Exercise) {
-        guard let category = findCategory(exercise) else { return }
+    func startTraining(for exercise: Exercise, startSource: TrainingStartSource = .categoryView) {
+        print("🟠 TRAININGCOORDINATOR.STARTTRAINING CALLED!")
+        print("🟠 Exercise: \(exercise.name)")
+        print("🟠 StartSource: \(startSource)")
+        
+        guard let category = findCategory(exercise) else { 
+            print("🟠 ERROR: Could not find category for exercise!")
+            return 
+        }
+        
+        print("🟠 Found category: \(category)")
         
         // Get or create the appropriate ActiveSetViewModel for this category from SessionTrainingCache
         let categoryActiveSetVM: ActiveSetViewModel
         if let existing = SessionTrainingCache.shared.activeSetVMs[category] {
             categoryActiveSetVM = existing
+            print("🟠 Using existing ActiveSetViewModel for category")
         } else {
             let newVM = ActiveSetViewModel()
             SessionTrainingCache.shared.activeSetVMs[category] = newVM
             categoryActiveSetVM = newVM
+            print("🟠 Created new ActiveSetViewModel for category")
         }
         
         // Update our reference to point to the correct category VM
         activeSetViewModel = categoryActiveSetVM
         setupActiveSetViewModelObserver()
         
+        print("🟠 About to call activeSetViewModel.startSet...")
         // Always start the first set immediately when training begins
-        activeSetViewModel.startSet(for: exercise, category: category)
+        activeSetViewModel.startSet(for: exercise, category: category, startSource: startSource)
+        print("🟠 Called activeSetViewModel.startSet!")
         
         // Update published properties
         currentExercise = exercise
         isTrainingActive = true
+        print("🟠 Training started successfully!")
     }
     
     func completeSet() {

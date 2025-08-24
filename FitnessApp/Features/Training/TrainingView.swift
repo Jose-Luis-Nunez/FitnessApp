@@ -3,6 +3,7 @@ import SwiftUI
 struct TrainingView: View {
     let exercise: Exercise
     let category: MuscleCategoryGroup
+    let returnDestination: TrainingReturnDestination
     @Binding var navigationPath: NavigationPath
     
     @StateObject private var trainingCoordinator: TrainingCoordinator
@@ -12,10 +13,13 @@ struct TrainingView: View {
     @State private var hasFinishedTraining = false
     @State private var isInitialLoad = true
     @State private var isManuallyNavigatingBack = false
+    @State private var isCancellingTraining = false
+    @State private var shouldPreventCustomBackAction = false
     
-    init(exercise: Exercise, category: MuscleCategoryGroup, navigationPath: Binding<NavigationPath>) {
+    init(exercise: Exercise, category: MuscleCategoryGroup, returnDestination: TrainingReturnDestination, navigationPath: Binding<NavigationPath>) {
         self.exercise = exercise
         self.category = category
+        self.returnDestination = returnDestination
         self._navigationPath = navigationPath
         
         // Create TrainingCoordinator for this specific training session
@@ -50,6 +54,7 @@ struct TrainingView: View {
         ZStack(alignment: .bottom) {
             AppStyle.Color.backgroundColor
                 .ignoresSafeArea()
+                .animation(.easeInOut(duration: 0.2), value: trainingCoordinator.isTrainingActive)
             
             // Only show content if training is active
             if trainingCoordinator.isTrainingActive {
@@ -84,6 +89,36 @@ struct TrainingView: View {
                             // Training Session (ActiveSetView + TimerView)
                             TrainingSessionComponent(
                                 coordinator: trainingCoordinator,
+                                onCancel: {
+                                    print("🔴 TIMER CANCEL in TrainingView!")
+                                    print("🔴 Current category: \(category)")
+                                    print("🔴 Original category: \(trainingCoordinator.activeSetViewModel.originalCategory?.rawValue ?? "nil")")
+                                    print("🔴 Original start source: \(trainingCoordinator.activeSetViewModel.originalStartSource)")
+                                    
+                                    let targetCategory = trainingCoordinator.activeSetViewModel.originalCategory ?? category
+                                    
+                                    // WICHTIG: Verhindere customBackAction
+                                    overlayState.isCancellingTraining = true
+                                    print("🔴 SET isCancellingTraining = true")
+                                    
+                                    // Sofortige Navigation BEVOR cancelActiveSet
+                                    print("🔴 Cancel ALWAYS navigates to CategoryView: \(targetCategory.rawValue)")
+                                    var newPath = NavigationPath()
+                                    newPath.append(NavigationDestination.home)
+                                    newPath.append(NavigationDestination.muscleCategory(targetCategory))
+                                    navigationPath = newPath
+                                    
+                                    // Cancel NACH der Navigation
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                        trainingCoordinator.activeSetViewModel.cancelActiveSet()
+                                        
+                                        // Reset flag after cancel
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                            overlayState.isCancellingTraining = false
+                                            print("🔴 RESET isCancellingTraining = false")
+                                        }
+                                    }
+                                },
                                 analyticsViewModel: analyticsViewModel
                             )
                         }
@@ -125,9 +160,32 @@ struct TrainingView: View {
                                     title: "Cancel", 
                                     isDestructive: true
                                 ) {
-                                    // Cancel the active training
-                                    trainingCoordinator.activeSetViewModel.cancelActiveSet()
+                                    print("🔴 MINI MENU CANCEL CLICKED IN TRAININGVIEW!")
+                                    
+                                    let targetCategory = trainingCoordinator.activeSetViewModel.originalCategory ?? category
+                                    
+                                    // WICHTIG: Verhindere customBackAction
+                                    overlayState.isCancellingTraining = true
                                     overlayState.showTrainingMiniMenu = false
+                                    print("🔴 SET isCancellingTraining = true")
+                                    
+                                    // Sofortige Navigation BEVOR cancelActiveSet
+                                    print("🔴 Mini Menu Cancel navigates to CategoryView: \(targetCategory.rawValue)")
+                                    var newPath = NavigationPath()
+                                    newPath.append(NavigationDestination.home)
+                                    newPath.append(NavigationDestination.muscleCategory(targetCategory))
+                                    navigationPath = newPath
+                                    
+                                    // Cancel NACH der Navigation
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                        trainingCoordinator.activeSetViewModel.cancelActiveSet()
+                                        
+                                        // Reset flag after cancel
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                            overlayState.isCancellingTraining = false
+                                            print("🔴 RESET isCancellingTraining = false")
+                                        }
+                                    }
                                 }
                             ],
                             width: min(UIScreen.main.bounds.width * 0.55, 320),
@@ -145,8 +203,19 @@ struct TrainingView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .onAppear {
+            print("🔵 TRAININGVIEW ONAPPEAR!")
+            print("🔵 Exercise: \(exercise.name)")
+            print("🔵 Category: \(category)")
+            print("🔵 ReturnDestination: \(returnDestination)")
+            
             // Start training automatically when view appears
-            trainingCoordinator.startTraining(for: exercise)
+            // Determine start source based on returnDestination
+            let startSource: TrainingStartSource = returnDestination == .categoryView ? .categorySelectionView : .categoryView
+            print("🔵 Determined startSource: \(startSource)")
+            
+            trainingCoordinator.startTraining(for: exercise, startSource: startSource)
+            print("🔵 Called trainingCoordinator.startTraining!")
+            
             // Mark that initial load is complete after a short delay
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 isInitialLoad = false
@@ -154,29 +223,27 @@ struct TrainingView: View {
         }
         .onReceive(trainingCoordinator.$isTrainingActive) { isActive in
             // Only auto-navigate back when training is finished programmatically (completed, cancelled)
-            // NOT when user manually navigates back with back button
-            if !isActive && !hasFinishedTraining && !isInitialLoad && !isManuallyNavigatingBack {
+            // NOT when user manually navigates back with back button OR when cancelling training
+            if !isActive && !hasFinishedTraining && !isInitialLoad && !isManuallyNavigatingBack && !overlayState.isCancellingTraining {
                 hasFinishedTraining = true
                 // Hide any overlay states
                 overlayState.showTrainingMiniMenu = false
                 
-                // Navigate back normally - customBackAction in BottomMenuBarView handles training navigation
+                print("🔵 onReceive: Normal training completion - navigating back")
+                // Normal navigation back (Timer cancel is handled separately)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     if !navigationPath.isEmpty {
                         navigationPath.removeLast()
                     }
                 }
+            } else if !isActive && overlayState.isCancellingTraining {
+                print("🔵 onReceive: Training cancelled - skipping auto-navigation (handled by cancel logic)")
+                hasFinishedTraining = true
+                overlayState.showTrainingMiniMenu = false
             }
         }
         .onDisappear {
-            // Mark that we're manually navigating back (back button pressed)
             isManuallyNavigatingBack = true
-            
-            // DON'T finish training when manually navigating back - let it continue in background
-            // Training should only be finished when user explicitly completes or cancels it
-            // The SessionTrainingCache will preserve the training state
-            
-            // Always clean up overlay states when leaving TrainingView
             overlayState.showTrainingMiniMenu = false
         }
     }
@@ -197,6 +264,7 @@ struct TrainingView: View {
             TrainingView(
                 exercise: sampleExercise,
                 category: .chest,
+                returnDestination: .categorySelectionView,
                 navigationPath: .constant(NavigationPath())
             )
         }
