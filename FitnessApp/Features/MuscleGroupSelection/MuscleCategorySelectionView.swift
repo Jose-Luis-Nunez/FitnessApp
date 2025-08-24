@@ -136,6 +136,13 @@ struct MuscleCategorySelectionView: View {
                     filterToggleView
                         .padding(.horizontal, Constants.horizontalPadding)
                         .padding(.top, Constants.topPadding)
+                } else {
+                    // Show a message that training is active
+                    Text("Training Active")
+                        .font(.headline)
+                        .foregroundColor(AppStyle.Color.green)
+                        .padding(.horizontal, Constants.horizontalPadding)
+                        .padding(.top, Constants.topPadding)
                 }
                 
                 ScrollView {
@@ -196,13 +203,21 @@ struct MuscleCategorySelectionView: View {
                                 .padding(.top, 16)
                             }
                         } else {
-                            // Show all exercises list
-                            LazyVStack(spacing: Constants.CategoryTile.verticalSpacing) {
-                                allExercisesList
+                            // If there's an active training, show only that exercise
+                            if trainingCoordinator.isTrainingActive && trainingCoordinator.currentExercise != nil {
+                                LazyVStack(spacing: Constants.CategoryTile.verticalSpacing) {
+                                    activeTrainingOnlyList
+                                }
+                                .padding(.horizontal, 0)
+                                .padding(.top, 16)
+                            } else {
+                                // Show all exercises list
+                                LazyVStack(spacing: Constants.CategoryTile.verticalSpacing) {
+                                    allExercisesList
+                                }
+                                .padding(.horizontal, 0)
+                                .padding(.top, 16)
                             }
-                            .padding(.horizontal, 0)
-                            .padding(.top, 16)
-
                         }
                     }
                     // small spacer so last tile isn't glued to gesture area
@@ -395,9 +410,25 @@ struct MuscleCategorySelectionView: View {
     
     private var categoryList: some View {
         ForEach(viewModel.categories, id: \.self) { group in
-            NavigationLink(value: NavigationDestination.muscleCategory(group)) {
+            Button(action: {
+                // If this category has active training, go directly to TrainingView
+                if let activeSetVM = SessionTrainingCache.shared.activeSetVMs[group],
+                   let activeExercise = activeSetVM.currentExercise {
+                    
+                    TrainingNavigationHelper.navigateToTraining(
+                        exercise: activeExercise,
+                        category: group,
+                        navigationPath: &navigationPath
+                    )
+                } else {
+                    // Normal navigation to CategoryView
+                    navigationPath.append(NavigationDestination.muscleCategory(group))
+                }
+            }) {
                 CategoryTileView(group: group, viewModel: viewModel)
             }
+            .buttonStyle(.plain)
+            .contentShape(Rectangle())
         }
     }
     
@@ -476,6 +507,47 @@ struct MuscleCategorySelectionView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
     
+    private var activeTrainingOnlyList: some View {
+        Group {
+            if let activeExercise = trainingCoordinator.currentExercise,
+               let category = viewModel.findCategoryForExercise(activeExercise) {
+                
+                Section {
+                    ExerciseCardContainerView(
+                        viewModel: ExerciseCardViewModel(exercise: activeExercise) { updatedExercise in
+                            viewModel.updateExercise(updatedExercise, category: category)
+                        },
+                        onEdit: { exerciseToEdit in
+                            // In active training mode, open ExercisePickerView
+                            editingExercise = exerciseToEdit
+                            editingCategory = category
+                            exerciseFormViewModel.loadExercise(exerciseToEdit, category: category)
+                            isShowingExercisePicker = true
+                        },
+                        isEditable: true,
+                        analyticsViewModel: AnalyticsViewModel(),
+                        activeSetViewModel: trainingCoordinator.activeSetViewModel,
+                        onStart: { exerciseToStart in
+                            // Navigate back to TrainingView for the same exercise
+                            TrainingNavigationHelper.navigateToTraining(
+                                exercise: exerciseToStart,
+                                category: category,
+                                navigationPath: &navigationPath
+                            )
+                        },
+                        onReset: { exerciseToReset in
+                            viewModel.resetExercise(exerciseToReset, category: category)
+                        },
+                        isActiveSetVisible: trainingCoordinator.isTrainingActive,
+                        isResetEnabled: activeExercise.isCompleted
+                    )
+                }
+            } else {
+                EmptyView()
+            }
+        }
+    }
+    
     private var allExercisesList: some View {
         ForEach(MuscleCategoryGroup.allCases, id: \.id) { category in
             let exercises = viewModel.getExercises(for: category)
@@ -504,6 +576,11 @@ struct MuscleCategorySelectionView: View {
                             analyticsViewModel: AnalyticsViewModel(),
                             activeSetViewModel: trainingCoordinator.activeSetViewModel,
                             onStart: { exerciseToStart in
+                                // Don't allow starting new training if another is already active
+                                if trainingCoordinator.isTrainingActive && trainingCoordinator.currentExercise?.id != exerciseToStart.id {
+                                    return // Block starting different exercise
+                                }
+                                
                                 // Add haptic feedback
                                 let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                                 impactFeedback.impactOccurred()
@@ -529,6 +606,11 @@ struct MuscleCategorySelectionView: View {
         .onAppear {
             // Refresh exercise data when view appears (e.g., returning from TrainingView)
             viewModel.updateExerciseCounts()
+            
+            // If there's an active training, automatically switch to list mode to show only the active exercise
+            if trainingCoordinator.isTrainingActive && trainingCoordinator.currentExercise != nil {
+                currentViewMode = .list
+            }
         }
     }
     

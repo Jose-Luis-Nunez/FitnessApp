@@ -83,7 +83,8 @@ class MuscleCategorySelectionViewModel: ObservableObject {
     }
     
     func hasActiveSetForCategory(_ group: MuscleCategoryGroup) -> Bool {
-        return SessionTrainingCache.shared.activeSetVMs.values.contains { $0.category == group && $0.isSetInProgress }
+        // Check if there's an active training for this category
+        return SessionTrainingCache.shared.activeSetVMs[group]?.currentExercise != nil
     }
     
     private func updateCategories(for workout: Workout?) {

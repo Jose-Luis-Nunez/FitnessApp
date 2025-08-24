@@ -18,6 +18,7 @@ struct BottomMenuBarView: View {
     var narrowBy: CGFloat = 50 // reduce overall bar width by this many points (made 10pt narrower)
     var rightActionStyle: BottomBarRightActionStyle = .reset
     var onRightAction: () -> Void = {}
+    var customBackAction: (() -> Void)? = nil // Custom back action for special cases
 
     @EnvironmentObject private var overlayState: UIOverlayState
 
@@ -48,7 +49,11 @@ struct BottomMenuBarView: View {
                 Group {
                     if shouldShowBackButton {
                         Button(action: {
-                            navigationPath.removeLast()
+                            if let customAction = customBackAction {
+                                customAction()
+                            } else {
+                                navigationPath.removeLast()
+                            }
                         }) {
                             ZStack {
                                 Group {

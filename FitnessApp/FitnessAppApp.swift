@@ -114,7 +114,13 @@ struct FitnessAppApp: App {
                         case .training:
                             overlayState.showTrainingMiniMenu.toggle()
                         }
-                    }
+                    },
+                    customBackAction: currentScene == .training ? {
+                        // Direct navigation to CategorySelectionView when in training
+                        var newPath = NavigationPath()
+                        newPath.append(NavigationDestination.home)
+                        navigationPath = newPath
+                    } : nil
                 )
                 .zIndex((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu) ? 0 : 1)
                 .opacity((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu) ? 0 : 1)

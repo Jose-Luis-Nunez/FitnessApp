@@ -160,7 +160,7 @@ struct TrainingView: View {
                 // Hide any overlay states
                 overlayState.showTrainingMiniMenu = false
                 
-                // Navigate back only if training was finished programmatically
+                // Navigate back normally - customBackAction in BottomMenuBarView handles training navigation
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     if !navigationPath.isEmpty {
                         navigationPath.removeLast()
@@ -172,11 +172,9 @@ struct TrainingView: View {
             // Mark that we're manually navigating back (back button pressed)
             isManuallyNavigatingBack = true
             
-            // Clean up when leaving training view manually (back button, etc.)
-            if trainingCoordinator.isTrainingActive {
-                // Save analytics before leaving
-                trainingCoordinator.finishExercise()
-            }
+            // DON'T finish training when manually navigating back - let it continue in background
+            // Training should only be finished when user explicitly completes or cancels it
+            // The SessionTrainingCache will preserve the training state
             
             // Always clean up overlay states when leaving TrainingView
             overlayState.showTrainingMiniMenu = false
