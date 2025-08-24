@@ -22,13 +22,7 @@ struct TrainingNavigationHelper {
         navigationPath: inout NavigationPath,
         returnDestination: TrainingReturnDestination = .categorySelectionView
     ) {
-        print("🟣 TRAININGNAVIGATIONHELPER.NAVIGATETOTRAINING CALLED!")
-        print("🟣 Exercise: \(exercise.name)")
-        print("🟣 Category: \(category)")
-        print("🟣 ReturnDestination: \(returnDestination)")
-        
         navigationPath.append(NavigationDestination.training(exercise, category, returnDestination))
-        print("🟣 Navigation path updated!")
     }
     
     /// Create onStart closure that navigates to TrainingView

@@ -70,23 +70,11 @@ struct FitnessAppApp: App {
                                     TrainingView(exercise: exercise, category: category, returnDestination: returnDestination, navigationPath: $navigationPath)
                                         .navigationBarBackButtonHidden(true)
                                         .onAppear { 
-                                            print("🎯 NAVIGATED TO DEDICATED TRAININGVIEW!")
-                                            print("🎯 Exercise: \(exercise.name)")
-                                            print("🎯 Category: \(category)")
                                             isShowingWorkoutsRoot = false
                                             currentScene = .training 
                                         }
                                 }
                             }
-                            .onAppear {
-                                // Navigation tracking - no debug prints needed in production
-                            }
-                        }
-                        .onAppear {
-                            // Root navigation setup - no debug prints needed
-                        }
-                        .onChange(of: navigationPath) { oldPath, newPath in
-                            // Navigation path tracking - no debug prints needed
                         }
                 }
                 .zIndex(overlayState.isEditingSheetVisible ? 2 : 0)
@@ -122,26 +110,20 @@ struct FitnessAppApp: App {
                         }
                     },
                     customBackAction: currentScene == .training ? {
-                        print("🟡 CUSTOM BACK ACTION TRIGGERED!")
-                        print("🟡 isCancellingTraining: \(overlayState.isCancellingTraining)")
-                        
                         // Don't override navigation if training is being cancelled
                         if overlayState.isCancellingTraining {
-                            print("🟡 SKIPPING customBackAction - cancel in progress")
                             return // Let TrainingView handle cancel navigation
                         }
                         
-                        print("🟡 EXECUTING customBackAction - normal back navigation")
                         // Normal back navigation: direct jump to CategorySelectionView
                         var newPath = NavigationPath()
                         newPath.append(NavigationDestination.home)
                         navigationPath = newPath
-                        print("🟡 customBackAction completed!")
                     } : nil
                 )
-                .zIndex((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu) ? 0 : 1)
-                .opacity((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu) ? 0 : 1)
-                .allowsHitTesting(!(overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu))
+                .zIndex((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu) ? 0 : 1)
+                .opacity((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu) ? 0 : 1)
+                .allowsHitTesting(!(overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu))
             }
             .environmentObject(overlayState)
         }

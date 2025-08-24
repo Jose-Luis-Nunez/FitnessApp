@@ -380,15 +380,13 @@ struct MuscleCategorySelectionView: View {
     private var resetMenuItems: [MiniActionMenuItem] {
         [
             MiniActionMenuItem(
-                icon: viewModel.hasInactiveExercises() ? "xmark" : nil,
-                title: viewModel.hasInactiveExercises() ? "Reset all" : "",
+                icon: "xmark",
+                title: "Reset all",
                 isDestructive: false,
                 action: {
                     overlayState.showSelectionMiniMenu = false
                     showCategorySelection = false
-                    if viewModel.hasInactiveExercises() {
-                        viewModel.resetAllExercises()
-                    }
+                    viewModel.resetAllExercises()
                 }
             )
         ]
