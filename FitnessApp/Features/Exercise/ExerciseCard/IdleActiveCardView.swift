@@ -39,10 +39,11 @@ struct IdleActiveCardView: View {
                         AppChip(
                             text: viewModel.exercise.seatSetting ?? L10n.seatChipDefaultvalue,
                             fontColor: AppStyle.Color.white,
-                            backgroundColor: Color.white.opacity(0.12),
+                            backgroundColor: AppStyle.Color.exerciseCardBackground,
                             size: .regular,
-                            icon: ChipIcon(image: "chairSettings", color: .white),
-                            onTap: isEditable ? { onEdit(viewModel.exercise) } : nil
+                            icon: ChipIcon(image: "chairSettings", color: .white, size: .large),
+                            onTap: isEditable ? { onEdit(viewModel.exercise) } : nil,
+                            borderColor: Color(hex: "#2B2B2B")
                         )
                         .frame(height: chipHeight)
                         
@@ -50,24 +51,34 @@ struct IdleActiveCardView: View {
                         AppChip(
                             text: "\(viewModel.exercise.weight == floor(viewModel.exercise.weight) ? "\(Int(viewModel.exercise.weight))" : String(viewModel.exercise.weight).replacingOccurrences(of: ".", with: ",")) kg",
                             fontColor: AppStyle.Color.white,
-                            backgroundColor: Color.white.opacity(0.12),
+                            backgroundColor: AppStyle.Color.exerciseCardBackground,
                             size: .regular,
-                            onTap: isEditable ? { onEdit(viewModel.exercise) } : nil
+                            onTap: isEditable ? { onEdit(viewModel.exercise) } : nil,
+                            borderColor: Color(hex: "#2B2B2B")
                         )
                         .frame(height: chipHeight)
                         
-                        // Analytics icon
+                        // Analytics chip
                         Button(action: { isShowingAnalytics = true }) {
-                            Image("analyticsEntry")
-                                .renderingMode(.template)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 46, height: 46)
-                                .foregroundColor(AppStyle.Color.greenGlow)
+                            HStack(spacing: 6) {
+                                Image("analyticsEntry")
+                                    .renderingMode(.template)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 40, height: 40)
+                                    .foregroundColor(AppStyle.Color.greenGlow)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 4)
+                            .frame(height: chipHeight)
+                            .background(AppStyle.Color.exerciseCardBackground)
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color(hex: "#2B2B2B"), lineWidth: 1)
+                            )
                         }
                         .buttonStyle(.plain)
-                        .frame(height: chipHeight) // Align with chips
-                        .padding(.leading, -4) // Compensate for chip's internal padding
                         
                         Spacer()
                     }

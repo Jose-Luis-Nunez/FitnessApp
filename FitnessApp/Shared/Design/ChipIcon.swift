@@ -29,9 +29,9 @@ struct ChipIcon {
 
     private var iconSize: CGFloat {
         switch size {
-        case .small: return 20
+        case .small: return 16
         case .regular: return 20
-        case .large: return 16
+        case .large: return 24
         case .extraLarge: return 70
         case .wide: return 52
         }

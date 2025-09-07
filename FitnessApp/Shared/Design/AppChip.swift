@@ -42,12 +42,13 @@ struct AppChip: View {
                 .font(font)
                 .foregroundColor(fontColor)
                 .lineLimit(1)
-                .minimumScaleFactor(1.0)
+                .minimumScaleFactor(0.6)
                 .layoutPriority(1)
         }
         .padding(.horizontal, horizontalPadding)
         .padding(.vertical, verticalPadding)
-        .frame(width: fixedWidth, height: fixedHeight)
+        .frame(minWidth: fixedWidth)
+        .frame(height: fixedHeight)
         .background(backgroundColor)
         .cornerRadius(12)
         .overlay(
@@ -71,7 +72,7 @@ struct AppChip: View {
     private var horizontalPadding: CGFloat {
         switch size {
         case .small: return 4
-        case .regular: return 10
+        case .regular: return 14
         case .large: return 16
         case .wide: return 10
         case .extraLarge: return 16
