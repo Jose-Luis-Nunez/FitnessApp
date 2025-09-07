@@ -1,6 +1,8 @@
 import Foundation
 import Combine
 
+enum AppCurrentScene { case workouts, home, profile, category, training }
+
 final class UIOverlayState: ObservableObject {
     @Published var isEditingSheetVisible: Bool = false
     // Increments to signal a Reset All request from the bottom bar
@@ -19,6 +21,8 @@ final class UIOverlayState: ObservableObject {
     @Published var showTrainingMiniMenu: Bool = false
     // Prevents customBackAction when cancelling training
     @Published var isCancellingTraining: Bool = false
+    // Current app scene for proper mini menu handling
+    @Published var currentScene: AppCurrentScene = .workouts
 }
 
 

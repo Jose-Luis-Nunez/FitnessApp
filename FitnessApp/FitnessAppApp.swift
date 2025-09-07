@@ -6,7 +6,7 @@ enum NavigationDestination: Hashable {
     case profile
     case totalAnalytics
     case muscleCategory(MuscleCategoryGroup)
-    case training(Exercise, MuscleCategoryGroup, TrainingReturnDestination)
+    case training(Exercise, MuscleCategoryGroup)
 }
 
 @main
@@ -16,8 +16,6 @@ struct FitnessAppApp: App {
     @StateObject private var workoutStorageService = WorkoutStorageService.shared
     @State private var isShowingWorkoutsRoot: Bool = false
     @State private var didAutoNavigateToHome: Bool = false
-    private enum CurrentScene { case workouts, home, profile, category, training }
-    @State private var currentScene: CurrentScene = .workouts
     
     private let backgroundColor = AppStyle.Color.backgroundColor
 
@@ -36,10 +34,10 @@ struct FitnessAppApp: App {
                                 navigationPath.append(NavigationDestination.home)
                                 didAutoNavigateToHome = true
                                 isShowingWorkoutsRoot = false
-                                currentScene = .home
+                                overlayState.currentScene = .home
                             } else {
                                 isShowingWorkoutsRoot = navigationPath.isEmpty
-                                currentScene = .workouts
+                                overlayState.currentScene = .workouts
                             }
                         }
                     .navigationBarBackButtonHidden(true)
@@ -49,29 +47,38 @@ struct FitnessAppApp: App {
                                 case .workouts:
                                     WorkoutsScreen(navigationPath: $navigationPath)
                                         .navigationBarBackButtonHidden(true)
-                                        .onAppear { isShowingWorkoutsRoot = true; currentScene = .workouts }
+                                        .onAppear { 
+                                            isShowingWorkoutsRoot = true
+                                            overlayState.currentScene = .workouts
+                                        }
                                 case .home:
                                     MuscleCategorySelectionView(navigationPath: $navigationPath)
                                         .navigationBarBackButtonHidden(true)
-                                        .onAppear { isShowingWorkoutsRoot = false; currentScene = .home }
+                                        .onAppear { 
+                                            isShowingWorkoutsRoot = false
+                                            overlayState.currentScene = .home
+                                        }
                                 case .profile:
                                     ProfileView()
                                         .navigationBarBackButtonHidden(true)
-                                        .onAppear { isShowingWorkoutsRoot = false; currentScene = .profile }
+                                        .onAppear { isShowingWorkoutsRoot = false; overlayState.currentScene = .profile }
                                 case .totalAnalytics:
                                     TotalAnalyticsView()
                                         .navigationBarBackButtonHidden(true)
-                                        .onAppear { isShowingWorkoutsRoot = false; currentScene = .home }
+                                        .onAppear { isShowingWorkoutsRoot = false; overlayState.currentScene = .home }
                                 case .muscleCategory(let group):
                                     MuscleCategoryView(group: group, navigationPath: $navigationPath)
                                         .navigationBarBackButtonHidden(true)
-                                        .onAppear { isShowingWorkoutsRoot = false; currentScene = .category }
-                                case .training(let exercise, let category, let returnDestination):
-                                    TrainingView(exercise: exercise, category: category, returnDestination: returnDestination, navigationPath: $navigationPath)
+                                        .onAppear { 
+                                            isShowingWorkoutsRoot = false
+                                            overlayState.currentScene = .category
+                                        }
+                                case .training(let exercise, let category):
+                                    TrainingView(exercise: exercise, category: category, navigationPath: $navigationPath)
                                         .navigationBarBackButtonHidden(true)
                                         .onAppear { 
                                             isShowingWorkoutsRoot = false
-                                            currentScene = .training 
+                                            overlayState.currentScene = .training
                                         }
                                 }
                             }
@@ -80,7 +87,7 @@ struct FitnessAppApp: App {
                 .zIndex(overlayState.isEditingSheetVisible ? 2 : 0)
                 let showBack = !navigationPath.isEmpty
                 let rightStyle: BottomBarRightActionStyle = {
-                    switch currentScene {
+                    switch overlayState.currentScene {
                     case .home: return .menu
                     case .category, .workouts, .profile: return .menu
                     case .training: return .menu  // TrainingView has no mini menu, but keep menu icon
@@ -96,7 +103,7 @@ struct FitnessAppApp: App {
                     narrowBy: 90,
                     rightActionStyle: rightStyle,
                     onRightAction: {
-                        switch currentScene {
+                        switch overlayState.currentScene {
                         case .home:
                             overlayState.showSelectionMiniMenu.toggle()
                         case .category:
@@ -109,7 +116,7 @@ struct FitnessAppApp: App {
                             overlayState.showTrainingMiniMenu.toggle()
                         }
                     },
-                    customBackAction: currentScene == .training ? {
+                    customBackAction: overlayState.currentScene == .training ? {
                         // Don't override navigation if training is being cancelled
                         if overlayState.isCancellingTraining {
                             return // Let TrainingView handle cancel navigation

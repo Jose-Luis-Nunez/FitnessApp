@@ -24,12 +24,10 @@ class AnalyticsViewModel: ObservableObject {
         var existingEntries = storageService.load(for: exerciseId)
         existingEntries.append(analyticsEntry)
         storageService.save(existingEntries, for: exerciseId)
-        print("Saved analytics entry for exercise \(exerciseId)")
     }
     
     func loadAnalytics(for exerciseId: UUID) -> [AnalyticsEntry] {
         let entries = storageService.load(for: exerciseId)
-        print("Loaded \(entries.count) analytics entries for exercise \(exerciseId)")
         return entries
     }
     
@@ -39,7 +37,6 @@ class AnalyticsViewModel: ObservableObject {
         let filteredEntries = entries.filter { entry in
             calendar.isDate(entry.date, inSameDayAs: date)
         }
-        print("Loaded \(filteredEntries.count) analytics entries for exercise \(exerciseId) on \(date)")
         return filteredEntries
     }
     

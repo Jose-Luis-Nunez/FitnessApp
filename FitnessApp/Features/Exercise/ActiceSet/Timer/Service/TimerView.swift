@@ -25,7 +25,6 @@ struct TimerView: View {
                         .foregroundColor(AppStyle.Color.white)
                     
                     Button(action: {
-                        print("🔴 TIMER CANCEL CLICKED!")
                         if let onCancel = onCancel {
                             onCancel()
                         } else {

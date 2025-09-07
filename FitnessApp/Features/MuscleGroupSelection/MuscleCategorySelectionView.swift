@@ -411,12 +411,11 @@ struct MuscleCategorySelectionView: View {
             Button(action: {
                 if let activeSetVM = SessionTrainingCache.shared.activeSetVMs[group],
                    let activeExercise = activeSetVM.currentExercise {
-                    // Active training: Navigate directly to TrainingView, return to CategoryView on cancel
+                    // Active training: Navigate directly to TrainingView
                     TrainingNavigationHelper.navigateToTraining(
                         exercise: activeExercise,
                         category: group,
-                        navigationPath: &navigationPath,
-                        returnDestination: .categoryView
+                        navigationPath: &navigationPath
                     )
                 } else {
                     navigationPath.append(NavigationDestination.muscleCategory(group))

@@ -44,7 +44,6 @@ final class ExerciseStorageService: ExerciseStoring {
             let data = try Data(contentsOf: fileURL)
             let decoder = JSONDecoder()
             let exercises = try decoder.decode([Exercise].self, from: data)
-            print("Loaded \(exercises.count) exercises from \(fileURL.path)")
             return exercises
         } catch {
             print("Failed to load exercises: \(error)")
@@ -59,7 +58,6 @@ final class ExerciseStorageService: ExerciseStoring {
             encoder.dateEncodingStrategy = .iso8601
             let data = try encoder.encode(exercises)
             try data.write(to: fileURL, options: .atomic)
-            print("Exercises saved to \(fileURL.path)")
         } catch {
             print("Failed to save exercises: \(error)")
         }
@@ -92,7 +90,6 @@ final class ExerciseStorageService: ExerciseStoring {
             let data = try Data(contentsOf: fileURL)
             let decoder = JSONDecoder()
             let exercises = try decoder.decode([Exercise].self, from: data)
-            print("Loaded \(exercises.count) workout exercises from \(fileURL.path)")
             return exercises
         } catch {
             print("Failed to load workout exercises: \(error)")
@@ -107,7 +104,6 @@ final class ExerciseStorageService: ExerciseStoring {
             encoder.dateEncodingStrategy = .iso8601
             let data = try encoder.encode(exercises)
             try data.write(to: fileURL, options: .atomic)
-            print("Workout exercises saved to \(fileURL.path)")
         } catch {
             print("Failed to save workout exercises: \(error)")
         }

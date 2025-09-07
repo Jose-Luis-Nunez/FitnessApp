@@ -33,7 +33,6 @@ final class AnalyticsStorageService: AnalyticsStoring {
             encoder.dateEncodingStrategy = .iso8601
             let data = try encoder.encode(entries)
             try data.write(to: fileURL, options: .atomic)
-            print("Analytics saved to \(fileURL.path)")
         } catch {
             print("Failed to save analytics: \(error)")
         }
@@ -51,7 +50,6 @@ final class AnalyticsStorageService: AnalyticsStoring {
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
             let entries = try decoder.decode([AnalyticsEntry].self, from: data)
-            print("Loaded \(entries.count) analytics entries from \(fileURL.path)")
             return entries
         } catch {
             print("Failed to load analytics: \(error)")

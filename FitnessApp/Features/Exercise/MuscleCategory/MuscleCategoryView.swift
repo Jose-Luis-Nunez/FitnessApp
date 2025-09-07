@@ -340,49 +340,69 @@ private extension MuscleCategoryView {
                         Spacer()
                         MiniActionMenuView(
                             title: nil,
-                            items: [
-                                // Top: New Exercise
-                                MiniActionMenuItem(icon: viewModel.showNewExercise ? "plus" : nil, title: viewModel.showNewExercise ? "New Exercise" : "", isDestructive: false) {
-                                    withAnimation {
-                                        formViewModel.loadExercise(nil, category: group)
-                                        formViewModel.toggleForm()
+                            items: {
+                                var items: [MiniActionMenuItem] = []
+                                
+                                // New Exercise
+                                if viewModel.showNewExercise {
+                                    items.append(MiniActionMenuItem(icon: "plus", title: "New Exercise", isDestructive: false) {
+                                        withAnimation {
+                                            formViewModel.loadExercise(nil, category: group)
+                                            formViewModel.toggleForm()
+                                            overlayState.showCategoryMiniMenu = false
+                                        }
+                                    })
+                                }
+                                
+                                // Start Training
+                                if viewModel.showStartTraining {
+                                    items.append(MiniActionMenuItem(icon: "play.fill", title: "Start Training", isDestructive: false) {
+                                        if let exercise = trainingCoordinator.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) {
+                                            TrainingNavigationHelper.navigateToTraining(
+                                                exercise: exercise,
+                                                category: group,
+                                                navigationPath: &navigationPath
+                                            )
+                                        }
                                         overlayState.showCategoryMiniMenu = false
-                                    }
-                                },
-                                // Middle: Start Training
-                                MiniActionMenuItem(icon: viewModel.showStartTraining ? "play.fill" : nil, title: viewModel.showStartTraining ? "Start Training" : "", isDestructive: false) {
-                                    if let exercise = trainingCoordinator.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) {
-                                        // Navigate to TrainingView
-                                        TrainingNavigationHelper.navigateToTraining(
-                                            exercise: exercise,
-                                            category: group,
-                                            navigationPath: &navigationPath
-                                        )
-                                    }
-                                    overlayState.showCategoryMiniMenu = false
-                                },
-                                // Bottom: Reset or Cancel
-                                MiniActionMenuItem(icon: (viewModel.showCancel ? "xmark" : (viewModel.showReset ? "arrow.counterclockwise" : nil)), title: (viewModel.showCancel ? "Cancel" : (viewModel.showReset ? "Reset" : "")), isDestructive: false) {
-                                    if viewModel.showCancel {
-                                        print("🔴 CANCEL CLICKED IN CATEGORYVIEW!")
-                                        
+                                    })
+                                }
+                                
+                                // Cancel Training
+                                if viewModel.showCancel {
+                                    items.append(MiniActionMenuItem(icon: "xmark", title: "Cancel", isDestructive: false) {
                                         trainingCoordinator.activeSetViewModel.cancelActiveSet()
                                         
-                                        // EINFACH: Cancel führt IMMER zur ursprünglichen CategoryView
                                         let targetCategory = trainingCoordinator.activeSetViewModel.originalCategory ?? group
-                                        print("🔴 Navigating to CategoryView: \(targetCategory.rawValue)")
-                                        
                                         if targetCategory != group {
                                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                                 navigationPath.append(NavigationDestination.muscleCategory(targetCategory))
                                             }
                                         }
-                                    } else if viewModel.showReset {
-                                        viewModel.showResetConfirmation = true
-                                    }
-                                    overlayState.showCategoryMiniMenu = false
+                                        overlayState.showCategoryMiniMenu = false
+                                    })
                                 }
-                            ],
+                                
+                                // Reset
+                                if viewModel.showReset {
+                                    items.append(MiniActionMenuItem(icon: "arrow.counterclockwise", title: "Reset", isDestructive: false) {
+                                        viewModel.showResetConfirmation = true
+                                        overlayState.showCategoryMiniMenu = false
+                                    })
+                                }
+                                
+                                // FALLBACK: Always show at least "New Exercise" if no other items
+                                if items.isEmpty {
+                                    items.append(MiniActionMenuItem(icon: "plus", title: "New Exercise", isDestructive: false) {
+                                        withAnimation {
+                                            formViewModel.loadExercise(nil, category: group)
+                                            formViewModel.toggleForm()
+                                            overlayState.showCategoryMiniMenu = false
+                                        }
+                                    })
+                                }
+                                return items
+                            }(),
                             width: min(UIScreen.main.bounds.width * 0.55, 320),
                             minHeight: 140
                         )

@@ -6,12 +6,6 @@ enum TrainingStartSource {
     case categorySelectionView  // Training started from CategorySelectionView
 }
 
-// MARK: - Training Return Destination
-enum TrainingReturnDestination {
-    case categorySelectionView  // Normal return to CategorySelectionView
-    case categoryView          // Return to CategoryView (when started from CategorySelectionView with active training)
-}
-
 // MARK: - Training Navigation Helper
 struct TrainingNavigationHelper {
     
@@ -19,10 +13,9 @@ struct TrainingNavigationHelper {
     static func navigateToTraining(
         exercise: Exercise,
         category: MuscleCategoryGroup,
-        navigationPath: inout NavigationPath,
-        returnDestination: TrainingReturnDestination = .categorySelectionView
+        navigationPath: inout NavigationPath
     ) {
-        navigationPath.append(NavigationDestination.training(exercise, category, returnDestination))
+        navigationPath.append(NavigationDestination.training(exercise, category))
     }
     
     /// Create onStart closure that navigates to TrainingView

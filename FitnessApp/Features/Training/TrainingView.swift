@@ -3,7 +3,6 @@ import SwiftUI
 struct TrainingView: View {
     let exercise: Exercise
     let category: MuscleCategoryGroup
-    let returnDestination: TrainingReturnDestination
     @Binding var navigationPath: NavigationPath
     
     @StateObject private var trainingCoordinator: TrainingCoordinator
@@ -14,10 +13,9 @@ struct TrainingView: View {
     @State private var isInitialLoad = true
     @State private var isManuallyNavigatingBack = false
     
-    init(exercise: Exercise, category: MuscleCategoryGroup, returnDestination: TrainingReturnDestination, navigationPath: Binding<NavigationPath>) {
+    init(exercise: Exercise, category: MuscleCategoryGroup, navigationPath: Binding<NavigationPath>) {
         self.exercise = exercise
         self.category = category
-        self.returnDestination = returnDestination
         self._navigationPath = navigationPath
         
         // Create TrainingCoordinator for this specific training session
@@ -99,9 +97,14 @@ struct TrainingView: View {
                                     newPath.append(NavigationDestination.muscleCategory(targetCategory))
                                     navigationPath = newPath
                                     
-                                    // Cancel after navigation
+                                    // Cancel after navigation and ensure correct scene is set
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                         trainingCoordinator.activeSetViewModel.cancelActiveSet()
+                                        
+                                        // Force currentScene to category after navigation completes
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                            overlayState.currentScene = .category
+                                        }
                                         
                                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                                             overlayState.isCancellingTraining = false
@@ -161,9 +164,14 @@ struct TrainingView: View {
                                     newPath.append(NavigationDestination.muscleCategory(targetCategory))
                                     navigationPath = newPath
                                     
-                                    // Cancel after navigation
+                                    // Cancel after navigation and ensure correct scene is set
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                         trainingCoordinator.activeSetViewModel.cancelActiveSet()
+                                        
+                                        // Force currentScene to category after navigation completes
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                            overlayState.currentScene = .category
+                                        }
                                         
                                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                                             overlayState.isCancellingTraining = false
@@ -187,8 +195,8 @@ struct TrainingView: View {
         .navigationBarBackButtonHidden(true)
         .onAppear {
             // Start training automatically when view appears
-            let startSource: TrainingStartSource = returnDestination == .categoryView ? .categorySelectionView : .categoryView
-            trainingCoordinator.startTraining(for: exercise, startSource: startSource)
+            // Always use .categoryView as start source since we're in dedicated TrainingView
+            trainingCoordinator.startTraining(for: exercise, startSource: .categoryView)
             
             // Mark that initial load is complete
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -234,7 +242,6 @@ struct TrainingView: View {
             TrainingView(
                 exercise: sampleExercise,
                 category: .chest,
-                returnDestination: .categorySelectionView,
                 navigationPath: .constant(NavigationPath())
             )
         }
