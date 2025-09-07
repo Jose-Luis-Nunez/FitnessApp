@@ -128,9 +128,9 @@ struct FitnessAppApp: App {
                         navigationPath = newPath
                     } : nil
                 )
-                .zIndex((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu) ? 0 : 1)
-                .opacity((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu) ? 0 : 1)
-                .allowsHitTesting(!(overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu))
+                .zIndex((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu) ? 0 : 1)
+                .opacity((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu) ? 0 : 1)
+                .allowsHitTesting(!(overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutDropdown || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu))
             }
             .environmentObject(overlayState)
         }
