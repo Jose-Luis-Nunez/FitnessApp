@@ -85,7 +85,7 @@ struct IdleActiveCardView: View {
                         AppChip(
                             text: viewModel.exercise.seatSetting ?? L10n.seatChipDefaultvalue,
                             fontColor: AppStyle.Color.white,
-                            backgroundColor: AppStyle.Color.exerciseCardBackground,
+                            backgroundColor: Color.clear,
                             size: .small,
                             icon: ChipIcon(image: "chairSettings", color: .white, size: .small),
                             onTap: isEditable ? { onEdit(viewModel.exercise) } : nil,
@@ -97,7 +97,7 @@ struct IdleActiveCardView: View {
                         AppChip(
                             text: "\(viewModel.exercise.weight == floor(viewModel.exercise.weight) ? "\(Int(viewModel.exercise.weight))" : String(viewModel.exercise.weight).replacingOccurrences(of: ".", with: ",")) kg",
                             fontColor: AppStyle.Color.white,
-                            backgroundColor: AppStyle.Color.exerciseCardBackground,
+                            backgroundColor: Color.clear,
                             size: .small,
                             onTap: isEditable ? { onEdit(viewModel.exercise) } : nil,
                             borderColor: Color(hex: "#2B2B2B")
@@ -113,7 +113,7 @@ struct IdleActiveCardView: View {
                                 .frame(width: 40, height: 40)
                                 .foregroundColor(AppStyle.Color.greenGlow)
                                 .frame(width: chipWidth, height: chipHeight)
-                                .background(AppStyle.Color.exerciseCardBackground)
+                                .background(Color.clear)
                                 .cornerRadius(12)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
