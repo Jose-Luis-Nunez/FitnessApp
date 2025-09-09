@@ -101,6 +101,7 @@ struct ActiveSetView: View {
                             exercise: exercise,
                             activeSetIndex: viewModel.activeSetIndex,
                             iconSize: iconSize,
+                            quickDoneAllCompleted: viewModel.quickDoneAllCompleted,
                             onEdit: {
                                 viewModel.pendingEditIndex = index
                                 viewModel.pendingEditMode = .edit
@@ -135,6 +136,7 @@ private struct ActiveSetRowView: View {
     let exercise: Exercise
     let activeSetIndex: Int
     let iconSize: CGFloat
+    let quickDoneAllCompleted: Bool
     let onEdit: () -> Void
     
     var body: some View {
@@ -144,7 +146,7 @@ private struct ActiveSetRowView: View {
                     .fill(AppStyle.Color.backgroundColor)
                     .frame(width: iconSize, height: iconSize)
                 
-                if index == activeSetIndex {
+                if index == activeSetIndex && !quickDoneAllCompleted {
                     Circle()
                         .stroke(AppStyle.Color.greenGlow, lineWidth: 2)
                         .frame(width: iconSize, height: iconSize)
