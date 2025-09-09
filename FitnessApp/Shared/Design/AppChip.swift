@@ -16,6 +16,7 @@ struct AppChip: View {
     let icon: ChipIcon?
     let onTap: (() -> Void)?
     var borderColor: Color? = nil
+    var customHeight: CGFloat? = nil
 
     init(
         text: String,
@@ -24,7 +25,8 @@ struct AppChip: View {
         size: AppChipSize = .regular,
         icon: ChipIcon? = nil,
         onTap: (() -> Void)? = nil,
-        borderColor: Color? = nil
+        borderColor: Color? = nil,
+        customHeight: CGFloat? = nil
     ) {
         self.text = text
         self.fontColor = fontColor
@@ -33,6 +35,7 @@ struct AppChip: View {
         self.icon = icon
         self.onTap = onTap
         self.borderColor = borderColor
+        self.customHeight = customHeight
     }
 
     var body: some View {
@@ -89,6 +92,9 @@ struct AppChip: View {
     }
 
     private var fixedHeight: CGFloat {
+        if let customHeight = customHeight {
+            return customHeight
+        }
         switch size {
         case .small, .regular: return 32
         case .large: return 44

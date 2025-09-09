@@ -10,7 +10,7 @@ struct IdleActiveCardView: View {
 
     @State private var isShowingAnalytics = false
 
-    private let chipHeight: CGFloat = 32
+    private let chipHeight: CGFloat = 36
     
     // Dynamischer Abstand basierend auf Screen-Breite
     private var dynamicSpacing: CGFloat {
@@ -89,9 +89,10 @@ struct IdleActiveCardView: View {
                             size: .small,
                             icon: ChipIcon(image: "chairSettings", color: .white, size: .small),
                             onTap: isEditable ? { onEdit(viewModel.exercise) } : nil,
-                            borderColor: Color(hex: "#2B2B2B")
+                            borderColor: Color(hex: "#2B2B2B"),
+                            customHeight: chipHeight
                         )
-                        .frame(width: chipWidth, height: chipHeight)
+                        .frame(width: chipWidth)
                         
                         // Weight chip
                         AppChip(
@@ -100,9 +101,10 @@ struct IdleActiveCardView: View {
                             backgroundColor: Color.clear,
                             size: .small,
                             onTap: isEditable ? { onEdit(viewModel.exercise) } : nil,
-                            borderColor: Color(hex: "#2B2B2B")
+                            borderColor: Color(hex: "#2B2B2B"),
+                            customHeight: chipHeight
                         )
-                        .frame(width: chipWidth, height: chipHeight)
+                        .frame(width: chipWidth)
                         
                         // Analytics chip (mit custom 40px Icon)
                         Button(action: { isShowingAnalytics = true }) {
