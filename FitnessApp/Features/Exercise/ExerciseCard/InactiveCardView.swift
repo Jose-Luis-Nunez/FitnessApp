@@ -84,8 +84,6 @@ struct InactiveCardView: View {
         .sheet(isPresented: $isShowingAnalytics) {
             AnalyticsView(exercise: viewModel.exercise, viewModel: analyticsViewModel)
         }
-        .transition(.move(edge: .bottom))
-        .animation(.easeInOut, value: viewModel.exercise.isCompleted)
     }
 }
 
@@ -105,7 +103,7 @@ extension InactiveCardView {
         var body: some View {
             Button(action: onTap) {
                 HStack(spacing: 10) {
-                    Text("Done")
+                    Text("Reset")
                         .foregroundColor(.white)
                         .font(.system(size: Constants.fontSize, weight: .bold))
                         .lineLimit(1)
