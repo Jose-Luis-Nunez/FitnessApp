@@ -39,7 +39,7 @@ struct ActiveCardView: View {
                                     fontColor: AppStyle.Color.white,
                                     backgroundColor: Color.clear,
                                     icon: ChipIcon(systemName: "bolt.fill", color: AppStyle.Color.yellow, size: .large),
-                                    borderColor: Color(hex: "#2B2B2B")
+                                    borderColor: AppStyle.Color.gray.opacity(0.7)
                                 ).frame(height: chipHeight)
                                 
                                 AppChip(
@@ -47,7 +47,7 @@ struct ActiveCardView: View {
                                     fontColor: AppStyle.Color.white,
                                     backgroundColor: Color.clear,
                                     icon: ChipIcon(systemName: "arrow.triangle.2.circlepath", color: AppStyle.Color.green, size: .large),
-                                    borderColor: Color(hex: "#2B2B2B")
+                                    borderColor: AppStyle.Color.gray.opacity(0.7)
                                 ).frame(height: chipHeight)
                             }
                             
@@ -63,7 +63,7 @@ struct ActiveCardView: View {
                                 .cornerRadius(12)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color(hex: "#2B2B2B"), lineWidth: 1)
+                                        .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
                                 )
                         }
                         
@@ -81,7 +81,7 @@ struct ActiveCardView: View {
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color(hex: "#2B2B2B"), lineWidth: 1)
+                                    .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
                             )
                         }
                         .buttonStyle(.plain)

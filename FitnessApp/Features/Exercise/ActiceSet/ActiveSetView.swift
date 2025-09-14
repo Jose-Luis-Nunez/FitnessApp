@@ -29,7 +29,10 @@ struct ActiveSetView: View {
                             }
                             
                             Button("\(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ",")) kg") {
-                                viewModel.startEditingSet(index: index, mode: .edit)
+                                // Nur klickbar wenn Set abgeschlossen ist
+                                if progress.status != .notStarted && progress.status != .inProgress {
+                                    viewModel.startEditingSet(index: index, mode: .edit)
+                                }
                             }
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(abs(progress.weight - exercise.weight) > 0.0001 ? AppStyle.Color.green : AppStyle.Color.white)
@@ -178,7 +181,10 @@ private struct ActiveSetRowView: View {
             }
             
             Button("\(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ",")) kg") {
-                onEdit()
+                // Nur klickbar wenn Set abgeschlossen ist
+                if progress.status != .notStarted && progress.status != .inProgress {
+                    onEdit()
+                }
             }
             .font(.system(size: 14, weight: .semibold))
             .foregroundColor(abs(progress.weight - exercise.weight) > 0.0001 ? AppStyle.Color.green : AppStyle.Color.white)

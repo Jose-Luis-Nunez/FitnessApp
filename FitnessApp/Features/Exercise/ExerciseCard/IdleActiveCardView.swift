@@ -89,7 +89,7 @@ struct IdleActiveCardView: View {
                             size: .small,
                             icon: ChipIcon(image: "chairSettings", color: .white, size: .small),
                             onTap: isEditable ? { onEdit(viewModel.exercise) } : nil,
-                            borderColor: Color(hex: "#2B2B2B"),
+                            borderColor: AppStyle.Color.gray.opacity(0.7),
                             customHeight: chipHeight
                         )
                         .frame(width: chipWidth)
@@ -101,7 +101,7 @@ struct IdleActiveCardView: View {
                             backgroundColor: Color.clear,
                             size: .small,
                             onTap: isEditable ? { onEdit(viewModel.exercise) } : nil,
-                            borderColor: Color(hex: "#2B2B2B"),
+                            borderColor: AppStyle.Color.gray.opacity(0.7),
                             customHeight: chipHeight
                         )
                         .frame(width: chipWidth)
@@ -119,7 +119,7 @@ struct IdleActiveCardView: View {
                                 .cornerRadius(12)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color(hex: "#2B2B2B"), lineWidth: 1)
+                                        .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
                                 )
                         }
                         .buttonStyle(.plain)
