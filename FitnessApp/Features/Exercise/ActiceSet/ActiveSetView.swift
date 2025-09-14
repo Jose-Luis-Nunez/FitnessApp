@@ -9,6 +9,8 @@ struct ActiveSetView: View {
     private let backgroundColor = AppStyle.Color.activeSetBackground
     private let iconSize: CGFloat = 26
     private let defaultPadding: CGFloat = AppStyle.Padding.horizontal
+    private let chipModifiedColor = Color(hex: "#03494A")
+    private let chipModifiedBorderColor = Color(hex: "#06C6C8")
     
     var body: some View {
         CardBackground(useGlassEffect: true) {
@@ -42,7 +44,11 @@ struct ActiveSetView: View {
                             .padding(.vertical, 4)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .fill(abs(progress.weight - exercise.weight) > 0.0001 ? Color(hex: "#012426") : AppStyle.Color.gray.opacity(0.7))
+                                    .fill(abs(progress.weight - exercise.weight) > 0.0001 ? chipModifiedColor : AppStyle.Color.gray.opacity(0.7))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(abs(progress.weight - exercise.weight) > 0.0001 ? chipModifiedBorderColor : Color.clear, lineWidth: 1)
                             )
                             .buttonStyle(PlainButtonStyle())
                             .contentShape(Rectangle())
@@ -61,7 +67,11 @@ struct ActiveSetView: View {
                                 .padding(.vertical, 4)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .fill((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? Color(hex: "#012426") : AppStyle.Color.gray.opacity(0.7))
+                                        .fill((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? chipModifiedColor : AppStyle.Color.gray.opacity(0.7))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? chipModifiedBorderColor : Color.clear, lineWidth: 1)
                                 )
                                 .buttonStyle(PlainButtonStyle())
                                 .contentShape(Rectangle())
@@ -117,6 +127,8 @@ struct ActiveSetView: View {
                             activeSetIndex: viewModel.activeSetIndex,
                             iconSize: iconSize,
                             quickDoneAllCompleted: viewModel.quickDoneAllCompleted,
+                            chipModifiedColor: chipModifiedColor,
+                            chipModifiedBorderColor: chipModifiedBorderColor,
                             onEdit: {
                                 viewModel.startEditingSet(index: index, mode: .edit)
                             }
@@ -145,6 +157,8 @@ private struct ActiveSetRowView: View {
     let activeSetIndex: Int
     let iconSize: CGFloat
     let quickDoneAllCompleted: Bool
+    let chipModifiedColor: Color
+    let chipModifiedBorderColor: Color
     let onEdit: () -> Void
     
     var body: some View {
@@ -179,7 +193,11 @@ private struct ActiveSetRowView: View {
             .padding(.vertical, 4)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(abs(progress.weight - exercise.weight) > 0.0001 ? Color(hex: "#012426") : AppStyle.Color.gray.opacity(0.7))
+                    .fill(abs(progress.weight - exercise.weight) > 0.0001 ? chipModifiedColor : AppStyle.Color.gray.opacity(0.7))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(abs(progress.weight - exercise.weight) > 0.0001 ? chipModifiedBorderColor : Color.clear, lineWidth: 1)
             )
             .buttonStyle(PlainButtonStyle())
             .contentShape(Rectangle())
@@ -199,7 +217,11 @@ private struct ActiveSetRowView: View {
                 .padding(.vertical, 4)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? Color(hex: "#012426") : AppStyle.Color.gray.opacity(0.7))
+                        .fill((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? chipModifiedColor : AppStyle.Color.gray.opacity(0.7))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? chipModifiedBorderColor : Color.clear, lineWidth: 1)
                 )
                 .buttonStyle(PlainButtonStyle())
                 .contentShape(Rectangle())
