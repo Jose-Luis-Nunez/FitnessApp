@@ -27,6 +27,7 @@ struct ActiveSetView: View {
                                     .font(.system(size: 12, weight: .semibold))
                                     .foregroundColor(AppStyle.Color.white)
                             }
+                            .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.4)
                             
                             Button("\(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ",")) kg") {
                                 // Nur klickbar wenn Set abgeschlossen ist
@@ -41,20 +42,11 @@ struct ActiveSetView: View {
                             .padding(.vertical, 4)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .fill(AppStyle.Color.backgroundColor)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(
-                                        AppStyle.Color.gray.opacity(0.7),
-                                        style: StrokeStyle(
-                                            lineWidth: 1,
-                                            dash: (progress.status == .notStarted || progress.status == .inProgress) ? [4, 4] : []
-                                        )
-                                    )
+                                    .fill(AppStyle.Color.gray.opacity(0.7))
                             )
                             .buttonStyle(PlainButtonStyle())
                             .contentShape(Rectangle())
+                            .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.4)
                             
                             
                             HStack(spacing: 8) {
@@ -69,28 +61,21 @@ struct ActiveSetView: View {
                                 .padding(.vertical, 4)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .fill(AppStyle.Color.backgroundColor)
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(
-                                            AppStyle.Color.gray.opacity(0.7),
-                                            style: StrokeStyle(
-                                                lineWidth: 1,
-                                                dash: (progress.status == .notStarted || progress.status == .inProgress) ? [4, 4] : []
-                                            )
-                                        )
+                                        .fill(AppStyle.Color.gray.opacity(0.7))
                                 )
                                 .buttonStyle(PlainButtonStyle())
                                 .contentShape(Rectangle())
+                                .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.4)
                                 
                                 Text(" of ")
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(AppStyle.Color.white)
+                                    .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.4)
                                 
                                 Text("\(exercise.reps)")
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(AppStyle.Color.white)
+                                    .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.4)
                                 
                                 if progress.status == .notStarted || progress.status == .inProgress {
                                     Button(action: {
@@ -179,6 +164,7 @@ private struct ActiveSetRowView: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(AppStyle.Color.white)
             }
+            .opacity((index == activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.4)
             
             Button("\(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ",")) kg") {
                 // Nur klickbar wenn Set abgeschlossen ist
@@ -193,20 +179,11 @@ private struct ActiveSetRowView: View {
             .padding(.vertical, 4)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(AppStyle.Color.backgroundColor)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(
-                        AppStyle.Color.gray.opacity(0.7),
-                        style: StrokeStyle(
-                            lineWidth: 1,
-                            dash: (progress.status == .notStarted || progress.status == .inProgress) ? [4, 4] : []
-                        )
-                    )
+                    .fill(AppStyle.Color.gray.opacity(0.7))
             )
             .buttonStyle(PlainButtonStyle())
             .contentShape(Rectangle())
+            .opacity((index == activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.4)
 
             
             
@@ -222,28 +199,21 @@ private struct ActiveSetRowView: View {
                 .padding(.vertical, 4)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(AppStyle.Color.backgroundColor)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(
-                            AppStyle.Color.gray.opacity(0.7),
-                            style: StrokeStyle(
-                                lineWidth: 1,
-                                dash: (progress.status == .notStarted || progress.status == .inProgress) ? [4, 4] : []
-                            )
-                        )
+                        .fill(AppStyle.Color.gray.opacity(0.7))
                 )
                 .buttonStyle(PlainButtonStyle())
                 .contentShape(Rectangle())
+                .opacity((index == activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.4)
                 
                 Text(" of ")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(AppStyle.Color.white)
+                    .opacity((index == activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.4)
                 
                 Text("\(exercise.reps)")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(AppStyle.Color.white)
+                    .opacity((index == activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.4)
                 
                 Spacer()
             }
