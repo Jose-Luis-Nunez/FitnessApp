@@ -36,13 +36,13 @@ struct ActiveSetView: View {
                                 }
                             }
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(abs(progress.weight - exercise.weight) > 0.0001 ? AppStyle.Color.green : AppStyle.Color.white)
+                            .foregroundColor(AppStyle.Color.white)
                             .frame(minWidth: 60, minHeight: 24)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .fill(AppStyle.Color.gray.opacity(0.7))
+                                    .fill(abs(progress.weight - exercise.weight) > 0.0001 ? Color(hex: "#012426") : AppStyle.Color.gray.opacity(0.7))
                             )
                             .buttonStyle(PlainButtonStyle())
                             .contentShape(Rectangle())
@@ -55,13 +55,13 @@ struct ActiveSetView: View {
                                     viewModel.startEditingSet(index: index, mode: .edit)
                                 }
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(AppStyle.Color.green)
+                                .foregroundColor(AppStyle.Color.white)
                                 .frame(minWidth: 36, minHeight: 24)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .fill(AppStyle.Color.gray.opacity(0.7))
+                                        .fill((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? Color(hex: "#012426") : AppStyle.Color.gray.opacity(0.7))
                                 )
                                 .buttonStyle(PlainButtonStyle())
                                 .contentShape(Rectangle())
@@ -173,13 +173,13 @@ private struct ActiveSetRowView: View {
                 }
             }
             .font(.system(size: 14, weight: .semibold))
-            .foregroundColor(abs(progress.weight - exercise.weight) > 0.0001 ? AppStyle.Color.green : AppStyle.Color.white)
+            .foregroundColor(AppStyle.Color.white)
             .frame(minWidth: 60, minHeight: 24)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(AppStyle.Color.gray.opacity(0.7))
+                    .fill(abs(progress.weight - exercise.weight) > 0.0001 ? Color(hex: "#012426") : AppStyle.Color.gray.opacity(0.7))
             )
             .buttonStyle(PlainButtonStyle())
             .contentShape(Rectangle())
@@ -193,13 +193,13 @@ private struct ActiveSetRowView: View {
                     onEdit()
                 }
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(AppStyle.Color.green)
+                .foregroundColor(AppStyle.Color.white)
                 .frame(minWidth: 36, minHeight: 24)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(AppStyle.Color.gray.opacity(0.7))
+                        .fill((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? Color(hex: "#012426") : AppStyle.Color.gray.opacity(0.7))
                 )
                 .buttonStyle(PlainButtonStyle())
                 .contentShape(Rectangle())
