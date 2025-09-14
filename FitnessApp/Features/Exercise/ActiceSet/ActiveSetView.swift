@@ -11,6 +11,10 @@ struct ActiveSetView: View {
     private let defaultPadding: CGFloat = AppStyle.Padding.horizontal
     private let chipModifiedColor = Color(hex: "#051920")
     private let chipModifiedBorderColor = Color(hex: "#014F55")
+    private let chipNormalColor = Color(hex: "#100F15")
+    private let chipNormalBorderColor = Color(hex: "#27262E")
+    private let setNumberCircleColor = AppStyle.Color.backgroundColor
+    private let inactiveSetOpacity: Double = 0.6
     
     var body: some View {
         CardBackground(useGlassEffect: true) {
@@ -22,14 +26,14 @@ struct ActiveSetView: View {
                         HStack(spacing: 12) {
                             ZStack {
                                 Circle()
-                                    .fill(AppStyle.Color.backgroundColor)
+                                    .fill(setNumberCircleColor)
                                     .frame(width: iconSize, height: iconSize)
                                 
                                 Text("\(index + 1)")
                                     .font(.system(size: 12, weight: .semibold))
                                     .foregroundColor(AppStyle.Color.white)
                             }
-                            .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.4)
+                            .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : inactiveSetOpacity)
                             
                             Button("\(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ",")) kg") {
                                 // Nur klickbar wenn Set abgeschlossen ist
@@ -44,15 +48,15 @@ struct ActiveSetView: View {
                             .padding(.vertical, 4)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .fill(abs(progress.weight - exercise.weight) > 0.0001 ? chipModifiedColor : AppStyle.Color.gray.opacity(0.7))
+                                    .fill(abs(progress.weight - exercise.weight) > 0.0001 ? chipModifiedColor : chipNormalColor)
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(abs(progress.weight - exercise.weight) > 0.0001 ? chipModifiedBorderColor : Color.clear, lineWidth: 1.5)
+                                    .stroke(abs(progress.weight - exercise.weight) > 0.0001 ? chipModifiedBorderColor : chipNormalBorderColor, lineWidth: 1.5)
                             )
                             .buttonStyle(PlainButtonStyle())
                             .contentShape(Rectangle())
-                            .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.4)
+                            .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : inactiveSetOpacity)
                             
                             
                             HStack(spacing: 8) {
@@ -67,25 +71,25 @@ struct ActiveSetView: View {
                                 .padding(.vertical, 4)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .fill((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? chipModifiedColor : AppStyle.Color.gray.opacity(0.7))
+                                        .fill((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? chipModifiedColor : chipNormalColor)
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? chipModifiedBorderColor : Color.clear, lineWidth: 1.5)
+                                        .stroke((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? chipModifiedBorderColor : chipNormalBorderColor, lineWidth: 1.5)
                                 )
                                 .buttonStyle(PlainButtonStyle())
                                 .contentShape(Rectangle())
-                                .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.4)
+                                .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : inactiveSetOpacity)
                                 
                                 Text(" of ")
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(AppStyle.Color.white)
-                                    .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.4)
+                                    .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : inactiveSetOpacity)
                                 
                                 Text("\(exercise.reps)")
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(AppStyle.Color.white)
-                                    .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.4)
+                                    .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : inactiveSetOpacity)
                                 
                                 if progress.status == .notStarted || progress.status == .inProgress {
                                     Button(action: {
@@ -129,6 +133,10 @@ struct ActiveSetView: View {
                             quickDoneAllCompleted: viewModel.quickDoneAllCompleted,
                             chipModifiedColor: chipModifiedColor,
                             chipModifiedBorderColor: chipModifiedBorderColor,
+                            chipNormalColor: chipNormalColor,
+                            chipNormalBorderColor: chipNormalBorderColor,
+                            setNumberCircleColor: setNumberCircleColor,
+                            inactiveSetOpacity: inactiveSetOpacity,
                             onEdit: {
                                 viewModel.startEditingSet(index: index, mode: .edit)
                             }
@@ -159,13 +167,17 @@ private struct ActiveSetRowView: View {
     let quickDoneAllCompleted: Bool
     let chipModifiedColor: Color
     let chipModifiedBorderColor: Color
+    let chipNormalColor: Color
+    let chipNormalBorderColor: Color
+    let setNumberCircleColor: Color
+    let inactiveSetOpacity: Double
     let onEdit: () -> Void
     
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(AppStyle.Color.backgroundColor)
+                    .fill(setNumberCircleColor)
                     .frame(width: iconSize, height: iconSize)
                 
                 if index == activeSetIndex && !quickDoneAllCompleted {
@@ -178,7 +190,7 @@ private struct ActiveSetRowView: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(AppStyle.Color.white)
             }
-            .opacity((index == activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.4)
+            .opacity((index == activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : inactiveSetOpacity)
             
             Button("\(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ",")) kg") {
                 // Nur klickbar wenn Set abgeschlossen ist
@@ -193,15 +205,15 @@ private struct ActiveSetRowView: View {
             .padding(.vertical, 4)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(abs(progress.weight - exercise.weight) > 0.0001 ? chipModifiedColor : AppStyle.Color.gray.opacity(0.7))
+                    .fill(abs(progress.weight - exercise.weight) > 0.0001 ? chipModifiedColor : chipNormalColor)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                            .stroke(abs(progress.weight - exercise.weight) > 0.0001 ? chipModifiedBorderColor : Color.clear, lineWidth: 1.5)
+                    .stroke(abs(progress.weight - exercise.weight) > 0.0001 ? chipModifiedBorderColor : chipNormalBorderColor, lineWidth: 1.5)
             )
             .buttonStyle(PlainButtonStyle())
             .contentShape(Rectangle())
-            .opacity((index == activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.4)
+            .opacity((index == activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : inactiveSetOpacity)
 
             
             
@@ -217,25 +229,25 @@ private struct ActiveSetRowView: View {
                 .padding(.vertical, 4)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? chipModifiedColor : AppStyle.Color.gray.opacity(0.7))
+                        .fill((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? chipModifiedColor : chipNormalColor)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? chipModifiedBorderColor : Color.clear, lineWidth: 1.5)
+                        .stroke((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? chipModifiedBorderColor : chipNormalBorderColor, lineWidth: 1.5)
                 )
                 .buttonStyle(PlainButtonStyle())
                 .contentShape(Rectangle())
-                .opacity((index == activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.4)
+                .opacity((index == activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : inactiveSetOpacity)
                 
                 Text(" of ")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(AppStyle.Color.white)
-                    .opacity((index == activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.4)
+                    .opacity((index == activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : inactiveSetOpacity)
                 
                 Text("\(exercise.reps)")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(AppStyle.Color.white)
-                    .opacity((index == activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.4)
+                    .opacity((index == activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : inactiveSetOpacity)
                 
                 Spacer()
             }
