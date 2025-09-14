@@ -81,32 +81,58 @@ struct IdleActiveCardView: View {
                     
                     // Level 2: Sets chip, Weight chip, and Analytics icon
                     HStack(alignment: .center, spacing: 5) {
-                        // Sets chip
-                        AppChip(
-                            text: viewModel.exercise.seatSetting ?? L10n.seatChipDefaultvalue,
-                            fontColor: AppStyle.Color.white,
-                            backgroundColor: Color.clear,
-                            size: .small,
-                            icon: ChipIcon(image: "chairSettings", color: .white, size: .small),
-                            onTap: isEditable ? { onEdit(viewModel.exercise) } : nil,
-                            borderColor: AppStyle.Color.gray.opacity(0.7),
-                            customHeight: chipHeight
-                        )
-                        .frame(width: chipWidth)
+                        // Custom Sets chip (responsive width)
+                        Button(action: {
+                            if isEditable { onEdit(viewModel.exercise) }
+                        }) {
+                            HStack(spacing: 4) {
+                                Image("chairSettings")
+                                    .renderingMode(.template)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 14, height: 14)
+                                    .foregroundColor(.white)
+                                
+                                Text(viewModel.exercise.seatSetting ?? L10n.seatChipDefaultvalue)
+                                    .font(AppStyle.Font.regularChip)
+                                    .foregroundColor(AppStyle.Color.white)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .frame(width: chipWidth, height: chipHeight)
+                            .background(Color.clear)
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
                         
-                        // Weight chip
-                        AppChip(
-                            text: "\(viewModel.exercise.weight == floor(viewModel.exercise.weight) ? "\(Int(viewModel.exercise.weight))" : String(viewModel.exercise.weight).replacingOccurrences(of: ".", with: ",")) kg",
-                            fontColor: AppStyle.Color.white,
-                            backgroundColor: Color.clear,
-                            size: .small,
-                            onTap: isEditable ? { onEdit(viewModel.exercise) } : nil,
-                            borderColor: AppStyle.Color.gray.opacity(0.7),
-                            customHeight: chipHeight
-                        )
-                        .frame(width: chipWidth)
+                        // Custom Weight chip (responsive width)
+                        Button(action: {
+                            if isEditable { onEdit(viewModel.exercise) }
+                        }) {
+                            Text("\(viewModel.exercise.weight == floor(viewModel.exercise.weight) ? "\(Int(viewModel.exercise.weight))" : String(viewModel.exercise.weight).replacingOccurrences(of: ".", with: ",")) kg")
+                                .font(AppStyle.Font.regularChip)
+                                .foregroundColor(AppStyle.Color.white)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .frame(width: chipWidth, height: chipHeight)
+                                .background(Color.clear)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
                         
-                        // Analytics chip (mit custom 40px Icon)
+                        // Analytics chip (responsive width)
                         Button(action: { isShowingAnalytics = true }) {
                             Image("analyticsEntry")
                                 .renderingMode(.template)
@@ -131,7 +157,7 @@ struct IdleActiveCardView: View {
                 AnalyticsView(exercise: viewModel.exercise, viewModel: analyticsViewModel)
             }
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, AppStyle.Padding.card)
         .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
 
     }
