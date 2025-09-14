@@ -16,7 +16,7 @@ struct ActiveSetView: View {
     private let chipNormalColor = Color(hex: "#100F15")
     private let chipNormalBorderColor = Color(hex: "#27262E")
     private let setNumberCircleColor = AppStyle.Color.backgroundColor
-    private let inactiveSetOpacity: Double = 0.6
+    private let inactiveSetOpacity: Double = 0.3
     
     var body: some View {
         CardBackground(useGlassEffect: true) {
