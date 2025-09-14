@@ -9,8 +9,8 @@ struct ActiveSetView: View {
     private let backgroundColor = AppStyle.Color.activeSetBackground
     private let iconSize: CGFloat = 26
     private let defaultPadding: CGFloat = AppStyle.Padding.horizontal
-    private let chipModifiedColor = Color(hex: "#03494A")
-    private let chipModifiedBorderColor = Color(hex: "#06C6C8")
+    private let chipModifiedColor = Color(hex: "#051920")
+    private let chipModifiedBorderColor = Color(hex: "#014F55")
     
     var body: some View {
         CardBackground(useGlassEffect: true) {
@@ -48,7 +48,7 @@ struct ActiveSetView: View {
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(abs(progress.weight - exercise.weight) > 0.0001 ? chipModifiedBorderColor : Color.clear, lineWidth: 1)
+                                    .stroke(abs(progress.weight - exercise.weight) > 0.0001 ? chipModifiedBorderColor : Color.clear, lineWidth: 1.5)
                             )
                             .buttonStyle(PlainButtonStyle())
                             .contentShape(Rectangle())
@@ -71,7 +71,7 @@ struct ActiveSetView: View {
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? chipModifiedBorderColor : Color.clear, lineWidth: 1)
+                                        .stroke((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? chipModifiedBorderColor : Color.clear, lineWidth: 1.5)
                                 )
                                 .buttonStyle(PlainButtonStyle())
                                 .contentShape(Rectangle())
@@ -197,7 +197,7 @@ private struct ActiveSetRowView: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(abs(progress.weight - exercise.weight) > 0.0001 ? chipModifiedBorderColor : Color.clear, lineWidth: 1)
+                            .stroke(abs(progress.weight - exercise.weight) > 0.0001 ? chipModifiedBorderColor : Color.clear, lineWidth: 1.5)
             )
             .buttonStyle(PlainButtonStyle())
             .contentShape(Rectangle())
@@ -221,7 +221,7 @@ private struct ActiveSetRowView: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? chipModifiedBorderColor : Color.clear, lineWidth: 1)
+                        .stroke((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? chipModifiedBorderColor : Color.clear, lineWidth: 1.5)
                 )
                 .buttonStyle(PlainButtonStyle())
                 .contentShape(Rectangle())
