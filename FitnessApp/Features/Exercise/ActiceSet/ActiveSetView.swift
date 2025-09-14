@@ -11,6 +11,8 @@ struct ActiveSetView: View {
     private let defaultPadding: CGFloat = AppStyle.Padding.horizontal
     private let chipModifiedColor = Color(hex: "#051920")
     private let chipModifiedBorderColor = Color(hex: "#014F55")
+    private let chipReducedColor = Color(hex: "#20160D")
+    private let chipReducedBorderColor = Color(hex: "#E57D00")
     private let chipNormalColor = Color(hex: "#100F15")
     private let chipNormalBorderColor = Color(hex: "#27262E")
     private let setNumberCircleColor = AppStyle.Color.backgroundColor
@@ -48,11 +50,13 @@ struct ActiveSetView: View {
                             .padding(.vertical, 4)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .fill(abs(progress.weight - exercise.weight) > 0.0001 ? chipModifiedColor : chipNormalColor)
+                                    .fill(progress.weight > exercise.weight ? chipModifiedColor : 
+                                          progress.weight < exercise.weight ? chipReducedColor : chipNormalColor)
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(abs(progress.weight - exercise.weight) > 0.0001 ? chipModifiedBorderColor : chipNormalBorderColor, lineWidth: 1.5)
+                                    .stroke(progress.weight > exercise.weight ? chipModifiedBorderColor : 
+                                            progress.weight < exercise.weight ? chipReducedBorderColor : chipNormalBorderColor, lineWidth: 1.5)
                             )
                             .buttonStyle(PlainButtonStyle())
                             .contentShape(Rectangle())
@@ -71,11 +75,15 @@ struct ActiveSetView: View {
                                 .padding(.vertical, 4)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .fill((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? chipModifiedColor : chipNormalColor)
+                                        .fill((progress.status != .notStarted && progress.status != .inProgress) ? 
+                                              (progress.currentReps > exercise.reps ? chipModifiedColor : 
+                                               progress.currentReps < exercise.reps ? chipReducedColor : chipNormalColor) : chipNormalColor)
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? chipModifiedBorderColor : chipNormalBorderColor, lineWidth: 1.5)
+                                        .stroke((progress.status != .notStarted && progress.status != .inProgress) ? 
+                                                (progress.currentReps > exercise.reps ? chipModifiedBorderColor : 
+                                                 progress.currentReps < exercise.reps ? chipReducedBorderColor : chipNormalBorderColor) : chipNormalBorderColor, lineWidth: 1.5)
                                 )
                                 .buttonStyle(PlainButtonStyle())
                                 .contentShape(Rectangle())
@@ -133,6 +141,8 @@ struct ActiveSetView: View {
                             quickDoneAllCompleted: viewModel.quickDoneAllCompleted,
                             chipModifiedColor: chipModifiedColor,
                             chipModifiedBorderColor: chipModifiedBorderColor,
+                            chipReducedColor: chipReducedColor,
+                            chipReducedBorderColor: chipReducedBorderColor,
                             chipNormalColor: chipNormalColor,
                             chipNormalBorderColor: chipNormalBorderColor,
                             setNumberCircleColor: setNumberCircleColor,
@@ -167,6 +177,8 @@ private struct ActiveSetRowView: View {
     let quickDoneAllCompleted: Bool
     let chipModifiedColor: Color
     let chipModifiedBorderColor: Color
+    let chipReducedColor: Color
+    let chipReducedBorderColor: Color
     let chipNormalColor: Color
     let chipNormalBorderColor: Color
     let setNumberCircleColor: Color
@@ -205,11 +217,13 @@ private struct ActiveSetRowView: View {
             .padding(.vertical, 4)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(abs(progress.weight - exercise.weight) > 0.0001 ? chipModifiedColor : chipNormalColor)
+                    .fill(progress.weight > exercise.weight ? chipModifiedColor : 
+                          progress.weight < exercise.weight ? chipReducedColor : chipNormalColor)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(abs(progress.weight - exercise.weight) > 0.0001 ? chipModifiedBorderColor : chipNormalBorderColor, lineWidth: 1.5)
+                    .stroke(progress.weight > exercise.weight ? chipModifiedBorderColor : 
+                            progress.weight < exercise.weight ? chipReducedBorderColor : chipNormalBorderColor, lineWidth: 1.5)
             )
             .buttonStyle(PlainButtonStyle())
             .contentShape(Rectangle())
@@ -229,11 +243,15 @@ private struct ActiveSetRowView: View {
                 .padding(.vertical, 4)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? chipModifiedColor : chipNormalColor)
+                        .fill((progress.status != .notStarted && progress.status != .inProgress) ? 
+                              (progress.currentReps > exercise.reps ? chipModifiedColor : 
+                               progress.currentReps < exercise.reps ? chipReducedColor : chipNormalColor) : chipNormalColor)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke((progress.status != .notStarted && progress.status != .inProgress && progress.currentReps != exercise.reps) ? chipModifiedBorderColor : chipNormalBorderColor, lineWidth: 1.5)
+                        .stroke((progress.status != .notStarted && progress.status != .inProgress) ? 
+                                (progress.currentReps > exercise.reps ? chipModifiedBorderColor : 
+                                 progress.currentReps < exercise.reps ? chipReducedBorderColor : chipNormalBorderColor) : chipNormalBorderColor, lineWidth: 1.5)
                 )
                 .buttonStyle(PlainButtonStyle())
                 .contentShape(Rectangle())
