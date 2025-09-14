@@ -101,7 +101,7 @@ struct ActiveCardView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .frame(width: 58, height: chipHeight)
+        .frame(width: 63, height: chipHeight)
         .background(Color.clear)
         .cornerRadius(12)
         .overlay(
@@ -122,7 +122,7 @@ struct ActiveCardView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .frame(width: 58, height: chipHeight)
+        .frame(width: 63, height: chipHeight)
         .background(Color.clear)
         .cornerRadius(12)
         .overlay(
@@ -140,7 +140,7 @@ struct ActiveCardView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 4)
             .frame(height: chipHeight)
-            .frame(width: 122) // 58 + 6 (spacing) + 58 = 122pt (same width as both chips above)
+            .frame(width: 132) // 63 + 6 (spacing) + 63 = 132pt (same width as both chips above)
             .background(Color.clear)
             .cornerRadius(12)
             .overlay(
