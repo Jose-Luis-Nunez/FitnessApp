@@ -14,7 +14,7 @@ struct ActiveSetView: View {
     private let chipReducedColor = Color(hex: "#20160D")
     private let chipReducedBorderColor = Color(hex: "#E57D00")
     private let chipNormalColor = Color(hex: "#100F15")
-    private let chipNormalBorderColor = Color(hex: "#27262E")
+    private let chipNormalBorderColor = AppStyle.Color.gray.opacity(0.7)
     private let setNumberCircleColor = AppStyle.Color.backgroundColor
     private let inactiveSetOpacity: Double = 0.3
     
