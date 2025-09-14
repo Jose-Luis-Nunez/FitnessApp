@@ -12,9 +12,31 @@ struct ActiveCardView: View {
     
     @State private var isShowingAnalytics = false
     private let chipHeight: CGFloat = 32
-    private let analyticsButtonWidth: CGFloat = 80
-    private let analyticsButtonHeight: CGFloat = 56
-    private let iconContainerWidth: CGFloat = 72
+    
+    // Pro Max specific sizing
+    private var isProMax: Bool {
+        UIScreen.main.bounds.width >= 430 // iPhone 16 Pro Max threshold
+    }
+    
+    private var analyticsButtonWidth: CGFloat {
+        isProMax ? 90 : 80
+    }
+    
+    private var iconContainerWidth: CGFloat {
+        isProMax ? 82 : 72
+    }
+    
+    private var iconSize: CGFloat {
+        isProMax ? 108 : 98
+    }
+    
+    private var chipWidthSmall: CGFloat {
+        isProMax ? 71 : 63
+    }
+    
+    private var chipWidthLarge: CGFloat {
+        isProMax ? 148 : 132 // 71 + 6 + 71 = 148
+    }
     
     private var formattedWeight: String {
         let weight = viewModel.exercise.weight
@@ -41,23 +63,37 @@ struct ActiveCardView: View {
         let screenWidth = UIScreen.main.bounds.width
         let availableWidth = screenWidth - 64 // Account for card and outer padding
         
-        // Responsive spacing between analytics and icon to match ActiveSetView width
+        // Responsive spacing between analytics and icon
         let analyticsToIconSpacing: CGFloat = {
-            if screenWidth > 400 { return 8 }  // iPhone 16 Pro: minimal spacing
+            if isProMax { return 12 }  // iPhone 16 Pro Max: more generous spacing
+            else if screenWidth > 400 { return 8 }  // iPhone 16 Pro: minimal spacing
             else if screenWidth > 375 { return 6 }  // iPhone 14/15: very tight
             else { return 4 }  // iPhone 12/13 mini: ultra tight
         }()
         
-        return HStack(alignment: .center, spacing: dynamicSpacing) {
+        let contentView = HStack(alignment: .center, spacing: dynamicSpacing) {
             exerciseInfoSection(availableWidth: availableWidth, dynamicSpacing: dynamicSpacing)
             
             Spacer()
-                .frame(maxWidth: analyticsToIconSpacing) // Responsive spacing based on screen size
+                .frame(maxWidth: analyticsToIconSpacing)
             
             exerciseIconSection
         }
         .frame(height: 100)
-        .frame(maxWidth: .infinity)
+        
+        // Pro Max: Limit content width and center it
+        if isProMax {
+            return AnyView(
+                contentView
+                    .frame(maxWidth: 400) // Limit content width on Pro Max
+                    .frame(maxWidth: .infinity) // Center it
+            )
+        } else {
+            return AnyView(
+                contentView
+                    .frame(maxWidth: .infinity)
+            )
+        }
     }
     
     private func exerciseInfoSection(availableWidth: CGFloat, dynamicSpacing: CGFloat) -> some View {
@@ -101,7 +137,7 @@ struct ActiveCardView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .frame(width: 63, height: chipHeight)
+        .frame(width: chipWidthSmall, height: chipHeight)
         .background(Color.clear)
         .cornerRadius(12)
         .overlay(
@@ -122,7 +158,7 @@ struct ActiveCardView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .frame(width: 63, height: chipHeight)
+        .frame(width: chipWidthSmall, height: chipHeight)
         .background(Color.clear)
         .cornerRadius(12)
         .overlay(
@@ -140,7 +176,7 @@ struct ActiveCardView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 4)
             .frame(height: chipHeight)
-            .frame(width: 132) // 63 + 6 (spacing) + 63 = 132pt (same width as both chips above)
+            .frame(width: chipWidthLarge) // Responsive width: Pro Max 148pt, others 132pt
             .background(Color.clear)
             .cornerRadius(12)
             .overlay(
@@ -175,14 +211,14 @@ struct ActiveCardView: View {
             ZStack {
                 Circle()
                     .fill(AppStyle.Color.greenBlack)
-                    .frame(width: 98 * 0.9, height: 98 * 0.9)
+                    .frame(width: iconSize * 0.9, height: iconSize * 0.9)
                     .blur(radius: 12)
                     .opacity(0.5)
                 
                 Image(viewModel.exercise.displayIconName)
                     .resizable()
                     .scaledToFill()
-                    .frame(width: 98, height: 98, alignment: viewModel.exercise.iconAlignment)
+                    .frame(width: iconSize, height: iconSize, alignment: viewModel.exercise.iconAlignment)
                     .clipped()
             }
         }
