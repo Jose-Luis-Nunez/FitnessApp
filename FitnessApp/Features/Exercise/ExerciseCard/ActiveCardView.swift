@@ -34,8 +34,8 @@ struct ActiveCardView: View {
         isProMax ? 71 : 63
     }
     
-    private var chipWidthLarge: CGFloat {
-        isProMax ? 148 : 132 // 71 + 6 + 71 = 148
+    private var chipWidthVertical: CGFloat {
+        isProMax ? 71 : 63 // Same as small chips for vertical stacking
     }
     
     private var formattedWeight: String {
@@ -99,11 +99,7 @@ struct ActiveCardView: View {
     private func exerciseInfoSection(availableWidth: CGFloat, dynamicSpacing: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             exerciseTitle
-            
-            HStack(alignment: .bottom, spacing: 6) { // Changed from .top to .bottom
-                exerciseChipsSection(availableWidth: availableWidth, dynamicSpacing: dynamicSpacing)
-                analyticsButton
-            }
+            exerciseChipsSection(availableWidth: availableWidth, dynamicSpacing: dynamicSpacing)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -116,12 +112,16 @@ struct ActiveCardView: View {
     }
     
     private func exerciseChipsSection(availableWidth: CGFloat, dynamicSpacing: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
+        HStack(alignment: .bottom, spacing: 6) {
+            // Left side: Sets and Reps stacked vertically
+            VStack(alignment: .leading, spacing: 4) {
                 setsChip
                 repsChip
             }
-            weightChip(availableWidth: availableWidth, dynamicSpacing: dynamicSpacing)
+            
+            // Right side: Weight and Analytics side by side
+            weightChip
+            analyticsButton
         }
     }
     
@@ -137,8 +137,8 @@ struct ActiveCardView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .frame(width: chipWidthSmall, height: chipHeight)
-        .background(Color.clear)
+        .frame(width: chipWidthVertical, height: chipHeight)
+        .background(Color(hex: "#100F15"))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
@@ -158,8 +158,8 @@ struct ActiveCardView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .frame(width: chipWidthSmall, height: chipHeight)
-        .background(Color.clear)
+        .frame(width: chipWidthVertical, height: chipHeight)
+        .background(Color(hex: "#100F15"))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
@@ -167,7 +167,7 @@ struct ActiveCardView: View {
         )
     }
     
-    private func weightChip(availableWidth: CGFloat, dynamicSpacing: CGFloat) -> some View {
+    private var weightChip: some View {
         Text(formattedWeight)
             .font(AppStyle.Font.regularChip)
             .foregroundColor(AppStyle.Color.white)
@@ -175,9 +175,9 @@ struct ActiveCardView: View {
             .minimumScaleFactor(0.8)
             .padding(.horizontal, 12)
             .padding(.vertical, 4)
-            .frame(height: chipHeight)
-            .frame(width: chipWidthLarge) // Responsive width: Pro Max 148pt, others 132pt
-            .background(Color.clear)
+            .frame(height: 68) // Same height as analytics button (tall like analytics)
+            .frame(width: analyticsButtonWidth) // Same width as analytics button
+            .background(Color(hex: "#100F15"))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
@@ -196,7 +196,7 @@ struct ActiveCardView: View {
                 .frame(width: 60, height: 60) // Larger icon size within the same chip
                 .foregroundStyle(Color(hex:"#077484"))
                 .frame(width: analyticsButtonWidth, height: 68) // Chip stays same size
-                .background(Color.clear)
+                .background(Color(hex: "#100F15"))
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
