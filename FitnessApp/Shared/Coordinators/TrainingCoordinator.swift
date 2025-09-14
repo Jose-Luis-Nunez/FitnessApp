@@ -80,6 +80,13 @@ class TrainingCoordinator: ObservableObject {
         
         // Update our reference to point to the correct category VM
         activeSetViewModel = categoryActiveSetVM
+        
+        // CRITICAL: Setup coordinator update callback for state sync
+        activeSetViewModel.onCoordinatorUpdateNeeded = { [weak self] in
+            print("🔄 Coordinator update triggered via callback")
+            self?.objectWillChange.send()
+        }
+        
         setupActiveSetViewModelObserver()
         
         print("🟠 About to call activeSetViewModel.startSet...")

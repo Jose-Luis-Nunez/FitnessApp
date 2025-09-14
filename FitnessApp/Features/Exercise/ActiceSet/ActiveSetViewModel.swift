@@ -28,6 +28,9 @@ class ActiveSetViewModel: ObservableObject {
     var category: MuscleCategoryGroup?
     var originalStartSource: TrainingStartSource = .categoryView
     var originalCategory: MuscleCategoryGroup?
+    
+    // Callback to notify parent coordinator of critical state changes
+    var onCoordinatorUpdateNeeded: (() -> Void)?
 
     var isInputValid: Bool {
         guard let newReps = Int(repsInput),
@@ -315,6 +318,24 @@ class ActiveSetViewModel: ObservableObject {
         weightInput = weight == floor(weight)
             ? String(Int(weight))
             : String(weight).replacingOccurrences(of: ".", with: ",")
+        
+        // AGGRESSIVE UI REFRESH - Force SwiftUI to update NOW
+        objectWillChange.send()
+
+        // CRITICAL: Also notify parent coordinator for state propagation
+        onCoordinatorUpdateNeeded?()
+
+        DispatchQueue.main.async {
+            self.objectWillChange.send()
+            // Double-notify coordinator
+            self.onCoordinatorUpdateNeeded?()
+
+            // Additional refresh after short delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+                self.objectWillChange.send()
+                self.onCoordinatorUpdateNeeded?()
+            }
+        }
     }
     
     func handleAppForeground() {

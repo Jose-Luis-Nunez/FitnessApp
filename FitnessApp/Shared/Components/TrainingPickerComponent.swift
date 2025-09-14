@@ -7,15 +7,21 @@ struct TrainingPickerComponent: View {
     
     // State management for picker visibility and processing
     @State private var isProcessingSaveCancel = false
-    @State private var isEditPickerVisible = false
     
     var body: some View {
-        Group {
-            if coordinator.activeSetViewModel.isEditing || isEditPickerVisible {
-                // Signal: bring sheet to front, hide menu bar
-                Color.clear
-                    .onAppear { 
-                        overlayState.isEditingSheetVisible = true 
+        // REMOVE Group wrapper - direct rendering
+        if coordinator.activeSetViewModel.isEditing {
+            
+            // Fullscreen overlay to ensure visibility
+            ZStack {
+                // Semi-transparent background
+                Color.black.opacity(0.4)
+                    .ignoresSafeArea(.all)
+                    .onTapGesture {
+                        coordinator.activeSetViewModel.isEditing = false
+                    }
+                    .onAppear {
+                        overlayState.isEditingSheetVisible = true
                     }
                 
                 ActiveSetEditPickerView(
@@ -40,7 +46,6 @@ struct TrainingPickerComponent: View {
                         coordinator.activeSetViewModel.updateCurrentReps(newReps, newWeight)
                         coordinator.activeSetViewModel.isEditing = false
                         coordinator.activeSetViewModel.pendingEditIndex = nil
-                        isEditPickerVisible = false  // Force picker to close
                         
                         // Force ActiveSetViewModel refresh
                         coordinator.activeSetViewModel.objectWillChange.send()
@@ -72,7 +77,6 @@ struct TrainingPickerComponent: View {
                         // ONLY reset editing state - DON'T touch timer or training state
                         coordinator.activeSetViewModel.isEditing = false
                         coordinator.activeSetViewModel.pendingEditIndex = nil
-                        isEditPickerVisible = false  // Force picker to close
                         
                         // Force UI refresh to restore FABs
                         coordinator.objectWillChange.send()
@@ -85,16 +89,13 @@ struct TrainingPickerComponent: View {
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                 .shadow(radius: 5)
-                .transition(.move(edge: .bottom).combined(with: .opacity).animation(.easeOut(duration: 0.25)))
-                .zIndex(1000)  // Higher than bottom menu bar
-                .ignoresSafeArea(edges: .bottom)
+                .zIndex(99999)  // MAXIMUM zIndex to ensure visibility
+                .ignoresSafeArea(edges: .all)  // Ignore ALL safe areas
                 .onDisappear { overlayState.isEditingSheetVisible = false }
             }
-        }
-        .onChange(of: coordinator.activeSetViewModel.isEditing) { isEditing in
-            if isEditing && !isEditPickerVisible {
-                isEditPickerVisible = true
-            }
+            .id("picker-\(coordinator.activeSetViewModel.isEditing)")  // Force SwiftUI refresh
+        } else {
+            EmptyView()
         }
     }
     
