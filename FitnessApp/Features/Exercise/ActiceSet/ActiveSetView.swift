@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftUI
 
 struct ActiveSetView: View {
     let sets: Int
@@ -29,29 +28,58 @@ struct ActiveSetView: View {
                                     .foregroundColor(AppStyle.Color.white)
                             }
                             
-                            Text("\(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ",")) kg")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(abs(progress.weight - exercise.weight) > 0.0001 ? AppStyle.Color.green : AppStyle.Color.white)
+                            Button("\(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ",")) kg") {
+                                viewModel.startEditingSet(index: index, mode: .edit)
+                            }
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(abs(progress.weight - exercise.weight) > 0.0001 ? AppStyle.Color.green : AppStyle.Color.white)
+                            .frame(minWidth: 60, minHeight: 24)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(AppStyle.Color.backgroundColor)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(
+                                        AppStyle.Color.gray.opacity(0.7),
+                                        style: StrokeStyle(
+                                            lineWidth: 1,
+                                            dash: (progress.status == .notStarted || progress.status == .inProgress) ? [4, 4] : []
+                                        )
+                                    )
+                            )
+                            .buttonStyle(PlainButtonStyle())
+                            .contentShape(Rectangle())
                             
-                            Spacer()
                             
-                            HStack(spacing: 4) {
-                                if progress.status != .notStarted && progress.status != .inProgress {
-                                    Button("\(progress.currentReps)") {
-                                        viewModel.startEditingSet(index: index, mode: .edit)
-                                    }
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(AppStyle.Color.green)
-                                    .buttonStyle(PlainButtonStyle())
-                                    .contentShape(Rectangle())
-                                } else {
-                                    Image(systemName: "arrow.triangle.2.circlepath")
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(width: 16, height: 16)
-                                        .symbolRenderingMode(.palette)
-                                        .foregroundStyle(AppStyle.Color.green)
+                            HStack(spacing: 8) {
+                                // Chip immer sichtbar - leer wenn noch nicht done
+                                Button(progress.status != .notStarted && progress.status != .inProgress ? "\(progress.currentReps)" : "") {
+                                    viewModel.startEditingSet(index: index, mode: .edit)
                                 }
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(AppStyle.Color.green)
+                                .frame(minWidth: 36, minHeight: 24)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(AppStyle.Color.backgroundColor)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(
+                                            AppStyle.Color.gray.opacity(0.7),
+                                            style: StrokeStyle(
+                                                lineWidth: 1,
+                                                dash: (progress.status == .notStarted || progress.status == .inProgress) ? [4, 4] : []
+                                            )
+                                        )
+                                )
+                                .buttonStyle(PlainButtonStyle())
+                                .contentShape(Rectangle())
                                 
                                 Text(" of ")
                                     .font(.system(size: 16, weight: .semibold))
@@ -149,30 +177,59 @@ private struct ActiveSetRowView: View {
                     .foregroundColor(AppStyle.Color.white)
             }
             
-            Text("\(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ",")) kg")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(abs(progress.weight - exercise.weight) > 0.0001 ? AppStyle.Color.green : AppStyle.Color.white)
+            Button("\(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ",")) kg") {
+                onEdit()
+            }
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundColor(abs(progress.weight - exercise.weight) > 0.0001 ? AppStyle.Color.green : AppStyle.Color.white)
+            .frame(minWidth: 60, minHeight: 24)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(AppStyle.Color.backgroundColor)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(
+                        AppStyle.Color.gray.opacity(0.7),
+                        style: StrokeStyle(
+                            lineWidth: 1,
+                            dash: (progress.status == .notStarted || progress.status == .inProgress) ? [4, 4] : []
+                        )
+                    )
+            )
+            .buttonStyle(PlainButtonStyle())
+            .contentShape(Rectangle())
 
             
-            Spacer()
             
-            HStack(spacing: 4) {
-                if progress.status != .notStarted && progress.status != .inProgress {
-                    Button("\(progress.currentReps)") {
-                        onEdit()
-                    }
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(AppStyle.Color.green)
-                    .buttonStyle(PlainButtonStyle())
-                    .contentShape(Rectangle())
-                } else {
-                    Image(systemName: "arrow.triangle.2.circlepath")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 16, height: 16)
-                        .symbolRenderingMode(.palette)
-                        .foregroundStyle(AppStyle.Color.green)
+            HStack(spacing: 8) {
+                // Chip immer sichtbar - leer wenn noch nicht done
+                Button(progress.status != .notStarted && progress.status != .inProgress ? "\(progress.currentReps)" : "") {
+                    onEdit()
                 }
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(AppStyle.Color.green)
+                .frame(minWidth: 36, minHeight: 24)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(AppStyle.Color.backgroundColor)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(
+                            AppStyle.Color.gray.opacity(0.7),
+                            style: StrokeStyle(
+                                lineWidth: 1,
+                                dash: (progress.status == .notStarted || progress.status == .inProgress) ? [4, 4] : []
+                            )
+                        )
+                )
+                .buttonStyle(PlainButtonStyle())
+                .contentShape(Rectangle())
                 
                 Text(" of ")
                     .font(.system(size: 16, weight: .semibold))
@@ -185,5 +242,41 @@ private struct ActiveSetRowView: View {
                 Spacer()
             }
         }
+    }
+}
+
+// MARK: - Reusable ActiveSetChip Component
+private struct ActiveSetChip: View {
+    let text: String
+    let textColor: Color
+    let minWidth: CGFloat
+    let isDashed: Bool
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(text) {
+            onTap()
+        }
+        .font(.system(size: 14, weight: .semibold))
+        .foregroundColor(textColor)
+        .frame(minWidth: minWidth, minHeight: 24)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(AppStyle.Color.backgroundColor)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(
+                    AppStyle.Color.gray.opacity(0.7),
+                    style: StrokeStyle(
+                        lineWidth: 1,
+                        dash: isDashed ? [4, 4] : []
+                    )
+                )
+        )
+        .buttonStyle(PlainButtonStyle())
+        .contentShape(Rectangle())
     }
 }
