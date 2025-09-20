@@ -22,7 +22,7 @@ struct SimpleActiveSetView: View {
     }
     
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 8) {
             // Quick Done Mode
             if viewModel.quickDoneModeActive {
                 ForEach(setProgress.indices, id: \.self) { index in
@@ -39,7 +39,7 @@ struct SimpleActiveSetView: View {
             }
         }
         .padding(.horizontal, dynamicPadding)
-        .padding(.vertical, 8)
+        .padding(.vertical, 12)
         .background(
             Group {
                 if #available(iOS 26.0, *) {

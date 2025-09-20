@@ -16,8 +16,6 @@ struct TrainingSessionComponent: View {
         else if screenWidth <= 400 { return 12 } // iPhone 16 Pro: compact spacing
         else { return 16 }                       // iPhone Pro Max: comfortable spacing
     }
-    
-    
     init(
         coordinator: TrainingCoordinator,
         onEdit: ((Exercise) -> Void)? = nil,
@@ -57,7 +55,6 @@ struct TrainingSessionComponent: View {
                         onCancel: onCancel
                     )
                     .frame(minWidth: 80, maxWidth: 160) // Flexible width with bounds
-                    .frame(maxHeight: .infinity) // Match SimpleActiveSetView height
                 }
                 .padding(.horizontal, AppStyle.Padding.card) // Only outer padding like ActiveCardView
             }
@@ -115,7 +112,6 @@ struct CompactTimerComponent: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity) // Fill assigned width
-        .frame(maxHeight: .infinity) // Fill assigned height
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(AppStyle.Color.greenBlack)
