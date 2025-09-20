@@ -36,7 +36,7 @@ struct TimerView: View {
                             .foregroundColor(AppStyle.Color.white)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
-                            .background(AppStyle.Color.exerciseCardBackground)
+                            .background(AppStyle.Color.green)
                             .cornerRadius(12)
                     }
                     .contentShape(Rectangle())

@@ -90,8 +90,9 @@ struct CompactTimerComponent: View {
                 .minimumScaleFactor(0.6)
             
             Spacer()
+                .frame(maxHeight: 10) // Spacer begrenzen = Button nach oben
             
-            // Cancel button
+            // Cancel button - at bottom
             Button(action: {
                 if let onCancel = onCancel {
                     onCancel()
@@ -100,12 +101,12 @@ struct CompactTimerComponent: View {
                 }
             }) {
                 Text("Cancel")
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.system(size: 16, weight: .medium))
                     .foregroundColor(AppStyle.Color.white)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(AppStyle.Color.exerciseCardBackground)
-                    .cornerRadius(6)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(AppStyle.Color.green)
+                    .cornerRadius(12)
             }
             .buttonStyle(.plain)
         }
