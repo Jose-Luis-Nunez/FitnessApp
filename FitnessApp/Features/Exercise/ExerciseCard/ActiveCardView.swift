@@ -19,7 +19,11 @@ struct ActiveCardView: View {
     }
     
     private var analyticsButtonWidth: CGFloat {
-        isProMax ? 90 : 80
+        let screenWidth = UIScreen.main.bounds.width
+        if isProMax { return 80 }              // Pro Max: balanced
+        else if screenWidth <= 375 { return 62 } // iPhone 12 mini: small but readable
+        else if screenWidth <= 390 { return 65 } // iPhone 12: small but readable  
+        else { return 70 }                    // iPhone 16 Pro: balanced
     }
     
     private var iconContainerWidth: CGFloat {

@@ -8,6 +8,16 @@ struct TrainingSessionComponent: View {
     let onCancel: (() -> Void)?
     let analyticsViewModel: AnalyticsViewModel
     
+    // Compact spacing to fit everything within ActiveCardView bounds
+    private var dynamicSpacing: CGFloat {
+        let screenWidth = UIScreen.main.bounds.width
+        if screenWidth <= 375 { return 8 }       // iPhone 12 mini: minimal spacing
+        else if screenWidth <= 390 { return 10 } // iPhone 12: tight spacing
+        else if screenWidth <= 400 { return 12 } // iPhone 16 Pro: compact spacing
+        else { return 16 }                       // iPhone Pro Max: comfortable spacing
+    }
+    
+    
     init(
         coordinator: TrainingCoordinator,
         onEdit: ((Exercise) -> Void)? = nil,
@@ -25,22 +35,95 @@ struct TrainingSessionComponent: View {
     var body: some View {
         if let exercise = coordinator.currentExercise {
             VStack(spacing: 16) {
-                ActiveSetView(
-                    sets: exercise.sets,
-                    exercise: exercise,
-                    setProgress: $coordinator.activeSetViewModel.setProgress,
-                    viewModel: coordinator.activeSetViewModel
-                )
-                .onAppear {
-                    if coordinator.activeSetViewModel.isSetInProgress {
-                        coordinator.activeSetViewModel.startTimer()
+                // Simple container - match ActiveCardView width exactly
+                HStack(alignment: .top, spacing: dynamicSpacing) {
+                    // Left side: SimpleActiveSetView - takes priority space
+                    SimpleActiveSetView(
+                        sets: exercise.sets,
+                        exercise: exercise,
+                        setProgress: $coordinator.activeSetViewModel.setProgress,
+                        viewModel: coordinator.activeSetViewModel
+                    )
+                    .layoutPriority(1) // Higher priority - gets space first
+                    .onAppear {
+                        if coordinator.activeSetViewModel.isSetInProgress {
+                            coordinator.activeSetViewModel.startTimer()
+                        }
                     }
+                    
+                    // Right side: Timer - fills remaining space intelligently
+                    CompactTimerComponent(
+                        viewModel: coordinator.activeSetViewModel,
+                        onCancel: onCancel
+                    )
+                    .frame(minWidth: 80, maxWidth: 160) // Flexible width with bounds
+                    .frame(maxHeight: .infinity) // Match SimpleActiveSetView height
                 }
-                
-                TimerView(viewModel: coordinator.activeSetViewModel, onCancel: onCancel)
+                .padding(.horizontal, AppStyle.Padding.card) // Only outer padding like ActiveCardView
             }
             .padding(.vertical, 0)
         }
+    }
+}
+
+// MARK: - Compact Timer Component
+struct CompactTimerComponent: View {
+    @ObservedObject var viewModel: ActiveSetViewModel
+    let onCancel: (() -> Void)?
+    
+    // Responsive timer font size and width based on screen width
+    private var timerFontSize: CGFloat {
+        let screenWidth = UIScreen.main.bounds.width
+        if screenWidth <= 375 { return 15 }      // iPhone 12 mini, SE: readable
+        else if screenWidth <= 390 { return 16 } // iPhone 12, 13, 14: readable
+        else if screenWidth <= 400 { return 18 } // iPhone 16 Pro: good
+        else { return 20 }                       // iPhone Pro Max: large
+    }
+    
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            
+            // Timer display - responsive size based on screen
+            Text(viewModel.formatTime(seconds: max(viewModel.timerSeconds, 0)))
+                .font(.system(size: timerFontSize, weight: .bold))
+                .foregroundColor(AppStyle.Color.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            
+            Spacer()
+            
+            // Cancel button
+            Button(action: {
+                if let onCancel = onCancel {
+                    onCancel()
+                } else {
+                    viewModel.cancelActiveSet()
+                }
+            }) {
+                Text("Cancel")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(AppStyle.Color.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(AppStyle.Color.exerciseCardBackground)
+                    .cornerRadius(6)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity) // Fill assigned width
+        .frame(maxHeight: .infinity) // Fill assigned height
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(AppStyle.Color.greenBlack)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(AppStyle.Color.greenGlow, lineWidth: 1.5)
+                )
+        )
     }
 }
 
