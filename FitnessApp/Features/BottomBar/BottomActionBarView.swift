@@ -22,25 +22,27 @@ struct BottomActionBarView: View {
     private let backgroundColor = AppStyle.Color.backgroundColor
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            FloatingActionButtonsView(
-                viewModel: viewModel,
-                onStart: onStart,
-                onCompleteSet: onCompleteSet,
-                onQuickDone: onQuickDone,
-                onCompleteAllQuickDone: onCompleteAllQuickDone,
-                onCategoryReset: onCategoryReset,
-                onEditLess: onEditLess,
-                onEditMore: onEditMore,
-                onFinish: onFinish,
-                onAddExercise: onAddExercise,
-                onResetAllExercises: onResetAllExercises,
-                barHeight: barHeight,
-                backgroundColor: backgroundColor
-            )
+        if viewModel.shouldShow {
+            ZStack(alignment: .bottom) {
+                FloatingActionButtonsView(
+                    viewModel: viewModel,
+                    onStart: onStart,
+                    onCompleteSet: onCompleteSet,
+                    onQuickDone: onQuickDone,
+                    onCompleteAllQuickDone: onCompleteAllQuickDone,
+                    onCategoryReset: onCategoryReset,
+                    onEditLess: onEditLess,
+                    onEditMore: onEditMore,
+                    onFinish: onFinish,
+                    onAddExercise: onAddExercise,
+                    onResetAllExercises: onResetAllExercises,
+                    barHeight: barHeight,
+                    backgroundColor: backgroundColor
+                )
+            }
+            .background(Color.clear)
+            .zIndex(2)
         }
-        .background(Color.clear)
-        .zIndex(2)
     }
 }
 
@@ -58,281 +60,205 @@ struct FloatingActionButtonsView: View {
     let onResetAllExercises: () -> Void
     let barHeight: CGFloat
     let backgroundColor: Color
-
-    private let buttonWidthRegular: CGFloat = 110
-    private let buttonHeightRegular: CGFloat = 40
-    private let buttonHeightLarge: CGFloat = 40
-    // Narrower small buttons so the centered "Done" can breathe and align nicer
-    private let smallButtonFixedWidth: CGFloat = 100
-    private let verticalSpacing: CGFloat = 8
-    private let topPadding: CGFloat = 10
-    private let bottomPadding: CGFloat = 16
+    // Design constants matching BottomMenuBar  
+    private var capsuleHeight: CGFloat { max(48, barHeight * 1.6) }
+    private let sideMargin: CGFloat = AppStyle.Layout.cardHorizontalPadding
+    private var capsuleWidth: CGFloat {
+        let defaultWidth = UIScreen.main.bounds.width - (2 * sideMargin)
+        return max(240, defaultWidth)
+    }
+    private let selectionHeight: CGFloat = 46
+    private var selectionWidth: CGFloat { max(selectionHeight, selectionHeight * 1.8 - 8) } // Breiterer Kreis
+    private let selectionFill = Color.white.opacity(0.12)
     
-    private var rowCount: Int {
-        var rows = 1
-        if viewModel.showQuickDoneBeendenButton || viewModel.showQuickDoneDoneButton {
-            rows = 2
-        } else if viewModel.showSetControls && viewModel.currentSet == 0 {
-            rows = 2
-        }
-        return rows
-    }
-
-    private var totalHeight: CGFloat {
-        (buttonHeightRegular * CGFloat(rowCount)) + (verticalSpacing * CGFloat(rowCount - 1)) + bottomPadding
-    }
+    // FAB-ähnliche Positionierung - schwebt über allem
+    private let bottomOffset: CGFloat = 16
 
     var body: some View {
-        GeometryReader { geometry in
-            // Content-Breite exakt wie die ActiveSetView: Bildschirmbreite minus Karten-Padding
-            let contentWidth = geometry.size.width - (2 * AppStyle.Padding.card)
-            let interItemSpacing: CGFloat = 12
-            // Minimalbreite für Less/More, gut lesbar aber kompakt (kleiner, damit "Done" dominanter wird)
-            let smallMinWidth: CGFloat = 84
-            // Dominanter Done füllt die Restbreite exakt auf, sodass die Summe = contentWidth ist
-            let doneComputedWidth = max(160, contentWidth - (2 * smallMinWidth) - (2 * interItemSpacing))
-
-            ZStack(alignment: .bottom) {
-                // No background pill here – only floating buttons
-                VStack(spacing: verticalSpacing) {
-                if viewModel.showQuickDoneBeendenButton {
-                    actionButtonExtraLarge(
-                        text: "Beenden",
-                        textFont: AppStyle.Font.bottomBarButtons,
-                        backgroundColor: AppStyle.Color.green,
-                        fontColor: AppStyle.Color.white,
-                        action: onFinish,
-                        width: contentWidth
-                    )
-                } else if viewModel.showQuickDoneDoneButton {
-                    actionButtonExtraLarge(
-                        text: "All Done",
-                        textFont: AppStyle.Font.bottomBarButtons,
-                        backgroundColor: AppStyle.Color.primaryButton,
-                        fontColor: AppStyle.Color.white,
-                        action: onCompleteAllQuickDone,
-                        width: contentWidth
-                    )
-                } else {
-                    if viewModel.showSetControls && viewModel.currentSet == 0 {
-                        actionButtonExtraLarge(
-                            text: "Quick Done",
-                            textFont: AppStyle.Font.bottomBarButtons,
-                            backgroundColor: AppStyle.Color.exerciseCardBackground,
-                            fontColor: AppStyle.Color.white,
-                            action: onQuickDone,
-                            width: contentWidth
-                        )
+        ZStack(alignment: .bottom) {
+            if viewModel.showQuickDoneBeendenButton {
+                // Single large button for "Beenden"
+                glassCapsuleButton(
+                    text: "Beenden",
+                    action: onFinish,
+                    style: .finish
+                )
+            } else if viewModel.showQuickDoneDoneButton {
+                // Single large button for "All Done"
+                glassCapsuleButton(
+                    text: "All Done",
+                    action: onCompleteAllQuickDone,
+                    style: .allDone
+                )
+            } else {
+                // Main glass bar with training controls
+                ZStack {
+                    // Glass background matching BottomMenuBar
+                    Group {
+                        if #available(iOS 26.0, *) {
+                            RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous)
+                                .fill(Color.clear)
+                                .frame(width: capsuleWidth, height: capsuleHeight)
+                                .glassEffect()
+                        } else {
+                            LiquidGlassBackground(
+                                cornerRadius: capsuleHeight / 2,
+                                material: .ultraThinMaterial,
+                                tintOpacity: 0.0,
+                                showsEdgeStroke: false,
+                                showsCaustic: false,
+                                shadowOpacity: 0.20,
+                                lightnessBoostOpacity: 0.12
+                            )
+                            .frame(width: capsuleWidth, height: capsuleHeight)
+                        }
                     }
 
-                    HStack(spacing: interItemSpacing) {
-                        // Add Exercise button removed from FAB bar; moved to mini menu
-
-                        // Do not show initial "Start Training" in Category View context; only show for subsequent sets
+                    HStack(spacing: 0) {
                         if viewModel.showStartButton && (viewModel.currentSet != 0 || viewModel.didJustEditSet) {
-                            actionButtonLarge(
+                            menuTextItem(
                                 text: viewModel.startButtonTitle,
-                                textFont: AppStyle.Font.bottomBarButtons,
-                                backgroundColor: AppStyle.Color.primaryButton,
-                                fontColor: AppStyle.Color.white,
-                                action: onStart
+                                action: onStart,
+                                style: .start
                             )
                         }
 
                         if viewModel.showSetControls {
-                            // Less links mit Minimalbreite
-                            actionButtonFixedLarge(
+                            menuTextItem(
                                 text: "Less",
-                                textFont: AppStyle.Font.bottomBarButtons,
-                                backgroundColor: AppStyle.Color.green,
-                                fontColor: AppStyle.Color.white,
-                                action: {
-                                    onEditLess()
-                                },
-                                width: smallMinWidth
+                                action: onEditLess,
+                                style: .control
                             )
 
-                            // Done füllt exakt die verbleibende Breite
-                            actionButtonFixedLarge(
+                            menuTextItem(
                                 text: "Done",
-                                textFont: AppStyle.Font.bottomBarButtons,
-                                backgroundColor: AppStyle.Color.green,
-                                fontColor: AppStyle.Color.white,
                                 action: onCompleteSet,
-                                width: doneComputedWidth
+                                style: .done
                             )
 
-                            // More rechts mit Minimalbreite
-                            actionButtonFixedLarge(
+                            menuTextItem(
                                 text: "More",
-                                textFont: AppStyle.Font.bottomBarButtons,
-                                backgroundColor: AppStyle.Color.green,
-                                fontColor: AppStyle.Color.white,
-                                action: {
-                                    onEditMore()
-                                },
-                                width: smallMinWidth
+                                action: onEditMore,
+                                style: .control
                             )
+                            
+                            // Quick Done Icon (nur beim ersten Set)
+                            if viewModel.currentSet == 0 {
+                                menuIconItem(
+                                    icon: "quickDoneIcon",
+                                    action: onQuickDone,
+                                    style: .quickDone
+                                )
+                            }
                         }
 
-                        // Reset button removed from FAB bar; moved to mini menu
-
                         if viewModel.showFinishButton {
-                            actionButtonLarge(
+                            menuTextItem(
                                 text: "Beenden",
-                                textFont: AppStyle.Font.bottomBarButtons,
-                                backgroundColor: AppStyle.Color.green,
-                                fontColor: AppStyle.Color.white,
-                                action: onFinish
+                                action: onFinish,
+                                style: .finish
                             )
                         }
                     }
-                    // Gleiche Breite wie "Quick Done" darüber
-                    .frame(width: contentWidth, alignment: .center)
+                    .frame(width: capsuleWidth - 2 * AppStyle.Layout.cardHorizontalPadding)
                 }
-                }
-                .padding(.top, topPadding)
-                .padding(.bottom, bottomPadding)
-                .frame(width: contentWidth)
-                .frame(maxWidth: .infinity, alignment: .center)
+                .clipShape(RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous))
             }
-            .frame(width: geometry.size.width, height: totalHeight, alignment: .bottom)
         }
-        .frame(height: totalHeight)
+        .padding(.horizontal, sideMargin)
+        .padding(.bottom, bottomOffset)
+        .frame(height: capsuleHeight + 6)
     }
 
-    @ViewBuilder
-    private func actionButtonLarge(
-        text: String,
-        textFont: Font,
-        backgroundColor: Color,
-        fontColor: Color,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            Text(text)
-                .font(textFont)
-                .foregroundColor(fontColor)
-                .frame(minWidth: 0, maxWidth: .infinity, minHeight: buttonHeightLarge, maxHeight: buttonHeightLarge)
-                .padding(.horizontal, 12)
-        }
-        .background(backgroundColor)
-        .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
+    // Menu item styles
+    enum MenuItemStyle {
+        case control, done, start, finish, allDone, quickDone
     }
-
+    
     @ViewBuilder
-    private func actionButtonFixedLarge(
+    private func glassCapsuleButton(
         text: String,
-        textFont: Font,
-        backgroundColor: Color,
-        fontColor: Color,
         action: @escaping () -> Void,
-        width: CGFloat
+        style: MenuItemStyle
     ) -> some View {
         Button(action: action) {
-            Text(text)
-                .font(textFont)
-                .foregroundColor(fontColor)
-                .frame(width: width, height: buttonHeightLarge)
+            ZStack {
+                // Glass background
+                Group {
+                    if #available(iOS 26.0, *) {
+                        RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous)
+                            .fill(Color.clear)
+                            .frame(width: capsuleWidth, height: capsuleHeight)
+                            .glassEffect()
+                    } else {
+                        LiquidGlassBackground(
+                            cornerRadius: capsuleHeight / 2,
+                            material: .ultraThinMaterial,
+                            tintOpacity: 0.0,
+                            showsEdgeStroke: false,
+                            showsCaustic: false,
+                            shadowOpacity: 0.20,
+                            lightnessBoostOpacity: 0.12
+                        )
+                        .frame(width: capsuleWidth, height: capsuleHeight)
+                    }
+                }
+                
+                Text(text)
+                    .font(AppStyle.Font.bottomBarButtons)
+                    .foregroundColor(AppStyle.Color.white.opacity(0.98))
+                    .frame(maxWidth: .infinity)
+            }
         }
-        .background(backgroundColor)
-        .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
+        .buttonStyle(PlainButtonStyle())
+        .frame(width: capsuleWidth, height: capsuleHeight)
     }
+
     @ViewBuilder
-    private func actionButtonIntrinsicLarge(
+    private func menuTextItem(
         text: String,
-        textFont: Font,
-        backgroundColor: Color,
-        fontColor: Color,
         action: @escaping () -> Void,
-        minHorizontalPadding: CGFloat
+        style: MenuItemStyle
     ) -> some View {
         Button(action: action) {
             Text(text)
-                .font(textFont)
-                .foregroundColor(fontColor)
-                .padding(.horizontal, minHorizontalPadding)
-                .frame(minHeight: buttonHeightLarge, maxHeight: buttonHeightLarge)
-                .fixedSize()
+                .font(AppStyle.Font.bottomBarButtons)
+                .foregroundColor(AppStyle.Color.white.opacity(0.98))
+                .frame(maxWidth: .infinity, minHeight: capsuleHeight, maxHeight: capsuleHeight)
+                .padding(.horizontal, 4)
+                .background(alignment: .center) {
+                    if style == .done {
+                        RoundedRectangle(cornerRadius: selectionHeight / 2, style: .continuous)
+                            .fill(selectionFill)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: selectionHeight / 2, style: .continuous)
+                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                            )
+                            .frame(width: selectionWidth, height: selectionHeight)
+                    }
+                }
         }
-        .background(backgroundColor)
-        .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
+        .buttonStyle(PlainButtonStyle())
+        .contentShape(Rectangle())
     }
-
+    
     @ViewBuilder
-    private func actionButtonMinimal(
-        text: String,
-        textFont: Font,
-        backgroundColor: Color,
-        fontColor: Color,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            Text(text)
-                .font(textFont)
-                .foregroundColor(fontColor)
-                .padding(.horizontal, 12)
-                .frame(minHeight: buttonHeightLarge, maxHeight: buttonHeightLarge)
-                .fixedSize()
-        }
-        .background(backgroundColor)
-        .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
-    }
-
-    @ViewBuilder
-    private func actionButtonSmall(
-        text: String,
-        textFont: Font,
-        backgroundColor: Color,
-        fontColor: Color,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            Text(text)
-                .font(textFont)
-                .foregroundColor(fontColor)
-                .frame(width: buttonWidthRegular / 1.5, height: buttonHeightRegular)
-        }
-        .background(backgroundColor)
-        .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
-    }
-
-    @ViewBuilder
-    private func actionButtonFixedSmall(
-        text: String,
-        textFont: Font,
-        backgroundColor: Color,
-        fontColor: Color,
+    private func menuIconItem(
+        icon: String,
         action: @escaping () -> Void,
-        width: CGFloat
+        style: MenuItemStyle
     ) -> some View {
         Button(action: action) {
-            Text(text)
-                .font(textFont)
-                .foregroundColor(fontColor)
-                .frame(width: width, height: buttonHeightRegular)
+            Image(icon)
+                .renderingMode(.template)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 50, height: 50) // Maximales Icon
+                .foregroundColor(AppStyle.Color.greenLight)
+                .frame(width: 44, height: capsuleHeight) // Kompakte feste Breite
+                .padding(.leading, 8) // Nur links Padding für nähere Position zu "More"
         }
-        .background(backgroundColor)
-        .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
-    }
-
-    @ViewBuilder
-    private func actionButtonExtraLarge(
-        text: String,
-        textFont: Font,
-        backgroundColor: Color,
-        fontColor: Color,
-        action: @escaping () -> Void,
-        width: CGFloat
-    ) -> some View {
-        Button(action: action) {
-            Text(text)
-                .font(textFont)
-                .foregroundColor(fontColor)
-                .frame(width: width)
-                .frame(minHeight: buttonHeightLarge, maxHeight: buttonHeightLarge)
-        }
-        .background(backgroundColor)
-        .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
+        .buttonStyle(PlainButtonStyle())
+        .contentShape(Rectangle())
     }
 }

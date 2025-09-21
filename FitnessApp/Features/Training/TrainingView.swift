@@ -125,7 +125,7 @@ struct TrainingView: View {
                     exercises: [exercise],
                     hasActiveExercise: trainingCoordinator.isTrainingActive
                 )
-                .padding(.bottom, safeAreaBottomInset + 12)
+                .padding(.bottom, safeAreaBottomInset + 12) // Standard Positionierung
                 
                 // Training Picker Component
                 TrainingPickerComponent(coordinator: trainingCoordinator)

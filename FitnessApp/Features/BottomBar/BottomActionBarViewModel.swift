@@ -15,7 +15,11 @@ struct BottomActionBarViewModel {
     let showResetAllExercisesButton: Bool
 
     var shouldShow: Bool {
-        showStartButton || showSetControls || showCategoryResetButton || showFinishButton || showQuickDoneBeendenButton || showQuickDoneDoneButton || showAddExerciseButton || showResetAllExercisesButton
+        // Nur anzeigen wenn wirklich ein Training läuft (Set in Progress oder aktuelle Exercise)
+        let hasActiveTraining = isSetInProgress || currentExercise != nil
+        let hasTrainingActivity = showStartButton || showSetControls || showFinishButton || showQuickDoneBeendenButton || showQuickDoneDoneButton
+        
+        return hasActiveTraining && hasTrainingActivity
     }
 
     var showStartButton: Bool {
