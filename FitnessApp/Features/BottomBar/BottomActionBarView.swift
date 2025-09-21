@@ -144,7 +144,7 @@ struct FloatingActionButtonsView: View {
                             actionButtonFixedLarge(
                                 text: "Less",
                                 textFont: AppStyle.Font.bottomBarButtons,
-                                backgroundColor: AppStyle.Color.greenLight,
+                                backgroundColor: AppStyle.Color.green,
                                 fontColor: AppStyle.Color.white,
                                 action: {
                                     onEditLess()
@@ -166,7 +166,7 @@ struct FloatingActionButtonsView: View {
                             actionButtonFixedLarge(
                                 text: "More",
                                 textFont: AppStyle.Font.bottomBarButtons,
-                                backgroundColor: AppStyle.Color.greenLight,
+                                backgroundColor: AppStyle.Color.green,
                                 fontColor: AppStyle.Color.white,
                                 action: {
                                     onEditMore()
