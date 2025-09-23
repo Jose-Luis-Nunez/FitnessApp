@@ -262,7 +262,7 @@ struct FloatingActionButtonsView: View {
                     .renderingMode(.template)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 24, height: 24)
+                    .frame(width: 30, height: 30)
                     .foregroundColor(AppStyle.Color.white)
             }
         }
