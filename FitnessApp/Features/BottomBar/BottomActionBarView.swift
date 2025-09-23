@@ -12,11 +12,6 @@ struct BottomActionBarView: View {
     let onFinish: () -> Void
     let onAddExercise: () -> Void
     let onResetAllExercises: () -> Void
-    // Note: Add/Reset are no longer rendered here; only core training controls remain
-    
-    // CENTRAL PICKER STATE
-    @State private var isShowingEditPicker = false
-    @State private var editMode: SetEditingMode = .less
 
     private let barHeight: CGFloat = 0
     private let backgroundColor = AppStyle.Color.backgroundColor
@@ -60,117 +55,109 @@ struct FloatingActionButtonsView: View {
     let onResetAllExercises: () -> Void
     let barHeight: CGFloat
     let backgroundColor: Color
-    // Design constants matching BottomMenuBar  
     private var capsuleHeight: CGFloat { max(48, barHeight * 1.6) }
     private let sideMargin: CGFloat = AppStyle.Layout.cardHorizontalPadding
     private var capsuleWidth: CGFloat {
         let defaultWidth = UIScreen.main.bounds.width - (2 * sideMargin)
-        return max(240, defaultWidth)
+        return max(240, defaultWidth - 50)
     }
     private let selectionHeight: CGFloat = 46
-    private var selectionWidth: CGFloat { max(selectionHeight, selectionHeight * 1.8 - 8) } // Breiterer Kreis
+    private var selectionWidth: CGFloat { max(selectionHeight, selectionHeight * 2.2 - 6) }
     private let selectionFill = Color.white.opacity(0.12)
-    
-    // FAB-ähnliche Positionierung - schwebt über allem
     private let bottomOffset: CGFloat = 16
 
     var body: some View {
         ZStack(alignment: .bottom) {
             if viewModel.showQuickDoneBeendenButton {
-                // Single large button for "Beenden"
                 glassCapsuleButton(
                     text: "Beenden",
                     action: onFinish,
                     style: .finish
                 )
             } else if viewModel.showQuickDoneDoneButton {
-                // Single large button for "All Done"
                 glassCapsuleButton(
                     text: "All Done",
                     action: onCompleteAllQuickDone,
                     style: .allDone
                 )
             } else {
-                // Main glass bar with training controls
-                ZStack {
-                    // Glass background matching BottomMenuBar
-                    Group {
-                        if #available(iOS 26.0, *) {
-                            RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous)
-                                .fill(Color.clear)
-                                .frame(width: capsuleWidth, height: capsuleHeight)
-                                .glassEffect()
-                        } else {
-                            LiquidGlassBackground(
-                                cornerRadius: capsuleHeight / 2,
-                                material: .ultraThinMaterial,
-                                tintOpacity: 0.0,
-                                showsEdgeStroke: false,
-                                showsCaustic: false,
-                                shadowOpacity: 0.20,
-                                lightnessBoostOpacity: 0.12
-                            )
-                            .frame(width: capsuleWidth, height: capsuleHeight)
-                        }
-                    }
-
-                    HStack(spacing: 0) {
-                        if viewModel.showStartButton && (viewModel.currentSet != 0 || viewModel.didJustEditSet) {
-                            menuTextItem(
-                                text: viewModel.startButtonTitle,
-                                action: onStart,
-                                style: .start
-                            )
-                        }
-
-                        if viewModel.showSetControls {
-                            menuTextItem(
-                                text: "Less",
-                                action: onEditLess,
-                                style: .control
-                            )
-
-                            menuTextItem(
-                                text: "Done",
-                                action: onCompleteSet,
-                                style: .done
-                            )
-
-                            menuTextItem(
-                                text: "More",
-                                action: onEditMore,
-                                style: .control
-                            )
-                            
-                            // Quick Done Icon (nur beim ersten Set)
-                            if viewModel.currentSet == 0 {
-                                menuIconItem(
-                                    icon: "quickDoneIcon",
-                                    action: onQuickDone,
-                                    style: .quickDone
+                HStack(spacing: 6) {
+                    ZStack {
+                        Group {
+                            if #available(iOS 26.0, *) {
+                                RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous)
+                                    .fill(Color.clear)
+                                    .glassEffect()
+                            } else {
+                                LiquidGlassBackground(
+                                    cornerRadius: capsuleHeight / 2,
+                                    material: .ultraThinMaterial,
+                                    tintOpacity: 0.0,
+                                    showsEdgeStroke: false,
+                                    showsCaustic: false,
+                                    shadowOpacity: 0.20,
+                                    lightnessBoostOpacity: 0.12
                                 )
                             }
                         }
+                        
+                        HStack(spacing: 18) {
+                            if viewModel.showStartButton && (viewModel.currentSet != 0 || viewModel.didJustEditSet) {
+                                menuTextItem(
+                                    text: viewModel.startButtonTitle,
+                                    action: onStart,
+                                    style: .start
+                                )
+                            }
 
-                        if viewModel.showFinishButton {
-                            menuTextItem(
-                                text: "Beenden",
-                                action: onFinish,
-                                style: .finish
-                            )
+                            if viewModel.showSetControls {
+                                menuTextItem(
+                                    text: "Less",
+                                    action: onEditLess,
+                                    style: .control
+                                )
+
+                                menuTextItem(
+                                    text: "Done",
+                                    action: onCompleteSet,
+                                    style: .done
+                                )
+
+                                menuTextItem(
+                                    text: "More",
+                                    action: onEditMore,
+                                    style: .control
+                                )
+                            }
+
+                            if viewModel.showFinishButton {
+                                menuTextItem(
+                                    text: "Beenden",
+                                    action: onFinish,
+                                    style: .finish
+                                )
+                            }
                         }
                     }
-                    .frame(width: capsuleWidth - 2 * AppStyle.Layout.cardHorizontalPadding)
+                    .frame(maxWidth: .infinity, maxHeight: capsuleHeight)
+                    .clipShape(RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous))
+                    
+                    if viewModel.showSetControls && viewModel.currentSet == 0 {
+                        menuIconItem(
+                            icon: "quickDoneIcon",
+                            action: onQuickDone,
+                            style: .quickDone
+                        )
+                    }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous))
             }
         }
-        .padding(.horizontal, sideMargin)
+        .padding(.leading, 8)
+        .padding(.trailing, 10)
         .padding(.bottom, bottomOffset)
         .frame(height: capsuleHeight + 6)
     }
 
-    // Menu item styles
     enum MenuItemStyle {
         case control, done, start, finish, allDone, quickDone
     }
@@ -183,7 +170,6 @@ struct FloatingActionButtonsView: View {
     ) -> some View {
         Button(action: action) {
             ZStack {
-                // Glass background
                 Group {
                     if #available(iOS 26.0, *) {
                         RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous)
@@ -225,7 +211,7 @@ struct FloatingActionButtonsView: View {
                 .font(AppStyle.Font.bottomBarButtons)
                 .foregroundColor(AppStyle.Color.white.opacity(0.98))
                 .frame(maxWidth: .infinity, minHeight: capsuleHeight, maxHeight: capsuleHeight)
-                .padding(.horizontal, 4)
+                .padding(.horizontal, 2)
                 .background(alignment: .center) {
                     if style == .done {
                         RoundedRectangle(cornerRadius: selectionHeight / 2, style: .continuous)
@@ -249,16 +235,39 @@ struct FloatingActionButtonsView: View {
         style: MenuItemStyle
     ) -> some View {
         Button(action: action) {
-            Image(icon)
-                .renderingMode(.template)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 50, height: 50) // Maximales Icon
-                .foregroundColor(AppStyle.Color.greenLight)
-                .frame(width: 44, height: capsuleHeight) // Kompakte feste Breite
-                .padding(.leading, 8) // Nur links Padding für nähere Position zu "More"
+            ZStack {
+                Group {
+                    if #available(iOS 26.0, *) {
+                        Circle()
+                            .fill(Color.clear)
+                            .glassEffect()
+                    } else {
+                        LiquidGlassBackground(
+                            cornerRadius: 22,
+                            material: .ultraThinMaterial,
+                            tintOpacity: 0.0,
+                            showsEdgeStroke: false,
+                            showsCaustic: false,
+                            shadowOpacity: 0.20,
+                            lightnessBoostOpacity: 0.12
+                        )
+                        .clipShape(Circle())
+                    }
+                }
+                .overlay(
+                    Circle().stroke(AppStyle.Color.white.opacity(0.10), lineWidth: 1)
+                )
+                
+                Image(icon)
+                    .renderingMode(.template)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 24, height: 24)
+                    .foregroundColor(AppStyle.Color.white)
+            }
         }
-        .buttonStyle(PlainButtonStyle())
-        .contentShape(Rectangle())
+        .frame(width: 44, height: 44) // EXAKT wie BottomMenuBar buttons
+        .contentShape(Circle())
+        .buttonStyle(.plain)
     }
 }
