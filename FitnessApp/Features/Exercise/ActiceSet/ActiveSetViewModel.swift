@@ -69,12 +69,6 @@ class ActiveSetViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     func startSet(for exercise: Exercise, category: MuscleCategoryGroup, startSource: TrainingStartSource = .categoryView) {
-        print("🟢 startSet called:")
-        print("🟢 Exercise: \(exercise.name)")
-        print("🟢 Category: \(category.rawValue)")
-        print("🟢 StartSource: \(startSource)")
-        print("🟢 Current originalCategory: \(originalCategory?.rawValue ?? "nil")")
-        
         currentExercise = exercise
         self.category = category
         
@@ -82,9 +76,6 @@ class ActiveSetViewModel: ObservableObject {
         if originalCategory == nil {
             originalStartSource = startSource
             originalCategory = category
-            print("🟢 SET originalCategory to: \(category.rawValue)")
-        } else {
-            print("🟢 KEEPING originalCategory: \(originalCategory!.rawValue)")
         }
         
         currentSet = 0
@@ -113,13 +104,10 @@ class ActiveSetViewModel: ObservableObject {
         
         // Prevent completing sets beyond the defined number
         guard currentSet < exercise.sets else {
-
             return
         }
         
-        // Ensure setProgress array has the correct size (should not be needed if properly initialized)
         guard currentSet < setProgress.count else {
-
             return
         }
         
@@ -129,7 +117,6 @@ class ActiveSetViewModel: ObservableObject {
             weight: exercise.weight
         )
         
-        // Update the existing set progress entry
         setProgress[currentSet] = progress
         
         currentSet += 1
@@ -144,20 +131,15 @@ class ActiveSetViewModel: ObservableObject {
     
     func updateCurrentReps(_ newReps: Int, _ newWeight: Double) {
         guard let exercise = currentExercise else { 
-
             return 
         }
         
         let indexToUpdate: Int
         if let editIndex = pendingEditIndex {
             indexToUpdate = editIndex
-
         } else {
             indexToUpdate = currentSet
-
         }
-        
-
         
         let status: SetStatus = newReps < exercise.reps ? .completedLess : .completedMore
         let progress = SetProgress(
@@ -168,13 +150,9 @@ class ActiveSetViewModel: ObservableObject {
         
         if setProgress.count <= indexToUpdate {
             setProgress.append(progress)
-
         } else {
             setProgress[indexToUpdate] = progress
-
         }
-        
-
         
         if pendingEditIndex == nil {
             // Only increment currentSet if we're completing a new set, not editing an old one
@@ -190,9 +168,7 @@ class ActiveSetViewModel: ObservableObject {
                 currentSet += 1
                 if currentSet >= exercise.sets {
                     isLastSetCompleted = true
-
                 }
-
             }
             isSetInProgress = false
             didJustEditSet = true
@@ -218,6 +194,8 @@ class ActiveSetViewModel: ObservableObject {
         didEditCompleteSet = false
         didJustEditSet = false
         category = nil
+        originalCategory = nil
+        originalStartSource = .categoryView
     }
     
     func resetProgress() {
@@ -229,6 +207,8 @@ class ActiveSetViewModel: ObservableObject {
         quickDoneAllCompleted = false
         didJustEditSet = false
         category = nil
+        originalCategory = nil
+        originalStartSource = .categoryView
     }
     
     func startTimer() {

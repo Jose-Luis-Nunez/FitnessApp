@@ -18,7 +18,17 @@ struct TrainingView: View {
         self.category = category
         self._navigationPath = navigationPath
         
-        // Create TrainingCoordinator for this specific training session
+        // Get or create the appropriate ActiveSetViewModel for this category from SessionTrainingCache
+        let categoryActiveSetVM: ActiveSetViewModel
+        if let existing = SessionTrainingCache.shared.activeSetVMs[category] {
+            categoryActiveSetVM = existing
+        } else {
+            let newVM = ActiveSetViewModel()
+            SessionTrainingCache.shared.activeSetVMs[category] = newVM
+            categoryActiveSetVM = newVM
+        }
+        
+        // Create TrainingCoordinator with the cached ActiveSetViewModel
         _trainingCoordinator = StateObject(wrappedValue: TrainingCoordinator(
             findCategory: { _ in category },
             onExerciseUpdate: { updatedExercise, _ in
@@ -36,7 +46,8 @@ struct TrainingView: View {
             },
             onResetAllExercises: {
                 // Not needed in dedicated training view
-            }
+            },
+            activeSetViewModel: categoryActiveSetVM
         ))
         
         _analyticsViewModel = StateObject(wrappedValue: AnalyticsViewModel())

@@ -55,49 +55,35 @@ class TrainingCoordinator: ObservableObject {
     // MARK: - Training Actions
     
     func startTraining(for exercise: Exercise, startSource: TrainingStartSource = .categoryView) {
-        print("🟠 TRAININGCOORDINATOR.STARTTRAINING CALLED!")
-        print("🟠 Exercise: \(exercise.name)")
-        print("🟠 StartSource: \(startSource)")
-        
         guard let category = findCategory(exercise) else { 
-            print("🟠 ERROR: Could not find category for exercise!")
             return 
         }
         
-        print("🟠 Found category: \(category)")
-        
-        // Get or create the appropriate ActiveSetViewModel for this category from SessionTrainingCache
-        let categoryActiveSetVM: ActiveSetViewModel
-        if let existing = SessionTrainingCache.shared.activeSetVMs[category] {
-            categoryActiveSetVM = existing
-            print("🟠 Using existing ActiveSetViewModel for category")
-        } else {
-            let newVM = ActiveSetViewModel()
-            SessionTrainingCache.shared.activeSetVMs[category] = newVM
-            categoryActiveSetVM = newVM
-            print("🟠 Created new ActiveSetViewModel for category")
-        }
-        
-        // Update our reference to point to the correct category VM
-        activeSetViewModel = categoryActiveSetVM
-        
-        // CRITICAL: Setup coordinator update callback for state sync
+        // Setup coordinator update callback for state sync
         activeSetViewModel.onCoordinatorUpdateNeeded = { [weak self] in
-            print("🔄 Coordinator update triggered via callback")
             self?.objectWillChange.send()
         }
         
         setupActiveSetViewModelObserver()
         
-        print("🟠 About to call activeSetViewModel.startSet...")
-        // Always start the first set immediately when training begins
-        activeSetViewModel.startSet(for: exercise, category: category, startSource: startSource)
-        print("🟠 Called activeSetViewModel.startSet!")
+        // Check if we already have an active training session for this exercise
+        // This includes both in-progress sessions and completed sessions that haven't been finished
+        let isSameExercise = activeSetViewModel.currentExercise?.id == exercise.id
+        let hasTrainingData = activeSetViewModel.isSetInProgress || 
+                             activeSetViewModel.isLastSetCompleted ||
+                             !activeSetViewModel.setProgress.isEmpty
+        let hasExistingSession = isSameExercise && hasTrainingData
         
-        // Update published properties
-        currentExercise = exercise
-        isTrainingActive = true
-        print("🟠 Training started successfully!")
+        if hasExistingSession {
+            // Resume the existing session, don't restart
+            currentExercise = exercise
+            isTrainingActive = true
+        } else {
+            // Start new training session
+            activeSetViewModel.startSet(for: exercise, category: category, startSource: startSource)
+            currentExercise = exercise
+            isTrainingActive = true
+        }
     }
     
     func completeSet() {
@@ -132,8 +118,6 @@ class TrainingCoordinator: ObservableObject {
         
         activeSetViewModel.startQuickDone(for: exercise, category: category)
     }
-    
-
     
     func resetExercise() {
         activeSetViewModel.stopTimer()
