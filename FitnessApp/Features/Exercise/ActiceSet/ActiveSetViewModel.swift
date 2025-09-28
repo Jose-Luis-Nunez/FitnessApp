@@ -127,6 +127,11 @@ class ActiveSetViewModel: ObservableObject {
         
         isSetInProgress = false
         timerService.stopTimer()
+        
+        // Reset timer to 00:00 when exercise is completed
+        if currentSet >= exercise.sets {
+            timerSeconds = 0
+        }
     }
     
     func updateCurrentReps(_ newReps: Int, _ newWeight: Double) {
@@ -180,6 +185,10 @@ class ActiveSetViewModel: ObservableObject {
             isSetInProgress = false
             isLastSetCompleted = true
             didEditCompleteSet = true
+            
+            // Reset timer to 00:00 when all sets are completed via Less/More
+            timerService.stopTimer()
+            timerSeconds = 0
         }
     }
     
@@ -253,6 +262,10 @@ class ActiveSetViewModel: ObservableObject {
         
         // Start timer so user can see time and cancel if needed
         timerService.resetAndStartTimer()
+        
+        // Since all sets are already completed in quick done, reset timer to 00:00
+        timerService.stopTimer()
+        timerSeconds = 0
     }
     
     func processQuickDone(at index: Int) {
@@ -265,6 +278,10 @@ class ActiveSetViewModel: ObservableObject {
         if setProgress.allSatisfy({ $0.status != .notStarted && $0.status != .inProgress }) {
             isLastSetCompleted = true
             quickDoneAllCompleted = true
+            
+            // Reset timer to 00:00 when all sets are completed in quick done mode
+            timerService.stopTimer()
+            timerSeconds = 0
         }
     }
     
@@ -277,6 +294,12 @@ class ActiveSetViewModel: ObservableObject {
         }
         quickDoneAllCompleted = setProgress.allSatisfy { $0.status != .notStarted && $0.status != .inProgress }
         isLastSetCompleted = quickDoneAllCompleted
+        
+        // Reset timer to 00:00 when all sets are completed via "All Done" button
+        if quickDoneAllCompleted {
+            timerService.stopTimer()
+            timerSeconds = 0
+        }
     }
     
     func formatTime(seconds: Int) -> String {
