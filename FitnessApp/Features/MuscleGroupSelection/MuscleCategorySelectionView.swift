@@ -102,6 +102,14 @@ struct MuscleCategorySelectionView: View {
         _viewModel = StateObject(wrappedValue: selectionViewModel)
     }
     
+    // 2 columns with same spacing as WorkoutsScreen
+    private var adaptiveColumns: [GridItem] {
+        [
+            GridItem(.flexible(), spacing: Constants.verticalSpacing), // Same as WorkoutsScreen (12pt)
+            GridItem(.flexible(), spacing: Constants.verticalSpacing)
+        ]
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
             AppStyle.Color.backgroundColor.ignoresSafeArea()
@@ -147,7 +155,11 @@ struct MuscleCategorySelectionView: View {
                 
                 ScrollView {
                     if currentViewMode == .overview {
-                        LazyVStack(spacing: Constants.CategoryTile.verticalSpacing) {
+                        // Grid with same spacing as WorkoutsScreen
+                        LazyVGrid(
+                            columns: adaptiveColumns, 
+                            spacing: Constants.verticalSpacing // Same as WorkoutsScreen (12pt)
+                        ) {
                             categoryList
                         }
                         .padding(.horizontal, Constants.horizontalPadding)
@@ -640,62 +652,63 @@ private struct CategoryTileView: View {
             addPadding: false
         ) {
             HStack(spacing: 0) {
-                categoryInfoView(exerciseInfo: exerciseInfo)
-                Spacer()
-                progressSection(exerciseInfo: exerciseInfo)
+                // Left side: 66% - Icon and Progress Bar
+                VStack(spacing: 8) {
+                    // Icon
+                    ZStack {
+                        Circle()
+                            .fill(AppStyle.Color.greenBlack)
+                            .frame(width: Constants.CategoryTile.iconSize * 0.9, height: Constants.CategoryTile.iconSize * 0.9)
+                            .blur(radius: 15)
+                            .opacity(0.5)
+                        
+                        Image(group.defaultIconName)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: Constants.CategoryTile.iconSize, height: Constants.CategoryTile.iconSize, alignment: group.iconAlignment)
+                            .clipped()
+                            .foregroundColor(AppStyle.Color.white)
+                    }
+                    .frame(width: Constants.CategoryTile.iconSize, height: Constants.CategoryTile.iconSize)
+                    
+                    // Progress bar below icon
+                    ProgressBar(
+                        progress: exerciseInfo.progress,
+                        totalWidth: Constants.CategoryTile.iconSize // Same width as icon
+                    )
+                    .frame(height: Constants.ProgressBar.height)
+                }
+                .frame(maxWidth: .infinity, alignment: .center) // Takes available space
+                .padding(.leading, Constants.CategoryTile.contentPadding)
+                
+                // Right side: 33% - Title, Chip, Count
+                VStack(alignment: .trailing, spacing: 6) {
+                    // Title
+                    Text(group.displayName)
+                        .font(AppStyle.Font.categorySelectionNameFont)
+                        .foregroundColor(Color(hex: "#3CFFFF"))
+                        .multilineTextAlignment(.trailing)
+                    
+                    // Status Chip
+                    CustomChip(
+                        text: getChipText(exerciseInfo),
+                        isCompleted: exerciseInfo.isCompleted,
+                        width: 70,
+                        verticalPadding: 4
+                    )
+                    
+                    // Count text
+                    Text("\(exerciseInfo.completed) of \(exerciseInfo.total)")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(AppStyle.Color.white)
+                }
+                .frame(maxWidth: .infinity * 0.5, alignment: .trailing) // Smaller portion
+                .padding(.trailing, Constants.CategoryTile.contentPadding)
             }
-            .frame(maxWidth: .infinity)
+            .padding(.vertical, Constants.CategoryTile.verticalPadding)
         }
     }
     
-    private func categoryInfoView(exerciseInfo: ExerciseInfo) -> some View {
-        HStack(spacing: Constants.CategoryTile.iconSpacing) {
-            ZStack {
-                Circle()
-                    .fill(AppStyle.Color.greenBlack)
-                    .frame(width: Constants.CategoryTile.iconSize * 0.9, height: Constants.CategoryTile.iconSize * 0.9)
-                    .blur(radius: 15)
-                    .opacity(0.5)
-                
-                Image(group.defaultIconName)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: Constants.CategoryTile.iconSize, height: Constants.CategoryTile.iconSize, alignment: group.iconAlignment)
-                    .clipped()
-                    .foregroundColor(AppStyle.Color.white)
-            }
-            .frame(width: Constants.CategoryTile.iconSize, height: Constants.CategoryTile.iconSize)
-            
-            VStack(alignment: .leading, spacing: Constants.CategoryTile.textSpacing) {
-                Text(group.displayName)
-                    .font(AppStyle.Font.categorySelectionNameFont)
-                    .foregroundColor(AppStyle.Color.white)
-                
-                Text("\(exerciseInfo.completed) of \(exerciseInfo.total) completed")
-                    .font(AppStyle.Font.defaultFont)
-                    .foregroundColor(AppStyle.Color.white)
-            }
-        }
-        .padding(.vertical, Constants.CategoryTile.verticalPadding)
-        .padding(.horizontal, Constants.CategoryTile.contentPadding)
-    }
-    
-    private func progressSection(exerciseInfo: ExerciseInfo) -> some View {
-        HStack(spacing: Constants.CategoryTile.itemSpacing) {
-            CircularProgressView(
-                progress: exerciseInfo.progress,
-                statusText: getChipText(exerciseInfo),
-                isCompleted: exerciseInfo.isCompleted
-            )
-            .accessibilityIdentifier(AccessibilityIDs.categoryLabel(for: group))
-            
-            Image(systemName: "chevron.right")
-                .foregroundColor(AppStyle.Color.white)
-                .imageScale(.medium)
-        }
-        .padding(.vertical, Constants.CategoryTile.verticalPadding)
-        .padding(.horizontal, Constants.CategoryTile.contentPadding)
-    }
     
     private func createExerciseInfo() -> ExerciseInfo {
         let count = viewModel.getExerciseCount(for: group) ?? (0, 0)
@@ -714,6 +727,7 @@ private struct CategoryTileView: View {
             return "Active"
         }
     }
+    
 }
 
 private struct CircularProgressView: View {
