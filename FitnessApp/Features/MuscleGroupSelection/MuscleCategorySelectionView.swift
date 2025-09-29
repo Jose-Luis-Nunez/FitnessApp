@@ -738,11 +738,19 @@ private struct CustomChip: View {
     var body: some View {
         Text(text)
             .font(.system(size: 11, weight: .medium))
-            .foregroundColor(AppStyle.Color.greenGlow)
+            .foregroundColor(textColor)
             .frame(width: width)
             .padding(.vertical, verticalPadding)
             .background(chipBackground)
             .overlay(chipOverlay)
+    }
+    
+    private var textColor: Color {
+        if text == "Active" || text == "Done" {
+            return AppStyle.Color.greenGlow
+        } else {
+            return AppStyle.Color.white
+        }
     }
     
     private var chipBackground: some View {
@@ -752,7 +760,15 @@ private struct CustomChip: View {
     
     private var chipOverlay: some View {
         RoundedRectangle(cornerRadius: Constants.ProgressBar.cornerRadius)
-            .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
+            .stroke(borderColor, lineWidth: 1)
+    }
+    
+    private var borderColor: Color {
+        if text == "Active" || text == "Done" {
+            return AppStyle.Color.greenGlow
+        } else {
+            return AppStyle.Color.white
+        }
     }
 }
 
