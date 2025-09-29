@@ -651,61 +651,56 @@ private struct CategoryTileView: View {
             useGlassEffect: true,
             addPadding: false
         ) {
-            HStack(spacing: 0) {
-                // Left side: 66% - Icon and Progress Bar
-                VStack(spacing: 8) {
-                    // Icon
-                    ZStack {
-                        Circle()
-                            .fill(AppStyle.Color.greenBlack)
-                            .frame(width: Constants.CategoryTile.iconSize * 0.9, height: Constants.CategoryTile.iconSize * 0.9)
-                            .blur(radius: 15)
-                            .opacity(0.5)
-                        
-                        Image(group.defaultIconName)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: Constants.CategoryTile.iconSize, height: Constants.CategoryTile.iconSize, alignment: group.iconAlignment)
-                            .clipped()
-                            .foregroundColor(AppStyle.Color.white)
-                    }
-                    .frame(width: Constants.CategoryTile.iconSize, height: Constants.CategoryTile.iconSize)
-                    
-                    // Progress bar below icon
-                    ProgressBar(
-                        progress: exerciseInfo.progress,
-                        totalWidth: Constants.CategoryTile.iconSize // Same width as icon
-                    )
-                    .frame(height: Constants.ProgressBar.height)
-                }
-                .frame(maxWidth: .infinity, alignment: .center) // Takes available space
-                .padding(.leading, Constants.CategoryTile.contentPadding)
-                
-                // Right side: 33% - Title, Chip, Count
-                VStack(alignment: .trailing, spacing: 6) {
-                    // Title
+            VStack(spacing: 6) {
+                HStack {
                     Text(group.displayName)
-                        .font(AppStyle.Font.categorySelectionNameFont)
-                        .foregroundColor(Color(hex: "#3CFFFF"))
-                        .multilineTextAlignment(.trailing)
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(AppStyle.Color.white)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     
-                    // Status Chip
                     CustomChip(
                         text: getChipText(exerciseInfo),
                         isCompleted: exerciseInfo.isCompleted,
-                        width: 70,
-                        verticalPadding: 4
+                        width: 60,
+                        verticalPadding: 3
                     )
+                }
+                .padding(.horizontal, Constants.CategoryTile.contentPadding)
+                
+                ZStack {
+                    Circle()
+                        .fill(AppStyle.Color.greenBlack)
+                        .frame(width: Constants.CategoryTile.iconSize * 0.9, height: Constants.CategoryTile.iconSize * 0.9)
+                        .blur(radius: 15)
+                        .opacity(0.5)
                     
-                    // Count text
-                    Text("\(exerciseInfo.completed) of \(exerciseInfo.total)")
-                        .font(.system(size: 12, weight: .medium))
+                    Image(group.defaultIconName)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 100, height: 100, alignment: group.iconAlignment)
+                        .clipped()
                         .foregroundColor(AppStyle.Color.white)
                 }
-                .frame(maxWidth: .infinity * 0.5, alignment: .trailing) // Smaller portion
-                .padding(.trailing, Constants.CategoryTile.contentPadding)
+                .frame(width: Constants.CategoryTile.iconSize, height: Constants.CategoryTile.iconSize)
+                
+                HStack(spacing: 8) {
+                    ProgressBar(
+                        progress: exerciseInfo.progress,
+                        totalWidth: 90
+                    )
+                    .frame(height: Constants.ProgressBar.height)
+                    
+                    Spacer()
+                    
+                    Text("\(exerciseInfo.completed) of \(exerciseInfo.total)")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(AppStyle.Color.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+                .padding(.horizontal, Constants.CategoryTile.contentPadding)
             }
-            .padding(.vertical, Constants.CategoryTile.verticalPadding)
+            .padding(.vertical, 12)
         }
     }
     
@@ -720,9 +715,9 @@ private struct CategoryTileView: View {
         if exerciseInfo.total == 0 {
             return "Not Set"
         } else if exerciseInfo.completed == exerciseInfo.total && !exerciseInfo.hasActiveSet {
-            return "Completed"
+            return "Done"
         } else if exerciseInfo.active == exerciseInfo.total && !exerciseInfo.hasActiveSet {
-            return "Not Started"
+            return "Todo"
         } else {
             return "Active"
         }
@@ -730,51 +725,6 @@ private struct CategoryTileView: View {
     
 }
 
-private struct CircularProgressView: View {
-    let progress: Double
-    let statusText: String
-    let isCompleted: Bool
-    
-    var body: some View {
-        ZStack {
-            // Background circle
-            Circle()
-                .stroke(
-                    Constants.secondaryTextColor,
-                    lineWidth: Constants.CategoryTile.circleLineWidth
-                )
-            
-            // Progress circle
-            Circle()
-                .trim(from: 0, to: CGFloat(progress.clamped(to: 0...1)))
-                .stroke(
-                    progressColor,
-                    style: StrokeStyle(
-                        lineWidth: Constants.CategoryTile.circleLineWidth,
-                        lineCap: .round
-                    )
-                )
-                .rotationEffect(.degrees(-90))
-            
-            // Status text in center
-            Text(statusText)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .frame(maxWidth: Constants.CategoryTile.circleSize - 20)
-        }
-        .frame(width: Constants.CategoryTile.circleSize, height: Constants.CategoryTile.circleSize)
-    }
-    
-    private var progressColor: Color {
-        if isCompleted {
-            return AppStyle.Color.green
-        } else {
-            return AppStyle.Color.green
-        }
-    }
-}
 
 private struct CustomChip: View {
     let text: String
@@ -784,8 +734,8 @@ private struct CustomChip: View {
     
     var body: some View {
         Text(text)
-            .font(AppStyle.Font.categorySelectionChipFont)
-            .foregroundColor(.white)
+            .font(.system(size: 11, weight: .medium))
+            .foregroundColor(AppStyle.Color.greenGlow)
             .frame(width: width)
             .padding(.vertical, verticalPadding)
             .background(chipBackground)
@@ -794,24 +744,12 @@ private struct CustomChip: View {
     
     private var chipBackground: some View {
         RoundedRectangle(cornerRadius: Constants.ProgressBar.cornerRadius)
-            .fill(getBackgroundColor())
-    }
-    
-    private func getBackgroundColor() -> Color {
-        if isCompleted {
-            return AppStyle.Color.green
-        } else {
-            return AppStyle.Color.exerciseCardBackground
-        }
+            .fill(AppStyle.Color.greenBlack)
     }
     
     private var chipOverlay: some View {
-        Group {
-            if text != "Completed" {
-                RoundedRectangle(cornerRadius: Constants.ProgressBar.cornerRadius)
-                    .stroke(Constants.secondaryTextColor, lineWidth: 1)
-            }
-        }
+        RoundedRectangle(cornerRadius: Constants.ProgressBar.cornerRadius)
+            .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
     }
 }
 
@@ -819,8 +757,8 @@ private struct ProgressBar: View {
     let progress: Double
     let totalWidth: CGFloat
     
-    private let fillColor = AppStyle.Color.green
-    private let trackColor = Constants.secondaryTextColor
+    private let fillColor = AppStyle.Color.greenGlow
+    private let trackColor = AppStyle.Color.greenBlack
     
     var body: some View {
         ZStack(alignment: .leading) {
@@ -832,11 +770,7 @@ private struct ProgressBar: View {
     
     private var trackView: some View {
         Capsule()
-            .strokeBorder(trackColor, lineWidth: Constants.ProgressBar.strokeWidth)
-            .background(
-                Capsule()
-                    .fill(AppStyle.Color.exerciseCardBackground)
-            )
+            .fill(trackColor)
             .frame(width: totalWidth, height: Constants.ProgressBar.height)
     }
     
