@@ -25,7 +25,7 @@ private enum Constants {
     }
     
     enum ProgressBar {
-        static let height: CGFloat = 10
+        static let height: CGFloat = 9
         static let strokeWidth: CGFloat = 1
         static let cornerRadius: CGFloat = 8
     }
@@ -651,7 +651,7 @@ private struct CategoryTileView: View {
             useGlassEffect: true,
             addPadding: false
         ) {
-            VStack(spacing: 6) {
+            VStack(spacing: 8) {
                 HStack {
                     Text(group.displayName)
                         .font(.system(size: 22, weight: .bold))
@@ -683,6 +683,9 @@ private struct CategoryTileView: View {
                 }
                 .frame(width: Constants.CategoryTile.iconSize, height: Constants.CategoryTile.iconSize)
                 
+                Spacer()
+                    .frame(height: 3)
+                
                 HStack(spacing: 8) {
                     ProgressBar(
                         progress: exerciseInfo.progress,
@@ -693,7 +696,7 @@ private struct CategoryTileView: View {
                     Spacer()
                     
                     Text("\(exerciseInfo.completed) of \(exerciseInfo.total)")
-                        .font(.system(size: 10, weight: .medium))
+                        .font(.system(size: 12, weight: .bold))
                         .foregroundColor(AppStyle.Color.white)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
