@@ -139,20 +139,6 @@ struct MuscleCategorySelectionView: View {
             .zIndex(2)
             
             VStack(spacing: 0) {
-                // Filter Toggle - only show when not training
-                if !trainingCoordinator.isTrainingActive {
-                    filterToggleView
-                        .padding(.horizontal, Constants.horizontalPadding)
-                        .padding(.top, Constants.topPadding)
-                } else {
-                    // Show a message that training is active
-                    Text("Training Active")
-                        .font(.headline)
-                        .foregroundColor(AppStyle.Color.green)
-                        .padding(.horizontal, Constants.horizontalPadding)
-                        .padding(.top, Constants.topPadding)
-                }
-                
                 ScrollView {
                     if currentViewMode == .overview {
                         // Grid with same spacing as WorkoutsScreen
@@ -236,6 +222,24 @@ struct MuscleCategorySelectionView: View {
                     Spacer(minLength: safeAreaInset + 24)
                 }
             }
+            
+            // Filter Toggle above bottom menu bar
+            VStack {
+                Spacer()
+                
+                if !trainingCoordinator.isTrainingActive {
+                    filterToggleView
+                        .padding(.horizontal, Constants.horizontalPadding)
+                        .padding(.bottom, safeAreaInset + 12)
+                } else {
+                    Text("Training Active")
+                        .font(.headline)
+                        .foregroundColor(AppStyle.Color.green)
+                        .padding(.horizontal, Constants.horizontalPadding)
+                        .padding(.bottom, safeAreaInset + 12)
+                }
+            }
+            .zIndex(3)
             
             // Bottom Action Bar for active training (like in MuscleCategoryView)
             TrainingActionBarComponent(
@@ -461,7 +465,7 @@ struct MuscleCategorySelectionView: View {
                         .foregroundColor(currentViewMode == .overview ? .white : .white.opacity(0.6))
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 36)
+                .frame(height: 32)
                 .background(
                     currentViewMode == .overview ? Color.white.opacity(0.12) : Color.clear
                 )
@@ -485,7 +489,7 @@ struct MuscleCategorySelectionView: View {
                         .foregroundColor(currentViewMode == .list ? .white : .white.opacity(0.6))
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 36)
+                .frame(height: 32)
                 .background(
                     currentViewMode == .list ? Color.white.opacity(0.12) : Color.clear
                 )
@@ -493,7 +497,7 @@ struct MuscleCategorySelectionView: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(4)
+        .padding(2)
         .background(
             Group {
                 if #available(iOS 26.0, *) {
@@ -662,7 +666,7 @@ private struct CategoryTileView: View {
                         text: getChipText(exerciseInfo),
                         isCompleted: exerciseInfo.isCompleted,
                         width: 60,
-                        verticalPadding: 3
+                        verticalPadding: 6
                     )
                 }
                 .padding(.horizontal, Constants.CategoryTile.contentPadding)
@@ -707,7 +711,6 @@ private struct CategoryTileView: View {
         }
     }
     
-    
     private func createExerciseInfo() -> ExerciseInfo {
         let count = viewModel.getExerciseCount(for: group) ?? (0, 0)
         let hasActiveSet = viewModel.hasActiveSetForCategory(group)
@@ -746,20 +749,16 @@ private struct CustomChip: View {
     }
     
     private var textColor: Color {
-        if text == "Active" || text == "Done" {
-            return AppStyle.Color.greenGlow
-        } else {
-            return AppStyle.Color.white
-        }
+        return AppStyle.Color.white
     }
     
     private var chipBackground: some View {
-        RoundedRectangle(cornerRadius: Constants.ProgressBar.cornerRadius)
+        RoundedRectangle(cornerRadius: 12)
             .fill(AppStyle.Color.greenBlack)
     }
     
     private var chipOverlay: some View {
-        RoundedRectangle(cornerRadius: Constants.ProgressBar.cornerRadius)
+        RoundedRectangle(cornerRadius: 10)
             .stroke(borderColor, lineWidth: 1)
     }
     
@@ -776,8 +775,8 @@ private struct ProgressBar: View {
     let progress: Double
     let totalWidth: CGFloat
     
-    private let fillColor = AppStyle.Color.greenGlow
-    private let trackColor = AppStyle.Color.greenBlack
+    private let fillColor = Color(hex: "#59E9AB")
+    private let trackColor = Color(hex: "#0A2726")
     
     var body: some View {
         ZStack(alignment: .leading) {
