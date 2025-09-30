@@ -502,10 +502,10 @@ struct MuscleCategorySelectionView: View {
             Group {
                 if #available(iOS 26.0, *) {
                     Color.clear
-                        .glassEffect(in: .rect(cornerRadius: 16))
+                        .glassEffect(in: .rect(cornerRadius: 18))
                 } else {
                     LiquidGlassBackground(
-                        cornerRadius: 16,
+                        cornerRadius: 18,
                         material: .ultraThinMaterial,
                         tintOpacity: 0.0,
                         showsEdgeStroke: false,
@@ -516,7 +516,7 @@ struct MuscleCategorySelectionView: View {
                 }
             }
         )
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
     
     private var activeTrainingOnlyList: some View {
