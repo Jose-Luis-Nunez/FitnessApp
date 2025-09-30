@@ -230,13 +230,13 @@ struct MuscleCategorySelectionView: View {
                 if !trainingCoordinator.isTrainingActive {
                     filterToggleView
                         .padding(.horizontal, Constants.horizontalPadding)
-                        .padding(.bottom, safeAreaInset + 12)
+                        .padding(.bottom, safeAreaInset + 24)
                 } else {
                     Text("Training Active")
                         .font(.headline)
                         .foregroundColor(AppStyle.Color.green)
                         .padding(.horizontal, Constants.horizontalPadding)
-                        .padding(.bottom, safeAreaInset + 12)
+                        .padding(.bottom, safeAreaInset + 24)
                 }
             }
             .zIndex(3)
