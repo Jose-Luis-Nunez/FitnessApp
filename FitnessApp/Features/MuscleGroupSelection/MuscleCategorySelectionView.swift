@@ -1,39 +1,24 @@
 import SwiftUI
 
+private struct ScrollOffsetPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
 private enum Constants {
     static let horizontalPadding: CGFloat = 15
     static let verticalSpacing: CGFloat = 10
-    static let titleTopPadding: CGFloat = 0
-    static let spacerHeight: CGFloat = 5
-    static let topPadding: CGFloat = 16
-    static let titleBottomSpacing: CGFloat = 5
-    
-    static let secondaryTextColor = Color(hex: "#46474B")
     
     enum CategoryTile {
-        static let barWidth: CGFloat = 120
-        static let chipVerticalPadding: CGFloat = 10
         static let contentPadding: CGFloat = 15
-        static let itemSpacing: CGFloat = 12
         static let verticalSpacing: CGFloat = 12
-        static let textSpacing: CGFloat = 28
-        static let verticalPadding: CGFloat = 20
-        static let circleSize: CGFloat = 80
-        static let circleLineWidth: CGFloat = 6
         static let iconSize: CGFloat = 80
-        static let iconSpacing: CGFloat = 16
     }
     
     enum ProgressBar {
         static let height: CGFloat = 9
-        static let strokeWidth: CGFloat = 1
-        static let cornerRadius: CGFloat = 8
-    }
-}
-
-private enum AccessibilityIDs {
-    static func categoryLabel(for group: MuscleCategoryGroup) -> String {
-        "id_label_\(group.id)"
     }
 }
 
@@ -56,8 +41,8 @@ private struct ExerciseInfo {
 }
 
 private enum ViewMode {
-    case overview  // Kategorien als Kacheln
-    case list      // Alle Übungen in Liste
+    case overview
+    case list
 }
 
 struct MuscleCategorySelectionView: View {
@@ -66,20 +51,13 @@ struct MuscleCategorySelectionView: View {
     @Binding var navigationPath: NavigationPath
     @EnvironmentObject private var overlayState: UIOverlayState
     @State private var currentViewMode: ViewMode = .overview
-    
-    // Exercise Picker State
     @State private var isShowingExercisePicker = false
     @State private var editingExercise: Exercise?
     @State private var editingCategory: MuscleCategoryGroup?
     @StateObject private var exerciseFormViewModel = ExerciseFormViewModel()
-    
-    // Mini Menu State
     @State private var showCategorySelection = false
-
-    
-
-    
-
+    @State private var isFilterBarVisible = true
+    @State private var lastScrollOffset: CGFloat = 0
     
     init(navigationPath: Binding<NavigationPath> = .constant(NavigationPath())) {
         self._navigationPath = navigationPath
@@ -102,10 +80,9 @@ struct MuscleCategorySelectionView: View {
         _viewModel = StateObject(wrappedValue: selectionViewModel)
     }
     
-    // 2 columns with same spacing as WorkoutsScreen
     private var adaptiveColumns: [GridItem] {
         [
-            GridItem(.flexible(), spacing: Constants.verticalSpacing), // Same as WorkoutsScreen (12pt)
+            GridItem(.flexible(), spacing: Constants.verticalSpacing),
             GridItem(.flexible(), spacing: Constants.verticalSpacing)
         ]
     }
@@ -114,10 +91,8 @@ struct MuscleCategorySelectionView: View {
         ZStack(alignment: .bottom) {
             AppStyle.Color.backgroundColor.ignoresSafeArea()
             
-            // Force observation of activeSetViewModel changes
             let _ = trainingCoordinator.activeSetViewModel.objectWillChange
             
-            // Bottom gradient starting below menu bar and going down
             VStack {
                 Spacer()
                 
@@ -140,33 +115,59 @@ struct MuscleCategorySelectionView: View {
             
             VStack(spacing: 0) {
                 ScrollView {
+                    GeometryReader { geometry in
+                        Color.clear.preference(
+                            key: ScrollOffsetPreferenceKey.self,
+                            value: geometry.frame(in: .named("scroll")).minY
+                        )
+                    }
+                    .frame(height: 0)
+                    .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
+                        if offset < 0 {
+                            let scrollDelta = offset - lastScrollOffset
+                            
+                            if abs(scrollDelta) > 10 {
+                                withAnimation(.easeInOut(duration: 0.25)) {
+                                    if scrollDelta < 0 {
+                                        isFilterBarVisible = false
+                                    } else {
+                                        isFilterBarVisible = true
+                                    }
+                                }
+                                lastScrollOffset = offset
+                            }
+                        } else {
+                            if !isFilterBarVisible {
+                                withAnimation(.easeInOut(duration: 0.25)) {
+                                    isFilterBarVisible = true
+                                }
+                            }
+                            lastScrollOffset = offset
+                        }
+                    }
+                    
                     if currentViewMode == .overview {
-                        // Grid with same spacing as WorkoutsScreen
                         LazyVGrid(
                             columns: adaptiveColumns, 
-                            spacing: Constants.verticalSpacing // Same as WorkoutsScreen (12pt)
+                            spacing: Constants.verticalSpacing
                         ) {
                             categoryList
                         }
                         .padding(.horizontal, Constants.horizontalPadding)
                         .padding(.top, 16)
                     } else {
-                        // List mode - check if training is active
                         let isActiveSetVisible = trainingCoordinator.isTrainingActive
                         
                         if isActiveSetVisible {
-                            // Show only active exercise (like in MuscleCategoryView)
                             if let exercise = trainingCoordinator.currentExercise {
                                 LazyVStack(spacing: 16) {
                                     ExerciseCardContainerView(
                                         viewModel: ExerciseCardViewModel(exercise: exercise) { updatedExercise in
-                                            // Update exercise for its category
                                             if let category = viewModel.findCategoryForExercise(exercise) {
                                                 viewModel.updateExercise(updatedExercise, category: category)
                                             }
                                         },
                                         onEdit: { exerciseToEdit in
-                                            // Navigate to category for editing
                                             if let category = viewModel.findCategoryForExercise(exerciseToEdit) {
                                                 navigationPath.append(NavigationDestination.muscleCategory(category))
                                             }
@@ -175,7 +176,6 @@ struct MuscleCategorySelectionView: View {
                                         analyticsViewModel: AnalyticsViewModel(),
                                         activeSetViewModel: trainingCoordinator.activeSetViewModel,
                                         onStart: { exerciseToStart in
-                                            // Navigate to TrainingView
                                             if let category = viewModel.findCategoryForExercise(exerciseToStart) {
                                                 TrainingNavigationHelper.navigateToTraining(
                                                     exercise: exerciseToStart,
@@ -201,7 +201,6 @@ struct MuscleCategorySelectionView: View {
                                 .padding(.top, 16)
                             }
                         } else {
-                            // If there's an active training, show only that exercise
                             if trainingCoordinator.isTrainingActive && trainingCoordinator.currentExercise != nil {
                                 LazyVStack(spacing: Constants.CategoryTile.verticalSpacing) {
                                     activeTrainingOnlyList
@@ -209,7 +208,6 @@ struct MuscleCategorySelectionView: View {
                                 .padding(.horizontal, 0)
                                 .padding(.top, 16)
                             } else {
-                                // Show all exercises list
                                 LazyVStack(spacing: Constants.CategoryTile.verticalSpacing) {
                                     allExercisesList
                                 }
@@ -218,30 +216,39 @@ struct MuscleCategorySelectionView: View {
                             }
                         }
                     }
-                    // small spacer so last tile isn't glued to gesture area
                     Spacer(minLength: safeAreaInset + 24)
                 }
+                .coordinateSpace(name: "scroll")
             }
             
-            // Filter Toggle above bottom menu bar
-            VStack {
-                Spacer()
-                
-                if !trainingCoordinator.isTrainingActive {
-                    filterToggleView
-                        .padding(.horizontal, Constants.horizontalPadding)
-                        .padding(.bottom, safeAreaInset + 24)
-                } else {
-                    Text("Training Active")
-                        .font(.headline)
-                        .foregroundColor(AppStyle.Color.green)
-                        .padding(.horizontal, Constants.horizontalPadding)
-                        .padding(.bottom, safeAreaInset + 24)
+            if isFilterBarVisible {
+                VStack {
+                    Spacer()
+                    
+                    ZStack(alignment: .bottom) {
+                        Rectangle()
+                            .fill(Color.clear)
+                            .frame(height: 100)
+                            .contentShape(Rectangle())
+                            .allowsHitTesting(true)
+                        
+                        if !trainingCoordinator.isTrainingActive {
+                            filterToggleView
+                                .padding(.horizontal, Constants.horizontalPadding)
+                                .padding(.bottom, safeAreaInset + 24)
+                        } else {
+                            Text("Training Active")
+                                .font(.headline)
+                                .foregroundColor(AppStyle.Color.green)
+                                .padding(.horizontal, Constants.horizontalPadding)
+                                .padding(.bottom, safeAreaInset + 24)
+                        }
+                    }
                 }
+                .zIndex(3)
+                .transition(.opacity)
             }
-            .zIndex(3)
             
-            // Bottom Action Bar for active training (like in MuscleCategoryView)
             TrainingActionBarComponent(
                 coordinator: trainingCoordinator,
                 exercises: viewModel.allExercises(),
@@ -249,11 +256,9 @@ struct MuscleCategorySelectionView: View {
             )
             .padding(.bottom, safeAreaInset + 12)
             
-            // Training Picker Component - Centralized picker logic (moved inside ZStack)
             TrainingPickerComponent(coordinator: trainingCoordinator)
-                .zIndex(1001)  // Ensure it's above everything including bottom menu bar
+                .zIndex(1001)
             
-            // Workout picker overlay
             if overlayState.showWorkoutDropdown {
                 Color.black.opacity(0.001)
                     .ignoresSafeArea()
@@ -268,7 +273,6 @@ struct MuscleCategorySelectionView: View {
                     .zIndex(4)
             }
             
-            // Selection mini menu overlay
             if overlayState.showSelectionMiniMenu {
                 Color.black.opacity(0.001)
                     .ignoresSafeArea()
@@ -295,7 +299,6 @@ struct MuscleCategorySelectionView: View {
                 .zIndex(3)
             }
             
-            // Exercise picker overlay (like in MuscleCategoryView)
             if isShowingExercisePicker {
                 if let editingCategory = editingCategory {
                     Color.clear.onAppear { overlayState.isEditingSheetVisible = true }
@@ -304,13 +307,10 @@ struct MuscleCategorySelectionView: View {
                         title: editingExercise != nil ? "Edit Exercise" : "New Exercise",
                         isPresented: $isShowingExercisePicker,
                         onSave: {
-                            // Handle save logic - same as in MuscleCategoryView
                             if let exercise = exerciseFormViewModel.createOrUpdateExercise() {
                                 if editingExercise != nil {
-                                    // Update existing exercise
                                     viewModel.updateExercise(exercise, category: editingCategory)
                                 } else {
-                                    // Add new exercise
                                     viewModel.addExercise(exercise, category: editingCategory)
                                 }
                             }
@@ -347,21 +347,6 @@ struct MuscleCategorySelectionView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             viewModel.updateExerciseCounts()
-        }
-
-
-    }
-    
-    private var headerView: some View {
-        HStack {
-            Text("Dein Workout")
-                .font(AppStyle.Font.navigationHeadline)
-                .foregroundColor(AppStyle.Color.white)
-                .padding(.top, Constants.titleTopPadding)
-                .padding(.bottom, Constants.titleBottomSpacing)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            
-
         }
     }
     
@@ -410,7 +395,7 @@ struct MuscleCategorySelectionView: View {
     
     private func openExercisePickerForCategory(_ category: MuscleCategoryGroup) {
         editingCategory = category
-        editingExercise = nil // New exercise
+        editingExercise = nil
         exerciseFormViewModel.loadExercise(nil, category: category)
         isShowingExercisePicker = true
     }
@@ -427,7 +412,6 @@ struct MuscleCategorySelectionView: View {
             Button(action: {
                 if let activeSetVM = SessionTrainingCache.shared.activeSetVMs[group],
                    let activeExercise = activeSetVM.currentExercise {
-                    // Active training: Navigate directly to TrainingView
                     TrainingNavigationHelper.navigateToTraining(
                         exercise: activeExercise,
                         category: group,
@@ -446,7 +430,6 @@ struct MuscleCategorySelectionView: View {
     
     private var filterToggleView: some View {
         HStack(spacing: 0) {
-            // Category Option
             Button(action: {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     currentViewMode = .overview
@@ -473,7 +456,6 @@ struct MuscleCategorySelectionView: View {
             }
             .buttonStyle(.plain)
             
-            // Exercise Option
             Button(action: {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     currentViewMode = .list
@@ -530,7 +512,6 @@ struct MuscleCategorySelectionView: View {
                             viewModel.updateExercise(updatedExercise, category: category)
                         },
                         onEdit: { exerciseToEdit in
-                            // In active training mode, open ExercisePickerView
                             editingExercise = exerciseToEdit
                             editingCategory = category
                             exerciseFormViewModel.loadExercise(exerciseToEdit, category: category)
@@ -540,7 +521,6 @@ struct MuscleCategorySelectionView: View {
                         analyticsViewModel: AnalyticsViewModel(),
                         activeSetViewModel: trainingCoordinator.activeSetViewModel,
                         onStart: { exerciseToStart in
-                            // Navigate back to TrainingView for the same exercise
                             TrainingNavigationHelper.navigateToTraining(
                                 exercise: exerciseToStart,
                                 category: category,
@@ -568,19 +548,15 @@ struct MuscleCategorySelectionView: View {
                     ForEach(exercises, id: \.id) { exercise in
                         ExerciseCardContainerView(
                             viewModel: ExerciseCardViewModel(exercise: exercise) { updatedExercise in
-                                // Update exercise and save
                                 viewModel.updateExercise(updatedExercise, category: category)
                             },
                             onEdit: { exerciseToEdit in
-                                // In list view, open ExercisePickerView instead of navigating
                                 if currentViewMode == .list {
                                     editingExercise = exerciseToEdit
                                     editingCategory = category
-                                    // Configure the form view model
                                     exerciseFormViewModel.loadExercise(exerciseToEdit, category: category)
                                     isShowingExercisePicker = true
                                 } else {
-                                    // Navigate to category and trigger edit (original behavior for overview)
                                     navigationPath.append(NavigationDestination.muscleCategory(category))
                                 }
                             },
@@ -588,16 +564,13 @@ struct MuscleCategorySelectionView: View {
                             analyticsViewModel: AnalyticsViewModel(),
                             activeSetViewModel: trainingCoordinator.activeSetViewModel,
                             onStart: { exerciseToStart in
-                                // Don't allow starting new training if another is already active
                                 if trainingCoordinator.isTrainingActive && trainingCoordinator.currentExercise?.id != exerciseToStart.id {
-                                    return // Block starting different exercise
+                                    return
                                 }
                                 
-                                // Add haptic feedback
                                 let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                                 impactFeedback.impactOccurred()
                                 
-                                // Navigate to TrainingView
                                 TrainingNavigationHelper.navigateToTraining(
                                     exercise: exerciseToStart,
                                     category: category,
@@ -605,7 +578,6 @@ struct MuscleCategorySelectionView: View {
                                 )
                             },
                             onReset: { exerciseToReset in
-                                // Reset exercise
                                 viewModel.resetExercise(exerciseToReset, category: category)
                             },
                             isActiveSetVisible: trainingCoordinator.isTrainingActive,
@@ -616,32 +588,20 @@ struct MuscleCategorySelectionView: View {
             }
         }
         .onAppear {
-            // Refresh exercise data when view appears (e.g., returning from TrainingView)
             viewModel.updateExerciseCounts()
             
-            // If there's an active training, automatically switch to list mode to show only the active exercise
             if trainingCoordinator.isTrainingActive && trainingCoordinator.currentExercise != nil {
                 currentViewMode = .list
             }
         }
     }
     
-
-    
-
-    
-
-    
     private var safeAreaInset: CGFloat {
         UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
     }
-    
-
-    
-
-    
-
 }
+
+// MARK: - Supporting Views
 
 private struct CategoryTileView: View {
     let group: MuscleCategoryGroup
@@ -793,17 +753,12 @@ private struct ProgressBar: View {
     }
     
     private var progressView: some View {
-        Capsule()
+        let clampedProgress = min(max(progress, 0.0), 1.0)
+        return Capsule()
             .fill(fillColor)
             .frame(
-                width: CGFloat(progress.clamped(to: 0...1)) * totalWidth,
+                width: CGFloat(clampedProgress) * totalWidth,
                 height: Constants.ProgressBar.height
             )
-    }
-}
-
-private extension Comparable {
-    func clamped(to range: ClosedRange<Self>) -> Self {
-        min(max(self, range.lowerBound), range.upperBound)
     }
 }
