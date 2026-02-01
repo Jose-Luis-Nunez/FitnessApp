@@ -629,16 +629,22 @@ private struct CategoryTileView: View {
                                 .frame(width: 32, height: 32)
                             
                             Image(systemName: "checkmark")
-                                .font(.system(size: 15, weight: .black))
+                                .font(.system(size: 16, weight: .black))
                                 .foregroundColor(AppStyle.Color.exerciseCardBackground)
                         }
+                    } else if exerciseInfo.total == 0 {
+                        ZStack {
+                            Circle()
+                                .fill(AppStyle.Color.greenGlow)
+                                .frame(width: 32, height: 32)
+                            
+                            Image(systemName: "plus")
+                                .font(.system(size: 14, weight: .heavy))
+                                .foregroundColor(AppStyle.Color.greenBlack)
+                        }
                     } else {
-                        CustomChip(
-                            text: getChipText(exerciseInfo),
-                            isCompleted: exerciseInfo.isCompleted,
-                            width: 60,
-                            verticalPadding: 8
-                        )
+                        Spacer()
+                            .frame(width: 32, height: 32)
                     }
                 }
                 .padding(.horizontal, Constants.CategoryTile.contentPadding)
@@ -662,24 +668,35 @@ private struct CategoryTileView: View {
                 Spacer()
                     .frame(height: 3)
                 
-                HStack(spacing: 8) {
-                    if !exerciseInfo.isCompleted {
-                        ProgressBar(
-                            progress: exerciseInfo.progress,
-                            totalWidth: 90
-                        )
-                        .frame(height: Constants.ProgressBar.height)
+                if exerciseInfo.total > 0 {
+                    HStack(spacing: 8) {
+                        if !exerciseInfo.isCompleted {
+                            ProgressBar(
+                                progress: exerciseInfo.progress,
+                                totalWidth: 90
+                            )
+                            .frame(height: Constants.ProgressBar.height)
+                        }
+                        
+                        Spacer()
+                        
+                        Text("\(exerciseInfo.completed) of \(exerciseInfo.total)")
+                            .font(.system(size: 12, weight: .heavy))
+                            .foregroundColor(AppStyle.Color.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     }
-                    
-                    Spacer()
-                    
-                    Text("\(exerciseInfo.completed) of \(exerciseInfo.total)")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(AppStyle.Color.white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+                    .padding(.horizontal, Constants.CategoryTile.contentPadding)
+                } else {
+                    HStack(spacing: 8) {
+                        Spacer()
+                        
+                        Text(" ")
+                            .font(.system(size: 12, weight: .heavy))
+                            .foregroundColor(.clear)
+                    }
+                    .padding(.horizontal, Constants.CategoryTile.contentPadding)
                 }
-                .padding(.horizontal, Constants.CategoryTile.contentPadding)
             }
             .padding(.vertical, 12)
             .overlay(
@@ -699,7 +716,7 @@ private struct CategoryTileView: View {
     
     private func getChipText(_ exerciseInfo: ExerciseInfo) -> String {
         if exerciseInfo.total == 0 {
-            return "Not Set"
+            return " + "
         } else if exerciseInfo.completed == exerciseInfo.total && !exerciseInfo.hasActiveSet {
             return "Done"
         } else if exerciseInfo.active == exerciseInfo.total && !exerciseInfo.hasActiveSet {
@@ -720,22 +737,16 @@ private struct CustomChip: View {
     
     var body: some View {
         Text(text)
-            .font(.system(size: 13, weight: .bold))
-            .foregroundColor(AppStyle.Color.green)
+            .font(.system(size: 12, weight: .heavy))
+            .foregroundColor(Color(hex: "#0A2726"))
             .frame(width: width)
             .padding(.vertical, verticalPadding)
             .background(chipBackground)
-            .overlay(chipRing)
     }
     
     private var chipBackground: some View {
         RoundedRectangle(cornerRadius: 13)
-            .fill(AppStyle.Color.greenBlack)
-    }
-    
-    private var chipRing: some View {
-        RoundedRectangle(cornerRadius: 13)
-            .stroke(AppStyle.Color.green, lineWidth: 2)
+            .fill(AppStyle.Color.greenGlow)
     }
 }
 
@@ -743,7 +754,7 @@ private struct ProgressBar: View {
     let progress: Double
     let totalWidth: CGFloat
     
-    private let fillColor = Color(hex: "#59E9AB")
+    private let fillColor = AppStyle.Color.greenGlow //Color(hex: "#59E9AB")
     private let trackColor = Color(hex: "#0A2726")
     
     var body: some View {
