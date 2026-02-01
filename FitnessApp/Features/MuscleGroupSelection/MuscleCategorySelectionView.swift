@@ -428,77 +428,93 @@ struct MuscleCategorySelectionView: View {
         }
     }
     
+    private let filterBarHeight: CGFloat = 44 // 40 + 2*2 padding
+    
     private var filterToggleView: some View {
-        HStack(spacing: 0) {
-            Button(action: {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    currentViewMode = .overview
-                }
-            }) {
-                HStack(spacing: 8) {
-                    Image("filterIconBody")
-                        .renderingMode(.template)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 28, height: 28)
-                        .foregroundColor(.white)
-                    
-                    Text("Category")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 40)
-                .background(
-                    currentViewMode == .overview ? Color.white.opacity(0.12) : Color.clear
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-            }
-            .buttonStyle(.plain)
+        GeometryReader { geometry in
+            let barWidth = geometry.size.width
             
-            Button(action: {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    currentViewMode = .list
+            ZStack {
+                // Backdrop hints for glass refraction (same as BottomMenuBar)
+                BackdropHints(barWidth: barWidth, barHeight: filterBarHeight)
+                    .frame(width: barWidth, height: filterBarHeight)
+                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .opacity(0.65)
+                
+                // Glass background
+                Group {
+                    if #available(iOS 26.0, *) {
+                        Color.clear
+                            .glassEffect(in: .rect(cornerRadius: 22))
+                    } else {
+                        LiquidGlassBackground(
+                            cornerRadius: 22,
+                            material: .ultraThinMaterial,
+                            tintOpacity: 0.0,
+                            showsEdgeStroke: false,
+                            showsCaustic: false,
+                            shadowOpacity: 0.20,
+                            lightnessBoostOpacity: 0.12
+                        )
+                    }
                 }
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "list.bullet")
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(.white)
+                
+                // Content
+                HStack(spacing: 0) {
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            currentViewMode = .overview
+                        }
+                    }) {
+                        HStack(spacing: 8) {
+                            Image("filterIconBody")
+                                .renderingMode(.template)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 28, height: 28)
+                                .foregroundColor(.white)
+                            
+                            Text("Category")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 40)
+                        .background(
+                            currentViewMode == .overview ? Color.white.opacity(0.12) : Color.clear
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
                     
-                    Text("Exercise")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            currentViewMode = .list
+                        }
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "list.bullet")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(.white)
+                            
+                            Text("Exercise")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 40)
+                        .background(
+                            currentViewMode == .list ? Color.white.opacity(0.12) : Color.clear
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 40)
-                .background(
-                    currentViewMode == .list ? Color.white.opacity(0.12) : Color.clear
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .padding(2)
             }
-            .buttonStyle(.plain)
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         }
-        .padding(2)
-        .background(
-            Group {
-                if #available(iOS 26.0, *) {
-                    Color.clear
-                        .glassEffect(in: .rect(cornerRadius: 22))
-                } else {
-                    LiquidGlassBackground(
-                        cornerRadius: 22,
-                        material: .ultraThinMaterial,
-                        tintOpacity: 0.0,
-                        showsEdgeStroke: false,
-                        showsCaustic: false,
-                        shadowOpacity: 0.20,
-                        lightnessBoostOpacity: 0.12
-                    )
-                }
-            }
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .frame(height: filterBarHeight)
     }
     
     private var activeTrainingOnlyList: some View {
