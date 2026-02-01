@@ -682,7 +682,7 @@ private struct CategoryTileView: View {
                         
                         Text("\(exerciseInfo.completed) of \(exerciseInfo.total)")
                             .font(.system(size: 12, weight: .heavy))
-                            .foregroundColor(AppStyle.Color.white)
+                            .foregroundColor(exerciseInfo.isCompleted ? AppStyle.Color.greenGlow : AppStyle.Color.white)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                     }
@@ -714,41 +714,8 @@ private struct CategoryTileView: View {
         return ExerciseInfo(total: count.total, active: count.active, hasActiveSet: hasActiveSet)
     }
     
-    private func getChipText(_ exerciseInfo: ExerciseInfo) -> String {
-        if exerciseInfo.total == 0 {
-            return " + "
-        } else if exerciseInfo.completed == exerciseInfo.total && !exerciseInfo.hasActiveSet {
-            return "Done"
-        } else if exerciseInfo.active == exerciseInfo.total && !exerciseInfo.hasActiveSet {
-            return "Todo"
-        } else {
-            return "Active"
-        }
-    }
-    
 }
 
-
-private struct CustomChip: View {
-    let text: String
-    let isCompleted: Bool
-    let width: CGFloat
-    let verticalPadding: CGFloat
-    
-    var body: some View {
-        Text(text)
-            .font(.system(size: 12, weight: .heavy))
-            .foregroundColor(Color(hex: "#0A2726"))
-            .frame(width: width)
-            .padding(.vertical, verticalPadding)
-            .background(chipBackground)
-    }
-    
-    private var chipBackground: some View {
-        RoundedRectangle(cornerRadius: 13)
-            .fill(AppStyle.Color.greenGlow)
-    }
-}
 
 private struct ProgressBar: View {
     let progress: Double
