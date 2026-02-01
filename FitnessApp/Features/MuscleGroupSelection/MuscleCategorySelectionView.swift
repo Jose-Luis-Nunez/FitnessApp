@@ -441,18 +441,18 @@ struct MuscleCategorySelectionView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 28, height: 28)
-                        .foregroundColor(currentViewMode == .overview ? .white : .white.opacity(0.6))
+                        .foregroundColor(.white)
                     
                     Text("Category")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(currentViewMode == .overview ? .white : .white.opacity(0.6))
+                        .foregroundColor(.white)
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 32)
+                .frame(height: 40)
                 .background(
                     currentViewMode == .overview ? Color.white.opacity(0.12) : Color.clear
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             }
             .buttonStyle(.plain)
             
@@ -464,18 +464,18 @@ struct MuscleCategorySelectionView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "list.bullet")
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(currentViewMode == .list ? .white : .white.opacity(0.6))
+                        .foregroundColor(.white)
                     
                     Text("Exercise")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(currentViewMode == .list ? .white : .white.opacity(0.6))
+                        .foregroundColor(.white)
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 32)
+                .frame(height: 40)
                 .background(
                     currentViewMode == .list ? Color.white.opacity(0.12) : Color.clear
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             }
             .buttonStyle(.plain)
         }
@@ -484,10 +484,10 @@ struct MuscleCategorySelectionView: View {
             Group {
                 if #available(iOS 26.0, *) {
                     Color.clear
-                        .glassEffect(in: .rect(cornerRadius: 18))
+                        .glassEffect(in: .rect(cornerRadius: 22))
                 } else {
                     LiquidGlassBackground(
-                        cornerRadius: 18,
+                        cornerRadius: 22,
                         material: .ultraThinMaterial,
                         tintOpacity: 0.0,
                         showsEdgeStroke: false,
@@ -498,7 +498,7 @@ struct MuscleCategorySelectionView: View {
                 }
             }
         )
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
     
     private var activeTrainingOnlyList: some View {
