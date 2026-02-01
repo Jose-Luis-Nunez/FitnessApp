@@ -619,15 +619,27 @@ private struct CategoryTileView: View {
                 HStack {
                     Text(group.displayName)
                         .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(AppStyle.Color.white)
+                        .foregroundColor(exerciseInfo.isCompleted ? AppStyle.Color.greenGlow : AppStyle.Color.white)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     
-                    CustomChip(
-                        text: getChipText(exerciseInfo),
-                        isCompleted: exerciseInfo.isCompleted,
-                        width: 60,
-                        verticalPadding: 6
-                    )
+                    if exerciseInfo.isCompleted {
+                        ZStack {
+                            Circle()
+                                .fill(AppStyle.Color.greenGlow)
+                                .frame(width: 32, height: 32)
+                            
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 15, weight: .black))
+                                .foregroundColor(AppStyle.Color.exerciseCardBackground)
+                        }
+                    } else {
+                        CustomChip(
+                            text: getChipText(exerciseInfo),
+                            isCompleted: exerciseInfo.isCompleted,
+                            width: 60,
+                            verticalPadding: 8
+                        )
+                    }
                 }
                 .padding(.horizontal, Constants.CategoryTile.contentPadding)
                 
@@ -651,11 +663,13 @@ private struct CategoryTileView: View {
                     .frame(height: 3)
                 
                 HStack(spacing: 8) {
-                    ProgressBar(
-                        progress: exerciseInfo.progress,
-                        totalWidth: 90
-                    )
-                    .frame(height: Constants.ProgressBar.height)
+                    if !exerciseInfo.isCompleted {
+                        ProgressBar(
+                            progress: exerciseInfo.progress,
+                            totalWidth: 90
+                        )
+                        .frame(height: Constants.ProgressBar.height)
+                    }
                     
                     Spacer()
                     
@@ -668,6 +682,12 @@ private struct CategoryTileView: View {
                 .padding(.horizontal, Constants.CategoryTile.contentPadding)
             }
             .padding(.vertical, 12)
+            .overlay(
+                exerciseInfo.isCompleted ?
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(AppStyle.Color.green.opacity(0.3))
+                : nil
+            )
         }
     }
     
@@ -700,34 +720,22 @@ private struct CustomChip: View {
     
     var body: some View {
         Text(text)
-            .font(.system(size: 11, weight: .medium))
-            .foregroundColor(textColor)
+            .font(.system(size: 13, weight: .bold))
+            .foregroundColor(AppStyle.Color.green)
             .frame(width: width)
             .padding(.vertical, verticalPadding)
             .background(chipBackground)
-            .overlay(chipOverlay)
-    }
-    
-    private var textColor: Color {
-        return AppStyle.Color.white
+            .overlay(chipRing)
     }
     
     private var chipBackground: some View {
-        RoundedRectangle(cornerRadius: 12)
+        RoundedRectangle(cornerRadius: 13)
             .fill(AppStyle.Color.greenBlack)
     }
     
-    private var chipOverlay: some View {
-        RoundedRectangle(cornerRadius: 10)
-            .stroke(borderColor, lineWidth: 1)
-    }
-    
-    private var borderColor: Color {
-        if text == "Active" || text == "Done" {
-            return AppStyle.Color.greenGlow
-        } else {
-            return AppStyle.Color.white
-        }
+    private var chipRing: some View {
+        RoundedRectangle(cornerRadius: 13)
+            .stroke(AppStyle.Color.green, lineWidth: 2)
     }
 }
 

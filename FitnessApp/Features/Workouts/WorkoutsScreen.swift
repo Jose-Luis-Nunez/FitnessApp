@@ -244,18 +244,6 @@ struct WorkoutsScreen: View {
         }
     }
     
-    private func settingsOption(icon: String, title: String, isDestructive: Bool = false, action: @escaping () -> Void) -> some View {
-        Text(title)
-            .font(.system(size: 16, weight: .medium))
-            .foregroundColor(AppStyle.Color.greenGlow)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                action()
-            }
-    }
-    
     private var safeAreaInset: CGFloat {
         UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
     }
