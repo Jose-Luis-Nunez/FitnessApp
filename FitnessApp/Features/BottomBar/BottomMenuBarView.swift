@@ -34,7 +34,7 @@ struct BottomMenuBarView: View {
     private let barTintOpacity: Double = 0.02
     // Selection pill sizing - matching Filter Toggle (3px padding all sides)
     private var selectionHeight: CGFloat { capsuleHeight - 6 }
-    private var selectionWidth: CGFloat { selectionHeight * 1.4 }
+    private var selectionBaseWidth: CGFloat { selectionHeight * 1.4 }
     private let selectionFill = Color.white.opacity(0.12)
     private let iconSize: CGFloat = 22
     private let iconBoost: CGFloat = 10 // increase all icons uniformly by +10pt
@@ -222,7 +222,7 @@ struct BottomMenuBarView: View {
                                 RoundedRectangle(cornerRadius: selectionHeight / 2, style: .continuous)
                                     .stroke(Color.white.opacity(0.10), lineWidth: 1)
                             )
-                            .frame(width: selectionWidth, height: selectionHeight)
+                            .frame(width: selectionBaseWidth, height: selectionHeight)
                     }
                 }
         }
@@ -266,7 +266,7 @@ struct BottomMenuBarView: View {
                             RoundedRectangle(cornerRadius: selectionHeight / 2, style: .continuous)
                                 .stroke(Color.white.opacity(0.10), lineWidth: 1)
                         )
-                        .frame(width: selectionWidth + 16, height: selectionHeight)
+                        .frame(width: selectionBaseWidth + 6, height: selectionHeight)
                 }
             }
         }
