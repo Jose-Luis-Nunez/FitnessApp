@@ -82,6 +82,7 @@ struct FitnessAppApp: App {
                                         }
                                 }
                             }
+                            .enableSwipeBack()
                         }
                 }
                 .zIndex(overlayState.isEditingSheetVisible ? 2 : 0)
