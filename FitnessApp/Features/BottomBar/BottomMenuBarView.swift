@@ -32,15 +32,16 @@ struct BottomMenuBarView: View {
     }
     // Liquid Glass tuning
     private let barTintOpacity: Double = 0.02
-    // Selection pill sizing (larger area like in reference)
-    private var selectionHeight: CGFloat { capsuleHeight - 2 }
-    private var selectionWidth: CGFloat { max(selectionHeight, selectionHeight * 1.6 - 10) }
+    // Selection pill sizing - matching Filter Toggle (3px padding all sides)
+    private var selectionHeight: CGFloat { capsuleHeight - 6 }
+    private var selectionWidth: CGFloat { selectionHeight * 1.4 }
     private let selectionFill = Color.white.opacity(0.12)
     private let iconSize: CGFloat = 22
     private let iconBoost: CGFloat = 10 // increase all icons uniformly by +10pt
     // Position tweak: negative moves the bar closer to the device bottom edge
     private let bottomOffset: CGFloat = -40
     private let calendarIconScale: CGFloat = 1.18
+    private let labelFontSize: CGFloat = 10 // iOS standard tab bar label size
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -123,9 +124,9 @@ struct BottomMenuBarView: View {
                         }
                     }
 
-                    HStack(spacing: 18) {
+                    HStack(spacing: 12) {
                         // Home uses custom asset and is always white
-                        menuItemImage(imageName: "homeIcon", tab: .home) {
+                        menuItemImage(imageName: "homeIcon", label: "Workout", tab: .home) {
                             selectedTab = .home
                             // Reset to root (Workouts) without pushing a destination,
                             // so the back button stays hidden on the root screen
@@ -133,17 +134,17 @@ struct BottomMenuBarView: View {
                         }
 
                         // Analytics uses custom asset
-                        menuItemImage(imageName: "analyticsEntry", tab: .chart) {
+                        menuItemImage(imageName: "analyticsEntry", label: "Analytics", tab: .chart) {
                             selectedTab = .chart
                             navigationPath = NavigationPath()
                             navigationPath.append(NavigationDestination.totalAnalytics)
                         }
 
-                        menuItemImage(imageName: "menuCalenderIcon", tab: .calendar) {
+                        menuItemImage(imageName: "menuCalenderIcon", label: "Schedule", tab: .calendar) {
                             selectedTab = .calendar
                         }
 
-                        menuItemImage(imageName: "profileMenuIcon", tab: .profile) {
+                        menuItemImage(imageName: "profileMenuIcon", label: "Profile", tab: .profile) {
                             selectedTab = .profile
                             navigationPath = NavigationPath()
                             navigationPath.append(NavigationDestination.profile)
@@ -230,36 +231,44 @@ struct BottomMenuBarView: View {
     }
 
     @ViewBuilder
-    private func menuItemImage(imageName: String, tab: BottomTab, action: @escaping () -> Void) -> some View {
+    private func menuItemImage(imageName: String, label: String, tab: BottomTab, action: @escaping () -> Void) -> some View {
         let isSelected = selectedTab == tab
         let baseForeground = AppStyle.Color.white.opacity(0.98)
         let selectedForeground = AppStyle.Color.white.opacity(0.98)
+        // Icon sizes with boost
+        let baseIconSize: CGFloat = iconSize + iconBoost
         let targetSize = imageName == "menuCalenderIcon"
-            ? iconSize * calendarIconScale
-            : (imageName == "analyticsEntry" ? iconSize + 10 : iconSize)
-        let verticalOffset: CGFloat = imageName == "menuCalenderIcon" ? 2 : (imageName == "analyticsEntry" ? -2 : 0)
+            ? baseIconSize * calendarIconScale
+            : (imageName == "analyticsEntry" ? baseIconSize + 4 : baseIconSize)
 
         Button(action: action) {
-            Image(imageName)
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .frame(width: targetSize + iconBoost, height: targetSize + iconBoost)
-                .foregroundColor(isSelected ? selectedForeground : baseForeground)
-                .offset(y: verticalOffset)
-                .frame(maxWidth: .infinity, minHeight: capsuleHeight, maxHeight: capsuleHeight)
-                .padding(.horizontal, 6)
-                .background(alignment: .center) {
-                    if isSelected {
-                        RoundedRectangle(cornerRadius: selectionHeight / 2, style: .continuous)
-                            .fill(selectionFill)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: selectionHeight / 2, style: .continuous)
-                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
-                            )
-                            .frame(width: selectionWidth, height: selectionHeight)
-                    }
+            VStack(spacing: 2) {
+                Image(imageName)
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: targetSize, height: targetSize)
+                    .foregroundColor(isSelected ? selectedForeground : baseForeground)
+                
+                Text(label)
+                    .font(.system(size: labelFontSize, weight: .medium))
+                    .foregroundColor(isSelected ? selectedForeground : baseForeground)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .frame(maxWidth: .infinity, minHeight: capsuleHeight, maxHeight: capsuleHeight)
+            .padding(.horizontal, 2)
+            .background(alignment: .center) {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: selectionHeight / 2, style: .continuous)
+                        .fill(selectionFill)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: selectionHeight / 2, style: .continuous)
+                                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                        )
+                        .frame(width: selectionWidth + 16, height: selectionHeight)
                 }
+            }
         }
         .buttonStyle(PlainButtonStyle())
         .contentShape(Rectangle())

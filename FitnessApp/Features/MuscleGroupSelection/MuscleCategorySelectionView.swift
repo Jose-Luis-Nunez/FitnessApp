@@ -233,9 +233,12 @@ struct MuscleCategorySelectionView: View {
                             .allowsHitTesting(true)
                         
                         if !trainingCoordinator.isTrainingActive {
-                            filterToggleView
-                                .padding(.horizontal, Constants.horizontalPadding)
-                                .padding(.bottom, safeAreaInset + 24)
+                            HStack {
+                                Spacer()
+                                filterToggleView
+                            }
+                            .padding(.horizontal, Constants.horizontalPadding)
+                            .padding(.bottom, safeAreaInset + 24)
                         } else {
                             Text("Training Active")
                                 .font(.headline)
@@ -428,85 +431,75 @@ struct MuscleCategorySelectionView: View {
         }
     }
     
-    private let filterBarHeight: CGFloat = 44 // 40 + 2*2 padding
+    // Filter toggle sizing - matching MenuBar proportions
+    private let filterBarHeight: CGFloat = 52
+    private let filterBarPadding: CGFloat = 3
+    private var filterSelectionHeight: CGFloat { filterBarHeight - (filterBarPadding * 2) }
+    private var filterSelectionWidth: CGFloat { filterSelectionHeight * 1.6 }
+    private let filterIconSize: CGFloat = 30
     
     private var filterToggleView: some View {
-        GeometryReader { geometry in
-            let barWidth = geometry.size.width
-            
-            ZStack {
-                // Backdrop hints for glass refraction (same as BottomMenuBar)
-                BackdropHints(barWidth: barWidth, barHeight: filterBarHeight)
-                    .frame(width: barWidth, height: filterBarHeight)
-                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                    .opacity(0.65)
-                
-                // Glass background - milkier/lighter appearance
-                Group {
-                    if #available(iOS 26.0, *) {
-                        Color.clear
-                            .glassEffect(in: .rect(cornerRadius: 22))
-                    } else {
-                        LiquidGlassBackground(
-                            cornerRadius: 22,
-                            material: .thinMaterial,
-                            tintOpacity: 0.05,
-                            showsEdgeStroke: false,
-                            showsCaustic: false,
-                            shadowOpacity: 0.15,
-                            lightnessBoostOpacity: 0.30
-                        )
-                    }
+        HStack(spacing: 0) {
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    currentViewMode = .overview
                 }
-                
-                // Content
-                HStack(spacing: 0) {
-                    Button(action: {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            currentViewMode = .overview
+            }) {
+                Image("filterIconBody")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: filterIconSize, height: filterIconSize)
+                    .foregroundColor(currentViewMode == .overview ? AppStyle.Color.greenGlow : .white)
+                    .frame(width: filterSelectionWidth, height: filterSelectionHeight)
+                    .background {
+                        if currentViewMode == .overview {
+                            RoundedRectangle(cornerRadius: filterSelectionHeight / 2, style: .continuous)
+                                .fill(.ultraThinMaterial)
                         }
-                    }) {
-                        Image("filterIconBody")
-                            .renderingMode(.template)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 34, height: 34)
-                            .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 40)
-                        .background {
-                            if currentViewMode == .overview {
-                                Rectangle().fill(.ultraThinMaterial)
-                            }
-                        }
-                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     }
-                    .buttonStyle(.plain)
-                    
-                    Button(action: {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            currentViewMode = .list
-                        }
-                    }) {
-                        Image(systemName: "list.bullet")
-                            .font(.system(size: 28, weight: .medium))
-                            .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 40)
-                        .background {
-                            if currentViewMode == .list {
-                                Rectangle().fill(.ultraThinMaterial)
-                            }
-                        }
-                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(2)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .buttonStyle(.plain)
+            
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    currentViewMode = .list
+                }
+            }) {
+                Image(systemName: "list.bullet")
+                    .font(.system(size: filterIconSize - 4, weight: .medium))
+                    .foregroundColor(currentViewMode == .list ? AppStyle.Color.greenGlow : .white)
+                    .frame(width: filterSelectionWidth, height: filterSelectionHeight)
+                    .background {
+                        if currentViewMode == .list {
+                            RoundedRectangle(cornerRadius: filterSelectionHeight / 2, style: .continuous)
+                                .fill(.ultraThinMaterial)
+                        }
+                    }
+            }
+            .buttonStyle(.plain)
         }
-        .frame(height: filterBarHeight)
+        .padding(filterBarPadding)
+        .background {
+            Group {
+                if #available(iOS 26.0, *) {
+                    Capsule()
+                        .fill(Color.clear)
+                        .glassEffect()
+                } else {
+                    LiquidGlassBackground(
+                        cornerRadius: filterBarHeight / 2,
+                        material: .ultraThinMaterial,
+                        tintOpacity: 0.0,
+                        showsEdgeStroke: false,
+                        showsCaustic: false,
+                        shadowOpacity: 0.20,
+                        lightnessBoostOpacity: 0.12
+                    )
+                }
+            }
+        }
+        .clipShape(Capsule())
     }
     
     private var activeTrainingOnlyList: some View {
