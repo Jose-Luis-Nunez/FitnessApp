@@ -2,12 +2,18 @@ import SwiftUI
 
 struct ChipIcon {
     let image: Image
-    let color: Color
+    let color: Color?
     let size: AppChipSize
 
     init(image: String, color: Color, size: AppChipSize = .regular) {
         self.image = Image(image)
         self.color = color
+        self.size = size
+    }
+
+    init(image: String, size: AppChipSize = .regular) {
+        self.image = Image(image)
+        self.color = nil
         self.size = size
     }
 
@@ -19,12 +25,20 @@ struct ChipIcon {
 
     @ViewBuilder
     var view: some View {
-        image
-            .renderingMode(.template)
-            .resizable()
-            .scaledToFit()
-            .frame(width: iconSize, height: iconSize)
-            .foregroundStyle(color)
+        if let color {
+            image
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: iconSize, height: iconSize)
+                .foregroundStyle(color)
+        } else {
+            image
+                .renderingMode(.original)
+                .resizable()
+                .scaledToFit()
+                .frame(width: iconSize, height: iconSize)
+        }
     }
 
     private var iconSize: CGFloat {
