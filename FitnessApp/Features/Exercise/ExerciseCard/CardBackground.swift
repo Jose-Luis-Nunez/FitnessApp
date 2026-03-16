@@ -25,22 +25,8 @@ struct CardBackground<Content: View>: View {
             .background(
                 Group {
                     if useGlassEffect {
-                        if #available(iOS 26.0, *) {
-                            Color.clear
-                                .glassEffect(in: .rect(cornerRadius: AppStyle.CornerRadius.card))
-                        } else if #available(iOS 18.0, *) {
-                            LiquidGlassBackground(
-                                cornerRadius: AppStyle.CornerRadius.card,
-                                material: .ultraThinMaterial,
-                                tintOpacity: 0.0,
-                                showsEdgeStroke: false,
-                                showsCaustic: false,
-                                shadowOpacity: 0.0,
-                                lightnessBoostOpacity: 0.0
-                            )
-                        } else {
-                            backgroundColor
-                        }
+                        Color.clear
+                            .glassEffect(in: .rect(cornerRadius: AppStyle.CornerRadius.card))
                     } else {
                         ZStack {
                             backgroundColor.opacity(0.85)
