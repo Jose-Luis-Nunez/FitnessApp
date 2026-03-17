@@ -80,7 +80,7 @@ private extension InactiveCardView {
                 HStack(spacing: 4) {
                     Text("Completed workout")
                         .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(AppStyle.Color.greenGlow.opacity(0.5))
                     
                     Image(systemName: "chevron.down")
                         .font(.system(size: 10, weight: .semibold))

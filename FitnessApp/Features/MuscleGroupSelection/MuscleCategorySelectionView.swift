@@ -541,52 +541,18 @@ struct MuscleCategorySelectionView: View {
         }
     }
     
+    private var allExercisesWithCategory: [(exercise: Exercise, category: MuscleCategoryGroup)] {
+        MuscleCategoryGroup.allCases.flatMap { category in
+            viewModel.getExercises(for: category).map { (exercise: $0, category: category) }
+        }
+        .sorted { !$0.exercise.isCompleted && $1.exercise.isCompleted }
+    }
+    
     private var allExercisesList: some View {
-        ForEach(MuscleCategoryGroup.allCases, id: \.id) { category in
-            let exercises = viewModel.getExercises(for: category)
-            if !exercises.isEmpty {
-                Section {
-                    ForEach(exercises, id: \.id) { exercise in
-                        ExerciseCardContainerView(
-                            viewModel: ExerciseCardViewModel(exercise: exercise) { updatedExercise in
-                                viewModel.updateExercise(updatedExercise, category: category)
-                            },
-                            onEdit: { exerciseToEdit in
-                                if currentViewMode == .list {
-                                    editingExercise = exerciseToEdit
-                                    editingCategory = category
-                                    exerciseFormViewModel.loadExercise(exerciseToEdit, category: category)
-                                    isShowingExercisePicker = true
-                                } else {
-                                    navigationPath.append(NavigationDestination.muscleCategory(category))
-                                }
-                            },
-                            isEditable: true,
-                            analyticsViewModel: AnalyticsViewModel(),
-                            activeSetViewModel: trainingCoordinator.activeSetViewModel,
-                            onStart: { exerciseToStart in
-                                if trainingCoordinator.isTrainingActive && trainingCoordinator.currentExercise?.id != exerciseToStart.id {
-                                    return
-                                }
-                                
-                                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                                impactFeedback.impactOccurred()
-                                
-                                TrainingNavigationHelper.navigateToTraining(
-                                    exercise: exerciseToStart,
-                                    category: category,
-                                    navigationPath: &navigationPath
-                                )
-                            },
-                            onReset: { exerciseToReset in
-                                viewModel.resetExercise(exerciseToReset, category: category)
-                            },
-                            isActiveSetVisible: trainingCoordinator.isTrainingActive,
-                            isResetEnabled: exercise.isCompleted
-                        )
-                    }
-                }
-            }
+        let items = allExercisesWithCategory
+        
+        return ForEach(items, id: \.exercise.id) { item in
+            exerciseCard(for: item.exercise, category: item.category)
         }
         .onAppear {
             viewModel.updateExerciseCounts()
@@ -595,6 +561,46 @@ struct MuscleCategorySelectionView: View {
                 currentViewMode = .list
             }
         }
+    }
+    
+    private func exerciseCard(for exercise: Exercise, category: MuscleCategoryGroup) -> some View {
+        ExerciseCardContainerView(
+            viewModel: ExerciseCardViewModel(exercise: exercise) { updatedExercise in
+                viewModel.updateExercise(updatedExercise, category: category)
+            },
+            onEdit: { exerciseToEdit in
+                if currentViewMode == .list {
+                    editingExercise = exerciseToEdit
+                    editingCategory = category
+                    exerciseFormViewModel.loadExercise(exerciseToEdit, category: category)
+                    isShowingExercisePicker = true
+                } else {
+                    navigationPath.append(NavigationDestination.muscleCategory(category))
+                }
+            },
+            isEditable: true,
+            analyticsViewModel: AnalyticsViewModel(),
+            activeSetViewModel: trainingCoordinator.activeSetViewModel,
+            onStart: { exerciseToStart in
+                if trainingCoordinator.isTrainingActive && trainingCoordinator.currentExercise?.id != exerciseToStart.id {
+                    return
+                }
+                
+                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                impactFeedback.impactOccurred()
+                
+                TrainingNavigationHelper.navigateToTraining(
+                    exercise: exerciseToStart,
+                    category: category,
+                    navigationPath: &navigationPath
+                )
+            },
+            onReset: { exerciseToReset in
+                viewModel.resetExercise(exerciseToReset, category: category)
+            },
+            isActiveSetVisible: trainingCoordinator.isTrainingActive,
+            isResetEnabled: exercise.isCompleted
+        )
     }
     
     private var safeAreaInset: CGFloat {
