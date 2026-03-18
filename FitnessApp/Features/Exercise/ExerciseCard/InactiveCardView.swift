@@ -31,12 +31,11 @@ struct InactiveCardView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card)
+                    .fill(AppStyle.Color.green.opacity(0.2))
+            )
         }
-        .overlay(
-            RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card)
-                .fill(AppStyle.Color.green.opacity(0.2))
-                .allowsHitTesting(false)
-        )
         .padding(.horizontal, 16)
         .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 2)
         .sheet(isPresented: $isShowingAnalytics) {
@@ -79,8 +78,8 @@ private extension InactiveCardView {
             } label: {
                 HStack(spacing: 4) {
                     Text("Completed workout")
-                        .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(AppStyle.Color.greenGlow.opacity(0.5))
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.white.opacity(0.5))
                     
                     Image(systemName: "chevron.down")
                         .font(.system(size: 10, weight: .semibold))
