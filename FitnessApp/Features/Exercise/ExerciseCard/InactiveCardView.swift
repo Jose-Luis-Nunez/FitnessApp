@@ -31,10 +31,11 @@ struct InactiveCardView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
-            .background(
-                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card)
-                    .fill(AppStyle.Color.green.opacity(0.2))
-            )
+            .background(alignment: .leading) {
+                Rectangle()
+                    .fill(AppStyle.Color.green)
+                    .frame(width: 8)
+            }
         }
         .padding(.horizontal, 16)
         .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 2)
@@ -62,37 +63,36 @@ private extension InactiveCardView {
             .scaledToFill()
             .frame(width: 50, height: 50, alignment: viewModel.exercise.iconAlignment)
             .clipped()
+            .contentShape(Rectangle())
+            .onTapGesture { isExpanded.toggle() }
     }
     
     var titleSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(viewModel.exercise.name)
                 .font(AppStyle.Font.cardHeadline)
-                .foregroundColor(AppStyle.Color.greenGlow)
+                .foregroundColor(.white)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier("id_label_exercise_name")
-            
-            Button {
-                isExpanded.toggle()
-            } label: {
-                HStack(spacing: 4) {
-                    Text("Completed workout")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.white.opacity(0.5))
-                    
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(AppStyle.Color.greenGlow.opacity(0.4))
-                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                .onTapGesture {
+                    if isEditable { onEdit(viewModel.exercise) }
                 }
+            
+            HStack(spacing: 4) {
+                Text("Completed workout")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.white.opacity(0.5))
+                
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.5))
+                    .rotationEffect(.degrees(isExpanded ? 180 : 0))
             }
-            .buttonStyle(.plain)
+            .contentShape(Rectangle())
+            .onTapGesture { isExpanded.toggle() }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .onTapGesture {
-            if isEditable { onEdit(viewModel.exercise) }
-        }
     }
     
     var checkmarkIcon: some View {
@@ -105,6 +105,7 @@ private extension InactiveCardView {
                 .font(.system(size: 16, weight: .black))
                 .foregroundColor(AppStyle.Color.exerciseCardBackground)
         }
+        .onTapGesture { isExpanded.toggle() }
     }
 }
 

@@ -63,14 +63,14 @@ struct IdleActiveCardView: View {
                             Button(action: { onStart(viewModel.exercise) }) {
                                 ZStack {
                                     Circle()
-                                        .fill(AppStyle.Color.green)
+                                        .fill(AppStyle.Color.greenGlow)
                                         .frame(width: 36, height: 36)
 
                                     Image(systemName: "play.fill")
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 16, height: 16)
-                                        .foregroundColor(.white)
+                                        .foregroundColor(AppStyle.Color.exerciseCardBackground)
                                         .offset(x: 2, y: 0)
                                 }
                             }

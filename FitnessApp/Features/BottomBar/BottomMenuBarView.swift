@@ -24,24 +24,21 @@ struct BottomMenuBarView: View {
 
     @State private var selectedTab: BottomTab = .home
 
-    private var capsuleHeight: CGFloat { max(48, barHeight * 1.6) }
-    private let sideMargin: CGFloat = AppStyle.Layout.cardHorizontalPadding // unify margins with other bars
+    private let capsuleHeight: CGFloat = 60
+    private let sideMargin: CGFloat = AppStyle.Layout.cardHorizontalPadding
     private var capsuleWidth: CGFloat {
         let defaultWidth = UIScreen.main.bounds.width - (2 * sideMargin)
         return max(240, defaultWidth - narrowBy)
     }
-    // Liquid Glass tuning
     private let barTintOpacity: Double = 0.02
-    // Selection pill sizing - matching Filter Toggle (3px padding all sides)
-    private var selectionHeight: CGFloat { capsuleHeight - 6 }
-    private var selectionBaseWidth: CGFloat { selectionHeight * 1.4 }
+    private var selectionHeight: CGFloat { capsuleHeight - 8 }
+    private var selectionBaseWidth: CGFloat { selectionHeight + 30 }
     private let selectionFill = Color.white.opacity(0.12)
     private let iconSize: CGFloat = 22
-    private let iconBoost: CGFloat = 10 // increase all icons uniformly by +10pt
-    // Position tweak: negative moves the bar closer to the device bottom edge
-    private let bottomOffset: CGFloat = -40
+    private let bottomOffset: CGFloat = -33
     private let calendarIconScale: CGFloat = 1.18
-    private let labelFontSize: CGFloat = 10 // iOS standard tab bar label size
+    private let labelFontSize: CGFloat = 10
+    private let circleButtonSize: CGFloat = 44
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -64,7 +61,7 @@ struct BottomMenuBarView: View {
                                             .glassEffect()
                                     } else {
                                         LiquidGlassBackground(
-                                            cornerRadius: 22,
+                                            cornerRadius: circleButtonSize / 2,
                                             material: .ultraThinMaterial,
                                             tintOpacity: 0.0,
                                             showsEdgeStroke: false,
@@ -83,14 +80,13 @@ struct BottomMenuBarView: View {
                                     .imageScale(.large)
                             }
                         }
-                        .frame(width: 44, height: 44)
+                        .frame(width: circleButtonSize, height: circleButtonSize)
                         .contentShape(Circle())
                         .buttonStyle(.plain)
                     } else {
-                        // Placeholder to keep bar and right action in identical horizontal positions
                         Circle()
                             .fill(Color.clear)
-                            .frame(width: 44, height: 44)
+                            .frame(width: circleButtonSize, height: circleButtonSize)
                             .allowsHitTesting(false)
                     }
                 }
@@ -167,7 +163,7 @@ struct BottomMenuBarView: View {
                                     .glassEffect()
                             } else {
                                 LiquidGlassBackground(
-                                    cornerRadius: 22,
+                                    cornerRadius: circleButtonSize / 2,
                                     material: .ultraThinMaterial,
                                     tintOpacity: 0.0,
                                     showsEdgeStroke: false,
@@ -185,7 +181,7 @@ struct BottomMenuBarView: View {
                             .foregroundColor(AppStyle.Color.white)
                             .imageScale(.medium)
                     }
-                    .frame(width: 44, height: 44)
+                    .frame(width: circleButtonSize, height: circleButtonSize)
                     .contentShape(Circle())
                 }
                 .buttonStyle(.plain)
@@ -210,7 +206,7 @@ struct BottomMenuBarView: View {
             Image(systemName: icon)
                 .resizable()
                 .scaledToFit()
-                    .frame(width: iconSize + iconBoost, height: iconSize + iconBoost)
+                .frame(width: iconSize, height: iconSize)
                 .foregroundColor(isSelected ? resolvedSelected : baseForeground)
                 .frame(maxWidth: .infinity, minHeight: capsuleHeight, maxHeight: capsuleHeight)
                 .padding(.horizontal, 6)
@@ -235,11 +231,9 @@ struct BottomMenuBarView: View {
         let isSelected = selectedTab == tab
         let baseForeground = AppStyle.Color.white.opacity(0.98)
         let selectedForeground = AppStyle.Color.white.opacity(0.98)
-        // Icon sizes with boost
-        let baseIconSize: CGFloat = iconSize + iconBoost
-        let targetSize = imageName == "menuCalenderIcon"
-            ? baseIconSize * calendarIconScale
-            : (imageName == "analyticsEntry" ? baseIconSize + 4 : baseIconSize)
+        let targetSize: CGFloat = imageName == "menuCalenderIcon"
+            ? iconSize * calendarIconScale
+            : (imageName == "analyticsEntry" ? iconSize + 4 : iconSize)
 
         Button(action: action) {
             VStack(spacing: 2) {
