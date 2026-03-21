@@ -17,8 +17,6 @@ struct FitnessAppApp: App {
     @State private var isShowingWorkoutsRoot: Bool = false
     @State private var didAutoNavigateToHome: Bool = false
     
-    private let backgroundColor = AppStyle.Color.backgroundColor
-
     var body: some Scene {
         WindowGroup {
             ZStack(alignment: .bottom) {
@@ -96,9 +94,6 @@ struct FitnessAppApp: App {
                 }()
 
                 BottomMenuBarView(
-                    barHeight: 40,
-                    onAddExercise: {},
-                    backgroundColor: backgroundColor,
                     navigationPath: $navigationPath,
                     showBackButton: showBack,
                     narrowBy: 90,

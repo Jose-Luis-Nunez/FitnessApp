@@ -10,15 +10,12 @@ enum BottomBarRightActionStyle {
 }
 
 struct BottomMenuBarView: View {
-    let barHeight: CGFloat
-    let onAddExercise: () -> Void
-    let backgroundColor: Color
     @Binding var navigationPath: NavigationPath
     var showBackButton: Bool = true
-    var narrowBy: CGFloat = 50 // reduce overall bar width by this many points (made 10pt narrower)
+    var narrowBy: CGFloat = 50
     var rightActionStyle: BottomBarRightActionStyle = .reset
     var onRightAction: () -> Void = {}
-    var customBackAction: (() -> Void)? = nil // Custom back action for special cases
+    var customBackAction: (() -> Void)? = nil
 
     @EnvironmentObject private var overlayState: UIOverlayState
 
@@ -30,11 +27,12 @@ struct BottomMenuBarView: View {
         let defaultWidth = UIScreen.main.bounds.width - (2 * sideMargin)
         return max(240, defaultWidth - narrowBy)
     }
-    private let barTintOpacity: Double = 0.02
     private var selectionHeight: CGFloat { capsuleHeight - 8 }
     private var selectionBaseWidth: CGFloat { selectionHeight + 30 }
-    private let selectionFill = Color.white.opacity(0.12)
-    private let iconSize: CGFloat = 22
+    private let selectionMaterial: Material = .ultraThinMaterial
+    private let tabForeground = AppStyle.Color.white.opacity(0.98)
+    private let tabSelectedForeground = AppStyle.Color.greenGlow
+    private let iconSize: CGFloat = 34
     private let bottomOffset: CGFloat = -33
     private let calendarIconScale: CGFloat = 1.18
     private let labelFontSize: CGFloat = 10
@@ -196,41 +194,8 @@ struct BottomMenuBarView: View {
     }
 
     @ViewBuilder
-    private func menuItem(icon: String, tab: BottomTab, selectedColorOverride: Color? = nil, action: @escaping () -> Void) -> some View {
-        let isSelected = selectedTab == tab
-        let baseForeground = AppStyle.Color.white.opacity(0.98)
-        let selectedForeground = AppStyle.Color.white.opacity(0.98)
-        let resolvedSelected = selectedColorOverride ?? selectedForeground
-
-        Button(action: action) {
-            Image(systemName: icon)
-                .resizable()
-                .scaledToFit()
-                .frame(width: iconSize, height: iconSize)
-                .foregroundColor(isSelected ? resolvedSelected : baseForeground)
-                .frame(maxWidth: .infinity, minHeight: capsuleHeight, maxHeight: capsuleHeight)
-                .padding(.horizontal, 6)
-                .background(alignment: .center) {
-                    if isSelected {
-                        RoundedRectangle(cornerRadius: selectionHeight / 2, style: .continuous)
-                            .fill(selectionFill)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: selectionHeight / 2, style: .continuous)
-                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
-                            )
-                            .frame(width: selectionBaseWidth, height: selectionHeight)
-                    }
-                }
-        }
-        .buttonStyle(PlainButtonStyle())
-        .contentShape(Rectangle())
-    }
-
-    @ViewBuilder
     private func menuItemImage(imageName: String, label: String, tab: BottomTab, action: @escaping () -> Void) -> some View {
         let isSelected = selectedTab == tab
-        let baseForeground = AppStyle.Color.white.opacity(0.98)
-        let selectedForeground = AppStyle.Color.white.opacity(0.98)
         let targetSize: CGFloat = imageName == "menuCalenderIcon"
             ? iconSize * calendarIconScale
             : (imageName == "analyticsEntry" ? iconSize + 4 : iconSize)
@@ -242,11 +207,11 @@ struct BottomMenuBarView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: targetSize, height: targetSize)
-                    .foregroundColor(isSelected ? selectedForeground : baseForeground)
+                    .foregroundColor(isSelected ? tabSelectedForeground : tabForeground)
                 
                 Text(label)
                     .font(.system(size: labelFontSize, weight: .medium))
-                    .foregroundColor(isSelected ? selectedForeground : baseForeground)
+                    .foregroundColor(isSelected ? tabSelectedForeground : tabForeground)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
@@ -255,7 +220,7 @@ struct BottomMenuBarView: View {
             .background(alignment: .center) {
                 if isSelected {
                     RoundedRectangle(cornerRadius: selectionHeight / 2, style: .continuous)
-                        .fill(selectionFill)
+                        .fill(selectionMaterial)
                         .overlay(
                             RoundedRectangle(cornerRadius: selectionHeight / 2, style: .continuous)
                                 .stroke(Color.white.opacity(0.10), lineWidth: 1)
