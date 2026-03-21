@@ -20,6 +20,9 @@ struct BottomMenuBarView: View {
     @EnvironmentObject private var overlayState: UIOverlayState
 
     @State private var selectedTab: BottomTab = .home
+    @State private var pillBounce: Bool = false
+    @State private var bounceTab: BottomTab? = nil
+    @Namespace private var tabNamespace
 
     private let capsuleHeight: CGFloat = 60
     private let sideMargin: CGFloat = AppStyle.Layout.cardHorizontalPadding
@@ -28,10 +31,8 @@ struct BottomMenuBarView: View {
         return max(240, defaultWidth - narrowBy)
     }
     private var selectionHeight: CGFloat { capsuleHeight - 8 }
-    private var selectionBaseWidth: CGFloat { selectionHeight + 30 }
-    private let selectionMaterial: Material = .ultraThinMaterial
     private let tabForeground = AppStyle.Color.white.opacity(0.98)
-    private let tabSelectedForeground = AppStyle.Color.greenGlow
+    private let tabSelectedForeground = AppStyle.Color.green
     private let iconSize: CGFloat = 34
     private let bottomOffset: CGFloat = -33
     private let calendarIconScale: CGFloat = 1.18
@@ -97,19 +98,19 @@ struct BottomMenuBarView: View {
     private var tabBar: some View {
         HStack(spacing: 0) {
             menuItemImage(imageName: "homeIcon", label: "Workout", tab: .home) {
-                selectedTab = .home
+                selectTab(.home)
                 navigationPath = NavigationPath()
             }
             menuItemImage(imageName: "analyticsEntry", label: "Analytics", tab: .chart) {
-                selectedTab = .chart
+                selectTab(.chart)
                 navigationPath = NavigationPath()
                 navigationPath.append(NavigationDestination.totalAnalytics)
             }
             menuItemImage(imageName: "menuCalenderIcon", label: "Schedule", tab: .calendar) {
-                selectedTab = .calendar
+                selectTab(.calendar)
             }
             menuItemImage(imageName: "profileMenuIcon", label: "Profile", tab: .profile) {
-                selectedTab = .profile
+                selectTab(.profile)
                 navigationPath = NavigationPath()
                 navigationPath.append(NavigationDestination.profile)
             }
@@ -160,6 +161,19 @@ struct BottomMenuBarView: View {
         .buttonStyle(.plain)
     }
 
+    private func selectTab(_ tab: BottomTab) {
+        guard tab != selectedTab else { return }
+        withAnimation(.smooth) { selectedTab = tab }
+        withAnimation(.spring(response: 0.25, dampingFraction: 0.4)) { pillBounce = true }
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) { bounceTab = tab }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) { pillBounce = false }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) { bounceTab = nil }
+        }
+    }
+
     // MARK: - Tab Item
 
     @ViewBuilder
@@ -177,6 +191,7 @@ struct BottomMenuBarView: View {
                     .scaledToFit()
                     .frame(width: targetSize, height: targetSize)
                     .foregroundColor(isSelected ? tabSelectedForeground : tabForeground)
+                    .scaleEffect(bounceTab == tab ? 1.3 : (isSelected ? 1.15 : 1.0))
 
                 Text(label)
                     .font(.system(size: labelFontSize, weight: .medium))
@@ -188,13 +203,11 @@ struct BottomMenuBarView: View {
             .padding(.horizontal, 6)
             .background {
                 if isSelected {
-                    RoundedRectangle(cornerRadius: selectionHeight / 2, style: .continuous)
-                        .fill(selectionMaterial)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: selectionHeight / 2, style: .continuous)
-                                .stroke(Color.white.opacity(0.10), lineWidth: 1)
-                        )
+                    Capsule()
+                        .fill(Color.white.opacity(0.15))
                         .frame(height: selectionHeight)
+                        .scaleEffect(y: pillBounce ? 1.4 : 1.0)
+                        .matchedGeometryEffect(id: "selectedTab", in: tabNamespace)
                 }
             }
         }
