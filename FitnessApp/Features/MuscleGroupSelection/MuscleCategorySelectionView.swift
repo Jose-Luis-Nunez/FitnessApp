@@ -51,6 +51,9 @@ struct MuscleCategorySelectionView: View {
     @Binding var navigationPath: NavigationPath
     @EnvironmentObject private var overlayState: UIOverlayState
     @State private var currentViewMode: ViewMode = .overview
+    @State private var filterPillBounce: Bool = false
+    @State private var filterBounceMode: ViewMode? = nil
+    @Namespace private var filterNamespace
     @State private var isShowingExercisePicker = false
     @State private var editingExercise: Exercise?
     @State private var editingCategory: MuscleCategoryGroup?
@@ -396,6 +399,19 @@ struct MuscleCategorySelectionView: View {
         ]
     }
     
+    private func selectViewMode(_ mode: ViewMode) {
+        guard mode != currentViewMode else { return }
+        withAnimation(.smooth) { currentViewMode = mode }
+        withAnimation(.spring(response: 0.25, dampingFraction: 0.4)) { filterPillBounce = true }
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) { filterBounceMode = mode }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) { filterPillBounce = false }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) { filterBounceMode = nil }
+        }
+    }
+
     private func openExercisePickerForCategory(_ category: MuscleCategoryGroup) {
         editingCategory = category
         editingExercise = nil
@@ -440,40 +456,38 @@ struct MuscleCategorySelectionView: View {
     
     private var filterToggleView: some View {
         HStack(spacing: 0) {
-            Button(action: {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    currentViewMode = .overview
-                }
-            }) {
+            Button(action: { selectViewMode(.overview) }) {
                 Image("filterIconBody")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: filterIconSize, height: filterIconSize)
                     .foregroundColor(currentViewMode == .overview ? AppStyle.Color.greenGlow : .white)
+                    .scaleEffect(filterBounceMode == .overview ? 1.3 : (currentViewMode == .overview ? 1.15 : 1.0))
                     .frame(width: filterSelectionWidth, height: filterSelectionHeight)
                     .background {
                         if currentViewMode == .overview {
-                            RoundedRectangle(cornerRadius: filterSelectionHeight / 2, style: .continuous)
-                                .fill(.ultraThinMaterial)
+                            Capsule()
+                                .fill(Color.white.opacity(0.15))
+                                .scaleEffect(y: filterPillBounce ? 1.4 : 1.0)
+                                .matchedGeometryEffect(id: "filterSelection", in: filterNamespace)
                         }
                     }
             }
             .buttonStyle(.plain)
             
-            Button(action: {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    currentViewMode = .list
-                }
-            }) {
+            Button(action: { selectViewMode(.list) }) {
                 Image(systemName: "list.bullet")
                     .font(.system(size: filterIconSize - 4, weight: .medium))
                     .foregroundColor(currentViewMode == .list ? AppStyle.Color.greenGlow : .white)
+                    .scaleEffect(filterBounceMode == .list ? 1.3 : (currentViewMode == .list ? 1.15 : 1.0))
                     .frame(width: filterSelectionWidth, height: filterSelectionHeight)
                     .background {
                         if currentViewMode == .list {
-                            RoundedRectangle(cornerRadius: filterSelectionHeight / 2, style: .continuous)
-                                .fill(.ultraThinMaterial)
+                            Capsule()
+                                .fill(Color.white.opacity(0.15))
+                                .scaleEffect(y: filterPillBounce ? 1.4 : 1.0)
+                                .matchedGeometryEffect(id: "filterSelection", in: filterNamespace)
                         }
                     }
             }
@@ -489,12 +503,7 @@ struct MuscleCategorySelectionView: View {
                 } else {
                     LiquidGlassBackground(
                         cornerRadius: filterBarHeight / 2,
-                        material: .ultraThinMaterial,
-                        tintOpacity: 0.0,
-                        showsEdgeStroke: false,
-                        showsCaustic: false,
-                        shadowOpacity: 0.20,
-                        lightnessBoostOpacity: 0.12
+                        material: .ultraThinMaterial
                     )
                 }
             }
