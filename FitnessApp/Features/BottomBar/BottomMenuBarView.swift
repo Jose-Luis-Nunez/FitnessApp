@@ -32,7 +32,7 @@ struct BottomMenuBarView: View {
     }
     private var selectionHeight: CGFloat { capsuleHeight - 8 }
     private let tabForeground = AppStyle.Color.white.opacity(0.98)
-    private let tabSelectedForeground = AppStyle.Color.green
+    private let tabSelectedForeground = AppStyle.Color.greenGlow
     private let iconSize: CGFloat = 34
     private let bottomOffset: CGFloat = -33
     private let calendarIconScale: CGFloat = 1.18

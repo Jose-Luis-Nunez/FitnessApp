@@ -61,7 +61,7 @@ enum AppStyle {
         
         static let green = SwiftUI.Color(hex: "#088177")
         static let greenLight = SwiftUI.Color(hex: "#7EBBAF")
-        static let greenGlow = SwiftUI.Color(hex: "#7CF5D6")
+        static let greenGlow = SwiftUI.Color(hex: "#3CC8A6")
         
         static let newColor = SwiftUI.Color(hex: "#081214")
     }
