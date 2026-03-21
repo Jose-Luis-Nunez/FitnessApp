@@ -96,7 +96,7 @@ struct FitnessAppApp: App {
                 BottomMenuBarView(
                     navigationPath: $navigationPath,
                     showBackButton: showBack,
-                    narrowBy: 90,
+                    narrowBy: 50,
                     rightActionStyle: rightStyle,
                     onRightAction: {
                         switch overlayState.currentScene {

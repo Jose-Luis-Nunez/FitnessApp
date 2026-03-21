@@ -40,158 +40,127 @@ struct BottomMenuBarView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            HStack(spacing: 6) {
-                let shouldShowBackButton = showBackButton && !navigationPath.isEmpty
-                Group {
-                    if shouldShowBackButton {
-                        Button(action: {
-                            if let customAction = customBackAction {
-                                customAction()
-                            } else {
-                                navigationPath.removeLast()
-                            }
-                        }) {
-                            ZStack {
-                                Group {
-                                    if #available(iOS 26.0, *) {
-                                        Circle()
-                                            .fill(Color.clear)
-                                            .glassEffect()
-                                    } else {
-                                        LiquidGlassBackground(
-                                            cornerRadius: circleButtonSize / 2,
-                                            material: .ultraThinMaterial,
-                                            tintOpacity: 0.0,
-                                            showsEdgeStroke: false,
-                                            showsCaustic: false,
-                                            shadowOpacity: 0.20,
-                                            lightnessBoostOpacity: 0.12
-                                        )
-                                        .clipShape(Circle())
-                                    }
-                                }
-                                .overlay(
-                                    Circle().stroke(AppStyle.Color.white.opacity(0.10), lineWidth: 1)
-                                )
-                                Image(systemName: "chevron.left")
-                                    .foregroundColor(AppStyle.Color.white)
-                                    .imageScale(.large)
-                            }
-                        }
-                        .frame(width: circleButtonSize, height: circleButtonSize)
-                        .contentShape(Circle())
-                        .buttonStyle(.plain)
-                    } else {
-                        Circle()
-                            .fill(Color.clear)
-                            .frame(width: circleButtonSize, height: circleButtonSize)
-                            .allowsHitTesting(false)
-                    }
-                }
-
-                // Glass bar
-                ZStack {
-                    // Backdrop behind the glass for refraction
-                    BackdropHints(barWidth: capsuleWidth, barHeight: capsuleHeight)
-                        .frame(width: capsuleWidth, height: capsuleHeight)
-                        .clipShape(RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous))
-                        .opacity(0.65)
-
-                    // Native glass on iOS 18+, fallback to custom glass otherwise
-                    Group {
-                        if #available(iOS 26.0, *) {
-                            RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous)
-                                .fill(Color.clear)
-                                .frame(width: capsuleWidth, height: capsuleHeight)
-                                .glassEffect()
-                        } else {
-                            LiquidGlassBackground(
-                                cornerRadius: capsuleHeight / 2,
-                                material: .ultraThinMaterial,
-                                tintOpacity: 0.0,
-                                showsEdgeStroke: false,
-                                showsCaustic: false,
-                                shadowOpacity: 0.20,
-                                lightnessBoostOpacity: 0.12
-                            )
-                            .frame(width: capsuleWidth, height: capsuleHeight)
-                        }
-                    }
-
-                    HStack(spacing: 12) {
-                        // Home uses custom asset and is always white
-                        menuItemImage(imageName: "homeIcon", label: "Workout", tab: .home) {
-                            selectedTab = .home
-                            // Reset to root (Workouts) without pushing a destination,
-                            // so the back button stays hidden on the root screen
-                            navigationPath = NavigationPath()
-                        }
-
-                        // Analytics uses custom asset
-                        menuItemImage(imageName: "analyticsEntry", label: "Analytics", tab: .chart) {
-                            selectedTab = .chart
-                            navigationPath = NavigationPath()
-                            navigationPath.append(NavigationDestination.totalAnalytics)
-                        }
-
-                        menuItemImage(imageName: "menuCalenderIcon", label: "Schedule", tab: .calendar) {
-                            selectedTab = .calendar
-                        }
-
-                        menuItemImage(imageName: "profileMenuIcon", label: "Profile", tab: .profile) {
-                            selectedTab = .profile
-                            navigationPath = NavigationPath()
-                            navigationPath.append(NavigationDestination.profile)
-                        }
-                    }
-                    .frame(width: capsuleWidth - 2 * AppStyle.Layout.cardHorizontalPadding)
-                }
-                .clipShape(RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous))
-                
-                // Right circular action for context dependent actions
-                Button(action: {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    onRightAction()
-                }) {
-                    ZStack {
-                        Group {
-                            if #available(iOS 26.0, *) {
-                                Circle()
-                                    .fill(Color.clear)
-                                    .glassEffect()
-                            } else {
-                                LiquidGlassBackground(
-                                    cornerRadius: circleButtonSize / 2,
-                                    material: .ultraThinMaterial,
-                                    tintOpacity: 0.0,
-                                    showsEdgeStroke: false,
-                                    showsCaustic: false,
-                                    shadowOpacity: 0.20,
-                                    lightnessBoostOpacity: 0.12
-                                )
-                                .clipShape(Circle())
-                            }
-                        }
-                        .overlay(
-                            Circle().stroke(AppStyle.Color.white.opacity(0.10), lineWidth: 1)
-                        )
-                        Image(systemName: rightActionStyle == .reset ? "arrow.counterclockwise" : "ellipsis")
-                            .foregroundColor(AppStyle.Color.white)
-                            .imageScale(.medium)
-                    }
-                    .frame(width: circleButtonSize, height: circleButtonSize)
-                    .contentShape(Circle())
-                }
-                .buttonStyle(.plain)
+            if #available(iOS 26.0, *) {
+                glassBody
+            } else {
+                fallbackBody
             }
-            // Zusätzlicher seitlicher Abstand, damit runde Buttons nicht am Rand schneiden
-            .padding(.horizontal, 8)
-            // Position näher am unteren Rand
-            .padding(.bottom, bottomOffset)
         }
-        // Nur so hoch wie die Kapsel – kein abgetrennter Hintergrundbereich
         .frame(height: capsuleHeight + 6)
     }
+
+    // MARK: - iOS 26+ (Native Liquid Glass)
+
+    @available(iOS 26.0, *)
+    private var glassBody: some View {
+        GlassEffectContainer(spacing: 6) {
+            HStack(spacing: 6) {
+                backButton
+
+                tabBar
+                    .frame(height: capsuleHeight)
+                    .clipShape(Capsule())
+                    .glassEffect(.regular, in: .capsule)
+
+                rightActionButton
+            }
+            .padding(.horizontal, 8)
+            .padding(.bottom, bottomOffset)
+        }
+    }
+
+    // MARK: - Pre-iOS 26 Fallback
+
+    private var fallbackBody: some View {
+        HStack(spacing: 6) {
+            backButton
+
+            ZStack {
+                LiquidGlassBackground(
+                    cornerRadius: capsuleHeight / 2,
+                    material: .ultraThinMaterial
+                )
+                .frame(width: capsuleWidth, height: capsuleHeight)
+
+                tabBar
+            }
+            .clipShape(RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous))
+
+            rightActionButton
+        }
+        .padding(.horizontal, 8)
+        .padding(.bottom, bottomOffset)
+    }
+
+    // MARK: - Shared Components
+
+    private var tabBar: some View {
+        HStack(spacing: 0) {
+            menuItemImage(imageName: "homeIcon", label: "Workout", tab: .home) {
+                selectedTab = .home
+                navigationPath = NavigationPath()
+            }
+            menuItemImage(imageName: "analyticsEntry", label: "Analytics", tab: .chart) {
+                selectedTab = .chart
+                navigationPath = NavigationPath()
+                navigationPath.append(NavigationDestination.totalAnalytics)
+            }
+            menuItemImage(imageName: "menuCalenderIcon", label: "Schedule", tab: .calendar) {
+                selectedTab = .calendar
+            }
+            menuItemImage(imageName: "profileMenuIcon", label: "Profile", tab: .profile) {
+                selectedTab = .profile
+                navigationPath = NavigationPath()
+                navigationPath.append(NavigationDestination.profile)
+            }
+        }
+        .padding(.horizontal, 4)
+        .frame(width: capsuleWidth - 2 * AppStyle.Layout.cardHorizontalPadding)
+    }
+
+    @ViewBuilder
+    private var backButton: some View {
+        let shouldShow = showBackButton && !navigationPath.isEmpty
+        if shouldShow {
+            Button(action: {
+                if let customAction = customBackAction {
+                    customAction()
+                } else {
+                    navigationPath.removeLast()
+                }
+            }) {
+                Image(systemName: "chevron.left")
+                    .foregroundColor(AppStyle.Color.white)
+                    .imageScale(.large)
+                    .frame(width: circleButtonSize, height: circleButtonSize)
+                    .circleGlass(size: circleButtonSize)
+            }
+            .contentShape(Circle())
+            .buttonStyle(.plain)
+        } else {
+            Circle()
+                .fill(Color.clear)
+                .frame(width: circleButtonSize, height: circleButtonSize)
+                .allowsHitTesting(false)
+        }
+    }
+
+    private var rightActionButton: some View {
+        Button(action: {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            onRightAction()
+        }) {
+            Image(systemName: rightActionStyle == .reset ? "arrow.counterclockwise" : "ellipsis")
+                .foregroundColor(AppStyle.Color.white)
+                .imageScale(.medium)
+                .frame(width: circleButtonSize, height: circleButtonSize)
+                .circleGlass(size: circleButtonSize)
+        }
+        .contentShape(Circle())
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Tab Item
 
     @ViewBuilder
     private func menuItemImage(imageName: String, label: String, tab: BottomTab, action: @escaping () -> Void) -> some View {
@@ -201,14 +170,14 @@ struct BottomMenuBarView: View {
             : (imageName == "analyticsEntry" ? iconSize + 4 : iconSize)
 
         Button(action: action) {
-            VStack(spacing: 2) {
+            VStack(spacing: -2) {
                 Image(imageName)
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: targetSize, height: targetSize)
                     .foregroundColor(isSelected ? tabSelectedForeground : tabForeground)
-                
+
                 Text(label)
                     .font(.system(size: labelFontSize, weight: .medium))
                     .foregroundColor(isSelected ? tabSelectedForeground : tabForeground)
@@ -216,8 +185,8 @@ struct BottomMenuBarView: View {
                     .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity, minHeight: capsuleHeight, maxHeight: capsuleHeight)
-            .padding(.horizontal, 2)
-            .background(alignment: .center) {
+            .padding(.horizontal, 6)
+            .background {
                 if isSelected {
                     RoundedRectangle(cornerRadius: selectionHeight / 2, style: .continuous)
                         .fill(selectionMaterial)
@@ -225,7 +194,7 @@ struct BottomMenuBarView: View {
                             RoundedRectangle(cornerRadius: selectionHeight / 2, style: .continuous)
                                 .stroke(Color.white.opacity(0.10), lineWidth: 1)
                         )
-                        .frame(width: selectionBaseWidth + 6, height: selectionHeight)
+                        .frame(height: selectionHeight)
                 }
             }
         }
@@ -234,3 +203,21 @@ struct BottomMenuBarView: View {
     }
 }
 
+// MARK: - Circle Glass Modifier
+
+private extension View {
+    @ViewBuilder
+    func circleGlass(size: CGFloat) -> some View {
+        if #available(iOS 26.0, *) {
+            self.glassEffect(.regular, in: .circle)
+        } else {
+            self.background {
+                LiquidGlassBackground(
+                    cornerRadius: size / 2,
+                    material: .ultraThinMaterial
+                )
+                .clipShape(Circle())
+            }
+        }
+    }
+}
