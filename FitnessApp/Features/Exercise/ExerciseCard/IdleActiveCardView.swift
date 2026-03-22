@@ -29,17 +29,16 @@ struct IdleActiveCardView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
             .background(alignment: .leading) {
-                Group {
-                    if #available(iOS 26.0, *) {
-                        Rectangle()
-                            .fill(Color(hex: "#27262a"))
-                            .frame(width: 66)
-                            .glassEffect(in: .rect)
-                    } else {
-                        Color(hex: "#27262a")
-                            .frame(width: 66)
-                    }
-                }
+                Color(hex: "#27262a")
+                    .frame(width: 66)
+                    .clipShape(UnevenRoundedRectangle(
+                        topLeadingRadius: AppStyle.CornerRadius.card,
+                        bottomLeadingRadius: AppStyle.CornerRadius.card
+                    ))
+                    .glassEffect(in: .rect(cornerRadii: .init(
+                        topLeading: AppStyle.CornerRadius.card,
+                        bottomLeading: AppStyle.CornerRadius.card
+                    )))
             }
             .sheet(isPresented: $isShowingAnalytics) {
                 AnalyticsView(exercise: viewModel.exercise, viewModel: analyticsViewModel)
@@ -69,30 +68,30 @@ struct IdleActiveCardView: View {
                     if isEditable { onEdit(viewModel.exercise) }
                 }
 
-            HStack(spacing: 10) {
+            HStack(spacing: 6) {
                 Text(formattedWeight)
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundColor(.white.opacity(0.7))
 
                 Text("·")
-                    .font(.system(size: 14))
+                    .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.5))
 
                 Image("chairSettings")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 30, height: 30)
+                    .frame(width: 22, height: 22)
                     .foregroundColor(.white.opacity(0.7))
 
                 if let seatSetting = viewModel.exercise.seatSetting {
                     Text(seatSetting)
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 12, weight: .bold))
                         .foregroundColor(.white.opacity(0.7))
                 }
 
                 Text("·")
-                    .font(.system(size: 14))
+                    .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.5))
 
                 Button(action: { isShowingAnalytics = true }) {
@@ -100,11 +99,12 @@ struct IdleActiveCardView: View {
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 35, height: 35)
+                        .frame(width: 22, height: 22)
                         .foregroundColor(.white.opacity(0.7))
                 }
                 .buttonStyle(.plain)
             }
+            .frame(height: 22)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
