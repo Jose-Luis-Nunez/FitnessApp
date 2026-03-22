@@ -32,8 +32,7 @@ struct InactiveCardView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
             .background(alignment: .leading) {
-                Rectangle()
-                    .fill(AppStyle.Color.green)
+                AppStyle.Color.greenGlow
                     .frame(width: 8)
             }
         }
@@ -82,11 +81,11 @@ private extension InactiveCardView {
             HStack(spacing: 4) {
                 Text("Completed workout")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundColor(.white.opacity(0.7))
                 
                 Image(systemName: "chevron.down")
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundColor(.white.opacity(0.7))
                     .rotationEffect(.degrees(isExpanded ? 180 : 0))
             }
             .contentShape(Rectangle())
