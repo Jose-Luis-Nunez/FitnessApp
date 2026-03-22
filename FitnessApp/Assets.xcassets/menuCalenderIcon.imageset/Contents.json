@@ -1,15 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "ChatGPT Image 20. März 2026, 23_42_03.png",
+      "filename" : "menuCalenderIcon@1x.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
+      "filename" : "menuCalenderIcon@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
+      "filename" : "ChatGPT Image 20. März 2026, 23_42_03.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
