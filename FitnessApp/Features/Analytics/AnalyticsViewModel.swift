@@ -347,4 +347,89 @@ extension AnalyticsViewModel {
             self.objectWillChange.send()
         }
     }
+    
+    func lastTrainingDate(for exerciseId: UUID) -> Date? {
+        loadAnalytics(for: exerciseId)
+            .max(by: { $0.date < $1.date })?
+            .date
+    }
+    
+    func weightPhases(for exerciseId: UUID, limit: Int = 3) -> [WeightPhase] {
+        let calendar = Calendar.current
+        let entries = loadAnalytics(for: exerciseId).sorted(by: { $0.date < $1.date })
+        guard !entries.isEmpty else { return [] }
+        
+        struct DaySession {
+            let date: Date
+            let weight: Double
+            let setsReps: String
+            let totalReps: Int
+        }
+        
+        let grouped = Dictionary(grouping: entries, by: { calendar.startOfDay(for: $0.date) })
+        let daySessions: [DaySession] = grouped.compactMap { (day, dayEntries) in
+            let allSets = dayEntries.flatMap { $0.setProgress }
+            guard !allSets.isEmpty else { return nil }
+            let maxWeight = allSets.map(\.weight).max() ?? 0
+            let setsAtWeight = allSets.filter { $0.weight == maxWeight }
+            let totalReps = setsAtWeight.reduce(0) { $0 + $1.currentReps }
+            let setsReps = "\(setsAtWeight.count)×\(setsAtWeight.first?.currentReps ?? 0)"
+            return DaySession(date: day, weight: maxWeight, setsReps: setsReps, totalReps: totalReps)
+        }
+        .sorted(by: { $0.date < $1.date })
+        
+        guard !daySessions.isEmpty else { return [] }
+        
+        struct RawPhase {
+            let weight: Double
+            let sessionCount: Int
+            let start: DaySession
+            let end: DaySession
+        }
+        
+        var rawPhases: [RawPhase] = []
+        var phaseStart = daySessions[0]
+        var phaseEnd = daySessions[0]
+        var sessionCount = 1
+        
+        for i in 1..<daySessions.count {
+            let current = daySessions[i]
+            if current.weight == phaseStart.weight {
+                phaseEnd = current
+                sessionCount += 1
+            } else {
+                rawPhases.append(RawPhase(weight: phaseStart.weight, sessionCount: sessionCount, start: phaseStart, end: phaseEnd))
+                phaseStart = current
+                phaseEnd = current
+                sessionCount = 1
+            }
+        }
+        rawPhases.append(RawPhase(weight: phaseStart.weight, sessionCount: sessionCount, start: phaseStart, end: phaseEnd))
+        
+        let phasesToReturn = Array(rawPhases.suffix(limit))
+        var result: [WeightPhase] = []
+        
+        for (index, raw) in phasesToReturn.enumerated() {
+            let days: Int
+            let globalIndex = rawPhases.count - phasesToReturn.count + index
+            if globalIndex + 1 < rawPhases.count {
+                days = calendar.dateComponents([.day], from: raw.start.date, to: rawPhases[globalIndex + 1].start.date).day ?? 0
+            } else {
+                days = calendar.dateComponents([.day], from: raw.start.date, to: raw.end.date).day ?? 0
+            }
+            
+            result.append(WeightPhase(
+                weight: raw.weight,
+                sessionCount: raw.sessionCount,
+                durationDays: max(days, 1),
+                startSetsReps: raw.start.setsReps,
+                startDate: raw.start.date,
+                endSetsReps: raw.end.setsReps,
+                endDate: raw.end.date,
+                hasImproved: raw.end.totalReps > raw.start.totalReps
+            ))
+        }
+        
+        return result
+    }
 }
