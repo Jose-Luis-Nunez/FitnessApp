@@ -103,20 +103,16 @@ private extension IdleActiveCardView {
                     if isEditable { onEdit(viewModel.exercise, .name) }
                 }
 
-            HStack(spacing: 8) {
+            HStack(spacing: 0) {
                 Text(formattedWeight)
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(.white.opacity(0.7))
                     .fixedSize()
+                    .padding(.trailing, 20)
                     .contentShape(Rectangle())
                     .onTapGesture {
                         if isEditable { onEdit(viewModel.exercise, .weight) }
                     }
-
-                Text("·")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.5))
-                    .fixedSize()
 
                 HStack(spacing: 4) {
                     Image("chairSettings")
@@ -134,15 +130,11 @@ private extension IdleActiveCardView {
                             .fixedSize()
                     }
                 }
+                .padding(.trailing, 20)
                 .contentShape(Rectangle())
                 .onTapGesture {
                     if isEditable { onEdit(viewModel.exercise, .seat) }
                 }
-
-                Text("·")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.5))
-                    .fixedSize()
 
                 Button(action: { isShowingAnalytics = true }) {
                     Image("analyticsEntry")
@@ -153,13 +145,9 @@ private extension IdleActiveCardView {
                         .foregroundColor(.white.opacity(0.7))
                 }
                 .buttonStyle(.plain)
+                .padding(.trailing, 20)
 
                 if !weightPhases.isEmpty {
-                    Text("·")
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.5))
-                        .fixedSize()
-
                     Image(systemName: "chevron.down")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.white.opacity(0.7))
