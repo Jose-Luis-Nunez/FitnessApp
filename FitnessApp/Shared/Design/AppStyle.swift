@@ -28,7 +28,7 @@ enum AppStyle {
         static let bottomBarButtons = SwiftUI.Font.system(size: 16, weight: .semibold)
         static let smallFont = SwiftUI.Font.system(size: 5, weight: .semibold)
         
-        static let analyticsExerciseTitle = SwiftUI.Font.system(size: 20, weight: .bold)
+        static let analyticsExerciseTitle = SwiftUI.Font.system(size: 20, weight: .semibold)
         static let doneButton = SwiftUI.Font.system(size: 16, weight: .bold)
         static let analyticsExerciseData = SwiftUI.Font.system(size: 16, weight: .semibold)
         

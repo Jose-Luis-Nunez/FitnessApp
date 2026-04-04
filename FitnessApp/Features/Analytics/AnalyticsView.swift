@@ -11,7 +11,6 @@ struct AnalyticsView: View {
     @State private var exercise: Exercise
     @ObservedObject var viewModel: AnalyticsViewModel
     private let initialReps: Int
-    @Environment(\.dismiss) private var dismiss
     @State private var selectedDate: Date = Date()
     @State private var originalDate: Date = Date()
     @State private var tempDate: Date = Date()
@@ -64,45 +63,6 @@ struct AnalyticsView: View {
     private func mainContent(geometry: GeometryProxy) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                // Top bar with close button and drag indicator
-                ZStack {
-                    // Drag indicator - centered on screen
-                    HStack {
-                        Spacer()
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(AppStyle.Color.gray.opacity(0.4))
-                            .frame(width: 36, height: 5)
-                        Spacer()
-                    }
-                    
-                    // Close button - positioned on left
-                    HStack {
-                        Button(action: {
-                            dismiss()
-                        }) {
-                            ZStack {
-                                Circle()
-                                    .fill(AppStyle.Color.gray.opacity(0.15))
-                                    .frame(width: 32, height: 32)
-                                    .overlay(
-                                        Circle()
-                                            .stroke(AppStyle.Color.gray.opacity(0.3), lineWidth: 1)
-                                    )
-                                
-                                Image(systemName: "xmark")
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(AppStyle.Color.white)
-                            }
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        
-                        Spacer()
-                    }
-                }
-                .padding(.top, 16)
-                .padding(.leading, 16)
-                .padding(.trailing, AppStyle.Padding.horizontal)
-                
                 headerView
                 
                 // Progress Chart - always shown
@@ -126,17 +86,7 @@ struct AnalyticsView: View {
             }
         }
         .background(AppStyle.Color.backgroundColor)
-        .standardToolbar(title: "Analytics")
-        .gesture(
-            DragGesture()
-                .onEnded { value in
-                    // Swipe down to close (drag distance > 100 and mostly downward)
-                    if value.translation.height > 100 && abs(value.translation.width) < abs(value.translation.height) {
-                        // This would typically dismiss the view - depends on how it's presented
-                        // For now, we'll just add the visual indicator
-                    }
-                }
-        )
+        .presentationDragIndicator(.visible)
         .onAppear {
             originalDate = selectedDate
             datesWithData = viewModel.allDatesWithData(for: exercise.id)
@@ -161,16 +111,40 @@ struct AnalyticsView: View {
     }
     
     private var hillChartView: some View {
-        GeometryReader { geometry in
-            ZStack {
-                hillShapeView(geometry: geometry)
-                hillOutlineView(geometry: geometry)
-                milestonesView(geometry: geometry)
+        VStack(spacing: 0) {
+            HStack {
+                Text("KG")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(.white.opacity(0.5))
+                Spacer()
+            }
+            GeometryReader { geometry in
+                ZStack {
+                    chartGridLines(geometry: geometry)
+                    hillShapeView(geometry: geometry)
+                    hillOutlineView(geometry: geometry)
+                    milestonesView(geometry: geometry)
+                }
+            }
+            .frame(height: 90)
+            HStack {
+                Spacer()
+                Text("Date")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(.white.opacity(0.5))
             }
         }
-        .frame(height: 90)
     }
     
+    private func chartGridLines(geometry: GeometryProxy) -> some View {
+        let midY = geometry.size.height / 2
+        return Path { path in
+            path.move(to: CGPoint(x: 0, y: midY))
+            path.addLine(to: CGPoint(x: geometry.size.width, y: midY))
+        }
+        .stroke(Color.white.opacity(0.08), lineWidth: 0.5)
+    }
+
     private func hillShapeView(geometry: GeometryProxy) -> some View {
         let milestones = viewModel.getDailyWeightProgression(for: exercise.id)
         let currentWeight = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight
@@ -188,8 +162,8 @@ struct AnalyticsView: View {
         .fill(
             LinearGradient(
                 gradient: Gradient(colors: [
-                    AppStyle.Color.greenGlow.opacity(0.3),
-                    AppStyle.Color.greenGlow.opacity(0.05)
+                    AppStyle.Color.greenGlow.opacity(0.15),
+                    AppStyle.Color.greenGlow.opacity(0.02)
                 ]),
                 startPoint: .top,
                 endPoint: .bottom
@@ -211,8 +185,8 @@ struct AnalyticsView: View {
             chartPoints: chartPoints,
             geometry: geometry
         )
-        .stroke(AppStyle.Color.greenGlow, lineWidth: 3)
-        .shadow(color: AppStyle.Color.greenGlow.opacity(0.5), radius: 4, x: 0, y: 0)
+        .stroke(AppStyle.Color.greenGlow, lineWidth: 2)
+        .shadow(color: AppStyle.Color.greenGlow.opacity(0.4), radius: 3, x: 0, y: 0)
     }
     
     private func milestonesView(geometry: GeometryProxy) -> some View {
@@ -253,7 +227,7 @@ struct AnalyticsView: View {
                 .position(x: point.xPosition, y: point.yPosition)
                 .shadow(color: AppStyle.Color.greenGlow.opacity(0.7), radius: point.isCurrentWeight ? 6 : 3, x: 0, y: 0)
 
-            Text("\(weightText) KG")
+            Text(weightText)
                 .font(.system(size: point.isCurrentWeight ? 16 : 11, weight: .bold))
                 .foregroundColor(AppStyle.Color.greenGlow)
                 .position(x: point.xPosition, y: point.yPosition - (point.isCurrentWeight ? 15 : 12))
@@ -283,26 +257,26 @@ struct AnalyticsView: View {
             Button(action: {
                 showCalendarDialog = true
             }) {
-                HStack(spacing: 4) {
+                HStack(spacing: 6) {
                     Image(systemName: "calendar")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.system(size: 14, weight: .medium))
                     Text(DateFormatter.germanShort.string(from: selectedDate))
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.system(size: 14, weight: .medium))
                 }
                 .foregroundColor(AppStyle.Color.greenGlow)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
                 .background(Color.white.opacity(0.06))
-                .cornerRadius(8)
+                .cornerRadius(10)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: 10)
                         .stroke(Color.white.opacity(0.15), lineWidth: 1)
                 )
             }
             .buttonStyle(PlainButtonStyle())
         }
         .padding(.horizontal, AppStyle.Padding.horizontal)
-        .padding(.top, 15)
+        .padding(.top, 20)
         .padding(.bottom, 10)
     }
     
@@ -655,7 +629,7 @@ struct AnalyticsView: View {
         if let goal = exercise.goal {
             return goal == floor(goal) ? "\(Int(goal))" : String(goal).replacingOccurrences(of: ".", with: ",")
         }
-        return "–"
+        return "Set"
     }
 
     private var weightMilestoneView: some View {
