@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ExerciseCardContainerView: View {
     @ObservedObject var viewModel: ExerciseCardViewModel
-    let onEdit: (Exercise) -> Void
+    let onEdit: (Exercise, ExerciseEditMode) -> Void
     let isEditable: Bool
     @ObservedObject var analyticsViewModel: AnalyticsViewModel
     @ObservedObject var activeSetViewModel: ActiveSetViewModel

@@ -1,7 +1,15 @@
 import Foundation
 
+enum ExerciseEditMode {
+    case full
+    case name
+    case weight
+    case seat
+}
+
 class ExerciseFormViewModel: ObservableObject {
     @Published var showForm: Bool = false
+    @Published var editMode: ExerciseEditMode = .full
     @Published var name: String = ""
     @Published var weight: Double = 0.0
     @Published var reps: Int = 1
@@ -22,6 +30,7 @@ class ExerciseFormViewModel: ObservableObject {
         sets = 1
         seat = ""
         editingExercise = nil
+        editMode = .full
         showForm = false
     }
     

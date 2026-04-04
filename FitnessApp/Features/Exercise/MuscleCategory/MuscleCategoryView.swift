@@ -66,9 +66,10 @@ struct MuscleCategoryView: View {
 
                         TrainingSessionComponent(
                             coordinator: trainingCoordinator,
-                            onEdit: { exercise in
+                            onEdit: { exercise, mode in
                                 withAnimation {
                                     formViewModel.loadExercise(exercise, category: group)
+                                    formViewModel.editMode = mode
                                     formViewModel.toggleForm()
                                 }
                             },
@@ -96,37 +97,14 @@ struct MuscleCategoryView: View {
             TrainingPickerComponent(coordinator: trainingCoordinator)
             
             if formViewModel.showForm {
-                // Signal: bring sheet to front, hide menu bar
                 Color.clear.onAppear { overlayState.isEditingSheetVisible = true }
-                ExercisePickerView(
-                    formViewModel: formViewModel,
-                    title: formViewModel.editingExercise != nil ? L10n.cardEditTitle : L10n.cardCreationTitle,
-                    isPresented: $formViewModel.showForm,
-                    onSave: {
-                        if let exercise = formViewModel.createOrUpdateExercise() {
-                            if formViewModel.editingExercise != nil {
-                                viewModel.updateExercise(exercise)
-                            } else {
-                                viewModel.add(exercise, atTop: true)
-                            }
-                        }
-                    },
-                    onCancel: {
-                        formViewModel.clearForm()
-                    },
-                    saveDisabled: !formViewModel.isFormValid,
-                    repsRange: 1...30,
-                    weightOptions: WeightOptionsGenerator.generateExerciseWeightOptions(),
-                    setsRange: 1...10,
-                    viewModel: viewModel,
-                    editingExercise: formViewModel.editingExercise,
-                )
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                .shadow(radius: 5)
-                .transition(.move(edge: .bottom))
-                .zIndex(3)
-                .ignoresSafeArea(edges: .bottom)
-                .onDisappear { overlayState.isEditingSheetVisible = false }
+                editPickerView
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                    .shadow(radius: 5)
+                    .transition(.move(edge: .bottom))
+                    .zIndex(3)
+                    .ignoresSafeArea(edges: .bottom)
+                    .onDisappear { overlayState.isEditingSheetVisible = false }
             }
         }
         .customToolbar(title: group.displayName, navigationPath: $navigationPath, showBackButton: false)
@@ -148,8 +126,64 @@ struct MuscleCategoryView: View {
         }
     }
 
-    
+    @ViewBuilder
+    private var editPickerView: some View {
+        let onSave: () -> Void = {
+            if let exercise = formViewModel.createOrUpdateExercise() {
+                if formViewModel.editingExercise != nil {
+                    viewModel.updateExercise(exercise)
+                } else {
+                    viewModel.add(exercise, atTop: true)
+                }
+            }
+        }
+        let onCancel: () -> Void = {
+            formViewModel.clearForm()
+        }
 
+        switch formViewModel.editMode {
+        case .full:
+            ExercisePickerView(
+                formViewModel: formViewModel,
+                title: formViewModel.editingExercise != nil ? L10n.cardEditTitle : L10n.cardCreationTitle,
+                isPresented: $formViewModel.showForm,
+                onSave: onSave,
+                onCancel: onCancel,
+                saveDisabled: !formViewModel.isFormValid,
+                repsRange: 1...30,
+                weightOptions: WeightOptionsGenerator.exerciseWeightOptions,
+                setsRange: 1...10,
+                viewModel: viewModel,
+                editingExercise: formViewModel.editingExercise
+            )
+        case .name:
+            ExerciseNamePickerView(
+                formViewModel: formViewModel,
+                isPresented: $formViewModel.showForm,
+                onSave: onSave,
+                onCancel: onCancel,
+                viewModel: viewModel,
+                editingExercise: formViewModel.editingExercise
+            )
+        case .weight:
+            ExerciseWeightPickerView(
+                formViewModel: formViewModel,
+                isPresented: $formViewModel.showForm,
+                onSave: onSave,
+                onCancel: onCancel,
+                repsRange: 1...30,
+                weightOptions: WeightOptionsGenerator.exerciseWeightOptions,
+                setsRange: 1...10
+            )
+        case .seat:
+            ExerciseSeatPickerView(
+                formViewModel: formViewModel,
+                isPresented: $formViewModel.showForm,
+                onSave: onSave,
+                onCancel: onCancel
+            )
+        }
+    }
 
     @ViewBuilder
     private func menuRow(icon: String, title: String, action: @escaping () -> Void) -> some View {
@@ -192,9 +226,10 @@ struct MuscleCategoryView: View {
                         viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
                             viewModel.updateExercise(updated)
                         },
-                        onEdit: { exercise in
+                        onEdit: { exercise, mode in
                             withAnimation {
                                 formViewModel.loadExercise(exercise, category: group)
+                                formViewModel.editMode = mode
                                 formViewModel.toggleForm()
                             }
                         },
@@ -202,7 +237,6 @@ struct MuscleCategoryView: View {
                         analyticsViewModel: analyticsViewModel,
                         activeSetViewModel: trainingCoordinator.activeSetViewModel,
                         onStart: { selectedExercise in
-                            // Navigate to TrainingView
                             TrainingNavigationHelper.navigateToTraining(
                                 exercise: selectedExercise,
                                 category: group,
@@ -244,18 +278,17 @@ struct MuscleCategoryView: View {
                         viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
                             viewModel.updateExercise(updated)
                         },
-                        onEdit: { exercise in
+                        onEdit: { exercise, mode in
                             withAnimation {
                                 formViewModel.loadExercise(exercise, category: group)
+                                formViewModel.editMode = mode
                                 formViewModel.toggleForm()
                             }
                         },
                         isEditable: true,
                         analyticsViewModel: analyticsViewModel,
                         activeSetViewModel: trainingCoordinator.activeSetViewModel,
-
                         onStart: { selectedExercise in
-                            // Navigate to TrainingView
                             TrainingNavigationHelper.navigateToTraining(
                                 exercise: selectedExercise,
                                 category: group,
@@ -288,18 +321,17 @@ struct MuscleCategoryView: View {
                         viewModel: ExerciseCardViewModel(exercise: exercise) { updated in
                             viewModel.updateExercise(updated)
                         },
-                        onEdit: { exercise in
+                        onEdit: { exercise, mode in
                             withAnimation {
                                 formViewModel.loadExercise(exercise, category: group)
+                                formViewModel.editMode = mode
                                 formViewModel.toggleForm()
                             }
                         },
                         isEditable: true,
                         analyticsViewModel: analyticsViewModel,
                         activeSetViewModel: trainingCoordinator.activeSetViewModel,
-
                         onStart: { selectedExercise in
-                            // Navigate to TrainingView
                             TrainingNavigationHelper.navigateToTraining(
                                 exercise: selectedExercise,
                                 category: group,

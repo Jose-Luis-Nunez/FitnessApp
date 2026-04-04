@@ -19,6 +19,7 @@ struct ExercisePickerView: View {
     @State private var seatPart2: String = ""
     @State private var isContentVisible: Bool = false
     @State private var showDecimal: Bool = false
+    @State private var validIconOptions: [String] = []
 
     private var filteredWeightOptions: [String] {
         showDecimal ? weightOptions : weightOptions.filter { !$0.contains(",") && !$0.contains(".") }
@@ -136,18 +137,12 @@ struct ExercisePickerView: View {
                 .padding(.horizontal, AppStyle.Padding.horizontal)
                 .padding(.bottom, 20)
 
-                // Icon selection only if more than one VALID icon exists (after filtering missing assets)
-                let iconOptionsRaw = formViewModel.selectedCategory.availableIcons
-                let iconOptions = iconOptionsRaw.filter { name in
-                    guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
-                    return UIImage(named: name) != nil
-                }
-                if iconOptions.count > 1 {
+                if validIconOptions.count > 1 {
                     Divider().padding(.top, 0)
 
                     IconPickerView(
                         selectedIcon: $formViewModel.selectedIconName,
-                        icons: iconOptions
+                        icons: validIconOptions
                     )
                     .padding(.horizontal, AppStyle.Padding.horizontal)
                     .padding(.top, 4)
@@ -276,6 +271,10 @@ struct ExercisePickerView: View {
         .frame(maxWidth: .infinity)
         .onAppear {
             loadSeatParts()
+            validIconOptions = formViewModel.selectedCategory.availableIcons.filter { name in
+                guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+                return UIImage(named: name) != nil
+            }
             let w = formViewModel.weight
             if w != floor(w) { showDecimal = true }
             // Defaults im Add-Flow setzen
@@ -287,9 +286,7 @@ struct ExercisePickerView: View {
                     formViewModel.weight = 20
                 }
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
-                withAnimation(.easeOut(duration: 0.18)) { isContentVisible = true }
-            }
+            withAnimation(.easeOut(duration: 0.18)) { isContentVisible = true }
         }
         .onChange(of: isPresented) { newValue in
             if !newValue { isContentVisible = false }

@@ -170,7 +170,7 @@ struct MuscleCategorySelectionView: View {
                                                 viewModel.updateExercise(updatedExercise, category: category)
                                             }
                                         },
-                                        onEdit: { exerciseToEdit in
+                                        onEdit: { exerciseToEdit, _ in
                                             if let category = viewModel.findCategoryForExercise(exerciseToEdit) {
                                                 navigationPath.append(NavigationDestination.muscleCategory(category))
                                             }
@@ -308,36 +308,13 @@ struct MuscleCategorySelectionView: View {
             if isShowingExercisePicker {
                 if let editingCategory = editingCategory {
                     Color.clear.onAppear { overlayState.isEditingSheetVisible = true }
-                    ExercisePickerView(
-                        formViewModel: exerciseFormViewModel,
-                        title: editingExercise != nil ? "Edit Exercise" : "New Exercise",
-                        isPresented: $isShowingExercisePicker,
-                        onSave: {
-                            if let exercise = exerciseFormViewModel.createOrUpdateExercise() {
-                                if editingExercise != nil {
-                                    viewModel.updateExercise(exercise, category: editingCategory)
-                                } else {
-                                    viewModel.addExercise(exercise, category: editingCategory)
-                                }
-                            }
-                            resetEditingState()
-                        },
-                        onCancel: {
-                            resetEditingState()
-                        },
-                        saveDisabled: !exerciseFormViewModel.isFormValid,
-                        repsRange: 1...50,
-                        weightOptions: WeightOptionsGenerator.generateExerciseWeightOptions(),
-                        setsRange: 1...10,
-                        viewModel: MuscleCategoryViewModel(group: editingCategory),
-                        editingExercise: editingExercise
-                    )
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                    .shadow(radius: 5)
-                    .transition(.move(edge: .bottom).combined(with: .opacity).animation(.easeOut(duration: 0.25)))
-                    .zIndex(5)
-                    .ignoresSafeArea(edges: .bottom)
-                    .onDisappear { overlayState.isEditingSheetVisible = false }
+                    selectionEditPickerView(category: editingCategory)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                        .shadow(radius: 5)
+                        .transition(.move(edge: .bottom).combined(with: .opacity).animation(.easeOut(duration: 0.25)))
+                        .zIndex(5)
+                        .ignoresSafeArea(edges: .bottom)
+                        .onDisappear { overlayState.isEditingSheetVisible = false }
                 }
             }
         }
@@ -425,7 +402,67 @@ struct MuscleCategorySelectionView: View {
         editingCategory = nil
         exerciseFormViewModel.clearForm()
     }
-    
+
+    @ViewBuilder
+    private func selectionEditPickerView(category: MuscleCategoryGroup) -> some View {
+        let onSave: () -> Void = {
+            if let exercise = exerciseFormViewModel.createOrUpdateExercise() {
+                if editingExercise != nil {
+                    viewModel.updateExercise(exercise, category: category)
+                } else {
+                    viewModel.addExercise(exercise, category: category)
+                }
+            }
+            resetEditingState()
+        }
+        let onCancel: () -> Void = {
+            resetEditingState()
+        }
+
+        switch exerciseFormViewModel.editMode {
+        case .full:
+            ExercisePickerView(
+                formViewModel: exerciseFormViewModel,
+                title: editingExercise != nil ? "Edit Exercise" : "New Exercise",
+                isPresented: $isShowingExercisePicker,
+                onSave: onSave,
+                onCancel: onCancel,
+                saveDisabled: !exerciseFormViewModel.isFormValid,
+                repsRange: 1...50,
+                weightOptions: WeightOptionsGenerator.exerciseWeightOptions,
+                setsRange: 1...10,
+                viewModel: MuscleCategoryViewModel(group: category),
+                editingExercise: editingExercise
+            )
+        case .name:
+            ExerciseNamePickerView(
+                formViewModel: exerciseFormViewModel,
+                isPresented: $isShowingExercisePicker,
+                onSave: onSave,
+                onCancel: onCancel,
+                viewModel: MuscleCategoryViewModel(group: category),
+                editingExercise: editingExercise
+            )
+        case .weight:
+            ExerciseWeightPickerView(
+                formViewModel: exerciseFormViewModel,
+                isPresented: $isShowingExercisePicker,
+                onSave: onSave,
+                onCancel: onCancel,
+                repsRange: 1...50,
+                weightOptions: WeightOptionsGenerator.exerciseWeightOptions,
+                setsRange: 1...10
+            )
+        case .seat:
+            ExerciseSeatPickerView(
+                formViewModel: exerciseFormViewModel,
+                isPresented: $isShowingExercisePicker,
+                onSave: onSave,
+                onCancel: onCancel
+            )
+        }
+    }
+
     private var categoryList: some View {
         ForEach(viewModel.categories, id: \.self) { group in
             Button(action: {
@@ -521,10 +558,11 @@ struct MuscleCategorySelectionView: View {
                         viewModel: ExerciseCardViewModel(exercise: activeExercise) { updatedExercise in
                             viewModel.updateExercise(updatedExercise, category: category)
                         },
-                        onEdit: { exerciseToEdit in
+                        onEdit: { exerciseToEdit, mode in
                             editingExercise = exerciseToEdit
                             editingCategory = category
                             exerciseFormViewModel.loadExercise(exerciseToEdit, category: category)
+                            exerciseFormViewModel.editMode = mode
                             isShowingExercisePicker = true
                         },
                         isEditable: true,
@@ -577,11 +615,12 @@ struct MuscleCategorySelectionView: View {
             viewModel: ExerciseCardViewModel(exercise: exercise) { updatedExercise in
                 viewModel.updateExercise(updatedExercise, category: category)
             },
-            onEdit: { exerciseToEdit in
+            onEdit: { exerciseToEdit, mode in
                 if currentViewMode == .list {
                     editingExercise = exerciseToEdit
                     editingCategory = category
                     exerciseFormViewModel.loadExercise(exerciseToEdit, category: category)
+                    exerciseFormViewModel.editMode = mode
                     isShowingExercisePicker = true
                 } else {
                     navigationPath.append(NavigationDestination.muscleCategory(category))

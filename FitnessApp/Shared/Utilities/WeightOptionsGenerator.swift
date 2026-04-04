@@ -3,6 +3,9 @@ import Foundation
 // MARK: - Weight Options Generator
 struct WeightOptionsGenerator {
     
+    static let exerciseWeightOptions: [String] = generateExerciseWeightOptions()
+    static let trainingWeightOptions: [String] = generateTrainingWeightOptions()
+    
     /// Generate weight options for training picker (0-300kg with 0.5 increments)
     static func generateTrainingWeightOptions() -> [String] {
         var options: [String] = []

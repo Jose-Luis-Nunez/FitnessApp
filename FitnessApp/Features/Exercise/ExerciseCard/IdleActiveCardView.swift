@@ -5,7 +5,7 @@ struct IdleActiveCardView: View {
     @ObservedObject var viewModel: ExerciseCardViewModel
     @ObservedObject var analyticsViewModel: AnalyticsViewModel
 
-    let onEdit: (Exercise) -> Void
+    let onEdit: (Exercise, ExerciseEditMode) -> Void
     let isEditable: Bool
     let onStart: ((Exercise) -> Void)?
 
@@ -100,34 +100,49 @@ private extension IdleActiveCardView {
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
                 .onTapGesture {
-                    if isEditable { onEdit(viewModel.exercise) }
+                    if isEditable { onEdit(viewModel.exercise, .name) }
                 }
 
-            HStack(spacing: 12) {
+            HStack(spacing: 8) {
                 Text(formattedWeight)
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(.white.opacity(0.7))
+                    .fixedSize()
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        if isEditable { onEdit(viewModel.exercise, .weight) }
+                    }
 
                 Text("·")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.5))
+                    .fixedSize()
 
-                Image("chairSettings")
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 28, height: 28)
-                    .foregroundColor(.white.opacity(0.7))
-
-                if let seatSetting = viewModel.exercise.seatSetting {
-                    Text(seatSetting)
-                        .font(.system(size: 14, weight: .bold))
+                HStack(spacing: 4) {
+                    Image("chairSettings")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 28, height: 28)
                         .foregroundColor(.white.opacity(0.7))
+
+                    if let seatSetting = viewModel.exercise.seatSetting {
+                        Text(seatSetting)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white.opacity(0.7))
+                            .lineLimit(1)
+                            .fixedSize()
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    if isEditable { onEdit(viewModel.exercise, .seat) }
                 }
 
                 Text("·")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.5))
+                    .fixedSize()
 
                 Button(action: { isShowingAnalytics = true }) {
                     Image("analyticsEntry")
@@ -143,17 +158,17 @@ private extension IdleActiveCardView {
                     Text("·")
                         .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.5))
+                        .fixedSize()
 
-                    HStack(spacing: 0) {
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.7))
-                            .rotationEffect(.degrees(isExpanded ? 180 : 0))
-                        Spacer()
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture { isExpanded.toggle() }
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.7))
+                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                        .contentShape(Rectangle())
+                        .onTapGesture { isExpanded.toggle() }
                 }
+
+                Spacer(minLength: 0)
             }
             .frame(height: 28)
         }

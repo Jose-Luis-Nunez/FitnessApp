@@ -35,7 +35,7 @@ struct TrainingPickerComponent: View {
                     selectedReps: $coordinator.activeSetViewModel.repsInput,
                     selectedWeight: $coordinator.activeSetViewModel.weightInput,
                     repsRange: 1...30,
-                    weightOptions: WeightOptionsGenerator.generateTrainingWeightOptions(),
+                    weightOptions: WeightOptionsGenerator.trainingWeightOptions,
                     onSave: { newReps, newWeight in
                         guard !isProcessingSaveCancel else { 
                             return 

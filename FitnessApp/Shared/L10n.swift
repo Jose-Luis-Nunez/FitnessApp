@@ -2,6 +2,9 @@ enum L10n {
     
     static let cardCreationTitle = "Add Exercise"
     static let cardEditTitle = "Edit Exercise"
+    static let cardEditNameTitle = "Edit Title"
+    static let cardEditWeightTitle = "Edit Weight"
+    static let cardEditSeatTitle = "Edit Seat"
     static let cardCreationPlaceholderTextName = "Name"
     static let cardCreationPlaceholderTextWeight = "Gewicht (kg)"
     static let cardCreationPlaceholderTextRepetitions = "Wiederholungen"

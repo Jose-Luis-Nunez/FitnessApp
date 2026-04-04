@@ -77,8 +77,7 @@ struct TrainingView: View {
                                     let managementService = ExerciseManagementService()
                                     managementService.updateExercise(updatedExercise, category: category)
                                 },
-                                onEdit: { exerciseToEdit in
-                                    // Could implement exercise editing here if needed
+                                onEdit: { exerciseToEdit, _ in
                                 },
                                 isEditable: !trainingCoordinator.activeSetViewModel.isSetInProgress,
                                 analyticsViewModel: analyticsViewModel,

@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - Training Session Component
 struct TrainingSessionComponent: View {
     @ObservedObject var coordinator: TrainingCoordinator
-    let onEdit: ((Exercise) -> Void)?
+    let onEdit: ((Exercise, ExerciseEditMode) -> Void)?
     let onReset: ((Exercise) -> Void)?
     let onCancel: (() -> Void)?
     let analyticsViewModel: AnalyticsViewModel
@@ -18,7 +18,7 @@ struct TrainingSessionComponent: View {
     }
     init(
         coordinator: TrainingCoordinator,
-        onEdit: ((Exercise) -> Void)? = nil,
+        onEdit: ((Exercise, ExerciseEditMode) -> Void)? = nil,
         onReset: ((Exercise) -> Void)? = nil,
         onCancel: (() -> Void)? = nil,
         analyticsViewModel: AnalyticsViewModel = AnalyticsViewModel()

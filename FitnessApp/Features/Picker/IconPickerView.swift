@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 struct IconPickerView: View {
     @Binding var selectedIcon: String
@@ -9,26 +8,18 @@ struct IconPickerView: View {
     private let tileBorderWidth: CGFloat = 1
     private let sheetBackground = Color(hex: "#222025")
 
-    private var filteredIcons: [String] {
-        icons.filter { name in
-            guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
-            return UIImage(named: name) != nil
-        }
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Select icon")
                 .font(.headline)
                 .foregroundColor(.white)
 
-            // Gleiche 3-Spalten-Struktur wie im CreateWorkoutView
             LazyVGrid(columns: [
                 GridItem(.flexible(), spacing: 12),
                 GridItem(.flexible(), spacing: 12),
                 GridItem(.flexible(), spacing: 12)
             ], spacing: 12) {
-                ForEach(filteredIcons, id: \.self) { iconName in
+                ForEach(icons, id: \.self) { iconName in
                     iconCell(for: iconName)
                 }
             }

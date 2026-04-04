@@ -2,7 +2,7 @@ import SwiftUI
 
 struct InactiveCardView: View {
     @ObservedObject var viewModel: ExerciseCardViewModel
-    let onEdit: (Exercise) -> Void
+    let onEdit: (Exercise, ExerciseEditMode) -> Void
     let isEditable: Bool
     @ObservedObject var analyticsViewModel: AnalyticsViewModel
     let onReset: ((Exercise) -> Void)?
@@ -75,7 +75,7 @@ private extension InactiveCardView {
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier("id_label_exercise_name")
                 .onTapGesture {
-                    if isEditable { onEdit(viewModel.exercise) }
+                    if isEditable { onEdit(viewModel.exercise, .name) }
                 }
             
             HStack(spacing: 4) {
