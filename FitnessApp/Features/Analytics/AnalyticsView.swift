@@ -152,10 +152,10 @@ struct AnalyticsView: View {
         .padding(.horizontal, 12)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(AppStyle.Color.greenBlack.opacity(0.3))
+                .fill(Color.white.opacity(0.06))
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(AppStyle.Color.greenGlow.opacity(0.2), lineWidth: 1)
+                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
                 )
         )
     }
@@ -172,7 +172,7 @@ struct AnalyticsView: View {
     }
     
     private func hillShapeView(geometry: GeometryProxy) -> some View {
-        let milestones = viewModel.getWeightProgressionMilestones(for: exercise.id)
+        let milestones = viewModel.getDailyWeightProgression(for: exercise.id)
         let currentWeight = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight
         
         let chartPoints = ProgressChartCalculator.calculateDynamicMilestones(
@@ -198,7 +198,7 @@ struct AnalyticsView: View {
     }
     
     private func hillOutlineView(geometry: GeometryProxy) -> some View {
-        let milestones = viewModel.getWeightProgressionMilestones(for: exercise.id)
+        let milestones = viewModel.getDailyWeightProgression(for: exercise.id)
         let currentWeight = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight
         
         let chartPoints = ProgressChartCalculator.calculateDynamicMilestones(
@@ -216,7 +216,7 @@ struct AnalyticsView: View {
     }
     
     private func milestonesView(geometry: GeometryProxy) -> some View {
-        let milestones = viewModel.getWeightProgressionMilestones(for: exercise.id)
+        let milestones = viewModel.getDailyWeightProgression(for: exercise.id)
         let currentWeight = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight
         
         let chartPoints = ProgressChartCalculator.calculateDynamicMilestones(
@@ -230,43 +230,56 @@ struct AnalyticsView: View {
         }
     }
     
+    private static let chartDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "dd.MM"
+        return f
+    }()
+
     private func dynamicMilestonePointView(point: ProgressChartCalculator.ChartPoint, geometry: GeometryProxy) -> some View {
-        ZStack {
-            // Dotted line from point down to bottom
+        let weightText = point.weight == floor(point.weight) ? "\(Int(point.weight))" : String(point.weight).replacingOccurrences(of: ".", with: ",")
+
+        return ZStack {
             Path { path in
                 path.move(to: CGPoint(x: point.xPosition, y: point.yPosition + 8))
                 path.addLine(to: CGPoint(x: point.xPosition, y: geometry.size.height))
             }
-            .stroke(AppStyle.Color.greenGlow.opacity(point.isCurrentWeight ? 0.8 : 0.4), 
+            .stroke(AppStyle.Color.greenGlow.opacity(point.isCurrentWeight ? 0.8 : 0.4),
                    style: StrokeStyle(lineWidth: point.isCurrentWeight ? 2 : 1, dash: [4, 4]))
-            
-            // Milestone point
+
             Circle()
                 .fill(AppStyle.Color.greenGlow)
                 .frame(width: point.isCurrentWeight ? 10 : 6, height: point.isCurrentWeight ? 10 : 6)
                 .position(x: point.xPosition, y: point.yPosition)
                 .shadow(color: AppStyle.Color.greenGlow.opacity(0.7), radius: point.isCurrentWeight ? 6 : 3, x: 0, y: 0)
-            
-            // Weight label
-            Text(point.weight == floor(point.weight) ? "\(Int(point.weight))" : String(point.weight).replacingOccurrences(of: ".", with: ","))
-                .font(.system(size: point.isCurrentWeight ? 20 : 14, weight: .bold))
+
+            Text("\(weightText) KG")
+                .font(.system(size: point.isCurrentWeight ? 16 : 11, weight: .bold))
                 .foregroundColor(AppStyle.Color.greenGlow)
                 .position(x: point.xPosition, y: point.yPosition - (point.isCurrentWeight ? 15 : 12))
-                .shadow(color: AppStyle.Color.greenGlow.opacity(0.3), radius: point.isCurrentWeight ? 8 : 4, x: 0, y: 0)
+
+            if let date = point.date {
+                Text(Self.chartDateFormatter.string(from: date))
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(.white.opacity(0.5))
+                    .position(x: point.xPosition, y: geometry.size.height - 2)
+            }
         }
     }
     
     private var chartLabelsView: some View {
-        // Labels row - below the chart
-        HStack {
-            // Left: 0 kg (single line)
-            Text("0 kg")
-                .font(.system(size: 16, weight: .bold))
-                .foregroundColor(AppStyle.Color.greenGlow)
-            
+        EmptyView()
+    }
+    
+    private var headerView: some View {
+        HStack(alignment: .center, spacing: 12) {
+            Text(exercise.name)
+                .font(AppStyle.Font.analyticsExerciseTitle)
+                .foregroundColor(AppStyle.Color.white)
+                .fixedSize()
+
             Spacer()
-            
-            // Center: Calendar Entry Point
+
             Button(action: {
                 showCalendarDialog = true
             }) {
@@ -279,51 +292,14 @@ struct AnalyticsView: View {
                 .foregroundColor(AppStyle.Color.greenGlow)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
-                .background(AppStyle.Color.greenBlack.opacity(0.3))
+                .background(Color.white.opacity(0.06))
                 .cornerRadius(8)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(AppStyle.Color.greenGlow.opacity(0.2), lineWidth: 1)
+                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
                 )
             }
             .buttonStyle(PlainButtonStyle())
-            
-            Spacer()
-            
-            // Right: Goal (single line)
-            Button(action: {
-                tempGoal = exercise.goal != nil ? formatGoalForInput(exercise.goal!) : ""
-                showGoalSheet = true
-            }) {
-                if let goal = exercise.goal {
-                    Text("Goal: \(goal == floor(goal) ? "\(Int(goal))" : String(goal).replacingOccurrences(of: ".", with: ",")) kg")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(AppStyle.Color.greenGlow)
-                } else {
-                    Text("Set Goal")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(AppStyle.Color.greenGlow)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(AppStyle.Color.greenGlow.opacity(0.5), lineWidth: 1)
-                        )
-                }
-            }
-            .buttonStyle(PlainButtonStyle())
-        }
-        .padding(.horizontal, 12)
-    }
-    
-    private var headerView: some View {
-        HStack(alignment: .center, spacing: 12) {
-            Text(exercise.name)
-                .font(AppStyle.Font.analyticsExerciseTitle)
-                .foregroundColor(AppStyle.Color.white)
-                .fixedSize()
-            
-            Spacer()
         }
         .padding(.horizontal, AppStyle.Padding.horizontal)
         .padding(.top, 15)
@@ -360,7 +336,11 @@ struct AnalyticsView: View {
                             .frame(maxWidth: .infinity)
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .fill(AppStyle.Color.greenBlack)
+                                    .fill(Color.white.opacity(0.06))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                                    )
                             )
                         }
                         
@@ -447,10 +427,10 @@ struct AnalyticsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(AppStyle.Color.greenBlack.opacity(0.3))
+                .fill(Color.white.opacity(0.06))
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(AppStyle.Color.greenGlow.opacity(0.2), lineWidth: 1)
+                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
                 )
         )
         .padding(.top, 9)
@@ -542,7 +522,7 @@ struct AnalyticsView: View {
             goalActionButtons
         }
         .padding(.horizontal, 24)
-        .background(AppStyle.Color.greenBlack)
+        .background(AppStyle.Color.exerciseCardBackground)
         .cornerRadius(16)
         .padding(.horizontal, 32)
     }
@@ -569,11 +549,11 @@ struct AnalyticsView: View {
                 .foregroundColor(AppStyle.Color.white)
                 .padding()
                 .padding(.trailing, exercise.goal != nil ? 40 : 0)
-                .background(AppStyle.Color.greenBlack)
+                .background(Color.white.opacity(0.06))
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppStyle.Color.greenGlow.opacity(0.3), lineWidth: 1)
+                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
                 )
             
             goalPlaceholder
@@ -585,7 +565,7 @@ struct AnalyticsView: View {
             if tempGoal.isEmpty {
                 Text("Enter goal weight")
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(AppStyle.Color.greenGlow.opacity(0.6))
+                    .foregroundColor(.white.opacity(0.4))
                     .padding(.leading, 16)
                     .allowsHitTesting(false)
             }
@@ -623,7 +603,7 @@ struct AnalyticsView: View {
         .foregroundColor(AppStyle.Color.white)
         .padding(.vertical, 12)
         .padding(.horizontal, 24)
-        .background(AppStyle.Color.greenBlack)
+        .background(Color.white.opacity(0.06))
         .cornerRadius(12)
     }
     
@@ -671,35 +651,78 @@ struct AnalyticsView: View {
         return WeightFormatter.formatGoalForInput(goal)
     }
     
+    private var goalTileNumber: String {
+        if let goal = exercise.goal {
+            return goal == floor(goal) ? "\(Int(goal))" : String(goal).replacingOccurrences(of: ".", with: ",")
+        }
+        return "–"
+    }
+
     private var weightMilestoneView: some View {
-        HStack(alignment: .top, spacing: 8) {
-            AnalyticsTileNumberView(
-                number: "\(viewModel.weightIncreasesInCurrentMonth(for: exercise.id))",
-                label: "Weight increase",
-                icon: nil,
-                iconColor: .clear
-            )
-            
-            AnalyticsTileNumberView(
-                number: "\(viewModel.trainingDaysInCurrentMonth(for: exercise.id))",
-                label: "Training \(viewModel.currentMonthName())",
-                icon: nil,
-                iconColor: .clear
-            )
-            
-            AnalyticsTileNumberView(
-                number: "\(viewModel.trainingSessionsUntilWeightIncrease(for: exercise.id))",
-                label: "Training to increase kg",
-                icon: nil,
-                iconColor: .clear
-            )
-            
-            AnalyticsTileNumberView(
-                number: "\(viewModel.loadAnalytics(for: exercise.id).count)",
-                label: "Total workouts",
-                icon: nil,
-                iconColor: .clear
-            )
+        VStack(spacing: 8) {
+            HStack(alignment: .top, spacing: 8) {
+                Button(action: {
+                    tempGoal = exercise.goal != nil ? formatGoalForInput(exercise.goal!) : ""
+                    showGoalSheet = true
+                }) {
+                    VStack(spacing: 4) {
+                        Text(goalTileNumber)
+                            .font(.system(size: 26, weight: .bold))
+                            .foregroundColor(AppStyle.Color.greenGlow)
+
+                        Text("Goal kg")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(.white.opacity(0.6))
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(8)
+                    .frame(height: 85)
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.white.opacity(0.06))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                            )
+                    )
+                }
+                .buttonStyle(.plain)
+
+                Color.clear.frame(maxWidth: .infinity).frame(height: 85)
+                Color.clear.frame(maxWidth: .infinity).frame(height: 85)
+                Color.clear.frame(maxWidth: .infinity).frame(height: 85)
+            }
+
+            HStack(alignment: .top, spacing: 8) {
+                AnalyticsTileNumberView(
+                    number: "\(viewModel.totalWeightIncreases(for: exercise.id))",
+                    label: "Weight increase",
+                    icon: nil,
+                    iconColor: .clear
+                )
+
+                AnalyticsTileNumberView(
+                    number: "\(viewModel.trainingDaysInCurrentMonth(for: exercise.id))",
+                    label: "Training \(viewModel.currentMonthName())",
+                    icon: nil,
+                    iconColor: .clear
+                )
+
+                AnalyticsTileNumberView(
+                    number: "\(viewModel.trainingSessionsUntilWeightIncrease(for: exercise.id))",
+                    label: "Training to increase kg",
+                    icon: nil,
+                    iconColor: .clear
+                )
+
+                AnalyticsTileNumberView(
+                    number: "\(viewModel.loadAnalytics(for: exercise.id).count)",
+                    label: "Total training",
+                    icon: nil,
+                    iconColor: .clear
+                )
+            }
         }
         .padding(.horizontal, AppStyle.Padding.horizontal)
         .padding(.vertical, 8)
@@ -728,7 +751,7 @@ struct AnalyticsTileNumberView: View {
             
             Text(label)
                 .font(.system(size: 10, weight: .medium))
-                .foregroundColor(AppStyle.Color.greenGlow)
+                .foregroundColor(.white.opacity(0.6))
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
@@ -738,10 +761,10 @@ struct AnalyticsTileNumberView: View {
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(AppStyle.Color.greenBlack.opacity(0.3))
+                .fill(Color.white.opacity(0.06))
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(AppStyle.Color.greenGlow.opacity(0.2), lineWidth: 1)
+                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
                 )
         )
     }
@@ -762,7 +785,7 @@ struct AnalyticsTileTextView: View {
             
             Text(label)
                 .font(.system(size: 10, weight: .medium))
-                .foregroundColor(AppStyle.Color.greenGlow)
+                .foregroundColor(.white.opacity(0.6))
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
@@ -772,10 +795,10 @@ struct AnalyticsTileTextView: View {
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(AppStyle.Color.greenBlack.opacity(0.3))
+                .fill(Color.white.opacity(0.06))
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(AppStyle.Color.greenGlow.opacity(0.2), lineWidth: 1)
+                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
                 )
         )
     }
@@ -861,11 +884,11 @@ struct AddAnalyticsEntryView: View {
                                 .font(.system(size: 16, weight: .medium))
                                 .foregroundColor(AppStyle.Color.white)
                                 .frame(width: 60, height: 38)
-                                .background(AppStyle.Color.greenBlack)
+                                .background(Color.white.opacity(0.06))
                                 .cornerRadius(8)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8)
-                                        .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
+                                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
                                 )
                         }
                         
@@ -880,11 +903,11 @@ struct AddAnalyticsEntryView: View {
                                 .font(.system(size: 16, weight: .medium))
                                 .foregroundColor(AppStyle.Color.white)
                                 .frame(width: 60, height: 38)
-                                .background(AppStyle.Color.greenBlack)
+                                .background(Color.white.opacity(0.06))
                                 .cornerRadius(8)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8)
-                                        .stroke(AppStyle.Color.greenGlow, lineWidth: 1)
+                                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
                                 )
                         }
                         
@@ -930,7 +953,7 @@ struct AddAnalyticsEntryView: View {
                     .foregroundColor(.white)
                     .padding(.vertical, 10)
                     .padding(.horizontal, 18)
-                    .background(AppStyle.Color.greenBlack)
+                    .background(Color.white.opacity(0.06))
                     .cornerRadius(12)
                     
                     Spacer()
@@ -966,7 +989,7 @@ struct AddAnalyticsEntryView: View {
             .padding(.horizontal, 18)
             .padding(.top, 10)
             .padding(.bottom, 22)
-            .background(AppStyle.Color.greenBlack)
+            .background(AppStyle.Color.exerciseCardBackground)
             .cornerRadius(18)
             .frame(maxWidth: 370)
             

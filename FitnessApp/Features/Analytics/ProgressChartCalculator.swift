@@ -5,6 +5,7 @@ import SwiftUI
 class ProgressChartCalculator {
     struct ChartPoint {
         let weight: Double
+        let date: Date?
         let xPosition: CGFloat
         let yPosition: CGFloat
         let isCurrentWeight: Bool
@@ -25,7 +26,7 @@ class ProgressChartCalculator {
         guard !milestones.isEmpty else { return [] }
         
         // Limit to maximum 5 milestones with smart filtering
-        let filteredMilestones = limitToFiveMilestones(milestones)
+        let filteredMilestones = limitToFiveDataPoints(milestones)
         
         let width = geometry.size.width
         let height = geometry.size.height
@@ -39,16 +40,21 @@ class ProgressChartCalculator {
         let maxWeight = weights.max() ?? minWeight + 1
         let weightRange = maxWeight - minWeight
         
-        // If all weights are the same, use single point
         if weightRange == 0 {
-            let xPos = width * 0.5
             let yPos = chartTopY + chartRange * 0.5
-            return [ChartPoint(
-                weight: minWeight,
-                xPosition: xPos,
-                yPosition: yPos,
-                isCurrentWeight: true
-            )]
+            var chartPoints: [ChartPoint] = []
+            for (index, milestone) in filteredMilestones.enumerated() {
+                let xProgress = filteredMilestones.count == 1 ? 0.5 : CGFloat(index) / CGFloat(filteredMilestones.count - 1)
+                let xPosition = width * (0.15 + xProgress * 0.7)
+                chartPoints.append(ChartPoint(
+                    weight: milestone.weight,
+                    date: milestone.date,
+                    xPosition: xPosition,
+                    yPosition: yPos,
+                    isCurrentWeight: index == filteredMilestones.count - 1
+                ))
+            }
+            return chartPoints
         }
         
         var chartPoints: [ChartPoint] = []
@@ -64,16 +70,17 @@ class ProgressChartCalculator {
             
             chartPoints.append(ChartPoint(
                 weight: milestone.weight,
+                date: milestone.date,
                 xPosition: xPosition,
                 yPosition: yPosition,
-                isCurrentWeight: milestone.weight == currentWeight
+                isCurrentWeight: index == filteredMilestones.count - 1
             ))
         }
         
         return chartPoints
     }
     
-    private static func limitToFiveMilestones(_ milestones: [(date: Date, weight: Double)]) -> [(date: Date, weight: Double)] {
+    private static func limitToFiveDataPoints(_ milestones: [(date: Date, weight: Double)]) -> [(date: Date, weight: Double)] {
         // If 5 or fewer milestones, return all
         guard milestones.count > 5 else { return milestones }
         

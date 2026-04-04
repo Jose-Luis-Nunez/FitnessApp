@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 
 struct IdleActiveCardView: View {
@@ -10,6 +11,8 @@ struct IdleActiveCardView: View {
 
     @State private var isShowingAnalytics = false
     @State private var isExpanded = false
+    @State private var weightPhases: [WeightPhase] = []
+    @State private var lastTrainingDateFormatted: String?
 
     private var formattedWeight: String {
         let weight = viewModel.exercise.weight
@@ -20,27 +23,32 @@ struct IdleActiveCardView: View {
         }
     }
 
-    private var weightPhases: [WeightPhase] {
-        analyticsViewModel.weightPhases(for: viewModel.exercise.id)
-    }
+    private static let lastTrainingFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "dd.MM.yy"
+        return f
+    }()
 
-    private var lastTrainingDateFormatted: String? {
-        guard let date = analyticsViewModel.lastTrainingDate(for: viewModel.exercise.id) else { return nil }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd.MM.yy"
-        return formatter.string(from: date)
+    private func refreshPhaseData() {
+        weightPhases = analyticsViewModel.weightPhases(for: viewModel.exercise.id)
+        if let date = analyticsViewModel.lastTrainingDate(for: viewModel.exercise.id) {
+            lastTrainingDateFormatted = Self.lastTrainingFormatter.string(from: date)
+        } else {
+            lastTrainingDateFormatted = nil
+        }
     }
 
     var body: some View {
         CardBackground(backgroundColor: AppStyle.Color.exerciseCardBackground, useGlassEffect: true, addPadding: false) {
             VStack(spacing: 0) {
                 headerRow
+                    .padding(.horizontal, 16)
 
                 if isExpanded, !weightPhases.isEmpty {
                     expandedContent
+                        .padding(.horizontal, 8)
                 }
             }
-            .padding(.horizontal, 16)
             .padding(.vertical, 8)
             .background {
                 if isExpanded {
@@ -53,6 +61,11 @@ struct IdleActiveCardView: View {
         }
         .padding(.horizontal, 16)
         .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 2)
+        .onAppear { refreshPhaseData() }
+        .onReceive(
+            analyticsViewModel.analyticsDidUpdate
+                .filter { $0 == viewModel.exercise.id }
+        ) { _ in refreshPhaseData() }
     }
 }
 
@@ -131,15 +144,18 @@ private extension IdleActiveCardView {
                         .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.5))
 
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.7))
-                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                    HStack(spacing: 0) {
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.7))
+                            .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                        Spacer()
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture { isExpanded.toggle() }
                 }
             }
-            .frame(height: 22)
-            .contentShape(Rectangle())
-            .onTapGesture { isExpanded.toggle() }
+            .frame(height: 28)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -182,7 +198,6 @@ private extension IdleActiveCardView {
             phaseTilesRow
         }
         .padding(.top, 4)
-        .padding(.horizontal, -8)
     }
 
     var phaseTilesRow: some View {
@@ -216,7 +231,7 @@ extension IdleActiveCardView {
         }
 
         private var durationText: String {
-            "Period: \(phase.durationDays) Days"
+            phase.durationDays == 1 ? "Period: 1 Day" : "Period: \(phase.durationDays) Days"
         }
 
         private static let tileDate: DateFormatter = {

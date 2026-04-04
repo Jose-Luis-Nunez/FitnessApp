@@ -1,6 +1,9 @@
+import Combine
 import Foundation
 
 class AnalyticsViewModel: ObservableObject {
+    let analyticsDidUpdate = PassthroughSubject<UUID, Never>()
+
     private let storageService: AnalyticsStorageService
     private let exerciseStorageService: ExerciseStorageService
     
@@ -24,6 +27,11 @@ class AnalyticsViewModel: ObservableObject {
         var existingEntries = storageService.load(for: exerciseId)
         existingEntries.append(analyticsEntry)
         storageService.save(existingEntries, for: exerciseId)
+
+        DispatchQueue.main.async {
+            self.objectWillChange.send()
+            self.analyticsDidUpdate.send(exerciseId)
+        }
     }
     
     func loadAnalytics(for exerciseId: UUID) -> [AnalyticsEntry] {
@@ -79,6 +87,7 @@ class AnalyticsViewModel: ObservableObject {
 
         DispatchQueue.main.async {
             self.objectWillChange.send()
+            self.analyticsDidUpdate.send(exerciseId)
         }
     }
     
@@ -124,6 +133,7 @@ class AnalyticsViewModel: ObservableObject {
         
         DispatchQueue.main.async {
             self.objectWillChange.send()
+            self.analyticsDidUpdate.send(exerciseId)
         }
     }
     
@@ -161,6 +171,7 @@ class AnalyticsViewModel: ObservableObject {
         
         DispatchQueue.main.async {
             self.objectWillChange.send()
+            self.analyticsDidUpdate.send(exerciseId)
         }
     }
 }
@@ -185,15 +196,12 @@ extension AnalyticsViewModel {
         return formatter.string(from: Date()).capitalized
     }
     
-    func weightIncreasesInCurrentMonth(for exerciseId: UUID) -> Int {
+    func totalWeightIncreases(for exerciseId: UUID) -> Int {
         let calendar = Calendar.current
         let entries = loadAnalytics(for: exerciseId)
+            .sorted(by: { $0.date < $1.date })
         
-        let currentMonthEntries = entries
-            .filter { calendar.isDate($0.date, equalTo: Date(), toGranularity: .month) }
-            .sorted(by: { $0.date < $1.date }) // chronologisch sortieren
-        
-        let dailyWeights: [(date: Date, weight: Double)] = currentMonthEntries.compactMap { entry in
+        let dailyWeights: [(date: Date, weight: Double)] = entries.compactMap { entry in
             guard let weight = entry.setProgress.first?.weight else { return nil }
             let day = calendar.startOfDay(for: entry.date)
             return (date: day, weight: weight)
@@ -291,15 +299,12 @@ extension AnalyticsViewModel {
         return mostCommonPattern
     }
     
-    func getWeightProgressionMilestones(for exerciseId: UUID) -> [(date: Date, weight: Double)] {
+    func getDailyWeightProgression(for exerciseId: UUID) -> [(date: Date, weight: Double)] {
         let calendar = Calendar.current
-        let entries = loadAnalytics(for: exerciseId)
-        
-        let currentMonthEntries = entries
-            .filter { calendar.isDate($0.date, equalTo: Date(), toGranularity: .month) }
+        let sortedEntries = loadAnalytics(for: exerciseId)
             .sorted(by: { $0.date < $1.date })
         
-        let dailyWeights: [(date: Date, weight: Double)] = currentMonthEntries.compactMap { entry in
+        let dailyWeights: [(date: Date, weight: Double)] = sortedEntries.compactMap { entry in
             guard let weight = entry.setProgress.first?.weight else { return nil }
             let day = calendar.startOfDay(for: entry.date)
             return (date: day, weight: weight)
@@ -312,39 +317,22 @@ extension AnalyticsViewModel {
             }
             .sorted(by: { $0.date < $1.date })
         
-        // Return only the weight progression milestones (when weight actually increased)
-        var milestones: [(date: Date, weight: Double)] = []
-        var lastWeight: Double? = nil
-        
-        for (date, weight) in maxWeightPerDay {
-            if let previous = lastWeight {
-                if weight > previous {
-                    milestones.append((date: date, weight: weight))
-                }
-            } else {
-                // First entry is always a milestone
-                milestones.append((date: date, weight: weight))
-            }
-            lastWeight = weight
-        }
-        
-        return milestones
+        return maxWeightPerDay
     }
     
     func updateExerciseGoal(exercise: inout Exercise, newGoal: Double?) {
         exercise.goal = newGoal
-        // Note: The caller should save the exercise using their storage service
+        let id = exercise.id
         DispatchQueue.main.async {
             self.objectWillChange.send()
+            self.analyticsDidUpdate.send(id)
         }
     }
     
     func setGoal(for exerciseId: UUID, goal: String) {
-        // This is a simplified implementation
-        // In a real app, you'd need access to the exercise storage service
-        // For now, we'll just trigger a UI update
         DispatchQueue.main.async {
             self.objectWillChange.send()
+            self.analyticsDidUpdate.send(exerciseId)
         }
     }
     
@@ -373,7 +361,8 @@ extension AnalyticsViewModel {
             let maxWeight = allSets.map(\.weight).max() ?? 0
             let setsAtWeight = allSets.filter { $0.weight == maxWeight }
             let totalReps = setsAtWeight.reduce(0) { $0 + $1.currentReps }
-            let setsReps = "\(setsAtWeight.count)×\(setsAtWeight.first?.currentReps ?? 0)"
+            let minReps = setsAtWeight.map(\.currentReps).min() ?? 0
+            let setsReps = "\(setsAtWeight.count)×\(minReps)"
             return DaySession(date: day, weight: maxWeight, setsReps: setsReps, totalReps: totalReps)
         }
         .sorted(by: { $0.date < $1.date })
