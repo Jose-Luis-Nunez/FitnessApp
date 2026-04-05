@@ -3,8 +3,11 @@ import SwiftUI
 enum AppStyle {
     enum Padding {
         static let horizontal: CGFloat = 18
-        static let vertical: CGFloat = 12
         static let card: CGFloat = 16
+        static let titleTop: CGFloat = 8
+        static let titleBottom: CGFloat = 12
+        static let activeCardIconOverflow: CGFloat = 20
+        static let titleBottomBeforeActiveCard: CGFloat = titleBottom - activeCardIconOverflow
     }
     enum Layout {
         static let cardHorizontalPadding: CGFloat = 16

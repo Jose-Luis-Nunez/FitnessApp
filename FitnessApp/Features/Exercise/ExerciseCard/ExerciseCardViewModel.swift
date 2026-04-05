@@ -16,6 +16,7 @@ final class ExerciseCardViewModel: ObservableObject {
     
     func updateSeat(_ newSeat: String) {
         exercise.seatSetting = newSeat
+        exercise.noSeats = false
         onUpdate(exercise)
     }
 

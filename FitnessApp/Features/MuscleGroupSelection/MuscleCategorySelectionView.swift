@@ -117,37 +117,44 @@ struct MuscleCategorySelectionView: View {
             .zIndex(2)
             
             VStack(spacing: 0) {
+                WorkoutDropdownView(viewModel: viewModel)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, AppStyle.Padding.horizontal)
+                    .padding(.top, AppStyle.Padding.titleTop)
+                    .padding(.bottom, AppStyle.Padding.titleBottom)
+
                 ScrollView {
-                    GeometryReader { geometry in
-                        Color.clear.preference(
-                            key: ScrollOffsetPreferenceKey.self,
-                            value: geometry.frame(in: .named("scroll")).minY
-                        )
-                    }
-                    .frame(height: 0)
-                    .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
-                        if offset < 0 {
-                            let scrollDelta = offset - lastScrollOffset
-                            
-                            if abs(scrollDelta) > 10 {
-                                withAnimation(.easeInOut(duration: 0.25)) {
-                                    if scrollDelta < 0 {
-                                        isFilterBarVisible = false
-                                    } else {
+                    VStack(spacing: 0) {
+                        GeometryReader { geometry in
+                            Color.clear.preference(
+                                key: ScrollOffsetPreferenceKey.self,
+                                value: geometry.frame(in: .named("scroll")).minY
+                            )
+                        }
+                        .frame(height: 0)
+                        .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
+                            if offset < 0 {
+                                let scrollDelta = offset - lastScrollOffset
+                                
+                                if abs(scrollDelta) > 10 {
+                                    withAnimation(.easeInOut(duration: 0.25)) {
+                                        if scrollDelta < 0 {
+                                            isFilterBarVisible = false
+                                        } else {
+                                            isFilterBarVisible = true
+                                        }
+                                    }
+                                    lastScrollOffset = offset
+                                }
+                            } else {
+                                if !isFilterBarVisible {
+                                    withAnimation(.easeInOut(duration: 0.25)) {
                                         isFilterBarVisible = true
                                     }
                                 }
                                 lastScrollOffset = offset
                             }
-                        } else {
-                            if !isFilterBarVisible {
-                                withAnimation(.easeInOut(duration: 0.25)) {
-                                    isFilterBarVisible = true
-                                }
-                            }
-                            lastScrollOffset = offset
                         }
-                    }
                     
                     if currentViewMode == .overview {
                         LazyVGrid(
@@ -157,7 +164,6 @@ struct MuscleCategorySelectionView: View {
                             categoryList
                         }
                         .padding(.horizontal, Constants.horizontalPadding)
-                        .padding(.top, 16)
                     } else {
                         let isActiveSetVisible = trainingCoordinator.isTrainingActive
                         
@@ -201,7 +207,6 @@ struct MuscleCategorySelectionView: View {
                                         analyticsViewModel: AnalyticsViewModel()
                                     )
                                 }
-                                .padding(.top, 16)
                             }
                         } else {
                             if trainingCoordinator.isTrainingActive && trainingCoordinator.currentExercise != nil {
@@ -209,17 +214,16 @@ struct MuscleCategorySelectionView: View {
                                     activeTrainingOnlyList
                                 }
                                 .padding(.horizontal, 0)
-                                .padding(.top, 16)
                             } else {
                                 LazyVStack(spacing: Constants.CategoryTile.verticalSpacing) {
                                     allExercisesList
                                 }
                                 .padding(.horizontal, 0)
-                                .padding(.top, 16)
                             }
                         }
                     }
                     Spacer(minLength: safeAreaInset + 24)
+                    }
                 }
                 .coordinateSpace(name: "scroll")
             }
@@ -319,14 +323,9 @@ struct MuscleCategorySelectionView: View {
         }
         .background(AppStyle.Color.backgroundColor)
         .id("picker-\(trainingCoordinator.activeSetViewModel.isEditing)")
-        .modifier(
-            CustomToolbarModifier(
-                navigationPath: $navigationPath,
-                customTitleView: AnyView(WorkoutDropdownView(viewModel: viewModel)),
-                showBackButton: false
-            )
-        )
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .navigationBarHidden(true)
         .onAppear {
             viewModel.updateExerciseCounts()
         }

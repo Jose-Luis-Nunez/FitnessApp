@@ -15,6 +15,7 @@ class ExerciseFormViewModel: ObservableObject {
     @Published var reps: Int = 1
     @Published var sets: Int = 1
     @Published var seat: String = ""
+    @Published var noSeats: Bool = false
     @Published var editingExercise: Exercise?
     @Published var selectedIconName: String = ""
     @Published var selectedCategory: MuscleCategoryGroup = .arms
@@ -29,6 +30,7 @@ class ExerciseFormViewModel: ObservableObject {
         reps = 1
         sets = 1
         seat = ""
+        noSeats = false
         editingExercise = nil
         editMode = .full
         showForm = false
@@ -56,6 +58,7 @@ class ExerciseFormViewModel: ObservableObject {
                 reps: reps,
                 sets: sets,
                 seatSetting: seat.isEmpty ? nil : seat,
+                noSeats: noSeats,
                 isCompleted: existingExercise.isCompleted,
                 iconName: icon,
                 category: selectedCategory
@@ -67,9 +70,9 @@ class ExerciseFormViewModel: ObservableObject {
                 reps: reps,
                 sets: sets,
                 seatSetting: seat.isEmpty ? nil : seat,
+                noSeats: noSeats,
                 iconName: icon,
                 category: selectedCategory
-                
             )
         }
     }
@@ -82,6 +85,7 @@ class ExerciseFormViewModel: ObservableObject {
             reps = exercise.reps
             sets = exercise.sets
             seat = exercise.seatSetting ?? ""
+            noSeats = exercise.noSeats
             let validIcons = category.availableIcons
             if validIcons.contains(exercise.iconName) {
                 selectedIconName = exercise.iconName

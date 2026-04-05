@@ -66,7 +66,13 @@ struct TrainingView: View {
             // Only show content if training is active
             if trainingCoordinator.isTrainingActive {
                 VStack(spacing: 0) {
-                    Spacer().frame(height: 16)
+                    Text(exercise.name)
+                        .font(AppStyle.Font.navigationHeadline)
+                        .foregroundColor(AppStyle.Color.white)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, AppStyle.Padding.horizontal)
+                        .padding(.top, AppStyle.Padding.titleTop)
+                        .padding(.bottom, AppStyle.Padding.titleBottomBeforeActiveCard)
                     
                     ScrollView {
                         LazyVStack(spacing: 16) {
@@ -200,9 +206,9 @@ struct TrainingView: View {
                 .zIndex(4)
             }
         }
-        .customToolbar(title: exercise.name, navigationPath: $navigationPath, showBackButton: false)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
+        .navigationBarHidden(true)
         .onAppear {
             // Start training automatically when view appears
             // Always use .categoryView as start source since we're in dedicated TrainingView

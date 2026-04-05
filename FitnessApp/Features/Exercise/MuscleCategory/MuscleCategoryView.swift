@@ -58,7 +58,14 @@ struct MuscleCategoryView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                Spacer().frame(height: 16)
+                Text(group.displayName)
+                    .font(AppStyle.Font.navigationHeadline)
+                    .foregroundColor(AppStyle.Color.white)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, AppStyle.Padding.horizontal)
+                    .padding(.top, AppStyle.Padding.titleTop)
+                    .padding(.bottom, AppStyle.Padding.titleBottom)
+
                 ScrollView {
                     LazyVStack(spacing: 4) {
                         exerciseListSection
@@ -107,8 +114,9 @@ struct MuscleCategoryView: View {
                     .onDisappear { overlayState.isEditingSheetVisible = false }
             }
         }
-        .customToolbar(title: group.displayName, navigationPath: $navigationPath, showBackButton: false)
+        .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
+        .navigationBarHidden(true)
         .onAppear {
             // Refresh exercises when view appears (e.g., returning from TrainingView)
             viewModel.refreshExercises()

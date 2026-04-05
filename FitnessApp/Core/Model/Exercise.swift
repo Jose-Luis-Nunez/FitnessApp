@@ -8,6 +8,7 @@ struct Exercise: Identifiable, Codable, Equatable, Hashable {
     var reps: Int
     var sets: Int
     var seatSetting: String?
+    var noSeats: Bool
     var isCompleted: Bool
     var iconName: String
     var category: MuscleCategoryGroup
@@ -22,6 +23,7 @@ struct Exercise: Identifiable, Codable, Equatable, Hashable {
         reps = try container.decode(Int.self, forKey: .reps)
         sets = try container.decode(Int.self, forKey: .sets)
         seatSetting = try container.decodeIfPresent(String.self, forKey: .seatSetting)
+        noSeats = try container.decodeIfPresent(Bool.self, forKey: .noSeats) ?? false
         isCompleted = try container.decodeIfPresent(Bool.self, forKey: .isCompleted) ?? false
         goal = try container.decodeIfPresent(Double.self, forKey: .goal)
         
@@ -45,6 +47,7 @@ struct Exercise: Identifiable, Codable, Equatable, Hashable {
         reps: Int,
         sets: Int,
         seatSetting: String? = nil,
+        noSeats: Bool = false,
         isCompleted: Bool = false,
         iconName: String,
         category: MuscleCategoryGroup,
@@ -56,6 +59,7 @@ struct Exercise: Identifiable, Codable, Equatable, Hashable {
         self.reps = reps
         self.sets = sets
         self.seatSetting = seatSetting
+        self.noSeats = noSeats
         self.isCompleted = isCompleted
         self.iconName = iconName
         self.category = category

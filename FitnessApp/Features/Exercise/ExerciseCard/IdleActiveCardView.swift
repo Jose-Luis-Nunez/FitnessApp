@@ -126,7 +126,7 @@ private extension IdleActiveCardView {
                             if isEditable { onEdit(viewModel.exercise, .weight) }
                         }
                 } else {
-                    Text("\(viewModel.exercise.sets)x\(viewModel.exercise.reps)")
+                    Text("\(viewModel.exercise.sets) x \(viewModel.exercise.reps)")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white.opacity(0.7))
                         .fixedSize()
@@ -137,9 +137,9 @@ private extension IdleActiveCardView {
                         }
                 }
 
-                if let seatSetting = viewModel.exercise.seatSetting {
+                if !viewModel.exercise.noSeats {
                     HStack(spacing: 4) {
-                        Text(seatSetting)
+                        Text(viewModel.displaySeatText)
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(.white.opacity(0.7))
                             .lineLimit(1)

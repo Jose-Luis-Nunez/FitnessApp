@@ -305,7 +305,7 @@ struct ExercisePickerView: View {
             let w = formViewModel.weight
             if w != floor(w) { showDecimal = true }
             if editingExercise != nil {
-                if formViewModel.seat.isEmpty { noSeats = true }
+                noSeats = formViewModel.noSeats
                 if w == 0 { noWeight = true }
             }
             if editingExercise == nil {
@@ -322,6 +322,7 @@ struct ExercisePickerView: View {
             if !newValue { isContentVisible = false }
         }
         .onChange(of: noSeats) { isNoSeats in
+            formViewModel.noSeats = isNoSeats
             if isNoSeats {
                 seatPart1 = ""
                 seatPart2 = ""

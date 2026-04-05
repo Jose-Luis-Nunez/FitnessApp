@@ -47,10 +47,21 @@ struct ActiveCardView: View {
         }
     }
     
+    private var iconOverflow: CGFloat { AppStyle.Padding.activeCardIconOverflow }
+
     var body: some View {
-        CardBackground(useGlassEffect: true, addPadding: true) {
-            cardContentView
+        ZStack(alignment: .trailing) {
+            CardBackground(useGlassEffect: true, addPadding: false) {
+                cardContentView
+                    .padding(.horizontal, AppStyle.Padding.card)
+                    .padding(.vertical, 12)
+            }
+
+            exerciseIconSection
+                .offset(y: -iconOverflow)
+                .padding(.trailing, AppStyle.Padding.card)
         }
+        .padding(.top, iconOverflow)
         .padding(.horizontal, AppStyle.Padding.card)
         .sheet(isPresented: $isShowingAnalytics) {
             AnalyticsView(exercise: viewModel.exercise, viewModel: analyticsViewModel)
@@ -75,11 +86,9 @@ struct ActiveCardView: View {
             exerciseInfoSection(availableWidth: availableWidth, dynamicSpacing: dynamicSpacing)
             
             Spacer()
-                .frame(maxWidth: analyticsToIconSpacing)
-            
-            exerciseIconSection
+                .frame(width: iconContainerWidth + analyticsToIconSpacing)
         }
-        .frame(height: 100)
+        .frame(height: 80)
         
         // Pro Max: Limit content width and center it
         if isProMax {
@@ -97,17 +106,7 @@ struct ActiveCardView: View {
     }
     
     private func exerciseInfoSection(availableWidth: CGFloat, dynamicSpacing: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            exerciseTitle
-            exerciseChipsSection(availableWidth: availableWidth, dynamicSpacing: dynamicSpacing)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    
-    private var exerciseTitle: some View {
-        Text(viewModel.exercise.name)
-            .font(AppStyle.Font.cardHeadline)
-            .foregroundColor(.white)
+        exerciseChipsSection(availableWidth: availableWidth, dynamicSpacing: dynamicSpacing)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
     

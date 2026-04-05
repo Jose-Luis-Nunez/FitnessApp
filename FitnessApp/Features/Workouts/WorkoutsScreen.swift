@@ -3,8 +3,8 @@ import SwiftUI
 private enum Constants {
     static let horizontalPadding: CGFloat = 15
     static let verticalSpacing: CGFloat = 12
-    static let titleTopPadding: CGFloat = 0
-    static let titleBottomSpacing: CGFloat = 20
+    static let titleTopPadding: CGFloat = AppStyle.Padding.titleTop
+    static let titleBottomSpacing: CGFloat = AppStyle.Padding.titleBottom
     static let topPadding: CGFloat = 1
     
     enum WorkoutTile {
@@ -95,9 +95,9 @@ struct WorkoutsScreen: View {
     
     private var mainContent: some View {
         VStack(spacing: 0) {
+            headerView
             ScrollView {
                 LazyVStack(spacing: Constants.verticalSpacing) {
-                    headerView
                     workoutsGrid
                 }
                 .padding(.horizontal, Constants.horizontalPadding)
@@ -111,9 +111,10 @@ struct WorkoutsScreen: View {
         Text("Meine Workouts")
             .font(AppStyle.Font.navigationHeadline)
             .foregroundColor(AppStyle.Color.white)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, Constants.horizontalPadding)
             .padding(.top, Constants.titleTopPadding)
             .padding(.bottom, Constants.titleBottomSpacing)
-            .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     private var workoutsGrid: some View {
