@@ -139,43 +139,6 @@ class AnalyticsViewModel: ObservableObject {
         }
     }
     
-    func updateSetInEntry(
-        exerciseId: UUID,
-        entryId: UUID,
-        setIndex: Int,
-        newSetProgress: SetProgress
-    ) {
-        var existingEntries = storageService.load(for: exerciseId)
-        
-        guard let entryIndex = existingEntries.firstIndex(where: { $0.id == entryId }) else {
-            print("Entry not found for update")
-            return
-        }
-        
-        let entry = existingEntries[entryIndex]
-        guard setIndex < entry.setProgress.count else {
-            print("Set index out of bounds")
-            return
-        }
-        
-        var updatedSetProgress = entry.setProgress
-        updatedSetProgress[setIndex] = newSetProgress
-        
-        let updatedEntry = AnalyticsEntry(
-            id: entry.id,
-            exerciseId: entry.exerciseId,
-            date: entry.date,
-            setProgress: updatedSetProgress
-        )
-        
-        existingEntries[entryIndex] = updatedEntry
-        storageService.save(existingEntries, for: exerciseId)
-        
-        DispatchQueue.main.async {
-            self.objectWillChange.send()
-            self.analyticsDidUpdate.send(exerciseId)
-        }
-    }
 }
 
 extension AnalyticsViewModel {
@@ -203,16 +166,10 @@ extension AnalyticsViewModel {
         let entries = loadAnalytics(for: exerciseId)
             .sorted(by: { $0.date < $1.date })
         
-        let dailyWeights: [(date: Date, weight: Double)] = entries.compactMap { entry in
-            guard let weight = entry.setProgress.first?.weight else { return nil }
-            let day = calendar.startOfDay(for: entry.date)
-            return (date: day, weight: weight)
-        }
-        
-        let maxWeightPerDay: [(date: Date, weight: Double)] = Dictionary(grouping: dailyWeights, by: { $0.date })
-            .compactMap { (date, values) in
-                let maxWeight = values.map(\.weight).max() ?? 0.0
-                return (date, maxWeight)
+        let maxWeightPerDay: [(date: Date, weight: Double)] = Dictionary(grouping: entries, by: { calendar.startOfDay(for: $0.date) })
+            .compactMap { (date, dayEntries) in
+                let maxWeight = dayEntries.flatMap { $0.setProgress.map(\.weight) }.max() ?? 0.0
+                return maxWeight > 0 ? (date, maxWeight) : nil
             }
             .sorted(by: { $0.date < $1.date })
         
@@ -303,39 +260,16 @@ extension AnalyticsViewModel {
     
     func getDailyWeightProgression(for exerciseId: UUID) -> [DailyProgression] {
         let calendar = Calendar.current
-        let sortedEntries = loadAnalytics(for: exerciseId)
-            .sorted(by: { $0.date < $1.date })
+        let entries = loadAnalytics(for: exerciseId)
         
-        let dailyWeights: [DailyProgression] = sortedEntries.compactMap { entry in
-            guard let weight = entry.setProgress.first?.weight else { return nil }
-            let day = calendar.startOfDay(for: entry.date)
-            return (date: day, value: weight)
-        }
-        
-        let maxWeightPerDay: [DailyProgression] = Dictionary(grouping: dailyWeights, by: { $0.date })
-            .compactMap { (date, values) in
-                let maxWeight = values.map(\.value).max() ?? 0.0
-                return (date: date, value: maxWeight)
+        let maxWeightPerDay: [DailyProgression] = Dictionary(grouping: entries, by: { calendar.startOfDay(for: $0.date) })
+            .compactMap { (date, dayEntries) in
+                let maxWeight = dayEntries.flatMap { $0.setProgress.map(\.weight) }.max() ?? 0.0
+                return maxWeight > 0 ? (date: date, value: maxWeight) : nil
             }
             .sorted(by: { $0.date < $1.date })
         
         return maxWeightPerDay
-    }
-    
-    func updateExerciseGoal(exercise: inout Exercise, newGoal: Double?) {
-        exercise.goal = newGoal
-        let id = exercise.id
-        DispatchQueue.main.async {
-            self.objectWillChange.send()
-            self.analyticsDidUpdate.send(id)
-        }
-    }
-    
-    func setGoal(for exerciseId: UUID, goal: String) {
-        DispatchQueue.main.async {
-            self.objectWillChange.send()
-            self.analyticsDidUpdate.send(exerciseId)
-        }
     }
     
     func lastTrainingDate(for exerciseId: UUID) -> Date? {

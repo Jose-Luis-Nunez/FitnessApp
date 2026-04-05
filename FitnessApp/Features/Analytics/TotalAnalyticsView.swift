@@ -7,8 +7,6 @@ struct AnalyticsTileData: Identifiable {
     let type: TileType
     let value: String
     let label: String
-    let icon: String?
-    let iconColor: Color
     
     enum TileType {
         case number
@@ -142,51 +140,37 @@ struct TotalAnalyticsView: View {
             AnalyticsTileData(
                 type: .number,
                 value: "\(viewModel.totalWorkoutDaysInCurrentMonth())",
-                label: "Training \(viewModel.currentMonthName())",
-                icon: nil,
-                iconColor: .clear
+                label: "Training \(viewModel.currentMonthName())"
             ),
             AnalyticsTileData(
                 type: .number,
                 value: "\(viewModel.totalWorkoutDaysInYear())",
-                label: "Training 2025",
-                icon: nil,
-                iconColor: .clear
+                label: "Training 2025"
             ),
             AnalyticsTileData(
                 type: .number,
                 value: "\(completionRate.percentage)%",
-                label: "Last Workout Completion",
-                icon: nil,
-                iconColor: .clear
+                label: "Last Workout Completion"
             ),
             AnalyticsTileData(
                 type: .text,
                 value: "\(viewModel.getTrainingRhythm())",
-                label: "Training Rhythm",
-                icon: nil,
-                iconColor: .clear
+                label: "Training Rhythm"
             ),
             AnalyticsTileData(
                 type: .text,
                 value: "\(mostTrained.category.displayName)",
-                label: "Category with most exercise",
-                icon: nil,
-                iconColor: .clear
+                label: "Category with most exercise"
             ),
             AnalyticsTileData(
                 type: .text,
                 value: "\(leastTrained.category.displayName)",
-                label: "Category with least exercise",
-                icon: nil,
-                iconColor: .clear
+                label: "Category with least exercise"
             ),
             AnalyticsTileData(
                 type: .text,
                 value: "\(mostImproved.category.displayName)",
-                label: "Category with most Improvements",
-                icon: nil,
-                iconColor: .clear
+                label: "Category with most Improvements"
             )
         ]
     }
@@ -213,16 +197,12 @@ struct TotalAnalyticsView: View {
             case .number:
                 AnalyticsTileNumberView(
                     number: tile.value,
-                    label: tile.label,
-                    icon: tile.icon,
-                    iconColor: tile.iconColor
+                    label: tile.label
                 )
             case .text:
                 AnalyticsTileTextView(
                     text: tile.value,
-                    label: tile.label,
-                    icon: tile.icon,
-                    iconColor: tile.iconColor
+                    label: tile.label
                 )
             }
         }

@@ -1,29 +1,16 @@
 import SwiftUI
 
-struct ViewHeightKey: PreferenceKey {
-    static var defaultValue: CGFloat { 0 }
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
-    }
-}
-
 struct AnalyticsView: View {
     @State private var exercise: Exercise
     @ObservedObject var viewModel: AnalyticsViewModel
     private let initialReps: Int
     @State private var selectedDate: Date
-    @State private var originalDate: Date
-    @State private var tempDate: Date
     @State private var showCalendarDialog: Bool = false
 
-    @State private var milestoneHeight: CGFloat = 0
-    @State private var datesWithData: Set<Date> = []
     @State private var showAddDataSheet: Bool = false
     @State private var editingEntry: AnalyticsEntry?
     @State private var showGoalSheet: Bool = false
     @State private var tempGoal: String = ""
-    
-    private let paddingAmount: CGFloat = 16
     
     init(exercise: Exercise, viewModel: AnalyticsViewModel, initialDate: Date = Date()) {
         let storageService = ExerciseStorageService()
@@ -36,8 +23,6 @@ struct AnalyticsView: View {
         self.viewModel = viewModel
         self.initialReps = latestExercise.reps
         self._selectedDate = State(initialValue: initialDate)
-        self._originalDate = State(initialValue: initialDate)
-        self._tempDate = State(initialValue: initialDate)
     }
     
     var body: some View {
@@ -57,49 +42,28 @@ struct AnalyticsView: View {
 
     }
     
-    private var trainingDates: Set<Date> {
-        let allEntries = viewModel.loadAnalytics(for: exercise.id)
-        let calendar = Calendar.current
-        return Set(allEntries.map { calendar.startOfDay(for: $0.date) })
-    }
-    
     private func mainContent(geometry: GeometryProxy) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 headerView
                 
-                // Progress Chart - always shown
                 progressChartView
                     .padding(.horizontal, AppStyle.Padding.horizontal)
                     .padding(.vertical, 12)
                 
                 weightMilestoneView
-                    .background(
-                        GeometryReader { proxy in
-                            Color.clear
-                                .preference(key: ViewHeightKey.self, value: proxy.size.height)
-                        }
-                    )
                 resultsView
                 Spacer()
             }
             .frame(minHeight: geometry.size.height)
-            .onPreferenceChange(ViewHeightKey.self) { height in
-                milestoneHeight = height
-            }
         }
         .background(AppStyle.Color.backgroundColor)
         .presentationDragIndicator(.visible)
-        .onAppear {
-            originalDate = selectedDate
-            datesWithData = viewModel.allDatesWithData(for: exercise.id)
-        }
     }
     
     private var progressChartView: some View {
         VStack(spacing: 8) {
             hillChartView
-            chartLabelsView
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 12)
@@ -129,7 +93,7 @@ struct AnalyticsView: View {
                     milestonesView(geometry: geometry)
                 }
             }
-            .frame(height: 90)
+            .frame(height: 105)
             HStack {
                 Spacer()
                 Text("Date")
@@ -152,12 +116,8 @@ struct AnalyticsView: View {
         let milestones = exercise.hasWeight
             ? viewModel.getDailyWeightProgression(for: exercise.id)
             : viewModel.getDailyRepsProgression(for: exercise.id)
-        let currentValue: Double = exercise.hasWeight
-            ? (viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight)
-            : Double(viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.currentReps ?? exercise.reps)
         return ProgressChartCalculator.calculateDynamicMilestones(
             milestones: milestones,
-            currentWeight: currentValue,
             geometry: geometry
         )
     }
@@ -209,7 +169,7 @@ struct AnalyticsView: View {
         return ZStack {
             Path { path in
                 path.move(to: CGPoint(x: point.xPosition, y: point.yPosition + 8))
-                path.addLine(to: CGPoint(x: point.xPosition, y: geometry.size.height))
+                path.addLine(to: CGPoint(x: point.xPosition, y: geometry.size.height - 12))
             }
             .stroke(AppStyle.Color.greenGlow.opacity(point.isCurrentWeight ? 0.8 : 0.4),
                    style: StrokeStyle(lineWidth: point.isCurrentWeight ? 2 : 1, dash: [4, 4]))
@@ -229,14 +189,11 @@ struct AnalyticsView: View {
                 Text(Self.chartDateFormatter.string(from: date))
                     .font(.system(size: 9, weight: .medium))
                     .foregroundColor(.white.opacity(0.5))
-                    .position(x: point.xPosition, y: geometry.size.height - 2)
+                    .position(x: point.xPosition, y: geometry.size.height + 2)
             }
         }
     }
     
-    private var chartLabelsView: some View {
-        EmptyView()
-    }
     
     private var headerView: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -273,69 +230,63 @@ struct AnalyticsView: View {
         .padding(.bottom, 10)
     }
     
+    @ViewBuilder
     private var resultsView: some View {
         let entries = viewModel.loadAnalytics(for: exercise.id, on: selectedDate)
         
         if entries.isEmpty {
-            return AnyView(
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("No data available")
-                        .font(AppStyle.Font.defaultFont)
-                        .foregroundColor(AppStyle.Color.white)
-                        .padding(.horizontal, AppStyle.Padding.horizontal)
-                    
-                    HStack(alignment: .top, spacing: 8) {
-                        // Add data button spanning width of 2 tiles
-                        Button(action: {
-                            showAddDataSheet = true
-                        }) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "plus.circle.fill")
-                                    .font(.system(size: 22, weight: .bold))
-                                Text("Add data")
-                                    .font(.body)
-                                    .fontWeight(.bold)
-                            }
-                            .foregroundColor(AppStyle.Color.greenGlow)
-                            .padding(.vertical, 12)
-                            .padding(.horizontal, 16)
-                            .frame(height: 75)
-                            .frame(maxWidth: .infinity)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color.white.opacity(0.06))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 16)
-                                            .stroke(Color.white.opacity(0.15), lineWidth: 1)
-                                    )
-                            )
-                        }
-                        
-                        // Match the spacing of the tiles above (2 empty tile spaces)
-                        Spacer()
-                            .frame(maxWidth: .infinity)
-                        Spacer()
-                            .frame(maxWidth: .infinity)
-                    }
+            VStack(alignment: .leading, spacing: 12) {
+                Text("No data available")
+                    .font(AppStyle.Font.defaultFont)
+                    .foregroundColor(AppStyle.Color.white)
                     .padding(.horizontal, AppStyle.Padding.horizontal)
-                }
-            )
-        }
-        else {
-            return AnyView(
-                VStack(alignment: .leading, spacing: 11) {
-                    ForEach(entries.reversed()) { entry in
-                        Text("Results today")
-                            .font(AppStyle.Font.analyticsExerciseData)
-                            .foregroundColor(AppStyle.Color.white)
-                            .padding(.horizontal, AppStyle.Padding.horizontal)
-                        entryView(entry)
+                
+                HStack(alignment: .top, spacing: 8) {
+                    Button(action: {
+                        showAddDataSheet = true
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 22, weight: .bold))
+                            Text("Add data")
+                                .font(.body)
+                                .fontWeight(.bold)
+                        }
+                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 16)
+                        .frame(height: 75)
+                        .frame(maxWidth: .infinity)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color.white.opacity(0.06))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                                )
+                        )
                     }
+                    
+                    Spacer()
+                        .frame(maxWidth: .infinity)
+                    Spacer()
+                        .frame(maxWidth: .infinity)
                 }
-                    .padding(.vertical, 10)
-                    .padding(.top, 5)
-                    .background(AppStyle.Color.backgroundColor)
-            )
+                .padding(.horizontal, AppStyle.Padding.horizontal)
+            }
+        } else {
+            VStack(alignment: .leading, spacing: 11) {
+                Text("Results today")
+                    .font(AppStyle.Font.analyticsExerciseData)
+                    .foregroundColor(AppStyle.Color.white)
+                    .padding(.horizontal, AppStyle.Padding.horizontal)
+                ForEach(entries.reversed()) { entry in
+                    entryView(entry)
+                }
+            }
+            .padding(.vertical, 10)
+            .padding(.top, 5)
+            .background(AppStyle.Color.backgroundColor)
         }
     }
     
@@ -382,7 +333,6 @@ struct AnalyticsView: View {
                     .foregroundColor(AppStyle.Color.greenGlow)
                 
                 Text("kg")
-                    .font(AppStyle.Font.analyticsExerciseData)
                     .font(.system(size: 35))
                     .foregroundColor(AppStyle.Color.green)
             }
@@ -440,7 +390,6 @@ struct AnalyticsView: View {
                                 )
                                 showAddDataSheet = false
                                 editingEntry = nil
-                                datesWithData = viewModel.allDatesWithData(for: exercise.id)
                             },
                             onCancel: {
                                 showAddDataSheet = false
@@ -589,7 +538,6 @@ struct AnalyticsView: View {
     }
     
     private func saveGoal() {
-        // Update the goal value
         if tempGoal.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             exercise.goal = nil
         } else if let goalValue = Double(tempGoal.replacingOccurrences(of: ",", with: ".")) {
@@ -609,12 +557,6 @@ struct AnalyticsView: View {
         
         showGoalSheet = false
     }
-    
-
-    
-
-    
-
     
     private func formatGoalForInput(_ goal: Double) -> String {
         return WeightFormatter.formatGoalForInput(goal)
@@ -668,53 +610,35 @@ struct AnalyticsView: View {
                     number: exercise.hasWeight
                         ? "\(viewModel.totalWeightIncreases(for: exercise.id))"
                         : "\(viewModel.totalRepsIncreases(for: exercise.id))",
-                    label: exercise.hasWeight ? "Weight increase" : "Reps increase",
-                    icon: nil,
-                    iconColor: .clear
+                    label: exercise.hasWeight ? "Weight increase" : "Reps increase"
                 )
 
                 AnalyticsTileNumberView(
                     number: "\(viewModel.trainingDaysInCurrentMonth(for: exercise.id))",
-                    label: "Training \(viewModel.currentMonthName())",
-                    icon: nil,
-                    iconColor: .clear
+                    label: "Training \(viewModel.currentMonthName())"
                 )
 
                 AnalyticsTileNumberView(
                     number: exercise.hasWeight
                         ? "\(viewModel.trainingSessionsUntilWeightIncrease(for: exercise.id))"
                         : "\(viewModel.trainingSessionsUntilRepsIncrease(for: exercise.id))",
-                    label: exercise.hasWeight ? "Training to increase kg" : "Training to increase Reps",
-                    icon: nil,
-                    iconColor: .clear
+                    label: exercise.hasWeight ? "Training to increase kg" : "Training to increase Reps"
                 )
 
                 AnalyticsTileNumberView(
                     number: "\(viewModel.loadAnalytics(for: exercise.id).count)",
-                    label: "Total training",
-                    icon: nil,
-                    iconColor: .clear
+                    label: "Total training"
                 )
             }
         }
         .padding(.horizontal, AppStyle.Padding.horizontal)
         .padding(.vertical, 8)
     }
-    
-
-    
-
 }
-
-
-
-
 
 struct AnalyticsTileNumberView: View {
     let number: String
     let label: String
-    let icon: String?
-    let iconColor: Color
     
     var body: some View {
         VStack(spacing: 4) {
@@ -746,8 +670,6 @@ struct AnalyticsTileNumberView: View {
 struct AnalyticsTileTextView: View {
     let text: String
     let label: String
-    let icon: String?
-    let iconColor: Color
     
     var body: some View {
         VStack(spacing: 6) {
@@ -1036,6 +958,3 @@ struct AddAnalyticsEntryView: View {
         }
     }
 }
-
-
-

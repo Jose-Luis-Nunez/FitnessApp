@@ -137,15 +137,13 @@ private extension IdleActiveCardView {
                         }
                 }
 
-                if viewModel.exercise.seatSetting != nil {
+                if let seatSetting = viewModel.exercise.seatSetting {
                     HStack(spacing: 4) {
-                        if let seatSetting = viewModel.exercise.seatSetting {
-                            Text(seatSetting)
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.white.opacity(0.7))
-                                .lineLimit(1)
-                                .fixedSize()
-                        }
+                        Text(seatSetting)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white.opacity(0.7))
+                            .lineLimit(1)
+                            .fixedSize()
 
                         Image("chairSettings")
                             .renderingMode(.template)

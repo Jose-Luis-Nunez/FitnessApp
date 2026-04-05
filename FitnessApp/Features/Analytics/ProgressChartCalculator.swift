@@ -11,16 +11,8 @@ class ProgressChartCalculator {
         let isCurrentWeight: Bool
     }
     
-    struct FrequencyChartPoint {
-        let frequency: Double
-        let xPosition: CGFloat
-        let yPosition: CGFloat
-        let isCurrentFrequency: Bool
-    }
-    
     static func calculateDynamicMilestones(
         milestones: [DailyProgression],
-        currentWeight: Double,
         geometry: GeometryProxy
     ) -> [ChartPoint] {
         guard !milestones.isEmpty else { return [] }
@@ -196,60 +188,4 @@ class ProgressChartCalculator {
         }
     }
     
-    // MARK: - Frequency Chart Calculator
-    
-    static func calculateFrequencyChartPoints(
-        milestones: [(date: Date, frequency: Double)],
-        currentFrequency: Double,
-        geometry: GeometryProxy
-    ) -> [FrequencyChartPoint] {
-        guard !milestones.isEmpty else { return [] }
-        
-        let width = geometry.size.width
-        let height = geometry.size.height
-        let chartTopY = height * 0.25    // 25% from top (more margin)
-        let chartBottomY = height * 0.75  // 75% from top (more margin)
-        let chartRange = chartBottomY - chartTopY
-        
-        // Find min and max frequencies for proper scaling
-        let frequencies = milestones.map { $0.frequency }
-        let minFrequency = frequencies.min() ?? 0
-        let maxFrequency = frequencies.max() ?? minFrequency + 1
-        let frequencyRange = maxFrequency - minFrequency
-        
-        // If all frequencies are the same, use single point
-        if frequencyRange == 0 {
-            let xPos = width * 0.5
-            let yPos = chartTopY + chartRange * 0.5
-            return [FrequencyChartPoint(
-                frequency: minFrequency,
-                xPosition: xPos,
-                yPosition: yPos,
-                isCurrentFrequency: true
-            )]
-        }
-        
-        var chartPoints: [FrequencyChartPoint] = []
-        
-        for (index, milestone) in milestones.enumerated() {
-            // X position: distribute evenly across chart width (15% to 85%)
-            let xProgress = milestones.count > 1 ? CGFloat(index) / CGFloat(milestones.count - 1) : 0.5
-            let xPos = width * (0.15 + xProgress * 0.7)
-            
-            // Y position: map frequency to chart range (inverted: lower frequency = better = higher on chart)
-            let frequencyProgress = (milestone.frequency - minFrequency) / frequencyRange
-            let yPos = chartBottomY - (frequencyProgress * chartRange) // Inverted Y
-            
-            let isCurrentFrequency = (index == milestones.count - 1)
-            
-            chartPoints.append(FrequencyChartPoint(
-                frequency: milestone.frequency,
-                xPosition: xPos,
-                yPosition: yPos,
-                isCurrentFrequency: isCurrentFrequency
-            ))
-        }
-        
-        return chartPoints
-    }
-} 
+}

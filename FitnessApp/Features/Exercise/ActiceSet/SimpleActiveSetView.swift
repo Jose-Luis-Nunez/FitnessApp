@@ -1,12 +1,10 @@
 import SwiftUI
 
 struct SimpleActiveSetView: View {
-    let sets: Int
     let exercise: Exercise
     @Binding var setProgress: [SetProgress]
     @ObservedObject var viewModel: ActiveSetViewModel
     
-    private let backgroundColor = AppStyle.Color.activeSetBackground
     private let iconSize: CGFloat = 26
     
     // Responsive spacing wie in ActiveCardView

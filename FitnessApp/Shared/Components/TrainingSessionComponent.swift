@@ -37,7 +37,6 @@ struct TrainingSessionComponent: View {
                 HStack(alignment: .top, spacing: dynamicSpacing) {
                     // Left side: SimpleActiveSetView - takes priority space
                     SimpleActiveSetView(
-                        sets: exercise.sets,
                         exercise: exercise,
                         setProgress: $coordinator.activeSetViewModel.setProgress,
                         viewModel: coordinator.activeSetViewModel

@@ -34,12 +34,8 @@ struct ActiveCardView: View {
         isProMax ? 108 : 98
     }
     
-    private var chipWidthSmall: CGFloat {
-        isProMax ? 71 : 63
-    }
-    
     private var chipWidthVertical: CGFloat {
-        isProMax ? 71 : 63 // Same as small chips for vertical stacking
+        isProMax ? 71 : 63
     }
     
     private var formattedWeight: String {
