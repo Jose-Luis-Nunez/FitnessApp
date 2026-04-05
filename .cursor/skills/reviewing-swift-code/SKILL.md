@@ -22,6 +22,7 @@ For reviews of large files (500+ lines) or multiple files (2+), use a subagent/T
 1. **Read the file(s)** the user wants reviewed.
 2. **Check each category** below and report violations with line numbers.
 3. **Suggest fixes** using the correct AppStyle token or shared component.
+4. **Fix, don't just mention.** When reviewing your own code (e.g. user asks "ist die Lösung gut?"), do not merely describe known weaknesses — fix them immediately. Mentioning a problem without resolving it wastes a round-trip and forces the user to ask for the fix explicitly.
 
 ## What to Check
 
@@ -56,6 +57,12 @@ Flag code that reimplements existing shared components (see Shared Components ta
 
 - Weight formatting without `WeightFormatter.displayWeight(_:)` (look for `String(format: "%.1f"` + `replacingOccurrences` or manual `"kg"` concatenation)
 - Date logic in analytics without `AnalyticsDateHelper` (look for `Calendar.current`, `DateFormatter` in analytics files)
+
+### Layout Robustness
+
+- Magic number offsets in `.alignmentGuide`, `.offset`, or `.padding` used to visually position elements relative to other containers -> group elements in the same `VStack`/`HStack` instead
+- Short label texts (< 10 chars) without `.fixedSize()` that may line-break on small screens
+- Related UI elements (e.g. icon + chevron) placed in separate containers when they belong in the same row -> move into shared `HStack`
 
 ### MVVM Violations
 

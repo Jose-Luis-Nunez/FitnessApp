@@ -25,3 +25,11 @@ Ask the user: "Soll ich dieses Learning in den Rules/Skills persistieren?"
 If confirmed, use the `reflect-and-learn` skill workflow to apply the change.
 
 Do NOT interrupt the current task to reflect. Complete the fix first, then suggest the learning.
+
+## Self-Review Rule
+
+When the user asks you to evaluate your own implementation ("ist das gut?", "is the solution good?", "review this"):
+
+- Do NOT merely describe known weaknesses or trade-offs — **fix them immediately**.
+- Mentioning a problem without resolving it wastes a round-trip and forces the user to request the fix separately.
+- If you identify a risk (e.g. magic number, fragile alignment, missing `.fixedSize()`), treat it as a finding and apply the fix in the same response.
