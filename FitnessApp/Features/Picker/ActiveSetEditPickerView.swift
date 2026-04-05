@@ -56,7 +56,7 @@ struct ActiveSetEditPickerView: View {
                         Spacer()
                         HStack(spacing: 6) {
                             Text("Decimal")
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(textColor.opacity(0.85))
                             Toggle("", isOn: $showDecimal)
                                 .labelsHidden()

@@ -35,6 +35,8 @@ struct InactiveCardView: View {
                 AppStyle.Color.greenGlow
                     .frame(width: 8)
             }
+            .contentShape(Rectangle())
+            .onTapGesture { isExpanded.toggle() }
         }
         .padding(.horizontal, 16)
         .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 2)
@@ -127,7 +129,7 @@ private extension InactiveCardView {
                     HStack(spacing: spacing) {
                         ForEach(setProgress.indices, id: \.self) { index in
                             let item = setProgress[index]
-                            SetTileView(setNumber: index + 1, weight: item.weight, reps: item.currentReps)
+                            SetTileView(setNumber: index + 1, weight: item.weight, reps: item.currentReps, hasWeight: viewModel.exercise.hasWeight)
                                 .frame(width: tileWidth)
                         }
                     }
@@ -182,6 +184,7 @@ extension InactiveCardView {
         let setNumber: Int
         let weight: Double
         let reps: Int
+        let hasWeight: Bool
         
         private var weightText: String {
             weight == floor(weight)
@@ -195,19 +198,29 @@ extension InactiveCardView {
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(.white.opacity(0.7))
                 
-                HStack(alignment: .firstTextBaseline, spacing: 1) {
-                    Text(weightText)
+                if hasWeight {
+                    HStack(alignment: .firstTextBaseline, spacing: 1) {
+                        Text(weightText)
+                            .font(.system(size: 16, weight: .bold))
+                        Text("kg")
+                            .font(.system(size: 10, weight: .medium))
+                    }
+                    .foregroundColor(AppStyle.Color.greenGlow)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                    
+                    Text("\(reps) reps")
+                        .font(.system(size: 9))
+                        .foregroundColor(.white.opacity(0.7))
+                } else {
+                    Text("\(reps)")
                         .font(.system(size: 16, weight: .bold))
-                    Text("kg")
-                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(AppStyle.Color.greenGlow)
+                    
+                    Text("reps")
+                        .font(.system(size: 9))
+                        .foregroundColor(.white.opacity(0.7))
                 }
-                .foregroundColor(AppStyle.Color.greenGlow)
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
-                
-                Text("\(reps) reps")
-                    .font(.system(size: 9))
-                    .foregroundColor(.white.opacity(0.7))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)

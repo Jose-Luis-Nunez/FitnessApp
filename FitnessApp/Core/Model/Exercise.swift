@@ -72,6 +72,8 @@ struct Exercise: Identifiable, Codable, Equatable, Hashable {
 }
 
 extension Exercise {
+    var hasWeight: Bool { weight > 0 }
+
     var displayIconName: String {
         category.availableIcons.contains(iconName)
         ? iconName

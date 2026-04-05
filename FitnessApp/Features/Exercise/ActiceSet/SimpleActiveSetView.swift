@@ -85,25 +85,27 @@ struct SimpleActiveSetView: View {
             }
             .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.3)
             
-            // Weight Button
-            Button("\(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ",")) kg") {
-                if progress.status != .notStarted && progress.status != .inProgress {
-                    viewModel.startEditingSet(index: index, mode: .edit)
+            if exercise.hasWeight {
+                // Weight Button
+                Button("\(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ",")) kg") {
+                    if progress.status != .notStarted && progress.status != .inProgress {
+                        viewModel.startEditingSet(index: index, mode: .edit)
+                    }
                 }
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(AppStyle.Color.white)
+                .frame(minWidth: UIScreen.main.bounds.width <= 390 ? 50 : 60, minHeight: 24)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color(hex: "#100F15"))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
+                )
+                .buttonStyle(PlainButtonStyle())
+                .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.3)
             }
-            .font(.system(size: 14, weight: .semibold))
-            .foregroundColor(AppStyle.Color.white)
-.frame(minWidth: UIScreen.main.bounds.width <= 390 ? 50 : 60, minHeight: 24)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Color(hex: "#100F15"))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
-            )
-            .buttonStyle(PlainButtonStyle())
-            .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.3)
             
             // Reps Button
             Button(progress.status != .notStarted && progress.status != .inProgress ? "\(progress.currentReps)" : "") {
@@ -111,7 +113,7 @@ struct SimpleActiveSetView: View {
             }
             .font(.system(size: 14, weight: .semibold))
             .foregroundColor(AppStyle.Color.white)
-.frame(minWidth: 35, minHeight: 24)
+            .frame(minWidth: exercise.hasWeight ? 35 : (UIScreen.main.bounds.width <= 390 ? 110 : 120), minHeight: 24)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(Color(hex: "#100F15"))
@@ -170,25 +172,27 @@ struct SimpleActiveSetView: View {
             }
             .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.3)
             
-            // Weight Button
-            Button("\(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ",")) kg") {
-                if progress.status != .notStarted && progress.status != .inProgress {
-                    viewModel.startEditingSet(index: index, mode: .edit)
+            if exercise.hasWeight {
+                // Weight Button
+                Button("\(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ",")) kg") {
+                    if progress.status != .notStarted && progress.status != .inProgress {
+                        viewModel.startEditingSet(index: index, mode: .edit)
+                    }
                 }
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(AppStyle.Color.white)
+                .frame(minWidth: UIScreen.main.bounds.width <= 390 ? 50 : 60, minHeight: 24)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color(hex: "#100F15"))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
+                )
+                .buttonStyle(PlainButtonStyle())
+                .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.3)
             }
-            .font(.system(size: 14, weight: .semibold))
-            .foregroundColor(AppStyle.Color.white)
-.frame(minWidth: UIScreen.main.bounds.width <= 390 ? 50 : 60, minHeight: 24)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Color(hex: "#100F15"))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
-            )
-            .buttonStyle(PlainButtonStyle())
-            .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.3)
             
             // Reps Button
             Button(progress.status != .notStarted && progress.status != .inProgress ? "\(progress.currentReps)" : "") {
@@ -196,7 +200,7 @@ struct SimpleActiveSetView: View {
             }
             .font(.system(size: 14, weight: .semibold))
             .foregroundColor(AppStyle.Color.white)
-.frame(minWidth: 35, minHeight: 24)
+            .frame(minWidth: exercise.hasWeight ? 35 : (UIScreen.main.bounds.width <= 390 ? 110 : 120), minHeight: 24)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(Color(hex: "#100F15"))
@@ -216,8 +220,6 @@ struct SimpleActiveSetView: View {
                 .minimumScaleFactor(0.6)
                 .fixedSize(horizontal: true, vertical: false)
                 .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.3)
-            
-            // Normal Mode hat keine Checkmarks
         }
         .padding(.horizontal, dynamicPadding)
     }

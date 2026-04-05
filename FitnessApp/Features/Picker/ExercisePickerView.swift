@@ -19,6 +19,8 @@ struct ExercisePickerView: View {
     @State private var seatPart2: String = ""
     @State private var isContentVisible: Bool = false
     @State private var showDecimal: Bool = false
+    @State private var noSeats: Bool = false
+    @State private var noWeight: Bool = false
     @State private var validIconOptions: [String] = []
 
     private var filteredWeightOptions: [String] {
@@ -83,16 +85,6 @@ struct ExercisePickerView: View {
                             .padding(.leading, 2)
                     }
 
-                    Spacer()
-
-                    HStack(spacing: 6) {
-                        Text("Decimal")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(textColor.opacity(0.85))
-                        Toggle("", isOn: $showDecimal)
-                            .labelsHidden()
-                            .toggleStyle(CapsuleToggleStyle(onColor: AppStyle.Color.greenGlow, offColor: Color.gray.opacity(0.4)))
-                    }
                 }
                 .padding(.horizontal, AppStyle.Padding.horizontal)
                 .padding(.bottom, 16)
@@ -106,6 +98,20 @@ struct ExercisePickerView: View {
                 }
                 .padding(.horizontal, AppStyle.Padding.horizontal)
                 .padding(.bottom, 20)
+
+                HStack {
+                    Spacer()
+                    HStack(spacing: 6) {
+                        Text("No Seats")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(textColor.opacity(0.85))
+                        Toggle("", isOn: $noSeats)
+                            .labelsHidden()
+                            .toggleStyle(CapsuleToggleStyle(onColor: AppStyle.Color.greenGlow, offColor: Color.gray.opacity(0.4)))
+                    }
+                }
+                .padding(.horizontal, AppStyle.Padding.horizontal)
+                .padding(.bottom, 8)
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Seat Settings")
@@ -132,6 +138,8 @@ struct ExercisePickerView: View {
                 }
                 .padding(.horizontal, AppStyle.Padding.horizontal)
                 .padding(.bottom, 20)
+                .opacity(noSeats ? 0.3 : 1)
+                .disabled(noSeats)
 
                 if validIconOptions.count > 1 {
                     Divider().padding(.top, 0)
@@ -144,6 +152,32 @@ struct ExercisePickerView: View {
                     .padding(.top, 4)
                     .padding(.bottom, 8)
                 }
+
+                HStack {
+                    if !noWeight {
+                        HStack(spacing: 6) {
+                            Text("Decimal")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(textColor.opacity(0.85))
+                            Toggle("", isOn: $showDecimal)
+                                .labelsHidden()
+                                .toggleStyle(CapsuleToggleStyle(onColor: AppStyle.Color.greenGlow, offColor: Color.gray.opacity(0.4)))
+                        }
+                    }
+
+                    Spacer()
+
+                    HStack(spacing: 6) {
+                        Text("No Weight")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(textColor.opacity(0.85))
+                        Toggle("", isOn: $noWeight)
+                            .labelsHidden()
+                            .toggleStyle(CapsuleToggleStyle(onColor: AppStyle.Color.greenGlow, offColor: Color.gray.opacity(0.4)))
+                    }
+                }
+                .padding(.horizontal, AppStyle.Padding.horizontal)
+                .padding(.bottom, 8)
 
                 HStack(alignment: .top, spacing: 0) {
                     VStack {
@@ -176,28 +210,30 @@ struct ExercisePickerView: View {
                         .clipped()
                     }
 
-                    VStack {
-                        Text("Weight")
-                            .font(.headline)
-                            .foregroundColor(textColor)
-                            .frame(maxWidth: .infinity)
-                        Picker("Weight", selection: Binding<String>(
-                            get: {
-                                return WeightFormatter.format(formViewModel.weight)
-                            },
-                            set: { newValue in
-                                if let weight = WeightFormatter.parse(newValue) {
-                                    formViewModel.weight = weight
+                    if !noWeight {
+                        VStack {
+                            Text("Weight")
+                                .font(.headline)
+                                .foregroundColor(textColor)
+                                .frame(maxWidth: .infinity)
+                            Picker("Weight", selection: Binding<String>(
+                                get: {
+                                    return WeightFormatter.format(formViewModel.weight)
+                                },
+                                set: { newValue in
+                                    if let weight = WeightFormatter.parse(newValue) {
+                                        formViewModel.weight = weight
+                                    }
+                                }
+                            )) {
+                                ForEach(filteredWeightOptions, id: \.self) { value in
+                                    Text("\(value) kg").tag(value).foregroundColor(pickerColor)
                                 }
                             }
-                        )) {
-                            ForEach(filteredWeightOptions, id: \.self) { value in
-                                Text("\(value) kg").tag(value).foregroundColor(pickerColor)
-                            }
+                            .pickerStyle(.wheel)
+                            .frame(maxWidth: .infinity)
+                            .clipped()
                         }
-                        .pickerStyle(.wheel)
-                        .frame(maxWidth: .infinity)
-                        .clipped()
                     }
                 }
                 .frame(height: 150)
@@ -268,7 +304,10 @@ struct ExercisePickerView: View {
             }
             let w = formViewModel.weight
             if w != floor(w) { showDecimal = true }
-            // Defaults im Add-Flow setzen
+            if editingExercise != nil {
+                if formViewModel.seat.isEmpty { noSeats = true }
+                if w == 0 { noWeight = true }
+            }
             if editingExercise == nil {
                 formViewModel.sets = max(setsRange.lowerBound, min(setsRange.upperBound, 3))
                 formViewModel.reps = max(repsRange.lowerBound, min(repsRange.upperBound, 12))
@@ -277,10 +316,22 @@ struct ExercisePickerView: View {
                     formViewModel.weight = 20
                 }
             }
-            withAnimation(.easeOut(duration: 0.18)) { isContentVisible = true }
+            isContentVisible = true
         }
         .onChange(of: isPresented) { newValue in
             if !newValue { isContentVisible = false }
+        }
+        .onChange(of: noSeats) { isNoSeats in
+            if isNoSeats {
+                seatPart1 = ""
+                seatPart2 = ""
+                updateSeat()
+            }
+        }
+        .onChange(of: noWeight) { isNoWeight in
+            if isNoWeight {
+                formViewModel.weight = 0
+            }
         }
     }
 

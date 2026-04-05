@@ -113,7 +113,7 @@ struct AnalyticsView: View {
     private var hillChartView: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("KG")
+                Text(exercise.hasWeight ? "KG" : "Reps")
                     .font(.system(size: 9, weight: .medium))
                     .foregroundColor(.white.opacity(0.5))
                 Spacer()
@@ -145,18 +145,24 @@ struct AnalyticsView: View {
         .stroke(Color.white.opacity(0.08), lineWidth: 0.5)
     }
 
-    private func hillShapeView(geometry: GeometryProxy) -> some View {
-        let milestones = viewModel.getDailyWeightProgression(for: exercise.id)
-        let currentWeight = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight
-        
-        let chartPoints = ProgressChartCalculator.calculateDynamicMilestones(
+    private func chartPoints(geometry: GeometryProxy) -> [ProgressChartCalculator.ChartPoint] {
+        let milestones = exercise.hasWeight
+            ? viewModel.getDailyWeightProgression(for: exercise.id)
+            : viewModel.getDailyRepsProgression(for: exercise.id)
+        let currentValue: Double = exercise.hasWeight
+            ? (viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight)
+            : Double(viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.currentReps ?? exercise.reps)
+        return ProgressChartCalculator.calculateDynamicMilestones(
             milestones: milestones,
-            currentWeight: currentWeight,
+            currentWeight: currentValue,
             geometry: geometry
         )
-        
+    }
+
+    private func hillShapeView(geometry: GeometryProxy) -> some View {
+        let points = chartPoints(geometry: geometry)
         return ProgressChartCalculator.generateCurvePathForFill(
-            chartPoints: chartPoints,
+            chartPoints: points,
             geometry: geometry
         )
         .fill(
@@ -172,17 +178,9 @@ struct AnalyticsView: View {
     }
     
     private func hillOutlineView(geometry: GeometryProxy) -> some View {
-        let milestones = viewModel.getDailyWeightProgression(for: exercise.id)
-        let currentWeight = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight
-        
-        let chartPoints = ProgressChartCalculator.calculateDynamicMilestones(
-            milestones: milestones,
-            currentWeight: currentWeight,
-            geometry: geometry
-        )
-        
+        let points = chartPoints(geometry: geometry)
         return ProgressChartCalculator.generateCurvePath(
-            chartPoints: chartPoints,
+            chartPoints: points,
             geometry: geometry
         )
         .stroke(AppStyle.Color.greenGlow, lineWidth: 2)
@@ -190,16 +188,8 @@ struct AnalyticsView: View {
     }
     
     private func milestonesView(geometry: GeometryProxy) -> some View {
-        let milestones = viewModel.getDailyWeightProgression(for: exercise.id)
-        let currentWeight = viewModel.loadAnalytics(for: exercise.id, on: selectedDate).first?.setProgress.first?.weight ?? exercise.weight
-        
-        let chartPoints = ProgressChartCalculator.calculateDynamicMilestones(
-            milestones: milestones,
-            currentWeight: currentWeight,
-            geometry: geometry
-        )
-        
-        return ForEach(Array(chartPoints.enumerated()), id: \.offset) { index, point in
+        let points = chartPoints(geometry: geometry)
+        return ForEach(Array(points.enumerated()), id: \.offset) { index, point in
             dynamicMilestonePointView(point: point, geometry: geometry)
         }
     }
@@ -383,14 +373,16 @@ struct AnalyticsView: View {
                 .foregroundColor(AppStyle.Color.white)
                 .frame(maxWidth: .infinity, alignment: .leading)
             
-            Text(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ","))
-                .font(.system(size: 30))
-                .foregroundColor(AppStyle.Color.greenGlow)
-            
-            Text("kg")
-                .font(AppStyle.Font.analyticsExerciseData)
-                .font(.system(size: 35))
-                .foregroundColor(AppStyle.Color.green)
+            if exercise.hasWeight {
+                Text(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ","))
+                    .font(.system(size: 30))
+                    .foregroundColor(AppStyle.Color.greenGlow)
+                
+                Text("kg")
+                    .font(AppStyle.Font.analyticsExerciseData)
+                    .font(.system(size: 35))
+                    .foregroundColor(AppStyle.Color.green)
+            }
             
             Text("\(progress.currentReps) / \(initialReps)")
                 .font(.system(size: 24))
@@ -502,7 +494,7 @@ struct AnalyticsView: View {
     }
     
     private var goalSheetHeader: some View {
-        Text("Set Weight Goal")
+        Text(exercise.hasWeight ? "Set Weight Goal" : "Set Reps Goal")
             .font(.headline)
             .foregroundColor(AppStyle.Color.white)
             .padding(.top, 16)
@@ -537,7 +529,7 @@ struct AnalyticsView: View {
     private var goalPlaceholder: some View {
         Group {
             if tempGoal.isEmpty {
-                Text("Enter goal weight")
+                Text(exercise.hasWeight ? "Enter goal weight" : "Enter goal reps")
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(.white.opacity(0.4))
                     .padding(.leading, 16)
@@ -644,7 +636,7 @@ struct AnalyticsView: View {
                             .font(.system(size: 26, weight: .bold))
                             .foregroundColor(AppStyle.Color.greenGlow)
 
-                        Text("Goal kg")
+                        Text(exercise.hasWeight ? "Goal kg" : "Goal Reps")
                             .font(.system(size: 10, weight: .medium))
                             .foregroundColor(.white.opacity(0.6))
                             .multilineTextAlignment(.center)
@@ -670,8 +662,10 @@ struct AnalyticsView: View {
 
             HStack(alignment: .top, spacing: 8) {
                 AnalyticsTileNumberView(
-                    number: "\(viewModel.totalWeightIncreases(for: exercise.id))",
-                    label: "Weight increase",
+                    number: exercise.hasWeight
+                        ? "\(viewModel.totalWeightIncreases(for: exercise.id))"
+                        : "\(viewModel.totalRepsIncreases(for: exercise.id))",
+                    label: exercise.hasWeight ? "Weight increase" : "Reps increase",
                     icon: nil,
                     iconColor: .clear
                 )
@@ -684,8 +678,10 @@ struct AnalyticsView: View {
                 )
 
                 AnalyticsTileNumberView(
-                    number: "\(viewModel.trainingSessionsUntilWeightIncrease(for: exercise.id))",
-                    label: "Training to increase kg",
+                    number: exercise.hasWeight
+                        ? "\(viewModel.trainingSessionsUntilWeightIncrease(for: exercise.id))"
+                        : "\(viewModel.trainingSessionsUntilRepsIncrease(for: exercise.id))",
+                    label: exercise.hasWeight ? "Training to increase kg" : "Training to increase Reps",
                     icon: nil,
                     iconColor: .clear
                 )
@@ -829,10 +825,12 @@ struct AddAnalyticsEntryView: View {
                     .padding(.top, 14)
                 
                 HStack(spacing: 12) {
-                    Text("Weight")
-                        .font(.caption)
-                        .foregroundColor(AppStyle.Color.white)
-                        .frame(width: 60, alignment: .leading)
+                    if exercise.hasWeight {
+                        Text("Weight")
+                            .font(.caption)
+                            .foregroundColor(AppStyle.Color.white)
+                            .frame(width: 60, alignment: .leading)
+                    }
                     
                     Text("Reps.")
                         .font(.caption)
@@ -846,24 +844,26 @@ struct AddAnalyticsEntryView: View {
                 
                 ForEach(Array(sets.enumerated()), id: \.element.id) { index, set in
                     HStack(spacing: 12) {
-                        Button(action: {
-                            editingSetIndex = index
-                            editingField = .weight
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                showNumberPad = true
+                        if exercise.hasWeight {
+                            Button(action: {
+                                editingSetIndex = index
+                                editingField = .weight
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    showNumberPad = true
+                                }
+                            }) {
+                                let weightValue = index < sets.count ? sets[index].weight : 0.0
+                                Text(weightValue == floor(weightValue) ? "\(Int(weightValue))" : String(weightValue).replacingOccurrences(of: ".", with: ","))
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(AppStyle.Color.white)
+                                    .frame(width: 60, height: 38)
+                                    .background(Color.white.opacity(0.06))
+                                    .cornerRadius(8)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                                    )
                             }
-                        }) {
-                            let weightValue = index < sets.count ? sets[index].weight : 0.0
-                            Text(weightValue == floor(weightValue) ? "\(Int(weightValue))" : String(weightValue).replacingOccurrences(of: ".", with: ","))
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(AppStyle.Color.white)
-                                .frame(width: 60, height: 38)
-                                .background(Color.white.opacity(0.06))
-                                .cornerRadius(8)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
-                                )
                         }
                         
                         Button(action: {
@@ -946,12 +946,17 @@ struct AddAnalyticsEntryView: View {
                         )
                         onSave(entry)
                     }
-                    .disabled(sets.contains(where: { $0.weight == 0 || $0.reps == 0 }))
+                    .disabled(exercise.hasWeight
+                        ? sets.contains(where: { $0.weight == 0 || $0.reps == 0 })
+                        : sets.contains(where: { $0.reps == 0 })
+                    )
                     .foregroundColor(.white)
                     .padding(.vertical, 10)
                     .padding(.horizontal, 22)
                     .background(
-                        sets.allSatisfy { $0.weight > 0 && $0.reps > 0 }
+                        (exercise.hasWeight
+                            ? sets.allSatisfy { $0.weight > 0 && $0.reps > 0 }
+                            : sets.allSatisfy { $0.reps > 0 })
                         ? AppStyle.Color.green
                         : AppStyle.Color.green.opacity(0.15)
                     )

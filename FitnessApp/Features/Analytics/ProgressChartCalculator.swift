@@ -19,7 +19,7 @@ class ProgressChartCalculator {
     }
     
     static func calculateDynamicMilestones(
-        milestones: [(date: Date, weight: Double)],
+        milestones: [DailyProgression],
         currentWeight: Double,
         geometry: GeometryProxy
     ) -> [ChartPoint] {
@@ -34,20 +34,19 @@ class ProgressChartCalculator {
         let chartBottomY = height * 0.75  // 75% from top (more margin)
         let chartRange = chartBottomY - chartTopY
         
-        // Find min and max weights for proper scaling
-        let weights = filteredMilestones.map { $0.weight }
-        let minWeight = weights.min() ?? 0
-        let maxWeight = weights.max() ?? minWeight + 1
-        let weightRange = maxWeight - minWeight
+        let values = filteredMilestones.map { $0.value }
+        let minValue = values.min() ?? 0
+        let maxValue = values.max() ?? minValue + 1
+        let valueRange = maxValue - minValue
         
-        if weightRange == 0 {
+        if valueRange == 0 {
             let yPos = chartTopY + chartRange * 0.5
             var chartPoints: [ChartPoint] = []
             for (index, milestone) in filteredMilestones.enumerated() {
                 let xProgress = filteredMilestones.count == 1 ? 0.5 : CGFloat(index) / CGFloat(filteredMilestones.count - 1)
                 let xPosition = width * (0.15 + xProgress * 0.7)
                 chartPoints.append(ChartPoint(
-                    weight: milestone.weight,
+                    weight: milestone.value,
                     date: milestone.date,
                     xPosition: xPosition,
                     yPosition: yPos,
@@ -60,16 +59,14 @@ class ProgressChartCalculator {
         var chartPoints: [ChartPoint] = []
         
         for (index, milestone) in filteredMilestones.enumerated() {
-            // X position: distribute evenly across chart width (15% to 85%)
             let xProgress = filteredMilestones.count == 1 ? 0.5 : CGFloat(index) / CGFloat(filteredMilestones.count - 1)
             let xPosition = width * (0.15 + xProgress * 0.7)
             
-            // Y position: proportional to actual weight value
-            let weightProgress = (milestone.weight - minWeight) / weightRange
-            let yPosition = chartBottomY - (chartRange * weightProgress)
+            let valueProgress = (milestone.value - minValue) / valueRange
+            let yPosition = chartBottomY - (chartRange * valueProgress)
             
             chartPoints.append(ChartPoint(
-                weight: milestone.weight,
+                weight: milestone.value,
                 date: milestone.date,
                 xPosition: xPosition,
                 yPosition: yPosition,
@@ -80,7 +77,7 @@ class ProgressChartCalculator {
         return chartPoints
     }
     
-    private static func limitToFiveDataPoints(_ milestones: [(date: Date, weight: Double)]) -> [(date: Date, weight: Double)] {
+    private static func limitToFiveDataPoints(_ milestones: [DailyProgression]) -> [DailyProgression] {
         // If 5 or fewer milestones, return all
         guard milestones.count > 5 else { return milestones }
         

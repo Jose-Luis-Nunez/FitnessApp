@@ -16,6 +16,10 @@ struct ExerciseWeightPickerView: View {
         showDecimal ? weightOptions : weightOptions.filter { !$0.contains(",") && !$0.contains(".") }
     }
 
+    private var hasWeight: Bool {
+        formViewModel.editingExercise?.hasWeight ?? (formViewModel.weight > 0)
+    }
+
     private let textColor: Color = AppStyle.Color.white
     private let pickerColor: Color = AppStyle.Color.greenLight
 
@@ -43,18 +47,20 @@ struct ExerciseWeightPickerView: View {
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity, alignment: .center)
 
-                    HStack {
-                        Spacer()
-                        HStack(spacing: 6) {
-                            Text("Decimal")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(textColor.opacity(0.85))
-                            Toggle("", isOn: $showDecimal)
-                                .labelsHidden()
-                                .toggleStyle(CapsuleToggleStyle(onColor: AppStyle.Color.greenGlow, offColor: Color.gray.opacity(0.4)))
+                    if hasWeight {
+                        HStack {
+                            Spacer()
+                            HStack(spacing: 6) {
+                                Text("Decimal")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(textColor.opacity(0.85))
+                                Toggle("", isOn: $showDecimal)
+                                    .labelsHidden()
+                                    .toggleStyle(CapsuleToggleStyle(onColor: AppStyle.Color.greenGlow, offColor: Color.gray.opacity(0.4)))
+                            }
                         }
+                        .padding(.horizontal, AppStyle.Padding.horizontal)
                     }
-                    .padding(.horizontal, AppStyle.Padding.horizontal)
                 }
                 .padding(.bottom, 18)
 
@@ -89,28 +95,30 @@ struct ExerciseWeightPickerView: View {
                         .clipped()
                     }
 
-                    VStack {
-                        Text("Weight")
-                            .font(.headline)
-                            .foregroundColor(textColor)
-                            .frame(maxWidth: .infinity)
-                        Picker("Weight", selection: Binding<String>(
-                            get: {
-                                WeightFormatter.format(formViewModel.weight)
-                            },
-                            set: { newValue in
-                                if let weight = WeightFormatter.parse(newValue) {
-                                    formViewModel.weight = weight
+                    if hasWeight {
+                        VStack {
+                            Text("Weight")
+                                .font(.headline)
+                                .foregroundColor(textColor)
+                                .frame(maxWidth: .infinity)
+                            Picker("Weight", selection: Binding<String>(
+                                get: {
+                                    WeightFormatter.format(formViewModel.weight)
+                                },
+                                set: { newValue in
+                                    if let weight = WeightFormatter.parse(newValue) {
+                                        formViewModel.weight = weight
+                                    }
+                                }
+                            )) {
+                                ForEach(filteredWeightOptions, id: \.self) { value in
+                                    Text("\(value) kg").tag(value).foregroundColor(pickerColor)
                                 }
                             }
-                        )) {
-                            ForEach(filteredWeightOptions, id: \.self) { value in
-                                Text("\(value) kg").tag(value).foregroundColor(pickerColor)
-                            }
+                            .pickerStyle(.wheel)
+                            .frame(maxWidth: .infinity)
+                            .clipped()
                         }
-                        .pickerStyle(.wheel)
-                        .frame(maxWidth: .infinity)
-                        .clipped()
                     }
                 }
                 .frame(height: 150)

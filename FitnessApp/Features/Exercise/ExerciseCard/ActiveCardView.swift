@@ -116,16 +116,53 @@ struct ActiveCardView: View {
     }
     
     private func exerciseChipsSection(availableWidth: CGFloat, dynamicSpacing: CGFloat) -> some View {
-        HStack(alignment: .bottom, spacing: 6) {
-            // Left side: Sets and Reps stacked vertically
-            VStack(alignment: .leading, spacing: 4) {
-                setsChip
-                repsChip
+        Group {
+            if viewModel.exercise.hasWeight {
+                HStack(alignment: .bottom, spacing: 6) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        setsChip
+                        repsChip
+                    }
+                    weightChip
+                    analyticsButton
+                }
+            } else {
+                HStack(alignment: .bottom, spacing: 6) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "bolt.fill")
+                            .foregroundColor(AppStyle.Color.yellow)
+                            .font(.system(size: 20, weight: .semibold))
+                        Text("\(viewModel.exercise.sets)x")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(AppStyle.Color.white)
+                    }
+                    .frame(width: analyticsButtonWidth, height: 68)
+                    .background(Color(hex: "#100F15"))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
+                    )
+
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .foregroundColor(AppStyle.Color.green)
+                            .font(.system(size: 20, weight: .semibold))
+                        Text("\(viewModel.exercise.reps)")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(AppStyle.Color.white)
+                    }
+                    .frame(width: analyticsButtonWidth, height: 68)
+                    .background(Color(hex: "#100F15"))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
+                    )
+
+                    analyticsButton
+                }
             }
-            
-            // Right side: Weight and Analytics side by side
-            weightChip
-            analyticsButton
         }
     }
     

@@ -30,7 +30,11 @@ struct IdleActiveCardView: View {
     }()
 
     private func refreshPhaseData() {
-        weightPhases = analyticsViewModel.weightPhases(for: viewModel.exercise.id)
+        if viewModel.exercise.hasWeight {
+            weightPhases = analyticsViewModel.weightPhases(for: viewModel.exercise.id)
+        } else {
+            weightPhases = analyticsViewModel.repsPhases(for: viewModel.exercise.id)
+        }
         if let date = analyticsViewModel.lastTrainingDate(for: viewModel.exercise.id) {
             lastTrainingDateFormatted = Self.lastTrainingFormatter.string(from: date)
         } else {
@@ -55,6 +59,8 @@ struct IdleActiveCardView: View {
                     Color.white.opacity(0.06)
                 }
             }
+            .contentShape(Rectangle())
+            .onTapGesture { isExpanded.toggle() }
             .sheet(isPresented: $isShowingAnalytics) {
                 AnalyticsView(exercise: viewModel.exercise, viewModel: analyticsViewModel)
             }
@@ -104,36 +110,50 @@ private extension IdleActiveCardView {
                 }
 
             HStack(spacing: 0) {
-                Text(formattedWeight)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.white.opacity(0.7))
-                    .fixedSize()
+                if viewModel.exercise.hasWeight {
+                    Text(formattedWeight)
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white.opacity(0.7))
+                        .fixedSize()
+                        .padding(.trailing, 20)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            if isEditable { onEdit(viewModel.exercise, .weight) }
+                        }
+                } else {
+                    Text("\(viewModel.exercise.sets)x\(viewModel.exercise.reps)")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white.opacity(0.7))
+                        .fixedSize()
+                        .padding(.trailing, 20)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            if isEditable { onEdit(viewModel.exercise, .weight) }
+                        }
+                }
+
+                if viewModel.exercise.seatSetting != nil {
+                    HStack(spacing: 4) {
+                        if let seatSetting = viewModel.exercise.seatSetting {
+                            Text(seatSetting)
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white.opacity(0.7))
+                                .lineLimit(1)
+                                .fixedSize()
+                        }
+
+                        Image("chairSettings")
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 28, height: 28)
+                            .foregroundColor(.white.opacity(0.7))
+                    }
                     .padding(.trailing, 20)
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        if isEditable { onEdit(viewModel.exercise, .weight) }
+                        if isEditable { onEdit(viewModel.exercise, .seat) }
                     }
-
-                HStack(spacing: 4) {
-                    if let seatSetting = viewModel.exercise.seatSetting {
-                        Text(seatSetting)
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white.opacity(0.7))
-                            .lineLimit(1)
-                            .fixedSize()
-                    }
-
-                    Image("chairSettings")
-                        .renderingMode(.template)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 28, height: 28)
-                        .foregroundColor(.white.opacity(0.7))
-                }
-                .padding(.trailing, 20)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    if isEditable { onEdit(viewModel.exercise, .seat) }
                 }
 
                 Button(action: { isShowingAnalytics = true }) {
@@ -206,7 +226,7 @@ private extension IdleActiveCardView {
     var phaseTilesRow: some View {
         HStack(spacing: 8) {
             ForEach(weightPhases) { phase in
-                WeightPhaseTileView(phase: phase)
+                WeightPhaseTileView(phase: phase, hasWeight: viewModel.exercise.hasWeight)
                     .frame(maxWidth: .infinity)
             }
 
@@ -226,6 +246,7 @@ extension IdleActiveCardView {
 
     struct WeightPhaseTileView: View {
         let phase: WeightPhase
+        let hasWeight: Bool
 
         private var weightNumber: String {
             phase.weight == floor(phase.weight)
@@ -245,13 +266,24 @@ extension IdleActiveCardView {
 
         var body: some View {
             VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text(weightNumber)
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(AppStyle.Color.greenGlow)
-                    Text("KG")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(AppStyle.Color.greenGlow)
+                if hasWeight {
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text(weightNumber)
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(AppStyle.Color.greenGlow)
+                        Text("KG")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(AppStyle.Color.greenGlow)
+                    }
+                } else {
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text("\(phase.maxReps ?? 0)")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(AppStyle.Color.greenGlow)
+                        Text("Reps")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(AppStyle.Color.greenGlow)
+                    }
                 }
 
                 Text(durationText)
