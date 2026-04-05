@@ -145,17 +145,6 @@ private extension IdleActiveCardView {
             verticalSeparator
             progressColumn
 
-            if !weightPhases.isEmpty {
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.7))
-                    .rotationEffect(.degrees(isExpanded ? 180 : 0))
-                    .padding(.leading, 12)
-                    .alignmentGuide(.metricLabel) { d in d[.top] - 16 }
-                    .contentShape(Rectangle())
-                    .onTapGesture { isExpanded.toggle() }
-            }
-
             Spacer(minLength: 0)
         }
     }
@@ -164,7 +153,7 @@ private extension IdleActiveCardView {
         Rectangle()
             .fill(Color.white.opacity(0.3))
             .frame(width: 1, height: 28)
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 12)
     }
 
     var weightColumn: some View {
@@ -172,6 +161,7 @@ private extension IdleActiveCardView {
             Text(viewModel.exercise.hasWeight ? "Weight" : "Reps")
                 .font(metricLabelFont)
                 .foregroundColor(metricLabelColor)
+                .fixedSize()
                 .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.center] }
 
             if viewModel.exercise.hasWeight {
@@ -197,6 +187,7 @@ private extension IdleActiveCardView {
             Text("Seat")
                 .font(metricLabelFont)
                 .foregroundColor(metricLabelColor)
+                .fixedSize()
                 .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.center] }
 
             if let seat = viewModel.exercise.seatSetting, !seat.isEmpty {
@@ -227,23 +218,35 @@ private extension IdleActiveCardView {
     }
 
     var progressColumn: some View {
-        VStack(alignment: .center, spacing: 2) {
+        VStack(alignment: .leading, spacing: 2) {
             Text("Progress")
                 .font(metricLabelFont)
                 .foregroundColor(metricLabelColor)
+                .fixedSize()
                 .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.center] }
 
-            Button(action: {
-                analyticsSheetDate = AnalyticsSheetDate(date: Date())
-            }) {
-                Image("analyticsEntry")
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 22, height: 22)
-                    .foregroundColor(AppStyle.Color.greenGlow)
+            HStack(spacing: 10) {
+                Button(action: {
+                    analyticsSheetDate = AnalyticsSheetDate(date: Date())
+                }) {
+                    Image("analyticsEntry")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 22, height: 22)
+                        .foregroundColor(AppStyle.Color.greenGlow)
+                }
+                .buttonStyle(.plain)
+
+                if !weightPhases.isEmpty {
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.7))
+                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                        .contentShape(Rectangle())
+                        .onTapGesture { isExpanded.toggle() }
+                }
             }
-            .buttonStyle(.plain)
         }
     }
 
@@ -394,7 +397,7 @@ extension IdleActiveCardView {
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(highlight ? AppStyle.Color.greenGlow : .white.opacity(0.7))
                 Text("(\(Self.tileDate.string(from: date)))")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 10, weight: .medium))
                     .foregroundColor(.white.opacity(0.4))
             }
         }
