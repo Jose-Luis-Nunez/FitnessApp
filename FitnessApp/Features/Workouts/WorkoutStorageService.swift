@@ -42,6 +42,15 @@ class WorkoutStorageService: ObservableObject {
         let duplicatedWorkout = workout.copy(withName: "\(workout.name) Copy")
         workouts.append(duplicatedWorkout)
         saveWorkouts()
+        
+        let exerciseService = ExerciseStorageService()
+        for category in workout.selectedCategories {
+            let exercises = exerciseService.loadForWorkout(workoutId: workout.id, category: category)
+            if !exercises.isEmpty {
+                exerciseService.saveForWorkout(exercises, workoutId: duplicatedWorkout.id, category: category)
+            }
+        }
+        
         return duplicatedWorkout
     }
     
