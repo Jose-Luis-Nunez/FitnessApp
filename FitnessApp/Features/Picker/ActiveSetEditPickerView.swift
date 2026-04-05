@@ -143,11 +143,6 @@ struct ActiveSetEditPickerView: View {
             .background(
                 RoundedCorner(radius: 22, corners: [.topLeft, .topRight])
                     .fill(Color(hex: "#222025"))
-                    .shadow(color: .black.opacity(0.35), radius: 20, x: 0, y: -4)
-            )
-            .overlay(
-                RoundedCorner(radius: 22, corners: [.topLeft, .topRight])
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
             )
             .frame(maxWidth: .infinity)
             .frame(minHeight: 420, alignment: .bottom)

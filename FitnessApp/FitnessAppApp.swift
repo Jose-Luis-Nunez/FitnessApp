@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 enum NavigationDestination: Hashable {
     case workouts
@@ -11,6 +12,13 @@ enum NavigationDestination: Hashable {
 
 @main
 struct FitnessAppApp: App {
+    init() {
+        let textFieldAppearance = UITextField.appearance()
+        textFieldAppearance.layer.shadowOpacity = 0
+        textFieldAppearance.layer.shadowRadius = 0
+        textFieldAppearance.backgroundColor = .clear
+    }
+
     @State private var navigationPath = NavigationPath()
     @StateObject private var overlayState = UIOverlayState()
     @StateObject private var workoutStorageService = WorkoutStorageService.shared

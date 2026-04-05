@@ -115,13 +115,6 @@ private extension IdleActiveCardView {
                     }
 
                 HStack(spacing: 4) {
-                    Image("chairSettings")
-                        .renderingMode(.template)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 28, height: 28)
-                        .foregroundColor(.white.opacity(0.7))
-
                     if let seatSetting = viewModel.exercise.seatSetting {
                         Text(seatSetting)
                             .font(.system(size: 14, weight: .bold))
@@ -129,6 +122,13 @@ private extension IdleActiveCardView {
                             .lineLimit(1)
                             .fixedSize()
                     }
+
+                    Image("chairSettings")
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 28, height: 28)
+                        .foregroundColor(.white.opacity(0.7))
                 }
                 .padding(.trailing, 20)
                 .contentShape(Rectangle())

@@ -48,15 +48,16 @@ struct ExercisePickerView: View {
                     .padding(.top, 8)
                     .padding(.bottom, 10)
 
-                VStack(spacing: 8) {
-                    Text(title)
-                        .font(.title2)
-                        .foregroundColor(textColor)
-                        .fontWeight(.bold)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                    
-                    HStack {
+                Text(title)
+                    .font(.title2)
+                    .foregroundColor(textColor)
+                    .fontWeight(.bold)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.bottom, 8)
+
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 6) {
                         if let exercise = editingExercise {
                             Button(action: {
                                 if let index = viewModel.exercises.firstIndex(where: { $0.id == exercise.id }) {
@@ -72,32 +73,27 @@ struct ExercisePickerView: View {
                             }
                         }
 
-                        Spacer()
+                        Text("Category")
+                            .font(.headline)
+                            .foregroundColor(textColor)
 
-                        HStack(spacing: 6) {
-                            Text("Decimal")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(textColor.opacity(0.85))
-                            Toggle("", isOn: $showDecimal)
-                                .labelsHidden()
-                                .toggleStyle(CapsuleToggleStyle(onColor: AppStyle.Color.greenGlow, offColor: Color.gray.opacity(0.4)))
-                        }
+                        Text(formViewModel.selectedCategory.displayName)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(AppStyle.Color.green)
+                            .padding(.leading, 2)
                     }
-                    .padding(.horizontal, AppStyle.Padding.horizontal)
-                }
-                .padding(.bottom, 18)
 
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Category")
-                        .font(.headline)
-                        .foregroundColor(textColor)
-                    
-                    Text(formViewModel.selectedCategory.displayName)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(AppStyle.Color.green)
-                        .padding(.leading, 2)
+                    Spacer()
+
+                    HStack(spacing: 6) {
+                        Text("Decimal")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(textColor.opacity(0.85))
+                        Toggle("", isOn: $showDecimal)
+                            .labelsHidden()
+                            .toggleStyle(CapsuleToggleStyle(onColor: AppStyle.Color.greenGlow, offColor: Color.gray.opacity(0.4)))
+                    }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, AppStyle.Padding.horizontal)
                 .padding(.bottom, 16)
 
@@ -106,7 +102,7 @@ struct ExercisePickerView: View {
                         .font(.headline)
                         .foregroundColor(textColor)
 
-                    clearableInputField(text: $formViewModel.name)
+                    ExercisePickerInputField(text: $formViewModel.name)
                 }
                 .padding(.horizontal, AppStyle.Padding.horizontal)
                 .padding(.bottom, 20)
@@ -117,7 +113,7 @@ struct ExercisePickerView: View {
                         .foregroundColor(textColor)
 
                     HStack(spacing: 12) {
-                        clearableInputField(prompt: "Setting 1", text: Binding(
+                        ExercisePickerInputField(prompt: "Setting 1", text: Binding(
                             get: { seatPart1 },
                             set: { newValue in
                                 seatPart1 = newValue
@@ -125,7 +121,7 @@ struct ExercisePickerView: View {
                             }
                         ))
 
-                        clearableInputField(prompt: "Setting 2", text: Binding(
+                        ExercisePickerInputField(prompt: "Setting 2", text: Binding(
                             get: { seatPart2 },
                             set: { newValue in
                                 seatPart2 = newValue
@@ -246,11 +242,6 @@ struct ExercisePickerView: View {
             .background(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .fill(Color(hex: "#222025"))
-                    .shadow(color: .black.opacity(0.35), radius: 20, x: 0, y: -4)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
             )
             .frame(maxWidth: .infinity)
             .frame(minHeight: 520, alignment: .bottom)
@@ -304,61 +295,5 @@ struct ExercisePickerView: View {
         seatPart1 = parts.count > 0 ? parts[0] : ""
         seatPart2 = parts.count > 1 ? parts[1] : ""
     }
-}
-
-private struct InputFieldStyle: ViewModifier {
-    func body(content: Content) -> some View {
-        return content
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .foregroundColor(AppStyle.Color.white)
-            .background(Color(hex: "#141518"))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.clear, lineWidth: 0)
-            )
-    }
-}
-
-private func clearableInputField(text: Binding<String>) -> some View {
-    HStack(spacing: 8) {
-        TextField("", text: text)
-            .accentColor(AppStyle.Color.white)
-            .foregroundColor(AppStyle.Color.white)
-            .textFieldStyle(PlainTextFieldStyle())
-
-        if !text.wrappedValue.isEmpty {
-            Button(action: { text.wrappedValue = "" }) {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundColor(Color.white.opacity(0.5))
-            }
-        }
-    }
-    .modifier(InputFieldStyle())
-}
-
-private func clearableInputField(prompt: String, text: Binding<String>) -> some View {
-    HStack(spacing: 8) {
-        // Eigene Placeholder-Farbe via Overlay, damit sie gut lesbar ist
-        ZStack(alignment: .leading) {
-            if text.wrappedValue.isEmpty {
-                Text(prompt)
-                    .foregroundColor(Color.white.opacity(0.55))
-            }
-            TextField("", text: text)
-                .accentColor(AppStyle.Color.white)
-                .foregroundColor(AppStyle.Color.white)
-                .textFieldStyle(PlainTextFieldStyle())
-        }
-
-        if !text.wrappedValue.isEmpty {
-            Button(action: { text.wrappedValue = "" }) {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundColor(Color.white.opacity(0.5))
-            }
-        }
-    }
-    .modifier(InputFieldStyle())
 }
 

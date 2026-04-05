@@ -13,11 +13,6 @@ struct ExercisePickerSheetModifier: ViewModifier {
             .background(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .fill(Color(hex: "#222025"))
-                    .shadow(color: .black.opacity(0.35), radius: 20, x: 0, y: -4)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
             )
             .frame(maxWidth: .infinity)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
@@ -78,11 +73,9 @@ struct ExercisePickerInputFieldStyle: ViewModifier {
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             .foregroundColor(AppStyle.Color.white)
-            .background(Color(hex: "#141518"))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.clear, lineWidth: 0)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color(hex: "#141518"))
             )
     }
 }
@@ -118,6 +111,7 @@ struct ExercisePickerInputField: View {
                 }
             }
         }
+        .compositingGroup()
         .modifier(ExercisePickerInputFieldStyle())
     }
 }
