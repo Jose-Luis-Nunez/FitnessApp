@@ -310,8 +310,7 @@ struct MuscleCategorySelectionView: View {
                     Color.clear.onAppear { overlayState.isEditingSheetVisible = true }
                     selectionEditPickerView(category: editingCategory)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                        .shadow(radius: 5)
-                        .transition(.move(edge: .bottom).combined(with: .opacity).animation(.easeOut(duration: 0.25)))
+                        .transition(.identity)
                         .zIndex(5)
                         .ignoresSafeArea(edges: .bottom)
                         .onDisappear { overlayState.isEditingSheetVisible = false }
@@ -342,7 +341,11 @@ struct MuscleCategorySelectionView: View {
                 title: "New Exercise",
                 isDestructive: false
             ) {
-                showCategorySelection = true
+                var transaction = Transaction()
+                transaction.disablesAnimations = true
+                withTransaction(transaction) {
+                    showCategorySelection = true
+                }
             }
         ]
     }
@@ -354,8 +357,12 @@ struct MuscleCategorySelectionView: View {
                 title: category.displayName,
                 isDestructive: false
             ) {
-                overlayState.showSelectionMiniMenu = false
-                showCategorySelection = false
+                var transaction = Transaction()
+                transaction.disablesAnimations = true
+                withTransaction(transaction) {
+                    overlayState.showSelectionMiniMenu = false
+                    showCategorySelection = false
+                }
                 openExercisePickerForCategory(category)
             }
         }
