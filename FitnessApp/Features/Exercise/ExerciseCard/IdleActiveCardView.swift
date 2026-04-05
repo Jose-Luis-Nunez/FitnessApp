@@ -9,10 +9,15 @@ struct IdleActiveCardView: View {
     let isEditable: Bool
     let onStart: ((Exercise) -> Void)?
 
-    @State private var isShowingAnalytics = false
+    @State private var analyticsSheetDate: AnalyticsSheetDate?
     @State private var isExpanded = false
     @State private var weightPhases: [WeightPhase] = []
     @State private var lastTrainingDateFormatted: String?
+
+    private struct AnalyticsSheetDate: Identifiable {
+        let id = UUID()
+        let date: Date
+    }
 
     private var formattedWeight: String {
         let weight = viewModel.exercise.weight
@@ -61,8 +66,8 @@ struct IdleActiveCardView: View {
             }
             .contentShape(Rectangle())
             .onTapGesture { isExpanded.toggle() }
-            .sheet(isPresented: $isShowingAnalytics) {
-                AnalyticsView(exercise: viewModel.exercise, viewModel: analyticsViewModel)
+            .sheet(item: $analyticsSheetDate) { sheetDate in
+                AnalyticsView(exercise: viewModel.exercise, viewModel: analyticsViewModel, initialDate: sheetDate.date)
             }
         }
         .padding(.horizontal, 16)
@@ -156,7 +161,9 @@ private extension IdleActiveCardView {
                     }
                 }
 
-                Button(action: { isShowingAnalytics = true }) {
+                Button(action: {
+                    analyticsSheetDate = AnalyticsSheetDate(date: Date())
+                }) {
                     Image("analyticsEntry")
                         .renderingMode(.template)
                         .resizable()
@@ -228,6 +235,10 @@ private extension IdleActiveCardView {
             ForEach(weightPhases) { phase in
                 WeightPhaseTileView(phase: phase, hasWeight: viewModel.exercise.hasWeight)
                     .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        analyticsSheetDate = AnalyticsSheetDate(date: phase.startDate)
+                    }
             }
 
             if weightPhases.count < 3 {
@@ -236,7 +247,6 @@ private extension IdleActiveCardView {
                 }
             }
         }
-        .onTapGesture { isShowingAnalytics = true }
     }
 }
 

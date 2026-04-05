@@ -11,9 +11,9 @@ struct AnalyticsView: View {
     @State private var exercise: Exercise
     @ObservedObject var viewModel: AnalyticsViewModel
     private let initialReps: Int
-    @State private var selectedDate: Date = Date()
-    @State private var originalDate: Date = Date()
-    @State private var tempDate: Date = Date()
+    @State private var selectedDate: Date
+    @State private var originalDate: Date
+    @State private var tempDate: Date
     @State private var showCalendarDialog: Bool = false
 
     @State private var milestoneHeight: CGFloat = 0
@@ -25,7 +25,7 @@ struct AnalyticsView: View {
     
     private let paddingAmount: CGFloat = 16
     
-    init(exercise: Exercise, viewModel: AnalyticsViewModel) {
+    init(exercise: Exercise, viewModel: AnalyticsViewModel, initialDate: Date = Date()) {
         let storageService = ExerciseStorageService()
         let category = exercise.category
         let workoutId = WorkoutStorageService.shared.currentWorkout?.id ?? UUID()
@@ -35,6 +35,9 @@ struct AnalyticsView: View {
         self._exercise = State(initialValue: latestExercise)
         self.viewModel = viewModel
         self.initialReps = latestExercise.reps
+        self._selectedDate = State(initialValue: initialDate)
+        self._originalDate = State(initialValue: initialDate)
+        self._tempDate = State(initialValue: initialDate)
     }
     
     var body: some View {
