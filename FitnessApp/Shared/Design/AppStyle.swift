@@ -5,7 +5,7 @@ enum AppStyle {
         static let horizontal: CGFloat = 18
         static let card: CGFloat = 16
         static let titleTop: CGFloat = 8
-        static let titleBottom: CGFloat = 12
+        static let titleBottom: CGFloat = 17
         static let activeCardIconOverflow: CGFloat = 20
         static let titleBottomBeforeActiveCard: CGFloat = titleBottom - activeCardIconOverflow
     }
