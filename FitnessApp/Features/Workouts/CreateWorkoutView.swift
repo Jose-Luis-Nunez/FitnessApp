@@ -5,125 +5,64 @@ struct CreateWorkoutView: View {
     @Binding var isPresented: Bool
     let onSave: () -> Void
     @ObservedObject var viewModel: WorkoutsViewModel
-    
+
     private let textColor = AppStyle.Color.white
-    
+
     var body: some View {
-        ZStack {
-            AppStyle.Color.backgroundColor
-                .ignoresSafeArea()
-            
-            VStack(spacing: 0) {
-                dragIndicator
-                headerView
-                contentView
-                Spacer()
-                saveButtonView
-            }
-        }
-    }
-    
-    private var dragIndicator: some View {
-        RoundedRectangle(cornerRadius: 2.5)
-            .fill(AppStyle.Color.gray.opacity(0.4))
-            .frame(width: 36, height: 5)
-            .padding(.top, 8)
-            .padding(.bottom, 8)
-    }
-    
-    private var headerView: some View {
-        HStack {
-            Button(action: {
-                isPresented = false
-            }) {
-                ZStack {
-                    Circle()
-                        .fill(AppStyle.Color.gray.opacity(0.15))
-                        .frame(width: 32, height: 32)
-                        .overlay(
-                            Circle()
-                                .stroke(AppStyle.Color.gray.opacity(0.3), lineWidth: 1)
-                        )
-                    
-                    Image(systemName: "xmark")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(AppStyle.Color.white)
-                }
-            }
-            .buttonStyle(PlainButtonStyle())
-            .padding(.leading, 16)
-            
-            Spacer()
-            
-            Text("Neues Workout")
-                .font(AppStyle.Font.navigationHeadline)
-                .foregroundColor(AppStyle.Color.white)
-            
-            Spacer()
-            
-            // Invisible button for balance
-            Button(action: {}) {
-                Image(systemName: "xmark")
-                    .foregroundColor(AppStyle.Color.white)
-                    .imageScale(.large)
-            }
-            .opacity(0)
-            .padding(.trailing, 16)
-        }
-        .padding(.vertical, 16)
-        .background(AppStyle.Color.backgroundColor)
-    }
-    
-    private var contentView: some View {
-        VStack(spacing: 32) {
-            // Name Section
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Name")
-                    .font(.headline)
-                    .foregroundColor(textColor)
-                
-                Text("Set your workout name")
-                    .font(.caption)
-                    .foregroundColor(textColor.opacity(0.7))
-                
-                TextField("Workout Name", text: $workoutName)
-                    .padding(12)
-                    .background(AppStyle.Color.backgroundColor)
-                    .cornerRadius(10)
-                    .foregroundColor(textColor)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(AppStyle.Color.gray, lineWidth: 1)
-                    )
-            }
-            .padding(.horizontal, AppStyle.Padding.horizontal)
-            
-            // Muscle Groups Section
-            VStack(alignment: .leading, spacing: 16) {
+        WorkoutFormSheet(
+            title: "Neues Workout",
+            isSaveDisabled: workoutName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+            onSave: onSave,
+            isPresented: $isPresented
+        ) {
+            VStack(spacing: 32) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Muskelgruppen")
+                    Text("Name")
                         .font(.headline)
                         .foregroundColor(textColor)
-                    
-                    Text("Wähle die Kategorien für dein Workout")
+
+                    Text("Set your workout name")
                         .font(.caption)
                         .foregroundColor(textColor.opacity(0.7))
+
+                    TextField("Workout Name", text: $workoutName)
+                        .padding(12)
+                        .background(AppStyle.Color.backgroundColor)
+                        .cornerRadius(10)
+                        .foregroundColor(textColor)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(AppStyle.Color.gray, lineWidth: 1)
+                        )
                 }
                 .padding(.horizontal, AppStyle.Padding.horizontal)
-                
-                muscleGroupsGrid
+
+                VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Muskelgruppen")
+                            .font(.headline)
+                            .foregroundColor(textColor)
+
+                        Text("Wähle die Kategorien für dein Workout")
+                            .font(.caption)
+                            .foregroundColor(textColor.opacity(0.7))
+                    }
+                    .padding(.horizontal, AppStyle.Padding.horizontal)
+
+                    muscleGroupsGrid
+                }
             }
+            .padding(.top, 32)
         }
-        .padding(.top, 32)
     }
-    
+
     private var muscleGroupsGrid: some View {
         let columns = [
             GridItem(.flexible(), spacing: 12),
             GridItem(.flexible(), spacing: 12),
             GridItem(.flexible(), spacing: 12)
         ]
-        
+
         return LazyVGrid(columns: columns, spacing: 12) {
             ForEach(MuscleCategoryGroup.allCases, id: \.self) { group in
                 MuscleGroupTile(
@@ -136,32 +75,6 @@ struct CreateWorkoutView: View {
             }
         }
         .padding(.horizontal, AppStyle.Padding.horizontal)
-    }
-    
-    private var saveButtonView: some View {
-        VStack(spacing: 16) {
-            Button(action: {
-                onSave()
-                isPresented = false
-            }) {
-                Text("Save")
-                    .font(AppStyle.Font.defaultFont)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity, minHeight: 50)
-                    .background(
-                        workoutName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 
-                        AppStyle.Color.gray : AppStyle.Color.green
-                    )
-                    .cornerRadius(12)
-            }
-            .disabled(workoutName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            .padding(.horizontal, AppStyle.Padding.horizontal)
-            .padding(.bottom, safeAreaInset + 16)
-        }
-    }
-    
-    private var safeAreaInset: CGFloat {
-        UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
     }
 }
 

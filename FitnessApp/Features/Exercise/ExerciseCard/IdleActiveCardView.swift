@@ -20,12 +20,7 @@ struct IdleActiveCardView: View {
     }
 
     private var formattedWeight: String {
-        let weight = viewModel.exercise.weight
-        if weight == floor(weight) {
-            return "\(Int(weight)) kg"
-        } else {
-            return "\(weight)".replacingOccurrences(of: ".", with: ",") + " kg"
-        }
+        WeightFormatter.displayWeight(viewModel.exercise.weight)
     }
 
     private static let lastTrainingFormatter: DateFormatter = {

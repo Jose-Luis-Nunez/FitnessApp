@@ -39,12 +39,7 @@ struct ActiveCardView: View {
     }
     
     private var formattedWeight: String {
-        let weight = viewModel.exercise.weight
-        if weight == floor(weight) {
-            return "\(Int(weight)) kg"
-        } else {
-            return "\(weight)".replacingOccurrences(of: ".", with: ",") + " kg"
-        }
+        WeightFormatter.displayWeight(viewModel.exercise.weight)
     }
     
     private var iconOverflow: CGFloat { AppStyle.Padding.activeCardIconOverflow }
@@ -123,37 +118,27 @@ struct ActiveCardView: View {
                 }
             } else {
                 HStack(alignment: .bottom, spacing: 6) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "bolt.fill")
-                            .foregroundColor(AppStyle.Color.yellow)
-                            .font(.system(size: 20, weight: .semibold))
-                        Text("\(viewModel.exercise.sets)x")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(AppStyle.Color.white)
+                    MetricChipView(width: analyticsButtonWidth) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "bolt.fill")
+                                .foregroundColor(AppStyle.Color.yellow)
+                                .font(.system(size: 20, weight: .semibold))
+                            Text("\(viewModel.exercise.sets)x")
+                                .font(AppStyle.Font.cardHeadline)
+                                .foregroundColor(AppStyle.Color.white)
+                        }
                     }
-                    .frame(width: analyticsButtonWidth, height: 68)
-                    .background(Color(hex: "#100F15"))
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
-                    )
 
-                    HStack(spacing: 6) {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .foregroundColor(AppStyle.Color.green)
-                            .font(.system(size: 20, weight: .semibold))
-                        Text("\(viewModel.exercise.reps)")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(AppStyle.Color.white)
+                    MetricChipView(width: analyticsButtonWidth) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                                .foregroundColor(AppStyle.Color.green)
+                                .font(.system(size: 20, weight: .semibold))
+                            Text("\(viewModel.exercise.reps)")
+                                .font(AppStyle.Font.cardHeadline)
+                                .foregroundColor(AppStyle.Color.white)
+                        }
                     }
-                    .frame(width: analyticsButtonWidth, height: 68)
-                    .background(Color(hex: "#100F15"))
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
-                    )
 
                     analyticsButton
                 }
@@ -162,82 +147,59 @@ struct ActiveCardView: View {
     }
     
     private var setsChip: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "bolt.fill")
-                .foregroundColor(AppStyle.Color.yellow)
-                .font(.system(size: 14, weight: .semibold))
-            
-            Text("\(viewModel.exercise.sets)x")
-                .font(AppStyle.Font.regularChip)
-                .foregroundColor(AppStyle.Color.white)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .frame(width: chipWidthVertical, height: chipHeight)
-        .background(Color(hex: "#100F15"))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
-        )
-    }
-    
-    private var repsChip: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "arrow.triangle.2.circlepath")
-                .foregroundColor(AppStyle.Color.green)
-                .font(.system(size: 14, weight: .semibold))
-            
-            Text("\(viewModel.exercise.reps)")
-                .font(AppStyle.Font.regularChip)
-                .foregroundColor(AppStyle.Color.white)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .frame(width: chipWidthVertical, height: chipHeight)
-        .background(Color(hex: "#100F15"))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
-        )
-    }
-    
-    private var weightChip: some View {
-        Text(formattedWeight)
-            .font(AppStyle.Font.regularChip)
-            .foregroundColor(AppStyle.Color.white)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
-            .padding(.horizontal, 12)
+        MetricChipView(width: chipWidthVertical, height: chipHeight) {
+            HStack(spacing: 4) {
+                Image(systemName: "bolt.fill")
+                    .foregroundColor(AppStyle.Color.yellow)
+                    .font(AppStyle.Font.tileLabel)
+                Text("\(viewModel.exercise.sets)x")
+                    .font(AppStyle.Font.regularChip)
+                    .foregroundColor(AppStyle.Color.white)
+            }
+            .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .frame(height: 68) // Same height as analytics button (tall like analytics)
-            .frame(width: analyticsButtonWidth) // Same width as analytics button
-            .background(Color(hex: "#100F15"))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
-            )
+        }
     }
-    
+
+    private var repsChip: some View {
+        MetricChipView(width: chipWidthVertical, height: chipHeight) {
+            HStack(spacing: 4) {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                    .foregroundColor(AppStyle.Color.green)
+                    .font(AppStyle.Font.tileLabel)
+                Text("\(viewModel.exercise.reps)")
+                    .font(AppStyle.Font.regularChip)
+                    .foregroundColor(AppStyle.Color.white)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+        }
+    }
+
+    private var weightChip: some View {
+        MetricChipView(width: analyticsButtonWidth) {
+            Text(formattedWeight)
+                .font(AppStyle.Font.regularChip)
+                .foregroundColor(AppStyle.Color.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 4)
+        }
+    }
+
     private var analyticsButton: some View {
         Button(action: {
             isShowingAnalytics = true
         }) {
-            Image("analyticsEntry")
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 60, height: 60) // Larger icon size within the same chip
-                .foregroundStyle(Color(hex:"#077484"))
-                .frame(width: analyticsButtonWidth, height: 68) // Chip stays same size
-                .background(Color(hex: "#100F15"))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
-                )
+            MetricChipView(width: analyticsButtonWidth) {
+                Image("analyticsEntry")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 60, height: 60)
+                    .foregroundStyle(AppStyle.Color.trainingAccent)
+            }
         }
         .buttonStyle(.plain)
     }

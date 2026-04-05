@@ -212,7 +212,7 @@ struct TrainingView: View {
         .onAppear {
             // Start training automatically when view appears
             // Always use .categoryView as start source since we're in dedicated TrainingView
-            trainingCoordinator.startTraining(for: exercise, startSource: .categoryView)
+            trainingCoordinator.startTraining(for: exercise)
             
             // Mark that initial load is complete
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {

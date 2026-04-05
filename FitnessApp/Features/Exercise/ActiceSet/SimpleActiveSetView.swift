@@ -84,46 +84,43 @@ struct SimpleActiveSetView: View {
             .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.3)
             
             if exercise.hasWeight {
-                // Weight Button
-                Button("\(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ",")) kg") {
+                Button(WeightFormatter.displayWeight(progress.weight)) {
                     if progress.status != .notStarted && progress.status != .inProgress {
                         viewModel.startEditingSet(index: index, mode: .edit)
                     }
                 }
-                .font(.system(size: 14, weight: .semibold))
+                .font(AppStyle.Font.tileLabel)
                 .foregroundColor(AppStyle.Color.white)
                 .frame(minWidth: UIScreen.main.bounds.width <= 390 ? 50 : 60, minHeight: 24)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
-                .background(Color(hex: "#100F15"))
-                .cornerRadius(12)
+                .background(AppStyle.Color.metricChipBackground)
+                .cornerRadius(AppStyle.CornerRadius.defaultButton)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: AppStyle.CornerRadius.defaultButton)
                         .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
                 )
                 .buttonStyle(PlainButtonStyle())
                 .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.3)
             }
-            
-            // Reps Button
+
             Button(progress.status != .notStarted && progress.status != .inProgress ? "\(progress.currentReps)" : "") {
                 viewModel.startEditingSet(index: index, mode: .edit)
             }
-            .font(.system(size: 14, weight: .semibold))
+            .font(AppStyle.Font.tileLabel)
             .foregroundColor(AppStyle.Color.white)
             .frame(minWidth: exercise.hasWeight ? 35 : (UIScreen.main.bounds.width <= 390 ? 110 : 120), minHeight: 24)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(Color(hex: "#100F15"))
-            .cornerRadius(12)
+            .background(AppStyle.Color.metricChipBackground)
+            .cornerRadius(AppStyle.CornerRadius.defaultButton)
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.defaultButton)
                     .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
             )
             .buttonStyle(PlainButtonStyle())
             .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.3)
-            
-            // "of X" Text (kompakter)
+
             Text("of \(exercise.reps)")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(AppStyle.Color.white)
@@ -131,13 +128,12 @@ struct SimpleActiveSetView: View {
                 .minimumScaleFactor(0.6)
                 .fixedSize(horizontal: true, vertical: false)
                 .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.3)
-            
-            // Quick Done Button (nur wenn aktiv)
+
             if progress.status == .notStarted || progress.status == .inProgress {
                 Button("Done") {
                     viewModel.pendingSetIndex = index
                 }
-                .font(.system(size: 16, weight: .semibold))
+                .font(AppStyle.Font.regularChip)
                 .foregroundColor(AppStyle.Color.white)
                 .frame(width: 80, height: 28)
                 .background(AppStyle.Color.primaryButton)
@@ -171,46 +167,43 @@ struct SimpleActiveSetView: View {
             .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.3)
             
             if exercise.hasWeight {
-                // Weight Button
-                Button("\(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ",")) kg") {
+                Button(WeightFormatter.displayWeight(progress.weight)) {
                     if progress.status != .notStarted && progress.status != .inProgress {
                         viewModel.startEditingSet(index: index, mode: .edit)
                     }
                 }
-                .font(.system(size: 14, weight: .semibold))
+                .font(AppStyle.Font.tileLabel)
                 .foregroundColor(AppStyle.Color.white)
                 .frame(minWidth: UIScreen.main.bounds.width <= 390 ? 50 : 60, minHeight: 24)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
-                .background(Color(hex: "#100F15"))
-                .cornerRadius(12)
+                .background(AppStyle.Color.metricChipBackground)
+                .cornerRadius(AppStyle.CornerRadius.defaultButton)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: AppStyle.CornerRadius.defaultButton)
                         .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
                 )
                 .buttonStyle(PlainButtonStyle())
                 .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.3)
             }
-            
-            // Reps Button
+
             Button(progress.status != .notStarted && progress.status != .inProgress ? "\(progress.currentReps)" : "") {
                 viewModel.startEditingSet(index: index, mode: .edit)
             }
-            .font(.system(size: 14, weight: .semibold))
+            .font(AppStyle.Font.tileLabel)
             .foregroundColor(AppStyle.Color.white)
             .frame(minWidth: exercise.hasWeight ? 35 : (UIScreen.main.bounds.width <= 390 ? 110 : 120), minHeight: 24)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(Color(hex: "#100F15"))
-            .cornerRadius(12)
+            .background(AppStyle.Color.metricChipBackground)
+            .cornerRadius(AppStyle.CornerRadius.defaultButton)
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.defaultButton)
                     .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
             )
             .buttonStyle(PlainButtonStyle())
             .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.3)
-            
-            // "of X" Text (kompakter)
+
             Text("of \(exercise.reps)")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(AppStyle.Color.white)

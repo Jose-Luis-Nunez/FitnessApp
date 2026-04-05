@@ -14,13 +14,11 @@ struct WeightFormatter {
         }
     }
     
-    /// Formats a weight value with "kg" suffix
-    /// - Parameter weight: The weight value to format
-    /// - Returns: Formatted string with kg suffix (e.g., "65kg", "67,5kg")
-    static func formatWithUnit(_ weight: Double) -> String {
-        return "\(format(weight))kg"
+    /// Formats a weight value with "kg" unit suffix for display
+    static func displayWeight(_ weight: Double) -> String {
+        "\(format(weight)) kg"
     }
-    
+
     /// Parses a weight string with German decimal separator to Double
     /// - Parameter weightString: String representation of weight (with comma as decimal separator)
     /// - Returns: Parsed Double value or nil if parsing fails

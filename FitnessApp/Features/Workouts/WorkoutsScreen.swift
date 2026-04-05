@@ -1,20 +1,20 @@
 import SwiftUI
 
 private enum Constants {
-    static let horizontalPadding: CGFloat = 15
+    static let horizontalPadding: CGFloat = AppStyle.Padding.screenHorizontal
     static let verticalSpacing: CGFloat = 12
     static let titleTopPadding: CGFloat = AppStyle.Padding.titleTop
     static let titleBottomSpacing: CGFloat = AppStyle.Padding.titleBottom
     static let topPadding: CGFloat = 1
-    
+
     enum WorkoutTile {
         static let contentPadding: CGFloat = 20
-        static let cornerRadius: CGFloat = 12
+        static let cornerRadius: CGFloat = AppStyle.CornerRadius.defaultButton
         static let iconSize: CGFloat = 24
         static let spacing: CGFloat = 12
         static let verticalPadding: CGFloat = 16
     }
-    
+
     enum FAB {
         static let mainSize: CGFloat = 56
         static let optionSize: CGFloat = 48

@@ -65,10 +65,8 @@ struct AppChip: View {
 
     private var font: Font {
         switch size {
-        case .small, .regular: return AppStyle.Font.regularChip
-        case .large: return AppStyle.Font.largeChip
-        case .wide: return AppStyle.Font.wideChip
-        case .extraLarge: return AppStyle.Font.extraLargeChip
+        case .small, .regular, .wide: return AppStyle.Font.regularChip
+        case .large, .extraLarge: return AppStyle.Font.largeChip
         }
     }
 

@@ -86,7 +86,7 @@ struct CustomNumberPadView: View {
                 Button(action: { adjustValue(-1) }) {
                     Image(systemName: "minus")
                         .font(.system(size: 24, weight: .regular))
-                        .foregroundColor(Color(hex: "#555555"))
+                        .foregroundColor(AppStyle.Color.numberPadGray)
                         .frame(width: 50, height: 50)
                 }
                 
@@ -170,7 +170,7 @@ struct CustomNumberPadView: View {
                 Button(action: { adjustValue(1) }) {
                     Image(systemName: "plus")
                         .font(.system(size: 24, weight: .regular))
-                        .foregroundColor(Color(hex: "#555555"))
+                        .foregroundColor(AppStyle.Color.numberPadGray)
                         .frame(width: 50, height: 50)
                 }
             }
@@ -182,7 +182,7 @@ struct CustomNumberPadView: View {
                 .animation(.easeInOut(duration: 0.3), value: statusText)
         }
         .padding(.vertical, 16)
-        .background(Color(hex: "#141518").opacity(0.85))
+        .background(AppStyle.Color.sheetInputBackground.opacity(0.85))
     }
     
     private var numberPadSection: some View {
@@ -240,7 +240,7 @@ struct CustomNumberPadView: View {
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 80)
-        .background(Color(hex: "#222025"))
+        .background(AppStyle.Color.sheetBackground)
     }
     
     private func numberButton(_ digit: String) -> some View {

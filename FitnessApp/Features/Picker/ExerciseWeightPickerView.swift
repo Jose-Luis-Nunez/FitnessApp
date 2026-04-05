@@ -25,7 +25,7 @@ struct ExerciseWeightPickerView: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.55)
+            Color.black.opacity(AppStyle.Opacity.overlayBackdrop)
                 .ignoresSafeArea()
                 .onTapGesture {
                     onCancel()
@@ -34,7 +34,7 @@ struct ExerciseWeightPickerView: View {
 
             VStack(spacing: 0) {
                 Capsule()
-                    .fill(Color.white.opacity(0.35))
+                    .fill(Color.white.opacity(AppStyle.Opacity.grabberHandle))
                     .frame(width: 44, height: 5)
                     .padding(.top, 8)
                     .padding(.bottom, 10)
@@ -52,7 +52,7 @@ struct ExerciseWeightPickerView: View {
                             Spacer()
                             HStack(spacing: 6) {
                                 Text("Decimal")
-                                    .font(.system(size: 12, weight: .semibold))
+                                    .font(AppStyle.Font.defaultFont)
                                     .foregroundColor(textColor.opacity(0.85))
                                 Toggle("", isOn: $showDecimal)
                                     .labelsHidden()
@@ -64,64 +64,18 @@ struct ExerciseWeightPickerView: View {
                 }
                 .padding(.bottom, 18)
 
-                HStack(alignment: .top, spacing: 0) {
-                    VStack {
-                        Text("Set")
-                            .font(.headline)
-                            .foregroundColor(textColor)
-                            .frame(maxWidth: .infinity)
-                        Picker("Sets", selection: $formViewModel.sets) {
-                            ForEach(setsRange, id: \.self) { value in
-                                Text("\(value)").tag(value).foregroundColor(pickerColor)
-                            }
-                        }
-                        .pickerStyle(.wheel)
-                        .frame(maxWidth: .infinity)
-                        .clipped()
-                    }
-
-                    VStack {
-                        Text("Reps")
-                            .font(.headline)
-                            .foregroundColor(textColor)
-                            .frame(maxWidth: .infinity)
-                        Picker("Reps", selection: $formViewModel.reps) {
-                            ForEach(repsRange, id: \.self) { value in
-                                Text("\(value)").tag(value).foregroundColor(pickerColor)
-                            }
-                        }
-                        .pickerStyle(.wheel)
-                        .frame(maxWidth: .infinity)
-                        .clipped()
-                    }
-
-                    if hasWeight {
-                        VStack {
-                            Text("Weight")
-                                .font(.headline)
-                                .foregroundColor(textColor)
-                                .frame(maxWidth: .infinity)
-                            Picker("Weight", selection: Binding<String>(
-                                get: {
-                                    WeightFormatter.format(formViewModel.weight)
-                                },
-                                set: { newValue in
-                                    if let weight = WeightFormatter.parse(newValue) {
-                                        formViewModel.weight = weight
-                                    }
-                                }
-                            )) {
-                                ForEach(filteredWeightOptions, id: \.self) { value in
-                                    Text("\(value) kg").tag(value).foregroundColor(pickerColor)
-                                }
-                            }
-                            .pickerStyle(.wheel)
-                            .frame(maxWidth: .infinity)
-                            .clipped()
-                        }
-                    }
-                }
-                .frame(height: 150)
+                ExerciseWheelPickerRow(
+                    sets: $formViewModel.sets,
+                    reps: $formViewModel.reps,
+                    weight: Binding<String>(
+                        get: { WeightFormatter.format(formViewModel.weight) },
+                        set: { if let w = WeightFormatter.parse($0) { formViewModel.weight = w } }
+                    ),
+                    setsRange: setsRange,
+                    repsRange: repsRange,
+                    weightOptions: filteredWeightOptions,
+                    showWeight: hasWeight
+                )
 
                 ExercisePickerActionButtons(
                     saveDisabled: false,

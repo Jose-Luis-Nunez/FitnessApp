@@ -54,7 +54,7 @@ class TrainingCoordinator: ObservableObject {
     
     // MARK: - Training Actions
     
-    func startTraining(for exercise: Exercise, startSource: TrainingStartSource = .categoryView) {
+    func startTraining(for exercise: Exercise) {
         guard let category = findCategory(exercise) else { 
             return 
         }
@@ -80,7 +80,7 @@ class TrainingCoordinator: ObservableObject {
             isTrainingActive = true
         } else {
             // Start new training session
-            activeSetViewModel.startSet(for: exercise, category: category, startSource: startSource)
+            activeSetViewModel.startSet(for: exercise, category: category)
             currentExercise = exercise
             isTrainingActive = true
         }

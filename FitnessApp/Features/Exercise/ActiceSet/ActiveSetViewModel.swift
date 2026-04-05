@@ -26,7 +26,6 @@ class ActiveSetViewModel: ObservableObject {
     @Published var didJustEditSet: Bool = false
     @Published var pendingEditMode: SetEditingMode? = nil
     var category: MuscleCategoryGroup?
-    var originalStartSource: TrainingStartSource = .categoryView
     var originalCategory: MuscleCategoryGroup?
     
     // Callback to notify parent coordinator of critical state changes
@@ -68,13 +67,11 @@ class ActiveSetViewModel: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     
-    func startSet(for exercise: Exercise, category: MuscleCategoryGroup, startSource: TrainingStartSource = .categoryView) {
+    func startSet(for exercise: Exercise, category: MuscleCategoryGroup) {
         currentExercise = exercise
         self.category = category
         
-        // Only set original values if this is a new training (not a restart)
         if originalCategory == nil {
-            originalStartSource = startSource
             originalCategory = category
         }
         
@@ -204,7 +201,6 @@ class ActiveSetViewModel: ObservableObject {
         didJustEditSet = false
         category = nil
         originalCategory = nil
-        originalStartSource = .categoryView
     }
     
     func resetProgress() {
@@ -217,7 +213,6 @@ class ActiveSetViewModel: ObservableObject {
         didJustEditSet = false
         category = nil
         originalCategory = nil
-        originalStartSource = .categoryView
     }
     
     func startTimer() {
@@ -231,17 +226,6 @@ class ActiveSetViewModel: ObservableObject {
     func resetEditingState() {
         repsInput = ""
         weightInput = ""
-    }
-    
-    func startEditing(mode: SetEditingMode) {
-        guard let exercise = currentExercise else { return }
-        isEditing = true
-        editMode = mode
-        repsInput = String(exercise.reps)
-        // Display decimals with comma to match picker options
-        weightInput = exercise.weight == floor(exercise.weight)
-            ? String(Int(exercise.weight))
-            : String(exercise.weight).replacingOccurrences(of: ".", with: ",")
     }
     
     func startQuickDone(for exercise: Exercise, category: MuscleCategoryGroup) {
@@ -341,13 +325,6 @@ class ActiveSetViewModel: ObservableObject {
         }
     }
     
-    func handleAppForeground() {
-        if isSetInProgress {
-            timerService.updateTimer()
-            timerService.startTimer()
-        }
-    }
-    
     func cancelActiveSet() {
         guard let exercise = currentExercise else { return }
         
@@ -362,8 +339,7 @@ class ActiveSetViewModel: ObservableObject {
         didEditCompleteSet = false
         didJustEditSet = false
         category = nil
-        originalStartSource = .categoryView  // Reset to default
-        originalCategory = nil  // Reset to nil
+        originalCategory = nil
         
         timerService.stopTimer()
         timerSeconds = 0

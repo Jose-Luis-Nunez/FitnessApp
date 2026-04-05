@@ -51,14 +51,7 @@ class TotalAnalyticsViewModel: ObservableObject {
     // MARK: - Statistics
     
     func totalWorkoutDaysInCurrentMonth() -> Int {
-        let calendar = Calendar.current
-        let allEntries = loadAllAnalytics()
-        
-        let currentMonthDates = allEntries
-            .filter { calendar.isDate($0.date, equalTo: Date(), toGranularity: .month) }
-            .map { calendar.startOfDay(for: $0.date) }
-        
-        return Set(currentMonthDates).count
+        AnalyticsDateHelper.daysInCurrentMonth(from: loadAllAnalytics().map(\.date))
     }
     
     func totalExercisesCompleted() -> Int {
@@ -106,17 +99,11 @@ class TotalAnalyticsViewModel: ObservableObject {
     }
     
     func allDatesWithData() -> Set<Date> {
-        let allEntries = loadAllAnalytics()
-        let calendar = Calendar.current
-        let uniqueDates = allEntries.map { calendar.startOfDay(for: $0.date) }
-        return Set(uniqueDates)
+        AnalyticsDateHelper.uniqueDays(from: loadAllAnalytics().map(\.date))
     }
-    
+
     func currentMonthName() -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "de_DE")
-        formatter.dateFormat = "LLLL"
-        return formatter.string(from: Date()).capitalized
+        AnalyticsDateHelper.currentMonthName()
     }
     
     func totalWorkoutDaysInYear() -> Int {

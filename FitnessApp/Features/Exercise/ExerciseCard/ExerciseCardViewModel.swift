@@ -35,21 +35,6 @@ final class ExerciseCardViewModel: ObservableObject {
         onUpdate(exercise)
     }
     
-    func generateStyledFieldData() -> [StyledExerciseField] {
-        let rawFields: [ExerciseFieldData] = [
-             ExerciseFieldData(field: .edit(.weightChip), value: exercise.weight),
-             ExerciseFieldData(field: .edit(.setsChip), value: Double(exercise.sets)),
-             ExerciseFieldData(field: .edit(.repsChip), value: Double(exercise.reps))
-         ]
-         
-         return rawFields.map { data in
-             StyledExerciseField(
-                 data: data,
-                 style: ExerciseCardConfig.config(for: data.field)
-             )
-         }
-    }
-    
     var displaySeatText: String {
         if let seat = exercise.seatSetting, !seat.isEmpty {
             return seat

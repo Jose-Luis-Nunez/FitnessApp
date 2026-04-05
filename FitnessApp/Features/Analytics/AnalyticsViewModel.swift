@@ -52,9 +52,7 @@ class AnalyticsViewModel: ObservableObject {
     
     func allDatesWithData(for exerciseId: UUID) -> Set<Date> {
         let entries = loadAnalytics(for: exerciseId)
-        let calendar = Calendar.current
-        let uniqueDates = entries.map { calendar.startOfDay(for: $0.date) }
-        return Set(uniqueDates)
+        return AnalyticsDateHelper.uniqueDays(from: entries.map(\.date))
     }
     
     func loadAnalyticsDates(for exerciseId: UUID) -> [Date] {
@@ -144,21 +142,11 @@ class AnalyticsViewModel: ObservableObject {
 extension AnalyticsViewModel {
     
     func trainingDaysInCurrentMonth(for exerciseId: UUID) -> Int {
-        let dates = loadAnalyticsDates(for: exerciseId)
-        let calendar = Calendar.current
-        
-        let monthDates = dates
-            .filter { calendar.isDate($0, equalTo: Date(), toGranularity: .month) }
-            .map { calendar.startOfDay(for: $0) }
-        
-        return Set(monthDates).count
+        AnalyticsDateHelper.daysInCurrentMonth(from: loadAnalyticsDates(for: exerciseId))
     }
-    
+
     func currentMonthName() -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "de_DE")
-        formatter.dateFormat = "LLLL"
-        return formatter.string(from: Date()).capitalized
+        AnalyticsDateHelper.currentMonthName()
     }
     
     func totalWeightIncreases(for exerciseId: UUID) -> Int {

@@ -33,23 +33,4 @@ struct WeightOptionsGenerator {
         return options
     }
     
-    /// Generate weight options with custom range
-    static func generateWeightOptions(maxWeight: Int = 300, includeHalfSteps: Bool = true) -> [String] {
-        var options: [String] = []
-        let maxIterations = includeHalfSteps ? maxWeight * 2 : maxWeight
-        
-        for i in 0...maxIterations {
-            if includeHalfSteps {
-                let weight = Double(i) * 0.5
-                if weight == floor(weight) {
-                    options.append("\(Int(weight))")
-                } else {
-                    options.append(String(format: "%.1f", weight).replacingOccurrences(of: ".", with: ","))
-                }
-            } else {
-                options.append(String(i))
-            }
-        }
-        return options
-    }
 }

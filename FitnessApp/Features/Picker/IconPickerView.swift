@@ -6,7 +6,7 @@ struct IconPickerView: View {
 
     private let tileCornerRadius: CGFloat = 10
     private let tileBorderWidth: CGFloat = 1
-    private let sheetBackground = Color(hex: "#222025")
+    private let sheetBackground = AppStyle.Color.sheetBackground
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {

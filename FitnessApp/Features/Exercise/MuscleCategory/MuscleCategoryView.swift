@@ -245,11 +245,7 @@ struct MuscleCategoryView: View {
                         analyticsViewModel: analyticsViewModel,
                         activeSetViewModel: trainingCoordinator.activeSetViewModel,
                         onStart: { selectedExercise in
-                            TrainingNavigationHelper.navigateToTraining(
-                                exercise: selectedExercise,
-                                category: group,
-                                navigationPath: &navigationPath
-                            )
+                            navigationPath.append(NavigationDestination.training(selectedExercise, group))
                         },
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)
@@ -297,11 +293,7 @@ struct MuscleCategoryView: View {
                         analyticsViewModel: analyticsViewModel,
                         activeSetViewModel: trainingCoordinator.activeSetViewModel,
                         onStart: { selectedExercise in
-                            TrainingNavigationHelper.navigateToTraining(
-                                exercise: selectedExercise,
-                                category: group,
-                                navigationPath: &navigationPath
-                            )
+                            navigationPath.append(NavigationDestination.training(selectedExercise, group))
                         },
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)
@@ -340,11 +332,7 @@ struct MuscleCategoryView: View {
                         analyticsViewModel: analyticsViewModel,
                         activeSetViewModel: trainingCoordinator.activeSetViewModel,
                         onStart: { selectedExercise in
-                            TrainingNavigationHelper.navigateToTraining(
-                                exercise: selectedExercise,
-                                category: group,
-                                navigationPath: &navigationPath
-                            )
+                            navigationPath.append(NavigationDestination.training(selectedExercise, group))
                         },
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)
@@ -398,11 +386,7 @@ private extension MuscleCategoryView {
                                 if viewModel.showStartTraining {
                                     items.append(MiniActionMenuItem(icon: "play.fill", title: "Start Training", isDestructive: false) {
                                         if let exercise = trainingCoordinator.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) {
-                                            TrainingNavigationHelper.navigateToTraining(
-                                                exercise: exercise,
-                                                category: group,
-                                                navigationPath: &navigationPath
-                                            )
+                                            navigationPath.append(NavigationDestination.training(exercise, group))
                                         }
                                         overlayState.showCategoryMiniMenu = false
                                     })

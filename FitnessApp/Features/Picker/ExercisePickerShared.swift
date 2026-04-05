@@ -12,7 +12,7 @@ struct ExercisePickerSheetModifier: ViewModifier {
             .padding(.bottom, 28)
             .background(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(Color(hex: "#222025"))
+                    .fill(AppStyle.Color.sheetBackground)
             )
             .frame(maxWidth: .infinity)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
@@ -65,6 +65,73 @@ struct ExercisePickerActionButtons: View {
     }
 }
 
+// MARK: - Shared Wheel Picker Row
+
+struct ExerciseWheelPickerRow: View {
+    @Binding var sets: Int
+    @Binding var reps: Int
+    @Binding var weight: String
+    let setsRange: ClosedRange<Int>
+    let repsRange: ClosedRange<Int>
+    let weightOptions: [String]
+    var showWeight: Bool = true
+
+    private let textColor: Color = AppStyle.Color.white
+    private let pickerColor: Color = AppStyle.Color.greenLight
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 0) {
+            VStack {
+                Text("Set")
+                    .font(.headline)
+                    .foregroundColor(textColor)
+                    .frame(maxWidth: .infinity)
+                Picker("Sets", selection: $sets) {
+                    ForEach(setsRange, id: \.self) { value in
+                        Text("\(value)").tag(value).foregroundColor(pickerColor)
+                    }
+                }
+                .pickerStyle(.wheel)
+                .frame(maxWidth: .infinity)
+                .clipped()
+            }
+
+            VStack {
+                Text("Reps")
+                    .font(.headline)
+                    .foregroundColor(textColor)
+                    .frame(maxWidth: .infinity)
+                Picker("Reps", selection: $reps) {
+                    ForEach(repsRange, id: \.self) { value in
+                        Text("\(value)").tag(value).foregroundColor(pickerColor)
+                    }
+                }
+                .pickerStyle(.wheel)
+                .frame(maxWidth: .infinity)
+                .clipped()
+            }
+
+            if showWeight {
+                VStack {
+                    Text("Weight")
+                        .font(.headline)
+                        .foregroundColor(textColor)
+                        .frame(maxWidth: .infinity)
+                    Picker("Weight", selection: $weight) {
+                        ForEach(weightOptions, id: \.self) { value in
+                            Text("\(value) kg").tag(value).foregroundColor(pickerColor)
+                        }
+                    }
+                    .pickerStyle(.wheel)
+                    .frame(maxWidth: .infinity)
+                    .clipped()
+                }
+            }
+        }
+        .frame(height: 150)
+    }
+}
+
 // MARK: - Shared Input Fields
 
 struct ExercisePickerInputFieldStyle: ViewModifier {
@@ -75,7 +142,7 @@ struct ExercisePickerInputFieldStyle: ViewModifier {
             .foregroundColor(AppStyle.Color.white)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(hex: "#141518"))
+                    .fill(AppStyle.Color.sheetInputBackground)
             )
     }
 }

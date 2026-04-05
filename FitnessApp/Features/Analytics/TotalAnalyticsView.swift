@@ -228,93 +228,15 @@ struct TotalAnalyticsView: View {
     }
     
     private var workoutDetailView: some View {
-        VStack(spacing: 0) {
-            // Header
-            workoutDetailHeader
-            
-            // Scrollable content with indicator
-            ZStack(alignment: .bottom) {
-                ScrollView {
-                    workoutDetailContent
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 30) // Extra space for scroll indicator
-                }
-                
-                // Scroll indicator if content overflows
-                if shouldShowScrollIndicator() {
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            Image(systemName: "chevron.down")
-                                .font(.system(size: 10, weight: .medium))
-                                .foregroundColor(AppStyle.Color.greenGlow.opacity(0.6))
-                                .padding(.bottom, 8)
-                            Spacer()
-                        }
-                    }
-                    .allowsHitTesting(false) // Don't intercept scroll gestures
-                }
-            }
+        AnalyticsDetailSection(shouldShowIndicator: shouldShowScrollIndicator()) {
+            AnalyticsDetailHeader(
+                title: "Last Workout",
+                subtitle: viewModel.getLastTrainingDayWorkoutDetail().map { DateFormatter.germanShort.string(from: $0.date) },
+                onBack: { showWorkoutDetail = false }
+            )
+        } content: {
+            workoutDetailContent
         }
-        .frame(height: 255 + 16) // 3 rows * 85px + spacing to match tiles height
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(AppStyle.Color.greenBlack.opacity(0.3))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(AppStyle.Color.greenGlow.opacity(0.2), lineWidth: 1)
-                )
-        )
-        .transition(.opacity.combined(with: .scale))
-        .onTapGesture {
-            // Prevent event bubbling - taps inside detail view should not close it
-        }
-    }
-    
-    private var workoutDetailHeader: some View {
-        HStack {
-            Button(action: {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    showWorkoutDetail = false
-                }
-            }) {
-                HStack(spacing: 6) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 14, weight: .medium))
-                    Text("Back")
-                        .font(.system(size: 14, weight: .medium))
-                }
-                .foregroundColor(AppStyle.Color.greenGlow)
-            }
-            
-            Spacer()
-            
-            VStack(spacing: 2) {
-                Text("Last Workout")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(AppStyle.Color.greenGlow)
-                
-                if let workoutDetail = viewModel.getLastTrainingDayWorkoutDetail() {
-                    Text(DateFormatter.germanShort.string(from: workoutDetail.date))
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(AppStyle.Color.greenGlow)
-                }
-            }
-            
-            Spacer()
-            
-            // Empty space to center the title
-            HStack(spacing: 6) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 14, weight: .medium))
-                Text("Back")
-                    .font(.system(size: 14, weight: .medium))
-            }
-            .opacity(0) // Invisible but maintains spacing
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
     }
     
     private var workoutDetailContent: some View {
@@ -387,93 +309,15 @@ struct TotalAnalyticsView: View {
     }
     
     private var rhythmDetailView: some View {
-        VStack(spacing: 0) {
-            // Header
-            rhythmDetailHeader
-            
-            // Scrollable content with indicator
-            ZStack(alignment: .bottom) {
-                ScrollView {
-                    rhythmDetailContent
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 30) // Extra space for scroll indicator
-                }
-                
-                // Scroll indicator if content overflows
-                if shouldShowRhythmScrollIndicator() {
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            Image(systemName: "chevron.down")
-                                .font(.system(size: 10, weight: .medium))
-                                .foregroundColor(AppStyle.Color.greenGlow.opacity(0.6))
-                                .padding(.bottom, 8)
-                            Spacer()
-                        }
-                    }
-                    .allowsHitTesting(false) // Don't intercept scroll gestures
-                }
-            }
+        AnalyticsDetailSection(shouldShowIndicator: shouldShowRhythmScrollIndicator()) {
+            AnalyticsDetailHeader(
+                title: "Training Rhythm",
+                subtitle: viewModel.getTrainingRhythmDetail()?.rhythmLabel,
+                onBack: { showRhythmDetail = false }
+            )
+        } content: {
+            rhythmDetailContent
         }
-        .frame(height: 255 + 16) // 3 rows * 85px + spacing to match tiles height
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(AppStyle.Color.greenBlack.opacity(0.3))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(AppStyle.Color.greenGlow.opacity(0.2), lineWidth: 1)
-                )
-        )
-        .transition(.opacity.combined(with: .scale))
-        .onTapGesture {
-            // Prevent event bubbling - taps inside detail view should not close it
-        }
-    }
-    
-    private var rhythmDetailHeader: some View {
-        HStack {
-            Button(action: {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    showRhythmDetail = false
-                }
-            }) {
-                HStack(spacing: 6) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 14, weight: .medium))
-                    Text("Back")
-                        .font(.system(size: 14, weight: .medium))
-                }
-                .foregroundColor(AppStyle.Color.greenGlow)
-            }
-            
-            Spacer()
-            
-            VStack(spacing: 2) {
-                Text("Training Rhythm")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(AppStyle.Color.greenGlow)
-                
-                if let rhythmDetail = viewModel.getTrainingRhythmDetail() {
-                    Text(rhythmDetail.rhythmLabel)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(AppStyle.Color.greenGlow)
-                }
-            }
-            
-            Spacer()
-            
-            // Empty space to center the title
-            HStack(spacing: 6) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 14, weight: .medium))
-                Text("Back")
-                    .font(.system(size: 14, weight: .medium))
-            }
-            .opacity(0) // Invisible but maintains spacing
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
     }
     
     private var rhythmDetailContent: some View {

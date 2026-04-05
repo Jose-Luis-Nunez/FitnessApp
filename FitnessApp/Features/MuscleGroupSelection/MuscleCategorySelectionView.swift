@@ -8,15 +8,15 @@ private struct ScrollOffsetPreferenceKey: PreferenceKey {
 }
 
 private enum Constants {
-    static let horizontalPadding: CGFloat = 15
+    static let horizontalPadding: CGFloat = AppStyle.Padding.screenHorizontal
     static let verticalSpacing: CGFloat = 10
-    
+
     enum CategoryTile {
-        static let contentPadding: CGFloat = 15
+        static let contentPadding: CGFloat = AppStyle.Padding.screenHorizontal
         static let verticalSpacing: CGFloat = 12
         static let iconSize: CGFloat = 80
     }
-    
+
     enum ProgressBar {
         static let height: CGFloat = 9
     }
@@ -186,11 +186,7 @@ struct MuscleCategorySelectionView: View {
                                         activeSetViewModel: trainingCoordinator.activeSetViewModel,
                                         onStart: { exerciseToStart in
                                             if let category = viewModel.findCategoryForExercise(exerciseToStart) {
-                                                TrainingNavigationHelper.navigateToTraining(
-                                                    exercise: exerciseToStart,
-                                                    category: category,
-                                                    navigationPath: &navigationPath
-                                                )
+                                                navigationPath.append(NavigationDestination.training(exerciseToStart, category))
                                             }
                                         },
                                         onReset: { exerciseToReset in
@@ -474,11 +470,7 @@ struct MuscleCategorySelectionView: View {
             Button(action: {
                 if let activeSetVM = SessionTrainingCache.shared.activeSetVMs[group],
                    let activeExercise = activeSetVM.currentExercise {
-                    TrainingNavigationHelper.navigateToTraining(
-                        exercise: activeExercise,
-                        category: group,
-                        navigationPath: &navigationPath
-                    )
+                    navigationPath.append(NavigationDestination.training(activeExercise, group))
                 } else {
                     navigationPath.append(NavigationDestination.muscleCategory(group))
                 }
@@ -575,11 +567,7 @@ struct MuscleCategorySelectionView: View {
                         analyticsViewModel: AnalyticsViewModel(),
                         activeSetViewModel: trainingCoordinator.activeSetViewModel,
                         onStart: { exerciseToStart in
-                            TrainingNavigationHelper.navigateToTraining(
-                                exercise: exerciseToStart,
-                                category: category,
-                                navigationPath: &navigationPath
-                            )
+                            navigationPath.append(NavigationDestination.training(exerciseToStart, category))
                         },
                         onReset: { exerciseToReset in
                             viewModel.resetExercise(exerciseToReset, category: category)
@@ -643,11 +631,7 @@ struct MuscleCategorySelectionView: View {
                 let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                 impactFeedback.impactOccurred()
                 
-                TrainingNavigationHelper.navigateToTraining(
-                    exercise: exerciseToStart,
-                    category: category,
-                    navigationPath: &navigationPath
-                )
+                navigationPath.append(NavigationDestination.training(exerciseToStart, category))
             },
             onReset: { exerciseToReset in
                 viewModel.resetExercise(exerciseToReset, category: category)
@@ -783,7 +767,7 @@ private struct ProgressBar: View {
     let totalWidth: CGFloat
     
     private let fillColor = AppStyle.Color.greenGlow //Color(hex: "#59E9AB")
-    private let trackColor = Color(hex: "#0A2726")
+    private let trackColor = AppStyle.Color.progressTrack
     
     var body: some View {
         ZStack(alignment: .leading) {
