@@ -1,6 +1,16 @@
 import Combine
 import SwiftUI
 
+private extension VerticalAlignment {
+    struct MetricLabelAlignment: AlignmentID {
+        static func defaultValue(in context: ViewDimensions) -> CGFloat {
+            context[.top]
+        }
+    }
+
+    static let metricLabel = VerticalAlignment(MetricLabelAlignment.self)
+}
+
 struct IdleActiveCardView: View {
     @ObservedObject var viewModel: ExerciseCardViewModel
     @ObservedObject var analyticsViewModel: AnalyticsViewModel
@@ -83,6 +93,7 @@ private extension IdleActiveCardView {
         HStack(spacing: 10) {
             categoryIconView
             titleSection
+            Spacer(minLength: 4)
             playButton
         }
     }
@@ -109,78 +120,131 @@ private extension IdleActiveCardView {
                     if isEditable { onEdit(viewModel.exercise, .name) }
                 }
 
-            HStack(spacing: 0) {
-                if viewModel.exercise.hasWeight {
-                    Text(formattedWeight)
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white.opacity(0.7))
-                        .fixedSize()
-                        .padding(.trailing, 20)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            if isEditable { onEdit(viewModel.exercise, .weight) }
-                        }
-                } else {
-                    Text("\(viewModel.exercise.sets) x \(viewModel.exercise.reps)")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white.opacity(0.7))
-                        .fixedSize()
-                        .padding(.trailing, 20)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            if isEditable { onEdit(viewModel.exercise, .weight) }
-                        }
-                }
+            metricRow
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
 
-                if !viewModel.exercise.noSeats {
-                    HStack(spacing: 4) {
-                        Text(viewModel.displaySeatText)
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white.opacity(0.7))
-                            .lineLimit(1)
-                            .fixedSize()
+    private var metricLabelFont: Font {
+        .system(size: 11, weight: .medium)
+    }
 
-                        Image("chairSettings")
-                            .renderingMode(.template)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 28, height: 28)
-                            .foregroundColor(.white.opacity(0.7))
-                    }
-                    .padding(.trailing, 20)
+    private var metricLabelColor: Color {
+        .white.opacity(0.5)
+    }
+
+    var metricRow: some View {
+        HStack(alignment: .metricLabel, spacing: 0) {
+            weightColumn
+
+            if !viewModel.exercise.noSeats {
+                verticalSeparator
+                seatColumn
+            }
+
+            verticalSeparator
+            progressColumn
+
+            if !weightPhases.isEmpty {
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.7))
+                    .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                    .padding(.leading, 12)
+                    .alignmentGuide(.metricLabel) { d in d[.top] - 16 }
                     .contentShape(Rectangle())
-                    .onTapGesture {
-                        if isEditable { onEdit(viewModel.exercise, .seat) }
-                    }
-                }
+                    .onTapGesture { isExpanded.toggle() }
+            }
 
-                Button(action: {
-                    analyticsSheetDate = AnalyticsSheetDate(date: Date())
-                }) {
-                    Image("analyticsEntry")
+            Spacer(minLength: 0)
+        }
+    }
+
+    var verticalSeparator: some View {
+        Rectangle()
+            .fill(Color.white.opacity(0.3))
+            .frame(width: 1, height: 28)
+            .padding(.horizontal, 16)
+    }
+
+    var weightColumn: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(viewModel.exercise.hasWeight ? "Weight" : "Reps")
+                .font(metricLabelFont)
+                .foregroundColor(metricLabelColor)
+                .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.center] }
+
+            if viewModel.exercise.hasWeight {
+                Text(formattedWeight)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(AppStyle.Color.greenGlow)
+                    .fixedSize()
+            } else {
+                Text("\(viewModel.exercise.sets) x \(viewModel.exercise.reps)")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(AppStyle.Color.greenGlow)
+                    .fixedSize()
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if isEditable { onEdit(viewModel.exercise, .weight) }
+        }
+    }
+
+    var seatColumn: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Seat")
+                .font(metricLabelFont)
+                .foregroundColor(metricLabelColor)
+                .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.center] }
+
+            if let seat = viewModel.exercise.seatSetting, !seat.isEmpty {
+                Text(seat)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(AppStyle.Color.greenGlow)
+                    .lineLimit(1)
+                    .fixedSize()
+            } else {
+                HStack(spacing: 2) {
+                    Text("+")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(AppStyle.Color.greenGlow)
+
+                    Image("chairSettings")
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 28, height: 28)
-                        .foregroundColor(.white.opacity(0.7))
+                        .frame(width: 20, height: 20)
+                        .foregroundColor(AppStyle.Color.greenGlow)
                 }
-                .buttonStyle(.plain)
-                .padding(.trailing, 20)
-
-                if !weightPhases.isEmpty {
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.7))
-                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
-                        .contentShape(Rectangle())
-                        .onTapGesture { isExpanded.toggle() }
-                }
-
-                Spacer(minLength: 0)
             }
-            .frame(height: 28)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if isEditable { onEdit(viewModel.exercise, .seat) }
+        }
+    }
+
+    var progressColumn: some View {
+        VStack(alignment: .center, spacing: 2) {
+            Text("Progress")
+                .font(metricLabelFont)
+                .foregroundColor(metricLabelColor)
+                .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.center] }
+
+            Button(action: {
+                analyticsSheetDate = AnalyticsSheetDate(date: Date())
+            }) {
+                Image("analyticsEntry")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 22, height: 22)
+                    .foregroundColor(AppStyle.Color.greenGlow)
+            }
+            .buttonStyle(.plain)
+        }
     }
 
     @ViewBuilder
