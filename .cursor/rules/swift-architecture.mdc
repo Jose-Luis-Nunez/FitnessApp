@@ -1,0 +1,61 @@
+---
+description: >-
+  SwiftUI architecture conventions for the FitnessApp iOS project. Use when
+  writing, editing, or reviewing Swift/SwiftUI code. Covers AppStyle design
+  tokens, shared components, MVVM structure, and navigation patterns.
+globs: "**/*.swift"
+alwaysApply: false
+---
+
+# FitnessApp Swift Architecture
+
+## Design Tokens — Use AppStyle
+
+Never use hardcoded styling values. Always use `AppStyle` tokens from `Shared/Design/AppStyle.swift`:
+
+```swift
+// BAD
+.font(.system(size: 14, weight: .semibold))
+.foregroundColor(Color(hex: "#088177"))
+.padding(.horizontal, 18)
+.cornerRadius(12)
+.opacity(0.55)
+
+// GOOD
+.font(AppStyle.Font.tileLabel)
+.foregroundColor(AppStyle.Color.green)
+.padding(.horizontal, AppStyle.Padding.horizontal)
+.cornerRadius(AppStyle.CornerRadius.defaultButton)
+.opacity(AppStyle.Opacity.overlayBackdrop)
+```
+
+If no matching token exists, add one to `AppStyle` first, then reference it.
+
+## Shared Components — Do Not Duplicate
+
+Before building custom UI, check these existing components:
+
+- `MetricChipView` — framed chip with background/stroke (cards, active sets)
+- `WorkoutFormSheet` — full-screen sheet with header, drag indicator, save button
+- `AnalyticsDetailSection` / `AnalyticsDetailHeader` — expandable analytics cards
+- `ExercisePickerSheetModifier` / `ExercisePickerActionButtons` — bottom sheet chrome
+- `ExerciseWheelPickerRow` — sets/reps/weight wheel picker row
+- `ExercisePickerInputField` — styled text input for picker sheets
+
+## Utilities — Centralized Logic
+
+- **Weight display**: `WeightFormatter.displayWeight(_:)` — never format weights manually.
+- **Analytics dates**: `AnalyticsDateHelper` — for month names, unique days, days-in-month.
+
+## MVVM Structure
+
+- Feature folder: `Features/<FeatureName>/`
+- ViewModel: `class <Name>ViewModel: ObservableObject` with `@Published` properties
+- View: `@StateObject private var viewModel` for owned ViewModels
+- No business logic in Views — delegate to ViewModel or Service
+
+## Navigation
+
+- All destinations in `NavigationDestination` enum (`FitnessAppApp.swift`)
+- Navigate via `navigationPath.append(NavigationDestination.<case>)`
+- New screens require a new enum case and a `.navigationDestination` entry

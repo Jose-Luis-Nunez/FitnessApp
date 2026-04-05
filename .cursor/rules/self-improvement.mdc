@@ -1,0 +1,27 @@
+---
+description: >-
+  Prompts the agent to identify learnings from corrections and suggest
+  persisting them as rules or skill updates. Activates whenever a mistake
+  is fixed or the user corrects agent output.
+alwaysApply: true
+---
+
+# Self-Improvement Protocol
+
+When any of the following occurs during a session:
+
+- You fix a bug caused by violating a project convention
+- The user corrects your output (e.g. wrong component, wrong token, wrong placement)
+- You discover a pattern not yet covered by existing rules or skills
+
+Then at the end of the task (after the fix is applied), briefly note:
+
+1. **What went wrong** — one sentence
+2. **Which rule/skill should cover this** — file path or "new rule needed"
+3. **Proposed addition** — the specific line or pattern to add
+
+Ask the user: "Soll ich dieses Learning in den Rules/Skills persistieren?"
+
+If confirmed, use the `reflect-and-learn` skill workflow to apply the change.
+
+Do NOT interrupt the current task to reflect. Complete the fix first, then suggest the learning.

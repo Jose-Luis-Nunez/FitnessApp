@@ -1,0 +1,27 @@
+---
+description: >-
+  Automatically run post-change validation after large edits. Triggers when
+  editing Swift files to remind the agent to validate after refactoring,
+  feature additions/deletions, or multi-file changes.
+globs: "**/*.swift"
+alwaysApply: false
+---
+
+# Automatic Post-Change Validation
+
+After completing any of these tasks, run the `post-change-validation` skill **before** reporting done to the user:
+
+- Refactoring (rename, extract, move, inline, delete) touching 2+ files
+- Adding or removing a feature, view, service, or model
+- Changing a service API (method signature, return type, parameters)
+- Deleting files or folders
+- Adding/removing enum cases
+
+Skip validation for trivial changes (single-line fix, comment edit, token swap).
+
+## How to Run
+
+1. Identify changed files via `git diff --name-only` or from the edits you just made
+2. Follow the full checklist in the `post-change-validation` skill
+3. Report findings inline — do not ask the user whether to validate, just do it
+4. If findings exist, fix them before reporting done (or flag items that need user decision)
