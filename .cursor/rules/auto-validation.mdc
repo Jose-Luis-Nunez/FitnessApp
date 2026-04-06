@@ -25,3 +25,4 @@ Skip validation for trivial changes (single-line fix, comment edit, token swap).
 2. Follow the full checklist in the `post-change-validation` skill
 3. Report findings inline — do not ask the user whether to validate, just do it
 4. If findings exist, fix them before reporting done (or flag items that need user decision)
+
