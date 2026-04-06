@@ -512,10 +512,10 @@ struct TotalAnalyticsView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity) // Fill provided frame
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(AppStyle.Color.greenBlack.opacity(0.3))
+                .fill(Color.white.opacity(0.06))
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(AppStyle.Color.greenGlow.opacity(0.2), lineWidth: 1)
+                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
                 )
         )
     }
