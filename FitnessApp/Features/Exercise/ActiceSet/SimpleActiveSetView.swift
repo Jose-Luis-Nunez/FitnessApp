@@ -140,6 +140,7 @@ struct SimpleActiveSetView: View {
                 .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
                 .buttonStyle(PlainButtonStyle())
                 .disabled(progress.status == .completedDone || viewModel.isLastSetCompleted)
+                .accessibilityIdentifier("id_button_quick_done_set_\(index)")
             }
         }
         .padding(.horizontal, dynamicPadding)

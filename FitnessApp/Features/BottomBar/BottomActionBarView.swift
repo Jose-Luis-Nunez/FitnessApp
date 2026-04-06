@@ -198,6 +198,7 @@ struct FloatingActionButtonsView: View {
         }
         .buttonStyle(PlainButtonStyle())
         .frame(width: capsuleWidth, height: capsuleHeight)
+        .accessibilityIdentifier(accessibilityID(for: style, text: text))
     }
 
     @ViewBuilder
@@ -226,6 +227,7 @@ struct FloatingActionButtonsView: View {
         }
         .buttonStyle(PlainButtonStyle())
         .contentShape(Rectangle())
+        .accessibilityIdentifier(accessibilityID(for: style, text: text))
     }
     
     @ViewBuilder
@@ -269,5 +271,16 @@ struct FloatingActionButtonsView: View {
         .frame(width: 44, height: 44) // EXAKT wie BottomMenuBar buttons
         .contentShape(Circle())
         .buttonStyle(.plain)
+    }
+
+    private func accessibilityID(for style: MenuItemStyle, text: String) -> String {
+        switch style {
+        case .done:    return "id_button_done"
+        case .finish:  return "id_button_finish"
+        case .start:   return "id_button_start"
+        case .allDone: return "id_button_all_done"
+        case .control: return "id_button_\(text.lowercased())"
+        case .quickDone: return "id_button_quick_done"
+        }
     }
 }
