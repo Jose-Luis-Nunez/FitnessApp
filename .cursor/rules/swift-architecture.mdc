@@ -3,8 +3,7 @@ description: >-
   SwiftUI architecture conventions for the FitnessApp iOS project. Use when
   writing, editing, or reviewing Swift/SwiftUI code. Covers AppStyle design
   tokens, shared components, MVVM structure, and navigation patterns.
-globs: "**/*.swift"
-alwaysApply: false
+alwaysApply: true
 ---
 
 # FitnessApp Swift Architecture

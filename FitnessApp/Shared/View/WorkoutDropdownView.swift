@@ -1,11 +1,11 @@
 import SwiftUI
 
 struct WorkoutDropdownView: View {
-    @ObservedObject var viewModel: MuscleCategorySelectionViewModel
+    @ObservedObject var workoutStorage: WorkoutStorageService = .shared
     @EnvironmentObject private var overlayState: UIOverlayState
-    
-    private let storageService = WorkoutStorageService.shared
-    
+
+    var titleFont: Font = AppStyle.Font.navigationHeadline
+
     var body: some View {
         Button(action: {
             withAnimation(.easeInOut(duration: 0.2)) {
@@ -13,8 +13,8 @@ struct WorkoutDropdownView: View {
             }
         }) {
             HStack(spacing: 8) {
-                Text(viewModel.currentWorkoutName)
-                    .font(AppStyle.Font.navigationHeadline)
+                Text(workoutStorage.currentWorkout?.name ?? "Dein Workout")
+                    .font(titleFont)
                     .foregroundColor(AppStyle.Color.white)
                     .lineLimit(1)
                 
@@ -25,13 +25,10 @@ struct WorkoutDropdownView: View {
             }
         }
     }
-
 }
 
 #Preview {
-    // Preview wrapper
     struct PreviewWrapper: View {
-        @StateObject private var viewModel = MuscleCategorySelectionViewModel()
         @StateObject private var overlayState = UIOverlayState()
         
         var body: some View {
@@ -39,7 +36,7 @@ struct WorkoutDropdownView: View {
                 AppStyle.Color.backgroundColor.ignoresSafeArea()
                 
                 VStack {
-                    WorkoutDropdownView(viewModel: viewModel)
+                    WorkoutDropdownView()
                         .environmentObject(overlayState)
                     Spacer()
                 }

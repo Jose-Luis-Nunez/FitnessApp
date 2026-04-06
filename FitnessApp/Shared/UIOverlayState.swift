@@ -1,7 +1,7 @@
 import Foundation
 import Combine
 
-enum AppCurrentScene { case workouts, home, profile, category, training }
+enum AppCurrentScene { case workouts, home, profile, category, training, schedule }
 
 final class UIOverlayState: ObservableObject {
     @Published var isEditingSheetVisible: Bool = false

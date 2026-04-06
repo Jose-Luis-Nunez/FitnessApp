@@ -1,12 +1,15 @@
 import SwiftUI
 
 struct WorkoutPickerView: View {
-    @ObservedObject var viewModel: MuscleCategorySelectionViewModel
     @EnvironmentObject private var overlayState: UIOverlayState
     @State private var selectedWorkout: Workout?
-    
+
+    var onSelect: (Workout) -> Void = { workout in
+        WorkoutStorageService.shared.setCurrentWorkout(workout)
+    }
+
     private let storageService = WorkoutStorageService.shared
-    
+
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
@@ -17,31 +20,29 @@ struct WorkoutPickerView: View {
                 )
             
             VStack(spacing: 16) {
-                // Title
                 Text("Select Workout")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white)
+                    .font(AppStyle.Font.sectionTitle)
+                    .foregroundColor(AppStyle.Color.white)
                     .padding(.top, 20)
                 
-                // Native iOS Picker with overlay arrow
                 ZStack {
                     Picker("Workout", selection: $selectedWorkout) {
                         ForEach(storageService.workouts, id: \.id) { workout in
                             Text(workout.name)
-                                .font(.system(size: 24, weight: .medium))
-                                .foregroundColor(.white)
+                                .font(AppStyle.Font.numberPadKey)
+                                .foregroundColor(AppStyle.Color.white)
                                 .padding(.leading, 5)
                                 .tag(workout as Workout?)
                         }
                     }
                     .allowsHitTesting(true)
                     
-                    // Arrow overlay on the right side
                     HStack {
                         Spacer()
                         Button(action: {
                             if let workout = selectedWorkout {
-                                selectWorkout(workout)
+                                onSelect(workout)
+                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
                             }
                             withAnimation(.easeInOut(duration: 0.2)) {
                                 overlayState.showWorkoutDropdown = false
@@ -53,8 +54,8 @@ struct WorkoutPickerView: View {
                                     .frame(width: 32, height: 32)
                                 
                                 Image(systemName: "arrow.right")
-                                    .foregroundColor(.black)
-                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(AppStyle.Color.black)
+                                    .font(AppStyle.Font.bottomBarButtons)
                             }
                         }
                         .buttonStyle(.plain)
@@ -64,7 +65,6 @@ struct WorkoutPickerView: View {
                 }
                 .pickerStyle(.wheel)
                 .frame(height: 150)
-
             }
         }
         .frame(width: 320, height: 220)
@@ -81,28 +81,17 @@ struct WorkoutPickerView: View {
             selectedWorkout = newWorkout
         }
     }
-    
-    private func selectWorkout(_ workout: Workout) {
-        viewModel.selectWorkout(workout)
-        
-        // Add haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-        impactFeedback.impactOccurred()
-    }
-    
-
 }
 
 #Preview {
     struct PreviewWrapper: View {
-        @StateObject private var viewModel = MuscleCategorySelectionViewModel()
         @StateObject private var overlayState = UIOverlayState()
         
         var body: some View {
             ZStack {
                 AppStyle.Color.backgroundColor.ignoresSafeArea()
                 
-                WorkoutPickerView(viewModel: viewModel)
+                WorkoutPickerView()
                     .environmentObject(overlayState)
             }
         }

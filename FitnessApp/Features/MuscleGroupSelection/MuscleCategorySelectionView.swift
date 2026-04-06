@@ -117,7 +117,7 @@ struct MuscleCategorySelectionView: View {
             .zIndex(2)
             
             VStack(spacing: 0) {
-                WorkoutDropdownView(viewModel: viewModel)
+                WorkoutDropdownView()
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, AppStyle.Padding.horizontal)
                     .padding(.top, AppStyle.Padding.titleTop)
@@ -274,7 +274,7 @@ struct MuscleCategorySelectionView: View {
                         }
                     }
                     .overlay {
-                        WorkoutPickerView(viewModel: viewModel)
+                        WorkoutPickerView(onSelect: { viewModel.selectWorkout($0) })
                     }
                     .zIndex(4)
             }

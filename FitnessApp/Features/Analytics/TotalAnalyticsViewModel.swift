@@ -336,7 +336,7 @@ class TotalAnalyticsViewModel: ObservableObject {
         return getWorkoutDetail(for: lastTrainingDay)
     }
     
-    private func getWorkoutDetail(for date: Date) -> WorkoutDetailData? {
+    func getWorkoutDetail(for date: Date) -> WorkoutDetailData? {
         guard let currentWorkout = WorkoutStorageService.shared.currentWorkout else { return nil }
         
         let exerciseStorage = ExerciseStorageService()
@@ -419,7 +419,7 @@ class TotalAnalyticsViewModel: ObservableObject {
         return "Historische Abstände: \(gapsText) Days\nDurchschnitt: \(roundedAverage) Days\nSeit letztem Training: \(daysSinceLastTraining) Days (nicht in Berechnung)\nErgebnis: \(rhythmLabel)"
     }
     
-    private func getTrainingDays() -> [Date] {
+    func getTrainingDays() -> [Date] {
         let allEntries = loadAllAnalytics()
         let calendar = Calendar.current
         

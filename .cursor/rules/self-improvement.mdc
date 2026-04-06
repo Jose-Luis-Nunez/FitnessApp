@@ -22,7 +22,7 @@ Then at the end of the task (after the fix is applied), briefly note:
 
 Ask the user: "Soll ich dieses Learning in den Rules/Skills persistieren?"
 
-If confirmed, use the `reflect-and-learn` skill workflow to apply the change.
+If confirmed, use the `reflect-and-learn` skill workflow to apply the change. Also consider whether the learning should update a custom subagent in `.cursor/agents/` (e.g. new detection pattern for `style-auditor`, new trigger for `docs-sync-agent`).
 
 Do NOT interrupt the current task to reflect. Complete the fix first, then suggest the learning.
 

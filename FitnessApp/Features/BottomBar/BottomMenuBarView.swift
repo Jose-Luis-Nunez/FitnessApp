@@ -108,6 +108,8 @@ struct BottomMenuBarView: View {
             }
             menuItemImage(imageName: "menuCalenderIcon", label: "Schedule", tab: .calendar) {
                 selectTab(.calendar)
+                navigationPath = NavigationPath()
+                navigationPath.append(NavigationDestination.schedule)
             }
             menuItemImage(imageName: "profileMenuIcon", label: "Profile", tab: .profile) {
                 selectTab(.profile)

@@ -42,6 +42,20 @@ enum AppStyle {
         static let numberPadKey = SwiftUI.Font.system(size: 24, weight: .medium)
         static let chartLabel = SwiftUI.Font.system(size: 10, weight: .regular)
         static let pickerAction = SwiftUI.Font.system(size: 14, weight: .regular)
+
+        static let calendarHeader = SwiftUI.Font.system(size: 16, weight: .semibold)
+        static let calendarSubheader = SwiftUI.Font.system(size: 12, weight: .medium)
+        static let calendarDay = SwiftUI.Font.system(size: 14, weight: .regular)
+        static let calendarDayBold = SwiftUI.Font.system(size: 14, weight: .bold)
+        static let dayChipLabel = SwiftUI.Font.system(size: 10, weight: .semibold)
+        static let dayChipNumber = SwiftUI.Font.system(size: 13, weight: .regular)
+        static let dayChipNumberBold = SwiftUI.Font.system(size: 13, weight: .bold)
+        static let detailCategory = SwiftUI.Font.system(size: 15, weight: .bold)
+        static let detailExercise = SwiftUI.Font.system(size: 14, weight: .medium)
+        static let detailBadge = SwiftUI.Font.system(size: 14, weight: .bold)
+        static let detailCaption = SwiftUI.Font.system(size: 12, weight: .medium)
+        static let streakLabel = SwiftUI.Font.system(size: 11, weight: .medium)
+        static let streakValue = SwiftUI.Font.system(size: 16, weight: .bold)
     }
 
     enum Color {

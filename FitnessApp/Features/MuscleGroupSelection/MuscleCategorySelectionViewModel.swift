@@ -4,7 +4,6 @@ import Combine
 class MuscleCategorySelectionViewModel: ObservableObject {
     @Published var categories: [MuscleCategoryGroup] = []
     @Published var bottomBarViewModel: BottomActionBarViewModel
-    @Published var currentWorkoutName: String = "Dein Workout"
 
     private let exerciseManagementService = ExerciseManagementService()
     private let workoutStorageService = WorkoutStorageService.shared
@@ -27,14 +26,11 @@ class MuscleCategorySelectionViewModel: ObservableObject {
             showResetAllExercisesButton: false
         )
         updateExerciseCountsAndViewModel()
-        updateWorkoutName(workoutStorageService.currentWorkout)
         
-        // Listen to workout changes
         workoutStorageService.$currentWorkout
             .sink { [weak self] currentWorkout in
                 self?.updateCategories(for: currentWorkout)
                 self?.updateExerciseCountsAndViewModel()
-                self?.updateWorkoutName(currentWorkout)
             }
             .store(in: &cancellables)
         
@@ -93,10 +89,6 @@ class MuscleCategorySelectionViewModel: ObservableObject {
         } else {
             categories = []
         }
-    }
-    
-    private func updateWorkoutName(_ workout: Workout?) {
-        currentWorkoutName = workout?.name ?? "Dein Workout"
     }
     
     // MARK: - Exercise Access

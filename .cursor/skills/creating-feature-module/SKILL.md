@@ -3,8 +3,10 @@ name: creating-feature-module
 description: >-
   Scaffold a new SwiftUI feature module, extend an existing feature, or create
   a picker sheet with correct project conventions. Use when the user asks to
-  create a new feature, screen, page, module, picker, or add functionality to
-  an existing feature in the FitnessApp iOS project.
+  create a new feature, screen, page, module, view, tab, picker, calendar,
+  schedule, dashboard, settings, or add functionality to an existing feature.
+  Also use when asked to build a neue Seite, neues Feature, neuer Screen,
+  new screen, or new page in the FitnessApp iOS project.
 ---
 
 # Creating a Feature Module
@@ -128,6 +130,7 @@ Pickers belong in `Features/Picker/`, not in a feature folder. Use existing pick
 
 - [ ] All styling uses `AppStyle` tokens (Color, Font, Padding, CornerRadius, Opacity)
 - [ ] No hardcoded `Color(hex:)`, `.font(.system(...))`, numeric `.padding()`, `.cornerRadius()`, `.opacity()`
+- [ ] If new font sizes/weights are needed, add tokens to `AppStyle.Font` first
 - [ ] Reusable components used where applicable (see Shared Components table in [architecture.md](../../references/architecture.md))
 - [ ] Weight display uses `WeightFormatter.displayWeight(_:)`
 - [ ] Analytics date logic uses `AnalyticsDateHelper`
@@ -135,3 +138,5 @@ Pickers belong in `Features/Picker/`, not in a feature folder. Use existing pick
 - [ ] View owns ViewModel via `@StateObject`
 - [ ] No business logic in the View
 - [ ] Navigation registered in `NavigationDestination` enum
+- [ ] `AppCurrentScene` enum updated if new scene type
+- [ ] `architecture.md` updated (Feature Map, Navigation, new shared components/services)

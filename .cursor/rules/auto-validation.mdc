@@ -9,7 +9,7 @@ alwaysApply: false
 
 # Automatic Post-Change Validation
 
-After completing any of these tasks, run the `post-change-validation` skill **before** reporting done to the user:
+You MUST validate changes **before** reporting done to the user after any of these tasks:
 
 - Refactoring (rename, extract, move, inline, delete) touching 2+ files
 - Adding or removing a feature, view, service, or model
@@ -17,12 +17,21 @@ After completing any of these tasks, run the `post-change-validation` skill **be
 - Deleting files or folders
 - Adding/removing enum cases
 
-Skip validation for trivial changes (single-line fix, comment edit, token swap).
+Skip validation only for trivial changes (single-line fix, comment edit, token swap).
 
 ## How to Run
 
+The project has three custom subagents in `.cursor/agents/` that handle validation automatically:
+
+- **`style-auditor`** — checks AppStyle token usage (readonly, runs on changed .swift files)
+- **`docs-sync-agent`** — updates architecture.md when structure changes
+- **`post-change-validator`** — checks dead code, missed reuse, referential integrity (readonly, background)
+
+If the subagents are not triggered automatically, delegate to them explicitly or fall back to the `post-change-validation` skill manually:
+
 1. Identify changed files via `git diff --name-only` or from the edits you just made
 2. Follow the full checklist in the `post-change-validation` skill
-3. Report findings inline — do not ask the user whether to validate, just do it
-4. If findings exist, fix them before reporting done (or flag items that need user decision)
+3. Report findings inline — do NOT ask the user whether to validate, just do it
+4. You MUST fix all findings before reporting done (or flag items that need user decision)
+5. You MUST also verify that `architecture.md` was updated if the change added/removed features, services, models, navigation destinations, or shared components
 

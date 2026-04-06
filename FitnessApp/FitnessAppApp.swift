@@ -6,6 +6,7 @@ enum NavigationDestination: Hashable {
     case home
     case profile
     case totalAnalytics
+    case schedule
     case muscleCategory(MuscleCategoryGroup)
     case training(Exercise, MuscleCategoryGroup)
 }
@@ -72,6 +73,10 @@ struct FitnessAppApp: App {
                                     TotalAnalyticsView()
                                         .navigationBarBackButtonHidden(true)
                                         .onAppear { isShowingWorkoutsRoot = false; overlayState.currentScene = .home }
+                                case .schedule:
+                                    ScheduleView()
+                                        .navigationBarBackButtonHidden(true)
+                                        .onAppear { isShowingWorkoutsRoot = false; overlayState.currentScene = .schedule }
                                 case .muscleCategory(let group):
                                     MuscleCategoryView(group: group, navigationPath: $navigationPath)
                                         .navigationBarBackButtonHidden(true)
@@ -96,8 +101,8 @@ struct FitnessAppApp: App {
                 let rightStyle: BottomBarRightActionStyle = {
                     switch overlayState.currentScene {
                     case .home: return .menu
-                    case .category, .workouts, .profile: return .menu
-                    case .training: return .menu  // TrainingView has no mini menu, but keep menu icon
+                    case .category, .workouts, .profile, .schedule: return .menu
+                    case .training: return .menu
                     }
                 }()
 
@@ -114,7 +119,7 @@ struct FitnessAppApp: App {
                             overlayState.showCategoryMiniMenu.toggle()
                         case .workouts:
                             overlayState.showWorkoutsMiniMenu.toggle()
-                        case .profile:
+                        case .profile, .schedule:
                             break
                         case .training:
                             overlayState.showTrainingMiniMenu.toggle()

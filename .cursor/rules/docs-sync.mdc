@@ -3,8 +3,7 @@ description: >-
   Keep architecture docs and skill references in sync when code structure
   changes. Triggers when editing Swift files that affect AppStyle, shared
   components, services, models, navigation, or feature structure.
-globs: "**/*.swift"
-alwaysApply: false
+alwaysApply: true
 ---
 
 # Documentation Sync
