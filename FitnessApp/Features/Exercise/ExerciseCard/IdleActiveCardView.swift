@@ -153,7 +153,7 @@ private extension IdleActiveCardView {
         Rectangle()
             .fill(Color.white.opacity(0.3))
             .frame(width: 1, height: 28)
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 16)
     }
 
     var weightColumn: some View {
@@ -206,7 +206,7 @@ private extension IdleActiveCardView {
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 20, height: 20)
+                        .frame(width: 22, height: 22)
                         .foregroundColor(AppStyle.Color.greenGlow)
                 }
             }
@@ -225,7 +225,7 @@ private extension IdleActiveCardView {
                 .fixedSize()
                 .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.center] }
 
-            HStack(spacing: 10) {
+            HStack(spacing: 16) {
                 Button(action: {
                     analyticsSheetDate = AnalyticsSheetDate(date: Date())
                 }) {
@@ -233,14 +233,14 @@ private extension IdleActiveCardView {
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 22, height: 22)
+                        .frame(width: 24, height: 24)
                         .foregroundColor(AppStyle.Color.greenGlow)
                 }
                 .buttonStyle(.plain)
 
                 if !weightPhases.isEmpty {
                     Image(systemName: "chevron.down")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white.opacity(0.7))
                         .rotationEffect(.degrees(isExpanded ? 180 : 0))
                         .contentShape(Rectangle())
