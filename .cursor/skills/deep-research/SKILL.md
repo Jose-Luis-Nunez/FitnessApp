@@ -39,7 +39,7 @@ Request received
 
 Depth selection
 ├── standard → 2-3 subagents, ~4.000 words,  phases 0-1-2-3-[QG]-3.1-3.5-4-5  [DEFAULT]
-└── deep     → 4-6 subagents, 6.000+ words,  phases 0-1-2-3-[QG]-2-3-3.1-3.5-4-4.5-5
+└── deep     → 4-6 subagents, 6.000+ words,  phases 0-1-2-3-[QG]-2-3-3.1-3.5-4-5
 
 [QG] = Quality Gate: skip next wave if source targets already met
 ```
@@ -90,6 +90,30 @@ orchestrates the pipeline; subagents handle retrieval, verification, and
   is delegated to subagents so the main agent preserves its tool-call
   budget for Phases 3-5.
 
+### Subagent Model Selection
+
+Use `model: "fast"` for Retrieval (Role 1) and Gap-Fill (Role 2) subagents
+— they search and extract, no deep reasoning needed. This reduces cost and
+latency. Use the default model (no `model` parameter) for Verification
+(Role 3) and Synthesis (Role 4) subagents, which require careful judgment.
+
+### Source Credibility Tiers
+
+Subagents (Retrieval + Gap-Fill) tag every source with a credibility tier
+at extraction time. This costs zero extra tool calls — the agent already
+reads the URL, author, and content. Phase 3 uses the tiers for confidence
+assignment.
+
+| Tier | Label | Examples |
+|------|-------|----------|
+| **1** | Authoritative | Peer-reviewed journals (arxiv, ACM, IEEE), official documentation, established research labs (Microsoft Research, Google Research), recognized industry authorities (Fowler, Thoughtworks Radar, DORA/State of DevOps) |
+| **2** | Credible | Engineering blogs from established companies (Netflix, Spotify, Airbnb tech blogs), conference talks (QCon, STAREAST, SeleniumConf), well-known practitioners with published track record |
+| **3** | Supplementary | Personal blogs, Medium posts, Reddit/HN discussions, vendor marketing content, undated articles, sources with no identifiable author |
+
+**Tagging rule:** Each source in the source list gets a `Tier: 1/2/3` tag.
+Phase 3 uses tiers for confidence: **`[High]` requires at least one Tier 1
+or Tier 2 source. Three Tier 3 sources alone = `[Medium]` maximum.**
+
 ---
 
 ## Tool Constraints & Subagent Strategy (Cursor-specific)
@@ -139,12 +163,22 @@ Budget: max 8 WebSearch + 5 WebFetch calls. If you have not found
 sufficient sources after these calls, return what you have — do not
 loop indefinitely. Keep your full response under 2000 words.
 
+Source credibility tiers — assign one per source based on domain,
+author, and content signals:
+  Tier 1 (authoritative): Peer-reviewed, official docs, research labs,
+    recognized authorities (Fowler, DORA, Thoughtworks Radar)
+  Tier 2 (credible): Established company engineering blogs, conference
+    talks, well-known practitioners
+  Tier 3 (supplementary): Personal blogs, Medium, Reddit/HN, vendor
+    marketing, undated or anonymous content
+
 Instructions:
 1. Run 4-6 WebSearch calls (parallel where possible).
 2. For the 3-5 most relevant results, fetch full pages with WebFetch.
 3. For each source, extract:
    - Core argument / key data points (2-3 sentences)
    - Author, publication, date
+   - Credibility tier (1, 2, or 3)
    - Direct quotes worth citing (if any)
 4. For EACH assigned area, write a 3-sentence TAKEAWAY that distills
    the consensus across sources. This takeaway is the main deliverable
@@ -158,7 +192,7 @@ Instructions:
    **[Area M]:** [3-sentence distillation]
 
    ## Sources
-   [START_INDEX] Author — Title — URL — Date accessed
+   [START_INDEX] Author — Title — URL — Date accessed — Tier: N
    Summary: ...
    Key quotes: ...
 
@@ -180,6 +214,14 @@ Search terms to start with: [list — tailored to the gap]
 
 Budget: max 5 WebSearch + 3 WebFetch calls.
 
+Source credibility tiers — assign one per source:
+  Tier 1 (authoritative): Peer-reviewed, official docs, research labs,
+    recognized authorities
+  Tier 2 (credible): Established company engineering blogs, conference
+    talks, well-known practitioners
+  Tier 3 (supplementary): Personal blogs, Medium, Reddit/HN, vendor
+    marketing, undated or anonymous content
+
 Instructions:
 1. Search specifically for the missing evidence. Do NOT re-cover
    areas that already have sufficient sources.
@@ -189,7 +231,8 @@ Instructions:
    explicitly — do NOT pad with tangentially related sources.
 4. Number sources starting from [START_INDEX].
 
-Return in the same format as the Retrieval Agent (takeaway + sources).
+Return in the same format as the Retrieval Agent (takeaway + sources
+with tier tags).
 ```
 
 #### Role 3: Verification Agent (Phase 3.1 — both depths)
@@ -250,7 +293,9 @@ When subagent results come back, the main agent merges them as follows:
    contradictory takeaways for overlapping areas, do NOT silently
    pick one. Instead, note the contradiction as a finding for Phase 3
    (triangulation). Both perspectives must surface in the report.
-4. **Update the master source list** before proceeding to the next phase.
+4. **Preserve tier tags** — carry over the credibility tier from the
+   subagent output into the master source list.
+5. **Update the master source list** before proceeding to the next phase.
 
 ### Additional optimization tips
 
@@ -399,10 +444,12 @@ Skip dimensions where the query is already specific.
 ### Phase 3 — TRIANGULATE (after each retrieval round)
 
 1. For each key claim, check: is it supported by **2+ independent sources**?
-2. Assign **confidence levels**:
-   - `[High]` — 3+ independent, credible sources agree
-   - `[Medium]` — 2 sources agree, or 1 highly authoritative source
-   - `[Low]` — single source only, or sources of questionable credibility
+2. Assign **confidence levels** using both source count and credibility tiers:
+   - `[High]` — 3+ independent sources agree, **with at least one Tier 1
+     or Tier 2 source**
+   - `[Medium]` — 2 sources agree (any tier), or 1 highly authoritative
+     Tier 1 source, or 3+ Tier 3 sources agreeing (cap: cannot exceed Medium)
+   - `[Low]` — single source only, or only Tier 3 sources with fewer than 3
 3. Apply **tiered recency rules**:
    - **Trends, tooling, benchmarks** — strict <18 months. Discard older sources.
    - **Methodology foundations** (e.g. Fowler, Google Testing Blog, Microsoft
@@ -488,7 +535,8 @@ red-team questions about the collected evidence:
    what would their strongest argument be?
 
 **If critique reveals a critical gap** (not just a nuance):
-- Launch 1 Gap-Fill subagent to fill the gap.
+- Launch 1 Gap-Fill subagent to fill the gap (assign next available
+  START_INDEX from the master source list).
 - Time-box to 5 tool calls maximum.
 - Do NOT restart the full pipeline.
 
@@ -545,7 +593,7 @@ contradictions and findings flagged by the Critique phase)
 citation corrections from Phase 3.1, degradation notes if applicable)
 
 ## Bibliography
-[1] Author — Title — URL — Accessed YYYY-MM-DD
+[1] Author — Title — URL — Accessed YYYY-MM-DD — Tier: N
 [2] ...
 
 ## Source Extracts
@@ -555,6 +603,7 @@ citation corrections from Phase 3.1, degradation notes if applicable)
 - **Summary:** [2-3 sentence extract]
 - **Key quotes:** [direct quotes used in the report]
 - **Source type:** [academic / industry / blog / docs / community]
+- **Credibility tier:** [1 / 2 / 3]
 
 ### [2] Title
 - ...
@@ -566,8 +615,8 @@ Each main section gets a confidence label based on Phase 3 triangulation:
 
 | Label | Meaning |
 |-------|---------|
-| `[High]` | Core claims backed by 3+ independent, credible sources |
-| `[Medium]` | Claims backed by 2 sources, or 1 highly authoritative source |
+| `[High]` | Core claims backed by 3+ independent, credible sources (at least one Tier 1 or 2) |
+| `[Medium]` | Claims backed by 2 sources, or 1 highly authoritative source, or 3+ Tier 3 only |
 | `[Low]` | Single-source claims or limited evidence — treat as directional |
 
 Use the labels inline for individual claims too when they diverge from the
@@ -585,7 +634,7 @@ section's overall confidence (e.g. a `[High]` section may contain one
 | Action Plan | Markdown checklist (`- [ ]`). Each item: one concrete, actionable step. Tie to **this** project; reference architecture.md if relevant |
 | Open Questions | Honest gaps, unresolved contradictions, Critique-phase caveats |
 | Methodology | Transparency: how the research was conducted |
-| Source Extracts | Raw subagent data (summary, key quotes, source type per source). Enables follow-up sessions without re-fetching |
+| Source Extracts | Raw subagent data (summary, key quotes, source type, credibility tier per source). Enables follow-up sessions without re-fetching |
 
 ---
 
@@ -595,7 +644,7 @@ section's overall confidence (e.g. a `[High]` section may contain one
 |------|--------|
 | Citation | Every factual claim uses `[N]`, resolved in Bibliography |
 | Triangulation | Major claims backed by 2+ independent sources |
-| Confidence | Every section labeled `[High]`, `[Medium]`, or `[Low]` |
+| Confidence | Every section labeled `[High]`, `[Medium]`, or `[Low]`; `[High]` requires ≥1 Tier 1/2 source |
 | No fabrication | Never invent URLs, authors, or publication names |
 | Recency | Tiered: trends/tooling <18 months; methodology foundations allowed regardless of age (mark `[foundational]`); in-between up to 36 months with age noted |
 | Prose-first | >=80% flowing text; bullet lists only for enumerations. Exception: Action Plan uses a checklist. |
