@@ -120,6 +120,7 @@ struct SimpleActiveSetView: View {
             )
             .buttonStyle(PlainButtonStyle())
             .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.3)
+            .accessibilityIdentifier("id_reps_set_\(index)")
 
             Text("of \(exercise.reps)")
                 .font(.system(size: 14, weight: .medium))
@@ -204,6 +205,7 @@ struct SimpleActiveSetView: View {
             )
             .buttonStyle(PlainButtonStyle())
             .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.3)
+            .accessibilityIdentifier("id_reps_set_\(index)")
 
             Text("of \(exercise.reps)")
                 .font(.system(size: 14, weight: .medium))

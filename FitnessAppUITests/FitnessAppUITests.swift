@@ -5,24 +5,14 @@ final class TrainingUITests: BaseTest {
     @MainActor
     func testFullTrainingFlow() throws {
         app.launch()
-        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10))
 
-        verifyExistsByPredicate(HomeSelectors.categoryTilePredicate)
-        let tile = app.descendants(matching: .any)
-            .matching(HomeSelectors.categoryTilePredicate)
-            .firstMatch
-        tile.tap()
+        tapOn(HomeSelectors.categoryTile)
 
-        tapOn(MuscleCategorySelectors.startExercise, timeout: 10)
-
-        tapOnIfExists(TrainingSelectors.startButton)
+        tapOn(MuscleCategorySelectors.startExercise, timeout: TestDefaults.longTimeout)
 
         for setIndex in 1...3 {
             tapOn(TrainingSelectors.doneButton)
-
-            if setIndex < 3 {
-                tapOnIfExists(TrainingSelectors.startButton, timeout: 2)
-            }
+            waitForNonEmptyLabel(TrainingSelectors.repsField(set: setIndex - 1))
         }
 
         tapOn(TrainingSelectors.finishButton)

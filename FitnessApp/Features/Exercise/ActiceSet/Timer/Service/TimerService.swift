@@ -3,20 +3,27 @@ import Foundation
 
 class TimerService {
     @Published var timerSeconds: Int = 0
-    private var timer: Timer?
+    private var timerSource: DispatchSourceTimer?
     private var startTime: Date?
     private var isRunning: Bool = false
     
     func startTimer() {
         guard !isRunning else { return }
-        timer?.invalidate()
+        timerSource?.cancel()
         isRunning = true
         startTime = Date()
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            guard let self = self, let start = self.startTime else { return }
-            self.timerSeconds = Int(Date().timeIntervalSince(start))
+
+        let source = DispatchSource.makeTimerSource(queue: .global(qos: .userInteractive))
+        source.schedule(deadline: .now(), repeating: 1.0)
+        source.setEventHandler { [weak self] in
+            guard let self, let start = self.startTime else { return }
+            let seconds = Int(Date().timeIntervalSince(start))
+            DispatchQueue.main.async {
+                self.timerSeconds = seconds
+            }
         }
-        timer?.fire()
+        timerSource = source
+        source.resume()
     }
     
     func resetAndStartTimer() {
@@ -25,8 +32,8 @@ class TimerService {
     }
     
     func stopTimer() {
-        timer?.invalidate()
-        timer = nil
+        timerSource?.cancel()
+        timerSource = nil
         isRunning = false
         startTime = nil
     }
