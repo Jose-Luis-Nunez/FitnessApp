@@ -26,6 +26,10 @@ struct FitnessAppApp: App {
     @State private var isShowingWorkoutsRoot: Bool = false
     @State private var didAutoNavigateToHome: Bool = false
     
+    private var isUITesting: Bool {
+        ProcessInfo.processInfo.arguments.contains("--uitesting")
+    }
+
     var body: some Scene {
         WindowGroup {
             ZStack(alignment: .bottom) {
@@ -142,6 +146,16 @@ struct FitnessAppApp: App {
                 .allowsHitTesting(!(overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu))
             }
             .environmentObject(overlayState)
+            .onAppear {
+                #if DEBUG
+                if isUITesting {
+                    UIApplication.shared.connectedScenes
+                        .compactMap { $0 as? UIWindowScene }
+                        .flatMap(\.windows)
+                        .forEach { $0.layer.speed = 100 }
+                }
+                #endif
+            }
         }
     }
 }
