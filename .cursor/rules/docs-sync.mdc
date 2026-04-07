@@ -32,6 +32,22 @@ When you edit Swift files, check if the change affects any of the items below. I
 3. Apply the minimal change (add/edit/remove the affected entry)
 4. Do not rewrite unrelated sections
 
+## UI Test Sync
+
+When you edit files under `FitnessAppUITests/`, check if the change affects `ui-test-conventions/reference.md` and update it in the **same task**:
+
+| What changed | What to update in `reference.md` |
+|---|---|
+| DSL function added/renamed/removed in `ElementActions.swift` | **DSL Function Reference** table |
+| `TestDefaults` constant added/changed | **Timeout Defaults** table |
+| Selector enum added/renamed/removed | **Project Structure** tree + examples if affected |
+| Selector constant added/renamed/removed | Check examples and **Reference Example** for stale references |
+| `BaseTest` API changed | **Test Template** and rules |
+| New file/folder under `FitnessAppUITests/` | **Project Structure** tree |
+| Deleted file under `FitnessAppUITests/` | **Project Structure** tree — remove entry |
+
+Also update `uitest-reviewer-agent.md` and `uitest-prep-agent.md` if the change affects their validation rules or report format.
+
 ## Skill References
 
 If the change affects what the skills check for (e.g. a new shared component that `reviewing-swift-code` should detect, or a new checklist item for `creating-feature-module`), update the skill's `SKILL.md` as well:

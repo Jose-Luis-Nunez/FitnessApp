@@ -14,6 +14,8 @@ For shared conventions (DSL, constraints, template, naming) see [ui-test-convent
 
 ### Step 1 — Identify the User Flow
 
+Read the **Navigation** and **Feature Map** sections in `.cursor/references/architecture.md` to understand the route between screens. Map each step to a `NavigationDestination` case.
+
 Break the feature into a sequence of user-visible actions:
 
 1. Which screen does the flow start on?
@@ -36,7 +38,7 @@ Use the test template from [ui-test-conventions/reference.md](../ui-test-convent
 
 - Inherit from `BaseTest`
 - Mark test methods `@MainActor`
-- First two lines: `app.launch()` + `wait(for: .runningForeground)`
+- First line: `app.launch()`
 - Only DSL functions and Selector constants — no raw API, no hardcoded strings
 - Use `tapOnIfExists` for conditional elements
 

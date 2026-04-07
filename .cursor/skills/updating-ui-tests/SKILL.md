@@ -13,14 +13,14 @@ For shared conventions (DSL, constraints, template, naming) see [ui-test-convent
 
 ## Workflow
 
-### Step 1 + 2 — Review Test and Check Production Code (parallel)
+### Step 1 — Review Test and Check Production Code (parallel)
 
 Launch both agents in parallel:
 
 - `uitest-reviewer-agent` on the existing test file — reports convention violations (raw API usage, hardcoded strings, structure issues, selector mismatches)
 - `uitest-prep-agent` with the existing test file as input — checks whether identifiers still exist in production, finds new untested elements, and flags stale selectors
 
-Both agents are read-only. **You** apply all fixes in Step 3.
+Both agents are read-only. **You** apply all fixes in Step 2.
 
 ### Step 2 — Fix and Extend
 

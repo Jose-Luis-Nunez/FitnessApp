@@ -29,11 +29,21 @@ You receive one of:
 
 ## Process
 
+### 0. Read Architecture Context
+
+Read `.cursor/references/architecture.md` and extract:
+- **Feature Map** — locate the correct folder for the given screen/flow
+- **Navigation** — understand the route between screens (which `NavigationDestination` cases are involved)
+- **Shared Components** — identify reusable components that contain interactive elements (e.g. `TrainingSessionComponent`, `TrainingPickerComponent`)
+- **Coordinators** — understand which coordinator orchestrates the flow
+
+Use this context to guide your search in Step 1 — don't search blindly, go directly to the relevant folders and components.
+
 ### 1. Find the View Files
 
 **If given a test file:** Read the test, extract all Selector references (e.g. `HomeSelectors.categoryTile`), read the Selector enums to get the identifier strings, then find the production Views containing those identifiers. Also search for the Views involved in the flow to find new elements not yet in the test.
 
-**If given a screen/flow:** Search `FitnessApp/Features/` for the relevant `.swift` View files.
+**If given a screen/flow:** Use the Feature Map and Navigation from Step 0 to locate the relevant View files. Check both `FitnessApp/Features/` and `Shared/Components/` — some screens delegate their UI to shared components (e.g. `TrainingSessionComponent`).
 
 ### 2. Scan for Interactive Elements
 
@@ -68,7 +78,7 @@ Read `FitnessAppUITests/DSL/ElementActions.swift` and verify that DSL functions 
 
 | Element | View File:Line | Has Identifier | Identifier Value | Has Selector |
 |---------|---------------|----------------|------------------|--------------|
-| Button "Start" | TrainingView.swift:42 | YES | id_button_start | YES |
+| Button "Done" | TrainingView.swift:42 | YES | id_button_done | YES |
 | Category tile | MuscleCategorySelectionView.swift:482 | YES | id_category_tile_* | YES |
 | Weight field | ... | NO | — | — |
 

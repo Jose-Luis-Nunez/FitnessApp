@@ -72,6 +72,8 @@ struct <FeatureName>View: View {
     private var contentView: some View {
         ScrollView {
             // Use AppStyle tokens for all styling
+            // Add .accessibilityIdentifier("id_<context>_<element>") to all
+            // interactive elements (buttons, text fields, tappable views)
         }
         .padding(.horizontal, AppStyle.Padding.horizontal)
     }
@@ -107,7 +109,8 @@ When adding to an existing feature (new view, new service method, new chart type
 4. **Reuse shared components** — check the Shared Components table before building custom UI.
 5. **If adding a new navigable screen** within the feature, register it in `NavigationDestination`.
 6. **If changing a model** — new fields on `Codable` types must be optional or have a default value (existing JSON data will lack the field).
-7. **Run the checklist** below.
+7. **Add accessibility identifiers** to all new interactive elements (`.accessibilityIdentifier("id_<context>_<element>")`) and matching Selector constants in `FitnessAppUITests/Selectors/`.
+8. **Run the checklist** below.
 
 ---
 
@@ -139,4 +142,6 @@ Pickers belong in `Features/Picker/`, not in a feature folder. Use existing pick
 - [ ] No business logic in the View
 - [ ] Navigation registered in `NavigationDestination` enum
 - [ ] `AppCurrentScene` enum updated if new scene type
+- [ ] All interactive elements (buttons, text fields, tappable views) have `.accessibilityIdentifier("id_<context>_<element>")` — see naming patterns in [ui-test-conventions/reference.md](../ui-test-conventions/reference.md)
+- [ ] Matching Selector constants added in `FitnessAppUITests/Selectors/<ScreenName>Selectors.swift`
 - [ ] `architecture.md` updated (Feature Map, Navigation, new shared components/services)

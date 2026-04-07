@@ -52,7 +52,7 @@ tapOn("id_button_start")
 verifyExists("id_some_element")
 
 // CORRECT
-tapOn(TrainingSelectors.startButton)
+tapOn(TrainingSelectors.doneButton)
 verifyExists(FeatureSelectors.someElement)
 ```
 
@@ -61,7 +61,7 @@ verifyExists(FeatureSelectors.someElement)
 Check each test file for:
 - Inherits from `BaseTest` (not `XCTestCase` directly)
 - Test methods marked `@MainActor`
-- First lines: `app.launch()` + `app.wait(for: .runningForeground, ...)`
+- First line: `app.launch()`
 - No business logic or complex setup in the test — just DSL calls
 
 ### 4. Selector Completeness

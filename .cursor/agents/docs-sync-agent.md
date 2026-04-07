@@ -39,6 +39,21 @@ Check `git diff --name-only HEAD` for changes matching these triggers:
 4. Do NOT rewrite unrelated sections
 5. Preserve the existing format and table structure
 
+## UI Test Docs
+
+When changes touch `FitnessAppUITests/`, also sync `.cursor/skills/ui-test-conventions/reference.md`:
+
+| Change Detected | Section to Update |
+|---|---|
+| DSL function added/renamed/removed in `ElementActions.swift` | **DSL Function Reference** table |
+| `TestDefaults` constant added/changed | **Timeout Defaults** table |
+| Selector enum/file added or removed | **Project Structure** tree |
+| Selector constant added/renamed/removed | Check all examples for stale references |
+| `BaseTest` API changed | **Test Template** and rules |
+| New/deleted file under `FitnessAppUITests/` | **Project Structure** tree |
+
+Also update `.cursor/agents/uitest-reviewer-agent.md` and `uitest-prep-agent.md` if their validation rules are affected.
+
 ## Also Check Skills
 
 If the change adds a new shared component or utility, also update:

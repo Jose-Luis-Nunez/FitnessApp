@@ -76,7 +76,7 @@ Rules:
 Use `tapOnIfExists` for elements that may or may not appear:
 
 ```swift
-tapOnIfExists(TrainingSelectors.startButton)
+tapOnIfExists(SomeSelectors.optionalElement)
 ```
 
 For loops over repeated actions, wait for UI feedback before continuing:
@@ -120,6 +120,10 @@ tapOn(TrainingSelectors.doneButton)
 3. **`NSPredicate`** — avoid; only if pattern matching is truly required
 
 Never resort to predicates or labels when an identifier can be added to the production code.
+
+### Stale Selectors — Remove When Production Code Changes
+
+When a production View element is renamed or deleted, remove the corresponding Selector constant immediately. Stale selectors that reference non-existent identifiers cause test failures and confusion.
 
 ## Naming Patterns
 
