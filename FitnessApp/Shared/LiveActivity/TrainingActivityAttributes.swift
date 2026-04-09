@@ -1,7 +1,6 @@
 import Foundation
 import ActivityKit
 
-@available(iOS 16.1, *)
 struct TrainingActivityAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
         var exerciseName: String

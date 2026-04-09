@@ -4,22 +4,14 @@ private enum BottomTab {
     case home, chart, calendar, profile
 }
 
-enum BottomBarRightActionStyle {
-    case reset
-    case menu
-}
-
 struct BottomMenuBarView: View {
-    @Binding var navigationPath: NavigationPath
     var showBackButton: Bool = true
     var narrowBy: CGFloat = 50
-    var rightActionStyle: BottomBarRightActionStyle = .reset
     var onRightAction: () -> Void = {}
     var customBackAction: (() -> Void)? = nil
 
-    @EnvironmentObject private var overlayState: UIOverlayState
+    @EnvironmentObject private var router: AppRouter
 
-    @State private var selectedTab: BottomTab = .home
     @State private var pillBounce: Bool = false
     @State private var bounceTab: BottomTab? = nil
     @Namespace private var tabNamespace
@@ -39,58 +31,32 @@ struct BottomMenuBarView: View {
     private let labelFontSize: CGFloat = 10
     private let circleButtonSize: CGFloat = 44
 
+    private var selectedTab: BottomTab {
+        switch router.currentScene {
+        case .workouts, .home, .category, .training: return .home
+        case .schedule:                               return .calendar
+        case .profile:                                return .profile
+        }
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
-            if #available(iOS 26.0, *) {
-                glassBody
-            } else {
-                fallbackBody
+            GlassEffectContainer(spacing: 6) {
+                HStack(spacing: 6) {
+                    backButton
+
+                    tabBar
+                        .frame(height: capsuleHeight)
+                        .clipShape(Capsule())
+                        .glassEffect(.regular, in: .capsule)
+
+                    rightActionButton
+                }
+                .padding(.horizontal, 8)
+                .padding(.bottom, bottomOffset)
             }
         }
         .frame(height: capsuleHeight + 6)
-    }
-
-    // MARK: - iOS 26+ (Native Liquid Glass)
-
-    @available(iOS 26.0, *)
-    private var glassBody: some View {
-        GlassEffectContainer(spacing: 6) {
-            HStack(spacing: 6) {
-                backButton
-
-                tabBar
-                    .frame(height: capsuleHeight)
-                    .clipShape(Capsule())
-                    .glassEffect(.regular, in: .capsule)
-
-                rightActionButton
-            }
-            .padding(.horizontal, 8)
-            .padding(.bottom, bottomOffset)
-        }
-    }
-
-    // MARK: - Pre-iOS 26 Fallback
-
-    private var fallbackBody: some View {
-        HStack(spacing: 6) {
-            backButton
-
-            ZStack {
-                LiquidGlassBackground(
-                    cornerRadius: capsuleHeight / 2,
-                    material: .ultraThinMaterial
-                )
-                .frame(width: capsuleWidth, height: capsuleHeight)
-
-                tabBar
-            }
-            .clipShape(RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous))
-
-            rightActionButton
-        }
-        .padding(.horizontal, 8)
-        .padding(.bottom, bottomOffset)
     }
 
     // MARK: - Shared Components
@@ -98,23 +64,20 @@ struct BottomMenuBarView: View {
     private var tabBar: some View {
         HStack(spacing: 0) {
             menuItemImage(imageName: "homeIcon", label: "Workout", tab: .home) {
-                selectTab(.home)
-                navigationPath = NavigationPath()
+                animateTabBounce(.home)
+                router.popToRoot()
             }
             menuItemImage(imageName: "analyticsEntry", label: "Analytics", tab: .chart) {
-                selectTab(.chart)
-                navigationPath = NavigationPath()
-                navigationPath.append(NavigationDestination.totalAnalytics)
+                animateTabBounce(.chart)
+                router.switchToAnalytics()
             }
             menuItemImage(imageName: "menuCalenderIcon", label: "Schedule", tab: .calendar) {
-                selectTab(.calendar)
-                navigationPath = NavigationPath()
-                navigationPath.append(NavigationDestination.schedule)
+                animateTabBounce(.calendar)
+                router.switchToSchedule()
             }
             menuItemImage(imageName: "profileMenuIcon", label: "Profile", tab: .profile) {
-                selectTab(.profile)
-                navigationPath = NavigationPath()
-                navigationPath.append(NavigationDestination.profile)
+                animateTabBounce(.profile)
+                router.switchToProfile()
             }
         }
         .padding(.horizontal, 4)
@@ -123,13 +86,13 @@ struct BottomMenuBarView: View {
 
     @ViewBuilder
     private var backButton: some View {
-        let shouldShow = showBackButton && !navigationPath.isEmpty
+        let shouldShow = showBackButton && !router.isEmpty
         if shouldShow {
             Button(action: {
                 if let customAction = customBackAction {
                     customAction()
                 } else {
-                    navigationPath.removeLast()
+                    router.pop()
                 }
             }) {
                 Image(systemName: "chevron.left")
@@ -153,7 +116,7 @@ struct BottomMenuBarView: View {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             onRightAction()
         }) {
-            Image(systemName: rightActionStyle == .reset ? "arrow.counterclockwise" : "ellipsis")
+            Image(systemName: "ellipsis")
                 .foregroundColor(AppStyle.Color.white)
                 .imageScale(.medium)
                 .frame(width: circleButtonSize, height: circleButtonSize)
@@ -163,9 +126,8 @@ struct BottomMenuBarView: View {
         .buttonStyle(.plain)
     }
 
-    private func selectTab(_ tab: BottomTab) {
+    private func animateTabBounce(_ tab: BottomTab) {
         guard tab != selectedTab else { return }
-        withAnimation(.smooth) { selectedTab = tab }
         withAnimation(.spring(response: 0.25, dampingFraction: 0.4)) { pillBounce = true }
         withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) { bounceTab = tab }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
@@ -221,18 +183,7 @@ struct BottomMenuBarView: View {
 // MARK: - Circle Glass Modifier
 
 private extension View {
-    @ViewBuilder
     func circleGlass(size: CGFloat) -> some View {
-        if #available(iOS 26.0, *) {
-            self.glassEffect(.regular, in: .circle)
-        } else {
-            self.background {
-                LiquidGlassBackground(
-                    cornerRadius: size / 2,
-                    material: .ultraThinMaterial
-                )
-                .clipShape(Circle())
-            }
-        }
+        self.glassEffect(.regular, in: .circle)
     }
 }

@@ -2,7 +2,6 @@ import SwiftUI
 import UIKit
 
 enum NavigationDestination: Hashable {
-    case workouts
     case home
     case profile
     case totalAnalytics
@@ -13,117 +12,86 @@ enum NavigationDestination: Hashable {
 
 @main
 struct FitnessAppApp: App {
+    private let launchStrategy: any AppLaunchStrategy
+
     init() {
         let textFieldAppearance = UITextField.appearance()
         textFieldAppearance.layer.shadowOpacity = 0
         textFieldAppearance.layer.shadowRadius = 0
         textFieldAppearance.backgroundColor = .clear
+
+        #if UITESTING
+        if ProcessInfo.processInfo.arguments.contains("--uitesting"),
+           let config = UITestLaunchConfig.from(
+               environment: ProcessInfo.processInfo.environment
+           ) {
+            launchStrategy = UITestLaunchStrategy(config: config)
+        } else {
+            launchStrategy = ProductionLaunchStrategy()
+        }
+        #else
+        launchStrategy = ProductionLaunchStrategy()
+        #endif
     }
 
-    @State private var navigationPath = NavigationPath()
+    @StateObject private var router = AppRouter()
     @StateObject private var overlayState = UIOverlayState()
     @StateObject private var workoutStorageService = WorkoutStorageService.shared
-    @State private var isShowingWorkoutsRoot: Bool = false
-    @State private var didAutoNavigateToHome: Bool = false
-    
-    private var isUITesting: Bool {
-        ProcessInfo.processInfo.arguments.contains("--uitesting")
-    }
+    @State private var didLaunch: Bool = false
 
     var body: some Scene {
         WindowGroup {
+            GeometryReader { geo in
             ZStack(alignment: .bottom) {
-                NavigationStack(path: $navigationPath) {
-                    // Always start on Workouts as the root. If a default workout exists,
-                    // we automatically push to Category Selection to preserve correct back animation.
-                    WorkoutsScreen(navigationPath: $navigationPath)
+                NavigationStack(path: $router.path) {
+                    WorkoutsScreen()
                         .onAppear {
-                            if isUITesting {
-                                isShowingWorkoutsRoot = navigationPath.isEmpty
-                                if navigationPath.isEmpty {
-                                    overlayState.currentScene = .workouts
-                                }
-                                return
+                            guard !didLaunch, router.isEmpty else { return }
+                            launchStrategy.prepare(workoutService: workoutStorageService)
+                            launchStrategy.configureEnvironment()
+                            let stack = launchStrategy.initialNavigationStack(
+                                workoutService: workoutStorageService
+                            )
+                            if !stack.isEmpty {
+                                router.replaceAll(with: stack)
                             }
-                            if let defaultWorkout = workoutStorageService.defaultWorkout,
-                               navigationPath.isEmpty,
-                               didAutoNavigateToHome == false {
-                                workoutStorageService.setCurrentWorkout(defaultWorkout)
-                                navigationPath.append(NavigationDestination.home)
-                                didAutoNavigateToHome = true
-                                isShowingWorkoutsRoot = false
-                                overlayState.currentScene = .home
-                            } else {
-                                isShowingWorkoutsRoot = navigationPath.isEmpty
-                                overlayState.currentScene = .workouts
-                            }
+                            didLaunch = true
                         }
                     .navigationBarBackButtonHidden(true)
                         .navigationDestination(for: NavigationDestination.self) { destination in
                             Group {
                                 switch destination {
-                                case .workouts:
-                                    WorkoutsScreen(navigationPath: $navigationPath)
-                                        .navigationBarBackButtonHidden(true)
-                                        .onAppear { 
-                                            isShowingWorkoutsRoot = true
-                                            overlayState.currentScene = .workouts
-                                        }
                                 case .home:
-                                    MuscleCategorySelectionView(navigationPath: $navigationPath)
+                                    MuscleCategorySelectionView()
                                         .navigationBarBackButtonHidden(true)
-                                        .onAppear { 
-                                            isShowingWorkoutsRoot = false
-                                            overlayState.currentScene = .home
-                                        }
                                 case .profile:
                                     ProfileView()
                                         .navigationBarBackButtonHidden(true)
-                                        .onAppear { isShowingWorkoutsRoot = false; overlayState.currentScene = .profile }
                                 case .totalAnalytics:
                                     TotalAnalyticsView()
                                         .navigationBarBackButtonHidden(true)
-                                        .onAppear { isShowingWorkoutsRoot = false; overlayState.currentScene = .home }
                                 case .schedule:
                                     ScheduleView()
                                         .navigationBarBackButtonHidden(true)
-                                        .onAppear { isShowingWorkoutsRoot = false; overlayState.currentScene = .schedule }
                                 case .muscleCategory(let group):
-                                    MuscleCategoryView(group: group, navigationPath: $navigationPath)
+                                    MuscleCategoryView(group: group)
                                         .navigationBarBackButtonHidden(true)
-                                        .onAppear { 
-                                            isShowingWorkoutsRoot = false
-                                            overlayState.currentScene = .category
-                                        }
                                 case .training(let exercise, let category):
-                                    TrainingView(exercise: exercise, category: category, navigationPath: $navigationPath)
+                                    TrainingView(exercise: exercise, category: category)
                                         .navigationBarBackButtonHidden(true)
-                                        .onAppear { 
-                                            isShowingWorkoutsRoot = false
-                                            overlayState.currentScene = .training
-                                        }
                                 }
                             }
                             .enableSwipeBack()
                         }
                 }
                 .zIndex(overlayState.isEditingSheetVisible ? 2 : 0)
-                let showBack = !navigationPath.isEmpty
-                let rightStyle: BottomBarRightActionStyle = {
-                    switch overlayState.currentScene {
-                    case .home: return .menu
-                    case .category, .workouts, .profile, .schedule: return .menu
-                    case .training: return .menu
-                    }
-                }()
+                let showBack = !router.isEmpty
 
                 BottomMenuBarView(
-                    navigationPath: $navigationPath,
                     showBackButton: showBack,
                     narrowBy: 50,
-                    rightActionStyle: rightStyle,
                     onRightAction: {
-                        switch overlayState.currentScene {
+                        switch router.currentScene {
                         case .home:
                             overlayState.showSelectionMiniMenu.toggle()
                         case .category:
@@ -136,42 +104,21 @@ struct FitnessAppApp: App {
                             overlayState.showTrainingMiniMenu.toggle()
                         }
                     },
-                    customBackAction: overlayState.currentScene == .training ? {
-                        // Don't override navigation if training is being cancelled
+                    customBackAction: router.currentScene == .training ? {
                         if overlayState.isCancellingTraining {
-                            return // Let TrainingView handle cancel navigation
+                            return
                         }
-                        
-                        // Normal back navigation: direct jump to CategorySelectionView
-                        var newPath = NavigationPath()
-                        newPath.append(NavigationDestination.home)
-                        navigationPath = newPath
+                        router.replaceAll(with: [.home])
                     } : nil
                 )
                 .zIndex((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu) ? 0 : 1)
                 .opacity((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu) ? 0 : 1)
                 .allowsHitTesting(!(overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu))
             }
+            .environment(\.safeAreaInsets, geo.safeAreaInsets)
             .environmentObject(overlayState)
-            .onAppear {
-                #if UITESTING
-                if isUITesting { configureUITestEnvironment() }
-                #endif
+            .environmentObject(router)
             }
         }
     }
-
-    #if UITESTING
-    private func configureUITestEnvironment() {
-        UITestRouter.speedUpAnimations()
-        guard let config = UITestLaunchConfig.from(
-            environment: ProcessInfo.processInfo.environment
-        ) else { return }
-        UITestRouter.configure(
-            config: config,
-            navigationPath: &navigationPath,
-            workoutStorageService: workoutStorageService
-        )
-    }
-    #endif // UITESTING
 }

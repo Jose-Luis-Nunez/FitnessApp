@@ -8,13 +8,11 @@ Features/
   BottomBar/          — Bottom navigation bar, bottom action bar
     Profile/          — User profile screen
   Exercise/
-    ActiceSet/        — Active set tracking during training
-      Timer/Service/  — Timer service for rest intervals
+    ActiveSet/        — Active set tracking during training, timer service
     ExerciseCard/     — Card UI for exercises (idle, active, inactive states)
     MuscleCategory/   — Muscle category detail screen with exercises
     Storage/          — Exercise persistence and management services
   MuscleGroupSelection/ — Home screen: muscle group category grid
-  Navigation/         — Swipe-back gesture modifier
   Picker/             — All picker sheets (exercise, weight, seat, icon, name, active-set edit)
   Schedule/           — Training calendar, streaks, week summary, day details
   Training/           — Training session screen
@@ -27,6 +25,7 @@ Located in `Core/Model/`.
 
 | Model | File | Key Properties |
 |-------|------|----------------|
+| `AnalyticsEntry` | `AnalyticsEntry.swift` | `id`, `exerciseId`, `date`, `setProgress` |
 | `Exercise` | `Exercise.swift` | `id`, `name`, `weight`, `reps`, `sets`, `seatSetting`, `noSeats`, `isCompleted`, `iconName`, `category`, `goal` |
 | `Workout` | `Workout.swift` | `id`, `name`, `createdDate`, `lastModified`, `exerciseData`, `selectedCategories` |
 | `MuscleCategoryGroup` | `MuscleCategoryGroup.swift` | Enum: `arms`, `chest`, `back`, `legs`, `abs` |
@@ -43,7 +42,7 @@ Located in `Core/Model/`.
 | `ExerciseManagementService` | `Features/Exercise/Storage/ExerciseManagementService.swift` | No | Exercise business logic (add, remove, reorder) |
 | `AnalyticsStorageService` | `Features/Analytics/AnalyticsStorageService.swift` | No | Per-exercise analytics entry persistence |
 | `TotalAnalyticsStorageService` | `Features/Analytics/TotalAnalyticsStorageService.swift` | No | Cross-exercise analytics loading, workout-scoped |
-| `TimerService` | `Features/Exercise/ActiceSet/Timer/Service/TimerService.swift` | No | Rest timer during active sets |
+| `TimerService` | `Features/Exercise/ActiveSet/TimerService.swift` | No | Rest timer during active sets |
 
 ## Shared Components
 
@@ -59,11 +58,11 @@ Located in `Shared/`.
 | `CalendarDialogView` | `View/CalendarDialogView.swift` | Date picker dialog with highlighted dates |
 | `MiniActionMenuView` | `View/MiniActionMenuView.swift` | Small context menu with icon + title rows |
 | `CapsuleToggleStyle` | `View/CapsuleToggleStyle.swift` | Reusable toggle style with on/off colors |
-| `TrainingSessionComponent` | `Components/TrainingSessionComponent.swift` | Training session UI driven by TrainingCoordinator |
-| `TrainingPickerComponent` | `Components/TrainingPickerComponent.swift` | Training picker UI using TrainingCoordinator |
-| `AppChip` | `Design/AppChip.swift` | Styled chip with size variants |
-| `ChipIcon` | `Design/ChipIcon.swift` | Icon rendering for chips |
-| `LiquidGlass` | `Design/LiquidGlass.swift` | Glass-effect modifier |
+| `TrainingSessionComponent` | `View/TrainingSessionComponent.swift` | Training session UI driven by TrainingCoordinator |
+| `TrainingPickerComponent` | `View/TrainingPickerComponent.swift` | Training picker UI using TrainingCoordinator |
+| `AppChip` | `View/AppChip.swift` | Styled chip with size variants |
+| `ChipIcon` | `View/ChipIcon.swift` | Icon rendering for chips |
+
 
 ## Utilities
 
@@ -75,6 +74,8 @@ Located in `Shared/Utilities/`.
 | `AnalyticsDateHelper` | `AnalyticsDateHelper.swift` | Month names, unique days, days-in-month for analytics |
 | `DateFormatterUtility` | `DateFormatterUtility.swift` | Shared DateFormatter instances (`germanMedium`, `germanMonthYear`, etc.) |
 | `WeightOptionsGenerator` | `WeightOptionsGenerator.swift` | Generate weight option arrays for pickers |
+| `L10n` | `L10n.swift` | Static user-facing strings for exercises, muscles, analytics, etc. |
+| `SafeAreaInsetsKey` | `SafeAreaInsetsKey.swift` | `@Environment(\.safeAreaInsets)` — use instead of deprecated `UIApplication.shared.windows` |
 
 ## Extensions
 
@@ -82,15 +83,17 @@ Located in `Shared/Utilities/`.
 |-----------|------|---------|
 | `View+Toolbar` | `Extensions/View+Toolbar.swift` | `.standardToolbar(title:)` modifier for consistent screen headers |
 | `Color+Extension` | `Design/Color+Extension.swift` | `Color(hex:)` initializer |
-| `SwipeBackGestureModifier` | `Features/Navigation/SwipeBackGestureModifier.swift` | `.enableSwipeBack()` modifier |
+| `SwipeBackGestureModifier` | `Shared/Extensions/SwipeBackGestureModifier.swift` | `.enableSwipeBack()` modifier |
 
-## Coordinators & State
+## State & Navigation
 
 | Type | File | Purpose |
 |------|------|---------|
-| `TrainingCoordinator` | `Shared/Coordinators/TrainingCoordinator.swift` | Orchestrates training session flow |
-| `UIOverlayState` | `Shared/UIOverlayState.swift` | Global overlay/menu visibility state |
-| `AppCurrentScene` | `Shared/UIOverlayState.swift` | Enum: `workouts`, `home`, `profile`, `category`, `training`, `schedule` |
+| `AppRouter` | `Shared/Navigation/AppRouter.swift` | Centralized navigation state (`NavigationPath` + `currentScene`), injected via `.environmentObject()` |
+| `AppCurrentScene` | `Shared/Navigation/AppRouter.swift` | Enum: `workouts`, `home`, `profile`, `category`, `training`, `schedule` — derived automatically by `AppRouter` |
+| `AppLaunchStrategy` | `Shared/Navigation/AppLaunchStrategy.swift` | Protocol for app launch configuration; `ProductionLaunchStrategy` (default) and `UITestLaunchStrategy` (`Shared/Navigation/UITestLaunchStrategy.swift`, `#if UITESTING`) |
+| `TrainingCoordinator` | `Shared/State/TrainingCoordinator.swift` | Orchestrates training session flow |
+| `UIOverlayState` | `Shared/State/UIOverlayState.swift` | Global overlay/menu visibility state |
 
 ## Navigation
 
@@ -98,7 +101,6 @@ All navigation destinations are in `FitnessAppApp.swift`:
 
 ```swift
 enum NavigationDestination: Hashable {
-    case workouts
     case home              // -> MuscleCategorySelectionView
     case profile           // -> ProfileView
     case totalAnalytics    // -> TotalAnalyticsView
@@ -108,7 +110,7 @@ enum NavigationDestination: Hashable {
 }
 ```
 
-Navigate via `navigationPath.append(NavigationDestination.<case>)`.
+Navigation is managed by `AppRouter` (injected as `@EnvironmentObject`). Use `router.navigate(to:)` to push, `router.pop()` to go back, `router.popToRoot()` to reset, and `router.replaceAll(with:)` for tab switches or deep links. `AppRouter` automatically derives `currentScene: AppCurrentScene` from the navigation stack — do **not** set the current scene manually. Do **not** manipulate `NavigationPath` directly in views.
 
 ## AppStyle Tokens
 

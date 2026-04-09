@@ -83,23 +83,9 @@ struct FloatingActionButtonsView: View {
             } else {
                 HStack(spacing: 6) {
                     ZStack {
-                        Group {
-                            if #available(iOS 26.0, *) {
-                                RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous)
-                                    .fill(Color.clear)
-                                    .glassEffect()
-                            } else {
-                                LiquidGlassBackground(
-                                    cornerRadius: capsuleHeight / 2,
-                                    material: .ultraThinMaterial,
-                                    tintOpacity: 0.0,
-                                    showsEdgeStroke: false,
-                                    showsCaustic: false,
-                                    shadowOpacity: 0.20,
-                                    lightnessBoostOpacity: 0.12
-                                )
-                            }
-                        }
+                        RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous)
+                            .fill(Color.clear)
+                            .glassEffect()
                         
                         HStack(spacing: 18) {
                             if viewModel.showStartButton && (viewModel.currentSet != 0 || viewModel.didJustEditSet) {
@@ -170,25 +156,10 @@ struct FloatingActionButtonsView: View {
     ) -> some View {
         Button(action: action) {
             ZStack {
-                Group {
-                    if #available(iOS 26.0, *) {
-                        RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous)
-                            .fill(Color.clear)
-                            .frame(width: capsuleWidth, height: capsuleHeight)
-                            .glassEffect()
-                    } else {
-                        LiquidGlassBackground(
-                            cornerRadius: capsuleHeight / 2,
-                            material: .ultraThinMaterial,
-                            tintOpacity: 0.0,
-                            showsEdgeStroke: false,
-                            showsCaustic: false,
-                            shadowOpacity: 0.20,
-                            lightnessBoostOpacity: 0.12
-                        )
-                        .frame(width: capsuleWidth, height: capsuleHeight)
-                    }
-                }
+                RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous)
+                    .fill(Color.clear)
+                    .frame(width: capsuleWidth, height: capsuleHeight)
+                    .glassEffect()
                 
                 Text(text)
                     .font(AppStyle.Font.bottomBarButtons)
@@ -238,25 +209,10 @@ struct FloatingActionButtonsView: View {
     ) -> some View {
         Button(action: action) {
             ZStack {
-                Group {
-                    if #available(iOS 26.0, *) {
-                        Circle()
-                            .fill(Color.clear)
-                            .glassEffect()
-                    } else {
-                        LiquidGlassBackground(
-                            cornerRadius: 22,
-                            material: .ultraThinMaterial,
-                            tintOpacity: 0.0,
-                            showsEdgeStroke: false,
-                            showsCaustic: false,
-                            shadowOpacity: 0.20,
-                            lightnessBoostOpacity: 0.12
-                        )
-                        .clipShape(Circle())
-                    }
-                }
-                .overlay(
+                Circle()
+                    .fill(Color.clear)
+                    .glassEffect()
+                    .overlay(
                     Circle().stroke(AppStyle.Color.white.opacity(0.10), lineWidth: 1)
                 )
                 

@@ -2,7 +2,6 @@ import SwiftUI
 import WidgetKit
 import ActivityKit
 
-@available(iOS 16.1, *)
 struct TrainingActivityWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: TrainingActivityAttributes.self) { context in

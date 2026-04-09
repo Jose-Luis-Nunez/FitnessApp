@@ -48,7 +48,7 @@ private enum ViewMode {
 struct MuscleCategorySelectionView: View {
     @StateObject private var viewModel = MuscleCategorySelectionViewModel()
     @StateObject private var trainingCoordinator: TrainingCoordinator
-    @Binding var navigationPath: NavigationPath
+    @EnvironmentObject private var router: AppRouter
     @EnvironmentObject private var overlayState: UIOverlayState
     @State private var currentViewMode: ViewMode = .overview
     @State private var filterPillBounce: Bool = false
@@ -62,8 +62,7 @@ struct MuscleCategorySelectionView: View {
     @State private var isFilterBarVisible = true
     @State private var lastScrollOffset: CGFloat = 0
     
-    init(navigationPath: Binding<NavigationPath> = .constant(NavigationPath())) {
-        self._navigationPath = navigationPath
+    init() {
         let selectionViewModel = MuscleCategorySelectionViewModel()
         
         _trainingCoordinator = StateObject(wrappedValue: TrainingCoordinator(
@@ -178,15 +177,15 @@ struct MuscleCategorySelectionView: View {
                                         },
                                         onEdit: { exerciseToEdit, _ in
                                             if let category = viewModel.findCategoryForExercise(exerciseToEdit) {
-                                                navigationPath.append(NavigationDestination.muscleCategory(category))
-                                            }
-                                        },
-                                        isEditable: !trainingCoordinator.activeSetViewModel.isSetInProgress,
-                                        analyticsViewModel: AnalyticsViewModel(),
-                                        activeSetViewModel: trainingCoordinator.activeSetViewModel,
-                                        onStart: { exerciseToStart in
-                                            if let category = viewModel.findCategoryForExercise(exerciseToStart) {
-                                                navigationPath.append(NavigationDestination.training(exerciseToStart, category))
+                            router.navigate(to: .muscleCategory(category))
+                            }
+                        },
+                        isEditable: !trainingCoordinator.activeSetViewModel.isSetInProgress,
+                        analyticsViewModel: AnalyticsViewModel(),
+                        activeSetViewModel: trainingCoordinator.activeSetViewModel,
+                        onStart: { exerciseToStart in
+                            if let category = viewModel.findCategoryForExercise(exerciseToStart) {
+                                router.navigate(to: .training(exerciseToStart, category))
                                             }
                                         },
                                         onReset: { exerciseToReset in
@@ -470,9 +469,9 @@ struct MuscleCategorySelectionView: View {
             Button(action: {
                 if let activeSetVM = SessionTrainingCache.shared.activeSetVMs[group],
                    let activeExercise = activeSetVM.currentExercise {
-                    navigationPath.append(NavigationDestination.training(activeExercise, group))
+                    router.navigate(to: .training(activeExercise, group))
                 } else {
-                    navigationPath.append(NavigationDestination.muscleCategory(group))
+                    router.navigate(to: .muscleCategory(group))
                 }
             }) {
                 CategoryTileView(group: group, viewModel: viewModel)
@@ -531,18 +530,9 @@ struct MuscleCategorySelectionView: View {
         }
         .padding(filterBarPadding)
         .background {
-            Group {
-                if #available(iOS 26.0, *) {
-                    Capsule()
-                        .fill(Color.clear)
-                        .glassEffect()
-                } else {
-                    LiquidGlassBackground(
-                        cornerRadius: filterBarHeight / 2,
-                        material: .ultraThinMaterial
-                    )
-                }
-            }
+            Capsule()
+                .fill(Color.clear)
+                .glassEffect()
         }
         .clipShape(Capsule())
     }
@@ -568,7 +558,7 @@ struct MuscleCategorySelectionView: View {
                         analyticsViewModel: AnalyticsViewModel(),
                         activeSetViewModel: trainingCoordinator.activeSetViewModel,
                         onStart: { exerciseToStart in
-                            navigationPath.append(NavigationDestination.training(exerciseToStart, category))
+                            router.navigate(to: .training(exerciseToStart, category))
                         },
                         onReset: { exerciseToReset in
                             viewModel.resetExercise(exerciseToReset, category: category)
@@ -618,7 +608,7 @@ struct MuscleCategorySelectionView: View {
                     exerciseFormViewModel.editMode = mode
                     isShowingExercisePicker = true
                 } else {
-                    navigationPath.append(NavigationDestination.muscleCategory(category))
+                    router.navigate(to: .muscleCategory(category))
                 }
             },
             isEditable: true,
@@ -632,7 +622,7 @@ struct MuscleCategorySelectionView: View {
                 let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                 impactFeedback.impactOccurred()
                 
-                navigationPath.append(NavigationDestination.training(exerciseToStart, category))
+                router.navigate(to: .training(exerciseToStart, category))
             },
             onReset: { exerciseToReset in
                 viewModel.resetExercise(exerciseToReset, category: category)
@@ -642,9 +632,8 @@ struct MuscleCategorySelectionView: View {
         )
     }
     
-    private var safeAreaInset: CGFloat {
-        UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
-    }
+    @Environment(\.safeAreaInsets) private var safeAreaInsets
+    private var safeAreaInset: CGFloat { safeAreaInsets.bottom }
 }
 
 // MARK: - Supporting Views

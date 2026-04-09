@@ -1,15 +1,14 @@
 #if UITESTING
-import SwiftUI
 import UIKit
 
-enum UITestRouter {
-    static func configure(
-        config: UITestLaunchConfig,
-        navigationPath: inout NavigationPath,
-        workoutStorageService: WorkoutStorageService
-    ) {
-        workoutStorageService.setCurrentWorkout(Workout(name: "Test Workout"))
+struct UITestLaunchStrategy: AppLaunchStrategy {
+    let config: UITestLaunchConfig
 
+    func prepare(workoutService: WorkoutStorageService) {
+        workoutService.setCurrentWorkout(Workout(name: "Test Workout"))
+    }
+
+    func initialNavigationStack(workoutService: WorkoutStorageService) -> [NavigationDestination] {
         switch config.screen {
         case .training:
             guard let name = config.exerciseName,
@@ -17,7 +16,7 @@ enum UITestRouter {
                   let reps = config.reps,
                   let sets = config.sets,
                   let category = MuscleCategoryGroup(rawValue: config.category)
-            else { return }
+            else { return [] }
 
             let exercise = Exercise(
                 name: name, weight: weight, reps: reps, sets: sets,
@@ -25,26 +24,23 @@ enum UITestRouter {
                 iconName: config.icon ?? "dumbbell",
                 category: category
             )
-            navigationPath.append(NavigationDestination.home)
-            navigationPath.append(NavigationDestination.muscleCategory(category))
-            navigationPath.append(NavigationDestination.training(exercise, category))
+            return [.home, .muscleCategory(category), .training(exercise, category)]
 
         case .category:
             guard let category = MuscleCategoryGroup(rawValue: config.category)
-            else { return }
-            navigationPath.append(NavigationDestination.home)
-            navigationPath.append(NavigationDestination.muscleCategory(category))
+            else { return [] }
+            return [.home, .muscleCategory(category)]
 
         case .schedule:
-            navigationPath.append(NavigationDestination.schedule)
+            return [.schedule]
         }
     }
 
-    static func speedUpAnimations() {
+    func configureEnvironment() {
         UIApplication.shared.connectedScenes
             .compactMap { $0 as? UIWindowScene }
             .flatMap(\.windows)
             .forEach { $0.layer.speed = 100 }
     }
 }
-#endif // UITESTING
+#endif

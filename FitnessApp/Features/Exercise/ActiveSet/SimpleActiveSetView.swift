@@ -39,24 +39,8 @@ struct SimpleActiveSetView: View {
         .padding(.horizontal, dynamicPadding)
         .padding(.vertical, 12)
         .background(
-            Group {
-                if #available(iOS 26.0, *) {
-                    Color.clear
-                        .glassEffect(in: .rect(cornerRadius: AppStyle.CornerRadius.card))
-                } else if #available(iOS 18.0, *) {
-                    LiquidGlassBackground(
-                        cornerRadius: AppStyle.CornerRadius.card,
-                        material: .ultraThinMaterial,
-                        tintOpacity: 0.0,
-                        showsEdgeStroke: false,
-                        showsCaustic: false,
-                        shadowOpacity: 0.0,
-                        lightnessBoostOpacity: 0.0
-                    )
-                } else {
-                    AppStyle.Color.exerciseCardBackground.opacity(0.85)
-                }
-            }
+            Color.clear
+                .glassEffect(in: .rect(cornerRadius: AppStyle.CornerRadius.card))
         )
         .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous))
         .padding(.horizontal, 0) // No extra padding - handled by parent

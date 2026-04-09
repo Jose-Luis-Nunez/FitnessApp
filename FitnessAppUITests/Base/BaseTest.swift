@@ -17,4 +17,32 @@ class BaseTest: XCTestCase {
         }
         app.terminate()
     }
+
+    // MARK: - Screen Launch Helpers
+
+    @MainActor
+    func launch(training fixture: TestExerciseFixture) throws {
+        let config = UITestLaunchConfig.training(fixture)
+        app.launchEnvironment["UITEST_CONFIG"] = try config.jsonString()
+        app.launch()
+    }
+
+    @MainActor
+    func launch(category name: String) throws {
+        let config = UITestLaunchConfig.category(name)
+        app.launchEnvironment["UITEST_CONFIG"] = try config.jsonString()
+        app.launch()
+    }
+
+    @MainActor
+    func launchSchedule() throws {
+        let config = UITestLaunchConfig.schedule()
+        app.launchEnvironment["UITEST_CONFIG"] = try config.jsonString()
+        app.launch()
+    }
+
+    @MainActor
+    func launchHome() {
+        app.launch()
+    }
 }

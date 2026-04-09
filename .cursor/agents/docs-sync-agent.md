@@ -24,7 +24,7 @@ Check `git diff --name-only HEAD` for changes matching these triggers:
 |---|---|
 | New/deleted folder under `FitnessApp/Features/` | **Feature Map** |
 | New/changed case in `NavigationDestination` | **Navigation** |
-| New/changed case in `AppCurrentScene` | **Coordinators & State** |
+| New/changed case in `AppCurrentScene` | **State & Navigation** |
 | New/renamed/deleted token in `AppStyle.swift` | **AppStyle Tokens** |
 | New/deleted file in `Shared/View/` or `Shared/Components/` | **Shared Components** |
 | New/deleted/changed `*Service*.swift` file | **Services** |
@@ -67,5 +67,5 @@ State exactly what was updated:
 Updated architecture.md:
 - Feature Map: added Schedule/
 - Navigation: added .schedule case
-- Coordinators & State: added .schedule to AppCurrentScene
+- State & Navigation: added .schedule to AppCurrentScene
 ```

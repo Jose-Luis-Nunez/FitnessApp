@@ -75,5 +75,8 @@ Short label texts (< 10 characters like "Weight", "Seat") must use `.fixedSize()
 ## Navigation
 
 - All destinations in `NavigationDestination` enum (`FitnessAppApp.swift`)
-- Navigate via `navigationPath.append(NavigationDestination.<case>)`
+- `AppRouter` (`Shared/Navigation/AppRouter.swift`) owns the `NavigationPath`, injected via `.environmentObject()`
+- Navigate via `router.navigate(to: .<case>)`, go back via `router.pop()`, reset via `router.popToRoot()`
+- For tab switches or deep links use `router.replaceAll(with:)` or convenience methods (`switchToHome()`, etc.)
+- Never manipulate `NavigationPath` directly in views — always go through `AppRouter`
 - New screens require a new enum case and a `.navigationDestination` entry

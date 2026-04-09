@@ -1,6 +1,5 @@
 import AppIntents
 
-@available(iOS 17.0, *)
 struct DoneIntent: AppIntent {
     static var title: LocalizedStringResource = "Done"
 

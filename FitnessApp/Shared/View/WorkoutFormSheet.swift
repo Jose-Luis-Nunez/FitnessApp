@@ -88,7 +88,6 @@ struct WorkoutFormSheet<Content: View>: View {
         }
     }
 
-    private var safeAreaInset: CGFloat {
-        UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
-    }
+    @Environment(\.safeAreaInsets) private var safeAreaInsets
+    private var safeAreaInset: CGFloat { safeAreaInsets.bottom }
 }

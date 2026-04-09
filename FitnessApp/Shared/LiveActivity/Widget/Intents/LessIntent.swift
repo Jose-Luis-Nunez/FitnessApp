@@ -1,6 +1,5 @@
 import AppIntents
 
-@available(iOS 17.0, *)
 struct LessIntent: AppIntent {
     static var title: LocalizedStringResource = "Less"
 

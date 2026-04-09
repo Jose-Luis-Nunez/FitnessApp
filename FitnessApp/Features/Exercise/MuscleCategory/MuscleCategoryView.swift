@@ -6,9 +6,9 @@ struct MuscleCategoryView: View {
     @StateObject private var formViewModel: ExerciseFormViewModel
     @StateObject private var trainingCoordinator: TrainingCoordinator
     @StateObject private var analyticsViewModel: AnalyticsViewModel
-    @Binding var navigationPath: NavigationPath
+    @EnvironmentObject private var router: AppRouter
     
-    init(group: MuscleCategoryGroup, navigationPath: Binding<NavigationPath>) {
+    init(group: MuscleCategoryGroup) {
         self.group = group
         let muscleCategoryViewModel = MuscleCategoryViewModel(group: group)
         _viewModel = StateObject(wrappedValue: muscleCategoryViewModel)
@@ -31,7 +31,6 @@ struct MuscleCategoryView: View {
             },
             onResetAllExercises: {}
         ))
-        self._navigationPath = navigationPath
     }
     
     private var bottomListPadding: CGFloat {
@@ -45,9 +44,8 @@ struct MuscleCategoryView: View {
         return safeAreaBottomInset + 40
     }
 
-    private var safeAreaBottomInset: CGFloat {
-        UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
-    }
+    @Environment(\.safeAreaInsets) private var safeAreaInsets
+    private var safeAreaBottomInset: CGFloat { safeAreaInsets.bottom }
 
     @EnvironmentObject private var overlayState: UIOverlayState
 
@@ -245,7 +243,7 @@ struct MuscleCategoryView: View {
                         analyticsViewModel: analyticsViewModel,
                         activeSetViewModel: trainingCoordinator.activeSetViewModel,
                         onStart: { selectedExercise in
-                            navigationPath.append(NavigationDestination.training(selectedExercise, group))
+                            router.navigate(to: .training(selectedExercise, group))
                         },
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)
@@ -293,7 +291,7 @@ struct MuscleCategoryView: View {
                         analyticsViewModel: analyticsViewModel,
                         activeSetViewModel: trainingCoordinator.activeSetViewModel,
                         onStart: { selectedExercise in
-                            navigationPath.append(NavigationDestination.training(selectedExercise, group))
+                            router.navigate(to: .training(selectedExercise, group))
                         },
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)
@@ -332,7 +330,7 @@ struct MuscleCategoryView: View {
                         analyticsViewModel: analyticsViewModel,
                         activeSetViewModel: trainingCoordinator.activeSetViewModel,
                         onStart: { selectedExercise in
-                            navigationPath.append(NavigationDestination.training(selectedExercise, group))
+                            router.navigate(to: .training(selectedExercise, group))
                         },
                         onReset: { selectedExercise in
                             viewModel.resetExercise(selectedExercise)
@@ -386,7 +384,7 @@ private extension MuscleCategoryView {
                                 if viewModel.showStartTraining {
                                     items.append(MiniActionMenuItem(icon: "play.fill", title: "Start Training", isDestructive: false) {
                                         if let exercise = trainingCoordinator.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) {
-                                            navigationPath.append(NavigationDestination.training(exercise, group))
+                                            router.navigate(to: .training(exercise, group))
                                         }
                                         overlayState.showCategoryMiniMenu = false
                                     })
@@ -400,7 +398,7 @@ private extension MuscleCategoryView {
                                         let targetCategory = trainingCoordinator.activeSetViewModel.originalCategory ?? group
                                         if targetCategory != group {
                                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                                navigationPath.append(NavigationDestination.muscleCategory(targetCategory))
+                                                router.navigate(to: .muscleCategory(targetCategory))
                                             }
                                         }
                                         overlayState.showCategoryMiniMenu = false

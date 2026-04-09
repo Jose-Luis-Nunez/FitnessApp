@@ -4,10 +4,7 @@ final class TrainingUITests: BaseTest {
 
     @MainActor
     func testFullTrainingFlow() throws {
-        
-        let config = UITestLaunchConfig.training(.defaultArmsExercise)
-        app.launchEnvironment["UITEST_CONFIG"] = try config.jsonString()
-        app.launch()
+        try launch(training: .defaultArmsExercise)
 
         for setIndex in 1...3 {
             tapOn(TrainingIDs.doneButton)

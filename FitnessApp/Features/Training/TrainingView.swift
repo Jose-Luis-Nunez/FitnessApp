@@ -3,8 +3,8 @@ import SwiftUI
 struct TrainingView: View {
     let exercise: Exercise
     let category: MuscleCategoryGroup
-    @Binding var navigationPath: NavigationPath
     
+    @EnvironmentObject private var router: AppRouter
     @StateObject private var trainingCoordinator: TrainingCoordinator
     @StateObject private var analyticsViewModel: AnalyticsViewModel
     @EnvironmentObject private var overlayState: UIOverlayState
@@ -13,10 +13,9 @@ struct TrainingView: View {
     @State private var isInitialLoad = true
     @State private var isManuallyNavigatingBack = false
     
-    init(exercise: Exercise, category: MuscleCategoryGroup, navigationPath: Binding<NavigationPath>) {
+    init(exercise: Exercise, category: MuscleCategoryGroup) {
         self.exercise = exercise
         self.category = category
-        self._navigationPath = navigationPath
         
         // Get or create the appropriate ActiveSetViewModel for this category from SessionTrainingCache
         let categoryActiveSetVM: ActiveSetViewModel
@@ -53,9 +52,8 @@ struct TrainingView: View {
         _analyticsViewModel = StateObject(wrappedValue: AnalyticsViewModel())
     }
     
-    private var safeAreaBottomInset: CGFloat {
-        UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
-    }
+    @Environment(\.safeAreaInsets) private var safeAreaInsets
+    private var safeAreaBottomInset: CGFloat { safeAreaInsets.bottom }
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -101,32 +99,7 @@ struct TrainingView: View {
                             // Training Session (ActiveSetView + TimerView)
                             TrainingSessionComponent(
                                 coordinator: trainingCoordinator,
-                                onCancel: {
-                                    let targetCategory = trainingCoordinator.activeSetViewModel.originalCategory ?? category
-                                    
-                                    // Prevent customBackAction interference
-                                    overlayState.isCancellingTraining = true
-                                    
-                                    // Navigate immediately before cancelling
-                                    var newPath = NavigationPath()
-                                    newPath.append(NavigationDestination.home)
-                                    newPath.append(NavigationDestination.muscleCategory(targetCategory))
-                                    navigationPath = newPath
-                                    
-                                    // Cancel after navigation and ensure correct scene is set
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                        trainingCoordinator.activeSetViewModel.cancelActiveSet()
-                                        
-                                        // Force currentScene to category after navigation completes
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                            overlayState.currentScene = .category
-                                        }
-                                        
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                                            overlayState.isCancellingTraining = false
-                                        }
-                                    }
-                                },
+                                onCancel: { cancelTraining() },
                                 analyticsViewModel: analyticsViewModel
                             )
                         }
@@ -168,31 +141,7 @@ struct TrainingView: View {
                                     title: "Cancel", 
                                     isDestructive: true
                                 ) {
-                                    let targetCategory = trainingCoordinator.activeSetViewModel.originalCategory ?? category
-                                    
-                                    // Prevent customBackAction interference
-                                    overlayState.isCancellingTraining = true
-                                    overlayState.showTrainingMiniMenu = false
-                                    
-                                    // Navigate immediately before cancelling
-                                    var newPath = NavigationPath()
-                                    newPath.append(NavigationDestination.home)
-                                    newPath.append(NavigationDestination.muscleCategory(targetCategory))
-                                    navigationPath = newPath
-                                    
-                                    // Cancel after navigation and ensure correct scene is set
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                        trainingCoordinator.activeSetViewModel.cancelActiveSet()
-                                        
-                                        // Force currentScene to category after navigation completes
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                            overlayState.currentScene = .category
-                                        }
-                                        
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                                            overlayState.isCancellingTraining = false
-                                        }
-                                    }
+                                    cancelTraining()
                                 }
                             ],
                             width: min(UIScreen.main.bounds.width * 0.55, 320),
@@ -227,9 +176,7 @@ struct TrainingView: View {
                 
                 // Normal navigation back (cancel is handled separately)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    if !navigationPath.isEmpty {
-                        navigationPath.removeLast()
-                    }
+                    router.pop()
                 }
             } else if !isActive && overlayState.isCancellingTraining {
                 hasFinishedTraining = true
@@ -239,6 +186,20 @@ struct TrainingView: View {
         .onDisappear {
             isManuallyNavigatingBack = true
             overlayState.showTrainingMiniMenu = false
+        }
+    }
+    
+    private func cancelTraining() {
+        let targetCategory = trainingCoordinator.activeSetViewModel.originalCategory ?? category
+        overlayState.isCancellingTraining = true
+        overlayState.showTrainingMiniMenu = false
+        router.replaceAll(with: [.home, .muscleCategory(targetCategory)])
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            trainingCoordinator.activeSetViewModel.cancelActiveSet()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                overlayState.isCancellingTraining = false
+            }
         }
     }
     
@@ -257,10 +218,10 @@ struct TrainingView: View {
         NavigationStack {
             TrainingView(
                 exercise: sampleExercise,
-                category: .chest,
-                navigationPath: .constant(NavigationPath())
+                category: .chest
             )
         }
         .environmentObject(UIOverlayState())
+        .environmentObject(AppRouter())
     }
 }

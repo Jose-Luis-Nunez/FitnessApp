@@ -23,7 +23,7 @@ When you edit Swift files, check if the change affects any of the items below. I
 | New feature folder under `Features/` | **Feature Map** tree — add entry |
 | Deleted feature folder | **Feature Map** tree — remove entry |
 | New utility in `Shared/Utilities/` | **Utilities** section — add entry |
-| Changed coordinator or state object | **Coordinators & State** section — update |
+| Changed coordinator or state object | **State & Navigation** section — update |
 
 ## How to Update
 

@@ -8,16 +8,18 @@ Shared conventions for writing and updating UI tests.
 FitnessAppUITests/
 ├── Base/BaseTest.swift              # XCTestCase subclass, all tests inherit from this
 ├── Config/
-│   ├── UITestScreen.swift           # Screen enum for launchDirectly(to:)
-│   └── TestAccessibilityIDs.swift   # ID constants mirroring view-local AIDs
+│   ├── UITestScreen.swift           # Screen enum for launch config
+│   ├── UITestLaunchConfig.swift     # Codable config sent to app via launchEnvironment
+│   └── AccessibilityIDs.swift       # ID constants mirroring view-local AIDs
 ├── DSL/
 │   └── ElementActions.swift         # Free functions: tapOn, verifyExists, fill, etc.
 ├── Fixtures/
-│   └── TestFixtures.swift           # TestExerciseFixture and named presets
-└── *Tests.swift                     # Test files
+│   ├── TestFixtures.swift           # UITestLaunchConfig factory + TestExerciseFixture
+│   └── ExerciseFixtures.swift       # Named exercise presets (.defaultArmsExercise)
+└── Tests/*Tests.swift               # Test files
 ```
 
-All test infrastructure lives exclusively in `FitnessAppUITests/`. The app target has zero test-specific files.
+The app target contains `Core/Testing/UITestRouter.swift` (compiled only under `UITESTING` flag) which reads the launch config and routes the `AppRouter` to the target screen.
 
 ## Accessibility ID Pattern
 
@@ -50,17 +52,17 @@ The test target maintains its own copy of the ID strings in `Config/TestAccessib
 
 ## Test Fixtures
 
-Mock data is defined in `Fixtures/TestFixtures.swift` as `TestExerciseFixture` structs. Tests pass fixtures explicitly via `launchDirectly(to:fixture:)` -- the app requires all fields (no defaults).
+Mock data is defined in `Fixtures/ExerciseFixtures.swift` as `TestExerciseFixture` structs. Tests pass fixtures explicitly via `launch(training:)` -- the app requires all fields (no defaults).
 
 ```swift
-launchDirectly(to: .training, fixture: .defaultArmsExercise)
+try launch(training: .defaultArmsExercise)
 ```
 
 Named presets (e.g. `.defaultArmsExercise`) keep tests readable. For custom scenarios, create a fixture inline:
 
 ```swift
 let heavy = TestExerciseFixture(name: "Deadlift", weight: 120.0, reps: 5, sets: 5, noSeats: true, icon: "dumbbell", category: "back")
-launchDirectly(to: .training, fixture: heavy)
+try launch(training: heavy)
 ```
 
 ## DSL Function Reference
@@ -100,7 +102,7 @@ final class <Feature>UITests: BaseTest {
 
     @MainActor
     func test<Scenario>() throws {
-        launchDirectly(to: .training, fixture: .defaultArmsExercise)
+        try launch(training: .defaultArmsExercise)
 
         tapOn(TrainingIDs.doneButton)
         verifyExists(TrainingIDs.repsField(set: 0))
@@ -112,7 +114,7 @@ final class <Feature>UITests: BaseTest {
 Rules:
 - Inherit from `BaseTest` (provides `app`, `setUp`, `tearDown`)
 - Mark test methods `@MainActor`
-- First line: `launchDirectly(to:fixture:)` or `launchDirectly(to:category:)` or `app.launch()`
+- First line: `launch(training:)`, `launch(category:)`, `launchSchedule()`, or `launchHome()`
 - One test method per user scenario; name it `test<WhatTheUserDoes>`
 - Only DSL functions and test ID constants -- no raw XCUITest API, no hardcoded strings
 - Always pass explicit fixture data -- no implicit defaults
@@ -195,25 +197,30 @@ Need to interact with an element in a test
 
 ## Direct Navigation
 
-For tests that focus on a specific screen, use `launchDirectly` to skip intermediate screens:
+For tests that focus on a specific screen, use `BaseTest` launch helpers to skip intermediate screens:
 
 ```swift
 // Training screen with explicit fixture
-launchDirectly(to: .training, fixture: .defaultArmsExercise)
+try launch(training: .defaultArmsExercise)
 
-// Category or schedule screen (no exercise data needed)
-launchDirectly(to: .category, category: "arms")
-launchDirectly(to: .schedule)
+// Category screen
+try launch(category: "arms")
+
+// Schedule screen
+try launchSchedule()
+
+// Home / Workouts screen (default)
+launchHome()
 ```
 
-The app reads the environment variables and builds the navigation stack programmatically so back-navigation still works. For the `.training` screen, **all exercise fields are required** -- the app will not navigate if any are missing.
+The app reads the `UITEST_CONFIG` environment variable and uses `AppRouter.replaceAll(with:)` to build the navigation stack programmatically so back-navigation still works. For training, **all exercise fields are required** -- the app will not navigate if any are missing.
 
 **When to use which:**
 
 | Scenario | Launch method |
 |----------|--------------|
-| Testing the full user journey (home to finish) | `app.launch()` + navigate via DSL |
-| Testing behavior on a specific screen | `launchDirectly(to:fixture:)` or `launchDirectly(to:category:)` |
+| Testing the full user journey (home to finish) | `launchHome()` + navigate via DSL |
+| Testing behavior on a specific screen | `launch(training:)`, `launch(category:)`, or `launchSchedule()` |
 
 Supported screens: `.training` (requires `TestExerciseFixture`), `.category`, `.schedule`.
 
@@ -226,7 +233,7 @@ final class TrainingUITests: BaseTest {
 
     @MainActor
     func testFullTrainingFlow() throws {
-        launchDirectly(to: .training, fixture: .defaultArmsExercise)
+        try launch(training: .defaultArmsExercise)
 
         for setIndex in 1...3 {
             tapOn(TrainingIDs.doneButton)

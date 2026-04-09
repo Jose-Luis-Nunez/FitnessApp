@@ -2,7 +2,6 @@ import Foundation
 import UIKit
 import ActivityKit
 
-@available(iOS 16.1, *)
 final class TrainingActivityManager {
     static let shared = TrainingActivityManager()
     private init() {}

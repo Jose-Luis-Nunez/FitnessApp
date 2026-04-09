@@ -39,7 +39,7 @@ Use the test template from [ui-test-conventions/reference.md](../ui-test-convent
 
 - Inherit from `BaseTest`
 - Mark test methods `@MainActor`
-- First line: `launchDirectly(to:fixture:)` with explicit test data, or `launchDirectly(to:category:)` for screens without exercise data, or `app.launch()` for full journeys
+- First line: `launch(training:)` with explicit test data, or `launch(category:)` for screens without exercise data, or `launchHome()` for full journeys
 - Only DSL functions and test ID constants (e.g. `TrainingIDs.doneButton`) — no raw API, no hardcoded strings
 - Always pass mock data explicitly via `TestExerciseFixture` — no implicit defaults
 - Use `tapOnIfExists` for conditional elements

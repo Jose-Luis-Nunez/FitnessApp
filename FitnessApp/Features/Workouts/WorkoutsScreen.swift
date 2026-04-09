@@ -28,12 +28,8 @@ private enum Constants {
 
 struct WorkoutsScreen: View {
     @StateObject private var viewModel = WorkoutsViewModel()
-    @Binding var navigationPath: NavigationPath
+    @EnvironmentObject private var router: AppRouter
     @EnvironmentObject private var overlayState: UIOverlayState
-    
-    init(navigationPath: Binding<NavigationPath> = .constant(NavigationPath())) {
-        self._navigationPath = navigationPath
-    }
     
     var body: some View {
         ZStack {
@@ -131,7 +127,7 @@ struct WorkoutsScreen: View {
                     exerciseCount: viewModel.getExerciseCount(for: workout),
                     onTap: {
                         viewModel.selectWorkout(workout)
-                        navigationPath.append(NavigationDestination.home)
+                        router.navigate(to: .home)
                     },
                     onLongPress: {
                         viewModel.showFABOptions(for: workout)
@@ -245,9 +241,8 @@ struct WorkoutsScreen: View {
         }
     }
     
-    private var safeAreaInset: CGFloat {
-        UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0
-    }
+    @Environment(\.safeAreaInsets) private var safeAreaInsets
+    private var safeAreaInset: CGFloat { safeAreaInsets.bottom }
 }
 
 private struct WorkoutTileView: View {
