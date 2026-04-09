@@ -27,12 +27,13 @@ Both agents are read-only. **You** apply all fixes in Step 2.
 Based on both agent reports, apply fixes:
 
 1. **Replace raw API** with DSL functions (`tapOn`, `verifyExists`, etc.)
-2. **Replace hardcoded strings** with Selector constants
+2. **Replace hardcoded strings** with test ID constants (e.g. `TrainingIDs.doneButton`)
 3. **Fix structure** (inherit `BaseTest`, add `@MainActor`, add launch sequence)
-4. **Add missing identifiers** in production Views (`.accessibilityIdentifier("id_...")`)
-5. **Add missing Selectors** to the appropriate enum
-6. **Remove stale Selectors** that reference deleted production elements
-7. **Add new test steps** for elements that were added to the screen since the test was written
+4. **Add missing identifiers** — add `enum AID` entry in the production View, then add `.accessibilityIdentifier(AID.x)` to the element
+5. **Add matching test IDs** — add the new constant to the appropriate enum in `Config/TestAccessibilityIDs.swift`
+6. **Remove stale test IDs** that reference deleted `AID` constants
+7. **Make mock data explicit** — replace implicit defaults with `TestExerciseFixture` passed via `launchDirectly(to:fixture:)`
+8. **Add new test steps** for elements that were added to the screen since the test was written
 
 ### Step 3 — Review the Result
 

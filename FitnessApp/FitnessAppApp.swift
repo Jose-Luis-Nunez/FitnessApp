@@ -38,6 +38,13 @@ struct FitnessAppApp: App {
                     // we automatically push to Category Selection to preserve correct back animation.
                     WorkoutsScreen(navigationPath: $navigationPath)
                         .onAppear {
+                            if isUITesting {
+                                isShowingWorkoutsRoot = navigationPath.isEmpty
+                                if navigationPath.isEmpty {
+                                    overlayState.currentScene = .workouts
+                                }
+                                return
+                            }
                             if let defaultWorkout = workoutStorageService.defaultWorkout,
                                navigationPath.isEmpty,
                                didAutoNavigateToHome == false {
@@ -147,15 +154,24 @@ struct FitnessAppApp: App {
             }
             .environmentObject(overlayState)
             .onAppear {
-                #if DEBUG
-                if isUITesting {
-                    UIApplication.shared.connectedScenes
-                        .compactMap { $0 as? UIWindowScene }
-                        .flatMap(\.windows)
-                        .forEach { $0.layer.speed = 100 }
-                }
+                #if UITESTING
+                if isUITesting { configureUITestEnvironment() }
                 #endif
             }
         }
     }
+
+    #if UITESTING
+    private func configureUITestEnvironment() {
+        UITestRouter.speedUpAnimations()
+        guard let config = UITestLaunchConfig.from(
+            environment: ProcessInfo.processInfo.environment
+        ) else { return }
+        UITestRouter.configure(
+            config: config,
+            navigationPath: &navigationPath,
+            workoutStorageService: workoutStorageService
+        )
+    }
+    #endif // UITESTING
 }

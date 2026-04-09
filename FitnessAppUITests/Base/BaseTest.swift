@@ -9,10 +9,12 @@ class BaseTest: XCTestCase {
     }
 
     override func tearDownWithError() throws {
+        if let failureCount = testRun?.failureCount, failureCount > 0 {
+            let screenshot = XCUIScreen.main.screenshot()
+            let attachment = XCTAttachment(screenshot: screenshot)
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
         app.terminate()
-    }
-
-    func startAccessibilityAudit() throws {
-        try app.performAccessibilityAudit(for: [.hitRegion, .trait, .textClipped])
     }
 }

@@ -6,14 +6,61 @@ Shared conventions for writing and updating UI tests.
 
 ```
 FitnessAppUITests/
-├── Base/BaseTest.swift          # XCTestCase subclass, all tests inherit from this
+├── Base/BaseTest.swift              # XCTestCase subclass, all tests inherit from this
+├── Config/
+│   ├── UITestScreen.swift           # Screen enum for launchDirectly(to:)
+│   └── TestAccessibilityIDs.swift   # ID constants mirroring view-local AIDs
 ├── DSL/
-│   └── ElementActions.swift     # Free functions: tapOn, verifyExists, fill, etc.
-├── Selectors/
-│   ├── HomeSelectors.swift
-│   ├── MuscleCategorySelectors.swift
-│   └── TrainingSelectors.swift
-└── *Tests.swift                 # Test files
+│   └── ElementActions.swift         # Free functions: tapOn, verifyExists, fill, etc.
+├── Fixtures/
+│   └── TestFixtures.swift           # TestExerciseFixture and named presets
+└── *Tests.swift                     # Test files
+```
+
+All test infrastructure lives exclusively in `FitnessAppUITests/`. The app target has zero test-specific files.
+
+## Accessibility ID Pattern
+
+Each SwiftUI View that needs accessibility identifiers defines an `enum AID` at the top of its struct body. This is the **source of truth** for all IDs in that view.
+
+```swift
+struct MyView: View {
+    enum AID {
+        static let submitButton = "id_button_submit"
+        static func row(at index: Int) -> String { "id_row_\(index)" }
+    }
+
+    var body: some View {
+        Button("Submit") { ... }
+            .accessibilityIdentifier(AID.submitButton)
+    }
+}
+```
+
+The test target maintains its own copy of the ID strings in `Config/TestAccessibilityIDs.swift`. These must be kept in sync with the view-local `enum AID`. If they drift, the test fails immediately -- which is the desired behavior.
+
+### Current Test ID Enums
+
+| Test Enum | Source View | IDs |
+|-----------|-------------|-----|
+| `TrainingIDs` | `FloatingActionButtonsView.AID`, `SimpleActiveSetView.AID` | `doneButton`, `finishButton`, `startButton`, `allDoneButton`, `quickDoneButton`, `controlButton(_:)`, `repsField(set:)`, `quickDoneSetButton(index:)` |
+| `HomeIDs` | `MuscleCategorySelectionView.AID` | `categoryTile(for:)` |
+| `MuscleCategoryIDs` | `IdleActiveCardView.AID` | `startExercise` |
+| `ExerciseIDs` | `InactiveCardView.AID` | `nameLabel` |
+
+## Test Fixtures
+
+Mock data is defined in `Fixtures/TestFixtures.swift` as `TestExerciseFixture` structs. Tests pass fixtures explicitly via `launchDirectly(to:fixture:)` -- the app requires all fields (no defaults).
+
+```swift
+launchDirectly(to: .training, fixture: .defaultArmsExercise)
+```
+
+Named presets (e.g. `.defaultArmsExercise`) keep tests readable. For custom scenarios, create a fixture inline:
+
+```swift
+let heavy = TestExerciseFixture(name: "Deadlift", weight: 120.0, reps: 5, sets: 5, noSeats: true, icon: "dumbbell", category: "back")
+launchDirectly(to: .training, fixture: heavy)
 ```
 
 ## DSL Function Reference
@@ -53,13 +100,11 @@ final class <Feature>UITests: BaseTest {
 
     @MainActor
     func test<Scenario>() throws {
-        app.launch()
+        launchDirectly(to: .training, fixture: .defaultArmsExercise)
 
-        tapOn(FeatureSelectors.actionButton)
-        fill(FeatureSelectors.inputField, with: "value")
-
-        verifyExists(FeatureSelectors.successIndicator)
-        verifyNotExists(FeatureSelectors.actionButton)
+        tapOn(TrainingIDs.doneButton)
+        verifyExists(TrainingIDs.repsField(set: 0))
+        verifyNotExists(TrainingIDs.finishButton)
     }
 }
 ```
@@ -67,30 +112,31 @@ final class <Feature>UITests: BaseTest {
 Rules:
 - Inherit from `BaseTest` (provides `app`, `setUp`, `tearDown`)
 - Mark test methods `@MainActor`
-- First line always: `app.launch()`
+- First line: `launchDirectly(to:fixture:)` or `launchDirectly(to:category:)` or `app.launch()`
 - One test method per user scenario; name it `test<WhatTheUserDoes>`
-- Only DSL functions and Selector constants — no raw XCUITest API, no hardcoded strings
+- Only DSL functions and test ID constants -- no raw XCUITest API, no hardcoded strings
+- Always pass explicit fixture data -- no implicit defaults
 
 ### Conditional UI
 
 Use `tapOnIfExists` for elements that may or may not appear:
 
 ```swift
-tapOnIfExists(SomeSelectors.optionalElement)
+tapOnIfExists(TrainingIDs.quickDoneButton)
 ```
 
 For loops over repeated actions, wait for UI feedback before continuing:
 
 ```swift
 for setIndex in 1...3 {
-    tapOn(TrainingSelectors.doneButton)
-    waitForNonEmptyLabel(TrainingSelectors.repsField(set: setIndex - 1))
+    tapOn(TrainingIDs.doneButton)
+    waitForNonEmptyLabel(TrainingIDs.repsField(set: setIndex - 1))
 }
 ```
 
 ## Constraints
 
-### Always Use DSL — Never Raw XCUITest API in Tests
+### Always Use DSL -- Never Raw XCUITest API in Tests
 
 ```swift
 // BAD
@@ -100,51 +146,76 @@ let tile = app.descendants(matching: .any)
 tile.tap()
 
 // GOOD
-tapOn(HomeSelectors.categoryTile)
+tapOn(HomeIDs.categoryTile(for: "arms"))
 ```
 
-### Selectors — Never Hardcode Strings in Tests
+### Test ID Constants -- Never Hardcode Strings in Tests
 
 ```swift
 // BAD
 tapOn("id_button_start")
 
 // GOOD
-tapOn(TrainingSelectors.doneButton)
+tapOn(TrainingIDs.startButton)
 ```
 
 ### Element Identification Priority
 
-1. **`accessibilityIdentifier`** — most reliable, language-independent
-2. **`label:`** — only for system controls without identifier
-3. **`NSPredicate`** — avoid; only if pattern matching is truly required
+1. **`accessibilityIdentifier`** -- most reliable, language-independent
+2. **`label:`** -- only for system controls without identifier
+3. **`NSPredicate`** -- avoid; only if pattern matching is truly required
 
 Never resort to predicates or labels when an identifier can be added to the production code.
 
-### Stale Selectors — Remove When Production Code Changes
+### Stale IDs -- Keep in Sync
 
-When a production View element is renamed or deleted, remove the corresponding Selector constant immediately. Stale selectors that reference non-existent identifiers cause test failures and confusion.
+When a production View's `AID` constant is renamed or deleted, update `Config/TestAccessibilityIDs.swift` to match. Stale constants that reference non-existent IDs cause test failures.
 
 ## Naming Patterns
 
-- Identifiers: `id_<context>_<element>` (e.g. `id_button_done`, `id_category_tile_arms`)
-- Selector enums: `<ScreenName>Selectors` (e.g. `HomeSelectors`, `TrainingSelectors`)
-- Dynamic selectors: static functions returning `String` (e.g. `repsField(set:)`)
+- View-local identifiers: `id_<context>_<element>` (e.g. `id_button_done`, `id_category_tile_arms`)
+- View-local enum: `enum AID` inside each View struct
+- Test ID enums: `<Screen>IDs` (e.g. `TrainingIDs`, `HomeIDs`) in `Config/TestAccessibilityIDs.swift`
+- Dynamic IDs: static functions returning `String` (e.g. `repsField(set:)`)
 
 ## Decision Flowchart
 
 ```
 Need to interact with an element in a test
-  │
-  ├─ Has accessibilityIdentifier in production code?
-  │   ├─ YES → Add static let to Selectors enum → use DSL function
-  │   └─ NO  → Add .accessibilityIdentifier("id_...") in View first
-  │            → Add static let to Selectors enum → use DSL function
-  │
-  └─ DSL function exists for this interaction?
-      ├─ YES → Use it
-      └─ NO  → Add new function to ElementActions.swift → then use it
+  |
+  +-- Has enum AID with accessibilityIdentifier in the View?
+  |   +-- YES -> Add matching constant to Config/TestAccessibilityIDs.swift -> use DSL function
+  |   +-- NO  -> Add enum AID to View + .accessibilityIdentifier(AID.x)
+  |              -> Add matching constant to Config/TestAccessibilityIDs.swift -> use DSL function
+  |
+  +-- DSL function exists for this interaction?
+      +-- YES -> Use it
+      +-- NO  -> Add new function to ElementActions.swift -> then use it
 ```
+
+## Direct Navigation
+
+For tests that focus on a specific screen, use `launchDirectly` to skip intermediate screens:
+
+```swift
+// Training screen with explicit fixture
+launchDirectly(to: .training, fixture: .defaultArmsExercise)
+
+// Category or schedule screen (no exercise data needed)
+launchDirectly(to: .category, category: "arms")
+launchDirectly(to: .schedule)
+```
+
+The app reads the environment variables and builds the navigation stack programmatically so back-navigation still works. For the `.training` screen, **all exercise fields are required** -- the app will not navigate if any are missing.
+
+**When to use which:**
+
+| Scenario | Launch method |
+|----------|--------------|
+| Testing the full user journey (home to finish) | `app.launch()` + navigate via DSL |
+| Testing behavior on a specific screen | `launchDirectly(to:fixture:)` or `launchDirectly(to:category:)` |
+
+Supported screens: `.training` (requires `TestExerciseFixture`), `.category`, `.schedule`.
 
 ## Reference Example
 
@@ -155,18 +226,15 @@ final class TrainingUITests: BaseTest {
 
     @MainActor
     func testFullTrainingFlow() throws {
-        app.launch()
-
-        tapOn(HomeSelectors.categoryTile)
-        tapOn(MuscleCategorySelectors.startExercise, timeout: TestDefaults.longTimeout)
+        launchDirectly(to: .training, fixture: .defaultArmsExercise)
 
         for setIndex in 1...3 {
-            tapOn(TrainingSelectors.doneButton)
-            waitForNonEmptyLabel(TrainingSelectors.repsField(set: setIndex - 1))
+            tapOn(TrainingIDs.doneButton)
+            waitForNonEmptyLabel(TrainingIDs.repsField(set: setIndex - 1))
         }
 
-        tapOn(TrainingSelectors.finishButton)
-        verifyNotExists(TrainingSelectors.finishButton)
+        tapOn(TrainingIDs.finishButton)
+        verifyNotExists(TrainingIDs.finishButton)
     }
 }
 ```

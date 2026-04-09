@@ -28,9 +28,10 @@ Launch `uitest-prep-agent` with the screen name or flow description. It scans th
 
 The prep agent is read-only. **You** fix all findings it reports before writing the test:
 
-- **Missing identifier** → add `.accessibilityIdentifier("id_<context>_<element>")` in the production View
-- **Missing selector** → add `static let` to the appropriate `Selectors/` enum
+- **Missing identifier** → add `enum AID` (or extend existing one) in the production View with the new ID, then add `.accessibilityIdentifier(AID.x)` to the element
+- **Missing test ID** → add matching constant to the appropriate enum in `Config/TestAccessibilityIDs.swift`
 - **Missing DSL function** → add to `ElementActions.swift`
+- **Missing fixture** → add a named preset to `Fixtures/TestFixtures.swift` if this screen needs mock data
 
 ### Step 3 — Write the Test
 
@@ -38,8 +39,9 @@ Use the test template from [ui-test-conventions/reference.md](../ui-test-convent
 
 - Inherit from `BaseTest`
 - Mark test methods `@MainActor`
-- First line: `app.launch()`
-- Only DSL functions and Selector constants — no raw API, no hardcoded strings
+- First line: `launchDirectly(to:fixture:)` with explicit test data, or `launchDirectly(to:category:)` for screens without exercise data, or `app.launch()` for full journeys
+- Only DSL functions and test ID constants (e.g. `TrainingIDs.doneButton`) — no raw API, no hardcoded strings
+- Always pass mock data explicitly via `TestExerciseFixture` — no implicit defaults
 - Use `tapOnIfExists` for conditional elements
 
 ### Step 4 — Review the Result

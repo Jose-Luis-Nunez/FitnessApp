@@ -75,7 +75,7 @@ private extension InactiveCardView {
                 .foregroundColor(.white)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
-                .accessibilityIdentifier("id_label_exercise_name")
+                .accessibilityIdentifier(ExerciseIDs.nameLabel)
                 .onTapGesture {
                     if isEditable { onEdit(viewModel.exercise, .name) }
                 }

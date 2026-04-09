@@ -266,7 +266,7 @@ private extension IdleActiveCardView {
                         .foregroundColor(AppStyle.Color.exerciseCardBackground)
                 }
             }
-            .accessibilityIdentifier("id_button_start_exercise")
+            .accessibilityIdentifier(MuscleCategoryIDs.startExercise)
             .buttonStyle(.plain)
         }
     }

@@ -120,7 +120,7 @@ struct SimpleActiveSetView: View {
             )
             .buttonStyle(PlainButtonStyle())
             .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.3)
-            .accessibilityIdentifier("id_reps_set_\(index)")
+            .accessibilityIdentifier(TrainingIDs.repsField(set: index))
 
             Text("of \(exercise.reps)")
                 .font(.system(size: 14, weight: .medium))
@@ -141,7 +141,7 @@ struct SimpleActiveSetView: View {
                 .cornerRadius(AppStyle.CornerRadius.bottomBarButton)
                 .buttonStyle(PlainButtonStyle())
                 .disabled(progress.status == .completedDone || viewModel.isLastSetCompleted)
-                .accessibilityIdentifier("id_button_quick_done_set_\(index)")
+                .accessibilityIdentifier(TrainingIDs.quickDoneSetButton(index: index))
             }
         }
         .padding(.horizontal, dynamicPadding)
@@ -150,7 +150,6 @@ struct SimpleActiveSetView: View {
     @ViewBuilder
     private func createNormalRow(index: Int, progress: SetProgress) -> some View {
         HStack(spacing: dynamicSpacing) {
-            // Nummer mit optionalem Glow für aktives Set
             ZStack {
                 Circle()
                     .fill(AppStyle.Color.backgroundColor)
@@ -205,7 +204,7 @@ struct SimpleActiveSetView: View {
             )
             .buttonStyle(PlainButtonStyle())
             .opacity((index == viewModel.activeSetIndex || progress.status != .notStarted && progress.status != .inProgress) ? 1.0 : 0.3)
-            .accessibilityIdentifier("id_reps_set_\(index)")
+            .accessibilityIdentifier(TrainingIDs.repsField(set: index))
 
             Text("of \(exercise.reps)")
                 .font(.system(size: 14, weight: .medium))

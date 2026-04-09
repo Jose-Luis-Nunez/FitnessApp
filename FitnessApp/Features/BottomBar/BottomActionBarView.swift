@@ -275,12 +275,12 @@ struct FloatingActionButtonsView: View {
 
     private func accessibilityID(for style: MenuItemStyle, text: String) -> String {
         switch style {
-        case .done:    return "id_button_done"
-        case .finish:  return "id_button_finish"
-        case .start:   return "id_button_start"
-        case .allDone: return "id_button_all_done"
-        case .control: return "id_button_\(text.lowercased())"
-        case .quickDone: return "id_button_quick_done"
+        case .done:      return TrainingIDs.doneButton
+        case .finish:    return TrainingIDs.finishButton
+        case .start:     return TrainingIDs.startButton
+        case .allDone:   return TrainingIDs.allDoneButton
+        case .control:   return TrainingIDs.controlButton(text)
+        case .quickDone: return TrainingIDs.quickDoneButton
         }
     }
 }

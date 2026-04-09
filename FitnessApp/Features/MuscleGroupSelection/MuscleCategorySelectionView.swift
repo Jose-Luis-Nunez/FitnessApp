@@ -479,7 +479,7 @@ struct MuscleCategorySelectionView: View {
             }
             .buttonStyle(.plain)
             .contentShape(Rectangle())
-            .accessibilityIdentifier("id_category_tile_\(group.rawValue)")
+            .accessibilityIdentifier(HomeIDs.categoryTile(for: group.rawValue))
         }
     }
     

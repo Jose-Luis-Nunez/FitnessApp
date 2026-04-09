@@ -1,0 +1,16 @@
+# Running UI Tests
+
+When asked to run UI tests, use this exact command:
+
+```bash
+cd ~/Documents/repo/FitnessApp && DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer xcodebuild test -scheme FitnessApp -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -only-testing:FitnessAppUITests 2>&1 | tail -30
+```
+
+## Notes
+
+- **DEVELOPER_DIR** must point to `~/Downloads/Xcode.app/Contents/Developer` because `xcode-select` is set to Command Line Tools, not full Xcode.
+- **Scheme**: Use `FitnessApp` (not `FitnessApp UITests`).
+- **Simulator**: `iPhone 17 Pro Max`.
+- To run a **single test**, append the test class and method: `-only-testing:FitnessAppUITests/TrainingUITests/testFullTrainingFlow`
+- To run **all UI tests**, use: `-only-testing:FitnessAppUITests`
+- Set `block_until_ms` to `300000` (5 min) since build + test takes ~90–120 seconds.
