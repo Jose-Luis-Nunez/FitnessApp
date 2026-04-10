@@ -1,4 +1,6 @@
 import SwiftUI
+import FitnessCore
+import FitnessUI
 
 struct CreateWorkoutView: View {
     @Binding var workoutName: String
@@ -107,7 +109,7 @@ struct MuscleGroupTile: View {
                 .frame(width: iconSize, height: iconSize)
                 
                 Text(group.displayName)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(AppStyle.Font.detailCaption)
                     .foregroundColor(isSelected ? AppStyle.Color.green : AppStyle.Color.white)
                     .multilineTextAlignment(.center)
                     .lineLimit(1)

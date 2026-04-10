@@ -1,4 +1,8 @@
 import SwiftUI
+import FitnessCore
+import FitnessStorage
+import FitnessUI
+import FitnessExercise
 
 private enum Constants {
     static let horizontalPadding: CGFloat = AppStyle.Padding.screenHorizontal
@@ -140,31 +144,6 @@ struct WorkoutsScreen: View {
         }
     }
     
-    // Removed legacy FAB; creation is handled via mini menu
-    
-    private var createWorkoutSheet: some View {
-        NavigationView {
-            VStack(spacing: 20) {
-                TextField("Workout Name", text: $viewModel.newWorkoutName)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding(.horizontal)
-                
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("Neues Workout")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(
-                leading: Button("Cancel") {
-                    viewModel.showingCreateWorkout = false
-                },
-                trailing: Button("Erstellen") {
-                    viewModel.createNewWorkout()
-                }
-                .disabled(viewModel.newWorkoutName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            )
-        }
-    }
     
     private var settingsMiniMenu: some View {
         Group {
@@ -314,7 +293,7 @@ private struct WorkoutTileView: View {
                                 .frame(width: 26, height: 26)
                             
                             Text("\(exerciseCount)")
-                                .font(.system(size: 14, weight: .bold))
+                                .font(AppStyle.Font.detailBadge)
                                 .foregroundColor(isDefault ? AppStyle.Color.green : Color.white)
                         }
                         .padding(.leading, 20)

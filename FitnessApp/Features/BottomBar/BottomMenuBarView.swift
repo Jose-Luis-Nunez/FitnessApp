@@ -1,4 +1,6 @@
 import SwiftUI
+import FitnessUI
+import FitnessExercise
 
 private enum BottomTab {
     case home, chart, calendar, profile
@@ -28,7 +30,6 @@ struct BottomMenuBarView: View {
     private let iconSize: CGFloat = 34
     private let bottomOffset: CGFloat = -33
     private let calendarIconScale: CGFloat = 1.18
-    private let labelFontSize: CGFloat = 10
     private let circleButtonSize: CGFloat = 44
 
     private var selectedTab: BottomTab {
@@ -158,7 +159,7 @@ struct BottomMenuBarView: View {
                     .scaleEffect(bounceTab == tab ? 1.3 : (isSelected ? 1.15 : 1.0))
 
                 Text(label)
-                    .font(.system(size: labelFontSize, weight: .medium))
+                    .font(AppStyle.Font.chartAxisSmall)
                     .foregroundColor(isSelected ? tabSelectedForeground : tabForeground)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)

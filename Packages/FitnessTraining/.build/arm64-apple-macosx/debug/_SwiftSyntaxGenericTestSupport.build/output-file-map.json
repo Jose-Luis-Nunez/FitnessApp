@@ -1,0 +1,19 @@
+{
+  "": {
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_SwiftSyntaxGenericTestSupport.build/master.swiftdeps"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/checkouts/swift-syntax/Sources/_SwiftSyntaxGenericTestSupport/AssertEqualWithDiff.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_SwiftSyntaxGenericTestSupport.build/AssertEqualWithDiff.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_SwiftSyntaxGenericTestSupport.build/AssertEqualWithDiff.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_SwiftSyntaxGenericTestSupport.build/AssertEqualWithDiff~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_SwiftSyntaxGenericTestSupport.build/AssertEqualWithDiff.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_SwiftSyntaxGenericTestSupport.build/AssertEqualWithDiff.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/checkouts/swift-syntax/Sources/_SwiftSyntaxGenericTestSupport/String+TrimmingTrailingWhitespace.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_SwiftSyntaxGenericTestSupport.build/String+TrimmingTrailingWhitespace.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_SwiftSyntaxGenericTestSupport.build/String+TrimmingTrailingWhitespace.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_SwiftSyntaxGenericTestSupport.build/String+TrimmingTrailingWhitespace~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_SwiftSyntaxGenericTestSupport.build/String+TrimmingTrailingWhitespace.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_SwiftSyntaxGenericTestSupport.build/String+TrimmingTrailingWhitespace.dia"
+  }
+}

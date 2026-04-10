@@ -85,6 +85,16 @@ Scan changed files for hardcoded values that should use tokens:
 - Remove commented-out code blocks (dead weight after refactoring)
 - Verify `print()` / debug statements are removed
 
+### 6. State Propagation (after ViewModel/Coordinator refactoring)
+
+When `@Published` properties are restructured (moved, renamed, wrapped in structs):
+
+- **Combine subscribers:** Grep for `$propertyName`. If the property became computed (bridging to a nested `@Published` struct), the `$` prefix won't compile. Subscribers must observe the underlying struct.
+- **Cached ViewModel sync:** Cached VMs must use a dedicated sync method (e.g. `syncExercise(_:)`) that suppresses `onUpdate` callbacks. Direct `.exercise = updated` causes re-entrant loops.
+- **Equatable traps:** If a model has id-only `Equatable`, guards like `exercise != oldValue` miss content changes. Verify sync guards use `isContentEqual(to:)`.
+- **objectWillChange suppression:** `didSet` guards on `@Published` must not silently swallow content-level changes due to id-only equality.
+- **Conditional View rendering:** Trace mutation → `@Published` → `objectWillChange` → View body → condition switch. Any broken link = stale UI.
+
 ## Report Format
 
 ```
@@ -107,5 +117,8 @@ Scan changed files for hardcoded values that should use tokens:
 ### Cleanup
 - `FileName.swift:LINE` — stale TODO from resolved task
 
-**Summary:** N dead code, N reuse, N style, N referential, N cleanup items found.
+### State Propagation
+- `FileName.swift:LINE` — `$computedProperty` subscriber will not compile after refactoring
+
+**Summary:** N dead code, N reuse, N style, N referential, N cleanup, N state propagation items found.
 ```

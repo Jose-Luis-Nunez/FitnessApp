@@ -1,0 +1,145 @@
+{
+  "": {
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/master.swiftdeps"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/Sources/FitnessUI/ActiveSetEditPickerView.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/ActiveSetEditPickerView.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/ActiveSetEditPickerView.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/ActiveSetEditPickerView~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/ActiveSetEditPickerView.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/ActiveSetEditPickerView.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/Sources/FitnessUI/AnalyticsDateHelper.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/AnalyticsDateHelper.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/AnalyticsDateHelper.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/AnalyticsDateHelper~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/AnalyticsDateHelper.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/AnalyticsDateHelper.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/Sources/FitnessUI/AppStyle.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/AppStyle.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/AppStyle.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/AppStyle~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/AppStyle.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/AppStyle.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/Sources/FitnessUI/CapsuleToggleStyle.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/CapsuleToggleStyle.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/CapsuleToggleStyle.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/CapsuleToggleStyle~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/CapsuleToggleStyle.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/CapsuleToggleStyle.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/Sources/FitnessUI/Color+Extension.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/Color+Extension.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/Color+Extension.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/Color+Extension~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/Color+Extension.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/Color+Extension.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/Sources/FitnessUI/DateFormatterUtility.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/DateFormatterUtility.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/DateFormatterUtility.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/DateFormatterUtility~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/DateFormatterUtility.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/DateFormatterUtility.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/Sources/FitnessUI/ExercisePickerSheetChrome.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/ExercisePickerSheetChrome.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/ExercisePickerSheetChrome.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/ExercisePickerSheetChrome~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/ExercisePickerSheetChrome.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/ExercisePickerSheetChrome.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/Sources/FitnessUI/MiniActionMenuView.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/MiniActionMenuView.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/MiniActionMenuView.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/MiniActionMenuView~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/MiniActionMenuView.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/MiniActionMenuView.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/Sources/FitnessUI/MuscleCategoryGroup+UI.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/MuscleCategoryGroup+UI.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/MuscleCategoryGroup+UI.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/MuscleCategoryGroup+UI~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/MuscleCategoryGroup+UI.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/MuscleCategoryGroup+UI.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/Sources/FitnessUI/SafeAreaInsetsKey.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/SafeAreaInsetsKey.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/SafeAreaInsetsKey.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/SafeAreaInsetsKey~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/SafeAreaInsetsKey.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/SafeAreaInsetsKey.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/Sources/FitnessUI/SwipeBackGestureModifier.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/SwipeBackGestureModifier.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/SwipeBackGestureModifier.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/SwipeBackGestureModifier~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/SwipeBackGestureModifier.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/SwipeBackGestureModifier.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/Sources/FitnessUI/TimeFormatter.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/TimeFormatter.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/TimeFormatter.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/TimeFormatter~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/TimeFormatter.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/TimeFormatter.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/Sources/FitnessUI/TrainingIDs.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/TrainingIDs.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/TrainingIDs.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/TrainingIDs~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/TrainingIDs.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/TrainingIDs.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/Sources/FitnessUI/UIOverlayState.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/UIOverlayState.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/UIOverlayState.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/UIOverlayState~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/UIOverlayState.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/UIOverlayState.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/Sources/FitnessUI/View+Toolbar.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/View+Toolbar.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/View+Toolbar.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/View+Toolbar~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/View+Toolbar.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/View+Toolbar.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/Sources/FitnessUI/WeightFormatter.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WeightFormatter.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WeightFormatter.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WeightFormatter~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WeightFormatter.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WeightFormatter.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/Sources/FitnessUI/WeightOptionsGenerator.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WeightOptionsGenerator.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WeightOptionsGenerator.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WeightOptionsGenerator~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WeightOptionsGenerator.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WeightOptionsGenerator.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/Sources/FitnessUI/WorkoutDropdownView.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WorkoutDropdownView.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WorkoutDropdownView.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WorkoutDropdownView~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WorkoutDropdownView.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WorkoutDropdownView.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/Sources/FitnessUI/WorkoutFormSheet.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WorkoutFormSheet.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WorkoutFormSheet.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WorkoutFormSheet~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WorkoutFormSheet.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WorkoutFormSheet.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/Sources/FitnessUI/WorkoutPickerView.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WorkoutPickerView.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WorkoutPickerView.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WorkoutPickerView~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WorkoutPickerView.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessSchedule/.build/arm64-apple-macosx/debug/FitnessUI.build/WorkoutPickerView.dia"
+  }
+}

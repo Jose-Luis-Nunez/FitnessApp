@@ -1,0 +1,40 @@
+{
+  "": {
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/master.swiftdeps"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/checkouts/swift-testing/Sources/Overlays/_Testing_CoreGraphics/Attachments/AttachableAsCGImage.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/AttachableAsCGImage.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/AttachableAsCGImage.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/AttachableAsCGImage~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/AttachableAsCGImage.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/AttachableAsCGImage.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/checkouts/swift-testing/Sources/Overlays/_Testing_CoreGraphics/Attachments/AttachableImageFormat+UTType.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/AttachableImageFormat+UTType.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/AttachableImageFormat+UTType.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/AttachableImageFormat+UTType~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/AttachableImageFormat+UTType.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/AttachableImageFormat+UTType.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/checkouts/swift-testing/Sources/Overlays/_Testing_CoreGraphics/Attachments/CGImage+AttachableAsImage.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/CGImage+AttachableAsImage.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/CGImage+AttachableAsImage.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/CGImage+AttachableAsImage~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/CGImage+AttachableAsImage.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/CGImage+AttachableAsImage.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/checkouts/swift-testing/Sources/Overlays/_Testing_CoreGraphics/Attachments/_AttachableImageWrapper+AttachableWrapper.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/_AttachableImageWrapper+AttachableWrapper.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/_AttachableImageWrapper+AttachableWrapper.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/_AttachableImageWrapper+AttachableWrapper~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/_AttachableImageWrapper+AttachableWrapper.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/_AttachableImageWrapper+AttachableWrapper.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/checkouts/swift-testing/Sources/Overlays/_Testing_CoreGraphics/ReexportTesting.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/ReexportTesting.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/ReexportTesting.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/ReexportTesting~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/ReexportTesting.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/_Testing_CoreGraphics.build/ReexportTesting.dia"
+  }
+}

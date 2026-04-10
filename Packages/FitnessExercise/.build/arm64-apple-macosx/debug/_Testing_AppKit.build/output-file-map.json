@@ -1,0 +1,19 @@
+{
+  "": {
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/_Testing_AppKit.build/master.swiftdeps"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/swift-testing/Sources/Overlays/_Testing_AppKit/Attachments/NSImage+AttachableAsImage.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/_Testing_AppKit.build/NSImage+AttachableAsImage.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/_Testing_AppKit.build/NSImage+AttachableAsImage.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/_Testing_AppKit.build/NSImage+AttachableAsImage~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/_Testing_AppKit.build/NSImage+AttachableAsImage.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/_Testing_AppKit.build/NSImage+AttachableAsImage.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/swift-testing/Sources/Overlays/_Testing_AppKit/ReexportTesting.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/_Testing_AppKit.build/ReexportTesting.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/_Testing_AppKit.build/ReexportTesting.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/_Testing_AppKit.build/ReexportTesting~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/_Testing_AppKit.build/ReexportTesting.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/_Testing_AppKit.build/ReexportTesting.dia"
+  }
+}

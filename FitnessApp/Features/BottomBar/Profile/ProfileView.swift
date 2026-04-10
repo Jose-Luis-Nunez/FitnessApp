@@ -1,4 +1,5 @@
 import SwiftUI
+import FitnessUI
 
 struct ProfileView: View {
     @AppStorage("userNickname") private var nickname: String = ""
@@ -50,7 +51,7 @@ struct ProfileView: View {
                         
                         Text("Cancel")
                             .foregroundColor(cancelButtonTextColor)
-                            .font(.system(size: 14))
+                            .font(AppStyle.Font.pickerAction)
                             .padding(5)
                             .frame(width: 120)
                             .cornerRadius(8)
@@ -74,7 +75,7 @@ struct ProfileView: View {
                         }) {
                             Text("Save")
                                 .foregroundColor(inputNickname.isEmpty ? saveButtonTextDisabledColor : saveButtonTextEnabledColor)
-                                .font(.system(size: 14))
+                                .font(AppStyle.Font.pickerAction)
                                 .padding(5)
                                 .frame(width: 140, height: 40)
                                 .background(inputNickname.isEmpty ? saveButtonBackgroundDisabledColor : saveButtonBackgroundEnabledColor)

@@ -1,0 +1,47 @@
+client:
+  name: basic
+  file-system: device-agnostic
+tools: {}
+targets:
+  "FitnessResources-arm64-apple-macosx26.0-debug.module": ["<FitnessResources-arm64-apple-macosx26.0-debug.module>"]
+  "PackageStructure": ["<PackageStructure>"]
+  "main": ["<FitnessResources-arm64-apple-macosx26.0-debug.module>"]
+  "test": ["<FitnessResources-arm64-apple-macosx26.0-debug.module>"]
+default: "main"
+nodes:
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/Sources/FitnessResources/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+commands:
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/.build/arm64-apple-macosx/debug/FitnessResources.build/sources":
+    tool: write-auxiliary-file
+    inputs: ["<sources-file-list>","/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/Sources/FitnessResources/L10n.swift"]
+    outputs: ["/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/.build/arm64-apple-macosx/debug/FitnessResources.build/sources"]
+    description: "Write auxiliary file /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/.build/arm64-apple-macosx/debug/FitnessResources.build/sources"
+
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt":
+    tool: write-auxiliary-file
+    inputs: ["<swift-get-version>","/Library/Developer/CommandLineTools/usr/bin/swiftc"]
+    outputs: ["/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"]
+    always-out-of-date: "true"
+    description: "Write auxiliary file /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
+
+  "<FitnessResources-arm64-apple-macosx26.0-debug.module>":
+    tool: phony
+    inputs: ["/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/.build/arm64-apple-macosx/debug/FitnessResources.build/L10n.swift.o","/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/.build/arm64-apple-macosx/debug/Modules/FitnessResources.swiftmodule"]
+    outputs: ["<FitnessResources-arm64-apple-macosx26.0-debug.module>"]
+
+  "C.FitnessResources-arm64-apple-macosx26.0-debug.module":
+    tool: shell
+    inputs: ["/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/Sources/FitnessResources/L10n.swift","/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt","/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/.build/arm64-apple-macosx/debug/FitnessResources.build/sources"]
+    outputs: ["/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/.build/arm64-apple-macosx/debug/FitnessResources.build/L10n.swift.o","/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/.build/arm64-apple-macosx/debug/Modules/FitnessResources.swiftmodule"]
+    description: "Compiling Swift Module 'FitnessResources' (1 sources)"
+    args: ["/Library/Developer/CommandLineTools/usr/bin/swiftc","-module-name","FitnessResources","-emit-dependencies","-emit-module","-emit-module-path","/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/.build/arm64-apple-macosx/debug/Modules/FitnessResources.swiftmodule","-output-file-map","/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/.build/arm64-apple-macosx/debug/FitnessResources.build/output-file-map.json","-parse-as-library","-incremental","-c","@/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/.build/arm64-apple-macosx/debug/FitnessResources.build/sources","-I","/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/.build/arm64-apple-macosx/debug/Modules","-target","arm64-apple-macosx14.0","-incremental","-enable-batch-mode","-serialize-diagnostics","-index-store-path","/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/.build/arm64-apple-macosx/debug/index/store","-Onone","-enable-testing","-j12","-DSWIFT_PACKAGE","-DDEBUG","-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE","-module-cache-path","/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/.build/arm64-apple-macosx/debug/ModuleCache","-parseable-output","-parse-as-library","-emit-objc-header","-emit-objc-header-path","/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/.build/arm64-apple-macosx/debug/FitnessResources.build/include/FitnessResources-Swift.h","-swift-version","5","-I","/Library/Developer/CommandLineTools/Library/Developer/Frameworks","-L","/Library/Developer/CommandLineTools/Library/Developer/Frameworks","-plugin-path","/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing","-sdk","/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk","-g","-Xcc","-isysroot","-Xcc","/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk","-Xcc","-fPIC","-Xcc","-g","-package-name","fitnessresources"]
+
+  "PackageStructure":
+    tool: package-structure-tool
+    inputs: ["/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/Sources/FitnessResources/","/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/Package.swift","/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/Package.resolved"]
+    outputs: ["<PackageStructure>"]
+    description: "Planning build"
+    allow-missing-inputs: true
+

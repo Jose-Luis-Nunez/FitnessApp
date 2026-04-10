@@ -1,0 +1,19 @@
+{
+  "": {
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/master.swiftdeps"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Tests/FitnessExerciseTests/ExerciseCardViewModelTests.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/ExerciseCardViewModelTests.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/ExerciseCardViewModelTests.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/ExerciseCardViewModelTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/ExerciseCardViewModelTests.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/ExerciseCardViewModelTests.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Tests/FitnessExerciseTests/MuscleCategoryViewModelTests.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/MuscleCategoryViewModelTests.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/MuscleCategoryViewModelTests.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/MuscleCategoryViewModelTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/MuscleCategoryViewModelTests.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/MuscleCategoryViewModelTests.dia"
+  }
+}

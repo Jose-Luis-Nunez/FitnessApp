@@ -143,6 +143,41 @@ extension BaseTest {
                        "Expected '\(identifier)' label to equal '\(expected)', got '\(element.label)'")
     }
 
+    @MainActor
+    func verifyExistsWithPrefix(
+        _ prefix: String,
+        elementType: XCUIElement.ElementType = .any,
+        timeout: TimeInterval = TestDefaults.timeout
+    ) {
+        let predicate = NSPredicate(format: "identifier BEGINSWITH %@", prefix)
+        let element = app
+            .descendants(matching: elementType)
+            .matching(predicate)
+            .firstMatch
+        XCTAssertTrue(
+            element.waitForExistence(timeout: timeout),
+            "Expected element with identifier starting with '\(prefix)' to exist"
+        )
+    }
+
+    @MainActor
+    func verifyNotExistsWithPrefix(
+        _ prefix: String,
+        elementType: XCUIElement.ElementType = .any,
+        timeout: TimeInterval = TestDefaults.shortTimeout
+    ) {
+        let predicate = NSPredicate(format: "identifier BEGINSWITH %@", prefix)
+        let element = app
+            .descendants(matching: elementType)
+            .matching(predicate)
+            .firstMatch
+        let notExists = NSPredicate(format: "exists == NO")
+        let expectation = XCTNSPredicateExpectation(predicate: notExists, object: element)
+        let result = XCTWaiter().wait(for: [expectation], timeout: timeout)
+        XCTAssertEqual(result, .completed,
+                       "Expected no element with identifier starting with '\(prefix)' to exist within \(timeout)s")
+    }
+
     // MARK: - Wait
 
     @MainActor

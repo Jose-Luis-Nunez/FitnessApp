@@ -1,0 +1,83 @@
+{
+  "object" : {
+    "artifacts" : [
+
+    ],
+    "dependencies" : [
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "fitnessanalytics",
+          "kind" : "fileSystem",
+          "location" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics",
+          "name" : "FitnessAnalytics"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics"
+        },
+        "subpath" : "fitnessanalytics"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "fitnesscore",
+          "kind" : "fileSystem",
+          "location" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore",
+          "name" : "FitnessCore"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore"
+        },
+        "subpath" : "fitnesscore"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "fitnessresources",
+          "kind" : "fileSystem",
+          "location" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources",
+          "name" : "FitnessResources"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources"
+        },
+        "subpath" : "fitnessresources"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "fitnessstorage",
+          "kind" : "fileSystem",
+          "location" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage",
+          "name" : "FitnessStorage"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage"
+        },
+        "subpath" : "fitnessstorage"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "fitnessui",
+          "kind" : "fileSystem",
+          "location" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI",
+          "name" : "FitnessUI"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI"
+        },
+        "subpath" : "fitnessui"
+      }
+    ],
+    "prebuilts" : [
+
+    ]
+  },
+  "version" : 7
+}

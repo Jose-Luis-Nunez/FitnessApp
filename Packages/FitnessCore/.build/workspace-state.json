@@ -1,0 +1,27 @@
+{
+  "object" : {
+    "artifacts" : [
+
+    ],
+    "dependencies" : [
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "fitnessresources",
+          "kind" : "fileSystem",
+          "location" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources",
+          "name" : "FitnessResources"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources"
+        },
+        "subpath" : "fitnessresources"
+      }
+    ],
+    "prebuilts" : [
+
+    ]
+  },
+  "version" : 7
+}

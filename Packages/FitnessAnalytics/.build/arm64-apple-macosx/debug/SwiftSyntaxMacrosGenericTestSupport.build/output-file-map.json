@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/SwiftSyntaxMacrosGenericTestSupport.build/master.swiftdeps"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/checkouts/swift-syntax/Sources/SwiftSyntaxMacrosGenericTestSupport/Assertions.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/SwiftSyntaxMacrosGenericTestSupport.build/Assertions.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/SwiftSyntaxMacrosGenericTestSupport.build/Assertions.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/SwiftSyntaxMacrosGenericTestSupport.build/Assertions~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/SwiftSyntaxMacrosGenericTestSupport.build/Assertions.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/SwiftSyntaxMacrosGenericTestSupport.build/Assertions.dia"
+  }
+}

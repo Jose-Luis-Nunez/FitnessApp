@@ -1,14 +1,12 @@
 import SwiftUI
 import UIKit
-
-enum NavigationDestination: Hashable {
-    case home
-    case profile
-    case totalAnalytics
-    case schedule
-    case muscleCategory(MuscleCategoryGroup)
-    case training(Exercise, MuscleCategoryGroup)
-}
+import FitnessCore
+import FitnessStorage
+import FitnessUI
+import FitnessExercise
+import FitnessAnalytics
+import FitnessSchedule
+import FitnessTraining
 
 @main
 struct FitnessAppApp: App {

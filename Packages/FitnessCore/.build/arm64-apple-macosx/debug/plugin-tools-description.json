@@ -1,0 +1,506 @@
+{
+  "builtTestProducts" : [
+
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.FitnessCore-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Library/Developer/CommandLineTools/usr/bin/swiftc",
+      "fileList" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/sources",
+      "importPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/AnalyticsEntry.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/AnalyticsStoring.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/Exercise.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/ExerciseEditMode.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/ExerciseStoring.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/MuscleCategoryGroup.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/SetEditingMode.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/SetProgress.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/WeightPhase.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/Workout.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/Modules/FitnessResources.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "FitnessCore",
+      "moduleOutputPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/Modules/FitnessCore.swiftmodule",
+      "objects" : [
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/AnalyticsEntry.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/AnalyticsStoring.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/Exercise.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/ExerciseEditMode.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/ExerciseStoring.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/MuscleCategoryGroup.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/SetEditingMode.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/SetProgress.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/WeightPhase.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/Workout.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j12",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/include/FitnessCore-Swift.h",
+        "-swift-version",
+        "5",
+        "-I",
+        "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+        "-L",
+        "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+        "-plugin-path",
+        "/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "fitnesscore"
+      ],
+      "outputFileMapPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/AnalyticsEntry.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/AnalyticsStoring.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/Exercise.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/ExerciseEditMode.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/ExerciseStoring.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/MuscleCategoryGroup.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/SetEditingMode.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/SetProgress.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/WeightPhase.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/Workout.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/Modules/FitnessCore.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/AnalyticsEntry.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/AnalyticsStoring.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/Exercise.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/ExerciseEditMode.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/ExerciseStoring.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/MuscleCategoryGroup.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/SetEditingMode.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/SetProgress.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/WeightPhase.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/Workout.swift"
+      ],
+      "tempsPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.FitnessResources-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Library/Developer/CommandLineTools/usr/bin/swiftc",
+      "fileList" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessResources.build/sources",
+      "importPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/Sources/FitnessResources/L10n.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessResources.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "FitnessResources",
+      "moduleOutputPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/Modules/FitnessResources.swiftmodule",
+      "objects" : [
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessResources.build/L10n.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j12",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessResources.build/include/FitnessResources-Swift.h",
+        "-swift-version",
+        "5",
+        "-I",
+        "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+        "-L",
+        "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+        "-plugin-path",
+        "/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "fitnessresources"
+      ],
+      "outputFileMapPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessResources.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessResources.build/L10n.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/Modules/FitnessResources.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/Sources/FitnessResources/L10n.swift"
+      ],
+      "tempsPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessResources.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "FitnessCore" : [
+      "/Library/Developer/CommandLineTools/usr/bin/swiftc",
+      "-module-name",
+      "FitnessCore",
+      "-package-name",
+      "fitnesscore",
+      "-c",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/AnalyticsEntry.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/AnalyticsStoring.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/Exercise.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/ExerciseEditMode.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/ExerciseStoring.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/MuscleCategoryGroup.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/SetEditingMode.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/SetProgress.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/WeightPhase.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/Workout.swift",
+      "-I",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j12",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/include/FitnessCore-Swift.h",
+      "-swift-version",
+      "5",
+      "-I",
+      "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+      "-L",
+      "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+      "-plugin-path",
+      "/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "fitnesscore",
+      "-driver-use-frontend-path",
+      "/Library/Developer/CommandLineTools/usr/bin/swiftc"
+    ],
+    "FitnessResources" : [
+      "/Library/Developer/CommandLineTools/usr/bin/swiftc",
+      "-module-name",
+      "FitnessResources",
+      "-package-name",
+      "fitnessresources",
+      "-c",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/Sources/FitnessResources/L10n.swift",
+      "-I",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j12",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessResources.build/include/FitnessResources-Swift.h",
+      "-swift-version",
+      "5",
+      "-I",
+      "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+      "-L",
+      "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+      "-plugin-path",
+      "/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "fitnessresources",
+      "-driver-use-frontend-path",
+      "/Library/Developer/CommandLineTools/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "FitnessCore" : [
+      "FitnessResources"
+    ],
+    "FitnessResources" : [
+
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/AnalyticsEntry.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/AnalyticsStoring.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/Exercise.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/ExerciseEditMode.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/ExerciseStoring.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/MuscleCategoryGroup.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/SetEditingMode.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/SetProgress.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/WeightPhase.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/Workout.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/sources"
+    },
+    "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessResources.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessResources/Sources/FitnessResources/L10n.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessResources.build/sources"
+    },
+    "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Library/Developer/CommandLineTools/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
+    }
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "": {
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/master.swiftdeps"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/AddAnalyticsEntryView.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AddAnalyticsEntryView.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AddAnalyticsEntryView.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AddAnalyticsEntryView~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AddAnalyticsEntryView.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AddAnalyticsEntryView.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/AnalyticsDetailSection.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsDetailSection.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsDetailSection.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsDetailSection~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsDetailSection.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsDetailSection.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/AnalyticsTileViews.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsTileViews.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsTileViews.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsTileViews~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsTileViews.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsTileViews.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/AnalyticsView.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsView.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsView.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsView~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsView.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsView.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/AnalyticsViewModel.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsViewModel.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsViewModel.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsViewModel~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsViewModel.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsViewModel.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/CalendarDialogView.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/CalendarDialogView.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/CalendarDialogView.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/CalendarDialogView~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/CalendarDialogView.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/CalendarDialogView.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/CalendarGridView.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/CalendarGridView.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/CalendarGridView.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/CalendarGridView~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/CalendarGridView.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/CalendarGridView.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/CustomNumberPadView.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/CustomNumberPadView.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/CustomNumberPadView.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/CustomNumberPadView~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/CustomNumberPadView.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/CustomNumberPadView.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/ProgressChartCalculator.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/ProgressChartCalculator.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/ProgressChartCalculator.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/ProgressChartCalculator~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/ProgressChartCalculator.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/ProgressChartCalculator.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/TotalAnalyticsView.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/TotalAnalyticsView.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/TotalAnalyticsView.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/TotalAnalyticsView~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/TotalAnalyticsView.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/TotalAnalyticsView.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/TotalAnalyticsViewModel.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/TotalAnalyticsViewModel.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/TotalAnalyticsViewModel.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/TotalAnalyticsViewModel~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/TotalAnalyticsViewModel.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/TotalAnalyticsViewModel.dia"
+  }
+}

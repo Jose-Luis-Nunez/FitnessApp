@@ -1,3 +1,5 @@
+import Foundation
+
 enum TrainingIDs {
     static let doneButton = "id_button_done"
     static let finishButton = "id_button_finish"
@@ -19,4 +21,13 @@ enum MuscleCategoryIDs {
 
 enum ExerciseIDs {
     static let nameLabel = "id_label_exercise_name"
+}
+
+enum ExerciseCardIDs {
+    static func completedCard(_ id: UUID) -> String { "id_card_completed_\(id.uuidString)" }
+    static func activeCard(_ id: UUID) -> String { "id_card_active_\(id.uuidString)" }
+    static func idleCard(_ id: UUID) -> String { "id_card_idle_\(id.uuidString)" }
+    static let completedCardPrefix = "id_card_completed_"
+    static let activeCardPrefix = "id_card_active_"
+    static let idleCardPrefix = "id_card_idle_"
 }

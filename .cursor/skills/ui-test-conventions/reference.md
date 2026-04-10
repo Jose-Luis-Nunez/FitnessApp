@@ -49,6 +49,7 @@ The test target maintains its own copy of the ID strings in `Config/TestAccessib
 | `HomeIDs` | `MuscleCategorySelectionView.AID` | `categoryTile(for:)` |
 | `MuscleCategoryIDs` | `IdleActiveCardView.AID` | `startExercise` |
 | `ExerciseIDs` | `InactiveCardView.AID` | `nameLabel` |
+| `ExerciseCardIDs` | `ExerciseCardContainerView` | `completedCard(_:)`, `activeCard(_:)`, `idleCard(_:)`, `completedCardPrefix`, `activeCardPrefix`, `idleCardPrefix` |
 
 ## Test Fixtures
 
@@ -75,6 +76,8 @@ try launch(training: heavy)
 | Type into a picker input button | `fillPickerInput(_:with:)` |
 | Assert element is visible | `verifyExists(_:)` |
 | Assert element is gone | `verifyNotExists(_:)` |
+| Assert element exists by ID prefix | `verifyExistsWithPrefix(_:)` |
+| Assert no element with ID prefix | `verifyNotExistsWithPrefix(_:)` |
 | Assert element label content | `verifyLabel(_:equals:)` |
 | Wait for label to be populated | `waitForNonEmptyLabel(_:)` |
 | Scroll until element is visible | `swipeUpUntilVisible(_:)` |

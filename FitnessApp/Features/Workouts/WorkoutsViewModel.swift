@@ -1,12 +1,13 @@
 import Foundation
 import SwiftUI
+import FitnessCore
+import FitnessStorage
 
 class WorkoutsViewModel: ObservableObject {
     @Published var workouts: [Workout] = []
     @Published var currentWorkout: Workout?
     @Published var defaultWorkout: Workout?
     @Published var showingFABOptions = false
-    @Published var showingCreateWorkout = false
     @Published var showingCreateWorkoutFullScreen = false
     @Published var showingRenameWorkout = false
     @Published var showingDeleteConfirmation = false
@@ -15,9 +16,10 @@ class WorkoutsViewModel: ObservableObject {
     @Published var renameWorkoutName = ""
     @Published var selectedMuscleGroups: Set<MuscleCategoryGroup> = []
     
-    private let storageService = WorkoutStorageService.shared
+    private let storageService: WorkoutStorageService
     
-    init() {
+    init(storageService: WorkoutStorageService = .shared) {
+        self.storageService = storageService
         setupBindings()
     }
     
@@ -125,12 +127,6 @@ class WorkoutsViewModel: ObservableObject {
     }
     
     // MARK: - Computed Properties
-    
-    var isCurrentWorkout: (Workout) -> Bool {
-        return { workout in
-            self.currentWorkout?.id == workout.id
-        }
-    }
     
     var canDeleteWorkout: Bool {
         return workouts.count > 1

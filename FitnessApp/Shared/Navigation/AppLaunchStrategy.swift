@@ -1,4 +1,7 @@
 import Foundation
+import FitnessCore
+import FitnessStorage
+import FitnessExercise
 
 protocol AppLaunchStrategy {
     func prepare(workoutService: WorkoutStorageService)

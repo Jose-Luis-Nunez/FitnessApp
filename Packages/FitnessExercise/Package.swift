@@ -1,0 +1,36 @@
+// swift-tools-version: 5.10
+
+import PackageDescription
+
+let package = Package(
+    name: "FitnessExercise",
+    platforms: [.iOS(.v17), .macOS(.v14)],
+    products: [
+        .library(name: "FitnessExercise", targets: ["FitnessExercise"]),
+    ],
+    dependencies: [
+        .package(path: "../FitnessCore"),
+        .package(path: "../FitnessStorage"),
+        .package(path: "../FitnessAnalytics"),
+        .package(path: "../FitnessTraining"),
+        .package(path: "../FitnessUI"),
+        .package(path: "../FitnessResources"),
+        .package(url: "https://github.com/swiftlang/swift-testing.git", from: "6.0.0"),
+    ],
+    targets: [
+        .target(
+            name: "FitnessExercise",
+            dependencies: ["FitnessCore", "FitnessStorage", "FitnessAnalytics", "FitnessTraining", "FitnessUI", "FitnessResources"]
+        ),
+        .testTarget(
+            name: "FitnessExerciseTests",
+            dependencies: [
+                "FitnessExercise",
+                "FitnessCore",
+                "FitnessStorage",
+                "FitnessTraining",
+                .product(name: "Testing", package: "swift-testing"),
+            ]
+        ),
+    ]
+)

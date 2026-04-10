@@ -1,4 +1,10 @@
 import SwiftUI
+import FitnessCore
+import FitnessStorage
+import FitnessUI
+import FitnessExercise
+import FitnessAnalytics
+import FitnessTraining
 
 struct TrainingView: View {
     let exercise: Exercise
@@ -9,6 +15,7 @@ struct TrainingView: View {
     @StateObject private var analyticsViewModel: AnalyticsViewModel
     @EnvironmentObject private var overlayState: UIOverlayState
     
+    @StateObject private var cardViewModel: ExerciseCardViewModel
     @State private var hasFinishedTraining = false
     @State private var isInitialLoad = true
     @State private var isManuallyNavigatingBack = false
@@ -17,39 +24,26 @@ struct TrainingView: View {
         self.exercise = exercise
         self.category = category
         
-        // Get or create the appropriate ActiveSetViewModel for this category from SessionTrainingCache
-        let categoryActiveSetVM: ActiveSetViewModel
-        if let existing = SessionTrainingCache.shared.activeSetVMs[category] {
-            categoryActiveSetVM = existing
-        } else {
-            let newVM = ActiveSetViewModel()
-            SessionTrainingCache.shared.activeSetVMs[category] = newVM
-            categoryActiveSetVM = newVM
-        }
+        let categoryActiveSetVM = SessionTrainingCache.shared.viewModel(for: category)
+        let sharedAnalyticsVM = AnalyticsViewModel()
+        let managementService = ExerciseManagementService()
         
-        // Create TrainingCoordinator with the cached ActiveSetViewModel
         _trainingCoordinator = StateObject(wrappedValue: TrainingCoordinator(
             findCategory: { _ in category },
             onExerciseUpdate: { updatedExercise, _ in
-                // Update exercise using ExerciseManagementService
-                let managementService = ExerciseManagementService()
                 managementService.updateExercise(updatedExercise, category: category)
             },
             onExerciseReset: { exerciseToReset, _ in
-                // Reset exercise using ExerciseManagementService
-                let managementService = ExerciseManagementService()
                 managementService.resetExercise(exerciseToReset, category: category)
             },
-            onAddExercise: {
-                // Not needed in dedicated training view
-            },
-            onResetAllExercises: {
-                // Not needed in dedicated training view
-            },
-            activeSetViewModel: categoryActiveSetVM
+            activeSetViewModel: categoryActiveSetVM,
+            analyticsViewModel: sharedAnalyticsVM
         ))
         
-        _analyticsViewModel = StateObject(wrappedValue: AnalyticsViewModel())
+        _analyticsViewModel = StateObject(wrappedValue: sharedAnalyticsVM)
+        _cardViewModel = StateObject(wrappedValue: ExerciseCardViewModel(exercise: exercise) { updatedExercise in
+            managementService.updateExercise(updatedExercise, category: category)
+        })
     }
     
     @Environment(\.safeAreaInsets) private var safeAreaInsets
@@ -76,11 +70,7 @@ struct TrainingView: View {
                         LazyVStack(spacing: 16) {
                             // Active Exercise Card
                             ExerciseCardContainerView(
-                                viewModel: ExerciseCardViewModel(exercise: exercise) { updatedExercise in
-                                    // Update exercise using ExerciseManagementService
-                                    let managementService = ExerciseManagementService()
-                                    managementService.updateExercise(updatedExercise, category: category)
-                                },
+                                viewModel: cardViewModel,
                                 onEdit: { exerciseToEdit, _ in
                                 },
                                 isEditable: !trainingCoordinator.activeSetViewModel.isSetInProgress,
@@ -159,23 +149,20 @@ struct TrainingView: View {
         .navigationBarBackButtonHidden(true)
         .navigationBarHidden(true)
         .onAppear {
-            // Start training automatically when view appears
-            // Always use .categoryView as start source since we're in dedicated TrainingView
             trainingCoordinator.startTraining(for: exercise)
             
-            // Mark that initial load is complete
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(500))
                 isInitialLoad = false
             }
         }
         .onReceive(trainingCoordinator.$isTrainingActive) { isActive in
-            // Handle training completion
             if !isActive && !hasFinishedTraining && !isInitialLoad && !isManuallyNavigatingBack && !overlayState.isCancellingTraining {
                 hasFinishedTraining = true
                 overlayState.showTrainingMiniMenu = false
                 
-                // Normal navigation back (cancel is handled separately)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(100))
                     router.pop()
                 }
             } else if !isActive && overlayState.isCancellingTraining {
@@ -195,11 +182,11 @@ struct TrainingView: View {
         overlayState.showTrainingMiniMenu = false
         router.replaceAll(with: [.home, .muscleCategory(targetCategory)])
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            trainingCoordinator.activeSetViewModel.cancelActiveSet()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                overlayState.isCancellingTraining = false
-            }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(100))
+            trainingCoordinator.cancelTraining()
+            try? await Task.sleep(for: .milliseconds(200))
+            overlayState.isCancellingTraining = false
         }
     }
     

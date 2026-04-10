@@ -1,4 +1,6 @@
 import SwiftUI
+import FitnessCore
+import FitnessUI
 
 struct RenameWorkoutView: View {
     @Binding var workoutName: String
@@ -33,7 +35,7 @@ struct RenameWorkoutView: View {
                             Button(action: { workoutName = "" }) {
                                 Image(systemName: "xmark.circle.fill")
                                     .foregroundColor(AppStyle.Color.gray)
-                                    .font(.system(size: 16))
+                                    .font(AppStyle.Font.tileValue)
                             }
                             .buttonStyle(PlainButtonStyle())
                         }

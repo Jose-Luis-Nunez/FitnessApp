@@ -56,6 +56,16 @@ Compare new code against existing shared components:
 - Remove commented-out code
 - Remove `print()` / debug statements
 
+### 5. State Propagation (after ViewModel/Coordinator refactoring)
+
+When `@Published` properties are restructured (moved, renamed, wrapped in structs, or turned into computed bridged properties):
+
+- **Combine subscribers:** Grep for all `$propertyName` usages. If the property is now computed (bridging to a nested `@Published` struct), the `$` prefix won't compile. Subscribers must observe the underlying `@Published` struct (e.g. `$tracking.map(\.currentExercise)` instead of `$currentExercise`).
+- **Cached ViewModel sync:** When ViewModel instances are cached (e.g. `cardViewModels[id]`), verify that parent-to-child state updates use a dedicated sync method (like `syncExercise(_:)`) that does **not** trigger `onUpdate` callbacks back to the parent. Direct assignment (`existing.exercise = updated`) causes re-entrant update loops.
+- **Equatable traps:** If a model type (e.g. `Exercise`) has a custom `Equatable` that only compares `id`, guards like `guard exercise != oldValue` will miss content changes (e.g. `isCompleted` flipping). Verify that sync guards use content-level comparison (`isContentEqual(to:)`) rather than `==`.
+- **objectWillChange suppression:** Verify that `didSet` guards on `@Published` properties don't suppress `objectWillChange` for legitimate state changes. A `guard exercise != oldValue` with id-only `Equatable` will silently swallow updates where only a non-id field changed.
+- **Conditional View rendering:** When a SwiftUI View switches between sub-views based on a ViewModel property (e.g. `if viewModel.exercise.isCompleted { InactiveCardView } else { IdleActiveCardView }`), trace the full chain: mutation → `@Published` fires → `objectWillChange` → View body re-evaluates → condition switches. Any broken link in this chain means the UI won't update.
+
 ## Report Format
 
 ```
@@ -73,6 +83,9 @@ Compare new code against existing shared components:
 - findings or "None"
 
 ### Cleanup
+- findings or "None"
+
+### State Propagation
 - findings or "None"
 
 **Summary:** N total findings.

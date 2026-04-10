@@ -1,5 +1,8 @@
 #if UITESTING
 import UIKit
+import FitnessCore
+import FitnessStorage
+import FitnessExercise
 
 struct UITestLaunchStrategy: AppLaunchStrategy {
     let config: UITestLaunchConfig
