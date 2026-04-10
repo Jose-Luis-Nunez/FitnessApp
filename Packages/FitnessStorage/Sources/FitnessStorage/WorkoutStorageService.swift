@@ -1,12 +1,14 @@
 import Foundation
+import Observation
 import FitnessCore
+import Factory
 
-public class WorkoutStorageService: ObservableObject {
-    public static let shared = WorkoutStorageService()
-
-    @Published public var workouts: [Workout] = []
-    @Published public var currentWorkout: Workout?
-    @Published public var defaultWorkout: Workout?
+@Observable
+@MainActor
+public final class WorkoutStorageService {
+    public var workouts: [Workout] = []
+    public var currentWorkout: Workout?
+    public var defaultWorkout: Workout?
 
     private let userDefaults = UserDefaults.standard
     private let workoutsKey = "stored_workouts"
@@ -41,11 +43,11 @@ public class WorkoutStorageService: ObservableObject {
         workouts.append(duplicatedWorkout)
         saveWorkouts()
 
-        let exerciseService = ExerciseStorageService()
+        let exercises = Container.shared.exerciseStorage()
         for category in workout.selectedCategories {
-            let exercises = exerciseService.loadForWorkout(workoutId: workout.id, category: category)
-            if !exercises.isEmpty {
-                exerciseService.saveForWorkout(exercises, workoutId: duplicatedWorkout.id, category: category)
+            let loaded = exercises.loadForWorkout(workoutId: workout.id, category: category)
+            if !loaded.isEmpty {
+                exercises.saveForWorkout(loaded, workoutId: duplicatedWorkout.id, category: category)
             }
         }
 

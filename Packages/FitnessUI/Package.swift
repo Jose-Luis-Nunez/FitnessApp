@@ -12,11 +12,12 @@ let package = Package(
         .package(path: "../FitnessCore"),
         .package(path: "../FitnessResources"),
         .package(path: "../FitnessStorage"),
+        .package(url: "https://github.com/hmlongco/Factory.git", from: "2.5.0"),
     ],
     targets: [
         .target(
             name: "FitnessUI",
-            dependencies: ["FitnessCore", "FitnessResources", "FitnessStorage"]
+            dependencies: ["FitnessCore", "FitnessResources", "FitnessStorage", .product(name: "Factory", package: "Factory")]
         ),
         .testTarget(
             name: "FitnessUITests",

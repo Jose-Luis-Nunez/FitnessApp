@@ -1,7 +1,9 @@
 import Foundation
+import Observation
 import FitnessAnalytics
 import FitnessCore
 import FitnessStorage
+import Factory
 
 public struct WeekDay: Identifiable {
     public let id: Int
@@ -23,15 +25,15 @@ public struct StreakData {
     public let rhythmLabel: String
 }
 
-public class ScheduleViewModel: ObservableObject {
-    @Published public var trainingDaySet: Set<Date> = []
-    @Published public var datesWithData: Set<Date> = []
+@Observable
+@MainActor
+public final class ScheduleViewModel {
+    public var trainingDaySet: Set<Date> = []
+    public var datesWithData: Set<Date> = []
 
-    private let totalAnalyticsVM: TotalAnalyticsViewModel
+    private let totalAnalyticsVM = TotalAnalyticsViewModel()
 
-    public init(totalAnalyticsVM: TotalAnalyticsViewModel = TotalAnalyticsViewModel()) {
-        self.totalAnalyticsVM = totalAnalyticsVM
-        reloadData()
+    nonisolated public init() {
     }
 
     public func reloadData() {

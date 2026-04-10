@@ -7,24 +7,25 @@ import FitnessCore
 import FitnessResources
 import FitnessTraining
 import FitnessUI
+import Factory
 
 public struct MuscleCategoryView: View {
     public let group: MuscleCategoryGroup
-    @StateObject private var viewModel: MuscleCategoryViewModel
-    @StateObject private var formViewModel: ExerciseFormViewModel
-    @StateObject private var trainingCoordinator: TrainingCoordinator
-    @StateObject private var analyticsViewModel: AnalyticsViewModel
-    @EnvironmentObject private var router: AppRouter
+    @State private var viewModel: MuscleCategoryViewModel
+    @State private var formViewModel: ExerciseFormViewModel
+    @State private var trainingCoordinator: TrainingCoordinator
+    @State private var analyticsViewModel: AnalyticsViewModel
+    @Environment(AppRouter.self) private var router
 
     public init(group: MuscleCategoryGroup) {
         self.group = group
         let muscleCategoryViewModel = MuscleCategoryViewModel(group: group)
         let sharedAnalyticsVM = AnalyticsViewModel()
-        _viewModel = StateObject(wrappedValue: muscleCategoryViewModel)
-        _formViewModel = StateObject(wrappedValue: muscleCategoryViewModel.formViewModel)
-        _analyticsViewModel = StateObject(wrappedValue: sharedAnalyticsVM)
+        self._viewModel = State(wrappedValue: muscleCategoryViewModel)
+        self._formViewModel = State(wrappedValue: muscleCategoryViewModel.formViewModel)
+        self._analyticsViewModel = State(wrappedValue: sharedAnalyticsVM)
 
-        _trainingCoordinator = StateObject(wrappedValue: TrainingCoordinator(
+        self._trainingCoordinator = State(wrappedValue: TrainingCoordinator(
             findCategory: { _ in group },
             onExerciseUpdate: { exercise, _ in
                 muscleCategoryViewModel.updateExercise(exercise)
@@ -55,7 +56,7 @@ public struct MuscleCategoryView: View {
     @Environment(\.safeAreaInsets) private var safeAreaInsets
     private var safeAreaBottomInset: CGFloat { safeAreaInsets.bottom }
 
-    @EnvironmentObject private var overlayState: UIOverlayState
+    @Environment(UIOverlayState.self) private var overlayState
 
     public var body: some View {
         ZStack(alignment: .bottom) {

@@ -2,6 +2,7 @@ import Testing
 import Foundation
 @testable import FitnessAnalytics
 import FitnessCore
+import Factory
 
 // MARK: - Mock Storage
 

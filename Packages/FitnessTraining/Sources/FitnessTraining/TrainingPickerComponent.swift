@@ -5,13 +5,13 @@ import FitnessUI
 // MARK: - Training Picker Component
 
 public struct TrainingPickerComponent: View {
-    @ObservedObject public var coordinator: TrainingCoordinator
-    @EnvironmentObject private var overlayState: UIOverlayState
+    @Bindable public var coordinator: TrainingCoordinator
+    @Environment(UIOverlayState.self) private var overlayState
 
     @State private var isProcessingSaveCancel = false
 
     public init(coordinator: TrainingCoordinator) {
-        _coordinator = ObservedObject(wrappedValue: coordinator)
+        self.coordinator = coordinator
     }
 
     public var body: some View {
@@ -49,19 +49,12 @@ public struct TrainingPickerComponent: View {
                         coordinator.activeSetViewModel.isEditing = false
                         coordinator.activeSetViewModel.pendingEditIndex = nil
 
-                        coordinator.activeSetViewModel.objectWillChange.send()
-
                         if !coordinator.activeSetViewModel.isLastSetCompleted {
                             coordinator.activeSetViewModel.startNextSet()
                         }
 
-                        coordinator.objectWillChange.send()
-
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            coordinator.objectWillChange.send()
-                        }
-
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        Task {
+                            try? await Task.sleep(for: .milliseconds(500))
                             isProcessingSaveCancel = false
                         }
                     },
@@ -74,9 +67,8 @@ public struct TrainingPickerComponent: View {
                         coordinator.activeSetViewModel.isEditing = false
                         coordinator.activeSetViewModel.pendingEditIndex = nil
 
-                        coordinator.objectWillChange.send()
-
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        Task {
+                            try? await Task.sleep(for: .milliseconds(500))
                             isProcessingSaveCancel = false
                         }
                     },

@@ -7,6 +7,7 @@ import FitnessExercise
 import FitnessAnalytics
 import FitnessSchedule
 import FitnessTraining
+import Factory
 
 @main
 struct FitnessAppApp: App {
@@ -32,16 +33,17 @@ struct FitnessAppApp: App {
         #endif
     }
 
-    @StateObject private var router = AppRouter()
-    @StateObject private var overlayState = UIOverlayState()
-    @StateObject private var workoutStorageService = WorkoutStorageService.shared
+    @State private var router = AppRouter()
+    @State private var overlayState = UIOverlayState()
+    @State private var workoutStorageService = Container.shared.workoutStorage()
     @State private var didLaunch: Bool = false
 
     var body: some Scene {
         WindowGroup {
             GeometryReader { geo in
             ZStack(alignment: .bottom) {
-                NavigationStack(path: $router.path) {
+                @Bindable var routerBindable = router
+                NavigationStack(path: $routerBindable.path) {
                     WorkoutsScreen()
                         .onAppear {
                             guard !didLaunch, router.isEmpty else { return }
@@ -114,8 +116,8 @@ struct FitnessAppApp: App {
                 .allowsHitTesting(!(overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu))
             }
             .environment(\.safeAreaInsets, geo.safeAreaInsets)
-            .environmentObject(overlayState)
-            .environmentObject(router)
+            .environment(overlayState)
+            .environment(router)
             }
         }
     }

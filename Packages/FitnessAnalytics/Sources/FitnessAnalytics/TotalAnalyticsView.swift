@@ -2,6 +2,7 @@ import FitnessCore
 import FitnessStorage
 import FitnessUI
 import SwiftUI
+import Factory
 
 // MARK: - Analytics Tile Data Model
 
@@ -25,7 +26,7 @@ public struct AnalyticsTileData: Identifiable {
 }
 
 public struct TotalAnalyticsView: View {
-    @ObservedObject public var viewModel: TotalAnalyticsViewModel
+    public var viewModel: TotalAnalyticsViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var selectedDate: Date = Date()
     @State private var showCalendarDialog: Bool = false
@@ -37,6 +38,8 @@ public struct TotalAnalyticsView: View {
     public init(viewModel: TotalAnalyticsViewModel = TotalAnalyticsViewModel()) {
         self.viewModel = viewModel
     }
+
+    @Injected(\.workoutStorage) private var workoutStorageService
 
     public var body: some View {
         GeometryReader { geometry in
@@ -95,7 +98,7 @@ public struct TotalAnalyticsView: View {
                         .foregroundColor(AppStyle.Color.white)
                         .fixedSize()
 
-                    if let currentWorkout = WorkoutStorageService.shared.currentWorkout {
+                    if let currentWorkout = workoutStorageService.currentWorkout {
                         Text("Workout: \(currentWorkout.name)")
                             .font(AppStyle.Font.detailCaption)
                             .foregroundColor(AppStyle.Color.greenGlow.opacity(0.8))

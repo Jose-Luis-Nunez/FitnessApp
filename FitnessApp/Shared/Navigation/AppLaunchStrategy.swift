@@ -3,6 +3,7 @@ import FitnessCore
 import FitnessStorage
 import FitnessExercise
 
+@MainActor
 protocol AppLaunchStrategy {
     func prepare(workoutService: WorkoutStorageService)
     func initialNavigationStack(workoutService: WorkoutStorageService) -> [NavigationDestination]

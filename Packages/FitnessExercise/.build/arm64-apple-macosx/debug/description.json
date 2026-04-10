@@ -7,7 +7,34 @@
     }
   ],
   "copyCommands" : {
-
+    "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory_Factory.bundle/PrivacyInfo.xcprivacy" : {
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/PrivacyInfo.xcprivacy"
+        }
+      ],
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory_Factory.bundle/PrivacyInfo.xcprivacy"
+        }
+      ]
+    },
+    "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory_FactoryKit.bundle/PrivacyInfo.xcprivacy" : {
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/PrivacyInfo.xcprivacy"
+        }
+      ],
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory_FactoryKit.bundle/PrivacyInfo.xcprivacy"
+        }
+      ]
+    }
   },
   "explicitTargetDependencyImportCheckingMode" : {
     "none" : {
@@ -21,6 +48,532 @@
 
   ],
   "swiftCommands" : {
+    "C.Factory-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Library/Developer/CommandLineTools/usr/bin/swiftc",
+      "fileList" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/sources",
+      "importPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Aliases.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Containers.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Contexts.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Factory.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Globals.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Injections.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Key.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Locking.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Modifiers.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Registrations.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Resolutions.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Resolver.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Scopes.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/DerivedSources/resource_bundle_accessor.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
+        },
+        {
+          "kind" : "virtual",
+          "name" : "<Factory-arm64-apple-macosx26.0-debug.module-resources>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "Factory",
+      "moduleOutputPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules/Factory.swiftmodule",
+      "objects" : [
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Aliases.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Containers.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Contexts.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Factory.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Globals.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Injections.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Key.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Locking.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Modifiers.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Registrations.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Resolutions.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Resolver.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Scopes.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/resource_bundle_accessor.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx10.15",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j12",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_AVAILABLE",
+        "-module-cache-path",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/include/Factory-Swift.h",
+        "-swift-version",
+        "6",
+        "-enable-experimental-feature",
+        "StrictConcurrency",
+        "-I",
+        "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+        "-L",
+        "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+        "-plugin-path",
+        "/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-suppress-warnings",
+        "-package-name",
+        "factory"
+      ],
+      "outputFileMapPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Aliases.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Containers.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Contexts.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Factory.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Globals.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Injections.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Key.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Locking.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Modifiers.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Registrations.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Resolutions.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Resolver.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Scopes.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/resource_bundle_accessor.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules/Factory.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Aliases.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Containers.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Contexts.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Factory.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Globals.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Injections.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Key.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Locking.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Modifiers.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Registrations.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Resolutions.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Resolver.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Scopes.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/DerivedSources/resource_bundle_accessor.swift"
+      ],
+      "tempsPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.FactoryKit-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Library/Developer/CommandLineTools/usr/bin/swiftc",
+      "fileList" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/sources",
+      "importPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Containers.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Contexts.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Factory.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Globals.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Injections.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Key.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Locking.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Modifiers.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Registrations.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Resolutions.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Resolver.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Scopes.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/DerivedSources/resource_bundle_accessor.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
+        },
+        {
+          "kind" : "virtual",
+          "name" : "<FactoryKit-arm64-apple-macosx26.0-debug.module-resources>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "FactoryKit",
+      "moduleOutputPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules/FactoryKit.swiftmodule",
+      "objects" : [
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Containers.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Contexts.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Factory.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Globals.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Injections.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Key.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Locking.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Modifiers.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Registrations.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Resolutions.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Resolver.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Scopes.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/resource_bundle_accessor.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx10.15",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j12",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_AVAILABLE",
+        "-module-cache-path",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/include/FactoryKit-Swift.h",
+        "-swift-version",
+        "6",
+        "-enable-experimental-feature",
+        "StrictConcurrency",
+        "-I",
+        "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+        "-L",
+        "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+        "-plugin-path",
+        "/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-suppress-warnings",
+        "-package-name",
+        "factory"
+      ],
+      "outputFileMapPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Containers.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Contexts.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Factory.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Globals.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Injections.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Key.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Locking.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Modifiers.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Registrations.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Resolutions.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Resolver.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/Scopes.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/resource_bundle_accessor.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules/FactoryKit.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Containers.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Contexts.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Factory.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Globals.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Injections.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Key.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Locking.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Modifiers.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Registrations.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Resolutions.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Resolver.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Scopes.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/DerivedSources/resource_bundle_accessor.swift"
+      ],
+      "tempsPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.FactoryTesting-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Library/Developer/CommandLineTools/usr/bin/swiftc",
+      "fileList" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryTesting.build/sources",
+      "importPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryTesting/ContainerTrait.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules/FactoryKit.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryTesting.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "FactoryTesting",
+      "moduleOutputPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules/FactoryTesting.swiftmodule",
+      "objects" : [
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryTesting.build/ContainerTrait.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx10.15",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j12",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryTesting.build/include/FactoryTesting-Swift.h",
+        "-swift-version",
+        "6",
+        "-enable-experimental-feature",
+        "StrictConcurrency",
+        "-I",
+        "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+        "-L",
+        "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+        "-plugin-path",
+        "/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-suppress-warnings",
+        "-package-name",
+        "factory"
+      ],
+      "outputFileMapPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryTesting.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryTesting.build/ContainerTrait.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules/FactoryTesting.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryTesting/ContainerTrait.swift"
+      ],
+      "tempsPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryTesting.build",
+      "wholeModuleOptimization" : false
+    },
     "C.FitnessAnalytics-arm64-apple-macosx26.0-debug.module" : {
       "executable" : "/Library/Developer/CommandLineTools/usr/bin/swiftc",
       "fileList" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/sources",
@@ -85,6 +638,10 @@
         {
           "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules/FitnessUI.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules/Factory.swiftmodule"
         },
         {
           "kind" : "file",
@@ -532,6 +1089,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules/Factory.swiftmodule"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExercise.build/sources"
         }
       ],
@@ -856,6 +1417,10 @@
       "inputs" : [
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Tests/FitnessExerciseTests/EnvironmentObjectContractTests.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Tests/FitnessExerciseTests/ExerciseCardViewModelTests.swift"
         },
         {
@@ -887,6 +1452,10 @@
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules/Testing.swiftmodule"
         },
         {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules/Factory.swiftmodule"
+        },
+        {
           "kind" : "virtual",
           "name" : "<TestingMacros-arm64-apple-macosx26.0-debug-tool.exe>"
         },
@@ -899,6 +1468,7 @@
       "moduleName" : "FitnessExerciseTests",
       "moduleOutputPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules/FitnessExerciseTests.swiftmodule",
       "objects" : [
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/EnvironmentObjectContractTests.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/ExerciseCardViewModelTests.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/MuscleCategoryViewModelTests.swift.o"
       ],
@@ -958,6 +1528,10 @@
       "outputs" : [
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/EnvironmentObjectContractTests.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/ExerciseCardViewModelTests.swift.o"
         },
         {
@@ -971,6 +1545,7 @@
       ],
       "prepareForIndexing" : false,
       "sources" : [
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Tests/FitnessExerciseTests/EnvironmentObjectContractTests.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Tests/FitnessExerciseTests/ExerciseCardViewModelTests.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Tests/FitnessExerciseTests/MuscleCategoryViewModelTests.swift"
       ],
@@ -1081,6 +1656,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/StorageContainer.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/TotalAnalyticsStorageService.swift"
         },
         {
@@ -1097,6 +1676,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules/Factory.swiftmodule"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessStorage.build/sources"
         }
       ],
@@ -1107,6 +1690,7 @@
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessStorage.build/AnalyticsStorageService.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseManagementService.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseStorageService.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessStorage.build/StorageContainer.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessStorage.build/TotalAnalyticsStorageService.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessStorage.build/WorkoutStorageService.swift.o"
       ],
@@ -1169,6 +1753,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessStorage.build/StorageContainer.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessStorage.build/TotalAnalyticsStorageService.swift.o"
         },
         {
@@ -1185,6 +1773,7 @@
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/AnalyticsStorageService.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseManagementService.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseStorageService.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/StorageContainer.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/TotalAnalyticsStorageService.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/WorkoutStorageService.swift"
       ],
@@ -1219,6 +1808,10 @@
         {
           "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TimerService.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingContainer.swift"
         },
         {
           "kind" : "file",
@@ -1258,6 +1851,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules/Factory.swiftmodule"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessTraining.build/sources"
         }
       ],
@@ -1271,6 +1868,7 @@
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessTraining.build/SessionTrainingCache.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessTraining.build/SimpleActiveSetView.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessTraining.build/TimerService.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessTraining.build/TrainingContainer.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessTraining.build/TrainingCoordinator.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessTraining.build/TrainingGlassEffectCompat.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessTraining.build/TrainingPickerComponent.swift.o",
@@ -1347,6 +1945,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessTraining.build/TrainingContainer.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessTraining.build/TrainingCoordinator.swift.o"
         },
         {
@@ -1374,6 +1976,7 @@
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/SessionTrainingCache.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/SimpleActiveSetView.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TimerService.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingContainer.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingCoordinator.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingGlassEffectCompat.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingPickerComponent.swift",
@@ -1482,6 +2085,10 @@
         {
           "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules/FitnessStorage.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules/Factory.swiftmodule"
         },
         {
           "kind" : "file",
@@ -13712,6 +14319,202 @@
 
   },
   "swiftTargetScanArgs" : {
+    "Factory" : [
+      "/Library/Developer/CommandLineTools/usr/bin/swiftc",
+      "-module-name",
+      "Factory",
+      "-package-name",
+      "factory",
+      "-c",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Aliases.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Containers.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Contexts.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Factory.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Globals.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Injections.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Key.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Locking.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Modifiers.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Registrations.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Resolutions.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Resolver.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Scopes.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/DerivedSources/resource_bundle_accessor.swift",
+      "-I",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx10.15",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j12",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_AVAILABLE",
+      "-module-cache-path",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/include/Factory-Swift.h",
+      "-swift-version",
+      "6",
+      "-enable-experimental-feature",
+      "StrictConcurrency",
+      "-I",
+      "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+      "-L",
+      "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+      "-plugin-path",
+      "/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-suppress-warnings",
+      "-package-name",
+      "factory",
+      "-driver-use-frontend-path",
+      "/Library/Developer/CommandLineTools/usr/bin/swiftc"
+    ],
+    "FactoryKit" : [
+      "/Library/Developer/CommandLineTools/usr/bin/swiftc",
+      "-module-name",
+      "FactoryKit",
+      "-package-name",
+      "factory",
+      "-c",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Containers.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Contexts.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Factory.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Globals.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Injections.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Key.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Locking.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Modifiers.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Registrations.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Resolutions.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Resolver.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Scopes.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/DerivedSources/resource_bundle_accessor.swift",
+      "-I",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx10.15",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j12",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_AVAILABLE",
+      "-module-cache-path",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/include/FactoryKit-Swift.h",
+      "-swift-version",
+      "6",
+      "-enable-experimental-feature",
+      "StrictConcurrency",
+      "-I",
+      "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+      "-L",
+      "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+      "-plugin-path",
+      "/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-suppress-warnings",
+      "-package-name",
+      "factory",
+      "-driver-use-frontend-path",
+      "/Library/Developer/CommandLineTools/usr/bin/swiftc"
+    ],
+    "FactoryTesting" : [
+      "/Library/Developer/CommandLineTools/usr/bin/swiftc",
+      "-module-name",
+      "FactoryTesting",
+      "-package-name",
+      "factory",
+      "-c",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryTesting/ContainerTrait.swift",
+      "-I",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx10.15",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j12",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryTesting.build/include/FactoryTesting-Swift.h",
+      "-swift-version",
+      "6",
+      "-enable-experimental-feature",
+      "StrictConcurrency",
+      "-I",
+      "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+      "-L",
+      "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+      "-plugin-path",
+      "/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-suppress-warnings",
+      "-package-name",
+      "factory",
+      "-driver-use-frontend-path",
+      "/Library/Developer/CommandLineTools/usr/bin/swiftc"
+    ],
     "FitnessAnalytics" : [
       "/Library/Developer/CommandLineTools/usr/bin/swiftc",
       "-module-name",
@@ -13988,6 +14791,7 @@
       "-package-name",
       "fitnessexercise",
       "-c",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Tests/FitnessExerciseTests/EnvironmentObjectContractTests.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Tests/FitnessExerciseTests/ExerciseCardViewModelTests.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Tests/FitnessExerciseTests/MuscleCategoryViewModelTests.swift",
       "-I",
@@ -14109,6 +14913,7 @@
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/AnalyticsStorageService.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseManagementService.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseStorageService.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/StorageContainer.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/TotalAnalyticsStorageService.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/WorkoutStorageService.swift",
       "-I",
@@ -14170,6 +14975,7 @@
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/SessionTrainingCache.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/SimpleActiveSetView.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TimerService.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingContainer.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingCoordinator.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingGlassEffectCompat.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingPickerComponent.swift",
@@ -17067,9 +17873,19 @@
     ]
   },
   "targetDependencyMap" : {
+    "Factory" : [
+
+    ],
+    "FactoryKit" : [
+
+    ],
+    "FactoryTesting" : [
+      "FactoryKit"
+    ],
     "FitnessAnalytics" : [
       "FitnessUI",
       "FitnessStorage",
+      "Factory",
       "FitnessCore",
       "FitnessResources"
     ],
@@ -17081,6 +17897,7 @@
       "FitnessAnalytics",
       "FitnessUI",
       "FitnessStorage",
+      "Factory",
       "FitnessCore",
       "FitnessResources"
     ],
@@ -17114,6 +17931,7 @@
       "FitnessAnalytics",
       "FitnessUI",
       "FitnessStorage",
+      "Factory",
       "FitnessCore",
       "FitnessResources"
     ],
@@ -17146,6 +17964,7 @@
       "FitnessAnalytics",
       "FitnessUI",
       "FitnessStorage",
+      "Factory",
       "FitnessCore",
       "FitnessResources"
     ],
@@ -17153,6 +17972,7 @@
 
     ],
     "FitnessStorage" : [
+      "Factory",
       "FitnessCore",
       "FitnessResources"
     ],
@@ -17160,11 +17980,13 @@
       "FitnessAnalytics",
       "FitnessUI",
       "FitnessStorage",
+      "Factory",
       "FitnessCore",
       "FitnessResources"
     ],
     "FitnessUI" : [
       "FitnessStorage",
+      "Factory",
       "FitnessCore",
       "FitnessResources"
     ],
@@ -17685,6 +18507,148 @@
     }
   },
   "writeCommands" : {
+    "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Aliases.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Containers.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Contexts.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Factory.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Globals.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Injections.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Key.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Locking.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Modifiers.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Registrations.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Resolutions.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Resolver.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/Factory/Factory/Scopes.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/DerivedSources/resource_bundle_accessor.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/sources"
+    },
+    "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Containers.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Contexts.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Factory.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Globals.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Injections.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Key.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Locking.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Modifiers.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Registrations.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Resolutions.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Resolver.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryKit/FactoryKit/Scopes.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/DerivedSources/resource_bundle_accessor.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryKit.build/sources"
+    },
+    "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryTesting.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryTesting/ContainerTrait.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryTesting.build/sources"
+    },
     "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/sources" : {
       "alwaysOutOfDate" : false,
       "inputs" : [
@@ -17922,6 +18886,62 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Aliases.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Containers.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Contexts.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Factory.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Globals.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Injections.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Key.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Locking.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Modifiers.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Registrations.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Resolutions.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Resolver.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/Scopes.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/Factory.build/resource_bundle_accessor.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AddAnalyticsEntryView.swift.o"
         },
         {
@@ -18110,6 +19130,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/EnvironmentObjectContractTests.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/ExerciseCardViewModelTests.swift.o"
         },
         {
@@ -18131,6 +19155,10 @@
         {
           "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseStorageService.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessStorage.build/StorageContainer.swift.o"
         },
         {
           "kind" : "file",
@@ -18163,6 +19191,10 @@
         {
           "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessTraining.build/TimerService.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessTraining.build/TrainingContainer.swift.o"
         },
         {
           "kind" : "file",
@@ -18760,6 +19792,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Tests/FitnessExerciseTests/EnvironmentObjectContractTests.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Tests/FitnessExerciseTests/ExerciseCardViewModelTests.swift"
         },
         {
@@ -18804,6 +19840,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/StorageContainer.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/TotalAnalyticsStorageService.swift"
         },
         {
@@ -18843,6 +19883,10 @@
         {
           "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TimerService.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingContainer.swift"
         },
         {
           "kind" : "file",

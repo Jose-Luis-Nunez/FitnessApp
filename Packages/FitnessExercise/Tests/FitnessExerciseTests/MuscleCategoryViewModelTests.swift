@@ -1,10 +1,10 @@
 import Testing
-import Combine
 import Foundation
 @testable import FitnessExercise
 import FitnessCore
 import FitnessStorage
 import FitnessTraining
+import Factory
 
 // MARK: - Mock Storage
 
@@ -48,8 +48,9 @@ private func makeExercise(
 }
 
 private func makeVM(exercises: [Exercise] = []) -> (MuscleCategoryViewModel, MockExerciseStorage) {
+    Container.shared.reset()
     let storage = MockExerciseStorage()
-    let workoutStorage = WorkoutStorageService()
+    let workoutStorage = Container.shared.workoutStorage()
     let activeSetVM = ActiveSetViewModel()
     let vm = MuscleCategoryViewModel(
         group: .arms,

@@ -1,14 +1,17 @@
 import SwiftUI
+import Observation
 
 public enum AppCurrentScene: Sendable {
     case workouts, home, profile, category, training, schedule
 }
 
-public final class AppRouter: ObservableObject {
-    @Published public var path = NavigationPath() {
+@Observable
+@MainActor
+public final class AppRouter {
+    public var path = NavigationPath() {
         didSet { reconcileDestinations() }
     }
-    @Published private(set) public var currentScene: AppCurrentScene = .workouts
+    public private(set) var currentScene: AppCurrentScene = .workouts
 
     private var destinations: [NavigationDestination] = []
     private var isMutating = false

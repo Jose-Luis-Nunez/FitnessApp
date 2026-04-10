@@ -5,17 +5,18 @@ import FitnessUI
 import FitnessExercise
 import FitnessAnalytics
 import FitnessTraining
+import Factory
 
 struct TrainingView: View {
     let exercise: Exercise
     let category: MuscleCategoryGroup
     
-    @EnvironmentObject private var router: AppRouter
-    @StateObject private var trainingCoordinator: TrainingCoordinator
-    @StateObject private var analyticsViewModel: AnalyticsViewModel
-    @EnvironmentObject private var overlayState: UIOverlayState
+    @Environment(AppRouter.self) private var router
+    @State private var trainingCoordinator: TrainingCoordinator
+    @State private var analyticsViewModel: AnalyticsViewModel
+    @Environment(UIOverlayState.self) private var overlayState
     
-    @StateObject private var cardViewModel: ExerciseCardViewModel
+    @State private var cardViewModel: ExerciseCardViewModel
     @State private var hasFinishedTraining = false
     @State private var isInitialLoad = true
     @State private var isManuallyNavigatingBack = false
@@ -24,11 +25,11 @@ struct TrainingView: View {
         self.exercise = exercise
         self.category = category
         
-        let categoryActiveSetVM = SessionTrainingCache.shared.viewModel(for: category)
+        let categoryActiveSetVM = Container.shared.sessionTrainingCache().viewModel(for: category)
         let sharedAnalyticsVM = AnalyticsViewModel()
-        let managementService = ExerciseManagementService()
+        let managementService = Container.shared.exerciseManagement()
         
-        _trainingCoordinator = StateObject(wrappedValue: TrainingCoordinator(
+        self._trainingCoordinator = State(wrappedValue: TrainingCoordinator(
             findCategory: { _ in category },
             onExerciseUpdate: { updatedExercise, _ in
                 managementService.updateExercise(updatedExercise, category: category)
@@ -40,8 +41,8 @@ struct TrainingView: View {
             analyticsViewModel: sharedAnalyticsVM
         ))
         
-        _analyticsViewModel = StateObject(wrappedValue: sharedAnalyticsVM)
-        _cardViewModel = StateObject(wrappedValue: ExerciseCardViewModel(exercise: exercise) { updatedExercise in
+        self._analyticsViewModel = State(wrappedValue: sharedAnalyticsVM)
+        self._cardViewModel = State(wrappedValue: ExerciseCardViewModel(exercise: exercise) { updatedExercise in
             managementService.updateExercise(updatedExercise, category: category)
         })
     }
@@ -156,7 +157,7 @@ struct TrainingView: View {
                 isInitialLoad = false
             }
         }
-        .onReceive(trainingCoordinator.$isTrainingActive) { isActive in
+        .onChange(of: trainingCoordinator.isTrainingActive) { _, isActive in
             if !isActive && !hasFinishedTraining && !isInitialLoad && !isManuallyNavigatingBack && !overlayState.isCancellingTraining {
                 hasFinishedTraining = true
                 overlayState.showTrainingMiniMenu = false
@@ -208,7 +209,7 @@ struct TrainingView: View {
                 category: .chest
             )
         }
-        .environmentObject(UIOverlayState())
-        .environmentObject(AppRouter())
+        .environment(UIOverlayState())
+        .environment(AppRouter())
     }
 }

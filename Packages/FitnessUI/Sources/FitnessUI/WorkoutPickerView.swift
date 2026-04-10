@@ -1,25 +1,25 @@
 import SwiftUI
 import FitnessCore
 import FitnessStorage
+import Factory
 #if canImport(UIKit)
 import UIKit
 #endif
 
 public struct WorkoutPickerView: View {
-    @EnvironmentObject private var overlayState: UIOverlayState
+    @Environment(UIOverlayState.self) private var overlayState
     @State private var selectedWorkout: Workout?
 
     public var onSelect: (Workout) -> Void
 
-    private let storageService: WorkoutStorageService
+    @Injected(\.workoutStorage) private var storageService
 
     public init(
-        storageService: WorkoutStorageService = .shared,
         onSelect: ((Workout) -> Void)? = nil
     ) {
-        self.storageService = storageService
+        let ws = Container.shared.workoutStorage()
         self.onSelect = onSelect ?? { workout in
-            storageService.setCurrentWorkout(workout)
+            ws.setCurrentWorkout(workout)
         }
     }
 

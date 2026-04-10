@@ -6,6 +6,7 @@ import FitnessAnalytics
 import FitnessCore
 import FitnessTraining
 import FitnessUI
+import Factory
 
 private struct ScrollOffsetPreferenceKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
@@ -25,19 +26,19 @@ private enum ViewMode {
 }
 
 public struct MuscleCategorySelectionView: View {
-    @StateObject private var viewModel = MuscleCategorySelectionViewModel()
-    @StateObject private var trainingCoordinator: TrainingCoordinator
-    @EnvironmentObject private var router: AppRouter
-    @EnvironmentObject private var overlayState: UIOverlayState
+    @State private var viewModel = MuscleCategorySelectionViewModel()
+    @State private var trainingCoordinator: TrainingCoordinator
+    @Environment(AppRouter.self) private var router
+    @Environment(UIOverlayState.self) private var overlayState
     @State private var currentViewMode: ViewMode = .overview
     @State private var filterPillBounce: Bool = false
     @State private var filterBounceMode: ViewMode? = nil
     @Namespace private var filterNamespace
-    @StateObject private var analyticsViewModel: AnalyticsViewModel
+    @State private var analyticsViewModel: AnalyticsViewModel
     @State private var isShowingExercisePicker = false
     @State private var editingExercise: Exercise?
     @State private var editingCategory: MuscleCategoryGroup?
-    @StateObject private var exerciseFormViewModel = ExerciseFormViewModel()
+    @State private var exerciseFormViewModel = ExerciseFormViewModel()
     @State private var showCategorySelection = false
     @State private var isFilterBarVisible = true
     @State private var lastScrollOffset: CGFloat = 0
@@ -46,7 +47,7 @@ public struct MuscleCategorySelectionView: View {
         let selectionViewModel = MuscleCategorySelectionViewModel()
         let sharedAnalyticsVM = AnalyticsViewModel()
 
-        _trainingCoordinator = StateObject(wrappedValue: TrainingCoordinator(
+        self._trainingCoordinator = State(wrappedValue: TrainingCoordinator(
             findCategory: { exercise in
                 selectionViewModel.findCategoryForExercise(exercise)
             },
@@ -61,8 +62,8 @@ public struct MuscleCategorySelectionView: View {
             analyticsViewModel: sharedAnalyticsVM
         ))
 
-        _viewModel = StateObject(wrappedValue: selectionViewModel)
-        _analyticsViewModel = StateObject(wrappedValue: sharedAnalyticsVM)
+        self._viewModel = State(wrappedValue: selectionViewModel)
+        self._analyticsViewModel = State(wrappedValue: sharedAnalyticsVM)
     }
 
     private var adaptiveColumns: [GridItem] {
@@ -75,8 +76,6 @@ public struct MuscleCategorySelectionView: View {
     public var body: some View {
         ZStack(alignment: .bottom) {
             AppStyle.Color.backgroundColor.ignoresSafeArea()
-
-            let _ = trainingCoordinator.activeSetViewModel.objectWillChange
 
             VStack {
                 Spacer()
@@ -362,10 +361,10 @@ public struct MuscleCategorySelectionView: View {
         withAnimation(.smooth) { currentViewMode = mode }
         withAnimation(.spring(response: 0.25, dampingFraction: 0.4)) { filterPillBounce = true }
         withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) { filterBounceMode = mode }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(200))
             withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) { filterPillBounce = false }
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            try? await Task.sleep(for: .milliseconds(50))
             withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) { filterBounceMode = nil }
         }
     }
@@ -447,7 +446,7 @@ public struct MuscleCategorySelectionView: View {
     private var categoryList: some View {
         ForEach(viewModel.categories, id: \.self) { group in
             Button(action: {
-                if let activeSetVM = SessionTrainingCache.shared.activeSetVMs[group],
+                if let activeSetVM = Container.shared.sessionTrainingCache().activeSetVMs[group],
                    let activeExercise = activeSetVM.currentExercise {
                     router.navigate(to: .training(activeExercise, group))
                 } else {

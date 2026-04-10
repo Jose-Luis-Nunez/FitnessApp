@@ -1,11 +1,15 @@
 import Foundation
+import Observation
 import FitnessCore
 import FitnessStorage
 import FitnessTraining
+import Factory
 
-public class MuscleCategoryViewModel: ObservableObject {
-    @Published public var exercises: [Exercise]
-    @Published public var showResetConfirmation: Bool = false
+@Observable
+@MainActor
+public final class MuscleCategoryViewModel {
+    public var exercises: [Exercise]
+    public var showResetConfirmation: Bool = false
 
     public let group: MuscleCategoryGroup
     public let formViewModel: ExerciseFormViewModel
@@ -14,18 +18,20 @@ public class MuscleCategoryViewModel: ObservableObject {
     private let workoutStorageService: WorkoutStorageService
     private var cardViewModels: [UUID: ExerciseCardViewModel] = [:]
 
-    public init(group: MuscleCategoryGroup, workoutStorageService: WorkoutStorageService = .shared) {
+    public init(group: MuscleCategoryGroup) {
         self.group = group
-        self.workoutStorageService = workoutStorageService
+        let ws = Container.shared.workoutStorage()
+        self.workoutStorageService = ws
         self.formViewModel = ExerciseFormViewModel()
-        self.storageService = ExerciseStorageService()
+        let es = Container.shared.exerciseStorage()
+        self.storageService = es
 
-        if let currentWorkout = workoutStorageService.currentWorkout {
-            self.exercises = storageService.loadForWorkout(workoutId: currentWorkout.id, category: group)
+        if let currentWorkout = ws.currentWorkout {
+            self.exercises = es.loadForWorkout(workoutId: currentWorkout.id, category: group)
         } else {
-            self.exercises = storageService.load(for: group)
+            self.exercises = es.load(for: group)
         }
-        self.activeSetViewModel = SessionTrainingCache.shared.viewModel(for: group)
+        self.activeSetViewModel = Container.shared.sessionTrainingCache().viewModel(for: group)
     }
 
     public init(

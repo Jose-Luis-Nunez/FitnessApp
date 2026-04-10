@@ -5,7 +5,7 @@ import FitnessUI
 public struct SimpleActiveSetView: View {
     public let exercise: Exercise
     @Binding public var setProgress: [SetProgress]
-    @ObservedObject public var viewModel: ActiveSetViewModel
+    public var viewModel: ActiveSetViewModel
 
     public init(exercise: Exercise, setProgress: Binding<[SetProgress]>, viewModel: ActiveSetViewModel) {
         self.exercise = exercise
@@ -77,7 +77,7 @@ private struct SetRowView: View {
     let index: Int
     let progress: SetProgress
     let exercise: Exercise
-    @ObservedObject var viewModel: ActiveSetViewModel
+    var viewModel: ActiveSetViewModel
     let isQuickDoneMode: Bool
 
     private var isHighlighted: Bool {

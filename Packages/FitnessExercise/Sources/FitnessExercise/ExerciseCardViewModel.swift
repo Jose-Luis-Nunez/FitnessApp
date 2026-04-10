@@ -1,8 +1,11 @@
 import Foundation
+import Observation
 import FitnessCore
 
-public final class ExerciseCardViewModel: ObservableObject {
-    @Published public var exercise: Exercise {
+@Observable
+@MainActor
+public final class ExerciseCardViewModel {
+    public var exercise: Exercise {
         didSet {
             guard !exercise.isContentEqual(to: oldValue), !isSyncingFromParent else { return }
             onUpdate(exercise)

@@ -31,9 +31,9 @@ private enum Constants {
 }
 
 struct WorkoutsScreen: View {
-    @StateObject private var viewModel = WorkoutsViewModel()
-    @EnvironmentObject private var router: AppRouter
-    @EnvironmentObject private var overlayState: UIOverlayState
+    @State private var viewModel = WorkoutsViewModel()
+    @Environment(AppRouter.self) private var router
+    @Environment(UIOverlayState.self) private var overlayState
     
     var body: some View {
         ZStack {

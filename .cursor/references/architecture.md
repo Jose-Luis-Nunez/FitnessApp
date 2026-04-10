@@ -39,15 +39,21 @@ Located in `Core/Model/`.
 
 ## Services
 
-| Service | File | Singleton | Purpose |
-|---------|------|-----------|---------|
-| `WorkoutStorageService` | `Shared/Services/WorkoutStorageService.swift` | `.shared` | Workout CRUD, current workout selection, default workout |
-| `ExerciseStorageService` | `Features/Exercise/Storage/ExerciseStorageService.swift` | No | Exercise persistence per workout/category |
-| `ExerciseManagementService` | `Features/Exercise/Storage/ExerciseManagementService.swift` | No | Exercise business logic (add, remove, reorder). Plain `final class`. |
-| `AnalyticsStorageService` | `Features/Analytics/AnalyticsStorageService.swift` | No | Per-exercise analytics entry persistence |
-| `TotalAnalyticsStorageService` | `Features/Analytics/TotalAnalyticsStorageService.swift` | No | Cross-exercise analytics loading, workout-scoped |
-| `TimerService` | `Features/Exercise/ActiveSet/TimerService.swift` | No | Rest timer during active sets (`ObservableObject`) |
-| `SessionTrainingCache` | `Features/Exercise/ActiveSet/SessionTrainingCache.swift` | `.shared` | Per-category `ActiveSetViewModel` cache. Conforms to `SessionTrainingCaching` protocol. Use `viewModel(for:)` for typed access. |
+All services are registered in a [hmlongco/Factory](https://github.com/hmlongco/Factory) DI container. Access via `@Injected(\.keyPath)` or `Container.shared.keyPath()`. No more `static let shared` singletons — use the container instead.
+
+**Container registrations:**
+- `Packages/FitnessStorage/Sources/FitnessStorage/StorageContainer.swift` — `workoutStorage`, `exerciseStorage`, `analyticsStorage`, `exerciseManagement`, `totalAnalyticsStorage`
+- `Packages/FitnessTraining/Sources/FitnessTraining/TrainingContainer.swift` — `sessionTrainingCache`
+
+| Service | File | Container Key | Scope | Purpose |
+|---------|------|---------------|-------|---------|
+| `WorkoutStorageService` | `Packages/FitnessStorage/.../WorkoutStorageService.swift` | `\.workoutStorage` | singleton | Workout CRUD, current workout selection, default workout |
+| `ExerciseStorageService` | `Packages/FitnessStorage/.../ExerciseStorageService.swift` | `\.exerciseStorage` | singleton | Exercise persistence per workout/category |
+| `ExerciseManagementService` | `Packages/FitnessStorage/.../ExerciseManagementService.swift` | `\.exerciseManagement` | singleton | Exercise business logic (add, remove, reorder) |
+| `AnalyticsStorageService` | `Packages/FitnessStorage/.../AnalyticsStorageService.swift` | `\.analyticsStorage` | singleton | Per-exercise analytics entry persistence |
+| `TotalAnalyticsStorageService` | `Packages/FitnessStorage/.../TotalAnalyticsStorageService.swift` | `\.totalAnalyticsStorage` | singleton | Cross-exercise analytics loading, workout-scoped |
+| `TimerService` | `Packages/FitnessTraining/.../TimerService.swift` | — | per-use | Rest timer during active sets |
+| `SessionTrainingCache` | `Packages/FitnessTraining/.../SessionTrainingCache.swift` | `\.sessionTrainingCache` | singleton | Per-category `ActiveSetViewModel` cache. Conforms to `SessionTrainingCaching` protocol. Use `viewModel(for:)` for typed access. |
 
 ## Shared Components
 

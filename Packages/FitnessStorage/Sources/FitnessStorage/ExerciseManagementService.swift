@@ -1,19 +1,14 @@
 import Foundation
 import FitnessCore
+import Factory
 
+@MainActor
 public final class ExerciseManagementService {
-    private let storageService: ExerciseStorageService
-    private let analyticsStorage: AnalyticsStoring
-    private let workoutStorageService: WorkoutStorageService
+    @Injected(\.exerciseStorage) private var storageService
+    @Injected(\.analyticsStorage) private var analyticsStorage
+    @Injected(\.workoutStorage) private var workoutStorageService
 
-    public init(
-        storageService: ExerciseStorageService = ExerciseStorageService(),
-        analyticsStorage: AnalyticsStoring? = nil,
-        workoutStorageService: WorkoutStorageService = .shared
-    ) {
-        self.storageService = storageService
-        self.analyticsStorage = analyticsStorage ?? AnalyticsStorageService()
-        self.workoutStorageService = workoutStorageService
+    nonisolated public init() {
     }
 
     public func updateExercise(_ updatedExercise: Exercise, category: MuscleCategoryGroup) {

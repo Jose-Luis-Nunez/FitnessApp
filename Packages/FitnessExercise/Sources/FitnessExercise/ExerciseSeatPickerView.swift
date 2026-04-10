@@ -3,7 +3,7 @@ import FitnessResources
 import FitnessUI
 
 public struct ExerciseSeatPickerView: View {
-    @ObservedObject public var formViewModel: ExerciseFormViewModel
+    public var formViewModel: ExerciseFormViewModel
     @Binding public var isPresented: Bool
     public let onSave: () -> Void
     public let onCancel: () -> Void

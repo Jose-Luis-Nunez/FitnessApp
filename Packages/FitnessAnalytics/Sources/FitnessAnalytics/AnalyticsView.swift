@@ -4,7 +4,7 @@ import SwiftUI
 
 public struct AnalyticsView: View {
     @State private var exercise: Exercise
-    @ObservedObject public var viewModel: AnalyticsViewModel
+    public var viewModel: AnalyticsViewModel
     private let initialReps: Int
     @State private var selectedDate: Date
     @State private var showCalendarDialog: Bool = false

@@ -10,8 +10,8 @@ import FitnessUI
 // MARK: - Test Host
 
 /// Wraps a SwiftUI View in a `UIHostingController` and forces view loading,
-/// which triggers `@EnvironmentObject` resolution. A missing or mismatched
-/// environment object crashes here instead of in the shipping app.
+/// which triggers `@Environment` resolution. A missing or mismatched
+/// environment value crashes here instead of in the shipping app.
 private func assertViewHosts<V: View>(
     _ view: V,
     sourceLocation: SourceLocation = #_sourceLocation
@@ -25,15 +25,15 @@ private func assertViewHosts<V: View>(
 
 // MARK: - MuscleCategorySelectionView
 
-@Suite("MuscleCategorySelectionView EnvironmentObject contract")
+@Suite("MuscleCategorySelectionView Environment contract")
 struct MuscleCategorySelectionViewContractTests {
 
     @Test
     @MainActor
     func requiresAppRouterAndOverlayState() {
         let view = MuscleCategorySelectionView()
-            .environmentObject(AppRouter())
-            .environmentObject(UIOverlayState())
+            .environment(AppRouter())
+            .environment(UIOverlayState())
 
         assertViewHosts(view)
     }
@@ -41,11 +41,8 @@ struct MuscleCategorySelectionViewContractTests {
     @Test
     @MainActor
     func crashesWithoutAppRouter() {
-        // Intentionally omit AppRouter — this documents the contract.
-        // If SwiftUI ever makes missing EnvironmentObjects non-fatal,
-        // this test should be updated to verify the new behavior.
         let view = MuscleCategorySelectionView()
-            .environmentObject(UIOverlayState())
+            .environment(UIOverlayState())
 
         withKnownIssue("Missing AppRouter must crash") {
             assertViewHosts(view)
@@ -55,15 +52,15 @@ struct MuscleCategorySelectionViewContractTests {
 
 // MARK: - MuscleCategoryView
 
-@Suite("MuscleCategoryView EnvironmentObject contract")
+@Suite("MuscleCategoryView Environment contract")
 struct MuscleCategoryViewContractTests {
 
     @Test
     @MainActor
     func requiresAppRouterAndOverlayState() {
         let view = MuscleCategoryView(group: .arms)
-            .environmentObject(AppRouter())
-            .environmentObject(UIOverlayState())
+            .environment(AppRouter())
+            .environment(UIOverlayState())
 
         assertViewHosts(view)
     }

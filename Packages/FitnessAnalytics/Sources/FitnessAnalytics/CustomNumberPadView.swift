@@ -80,12 +80,10 @@ public struct CustomNumberPadView: View {
             .offset(x: shakeOffset)
         }
         .onAppear {
-            DispatchQueue.main.async {
-                inputValue = currentValue
-                showComma = currentValue != floor(currentValue)
-                updateDisplayText()
-                isInitialized = false
-            }
+            inputValue = currentValue
+            showComma = currentValue != floor(currentValue)
+            updateDisplayText()
+            isInitialized = false
         }
     }
 
@@ -153,19 +151,19 @@ public struct CustomNumberPadView: View {
                             }
                     )
                     .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        Task {
+                            try? await Task.sleep(for: .milliseconds(100))
                             withAnimation(.easeInOut(duration: 0.3)) {
                                 proxy.scrollTo(displayText, anchor: .center)
                             }
-
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                isInitialized = true
-                            }
+                            try? await Task.sleep(for: .milliseconds(500))
+                            isInitialized = true
                         }
                     }
                     .onChange(of: displayText) { _, newValue in
                         if !isUserScrolling {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            Task {
+                                try? await Task.sleep(for: .milliseconds(100))
                                 withAnimation(.easeInOut(duration: 0.3)) {
                                     proxy.scrollTo(newValue, anchor: .center)
                                 }
@@ -437,7 +435,8 @@ public struct CustomNumberPadView: View {
             shakeOffset = 10
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(100))
             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                 shakeOffset = 0
             }

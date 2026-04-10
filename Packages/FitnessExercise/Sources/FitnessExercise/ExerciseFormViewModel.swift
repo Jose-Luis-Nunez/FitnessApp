@@ -1,18 +1,21 @@
 import Foundation
+import Observation
 import FitnessCore
 
-public class ExerciseFormViewModel: ObservableObject {
-    @Published public var showForm: Bool = false
-    @Published public var editMode: ExerciseEditMode = .full
-    @Published public var name: String = ""
-    @Published public var weight: Double = 0.0
-    @Published public var reps: Int = 1
-    @Published public var sets: Int = 1
-    @Published public var seat: String = ""
-    @Published public var noSeats: Bool = false
-    @Published public var editingExercise: Exercise?
-    @Published public var selectedIconName: String = ""
-    @Published public var selectedCategory: MuscleCategoryGroup = .arms
+@Observable
+@MainActor
+public final class ExerciseFormViewModel {
+    public var showForm: Bool = false
+    public var editMode: ExerciseEditMode = .full
+    public var name: String = ""
+    public var weight: Double = 0.0
+    public var reps: Int = 1
+    public var sets: Int = 1
+    public var seat: String = ""
+    public var noSeats: Bool = false
+    public var editingExercise: Exercise?
+    public var selectedIconName: String = ""
+    public var selectedCategory: MuscleCategoryGroup = .arms
 
     public init() {}
 

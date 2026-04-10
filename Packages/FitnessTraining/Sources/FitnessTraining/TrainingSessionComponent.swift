@@ -6,7 +6,7 @@ import FitnessUI
 // MARK: - Training Session Component
 
 public struct TrainingSessionComponent: View {
-    @ObservedObject public var coordinator: TrainingCoordinator
+    public var coordinator: TrainingCoordinator
     public let onEdit: ((Exercise, ExerciseEditMode) -> Void)?
     public let onReset: ((Exercise) -> Void)?
     public let onCancel: (() -> Void)?
@@ -23,7 +23,7 @@ public struct TrainingSessionComponent: View {
         onCancel: (() -> Void)? = nil,
         analyticsViewModel: AnalyticsViewModel = AnalyticsViewModel()
     ) {
-        _coordinator = ObservedObject(wrappedValue: coordinator)
+        self.coordinator = coordinator
         self.onEdit = onEdit
         self.onReset = onReset
         self.onCancel = onCancel
@@ -65,11 +65,11 @@ public struct TrainingSessionComponent: View {
 // MARK: - Compact Timer Component
 
 public struct CompactTimerComponent: View {
-    @ObservedObject public var viewModel: ActiveSetViewModel
+    public var viewModel: ActiveSetViewModel
     public let onCancel: (() -> Void)?
 
     public init(viewModel: ActiveSetViewModel, onCancel: (() -> Void)?) {
-        _viewModel = ObservedObject(wrappedValue: viewModel)
+        self.viewModel = viewModel
         self.onCancel = onCancel
     }
 
@@ -120,12 +120,12 @@ public struct CompactTimerComponent: View {
 // MARK: - Training Action Bar Component
 
 public struct TrainingActionBarComponent: View {
-    @ObservedObject public var coordinator: TrainingCoordinator
+    public var coordinator: TrainingCoordinator
     public let exercises: [Exercise]
     public let hasActiveExercise: Bool
 
     public init(coordinator: TrainingCoordinator, exercises: [Exercise], hasActiveExercise: Bool) {
-        _coordinator = ObservedObject(wrappedValue: coordinator)
+        self.coordinator = coordinator
         self.exercises = exercises
         self.hasActiveExercise = hasActiveExercise
     }
@@ -154,8 +154,6 @@ public struct TrainingActionBarComponent: View {
                     return
                 }
                 originalCallbacks.onEditLess()
-
-                coordinator.objectWillChange.send()
             },
             onEditMore: {
                 guard coordinator.activeSetViewModel.isSetInProgress ||
@@ -163,8 +161,6 @@ public struct TrainingActionBarComponent: View {
                     return
                 }
                 originalCallbacks.onEditMore()
-
-                coordinator.objectWillChange.send()
             },
             onFinish: originalCallbacks.onFinish,
             onAddExercise: originalCallbacks.onAddExercise,

@@ -1,6 +1,8 @@
 import Foundation
 import FitnessCore
+import Factory
 
+@MainActor
 public protocol TotalAnalyticsStoring {
     func loadAllAnalytics() -> [AnalyticsEntry]
     func loadAllAnalytics(for workoutId: UUID?) -> [AnalyticsEntry]
@@ -9,19 +11,13 @@ public protocol TotalAnalyticsStoring {
     func getAllExercisesWithAnalytics(for workoutId: UUID?) -> [Exercise]
 }
 
+@MainActor
 public final class TotalAnalyticsStorageService: TotalAnalyticsStoring {
-    public let analyticsStorage: AnalyticsStorageService
-    private let exerciseStorage: ExerciseStorageService
-    private let workoutStorage: WorkoutStorageService
+    @Injected(\.analyticsStorage) public var analyticsStorage
+    @Injected(\.exerciseStorage) private var exerciseStorage
+    @Injected(\.workoutStorage) private var workoutStorage
 
-    public init(
-        analyticsStorage: AnalyticsStorageService = AnalyticsStorageService(),
-        exerciseStorage: ExerciseStorageService = ExerciseStorageService(),
-        workoutStorage: WorkoutStorageService = WorkoutStorageService.shared
-    ) {
-        self.analyticsStorage = analyticsStorage
-        self.exerciseStorage = exerciseStorage
-        self.workoutStorage = workoutStorage
+    nonisolated public init() {
     }
 
     public func loadAllAnalytics() -> [AnalyticsEntry] {

@@ -7,11 +7,11 @@ import FitnessResources
 import FitnessUI
 
 public struct ExerciseNamePickerView: View {
-    @ObservedObject public var formViewModel: ExerciseFormViewModel
+    @Bindable public var formViewModel: ExerciseFormViewModel
     @Binding public var isPresented: Bool
     public let onSave: () -> Void
     public let onCancel: () -> Void
-    @ObservedObject public var viewModel: MuscleCategoryViewModel
+    public var viewModel: MuscleCategoryViewModel
     public let editingExercise: Exercise?
 
     @State private var isContentVisible: Bool = false

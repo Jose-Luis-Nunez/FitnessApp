@@ -1,9 +1,11 @@
-import Combine
 import Foundation
+import Observation
 
-public final class TimerService: ObservableObject {
-    @Published public var timerSeconds: Int = 0
-    private var timerSource: DispatchSourceTimer?
+@Observable
+@MainActor
+public final class TimerService {
+    public var timerSeconds: Int = 0
+    private var timerTask: Task<Void, Never>?
     private var startTime: Date?
     private var isRunning: Bool = false
 
@@ -11,31 +13,29 @@ public final class TimerService: ObservableObject {
 
     public func startTimer() {
         guard !isRunning else { return }
-        timerSource?.cancel()
         isRunning = true
         startTime = Date()
 
-        let source = DispatchSource.makeTimerSource(queue: .global(qos: .userInteractive))
-        source.schedule(deadline: .now(), repeating: 1.0)
-        source.setEventHandler { [weak self] in
-            guard let self, let start = self.startTime else { return }
-            let seconds = Int(Date().timeIntervalSince(start))
-            DispatchQueue.main.async {
-                self.timerSeconds = seconds
+        timerTask?.cancel()
+        let start = startTime!
+        timerTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled, let self else { return }
+                self.timerSeconds = Int(Date().timeIntervalSince(start))
             }
         }
-        timerSource = source
-        source.resume()
     }
 
     public func resetAndStartTimer() {
+        stopTimer()
         timerSeconds = 0
         startTimer()
     }
 
     public func stopTimer() {
-        timerSource?.cancel()
-        timerSource = nil
+        timerTask?.cancel()
+        timerTask = nil
         isRunning = false
         startTime = nil
     }

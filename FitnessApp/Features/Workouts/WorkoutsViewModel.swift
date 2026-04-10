@@ -1,37 +1,30 @@
 import Foundation
 import SwiftUI
+import Observation
 import FitnessCore
 import FitnessStorage
+import Factory
 
-class WorkoutsViewModel: ObservableObject {
-    @Published var workouts: [Workout] = []
-    @Published var currentWorkout: Workout?
-    @Published var defaultWorkout: Workout?
-    @Published var showingFABOptions = false
-    @Published var showingCreateWorkoutFullScreen = false
-    @Published var showingRenameWorkout = false
-    @Published var showingDeleteConfirmation = false
-    @Published var selectedWorkoutForAction: Workout?
-    @Published var newWorkoutName = ""
-    @Published var renameWorkoutName = ""
-    @Published var selectedMuscleGroups: Set<MuscleCategoryGroup> = []
+@Observable
+@MainActor
+final class WorkoutsViewModel {
+    var showingFABOptions = false
+    var showingCreateWorkoutFullScreen = false
+    var showingRenameWorkout = false
+    var showingDeleteConfirmation = false
+    var selectedWorkoutForAction: Workout?
+    var newWorkoutName = ""
+    var renameWorkoutName = ""
+    var selectedMuscleGroups: Set<MuscleCategoryGroup> = []
     
-    private let storageService: WorkoutStorageService
+    @ObservationIgnored @Injected(\.workoutStorage) var storageService
+    @ObservationIgnored @Injected(\.exerciseStorage) private var exerciseStorageService
     
-    init(storageService: WorkoutStorageService = .shared) {
-        self.storageService = storageService
-        setupBindings()
-    }
+    var workouts: [Workout] { storageService.workouts }
+    var currentWorkout: Workout? { storageService.currentWorkout }
+    var defaultWorkout: Workout? { storageService.defaultWorkout }
     
-    private func setupBindings() {
-        storageService.$workouts
-            .assign(to: &$workouts)
-        
-        storageService.$currentWorkout
-            .assign(to: &$currentWorkout)
-        
-        storageService.$defaultWorkout
-            .assign(to: &$defaultWorkout)
+    nonisolated init() {
     }
     
     // MARK: - Workout Actions
@@ -147,11 +140,10 @@ class WorkoutsViewModel: ObservableObject {
     }
     
     func getExerciseCount(for workout: Workout) -> Int {
-        let exerciseService = ExerciseStorageService()
         var totalCount = 0
         
         for category in MuscleCategoryGroup.allCases {
-            let exercises = exerciseService.loadForWorkout(workoutId: workout.id, category: category)
+            let exercises = exerciseStorageService.loadForWorkout(workoutId: workout.id, category: category)
             totalCount += exercises.count
         }
         

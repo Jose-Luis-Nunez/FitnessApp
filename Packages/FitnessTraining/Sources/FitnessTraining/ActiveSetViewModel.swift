@@ -1,5 +1,5 @@
-import Combine
 import Foundation
+import Observation
 import FitnessCore
 import FitnessUI
 
@@ -69,15 +69,17 @@ public struct QuickDoneState {
 
 // MARK: - ViewModel
 
-public class ActiveSetViewModel: ObservableObject {
-    @Published public var tracking = SetTrackingState()
-    @Published public var editing = SetEditingState()
-    @Published public var quickDone = QuickDoneState()
-    @Published public var pendingSetIndex: Int? = nil
-    @Published public var timerSeconds: Int = 0
+@Observable
+@MainActor
+public final class ActiveSetViewModel {
+    public var tracking = SetTrackingState()
+    public var editing = SetEditingState()
+    public var quickDone = QuickDoneState()
+    public var pendingSetIndex: Int? = nil
+    public var timerSeconds: Int = 0
 
     private let timerService: TimerService
-    private var cancellables = Set<AnyCancellable>()
+    private var timerObservationTask: Task<Void, Never>?
 
     public var onCoordinatorUpdateNeeded: (() -> Void)?
 
@@ -185,12 +187,18 @@ public class ActiveSetViewModel: ObservableObject {
 
     public init() {
         self.timerService = TimerService()
+        startTimerObservation()
+    }
 
-        timerService.$timerSeconds
-            .sink { [weak self] value in
-                self?.timerSeconds = value
+    private func startTimerObservation() {
+        timerObservationTask?.cancel()
+        timerObservationTask = Task { [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                self.timerSeconds = self.timerService.timerSeconds
+                try? await Task.sleep(for: .milliseconds(500))
             }
-            .store(in: &cancellables)
+        }
     }
 
     // MARK: - Set Lifecycle
@@ -401,7 +409,5 @@ public class ActiveSetViewModel: ObservableObject {
 
         timerService.stopTimer()
         timerSeconds = 0
-
-        objectWillChange.send()
     }
 }

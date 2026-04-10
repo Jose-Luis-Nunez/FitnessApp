@@ -1,5 +1,4 @@
 import Testing
-import Combine
 import Foundation
 @testable import FitnessExercise
 import FitnessCore
@@ -29,20 +28,15 @@ private func makeExercise(
 @Suite("syncExercise")
 struct SyncExerciseTests {
 
-    @Test func publishesObjectWillChangeWhenContentDiffers() {
+    @Test func updatesExerciseWhenContentDiffers() {
         let exercise = makeExercise()
         let vm = ExerciseCardViewModel(exercise: exercise) { _ in }
-
-        var changeCount = 0
-        let cancellable = vm.objectWillChange.sink { changeCount += 1 }
 
         var updated = exercise
         updated.isCompleted = true
         vm.syncExercise(updated)
 
-        #expect(changeCount >= 1)
         #expect(vm.exercise.isCompleted == true)
-        _ = cancellable
     }
 
     @Test func doesNotCallOnUpdate() {
@@ -62,15 +56,12 @@ struct SyncExerciseTests {
 
     @Test func skipsUpdateWhenContentIsIdentical() {
         let exercise = makeExercise()
-        let vm = ExerciseCardViewModel(exercise: exercise) { _ in }
-
-        var changeCount = 0
-        let cancellable = vm.objectWillChange.sink { changeCount += 1 }
+        var onUpdateCalled = false
+        let vm = ExerciseCardViewModel(exercise: exercise) { _ in onUpdateCalled = true }
 
         vm.syncExercise(exercise)
 
-        #expect(changeCount == 0)
-        _ = cancellable
+        #expect(!onUpdateCalled)
     }
 
     @Test func detectsIsCompletedChange() {

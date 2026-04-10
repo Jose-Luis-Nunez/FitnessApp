@@ -6,7 +6,7 @@ struct CreateWorkoutView: View {
     @Binding var workoutName: String
     @Binding var isPresented: Bool
     let onSave: () -> Void
-    @ObservedObject var viewModel: WorkoutsViewModel
+    var viewModel: WorkoutsViewModel
 
     private let textColor = AppStyle.Color.white
 

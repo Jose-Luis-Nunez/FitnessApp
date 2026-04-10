@@ -1,6 +1,8 @@
 import Foundation
 import FitnessCore
+import Factory
 
+@MainActor
 public final class ExerciseStorageService: ExerciseStoring {
     private let fileManager = FileManager.default
     private var userId: String {
@@ -13,7 +15,7 @@ public final class ExerciseStorageService: ExerciseStoring {
             }
     }
 
-    public init() {}
+    nonisolated public init() {}
 
     private func fileURL(for group: MuscleCategoryGroup) -> URL {
         let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -59,8 +61,7 @@ public final class ExerciseStorageService: ExerciseStoring {
         let fileURL = workoutFileURL(workoutId: workoutId, category: category)
 
         if !fileManager.fileExists(atPath: fileURL.path) {
-            let workoutService = WorkoutStorageService.shared
-            let isFirstWorkout = workoutService.workouts.first?.id == workoutId
+            let isFirstWorkout = Container.shared.workoutStorage().workouts.first?.id == workoutId
 
             if isFirstWorkout {
                 let oldExercises = load(for: category)

@@ -12,7 +12,7 @@ struct BottomMenuBarView: View {
     var onRightAction: () -> Void = {}
     var customBackAction: (() -> Void)? = nil
 
-    @EnvironmentObject private var router: AppRouter
+    @Environment(AppRouter.self) private var router
 
     @State private var pillBounce: Bool = false
     @State private var bounceTab: BottomTab? = nil
@@ -131,10 +131,10 @@ struct BottomMenuBarView: View {
         guard tab != selectedTab else { return }
         withAnimation(.spring(response: 0.25, dampingFraction: 0.4)) { pillBounce = true }
         withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) { bounceTab = tab }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(200))
             withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) { pillBounce = false }
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            try? await Task.sleep(for: .milliseconds(50))
             withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) { bounceTab = nil }
         }
     }

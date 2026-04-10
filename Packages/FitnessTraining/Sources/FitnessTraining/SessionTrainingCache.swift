@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 import FitnessCore
 
 public protocol SessionTrainingCaching: AnyObject {
@@ -6,9 +7,9 @@ public protocol SessionTrainingCaching: AnyObject {
     func viewModel(for group: MuscleCategoryGroup) -> ActiveSetViewModel
 }
 
+@Observable
+@MainActor
 public final class SessionTrainingCache: SessionTrainingCaching {
-    public static let shared = SessionTrainingCache()
-
     public init() {}
 
     public var activeSetVMs: [MuscleCategoryGroup: ActiveSetViewModel] = [:]

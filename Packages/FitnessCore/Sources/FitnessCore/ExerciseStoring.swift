@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 public protocol ExerciseStoring {
     func load(for group: MuscleCategoryGroup) -> [Exercise]
     func save(_ exercises: [Exercise], for group: MuscleCategoryGroup)

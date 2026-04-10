@@ -4,10 +4,10 @@ import FitnessCore
 import FitnessUI
 
 public struct ActiveCardView: View {
-    @ObservedObject public var viewModel: ExerciseCardViewModel
+    public var viewModel: ExerciseCardViewModel
     public let onEdit: (Exercise, ExerciseEditMode) -> Void
     public let isEditable: Bool
-    @ObservedObject public var analyticsViewModel: AnalyticsViewModel
+    public var analyticsViewModel: AnalyticsViewModel
 
     @State private var isShowingAnalytics = false
 

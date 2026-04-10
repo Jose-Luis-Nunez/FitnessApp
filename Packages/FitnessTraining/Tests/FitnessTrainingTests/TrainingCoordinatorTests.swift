@@ -1,9 +1,9 @@
 import Testing
-import Combine
 import Foundation
 @testable import FitnessTraining
 import FitnessCore
 import FitnessAnalytics
+import Factory
 
 // MARK: - Helpers
 
@@ -34,6 +34,7 @@ private func makeCoordinator(
     onExerciseUpdate: @escaping (Exercise, MuscleCategoryGroup) -> Void = { _, _ in },
     onExerciseReset: @escaping (Exercise, MuscleCategoryGroup) -> Void = { _, _ in }
 ) -> (TrainingCoordinator, ActiveSetViewModel) {
+    Container.shared.reset()
     let coordinator = TrainingCoordinator(
         findCategory: { _ in .arms },
         onExerciseUpdate: onExerciseUpdate,
@@ -175,20 +176,15 @@ struct HandleQuickDoneTests {
         #expect(activeSetVM.setProgress.allSatisfy { $0.status == .completedDone })
     }
 
-    @Test func notifiesObserversAfterQuickDone() {
+    @Test func setsTrainingActiveAfterQuickDone() {
         let activeSetVM = ActiveSetViewModel()
         let (coordinator, _) = makeCoordinator(activeSetVM: activeSetVM)
 
         let exercise = makeExercise(sets: 3)
         coordinator.startTraining(for: exercise)
-
-        var changeCount = 0
-        let cancellable = coordinator.objectWillChange.sink { changeCount += 1 }
-
         coordinator.handleQuickDone()
 
-        #expect(changeCount >= 1)
-        _ = cancellable
+        #expect(coordinator.isTrainingActive == true)
     }
 
     @Test func bottomBarShowsFinishAfterQuickDone() {

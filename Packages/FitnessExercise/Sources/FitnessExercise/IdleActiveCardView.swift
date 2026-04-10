@@ -14,8 +14,8 @@ private extension VerticalAlignment {
 }
 
 public struct IdleActiveCardView: View {
-    @ObservedObject public var viewModel: ExerciseCardViewModel
-    @ObservedObject public var analyticsViewModel: AnalyticsViewModel
+    public var viewModel: ExerciseCardViewModel
+    public var analyticsViewModel: AnalyticsViewModel
 
     public let onEdit: (Exercise, ExerciseEditMode) -> Void
     public let isEditable: Bool
@@ -94,10 +94,9 @@ public struct IdleActiveCardView: View {
         .padding(.horizontal, AppStyle.Padding.card)
         .shadow(color: AppStyle.Shadow.cardColor, radius: AppStyle.Shadow.cardRadius, x: 0, y: AppStyle.Shadow.cardY)
         .onAppear { refreshPhaseData() }
-        .onReceive(
-            analyticsViewModel.analyticsDidUpdate
-                .filter { $0 == viewModel.exercise.id }
-        ) { _ in refreshPhaseData() }
+        .onChange(of: analyticsViewModel.lastUpdatedExerciseId) { _, newId in
+            if newId == viewModel.exercise.id { refreshPhaseData() }
+        }
     }
 }
 

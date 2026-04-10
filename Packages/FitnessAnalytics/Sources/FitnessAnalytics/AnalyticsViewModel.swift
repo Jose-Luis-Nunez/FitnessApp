@@ -1,24 +1,27 @@
-import Combine
 import Foundation
+import Observation
 import FitnessCore
 import FitnessStorage
 import FitnessUI
+import Factory
 
 public typealias DailyProgression = (date: Date, value: Double)
 
-public class AnalyticsViewModel: ObservableObject {
-    public let analyticsDidUpdate = PassthroughSubject<UUID, Never>()
+@Observable
+@MainActor
+public final class AnalyticsViewModel {
+    public var lastUpdatedExerciseId: UUID?
 
     private let storageService: AnalyticsStoring
-    private let exerciseStorageService: ExerciseStorageService
+    @ObservationIgnored @Injected(\.exerciseStorage) private var exerciseStorageService
+    @ObservationIgnored @Injected(\.workoutStorage) private var workoutStorageService
     
-    public init(storageService: AnalyticsStoring = AnalyticsStorageService(), exerciseStorageService: ExerciseStorageService = ExerciseStorageService()) {
-        self.storageService = storageService
-        self.exerciseStorageService = exerciseStorageService
+    nonisolated public init(storageService: AnalyticsStoring? = nil) {
+        self.storageService = storageService ?? Container.shared.analyticsStorage()
     }
     
     public func resolveLatestExercise(_ exercise: Exercise) -> Exercise {
-        let workoutId = WorkoutStorageService.shared.currentWorkout?.id ?? UUID()
+        let workoutId = workoutStorageService.currentWorkout?.id ?? UUID()
         let exercises = exerciseStorageService.loadForWorkout(workoutId: workoutId, category: exercise.category)
         return exercises.first(where: { $0.id == exercise.id }) ?? exercise
     }
@@ -39,10 +42,7 @@ public class AnalyticsViewModel: ObservableObject {
         existingEntries.append(analyticsEntry)
         storageService.save(existingEntries, for: exerciseId)
 
-        DispatchQueue.main.async {
-            self.objectWillChange.send()
-            self.analyticsDidUpdate.send(exerciseId)
-        }
+        lastUpdatedExerciseId = exerciseId
     }
     
     public func loadAnalytics(for exerciseId: UUID) -> [AnalyticsEntry] {
@@ -94,10 +94,7 @@ public class AnalyticsViewModel: ObservableObject {
         }
         storageService.save(existingEntries, for: exerciseId)
 
-        DispatchQueue.main.async {
-            self.objectWillChange.send()
-            self.analyticsDidUpdate.send(exerciseId)
-        }
+        lastUpdatedExerciseId = exerciseId
     }
     
     public func deleteSetFromEntry(
@@ -135,15 +132,11 @@ public class AnalyticsViewModel: ObservableObject {
         
         storageService.save(existingEntries, for: exerciseId)
         
-        // If no analytics entries left, mark exercise as not completed in exercise storage
         if existingEntries.isEmpty {
             updateExerciseCompletionStatus(exerciseId: exerciseId, isCompleted: false)
         }
         
-        DispatchQueue.main.async {
-            self.objectWillChange.send()
-            self.analyticsDidUpdate.send(exerciseId)
-        }
+        lastUpdatedExerciseId = exerciseId
     }
     
     public func saveGoal(for exercise: inout Exercise, goalText: String) {
@@ -154,7 +147,7 @@ public class AnalyticsViewModel: ObservableObject {
         }
         
         let category = exercise.category
-        let workoutId = WorkoutStorageService.shared.currentWorkout?.id ?? UUID()
+        let workoutId = workoutStorageService.currentWorkout?.id ?? UUID()
         var exercises = exerciseStorageService.loadForWorkout(workoutId: workoutId, category: category)
         
         if let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
@@ -203,7 +196,7 @@ extension AnalyticsViewModel {
     }
     
     private func updateExerciseCompletionStatus(exerciseId: UUID, isCompleted: Bool) {
-        guard let currentWorkout = WorkoutStorageService.shared.currentWorkout else { 
+        guard let currentWorkout = workoutStorageService.currentWorkout else { 
             print("No current workout found")
             return 
         }

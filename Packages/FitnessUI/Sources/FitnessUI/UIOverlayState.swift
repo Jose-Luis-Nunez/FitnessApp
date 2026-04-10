@@ -1,15 +1,17 @@
-import Combine
 import Foundation
+import Observation
 
-public final class UIOverlayState: ObservableObject {
-    @Published public var isEditingSheetVisible: Bool = false
-    @Published public var showCategoryMiniMenu: Bool = false
-    @Published public var showSelectionMiniMenu: Bool = false
-    @Published public var showWorkoutsMiniMenu: Bool = false
-    @Published public var showWorkoutDropdown: Bool = false
-    @Published public var showWorkoutSettingsMenu: Bool = false
-    @Published public var showTrainingMiniMenu: Bool = false
-    @Published public var isCancellingTraining: Bool = false
+@Observable
+@MainActor
+public final class UIOverlayState {
+    public var isEditingSheetVisible: Bool = false
+    public var showCategoryMiniMenu: Bool = false
+    public var showSelectionMiniMenu: Bool = false
+    public var showWorkoutsMiniMenu: Bool = false
+    public var showWorkoutDropdown: Bool = false
+    public var showWorkoutSettingsMenu: Bool = false
+    public var showTrainingMiniMenu: Bool = false
+    public var isCancellingTraining: Bool = false
 
     public init() {}
 }

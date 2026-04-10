@@ -23,6 +23,13 @@
     "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseStorageService.swiftdeps",
     "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseStorageService.dia"
   },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/StorageContainer.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/StorageContainer.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/StorageContainer.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/StorageContainer~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/StorageContainer.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/StorageContainer.dia"
+  },
   "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/TotalAnalyticsStorageService.swift": {
     "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/TotalAnalyticsStorageService.d",
     "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/TotalAnalyticsStorageService.swift.o",

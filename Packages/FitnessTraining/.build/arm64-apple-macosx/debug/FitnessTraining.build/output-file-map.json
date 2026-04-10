@@ -44,6 +44,13 @@
     "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/TimerService.swiftdeps",
     "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/TimerService.dia"
   },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingContainer.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/TrainingContainer.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/TrainingContainer.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/TrainingContainer~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/TrainingContainer.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/TrainingContainer.dia"
+  },
   "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingCoordinator.swift": {
     "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/TrainingCoordinator.d",
     "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/TrainingCoordinator.swift.o",

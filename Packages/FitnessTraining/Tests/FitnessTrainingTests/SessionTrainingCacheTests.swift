@@ -2,6 +2,7 @@ import Testing
 import Foundation
 @testable import FitnessTraining
 import FitnessCore
+import Factory
 
 @Suite("SessionTrainingCache")
 struct SessionTrainingCacheTests {

@@ -1,7 +1,9 @@
 import Foundation
+import Observation
 import FitnessCore
 import FitnessStorage
 import FitnessUI
+import Factory
 
 // MARK: - Workout Detail Data Models
 
@@ -59,11 +61,14 @@ public struct TrainingRhythmDetailData {
     }
 }
 
-public class TotalAnalyticsViewModel: ObservableObject {
-    private let storageService: TotalAnalyticsStorageService
+@Observable
+@MainActor
+public final class TotalAnalyticsViewModel {
+    @ObservationIgnored @Injected(\.totalAnalyticsStorage) private var storageService
+    @ObservationIgnored @Injected(\.workoutStorage) private var workoutStorage
+    @ObservationIgnored @Injected(\.exerciseStorage) private var exerciseStorage
 
-    public init(storageService: TotalAnalyticsStorageService = TotalAnalyticsStorageService()) {
-        self.storageService = storageService
+    nonisolated public init() {
     }
 
     // MARK: - Data Loading
@@ -317,12 +322,11 @@ public class TotalAnalyticsViewModel: ObservableObject {
     }
 
     private func getWorkoutCompletionRate(for date: Date) -> (completed: Int, total: Int, percentage: Int) {
-        guard let currentWorkout = WorkoutStorageService.shared.currentWorkout else {
+        guard let currentWorkout = workoutStorage.currentWorkout else {
             return (completed: 0, total: 0, percentage: 0)
         }
 
         var allExercises: [Exercise] = []
-        let exerciseStorage = ExerciseStorageService()
 
         for category in MuscleCategoryGroup.allCases {
             let categoryExercises = exerciseStorage.loadForWorkout(workoutId: currentWorkout.id, category: category)
@@ -356,9 +360,8 @@ public class TotalAnalyticsViewModel: ObservableObject {
     }
 
     public func getWorkoutDetail(for date: Date) -> WorkoutDetailData? {
-        guard let currentWorkout = WorkoutStorageService.shared.currentWorkout else { return nil }
+        guard let currentWorkout = workoutStorage.currentWorkout else { return nil }
 
-        let exerciseStorage = ExerciseStorageService()
         let calendar = Calendar.current
         var categoryDetails: [CategoryDetailData] = []
 

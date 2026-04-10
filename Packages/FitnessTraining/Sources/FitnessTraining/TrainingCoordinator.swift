@@ -1,5 +1,5 @@
 import SwiftUI
-import Combine
+import Observation
 import FitnessCore
 import FitnessStorage
 import FitnessAnalytics
@@ -46,26 +46,28 @@ public struct TrainingCallbacks {
 
 // MARK: - Training Coordinator
 
-public class TrainingCoordinator: ObservableObject {
-    @Published public var activeSetViewModel: ActiveSetViewModel
-    @Published public var currentExercise: Exercise?
-    @Published public var isTrainingActive: Bool = false
+@Observable
+@MainActor
+public final class TrainingCoordinator {
+    public var activeSetViewModel: ActiveSetViewModel
+    public var currentExercise: Exercise?
+    public var isTrainingActive: Bool = false
 
     public let analyticsViewModel: AnalyticsViewModel
     private let findCategory: (Exercise) -> MuscleCategoryGroup?
-    private let onExerciseUpdate: (Exercise, MuscleCategoryGroup) -> Void
-    private let onExerciseReset: (Exercise, MuscleCategoryGroup) -> Void
-    private let onAddExercise: () -> Void
-    private let onResetAllExercises: () -> Void
+    private let onExerciseUpdate: @MainActor (Exercise, MuscleCategoryGroup) -> Void
+    private let onExerciseReset: @MainActor (Exercise, MuscleCategoryGroup) -> Void
+    private let onAddExercise: @MainActor () -> Void
+    private let onResetAllExercises: @MainActor () -> Void
 
-    private var cancellables = Set<AnyCancellable>()
+    private var observationTask: Task<Void, Never>?
 
     public init(
-        findCategory: @escaping (Exercise) -> MuscleCategoryGroup?,
-        onExerciseUpdate: @escaping (Exercise, MuscleCategoryGroup) -> Void,
-        onExerciseReset: @escaping (Exercise, MuscleCategoryGroup) -> Void,
-        onAddExercise: @escaping () -> Void = {},
-        onResetAllExercises: @escaping () -> Void = {},
+        findCategory: @escaping @MainActor (Exercise) -> MuscleCategoryGroup?,
+        onExerciseUpdate: @escaping @MainActor (Exercise, MuscleCategoryGroup) -> Void,
+        onExerciseReset: @escaping @MainActor (Exercise, MuscleCategoryGroup) -> Void,
+        onAddExercise: @escaping @MainActor () -> Void = {},
+        onResetAllExercises: @escaping @MainActor () -> Void = {},
         activeSetViewModel: ActiveSetViewModel? = nil,
         analyticsViewModel: AnalyticsViewModel = AnalyticsViewModel()
     ) {
@@ -89,9 +91,7 @@ public class TrainingCoordinator: ObservableObject {
             return
         }
 
-        activeSetViewModel.onCoordinatorUpdateNeeded = { [weak self] in
-            self?.objectWillChange.send()
-        }
+        activeSetViewModel.onCoordinatorUpdateNeeded = { }
 
         setupActiveSetViewModelObserver()
 
@@ -126,8 +126,6 @@ public class TrainingCoordinator: ObservableObject {
 
         activeSetViewModel.completeCurrentSet()
 
-        objectWillChange.send()
-
         if !isLastSet {
             activeSetViewModel.startNextSet()
         }
@@ -138,7 +136,6 @@ public class TrainingCoordinator: ObservableObject {
               let category = findCategory(exercise) else { return }
 
         activeSetViewModel.startQuickDone(for: exercise, category: category)
-        objectWillChange.send()
     }
 
     public func cancelTraining() {
@@ -287,17 +284,19 @@ public class TrainingCoordinator: ObservableObject {
     // MARK: - Private Helpers
 
     private func setupActiveSetViewModelObserver() {
-        cancellables.removeAll()
-
-        activeSetViewModel.$tracking
-            .map(\.currentExercise)
-            .removeDuplicates(by: { $0?.id == $1?.id })
-            .sink { [weak self] newExercise in
-                DispatchQueue.main.async {
-                    self?.currentExercise = newExercise
-                    self?.isTrainingActive = newExercise != nil
+        observationTask?.cancel()
+        var lastExerciseId: UUID? = activeSetViewModel.tracking.currentExercise?.id
+        observationTask = Task { [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                let newExercise = self.activeSetViewModel.tracking.currentExercise
+                if newExercise?.id != lastExerciseId {
+                    lastExerciseId = newExercise?.id
+                    self.currentExercise = newExercise
+                    self.isTrainingActive = newExercise != nil
                 }
+                try? await Task.sleep(for: .milliseconds(100))
             }
-            .store(in: &cancellables)
+        }
     }
 }

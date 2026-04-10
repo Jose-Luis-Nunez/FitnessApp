@@ -3,7 +3,7 @@ import FitnessResources
 import FitnessUI
 
 public struct ExerciseWeightPickerView: View {
-    @ObservedObject public var formViewModel: ExerciseFormViewModel
+    @Bindable public var formViewModel: ExerciseFormViewModel
     @Binding public var isPresented: Bool
     public let onSave: () -> Void
     public let onCancel: () -> Void

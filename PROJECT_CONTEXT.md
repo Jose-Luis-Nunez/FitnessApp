@@ -1,245 +1,169 @@
-# PROJECT_CONTEXT.md — FitnessApp Code Evaluation
+# PROJECT_CONTEXT
 
----
+## Data & Persistence
 
-## Daten & Persistenz
+**Scope.** Persistent domain models live in `Packages/FitnessCore/Sources/FitnessCore/`: `Workout`, `Exercise`, `AnalyticsEntry`, `SetProgress` with `SetStatus`, and `MuscleCategoryGroup`. `WeightPhase` is a derived analytics shape (not loaded from its own file). `ExerciseEditMode` and `SetEditingMode` are UI flow enums, not stored entities.
 
-### Entities und Beziehungen
+**Entity map (logical).** `Workout` holds metadata plus a loosely typed `exerciseData: [String: Any]` mirror (serialized as nested JSON `Data` on encode). `Exercise` instances are **not** embedded in that blob for list storage; they are saved per workout and muscle category. `AnalyticsEntry` carries `exerciseId`, `date`, and embedded `[SetProgress]`.
 
-```
-Workout (1) ──< Exercise (N)     via storage key: workout_{workoutId}_{category}_{userId}.json
-Exercise (1) ──< AnalyticsEntry (N)  via storage key: analytics_{exerciseId}_{userId}.json
+ER (text): `Workout` (1) — * `Exercise` (one JSON collection per `(workoutId, MuscleCategoryGroup)`); `Exercise` (1) — * `AnalyticsEntry` (append-only list per `exerciseId` file); each `AnalyticsEntry` contains value objects `SetProgress` (`SetStatus`, reps, weight).
 
-Workout
-├── id: UUID
-├── name: String
-├── createdDate / lastModified: Date
-├── exerciseData: [String: Any]    ← untyped dictionary, serialized via JSONSerialization
-└── selectedCategories: Set<MuscleCategoryGroup>
+**Persistence strategy.** **Workouts:** `UserDefaults` — `JSONEncoder`/`JSONDecoder` on `[Workout]` (`stored_workouts`), plus UUID strings for current and default workout ids. **Exercises:** app **Documents** — `workout_{uuid}_{category}_{userId}.json`. Legacy `exercises_{category}_{userId}.json` is read once and copied into the first workout’s per-workout files when a workout-scoped file is missing. **Analytics:** Documents — `analytics_{exerciseId}_{userId}.json` with ISO-8601 dates. **User id for paths:** `UserDefaults` key `userId` (created on first use) suffixes exercise and analytics filenames. **Profile:** shell app uses `@AppStorage("userNickname")`. No SwiftData or Core Data in this stack.
 
-Exercise
-├── id: UUID
-├── name, weight, reps, sets, seatSetting?, noSeats, isCompleted
-├── iconName, category: MuscleCategoryGroup
-└── goal: Double?
-
-AnalyticsEntry
-├── id: UUID, exerciseId: UUID, date: Date
-└── setProgress: [SetProgress]
-
-SetProgress
-├── status: SetStatus (.notStarted/.inProgress/.completedDone/.completedLess/.completedMore)
-├── currentReps: Int, weight: Double
-
-WeightPhase  (computed, not persisted)
-MuscleCategoryGroup  enum: arms, chest, back, legs, abs
-```
-
-### Persistenz-Strategie
-
-- **UserDefaults**: Workout-Liste (`stored_workouts`), aktuelle Workout-ID, Default-Workout-ID, userId
-- **Dokumentenverzeichnis (JSON-Dateien)**:
-  - Exercises pro Workout+Kategorie: `workout_{uuid}_{category}_{userId}.json`
-  - Analytics pro Exercise: `analytics_{exerciseId}_{userId}.json`
-  - Legacy-Exercises (pre-workout): `exercises_{category}_{userId}.json` (Migration beim ersten Zugriff)
-- **Kein CoreData, kein SwiftData, kein Keychain, kein HealthKit, kein CloudKit**
-
-### Integritaets-Risiken
-
-- `Workout.exerciseData` ist `[String: Any]` — kein Typschutz, keine Schema-Validierung, wird via `JSONSerialization` (de)serialisiert
-- Exercises und Analytics sind nur ueber `exerciseId` verknuepft, keine referentielle Integritaet — geloeschte Exercises hinterlassen verwaiste Analytics-Dateien
-- `userId` wird bei erstem Zugriff generiert und in UserDefaults gespeichert; bei UserDefaults-Reset (z.B. App-Delete) werden bestehende Dateien unerreichbar (Orphaned Data)
-- Kein Verschluesselung, keine Backup-Strategie
-- `WorkoutStorageService.shared` ist ein Singleton mit mutablem Zustand — nicht thread-safe
-
----
-
-## Architektur
-
-### Pattern: MVVM (konsistent)
-
-Alle Features folgen View + ViewModel (`ObservableObject` + `@Published`). Services sind separate Klassen. Kein TCA, kein Actors, kein Combine-Pipeline-basiertes Reactive.
-
-### Dependency Map (Package-Ebene)
-
-```
-FitnessResources          (Strings/L10n)
-       │
-FitnessCore               (Models, Protocols)
-       │
-   ┌───┴───┐
-FitnessStorage    FitnessUI
-   │               │
-   ├───────────────┤
-   │               │
-FitnessAnalytics  FitnessExercise  FitnessSchedule  FitnessTraining
-   │               │                │                │
-   └───────────────┴────────────────┴────────────────┘
-                        │
-                   FitnessApp (main target)
-```
-
-### Singletons und Shared State
-
-- `WorkoutStorageService.shared` — globaler Singleton, accessed from ViewModels, Services, Views
-- `SessionTrainingCache.shared` — global in-memory cache of `ActiveSetViewModel` per `MuscleCategoryGroup`
-- `ExerciseStorageService()` — Klasse ohne Zustand, wird bei jedem Aufruf neu instanziiert (kein Caching, liest immer von Disk)
-
-### Concurrency
-
-- **Keine async/await, keine Actors, keine strukturierte Concurrency**
-- Combine: nur `PassthroughSubject` in `AnalyticsViewModel` und `AnyCancellable` in `ActiveSetViewModel`/`TrainingCoordinator` fuer Timer und Observer
-- `DispatchQueue.main.async` wird in `AnalyticsViewModel` fuer UI-Updates nach Save/Delete genutzt
-- Alle File-I/O (`Data(contentsOf:)`, `data.write(to:)`) geschieht **synchron auf dem Main Thread**
-
-### Navigation
-
-- `NavigationStack` mit `NavigationPath` in `AppRouter` (EnvironmentObject)
-- `NavigationDestination` enum: `.home`, `.profile`, `.totalAnalytics`, `.schedule`, `.muscleCategory(group)`, `.training(exercise, category)`
-- Custom back-button handling mit `.navigationBarBackButtonHidden(true)` + `.enableSwipeBack()`
-- `UIOverlayState` (EnvironmentObject) steuert Overlay-Sichtbarkeit (Menus, Sheets, Dropdowns)
-
----
+**Weaknesses (summary).** Storage is convention-based only: weak linkage between `AnalyticsEntry.exerciseId` and live exercises; workout delete does not remove related JSON on disk; fragile `Workout.exerciseData` encode/decode; failures often `print` and yield empty collections; workout duplication reuses `Exercise.id`, coupling analytics across copies. Structured triggers, impact, and paths: **Risk Inventory**.
 
 ## UI & State
 
-### State-Inventar
+**Scope.** SwiftUI screens and components live in `FitnessApp/Features/` (shell app), `FitnessApp/Shared/` (Live Activity + widget, launch strategies only), and in SPM packages under `Packages/*/Sources/` (FitnessExercise, FitnessAnalytics, FitnessTraining, FitnessSchedule, FitnessUI). There is no `Shared/View/` or `Shared/Components/` tree; reusable feature and design-system UI live in SPM targets.
 
-| Pattern | Verwendung |
-|---|---|
-| `@StateObject` | ViewModels in Owner-Views (MuscleCategorySelectionView, FitnessAppApp) |
-| `@ObservedObject` | ViewModels die von aussen uebergeben werden (AnalyticsView) |
-| `@EnvironmentObject` | `AppRouter`, `UIOverlayState`, `WorkoutStorageService` |
-| `@State` | Lokaler UI-State (showSheet, selectedDate, scrollOffset etc.) |
-| `@Published` | ViewModel-Properties |
-| `@Namespace` | matchedGeometryEffect in Filter-Toggle |
+**State inventory (usage counts across all `*.swift` files that declare a `View` body, ~47 files).**
 
-### Duplizierter State
+| Wrapper | Approx. count | Typical role |
+|--------|----------------|--------------|
+| `@State` | 71 | Sheet visibility, picker animation, local form mirrors (e.g. seat parts), filter UI, calendar month |
+| `@ObservedObject` | 27 | Injected coordinators, card/form VMs, storage service in dropdown |
+| `@Binding` | 24 | Sheets, pickers, shared numeric fields |
+| `@StateObject` | 13 | Owned VMs at root screens (`WorkoutsScreen`, `ScheduleView`, `MuscleCategoryView`, app entry), long-lived coordinators |
+| `@EnvironmentObject` | 13 | `AppRouter`, `UIOverlayState` for global navigation and overlays |
+| `@Environment(...)` | 6 | `safeAreaInsets`, `dismiss` |
+| `@AppStorage` | 1 | Profile nickname persistence |
 
-- `TrainingCoordinator.currentExercise` und `ActiveSetViewModel.tracking.currentExercise` werden manuell synchronisiert (Observer + direktes Setzen) — Risiko fuer Inkonsistenz
-- `WorkoutStorageService.shared.currentWorkout` wird von mehreren ViewModels direkt gelesen — kein Single Source of Truth Pattern
+`@Published` appears on `ObservableObject` types (ViewModels/services), not on `View` structs. `@FocusState` / `@SceneStorage` were not found in view sources. `@Namespace` appears for matched geometry (e.g. category selection).
 
-### Views ueber 150 Zeilen
+**Duplicated / layered state.** `WorkoutsViewModel` mirrors `WorkoutStorageService`’s published fields via Combine `assign`, so workout lists and selection exist as a bound copy on the VM while persistence remains the service. Training flows use `SessionTrainingCache` for shared `ActiveSetViewModel` per category alongside per-screen `StateObject` coordinators and analytics VMs. Several flows keep short-lived `@State` copies (e.g. calendar `tempDate`, numeric pad display) beside bound or model data.
 
-| View | Zeilen | Bemerkung |
-|---|---|---|
-| `TotalAnalyticsViewModel.swift` | 728 | ViewModel, nicht View — aber enthaelt 4 verschachtelte Data Models |
-| `AnalyticsView.swift` | 627 | Chart, Overlays, Goal-Setter in einer View |
-| `MuscleCategorySelectionView.swift` | 626 | Haupt-Screen, 2 Modi, Overlays, Picker, Training-Integration |
-| `TotalAnalyticsView.swift` | 598 | |
-| `AnalyticsViewModel.swift` | 547 | Umfangreiche Berechnungslogik |
-| `CustomNumberPadView.swift` | 447 | Custom Number Pad |
-| `ActiveSetViewModel.swift` | 408 | Set-Tracking, Editing, QuickDone, Timer |
-| `MuscleCategoryView.swift` | 354 | |
-| `IdleActiveCardView.swift` | 328 | |
-| `WorkoutsScreen.swift` | 312 | |
+**Largest Swift files (by lines; excludes `.build/`, `Package.swift`).** `TotalAnalyticsViewModel.swift` (727), `AnalyticsView.swift` (626), `MuscleCategorySelectionView.swift` (624), `TotalAnalyticsView.swift` (597), `AnalyticsViewModel.swift` (547). **Other large views (>150 lines).** `CustomNumberPadView.swift` (446), `MuscleCategoryView.swift` (353), `IdleActiveCardView.swift` (327), `WorkoutsScreen.swift` (312), `BottomActionBarView.swift` (306), `ExercisePickerView.swift` (298), `AddAnalyticsEntryView.swift` (274), `ScheduleCalendarView.swift` (218), `TrainingView.swift` (214), `InactiveCardView.swift` (212), `TrainingSessionComponent.swift` (202), `CategoryTileView.swift` (190), `BottomMenuBarView.swift` (190), `ActiveCardView.swift` (189), `SimpleActiveSetView.swift` (173), `ExercisePickerShared.swift` (158), `ExerciseNamePickerView.swift` (157).
 
-### Loading/Error-Pattern
+**UX patterns (loading / error / empty).** There is no widespread use of `ProgressView()`; readiness is often handled with flags (e.g. training `isInitialLoad`) or conditional layout. Empty content is handled locally: dedicated empty UI in places like analytics lists and schedule day detail, plus conditional branches when collections are empty. Errors and confirmations use `.alert` and sheet validation (e.g. profile nickname); patterns vary by feature rather than one shared empty/error component.
 
-- **Kein einheitliches Loading/Error-Pattern**: Keine Loading-States, keine Error-Anzeigen fuer den User
-- File-I/O Fehler werden nur per `print()` geloggt, Rueckgabe ist leere Arrays
-- Keine Skeleton-Views, keine Retry-Logik
+## Module Structure
 
----
+**Scope.** All `*.swift` under the repo excluding `.build/` (~106 implementation files, ~15 test targets’ sources, eight `Package.swift` manifests; ~129 Swift files total). The iOS app target links every feature SPM product plus `FitnessCore`, `FitnessStorage`, `FitnessUI`, `FitnessResources`.
+
+### File inventory (function × owning module)
+
+- **Views:** *FitnessApp* — workouts (`WorkoutsScreen`, create/rename), `TrainingView`, `BottomMenuBarView`, `ProfileView`, Live Activity + Widget SwiftUI; *FitnessExercise* — muscle selection/category, cards (active/idle/inactive), pickers (name/weight/seat/icon), tiles; **note:** `ActiveSetEditPickerView.swift` here duplicates the `public` picker type in `FitnessUI` (training stack imports `FitnessUI`). *FitnessTraining* — `TrainingSessionComponent`, `TrainingActionBarComponent`, `TrainingPickerComponent`, `BottomActionBarView`, `SimpleActiveSetView`, picker row, glass compat; *FitnessAnalytics* — `AnalyticsView`, `TotalAnalyticsView`, `AnalyticsTileViews`, `CalendarGridView`, `CalendarDialogView` (tap “Last Workout Completion” / “Training Rhythm” for `AnalyticsDetailSection` drill-downs), `CustomNumberPadView`, `AddAnalyticsEntryView`; *FitnessSchedule* — `ScheduleView`, calendar, day detail, streak, week summary; *FitnessUI* — `WorkoutFormSheet`, `WorkoutDropdownView` / `WorkoutPickerView`, picker chrome, `MiniActionMenuView`, `ActiveSetEditPickerView`, `CapsuleToggleStyle`, shared modifiers/styles.
+- **ViewModels / coordinators:** *FitnessApp* — `WorkoutsViewModel`; *FitnessExercise* — `MuscleCategoryViewModel`, `MuscleCategorySelectionViewModel`, `ExerciseCardViewModel`, `ExerciseFormViewModel`; *FitnessTraining* — `TrainingCoordinator`, `BottomActionBarViewModel`, `ActiveSetViewModel`; *FitnessAnalytics* — `AnalyticsViewModel`, `TotalAnalyticsViewModel`; *FitnessSchedule* — `ScheduleViewModel`.
+- **Services:** *FitnessStorage* — `WorkoutStorageService`, `ExerciseStorageService`, `ExerciseManagementService`, `AnalyticsStorageService`, `TotalAnalyticsStorageService`; *FitnessTraining* — `SessionTrainingCache`, `TimerService`; *FitnessApp* — `TrainingActivityManager`, `AppLaunchStrategy` / `UITestLaunchStrategy`.
+- **Models / protocols:** *FitnessCore* — domain models, progress/edit enums, `MuscleCategoryGroup`, `AnalyticsStoring`, `ExerciseStoring` (entity ↔ persistence layout: **Data & Persistence**); *FitnessApp* — Live Activity attribute types; *FitnessExercise* — `NavigationDestination`, `AppRouter`; *FitnessResources* — `L10n`.
+- **Utilities / extensions:** *FitnessUI* — `AppStyle`, `WeightFormatter`, `TimeFormatter`, `DateFormatterUtility`, `AnalyticsDateHelper`, `WeightOptionsGenerator`, `Color+Extension`, `SafeAreaInsetsKey`, `SwipeBackGestureModifier`, `View+Toolbar`, `TrainingIDs`, `UIOverlayState`, `MuscleCategoryGroup+UI`; *FitnessAnalytics* — `ProgressChartCalculator`; *FitnessExercise* — `ExerciseAccessibilityIDs`; *FitnessTraining* — `TrainingGlassEffectCompat`; UITest — `ElementActions`, `TestFixtures.swift` / `ExerciseFixtures.swift` (`TestExerciseFixture`), `AccessibilityIDs`.
+- **Tests:** `FitnessAppTests`; `FitnessAppUITests` (`BaseTest`, `TrainingUITests`, config/DSL); package tests — `FitnessExerciseTests`, `FitnessTrainingTests`, `FitnessAnalyticsTests`.
+- **Other:** `FitnessAppApp.swift` (composition root); eight `Package.swift` files (manifests only).
+
+### Collaboration map
+
+- **Shared domain:** `FitnessCore` types and `*Storing` protocols are the hinge between UI/feature code and `FitnessStorage` services.
+- **Navigation:** `FitnessAppApp` owns the `NavigationStack` switch, but `AppRouter` / `NavigationDestination` types live in `FitnessExercise`, with destination views spanning Exercise, Analytics, Schedule, Training, and App targets.
+- **Training session:** `FitnessTraining` coordinator + cache + timer bind to `FitnessExercise` card/picker UI and `FitnessUI` tokens/sheets; workout selection often flows through `WorkoutDropdownView` / storage services.
+- **Analytics:** VMs in `FitnessAnalytics` read/write via analytics storage services on `FitnessCore` models; chart math isolated in `ProgressChartCalculator`. `TotalAnalyticsViewModel` colocates aggregate DTOs (`WorkoutDetailData`, `CategoryProgressData`, `ExerciseProgressSummary`, …) with the class; `AnalyticsViewModel` adds reps-based series (`getDailyRepsProgression`, `repsPhases`) alongside weight phases.
+
+### Workflow map
+
+- **Workouts (list / create / rename):** `WorkoutsScreen` + `WorkoutsViewModel` + `WorkoutStorageService` + `CreateWorkoutView` / `RenameWorkoutView` + `FitnessCore.Workout`.
+- **Train (category → exercise → sets):** `MuscleCategorySelectionView` (overview vs list, scroll-hiding filter bar, `WorkoutDropdownView` + `WorkoutPickerView` overlay, embedded `TrainingActionBarComponent` / `TrainingPickerComponent`; `init` builds `TrainingCoordinator` with a shared `AnalyticsViewModel`) → `MuscleCategoryView` (+ VMs) → `TrainingView` + `TrainingCoordinator` / `TrainingSessionComponent` / `BottomActionBarView` + `SessionTrainingCache` + `ActiveSetViewModel`.
+- **Analytics & totals:** `AnalyticsView` (`CalendarDialogView`, hill chart via `ProgressChartCalculator`, goal overlay `saveGoal`, `AddAnalyticsEntryView`, swipe-delete sets → `deleteSetFromEntry`) + VMs + `AnalyticsStorageService` / `TotalAnalyticsStorageService` + `CustomNumberPadView`. `TotalAnalyticsView` reads `WorkoutStorageService.shared` for header context; rollup logic treats a “training day” as a calendar day with **≥3 distinct exercises** in analytics (`getTrainingDays` in `TotalAnalyticsViewModel`).
+- **Schedule:** `ScheduleView` + `ScheduleViewModel` + `ScheduleCalendarView` / `ScheduleDayDetailView` + streak/week views.
+- **Exercise catalog / editing:** `ExerciseStorageService` / `ExerciseManagementService` + picker/form VMs and card views in `FitnessExercise`.
+- **Live Activity:** `TrainingActivityManager`, widget + intents under `Shared/LiveActivity`, driven from app/training lifecycle.
+
+### Natural module boundaries
+
+- **Domain vs persistence:** `FitnessCore` vs `FitnessStorage` (protocol-backed) is already a clean split.
+- **Design system vs features:** `FitnessUI` (tokens, formatters, shared chrome) vs journey packages (`FitnessExercise`, `FitnessTraining`, `FitnessAnalytics`, `FitnessSchedule`).
+- **Shell vs feature:** `FitnessApp` composes routers, tabs, and first-party-only concerns (profile, launch, Live Activity); feature SPMs stay user-journey sized.
+- **Possible future tighten:** relocate `AppRouter` / `NavigationDestination` next to the app entry if you want `FitnessExercise` to be purely exercise UI without global navigation ownership.
 
 ## Tests
 
-### Abdeckung
+**Scope (repo test sources; `.build/` excluded).** `FitnessAppTests/` (Xcode target), `FitnessAppUITests/`, and SPM tests under `Packages/FitnessAnalytics/Tests/`, `Packages/FitnessExercise/Tests/`, `Packages/FitnessTraining/Tests/`. No package test targets found for `FitnessCore`, `FitnessSchedule`, `FitnessUI`, or other `Packages/*` trees.
 
-| Modul | Unit | UI | Integration |
-|---|---|---|---|
-| FitnessAnalytics | AnalyticsViewModelTests (308 LOC) | — | — |
-| FitnessExercise | ExerciseCardViewModelTests (164 LOC), MuscleCategoryViewModelTests (210 LOC) | — | — |
-| FitnessTraining | TrainingCoordinatorTests (159 LOC), SessionTrainingCacheTests (50 LOC) | — | — |
-| FitnessApp | FitnessAppTests.swift (1 leerer Test) | TrainingUITests (1 Test: testFullTrainingFlow) | — |
-| FitnessStorage | — | — | — |
-| FitnessUI | — | — | — |
-| FitnessSchedule | — | — | — |
+| Module / area | Unit tests | UI tests | Integration tests |
+|---------------|------------|----------|-------------------|
+| App (`FitnessAppTests`) | Placeholder only (`Testing` stub) | — | — |
+| `FitnessAnalytics` | Yes (`AnalyticsViewModelTests`) | — | — |
+| `FitnessExercise` | Yes (`ExerciseCardViewModelTests`, `MuscleCategoryViewModelTests`, `EnvironmentObjectContractTests`) | — | — |
+| `FitnessTraining` | Yes (`TrainingCoordinatorTests`, `SessionTrainingCacheTests`) | — | — |
+| `FitnessCore`, `FitnessSchedule`, `FitnessUI` | None in repo | — | — |
+| Shell (XCUITest) | — | Yes (`TrainingUITests`: full training flow) | — |
 
-### Mocks/Fixtures
+**Quality.** SPM tests use Swift `Testing` (`@Suite` / `@Test`), `@testable import`, file-local model factories (`makeExercise`, `makeEntry`), and small protocol mocks (e.g. `MockAnalyticsStorage`). UI layer: `BaseTest` (`--uitesting`, `UITEST_CONFIG` JSON launch env, screenshots on failure, terminate in tearDown), `UITestLaunchConfig` / `UITestScreen`, fixtures (`TestExerciseFixture`, `ExerciseFixtures`), `ElementActions` DSL, `AccessibilityIDs`.
 
-- `MockAnalyticsStorage` (AnalyticsStoring) — in-memory
-- `MockExerciseStorage` (ExerciseStoring) — in-memory
-- `MockAnalyticsStorageForCoord` — minimal mock
-- Helpers: `makeExercise()`, `makeEntry()`, `date()` in mehreren Test-Files (dupliziert, nicht shared)
-- UI-Test-Fixtures: `ExerciseFixtures.swift`, `TestFixtures.swift` im UITests-Target
+**Gaps.** App-target unit tests are placeholder-only; XCUITest covers one training journey, not schedule/analytics/workouts/profile/navigation breadth; no `FitnessCore` / `FitnessStorage` / `FitnessSchedule` / `FitnessUI` test targets; no standalone integration suite beyond UI + package unit tests (see **Risk Inventory**).
 
-### Kritisch aber ungetestet
+## Architecture
 
-- **WorkoutStorageService** (Singleton, UserDefaults + File I/O, Migration) — 0 Tests
-- **ExerciseStorageService** (File I/O, Migration-Logik) — 0 Tests
-- **TotalAnalyticsStorageService** (aggregiert ueber alle Exercises/Workouts) — 0 Tests
-- **AnalyticsStorageService** (File I/O) — 0 Tests
-- Weight-basierte Analytics (totalWeightIncreases, getDailyWeightProgression, weightPhases) — nur Reps-Varianten getestet
-- Workout-CRUD (create, duplicate, delete, rename) — 0 Tests
-- Schedule-Feature — komplett ungetestet
+**Pattern.** The app is SwiftUI-first MVVM: `ObservableObject` types (`*ViewModel`, `TrainingCoordinator`) own feature state; `FitnessStorage` exposes concrete `*Service` classes for persistence. Training stacks `TrainingCoordinator` with `ActiveSetViewModel` and `SessionTrainingCache` (one active-set VM per `MuscleCategoryGroup`). `BottomActionBarViewModel` is an immutable struct of derived flags, not reactive state. `ExerciseFormViewModel` is local form/edit state. There is no TCA or a single strict MVC split; some timing and presentation logic still lives in views.
 
----
+**Dependency map (high level).**
 
-## Risiko-Inventar
+```
+Views / Screens
+  → @EnvironmentObject AppRouter, UIOverlayState (FitnessExercise / FitnessUI)
+  → @StateObject / @ObservedObject feature VMs
 
-### Risiko 1: Synchroner File-I/O auf dem Main Thread
+WorkoutsViewModel → WorkoutStorageService
+                  → ExerciseStorageService (ad hoc, e.g. exercise counts)
 
-- **Trigger**: Nutzer mit vielen Exercises und langer Analytics-Historie oeffnet TotalAnalyticsView oder MuscleCategorySelectionView
-- **Impact**: UI-Freeze, Watchdog-Kill bei App-Start wenn viele Dateien gelesen werden muessen. `TotalAnalyticsStorageService.loadAllAnalytics()` iteriert ueber ALLE Kategorien x ALLE Exercises und liest jede Analytics-Datei synchron.
-- **Betroffene Files**: `AnalyticsStorageService.swift`, `ExerciseStorageService.swift`, `TotalAnalyticsStorageService.swift`, `TotalAnalyticsViewModel.swift`, `AnalyticsViewModel.swift`
+MuscleCategorySelectionViewModel → WorkoutStorageService, ExerciseManagementService
+                                 → SessionTrainingCache (reset paths)
 
-### Risiko 2: Workout.exerciseData als [String: Any]
+MuscleCategoryViewModel → ExerciseStoring, WorkoutStorageService
+                        → ExerciseFormViewModel, ActiveSetViewModel (cache or injected)
 
-- **Trigger**: Speichern/Laden eines Workouts mit unerwarteten Typen in `exerciseData` (z.B. nach App-Update mit Schema-Aenderung)
-- **Impact**: Stille Datenverluste — `JSONSerialization` Fehler fuehren zu leerem Dictionary. Kein Crash, aber Daten verschwinden.
-- **Betroffene Files**: `Workout.swift` (Zeile 44-49, 66-68), `WorkoutStorageService.swift`
+TrainingCoordinator → ActiveSetViewModel, AnalyticsViewModel (+ closure callbacks to parents)
 
-### Risiko 3: Verwaiste Analytics-Daten nach Exercise-Loeschung
+AnalyticsViewModel → AnalyticsStoring, ExerciseStorageService
+                   → WorkoutStorageService.shared (`resolveLatestExercise`, `saveGoal`, `updateExerciseCompletionStatus` from `deleteSetFromEntry`)
 
-- **Trigger**: Nutzer loescht ein Exercise (oder ein Workout), Analytics-Dateien bleiben auf Disk
-- **Impact**: Unbegrenztes Wachstum des Dokumentenverzeichnisses. Bei neuem Exercise mit zufaellig gleicher UUID (theoretisch unmoeglich, praktisch bei Migration denkbar) falsche historische Daten.
-- **Betroffene Files**: `ExerciseManagementService.swift` (kein Cleanup), `AnalyticsStorageService.swift`, `WorkoutStorageService.swift` (kein cascading delete)
+TotalAnalyticsViewModel → TotalAnalyticsStorageService (also `analyticsStorage.load` per exercise)
+                        → WorkoutStorageService.shared, `ExerciseStorageService()` (last-workout completion/detail vs current workout catalog)
 
-### Risiko 4: Duplizierter currentExercise-State zwischen TrainingCoordinator und ActiveSetViewModel
+ScheduleViewModel → TotalAnalyticsViewModel
 
-- **Trigger**: Race condition bei schnellem Wechsel zwischen Exercises oder bei App-Background/Foreground waehrend Training
-- **Impact**: UI zeigt ein Exercise, Logik arbeitet mit einem anderen. `DispatchQueue.main.async` im Observer kann die Reihenfolge umkehren.
-- **Betroffene Files**: `TrainingCoordinator.swift` (Zeile 98-111, 288-301), `ActiveSetViewModel.swift`, `MuscleCategorySelectionView.swift`
+ExerciseManagementService → ExerciseStorageService, AnalyticsStoring, WorkoutStorageService
 
-### Risiko 5: Keine Fehlerbehandlung fuer den User
+ActiveSetViewModel → TimerService (Combine-based)
 
-- **Trigger**: Jede Disk-Operation die fehlschlaegt (Speicher voll, Berechtigungsproblem, korrupte JSON-Datei)
-- **Impact**: Nutzer verliert Daten ohne Feedback. Alle Fehler werden nur per `print()` geloggt. Kein Alert, kein Retry, kein Fallback.
-- **Betroffene Files**: Alle Storage-Services, alle ViewModels die Storage aufrufen
+TrainingActivityManager (app) → ActivityKit / UIKit (Live Activities only)
+```
 
----
+`WorkoutStorageService` and storage implementations do not depend on ViewModels upward. Hubs are shared instances (`WorkoutStorageService.shared`, `SessionTrainingCache.shared`); no compile-time circular type dependency among VM ↔ service ↔ storage was found in this pass.
 
-## Implizite Entscheidungen
+**Concurrency.** UI updates flow through `@Published` and Combine: `sink` / `assign` / `AnyCancellable` in selection and training types; `PassthroughSubject` on `AnalyticsViewModel` for cross-screen refresh signals. `DispatchQueue.main.async` appears after some analytics writes and in `TimerService` / parts of `TrainingCoordinator`. Swift `async`/`await` is rare and mostly `Task { @MainActor in … sleep }` for UI sequencing in training-related views. No app-defined actors showed up in the scanned sources.
 
-1. **UserDefaults als primaerer Workout-Speicher** statt File-basiert wie Exercises/Analytics — asymmetrische Persistenz-Strategie ohne dokumentierten Grund
-2. **Kein HealthKit, kein CloudKit, kein iCloud-Sync** — bewusste Entscheidung fuer lokale Datenhaltung, aber keine Migration-Strategie dokumentiert falls spaeter gewuenscht
-3. **Singleton-Pattern fuer WorkoutStorageService und SessionTrainingCache** statt Dependency Injection — erschwert Testbarkeit erheblich (WorkoutStorageService-Tests muessten UserDefaults mocken)
-4. **Keine Versionierung des Persistenz-Schemas** — bei Modell-Aenderungen kein automatischer Migrations-Pfad (nur Legacy-Exercise-Migration vorhanden)
-5. **SPM Local Packages statt Monolith** — bewusste Modularisierung, aber zirkulaere Abhaengigkeitsgefahr (FitnessUI haengt von FitnessStorage ab, was ungewoehnlich ist fuer ein UI-Package)
-6. **Custom JSON-File-Persistenz statt SwiftData/CoreData** — ermoeglicht einfaches Debugging aber verzichtet auf Indizes, Migrations, Undo, Lazy Loading
-7. **Kein Logging-Framework** — `print()` Statements statt strukturiertem Logging (OSLog/SwiftLog)
-8. **[String: Any] in Workout.exerciseData** — Flexible Erweiterbarkeit auf Kosten von Typsicherheit, ohne Schema-Validierung
+**Navigation.** `NavigationDestination` plus `AppRouter` (`Packages/FitnessExercise/…/AppRouter.swift`) own `NavigationPath` and mutations (`navigate`, `pop`, `popToRoot`, `replaceAll`, scene helpers). `FitnessAppApp` wires `NavigationStack` and `navigationDestination(for:)` to feature views. ViewModels generally do not push routes; views and chrome call the router.
 
----
+## Risk Inventory
 
-## Validierung (Phase 1F)
+- **Risk:** Orphan exercise and analytics files after workout deletion  
+  **Trigger:** User removes a `Workout` from the `UserDefaults`-backed list while matching `workout_*_*.json` and `analytics_*_*.json` files are never deleted.  
+  **Impact:** Storage growth, confusing restores/migrations, and stale data if IDs or paths are ever reused.  
+  **Affected files:** `Packages/FitnessStorage/Sources/FitnessStorage/WorkoutStorageService.swift`, `ExerciseStorageService.swift`, `AnalyticsStorageService.swift`
 
-Gegenprobe gegen die 5 groessten Files bestaetigt alle obigen Aussagen. Ergaenzungen:
+- **Risk:** Silent corruption or loss of `Workout.exerciseData`  
+  **Trigger:** JSON decode fails (substituted with `[:]`) or encode uses `try?` and drops the blob without surfacing an error.  
+  **Impact:** Opaque metadata loss; UI shows a workout shell with missing auxiliary payload.  
+  **Affected files:** `Packages/FitnessCore/Sources/FitnessCore/Workout.swift`, `Packages/FitnessStorage/Sources/FitnessStorage/WorkoutStorageService.swift`
 
-- **TotalAnalyticsViewModel.swift** (728 LOC): Enthaelt 4 eingebettete Data-Model-Structs (WorkoutDetailData, CategoryDetailData, ExerciseDetailData, TrainingRhythmDetailData) + 3 Helper-Structs. Diese koennten in eigene Dateien oder ins Core-Package extrahiert werden.
-- **AnalyticsView.swift** (627 LOC): Mischt Chart-Rendering, Overlay-Management und Goal-Setting in einer View. Die `#if os(iOS)` / `#else` Verzweigung im TextField ist redundant (gleicher Code in beiden Branches, Zeile 454-479).
-- **MuscleCategorySelectionView.swift** (626 LOC): Erstellt in `init()` DREI StateObjects und verdrahtet Closures — heavy init pattern. `MuscleCategorySelectionView` ist de facto der Main-Screen und traegt zu viel Verantwortung.
-- **ActiveSetViewModel.swift** (408 LOC): 30+ bridged accessors (Zeile 86-169) die nur Weiterleitungen an State-Structs sind. Boilerplate das mit `@Observable` / Macro eliminiert werden koennte.
-- **AnalyticsViewModel.swift** (547 LOC): Dupliziert die Weight-Increase-Berechnung die auch in `TotalAnalyticsViewModel` existiert (max-weight-per-day grouping pattern erscheint 4x im Projekt).
+- **Risk:** Duplicated workouts share analytics by `Exercise.id`  
+  **Trigger:** `WorkoutStorageService.duplicateWorkout` copies exercises with unchanged IDs into new per-workout files.  
+  **Impact:** `AnalyticsEntry` files keyed by `exerciseId` blend history across logically separate workouts.  
+  **Affected files:** `Packages/FitnessStorage/Sources/FitnessStorage/WorkoutStorageService.swift`, `ExerciseStorageService.swift`, `AnalyticsStorageService.swift`
 
----
+- **Risk:** Persistence failures appear as empty state, not recoverable errors  
+  **Trigger:** I/O or `UserDefaults` write failures caught internally; services `print` and return empty arrays or skip saves.  
+  **Impact:** User believes data is gone; no guided retry or diagnostics.  
+  **Affected files:** `Packages/FitnessStorage/Sources/FitnessStorage/WorkoutStorageService.swift`, `ExerciseStorageService.swift`, `AnalyticsStorageService.swift`
 
-## Quick-Check Template (Phase 2)
+- **Risk:** Low automated coverage on storage and non-training flows  
+  **Trigger:** Refactor to filenames, decoding, or `NavigationDestination` without new tests.  
+  **Impact:** Regressions ship unnoticed in data migration, routing, schedule, analytics, or shell tabs.  
+  **Affected files:** `FitnessAppTests/FitnessAppTests.swift`, `FitnessAppUITests/Tests/TrainingUITests.swift`, `FitnessAppUITests/Base/BaseTest.swift`; absence of tests under `Packages/FitnessCore`, `Packages/FitnessStorage`
 
-Fuer jeden kuenftigen Quick Check diesen Kontext als Basis nutzen. Fokus-Bereiche:
+## Implicit Decisions
 
-- Synchroner File-I/O bei neuen Features pruefen
-- Storage-Cleanup bei Delete-Operationen pruefen
-- currentExercise-Synchronisation bei Training-Flows pruefen
-- Duplizierte Berechnungslogik vermeiden
+- **Persistence:** `UserDefaults` for the workout catalog and current/default IDs; per-user JSON files in **Documents** for exercises and analytics; profile nickname via `@AppStorage` only—no SwiftData/Core Data stack.
+- **Modularity:** Journey-shaped SPM features (`FitnessExercise`, `FitnessTraining`, …) with `FitnessCore` + `FitnessStorage` as the domain/persistence hinge; `FitnessUI` centralizes `AppStyle` and shared chrome.
+- **Navigation ownership:** Global routing types (`AppRouter`, `NavigationDestination`) live in `FitnessExercise` while `FitnessAppApp.swift` hosts the `NavigationStack` wiring—shell vs. package boundary is a deliberate split (also noted as a possible future relocation under **Module Structure**).
+- **Reactivity:** Combine (`@Published`, `assign`, `sink`) and main-queue `DispatchQueue`/`TimerService` patterns over widespread `async`/`await`; shared `.shared` service hubs for storage and `SessionTrainingCache`.
+- **Testing stance:** Quality investment is concentrated in package unit tests (`FitnessAnalytics`, `FitnessExercise`, `FitnessTraining`) and one end-to-end training UI test, not in app-target units or persistence-focused suites.

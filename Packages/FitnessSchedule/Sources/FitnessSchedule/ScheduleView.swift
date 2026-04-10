@@ -2,11 +2,12 @@ import SwiftUI
 import FitnessCore
 import FitnessStorage
 import FitnessUI
+import Factory
 
 public struct ScheduleView: View {
-    @StateObject private var viewModel = ScheduleViewModel()
-    @ObservedObject private var workoutStorage = WorkoutStorageService.shared
-    @EnvironmentObject private var overlayState: UIOverlayState
+    @State private var viewModel = ScheduleViewModel()
+    @Injected(\.workoutStorage) private var workoutStorage
+    @Environment(UIOverlayState.self) private var overlayState
     @State private var selectedDate: Date = Date()
     @State private var currentMonth: Date = Date()
 

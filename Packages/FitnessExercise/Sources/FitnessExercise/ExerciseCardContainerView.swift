@@ -4,11 +4,11 @@ import FitnessCore
 import FitnessTraining
 
 public struct ExerciseCardContainerView: View {
-    @ObservedObject public var viewModel: ExerciseCardViewModel
+    public var viewModel: ExerciseCardViewModel
     public let onEdit: (Exercise, ExerciseEditMode) -> Void
     public let isEditable: Bool
-    @ObservedObject public var analyticsViewModel: AnalyticsViewModel
-    @ObservedObject public var activeSetViewModel: ActiveSetViewModel
+    public var analyticsViewModel: AnalyticsViewModel
+    public var activeSetViewModel: ActiveSetViewModel
     public let onStart: ((Exercise) -> Void)?
     public let onReset: ((Exercise) -> Void)?
     public let isActiveSetVisible: Bool

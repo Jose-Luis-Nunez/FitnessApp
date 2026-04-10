@@ -1,41 +1,51 @@
 import Foundation
-import Combine
+import Observation
 import FitnessCore
 import FitnessStorage
 import FitnessTraining
+import Factory
 
-public class MuscleCategorySelectionViewModel: ObservableObject {
-    @Published public var categories: [MuscleCategoryGroup] = []
+@Observable
+@MainActor
+public final class MuscleCategorySelectionViewModel {
+    public var categories: [MuscleCategoryGroup] = []
 
-    private let exerciseManagementService: ExerciseManagementService
-    private let workoutStorageService: WorkoutStorageService
-    private var cancellables = Set<AnyCancellable>()
+    @ObservationIgnored @Injected(\.exerciseManagement) private var exerciseManagementService
+    @ObservationIgnored @Injected(\.workoutStorage) private var workoutStorageService
 
-    @Published private var exerciseCounts: [MuscleCategoryGroup: (total: Int, active: Int)] = [:]
+    private var exerciseCounts: [MuscleCategoryGroup: (total: Int, active: Int)] = [:]
     private var cardViewModels: [UUID: ExerciseCardViewModel] = [:]
+    private var workoutObservationTask: Task<Void, Never>?
 
-    public init(
-        workoutStorageService: WorkoutStorageService = .shared,
-        exerciseManagementService: ExerciseManagementService = ExerciseManagementService()
-    ) {
-        self.workoutStorageService = workoutStorageService
-        self.exerciseManagementService = exerciseManagementService
+    public init() {
         updateExerciseCounts()
-
-        workoutStorageService.$currentWorkout
-            .sink { [weak self] currentWorkout in
-                self?.updateCategories(for: currentWorkout)
-                self?.updateExerciseCounts()
-            }
-            .store(in: &cancellables)
-
         updateCategories(for: workoutStorageService.currentWorkout)
+        startWorkoutObservation()
     }
+
+    private func startWorkoutObservation() {
+        workoutObservationTask?.cancel()
+        var lastWorkoutId: UUID? = workoutStorageService.currentWorkout?.id
+        workoutObservationTask = Task { [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                let current = self.workoutStorageService.currentWorkout
+                if current?.id != lastWorkoutId {
+                    lastWorkoutId = current?.id
+                    self.updateCategories(for: current)
+                    self.updateExerciseCounts()
+                }
+                try? await Task.sleep(for: .milliseconds(200))
+            }
+        }
+    }
+
+    @ObservationIgnored @Injected(\.sessionTrainingCache) private var sessionTrainingCache
 
     public func resetAllExercises() {
         guard workoutStorageService.currentWorkout != nil else { return }
 
-        for (_, activeSetVM) in SessionTrainingCache.shared.activeSetVMs {
+        for (_, activeSetVM) in sessionTrainingCache.activeSetVMs {
             activeSetVM.cancelActiveSet()
         }
 
@@ -56,7 +66,7 @@ public class MuscleCategorySelectionViewModel: ObservableObject {
     }
 
     public func hasActiveSetForCategory(_ group: MuscleCategoryGroup) -> Bool {
-        SessionTrainingCache.shared.activeSetVMs[group]?.currentExercise != nil
+        sessionTrainingCache.activeSetVMs[group]?.currentExercise != nil
     }
 
     private func updateCategories(for workout: Workout?) {

@@ -34,7 +34,7 @@ fileprivate struct ExerciseInfo {
 
 public struct CategoryTileView: View {
     public let group: MuscleCategoryGroup
-    @ObservedObject public var viewModel: MuscleCategorySelectionViewModel
+    public var viewModel: MuscleCategorySelectionViewModel
 
     public init(group: MuscleCategoryGroup, viewModel: MuscleCategorySelectionViewModel) {
         self.group = group

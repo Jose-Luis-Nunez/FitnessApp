@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryTesting.build/master.swiftdeps"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/checkouts/Factory/Sources/FactoryTesting/ContainerTrait.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryTesting.build/ContainerTrait.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryTesting.build/ContainerTrait.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryTesting.build/ContainerTrait~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryTesting.build/ContainerTrait.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FactoryTesting.build/ContainerTrait.dia"
+  }
+}

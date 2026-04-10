@@ -4,10 +4,10 @@ import FitnessCore
 import FitnessUI
 
 public struct InactiveCardView: View {
-    @ObservedObject public var viewModel: ExerciseCardViewModel
+    public var viewModel: ExerciseCardViewModel
     public let onEdit: (Exercise, ExerciseEditMode) -> Void
     public let isEditable: Bool
-    @ObservedObject public var analyticsViewModel: AnalyticsViewModel
+    public var analyticsViewModel: AnalyticsViewModel
     public let onReset: ((Exercise) -> Void)?
     public let isResetEnabled: Bool
 
@@ -64,10 +64,9 @@ public struct InactiveCardView: View {
             AnalyticsView(exercise: viewModel.exercise, viewModel: analyticsViewModel)
         }
         .onAppear { refreshSetProgress() }
-        .onReceive(
-            analyticsViewModel.analyticsDidUpdate
-                .filter { $0 == viewModel.exercise.id }
-        ) { _ in refreshSetProgress() }
+        .onChange(of: analyticsViewModel.lastUpdatedExerciseId) { _, newId in
+            if newId == viewModel.exercise.id { refreshSetProgress() }
+        }
     }
 }
 

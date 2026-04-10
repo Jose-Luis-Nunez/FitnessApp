@@ -1,11 +1,12 @@
 import Foundation
 import FitnessCore
 
+@MainActor
 public final class AnalyticsStorageService: AnalyticsStoring {
     private let fileManager: FileManager
     private let userId: String
 
-    public init(fileManager: FileManager = .default) {
+    nonisolated public init(fileManager: FileManager = .default) {
         self.fileManager = fileManager
         let defaults = UserDefaults.standard
         if let storedUserId = defaults.string(forKey: "userId") {

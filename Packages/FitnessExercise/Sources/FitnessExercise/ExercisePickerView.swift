@@ -6,7 +6,7 @@ import FitnessCore
 import FitnessUI
 
 public struct ExercisePickerView: View {
-    @ObservedObject public var formViewModel: ExerciseFormViewModel
+    @Bindable public var formViewModel: ExerciseFormViewModel
 
     public let title: String
     @Binding public var isPresented: Bool
@@ -16,7 +16,7 @@ public struct ExercisePickerView: View {
     public let repsRange: ClosedRange<Int>
     public let weightOptions: [String]
     public let setsRange: ClosedRange<Int>
-    @ObservedObject public var viewModel: MuscleCategoryViewModel
+    public var viewModel: MuscleCategoryViewModel
     public let editingExercise: Exercise?
 
     @State private var seatPart1: String = ""

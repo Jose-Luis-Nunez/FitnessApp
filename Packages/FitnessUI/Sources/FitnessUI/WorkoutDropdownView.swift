@@ -1,17 +1,16 @@
 import SwiftUI
 import FitnessStorage
+import Factory
 
 public struct WorkoutDropdownView: View {
-    @ObservedObject public var workoutStorage: WorkoutStorageService
-    @EnvironmentObject private var overlayState: UIOverlayState
+    @Injected(\.workoutStorage) private var workoutStorage
+    @Environment(UIOverlayState.self) private var overlayState
 
     public var titleFont: Font
 
     public init(
-        workoutStorage: WorkoutStorageService = .shared,
         titleFont: Font = AppStyle.Font.navigationHeadline
     ) {
-        self.workoutStorage = workoutStorage
         self.titleFont = titleFont
     }
 
