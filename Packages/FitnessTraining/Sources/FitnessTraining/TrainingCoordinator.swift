@@ -1,7 +1,6 @@
 import SwiftUI
 import Observation
 import FitnessCore
-import FitnessStorage
 import FitnessAnalytics
 import FitnessUI
 
@@ -49,19 +48,59 @@ public struct TrainingCallbacks {
 @Observable
 @MainActor
 public final class TrainingCoordinator {
-    public var activeSetViewModel: ActiveSetViewModel
-    public var currentExercise: Exercise?
-    public var isTrainingActive: Bool = false
+    public var activeSessions: [Exercise.ID: ActiveSetViewModel] = [:]
+    public var activeExercises: [Exercise.ID: Exercise] = [:]
+    public var focusedExerciseId: Exercise.ID?
     public var lastCompletedExercise: Exercise?
 
+    /// Backwards-compatible computed property: returns the focused session's VM,
+    /// falling back to a shared idle instance so callers never deal with nil.
+    public var activeSetViewModel: ActiveSetViewModel {
+        focusedSession ?? _idleViewModel
+    }
+
+    public var focusedSession: ActiveSetViewModel? {
+        guard let id = focusedExerciseId else { return nil }
+        return activeSessions[id]
+    }
+
+    public var currentExercise: Exercise? {
+        guard let id = focusedExerciseId else { return nil }
+        return activeExercises[id]
+    }
+
+    public var isTrainingActive: Bool {
+        focusedExerciseId != nil && activeSessions[focusedExerciseId!] != nil
+    }
+
+    public var hasActiveSessions: Bool {
+        !activeSessions.isEmpty
+    }
+
+    public func session(for exerciseId: Exercise.ID) -> ActiveSetViewModel? {
+        activeSessions[exerciseId]
+    }
+
+    public func isExerciseInProgress(_ exerciseId: Exercise.ID) -> Bool {
+        activeSessions[exerciseId] != nil
+    }
+
+    private let _idleViewModel = ActiveSetViewModel()
+
     public let analyticsViewModel: AnalyticsViewModel
-    private let findCategory: (Exercise) -> MuscleCategoryGroup?
+    let findCategory: (Exercise) -> MuscleCategoryGroup?
     private let onExerciseUpdate: @MainActor (Exercise, MuscleCategoryGroup) -> Void
     private let onExerciseReset: @MainActor (Exercise, MuscleCategoryGroup) -> Void
     private var _onAddExercise: @MainActor () -> Void
     private var _onResetAllExercises: @MainActor () -> Void
 
-    private var observationTask: Task<Void, Never>?
+    private let startTrainingUseCase: StartTrainingUseCase
+    private let completeSetUseCase: CompleteSetUseCase
+    private let finishExerciseUseCase: FinishExerciseUseCase
+    private let cancelTrainingUseCase: CancelTrainingUseCase
+    private let resetExerciseUseCase: ResetExerciseUseCase
+
+    private let sessionFactory: @MainActor () -> ActiveSetViewModel
 
     public init(
         findCategory: @escaping @MainActor (Exercise) -> MuscleCategoryGroup?,
@@ -69,20 +108,26 @@ public final class TrainingCoordinator {
         onExerciseReset: @escaping @MainActor (Exercise, MuscleCategoryGroup) -> Void,
         onAddExercise: @escaping @MainActor () -> Void = {},
         onResetAllExercises: @escaping @MainActor () -> Void = {},
-        activeSetViewModel: ActiveSetViewModel? = nil,
-        analyticsViewModel: AnalyticsViewModel = AnalyticsViewModel()
+        analyticsViewModel: AnalyticsViewModel = AnalyticsViewModel(),
+        startTrainingUseCase: StartTrainingUseCase = StartTrainingUseCase(),
+        completeSetUseCase: CompleteSetUseCase = CompleteSetUseCase(),
+        finishExerciseUseCase: FinishExerciseUseCase = FinishExerciseUseCase(),
+        cancelTrainingUseCase: CancelTrainingUseCase = CancelTrainingUseCase(),
+        resetExerciseUseCase: ResetExerciseUseCase = ResetExerciseUseCase(),
+        sessionFactory: @escaping @MainActor () -> ActiveSetViewModel = { ActiveSetViewModel() }
     ) {
         self.analyticsViewModel = analyticsViewModel
-        if let providedViewModel = activeSetViewModel {
-            self.activeSetViewModel = providedViewModel
-        } else {
-            self.activeSetViewModel = ActiveSetViewModel()
-        }
         self.findCategory = findCategory
         self.onExerciseUpdate = onExerciseUpdate
         self.onExerciseReset = onExerciseReset
         self._onAddExercise = onAddExercise
         self._onResetAllExercises = onResetAllExercises
+        self.startTrainingUseCase = startTrainingUseCase
+        self.completeSetUseCase = completeSetUseCase
+        self.finishExerciseUseCase = finishExerciseUseCase
+        self.cancelTrainingUseCase = cancelTrainingUseCase
+        self.resetExerciseUseCase = resetExerciseUseCase
+        self.sessionFactory = sessionFactory
     }
 
     /// Replaces the add-exercise callback. Only the currently visible view
@@ -99,120 +144,130 @@ public final class TrainingCoordinator {
     // MARK: - Training Actions
 
     public func startTraining(for exercise: Exercise) {
-        guard let category = findCategory(exercise) else {
+        guard let category = findCategory(exercise) else { return }
+
+        if let existingVM = activeSessions[exercise.id] {
+            focusedExerciseId = exercise.id
+            existingVM.onCoordinatorUpdateNeeded = { }
             return
         }
 
-        activeSetViewModel.onCoordinatorUpdateNeeded = { }
+        let vm = sessionFactory()
+        vm.onCoordinatorUpdateNeeded = { }
 
-        setupActiveSetViewModelObserver()
+        let result = startTrainingUseCase.execute(
+            exercise: exercise,
+            category: category,
+            activeSetViewModel: vm,
+            finishPreviousTraining: nil
+        )
 
-        let isSameExercise = activeSetViewModel.currentExercise?.id == exercise.id
-        let hasTrainingData = activeSetViewModel.isSetInProgress ||
-            activeSetViewModel.isLastSetCompleted ||
-            !activeSetViewModel.setProgress.isEmpty
-        let hasExistingSession = isSameExercise && hasTrainingData
+        _ = result
 
-        if hasExistingSession {
-            currentExercise = exercise
-            isTrainingActive = true
-        } else {
-            activeSetViewModel.startSet(for: exercise, category: category)
-            currentExercise = exercise
-            isTrainingActive = true
-        }
+        activeSessions[exercise.id] = vm
+        activeExercises[exercise.id] = exercise
+        focusedExerciseId = exercise.id
     }
 
     public func completeSet() {
-        guard let exercise = activeSetViewModel.currentExercise else {
-            return
-        }
-
-        guard activeSetViewModel.currentSet < exercise.sets && !activeSetViewModel.isLastSetCompleted else {
-            return
-        }
-
-        activeSetViewModel.stopTimer()
-
-        let isLastSet = (activeSetViewModel.currentSet + 1) >= exercise.sets
-
-        activeSetViewModel.completeCurrentSet()
-
-        if !isLastSet {
-            activeSetViewModel.startNextSet()
-        }
+        completeSetUseCase.execute(activeSetViewModel: activeSetViewModel)
     }
 
     public func handleQuickDone() {
-        guard let exercise = activeSetViewModel.currentExercise,
+        let vm = activeSetViewModel
+        guard let exercise = vm.currentExercise,
               let category = findCategory(exercise) else { return }
 
-        activeSetViewModel.startQuickDone(for: exercise, category: category)
+        vm.startQuickDone(for: exercise, category: category)
     }
 
     public func cancelTraining() {
-        activeSetViewModel.cancelActiveSet()
-        currentExercise = nil
-        isTrainingActive = false
+        guard let id = focusedExerciseId else { return }
+        cancelTrainingUseCase.execute(activeSetViewModel: activeSetViewModel)
+        activeSessions.removeValue(forKey: id)
+        activeExercises.removeValue(forKey: id)
+        focusedExerciseId = nil
+    }
+
+    public func cancelTraining(for exerciseId: Exercise.ID) {
+        guard let vm = activeSessions[exerciseId] else { return }
+        cancelTrainingUseCase.execute(activeSetViewModel: vm)
+        activeSessions.removeValue(forKey: exerciseId)
+        activeExercises.removeValue(forKey: exerciseId)
+        if focusedExerciseId == exerciseId {
+            focusedExerciseId = nil
+        }
     }
 
     public func resetExercise() {
-        activeSetViewModel.stopTimer()
-
-        guard let exercise = activeSetViewModel.currentExercise,
-              let category = findCategory(exercise) else { return }
-
-        onExerciseReset(exercise, category)
-        activeSetViewModel.resetProgress()
-
-        currentExercise = nil
-        isTrainingActive = false
+        guard let id = focusedExerciseId else { return }
+        resetExerciseUseCase.execute(
+            activeSetViewModel: activeSetViewModel,
+            findCategory: findCategory,
+            onExerciseReset: onExerciseReset
+        )
+        activeSessions.removeValue(forKey: id)
+        activeExercises.removeValue(forKey: id)
+        focusedExerciseId = nil
     }
 
     public func editLess() {
-        activeSetViewModel.stopTimer()
+        let vm = activeSetViewModel
+        vm.stopTimer()
 
-        let editIndex = activeSetViewModel.activeSetIndex
+        let editIndex = vm.activeSetIndex
 
-        guard editIndex >= 0 && editIndex < activeSetViewModel.setProgress.count else {
+        guard editIndex >= 0 && editIndex < vm.setProgress.count else {
             return
         }
 
-        activeSetViewModel.startEditingSet(index: editIndex, mode: .less)
+        vm.startEditingSet(index: editIndex, mode: .less)
     }
 
     public func editMore() {
-        activeSetViewModel.stopTimer()
+        let vm = activeSetViewModel
+        vm.stopTimer()
 
-        let editIndex = activeSetViewModel.activeSetIndex
+        let editIndex = vm.activeSetIndex
 
-        guard editIndex >= 0 && editIndex < activeSetViewModel.setProgress.count else {
+        guard editIndex >= 0 && editIndex < vm.setProgress.count else {
             return
         }
 
-        activeSetViewModel.startEditingSet(index: editIndex, mode: .more)
+        vm.startEditingSet(index: editIndex, mode: .more)
     }
 
     public func finishExercise() {
-        activeSetViewModel.stopTimer()
-
-        guard let exercise = activeSetViewModel.currentExercise,
-              let category = findCategory(exercise) else { return }
-
-        saveAnalytics()
-
-        if activeSetViewModel.isLastSetCompleted {
-            var updatedExercise = exercise
-            updatedExercise.isCompleted = true
-            onExerciseUpdate(updatedExercise, category)
-            lastCompletedExercise = updatedExercise
+        guard let id = focusedExerciseId else { return }
+        let vm = activeSetViewModel
+        if let completed = finishExerciseUseCase.execute(
+            activeSetViewModel: vm,
+            analyticsViewModel: analyticsViewModel,
+            findCategory: findCategory,
+            onExerciseUpdate: onExerciseUpdate
+        ) {
+            lastCompletedExercise = completed
         }
+        activeSessions.removeValue(forKey: id)
+        activeExercises.removeValue(forKey: id)
+        focusedExerciseId = nil
+    }
 
-        activeSetViewModel.finishExercise()
-        activeSetViewModel.quickDoneModeActive = false
-
-        currentExercise = nil
-        isTrainingActive = false
+    public func finishExercise(for exerciseId: Exercise.ID) {
+        guard let vm = activeSessions[exerciseId] else { return }
+        if let completed = finishExerciseUseCase.execute(
+            activeSetViewModel: vm,
+            analyticsViewModel: analyticsViewModel,
+            findCategory: findCategory,
+            onExerciseUpdate: onExerciseUpdate
+        ) {
+            lastCompletedExercise = completed
+        }
+        activeSessions.removeValue(forKey: exerciseId)
+        activeExercises.removeValue(forKey: exerciseId)
+        if focusedExerciseId == exerciseId {
+            focusedExerciseId = nil
+        }
     }
 
     // MARK: - BottomActionBar Integration
@@ -274,49 +329,19 @@ public final class TrainingCoordinator {
         )
     }
 
-    // MARK: - Analytics
-
-    private func saveAnalytics() {
-        guard let exercise = activeSetViewModel.currentExercise else {
-            return
-        }
-        analyticsViewModel.saveAnalytics(
-            exerciseId: exercise.id,
-            setProgress: activeSetViewModel.setProgress
-        )
-    }
-
     // MARK: - Current Exercise Management
 
     public func setCurrentExercise(_ exercise: Exercise?) {
-        currentExercise = exercise
-        isTrainingActive = exercise != nil
-        activeSetViewModel.currentExercise = exercise
-    }
-
-    // MARK: - Private Helpers
-
-    private func setupActiveSetViewModelObserver() {
-        observationTask?.cancel()
-        let vm = activeSetViewModel
-        var lastExerciseId: UUID? = vm.tracking.currentExercise?.id
-        observationTask = Task { [weak self] in
-            while !Task.isCancelled {
-                await withCheckedContinuation { continuation in
-                    withObservationTracking {
-                        _ = vm.currentExercise
-                    } onChange: {
-                        continuation.resume()
-                    }
-                }
-                guard let self, !Task.isCancelled else { return }
-                let newExercise = vm.tracking.currentExercise
-                if newExercise?.id != lastExerciseId {
-                    lastExerciseId = newExercise?.id
-                    self.currentExercise = newExercise
-                    self.isTrainingActive = newExercise != nil
-                }
+        if let exercise {
+            focusedExerciseId = exercise.id
+            activeExercises[exercise.id] = exercise
+            if activeSessions[exercise.id] == nil {
+                let vm = sessionFactory()
+                vm.currentExercise = exercise
+                activeSessions[exercise.id] = vm
             }
+        } else {
+            focusedExerciseId = nil
         }
     }
 }

@@ -858,6 +858,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/TotalAnalyticsStoring.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/WeightPhase.swift"
         },
         {
@@ -894,6 +898,7 @@
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessCore.build/MuscleCategoryGroup.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessCore.build/SetEditingMode.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessCore.build/SetProgress.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessCore.build/TotalAnalyticsStoring.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessCore.build/WeightPhase.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessCore.build/Workout.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessCore.build/WorkoutStoring.swift.o"
@@ -981,6 +986,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessCore.build/TotalAnalyticsStoring.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessCore.build/WeightPhase.swift.o"
         },
         {
@@ -1007,6 +1016,7 @@
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/MuscleCategoryGroup.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/SetEditingMode.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/SetProgress.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/TotalAnalyticsStoring.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/WeightPhase.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/Workout.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/WorkoutStoring.swift"
@@ -1110,11 +1120,31 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/DataMigrationService.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseManagementService.swift"
         },
         {
           "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseStorageService.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/AnalyticsEntryModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/ExerciseModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/SetProgressModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/WorkoutModel.swift"
         },
         {
           "kind" : "file",
@@ -1158,8 +1188,13 @@
       "moduleOutputPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/Modules/FitnessStorage.swiftmodule",
       "objects" : [
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/AnalyticsStorageService.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/DataMigrationService.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseManagementService.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseStorageService.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/AnalyticsEntryModel.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseModel.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/SetProgressModel.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/WorkoutModel.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/StorageContainer.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/TotalAnalyticsStorageService.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/DeleteWorkoutUseCase.swift.o",
@@ -1217,11 +1252,31 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/DataMigrationService.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseManagementService.swift.o"
         },
         {
           "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseStorageService.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/AnalyticsEntryModel.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseModel.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/SetProgressModel.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/WorkoutModel.swift.o"
         },
         {
           "kind" : "file",
@@ -1251,8 +1306,13 @@
       "prepareForIndexing" : false,
       "sources" : [
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/AnalyticsStorageService.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/DataMigrationService.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseManagementService.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseStorageService.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/AnalyticsEntryModel.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/ExerciseModel.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/SetProgressModel.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/WorkoutModel.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/StorageContainer.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/TotalAnalyticsStorageService.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/UseCases/DeleteWorkoutUseCase.swift",
@@ -1317,6 +1377,26 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/CancelTrainingUseCase.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/CompleteSetUseCase.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/FinishExerciseUseCase.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/ResetExerciseUseCase.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/StartTrainingUseCase.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
         },
         {
@@ -1359,7 +1439,12 @@
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/TrainingCoordinatorCache.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/TrainingGlassEffectCompat.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/TrainingPickerComponent.swift.o",
-        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/TrainingSessionComponent.swift.o"
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/TrainingSessionComponent.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/CancelTrainingUseCase.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/CompleteSetUseCase.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/FinishExerciseUseCase.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/ResetExerciseUseCase.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/StartTrainingUseCase.swift.o"
       ],
       "otherArguments" : [
         "-target",
@@ -1456,6 +1541,26 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/CancelTrainingUseCase.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/CompleteSetUseCase.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/FinishExerciseUseCase.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/ResetExerciseUseCase.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/StartTrainingUseCase.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/Modules/FitnessTraining.swiftmodule"
         }
       ],
@@ -1472,7 +1577,12 @@
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingCoordinatorCache.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingGlassEffectCompat.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingPickerComponent.swift",
-        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingSessionComponent.swift"
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingSessionComponent.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/CancelTrainingUseCase.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/CompleteSetUseCase.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/FinishExerciseUseCase.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/ResetExerciseUseCase.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/StartTrainingUseCase.swift"
       ],
       "tempsPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build",
       "wholeModuleOptimization" : false
@@ -1587,7 +1697,27 @@
       "inputs" : [
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/CancelTrainingUseCaseTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/CompleteSetUseCaseTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/FinishExerciseUseCaseTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/ResetExerciseUseCaseTests.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/SessionTrainingCacheTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/StartTrainingUseCaseTests.swift"
         },
         {
           "kind" : "file",
@@ -1634,7 +1764,12 @@
       "moduleName" : "FitnessTrainingTests",
       "moduleOutputPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/Modules/FitnessTrainingTests.swiftmodule",
       "objects" : [
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/CancelTrainingUseCaseTests.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/CompleteSetUseCaseTests.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/FinishExerciseUseCaseTests.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/ResetExerciseUseCaseTests.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/SessionTrainingCacheTests.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/StartTrainingUseCaseTests.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/TrainingCoordinatorCacheTests.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/TrainingCoordinatorTests.swift.o"
       ],
@@ -1694,7 +1829,27 @@
       "outputs" : [
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/CancelTrainingUseCaseTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/CompleteSetUseCaseTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/FinishExerciseUseCaseTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/ResetExerciseUseCaseTests.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/SessionTrainingCacheTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/StartTrainingUseCaseTests.swift.o"
         },
         {
           "kind" : "file",
@@ -1711,7 +1866,12 @@
       ],
       "prepareForIndexing" : false,
       "sources" : [
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/CancelTrainingUseCaseTests.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/CompleteSetUseCaseTests.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/FinishExerciseUseCaseTests.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/ResetExerciseUseCaseTests.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/SessionTrainingCacheTests.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/StartTrainingUseCaseTests.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/TrainingCoordinatorCacheTests.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/TrainingCoordinatorTests.swift"
       ],
@@ -14332,6 +14492,7 @@
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/MuscleCategoryGroup.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/SetEditingMode.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/SetProgress.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/TotalAnalyticsStoring.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/WeightPhase.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/Workout.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/WorkoutStoring.swift",
@@ -14443,8 +14604,13 @@
       "fitnessstorage",
       "-c",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/AnalyticsStorageService.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/DataMigrationService.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseManagementService.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseStorageService.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/AnalyticsEntryModel.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/ExerciseModel.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/SetProgressModel.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/WorkoutModel.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/StorageContainer.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/TotalAnalyticsStorageService.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/UseCases/DeleteWorkoutUseCase.swift",
@@ -14515,6 +14681,11 @@
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingGlassEffectCompat.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingPickerComponent.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingSessionComponent.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/CancelTrainingUseCase.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/CompleteSetUseCase.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/FinishExerciseUseCase.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/ResetExerciseUseCase.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/StartTrainingUseCase.swift",
       "-I",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/Modules",
       "-target",
@@ -14632,7 +14803,12 @@
       "-package-name",
       "fitnesstraining",
       "-c",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/CancelTrainingUseCaseTests.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/CompleteSetUseCaseTests.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/FinishExerciseUseCaseTests.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/ResetExerciseUseCaseTests.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/SessionTrainingCacheTests.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/StartTrainingUseCaseTests.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/TrainingCoordinatorCacheTests.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/TrainingCoordinatorTests.swift",
       "-I",
@@ -18417,6 +18593,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/TotalAnalyticsStoring.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/WeightPhase.swift"
         },
         {
@@ -18457,11 +18637,31 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/DataMigrationService.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseManagementService.swift"
         },
         {
           "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseStorageService.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/AnalyticsEntryModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/ExerciseModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/SetProgressModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/WorkoutModel.swift"
         },
         {
           "kind" : "file",
@@ -18540,6 +18740,26 @@
         {
           "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingSessionComponent.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/CancelTrainingUseCase.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/CompleteSetUseCase.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/FinishExerciseUseCase.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/ResetExerciseUseCase.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/StartTrainingUseCase.swift"
         }
       ],
       "outputFilePath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/sources"
@@ -18719,6 +18939,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessCore.build/TotalAnalyticsStoring.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessCore.build/WeightPhase.swift.o"
         },
         {
@@ -18735,7 +18959,15 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/AnalyticsEntryModel.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/AnalyticsStorageService.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/DataMigrationService.swift.o"
         },
         {
           "kind" : "file",
@@ -18751,7 +18983,15 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseModel.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseStorageService.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/SetProgressModel.swift.o"
         },
         {
           "kind" : "file",
@@ -18760,6 +19000,10 @@
         {
           "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/TotalAnalyticsStorageService.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessStorage.build/WorkoutModel.swift.o"
         },
         {
           "kind" : "file",
@@ -18779,11 +19023,31 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/CancelTrainingUseCase.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/CompleteSetUseCase.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/FinishExerciseUseCase.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/ResetExerciseUseCase.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/SessionTrainingCache.swift.o"
         },
         {
           "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/SimpleActiveSetView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTraining.build/StartTrainingUseCase.swift.o"
         },
         {
           "kind" : "file",
@@ -18819,7 +19083,27 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/CancelTrainingUseCaseTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/CompleteSetUseCaseTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/FinishExerciseUseCaseTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/ResetExerciseUseCaseTests.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/SessionTrainingCacheTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/StartTrainingUseCaseTests.swift.o"
         },
         {
           "kind" : "file",
@@ -19409,7 +19693,27 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/CancelTrainingUseCaseTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/CompleteSetUseCaseTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/FinishExerciseUseCaseTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/ResetExerciseUseCaseTests.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/SessionTrainingCacheTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/StartTrainingUseCaseTests.swift"
         },
         {
           "kind" : "file",

@@ -170,11 +170,11 @@ struct TrainingView: View {
         let targetCategory = trainingCoordinator.activeSetViewModel.originalCategory ?? category
         overlayState.isCancellingTraining = true
         overlayState.showTrainingMiniMenu = false
+
+        trainingCoordinator.cancelTraining()
         router.replaceAll(with: [.home, .muscleCategory(targetCategory)])
 
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(100))
-            trainingCoordinator.cancelTraining()
             try? await Task.sleep(for: .milliseconds(200))
             overlayState.isCancellingTraining = false
         }

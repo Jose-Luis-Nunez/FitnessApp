@@ -65,6 +65,13 @@
     "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessCore.build/SetProgress.swiftdeps",
     "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessCore.build/SetProgress.dia"
   },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/TotalAnalyticsStoring.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessCore.build/TotalAnalyticsStoring.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessCore.build/TotalAnalyticsStoring.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessCore.build/TotalAnalyticsStoring~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessCore.build/TotalAnalyticsStoring.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessCore.build/TotalAnalyticsStoring.dia"
+  },
   "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/WeightPhase.swift": {
     "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessCore.build/WeightPhase.d",
     "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessCore.build/WeightPhase.swift.o",

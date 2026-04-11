@@ -20,6 +20,7 @@ public struct IdleActiveCardView: View {
     public let onEdit: (Exercise, ExerciseEditMode) -> Void
     public let isEditable: Bool
     public let onStart: ((Exercise) -> Void)?
+    public let isInProgress: Bool
 
     @State private var analyticsSheetDate: AnalyticsSheetDate?
     @State private var isExpanded = false
@@ -31,13 +32,15 @@ public struct IdleActiveCardView: View {
         analyticsViewModel: AnalyticsViewModel,
         onEdit: @escaping (Exercise, ExerciseEditMode) -> Void,
         isEditable: Bool,
-        onStart: ((Exercise) -> Void)?
+        onStart: ((Exercise) -> Void)?,
+        isInProgress: Bool = false
     ) {
         self.viewModel = viewModel
         self.analyticsViewModel = analyticsViewModel
         self.onEdit = onEdit
         self.isEditable = isEditable
         self.onStart = onStart
+        self.isInProgress = isInProgress
     }
 
     private struct AnalyticsSheetDate: Identifiable {
@@ -271,14 +274,14 @@ private extension IdleActiveCardView {
             Button(action: { onStart(viewModel.exercise) }) {
                 ZStack {
                     Circle()
-                        .fill(AppStyle.Color.greenGlow)
+                        .fill(isInProgress ? AppStyle.Color.white.opacity(0.15) : AppStyle.Color.greenGlow)
                         .frame(width: AppStyle.Layout.playButtonSize, height: AppStyle.Layout.playButtonSize)
 
-                    Image(systemName: "play.fill")
+                    Image(systemName: isInProgress ? "figure.run" : "play.fill")
                         .resizable()
                         .scaledToFit()
                         .frame(width: AppStyle.Layout.playIconSize, height: AppStyle.Layout.playIconSize)
-                        .foregroundColor(AppStyle.Color.exerciseCardBackground)
+                        .foregroundColor(isInProgress ? AppStyle.Color.greenGlow : AppStyle.Color.exerciseCardBackground)
                 }
             }
             .accessibilityIdentifier(MuscleCategoryIDs.startExercise)

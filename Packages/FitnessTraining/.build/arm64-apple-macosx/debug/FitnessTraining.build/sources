@@ -10,3 +10,8 @@
 /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingGlassEffectCompat.swift
 /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingPickerComponent.swift
 /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/TrainingSessionComponent.swift
+/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/CancelTrainingUseCase.swift
+/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/CompleteSetUseCase.swift
+/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/FinishExerciseUseCase.swift
+/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/ResetExerciseUseCase.swift
+/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Sources/FitnessTraining/UseCases/StartTrainingUseCase.swift

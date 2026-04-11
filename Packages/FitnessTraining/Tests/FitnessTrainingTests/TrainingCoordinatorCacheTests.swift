@@ -27,14 +27,6 @@ struct TrainingCoordinatorCacheTests {
         #expect(arms !== chest)
     }
 
-    @Test func coordinatorUsesSharedActiveSetViewModel() {
-        let cache = TrainingCoordinatorCache()
-        let sessionCache = Container.shared.sessionTrainingCache()
-        let expectedVM = sessionCache.viewModel(for: .legs)
-        let coordinator = cache.coordinator(for: .legs)
-        #expect(coordinator.activeSetViewModel === expectedVM)
-    }
-
     @Test func activeCoordinatorReturnsNilWhenNoTraining() {
         let cache = TrainingCoordinatorCache()
         _ = cache.coordinator(for: .arms)

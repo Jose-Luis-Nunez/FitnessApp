@@ -114,7 +114,7 @@ struct FitnessAppApp: App {
                         if overlayState.isCancellingTraining {
                             return
                         }
-                        router.replaceAll(with: [.home])
+                        router.pop()
                     } : nil
                 )
                 .zIndex((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu) ? 0 : 1)

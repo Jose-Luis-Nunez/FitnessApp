@@ -103,7 +103,7 @@ public final class MuscleCategorySelectionViewModel {
     }
 
     public func hasActiveSetForCategory(_ group: MuscleCategoryGroup) -> Bool {
-        sessionTrainingCache.activeSetVMs[group]?.currentExercise != nil
+        coordinatorCache.coordinator(for: group).hasActiveSessions
     }
 
     private func updateCategories(for workout: Workout?) {

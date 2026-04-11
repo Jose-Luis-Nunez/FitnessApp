@@ -1,40 +1,34 @@
 ---
 description: >-
-  Automatically run post-change validation after large edits. Triggers when
-  editing Swift files to remind the agent to validate after refactoring,
-  feature additions/deletions, or multi-file changes.
-globs: "**/*.swift"
-alwaysApply: false
+  Documents the enforcement stack for post-change validation.
+  The actual enforcement happens via hooks, not this rule.
+alwaysApply: true
 ---
 
-# Automatic Post-Change Validation
+# Post-Change Validation — Enforcement Stack
 
-You MUST validate changes **before** reporting done to the user after any of these tasks:
+Validation is enforced by **three layers** — not by this rule alone.
 
-- Refactoring (rename, extract, move, inline, delete) touching 2+ files
-- Adding or removing a feature, view, service, model, protocol, cache, or coordinator
-- Changing a service API (method signature, return type, parameters)
-- Deleting files or folders
-- Adding/removing enum cases
-- Modifying shared state, reactive observation patterns, or ViewModel dependency injection
+## Layer 1: This Rule (L2 — Advisory)
 
-Skip validation only for trivial changes (single-line fix, comment edit, token swap).
+When you change 2+ Swift files in a non-trivial way (refactoring, new features, service changes, bug fixes touching coordinators/shared state), run the `post-change-validation` skill before reporting done. Write a stamp to `.cursor/hooks/state/validation-stamp.md`.
 
-## How to Run
+Skip for trivial changes (single-line fix, comment, token swap).
 
-The project has three custom subagents in `.cursor/agents/` that handle validation automatically:
+## Layer 2: Stop Hook — Grind Loop (L5 — Enforced)
 
-- **`style-auditor`** — checks AppStyle token usage (readonly, runs on changed .swift files)
-- **`docs-sync-agent`** — updates architecture.md when structure changes
-- **`post-change-validator`** — checks dead code, missed reuse, referential integrity, **state propagation**, and **architecture quality** (readonly, background)
+The `stop` hook (`.cursor/hooks/post-task-check.sh`) checks `git diff` for Swift changes and looks for a validation artifact. If missing, it sends you back with a `followup_message` up to 3 times. You cannot finish until validation runs or the cap is hit.
 
-If the subagents are not triggered automatically, delegate to them explicitly or fall back to the `post-change-validation` skill manually:
+The hook checks for: `.cursor/hooks/state/validation-stamp.md` (< 10 min old) OR validation markers in your output.
 
-1. Identify changed files via `git diff --name-only` or from the edits you just made
-2. Follow the full checklist in the `post-change-validation` skill
-3. Report findings inline — do NOT ask the user whether to validate, just do it
-4. You MUST fix all findings before reporting done (or flag items that need user decision)
-5. You MUST also verify that `architecture.md` was updated if the change added/removed features, services, models, navigation destinations, or shared components
-6. When refactoring `ObservableObject` ViewModels or Coordinators, also follow the `post-refactoring-checklist` rule for state propagation verification
-7. When the change involves services, protocols, caches, coordinators, shared state, or reactive observation, also run **Section 7 (Architecture Quality)** from the `post-change-validation` skill
+## Layer 3: Pre-Commit Hook (L4 — Blocking)
 
+`.git/hooks/pre-commit` blocks commits when 2+ Swift files are staged without a recent validation report. Error messages use RULE/VIOLATION/FIX format — read them and self-correct.
+
+## How to Validate
+
+```
+Task(subagent_type: "post-change-validator", prompt: "Validate changes. Files: <list>.")
+```
+
+Or follow the `post-change-validation` skill manually. Write a stamp to `.cursor/hooks/state/validation-stamp.md`.

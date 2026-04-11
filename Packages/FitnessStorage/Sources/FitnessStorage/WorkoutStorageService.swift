@@ -20,9 +20,10 @@ public final class WorkoutStorageService: WorkoutStoring {
     @ObservationIgnored
     private let defaultWorkoutKey = "default_workout_id"
     @ObservationIgnored
-    private lazy var exerciseStorage: ExerciseStoring = Container.shared.exerciseStorage()
+    private let exerciseStorage: ExerciseStoring
 
-    public init(defaults: UserDefaults = .standard) {
+    public init(defaults: UserDefaults = .standard, exerciseStorage: ExerciseStoring? = nil) {
+        self.exerciseStorage = exerciseStorage ?? Container.shared.exerciseStorage()
         let container = Container.shared.modelContainer()
         self.context = ModelContext(container)
         self.context.autosaveEnabled = true

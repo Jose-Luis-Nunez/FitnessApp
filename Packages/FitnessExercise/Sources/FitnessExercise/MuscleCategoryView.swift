@@ -38,10 +38,6 @@ public struct MuscleCategoryView: View {
 
     private var bottomListPadding: CGFloat {
         if formViewModel.showForm { return 340 }
-        if trainingCoordinator.activeSetViewModel.isEditing { return 240 }
-        let hasActiveTraining = trainingCoordinator.activeSetViewModel.isSetInProgress
-            || trainingCoordinator.activeSetViewModel.currentExercise != nil
-        if hasActiveTraining { return safeAreaBottomInset + 100 }
         return safeAreaBottomInset + 40
     }
 
@@ -67,35 +63,11 @@ public struct MuscleCategoryView: View {
                 ScrollView {
                     LazyVStack(spacing: 4) {
                         exerciseListSection
-
-                        TrainingSessionComponent(
-                            coordinator: trainingCoordinator,
-                            onEdit: { exercise, mode in
-                                withAnimation {
-                                    formViewModel.loadExercise(exercise, category: group)
-                                    formViewModel.editMode = mode
-                                    formViewModel.toggleForm()
-                                }
-                            },
-                            onReset: { exercise in
-                                viewModel.resetExercise(exercise)
-                            },
-                            analyticsViewModel: analyticsViewModel
-                        )
                     }
                     .padding(.bottom, bottomListPadding)
                 }
                 .offset(y: -10)
             }
-
-            TrainingActionBarComponent(
-                coordinator: trainingCoordinator,
-                exercises: viewModel.exercises,
-                hasActiveExercise: viewModel.hasActiveExercise
-            )
-            .padding(.bottom, safeAreaBottomInset + 12)
-
-            TrainingPickerComponent(coordinator: trainingCoordinator)
 
             if formViewModel.showForm {
                 Color.clear.onAppear { overlayState.isEditingSheetVisible = true }
@@ -116,6 +88,9 @@ public struct MuscleCategoryView: View {
         .onAppear {
             viewModel.refreshExercises()
         }
+        .onChange(of: trainingCoordinator.activeSessions.count) {
+            viewModel.refreshExercises()
+        }
         .overlay(miniMenuOverlay)
         .alert("Übungen zurücksetzen?", isPresented: $viewModel.showResetConfirmation) {
             Button("Zurücksetzen", role: .destructive) {
@@ -131,7 +106,8 @@ public struct MuscleCategoryView: View {
         exercise: Exercise,
         isEditable: Bool,
         isActiveSetVisible: Bool,
-        isResetEnabled: Bool
+        isResetEnabled: Bool,
+        isInProgress: Bool = false
     ) -> some View {
         ExerciseCardContainerView(
             viewModel: viewModel.cardViewModel(for: exercise),
@@ -152,7 +128,8 @@ public struct MuscleCategoryView: View {
                 viewModel.resetExercise(selectedExercise)
             },
             isActiveSetVisible: isActiveSetVisible,
-            isResetEnabled: isResetEnabled
+            isResetEnabled: isResetEnabled,
+            isInProgress: isInProgress
         )
         .frame(maxWidth: .infinity)
         .padding(.vertical, 6)
@@ -161,38 +138,38 @@ public struct MuscleCategoryView: View {
 
     @ViewBuilder
     private var exerciseListSection: some View {
-        let isActiveSetVisible = trainingCoordinator.currentExercise != nil
+        let activeIds = Set(trainingCoordinator.activeSessions.keys)
 
-        if isActiveSetVisible {
-            if let exercise = trainingCoordinator.currentExercise {
-                makeCardContainer(
-                    exercise: exercise,
-                    isEditable: !trainingCoordinator.activeSetViewModel.isSetInProgress,
-                    isActiveSetVisible: true,
-                    isResetEnabled: exercise.isCompleted
-                )
-            }
-        } else {
-            let incompleteExercises = viewModel.exercises.filter { !$0.isCompleted }
-            let completedExercises = viewModel.exercises.filter { $0.isCompleted }
+        let inProgressExercises = viewModel.exercises.filter { activeIds.contains($0.id) }
+        let incompleteExercises = viewModel.exercises.filter { !$0.isCompleted && !activeIds.contains($0.id) }
+        let completedExercises = viewModel.exercises.filter { $0.isCompleted && !activeIds.contains($0.id) }
 
-            ForEach(incompleteExercises, id: \.id) { exercise in
-                makeCardContainer(
-                    exercise: exercise,
-                    isEditable: true,
-                    isActiveSetVisible: false,
-                    isResetEnabled: exercise.isCompleted
-                )
-            }
+        ForEach(inProgressExercises, id: \.id) { exercise in
+            makeCardContainer(
+                exercise: exercise,
+                isEditable: true,
+                isActiveSetVisible: false,
+                isResetEnabled: exercise.isCompleted,
+                isInProgress: true
+            )
+        }
 
-            ForEach(completedExercises, id: \.id) { exercise in
-                makeCardContainer(
-                    exercise: exercise,
-                    isEditable: true,
-                    isActiveSetVisible: false,
-                    isResetEnabled: exercise.isCompleted
-                )
-            }
+        ForEach(incompleteExercises, id: \.id) { exercise in
+            makeCardContainer(
+                exercise: exercise,
+                isEditable: true,
+                isActiveSetVisible: false,
+                isResetEnabled: exercise.isCompleted
+            )
+        }
+
+        ForEach(completedExercises, id: \.id) { exercise in
+            makeCardContainer(
+                exercise: exercise,
+                isEditable: true,
+                isActiveSetVisible: false,
+                isResetEnabled: exercise.isCompleted
+            )
         }
     }
 
@@ -294,14 +271,9 @@ private extension MuscleCategoryView {
 
                                 if viewModel.showCancel {
                                     items.append(MiniActionMenuItem(icon: "xmark", title: "Cancel", isDestructive: false) { [router, overlayState] in
-                                        trainingCoordinator.activeSetViewModel.cancelActiveSet()
-
-                                        let targetCategory = trainingCoordinator.activeSetViewModel.originalCategory ?? group
-                                        if targetCategory != group {
-                                            Task { @MainActor in
-                                                try? await Task.sleep(for: .milliseconds(100))
-                                                router.navigate(to: .muscleCategory(targetCategory))
-                                            }
+                                        let activeIds = Array(trainingCoordinator.activeSessions.keys)
+                                        for id in activeIds {
+                                            trainingCoordinator.cancelTraining(for: id)
                                         }
                                         overlayState.showCategoryMiniMenu = false
                                     })

@@ -19,20 +19,19 @@ private final class MockCoordinatorCache: TrainingCoordinatorCaching {
         let coordinator = TrainingCoordinator(
             findCategory: { _ in group },
             onExerciseUpdate: { _, _ in },
-            onExerciseReset: { _, _ in },
-            activeSetViewModel: ActiveSetViewModel()
+            onExerciseReset: { _, _ in }
         )
         coordinators[group] = coordinator
         return coordinator
     }
 
     var activeCoordinator: TrainingCoordinator? {
-        coordinators.values.first { $0.isTrainingActive }
+        coordinators.values.first { $0.hasActiveSessions }
     }
 
     func findCoordinator(for exercise: Exercise) -> (TrainingCoordinator, MuscleCategoryGroup)? {
         for (group, coordinator) in coordinators {
-            if coordinator.currentExercise?.id == exercise.id {
+            if coordinator.isExerciseInProgress(exercise.id) {
                 return (coordinator, group)
             }
         }

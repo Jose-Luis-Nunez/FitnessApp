@@ -14,6 +14,7 @@ public final class MuscleCategoryViewModel {
     public let group: MuscleCategoryGroup
     public let formViewModel: ExerciseFormViewModel
     public let activeSetViewModel: ActiveSetViewModel
+    private let coordinator: TrainingCoordinator
     private let storageService: ExerciseStoring
     private let workoutStorageService: WorkoutStoring
     private var cardViewModels: [UUID: ExerciseCardViewModel] = [:]
@@ -32,10 +33,12 @@ public final class MuscleCategoryViewModel {
         } else {
             self.exercises = []
         }
-        self.activeSetViewModel = Container.shared.sessionTrainingCache().viewModel(for: group)
 
-        let coordinator = Container.shared.trainingCoordinatorCache().coordinator(for: group)
-        startCoordinatorObservation(coordinator)
+        let coord = Container.shared.trainingCoordinatorCache().coordinator(for: group)
+        self.coordinator = coord
+        self.activeSetViewModel = coord.activeSetViewModel
+
+        startCoordinatorObservation(coord)
     }
 
     public init(
@@ -52,6 +55,11 @@ public final class MuscleCategoryViewModel {
         self.workoutStorageService = workoutStorageService
         self.formViewModel = ExerciseFormViewModel()
         self.activeSetViewModel = activeSetViewModel
+        self.coordinator = coordinator ?? TrainingCoordinator(
+            findCategory: { _ in group },
+            onExerciseUpdate: { _, _ in },
+            onExerciseReset: { _, _ in }
+        )
         if let coordinator { startCoordinatorObservation(coordinator) }
     }
 
@@ -59,22 +67,26 @@ public final class MuscleCategoryViewModel {
         coordinatorObservationTask?.cancel()
     }
 
-    /// Observes `lastCompletedExercise` on the coordinator. When an exercise is
-    /// completed, updates the local `exercises` array in-place — no DB roundtrip.
+    /// Observes `lastCompletedExercise` and `activeSessions` on the coordinator.
+    /// When an exercise is completed or a session ends, updates the local array.
     private func startCoordinatorObservation(_ coordinator: TrainingCoordinator) {
         coordinatorObservationTask = Task { [weak self] in
             while !Task.isCancelled {
                 await withCheckedContinuation { continuation in
                     withObservationTracking {
                         _ = coordinator.lastCompletedExercise
+                        _ = coordinator.activeSessions
                     } onChange: {
                         continuation.resume()
                     }
                 }
                 guard let self, !Task.isCancelled else { return }
+
                 if let completed = coordinator.lastCompletedExercise,
                    let index = self.exercises.firstIndex(where: { $0.id == completed.id }) {
                     self.exercises[index] = completed
+                } else {
+                    self.refreshExercises()
                 }
             }
         }
@@ -85,7 +97,7 @@ public final class MuscleCategoryViewModel {
     }
 
     public var isTrainingInProgress: Bool {
-        activeSetViewModel.currentExercise != nil || activeSetViewModel.isSetInProgress
+        coordinator.hasActiveSessions
     }
 
     public var hasCompletedExercises: Bool {
@@ -117,21 +129,23 @@ public final class MuscleCategoryViewModel {
     public func updateExercise(_ updatedExercise: Exercise) {
         if let index = exercises.firstIndex(where: { $0.id == updatedExercise.id }) {
             exercises[index] = updatedExercise
-            if activeSetViewModel.currentExercise?.id == updatedExercise.id {
-                activeSetViewModel.currentExercise = updatedExercise
+            if let vm = coordinator.session(for: updatedExercise.id) {
+                vm.currentExercise = updatedExercise
             }
             saveExercises()
         }
     }
 
     public func resetProgress() {
+        let activeIds = Array(coordinator.activeSessions.keys)
+        for id in activeIds {
+            coordinator.cancelTraining(for: id)
+        }
         exercises = exercises.map { exercise in
             var updated = exercise
             updated.isCompleted = false
             return updated
         }
-        activeSetViewModel.resetProgress()
-        activeSetViewModel.stopTimer()
         saveExercises()
     }
 

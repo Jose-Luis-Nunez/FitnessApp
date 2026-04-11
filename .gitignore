@@ -27,3 +27,6 @@ Package.resolved
 # User-Spezifisches
 *.swp
 *.xcuserdatad/
+
+# Hook state (local only)
+.cursor/hooks/state/

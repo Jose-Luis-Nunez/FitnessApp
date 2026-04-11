@@ -65,6 +65,22 @@ Use custom `VerticalAlignment`/`HorizontalAlignment` only when elements genuinel
 
 Short label texts (< 10 characters like "Weight", "Seat") must use `.fixedSize()` to prevent line-breaks on small screens.
 
+## Bug Fixes — Root Cause, Not Symptoms
+
+Before implementing a fix, determine where the fix belongs:
+
+1. **Ask:** "Is this a data-flow problem or a UI-display problem?"
+   - Data-flow → fix in Use Case, Service, or Coordinator
+   - UI-display → fix in View (only after confirming the data layer is correct)
+
+2. **Ask:** "If a new entry point (Deep Link, Live Activity, test) triggers the same action, does my fix still work?"
+   - Yes → root cause fix (logic layer)
+   - No → symptom fix (UI guard) — move the logic down
+
+3. **Never** add a UI guard (`if` / `guard` in a View's `onStart` / `onTap`) to protect against a business-logic gap. The guard belongs in the Use Case or Coordinator that owns the state.
+
+4. **Always** write at least one integration test that verifies the new behavior through the Coordinator (not just the Use Case in isolation). If the fix involves state transitions (e.g. switching exercises, completing training), test the full sequence: setup → action → assert state + side effects.
+
 ## MVVM Structure
 
 - Feature folder: `Features/<FeatureName>/`

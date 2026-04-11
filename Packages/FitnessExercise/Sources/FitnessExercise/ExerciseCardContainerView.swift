@@ -13,6 +13,7 @@ public struct ExerciseCardContainerView: View {
     public let onReset: ((Exercise) -> Void)?
     public let isActiveSetVisible: Bool
     public let isResetEnabled: Bool
+    public let isInProgress: Bool
 
     public init(
         viewModel: ExerciseCardViewModel,
@@ -23,7 +24,8 @@ public struct ExerciseCardContainerView: View {
         onStart: ((Exercise) -> Void)?,
         onReset: ((Exercise) -> Void)?,
         isActiveSetVisible: Bool,
-        isResetEnabled: Bool
+        isResetEnabled: Bool,
+        isInProgress: Bool = false
     ) {
         self.viewModel = viewModel
         self.onEdit = onEdit
@@ -34,6 +36,7 @@ public struct ExerciseCardContainerView: View {
         self.onReset = onReset
         self.isActiveSetVisible = isActiveSetVisible
         self.isResetEnabled = isResetEnabled
+        self.isInProgress = isInProgress
     }
 
     public var body: some View {
@@ -47,7 +50,7 @@ public struct ExerciseCardContainerView: View {
                 isResetEnabled: true
             )
             .accessibilityIdentifier(ExerciseCardIDs.completedCard(viewModel.exercise.id))
-        } else if activeSetViewModel.currentExercise?.id == viewModel.exercise.id {
+        } else if isActiveSetVisible && activeSetViewModel.currentExercise?.id == viewModel.exercise.id {
             ActiveCardView(
                 viewModel: viewModel,
                 onEdit: onEdit,
@@ -61,7 +64,8 @@ public struct ExerciseCardContainerView: View {
                 analyticsViewModel: analyticsViewModel,
                 onEdit: onEdit,
                 isEditable: isEditable,
-                onStart: onStart
+                onStart: onStart,
+                isInProgress: isInProgress
             )
             .accessibilityIdentifier(ExerciseCardIDs.idleCard(viewModel.exercise.id))
         }

@@ -306,12 +306,10 @@ struct RefreshExercisesTests {
 
 @MainActor
 private func makeCoordinator() -> TrainingCoordinator {
-    let activeSetVM = ActiveSetViewModel()
     return TrainingCoordinator(
         findCategory: { _ in .arms },
         onExerciseUpdate: { _, _ in },
-        onExerciseReset: { _, _ in },
-        activeSetViewModel: activeSetVM
+        onExerciseReset: { _, _ in }
     )
 }
 

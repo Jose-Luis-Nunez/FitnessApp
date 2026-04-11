@@ -48,14 +48,6 @@ public struct MuscleCategorySelectionView: View {
         coordinatorCache.activeCoordinator
     }
 
-    private var isTrainingActive: Bool {
-        trainingCoordinator?.isTrainingActive ?? false
-    }
-
-    private var activeExercise: Exercise? {
-        trainingCoordinator?.currentExercise
-    }
-
     private var activeSetVM: ActiveSetViewModel? {
         trainingCoordinator?.activeSetViewModel
     }
@@ -144,45 +136,10 @@ public struct MuscleCategorySelectionView: View {
                             }
                             .padding(.horizontal, SelectionLayoutConstants.horizontalPadding)
                         } else {
-                            if isTrainingActive, let coordinator = trainingCoordinator,
-                               let exercise = activeExercise {
-                                let exerciseCategory = viewModel.findCategoryForExercise(exercise)
-                                LazyVStack(spacing: 16) {
-                                    ExerciseCardContainerView(
-                                        viewModel: viewModel.cardViewModel(for: exercise, category: exerciseCategory ?? .arms),
-                                        onEdit: { exerciseToEdit, _ in
-                                            if let category = viewModel.findCategoryForExercise(exerciseToEdit) {
-                                                router.navigate(to: .muscleCategory(category))
-                                            }
-                                        },
-                                        isEditable: !(activeSetVM?.isSetInProgress ?? false),
-                                        analyticsViewModel: analyticsViewModel,
-                                        activeSetViewModel: coordinator.activeSetViewModel,
-                                        onStart: { exerciseToStart in
-                                            if let category = viewModel.findCategoryForExercise(exerciseToStart) {
-                                                router.navigate(to: .training(exerciseToStart, category))
-                                            }
-                                        },
-                                        onReset: { exerciseToReset in
-                                            if let category = viewModel.findCategoryForExercise(exerciseToReset) {
-                                                viewModel.resetExercise(exerciseToReset, category: category)
-                                            }
-                                        },
-                                        isActiveSetVisible: true,
-                                        isResetEnabled: exercise.isCompleted
-                                    )
-
-                                    TrainingSessionComponent(
-                                        coordinator: coordinator,
-                                        analyticsViewModel: analyticsViewModel
-                                    )
-                                }
-                            } else {
-                                LazyVStack(spacing: CategoryTileViewConstants.CategoryTile.verticalSpacing) {
-                                    allExercisesList
-                                }
-                                .padding(.horizontal, 0)
+                            LazyVStack(spacing: CategoryTileViewConstants.CategoryTile.verticalSpacing) {
+                                allExercisesList
                             }
+                            .padding(.horizontal, 0)
                         }
                         Spacer(minLength: safeAreaInset + 24)
                     }
@@ -416,12 +373,7 @@ public struct MuscleCategorySelectionView: View {
     private var categoryList: some View {
         ForEach(viewModel.categories, id: \.self) { group in
             Button(action: {
-                if let activeSetVM = Container.shared.sessionTrainingCache().activeSetVMs[group],
-                   let activeExercise = activeSetVM.currentExercise {
-                    router.navigate(to: .training(activeExercise, group))
-                } else {
-                    router.navigate(to: .muscleCategory(group))
-                }
+                router.navigate(to: .muscleCategory(group))
             }) {
                 CategoryTileView(group: group, viewModel: viewModel)
             }
@@ -490,40 +442,6 @@ public struct MuscleCategorySelectionView: View {
         .clipShape(Capsule())
     }
 
-    private var activeTrainingOnlyList: some View {
-        Group {
-            if let exercise = activeExercise,
-               let coordinator = trainingCoordinator,
-               let category = viewModel.findCategoryForExercise(exercise) {
-                Section {
-                    ExerciseCardContainerView(
-                        viewModel: viewModel.cardViewModel(for: exercise, category: category),
-                        onEdit: { exerciseToEdit, mode in
-                            editingExercise = exerciseToEdit
-                            editingCategory = category
-                            exerciseFormViewModel.loadExercise(exerciseToEdit, category: category)
-                            exerciseFormViewModel.editMode = mode
-                            isShowingExercisePicker = true
-                        },
-                        isEditable: true,
-                        analyticsViewModel: analyticsViewModel,
-                        activeSetViewModel: coordinator.activeSetViewModel,
-                        onStart: { exerciseToStart in
-                            router.navigate(to: .training(exerciseToStart, category))
-                        },
-                        onReset: { exerciseToReset in
-                            viewModel.resetExercise(exerciseToReset, category: category)
-                        },
-                        isActiveSetVisible: isTrainingActive,
-                        isResetEnabled: exercise.isCompleted
-                    )
-                }
-            } else {
-                EmptyView()
-            }
-        }
-    }
-
     private var allExercisesWithCategory: [(exercise: Exercise, category: MuscleCategoryGroup)] {
         MuscleCategoryGroup.allCases.flatMap { category in
             viewModel.getExercises(for: category).map { (exercise: $0, category: category) }
@@ -539,10 +457,6 @@ public struct MuscleCategorySelectionView: View {
         }
         .onAppear {
             viewModel.updateExerciseCounts()
-
-            if isTrainingActive && activeExercise != nil {
-                currentViewMode = .list
-            }
         }
     }
 
@@ -565,10 +479,6 @@ public struct MuscleCategorySelectionView: View {
             analyticsViewModel: analyticsViewModel,
             activeSetViewModel: categoryCoordinator.activeSetViewModel,
             onStart: { exerciseToStart in
-                if isTrainingActive && activeExercise?.id != exerciseToStart.id {
-                    return
-                }
-
 #if canImport(UIKit)
                 let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                 impactFeedback.impactOccurred()
@@ -579,8 +489,9 @@ public struct MuscleCategorySelectionView: View {
             onReset: { exerciseToReset in
                 viewModel.resetExercise(exerciseToReset, category: category)
             },
-            isActiveSetVisible: isTrainingActive,
-            isResetEnabled: exercise.isCompleted
+            isActiveSetVisible: false,
+            isResetEnabled: exercise.isCompleted,
+            isInProgress: categoryCoordinator.isExerciseInProgress(exercise.id)
         )
     }
 

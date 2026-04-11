@@ -30,7 +30,6 @@ public final class TrainingCoordinatorCache: TrainingCoordinatorCaching {
         if let existing = coordinators[group] {
             return existing
         }
-        let activeSetVM = sessionTrainingCache.viewModel(for: group)
         let coordinator = TrainingCoordinator(
             findCategory: { _ in group },
             onExerciseUpdate: { [weak self] exercise, category in
@@ -38,20 +37,19 @@ public final class TrainingCoordinatorCache: TrainingCoordinatorCaching {
             },
             onExerciseReset: { [weak self] exercise, category in
                 self?.exerciseManagementService.resetExercise(exercise, category: category)
-            },
-            activeSetViewModel: activeSetVM
+            }
         )
         coordinators[group] = coordinator
         return coordinator
     }
 
     public var activeCoordinator: TrainingCoordinator? {
-        coordinators.values.first { $0.isTrainingActive }
+        coordinators.values.first { $0.hasActiveSessions }
     }
 
     public func findCoordinator(for exercise: Exercise) -> (TrainingCoordinator, MuscleCategoryGroup)? {
         for (group, coordinator) in coordinators {
-            if coordinator.currentExercise?.id == exercise.id {
+            if coordinator.isExerciseInProgress(exercise.id) {
                 return (coordinator, group)
             }
         }

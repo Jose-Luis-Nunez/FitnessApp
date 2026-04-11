@@ -147,7 +147,11 @@ When fixing a bug involving stale UI or missing updates:
 - If a fix requires observing **more than 2 properties** to detect a single logical event, it is likely a symptom fix — introduce a dedicated event property instead.
 - After a bug fix, ask: "If a new similar event is added tomorrow, does the fix still work, or do I need to add another observed property?" If the latter, the fix is fragile.
 
-## Report Format
+## Output
+
+### 1. Full Report (in agent response)
+
+Print the detailed report in your response so the user can see all findings:
 
 ```
 ## Post-Change Validation Report
@@ -174,7 +178,17 @@ When fixing a bug involving stale UI or missing updates:
 
 ### Architecture Quality
 - `FileName.swift:LINE` — `ExerciseManagementService` used as concrete type, needs protocol
-- `FileName.swift:LINE` — polling loop for `@Observable` property, replace with `withObservationTracking`
 
 **Summary:** N dead code, N reuse, N style, N referential, N cleanup, N state, N architecture items found.
+```
+
+### 2. Stamp file (for the hook)
+
+Write a **minimal** stamp to `.cursor/hooks/state/validation-stamp.md` so the grind-loop hook knows validation ran. This file is a checkpoint, not a report — it gets overwritten each run.
+
+```
+date: 2026-04-11T14:30:00
+result: PASS
+files_inspected: 5
+findings: 3
 ```
