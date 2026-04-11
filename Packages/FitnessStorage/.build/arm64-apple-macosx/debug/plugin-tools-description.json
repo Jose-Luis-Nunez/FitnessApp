@@ -865,11 +865,31 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/DataMigrationService.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseManagementService.swift"
         },
         {
           "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseStorageService.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/AnalyticsEntryModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/ExerciseModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/SetProgressModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/WorkoutModel.swift"
         },
         {
           "kind" : "file",
@@ -913,8 +933,13 @@
       "moduleOutputPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/Modules/FitnessStorage.swiftmodule",
       "objects" : [
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/AnalyticsStorageService.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/DataMigrationService.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseManagementService.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseStorageService.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/AnalyticsEntryModel.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseModel.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/SetProgressModel.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/WorkoutModel.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/StorageContainer.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/TotalAnalyticsStorageService.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/DeleteWorkoutUseCase.swift.o",
@@ -972,11 +997,31 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/DataMigrationService.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseManagementService.swift.o"
         },
         {
           "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseStorageService.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/AnalyticsEntryModel.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseModel.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/SetProgressModel.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/WorkoutModel.swift.o"
         },
         {
           "kind" : "file",
@@ -1006,8 +1051,13 @@
       "prepareForIndexing" : false,
       "sources" : [
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/AnalyticsStorageService.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/DataMigrationService.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseManagementService.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseStorageService.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/AnalyticsEntryModel.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/ExerciseModel.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/SetProgressModel.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/WorkoutModel.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/StorageContainer.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/TotalAnalyticsStorageService.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/UseCases/DeleteWorkoutUseCase.swift",
@@ -1345,8 +1395,13 @@
       "fitnessstorage",
       "-c",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/AnalyticsStorageService.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/DataMigrationService.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseManagementService.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseStorageService.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/AnalyticsEntryModel.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/ExerciseModel.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/SetProgressModel.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/WorkoutModel.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/StorageContainer.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/TotalAnalyticsStorageService.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/UseCases/DeleteWorkoutUseCase.swift",
@@ -1660,11 +1715,31 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/DataMigrationService.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseManagementService.swift"
         },
         {
           "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseStorageService.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/AnalyticsEntryModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/ExerciseModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/SetProgressModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/WorkoutModel.swift"
         },
         {
           "kind" : "file",

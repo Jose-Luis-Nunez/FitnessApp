@@ -138,6 +138,15 @@ Check every item. For each failing item, cite the concrete file and line. **Fix 
 - Protocol naming follows project convention: `*Storing`, `*Managing`, `*Caching`.
 - All protocols live in `FitnessCore` (cross-package boundary types).
 
+#### 7g. Root Cause vs. Symptom
+
+When fixing a bug involving stale UI or missing updates:
+
+- Verify the fix addresses the **data flow gap** (root cause), not just adding more observation triggers or sleep delays (symptom fix).
+- Observation of state transitions (e.g. `isTrainingActive`) should not be used as a proxy for domain events (e.g. "exercise was completed"). Prefer explicit domain event signals (e.g. `lastCompletedExercise`).
+- If a fix requires observing **more than 2 properties** to detect a single logical event, it is likely a symptom fix — introduce a dedicated event property instead.
+- After a bug fix, ask: "If a new similar event is added tomorrow, does the fix still work, or do I need to add another observed property?" If the latter, the fix is fragile.
+
 ## Report Format
 
 ```

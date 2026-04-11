@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import UIKit
 import FitnessCore
 import FitnessStorage
@@ -12,12 +13,17 @@ import Factory
 @main
 struct FitnessAppApp: App {
     private let launchStrategy: any AppLaunchStrategy
+    private let modelContainer: ModelContainer
 
     init() {
         let textFieldAppearance = UITextField.appearance()
         textFieldAppearance.layer.shadowOpacity = 0
         textFieldAppearance.layer.shadowRadius = 0
         textFieldAppearance.backgroundColor = .clear
+
+        let container = Container.shared.modelContainer()
+        self.modelContainer = container
+        DataMigrationService.migrateIfNeeded(context: container.mainContext)
 
         #if UITESTING
         if ProcessInfo.processInfo.arguments.contains("--uitesting"),
@@ -119,6 +125,7 @@ struct FitnessAppApp: App {
             .environment(overlayState)
             .environment(router)
             }
+            .modelContainer(modelContainer)
         }
     }
 }

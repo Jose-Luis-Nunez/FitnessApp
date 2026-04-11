@@ -52,6 +52,7 @@ public final class TrainingCoordinator {
     public var activeSetViewModel: ActiveSetViewModel
     public var currentExercise: Exercise?
     public var isTrainingActive: Bool = false
+    public var lastCompletedExercise: Exercise?
 
     public let analyticsViewModel: AnalyticsViewModel
     private let findCategory: (Exercise) -> MuscleCategoryGroup?
@@ -204,6 +205,7 @@ public final class TrainingCoordinator {
             var updatedExercise = exercise
             updatedExercise.isCompleted = true
             onExerciseUpdate(updatedExercise, category)
+            lastCompletedExercise = updatedExercise
         }
 
         activeSetViewModel.finishExercise()

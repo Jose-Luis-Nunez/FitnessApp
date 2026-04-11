@@ -63,22 +63,19 @@ public final class MuscleCategorySelectionViewModel {
     }
 
     private func startCoordinatorObservation(_ coordinator: TrainingCoordinator) {
-        var wasActive = coordinator.isTrainingActive
         let task = Task { [weak self] in
             while !Task.isCancelled {
                 await withCheckedContinuation { continuation in
                     withObservationTracking {
-                        _ = coordinator.isTrainingActive
+                        _ = coordinator.lastCompletedExercise
                     } onChange: {
                         continuation.resume()
                     }
                 }
                 guard let self, !Task.isCancelled else { return }
-                let currentlyActive = coordinator.isTrainingActive
-                if wasActive && !currentlyActive {
+                if coordinator.lastCompletedExercise != nil {
                     self.updateExerciseCounts()
                 }
-                wasActive = currentlyActive
             }
         }
         coordinatorObservationTasks.append(task)

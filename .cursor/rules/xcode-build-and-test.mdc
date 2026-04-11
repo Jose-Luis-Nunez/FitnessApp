@@ -1,0 +1,42 @@
+# Xcode Build & Test
+
+**DEVELOPER_DIR** must point to `~/Downloads/Xcode.app/Contents/Developer` because `xcode-select` is set to Command Line Tools, not full Xcode. **Always** prefix every `xcodebuild` call with this environment variable.
+
+## Build
+
+```bash
+cd ~/Documents/repo/FitnessApp && DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer xcodebuild build -scheme FitnessApp -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' 2>&1 | tail -30
+```
+
+## Unit Tests (App Target)
+
+```bash
+cd ~/Documents/repo/FitnessApp && DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer xcodebuild test -scheme FitnessApp -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -only-testing:FitnessAppTests 2>&1 | tail -30
+```
+
+## SPM Package Tests
+
+SPM test targets (e.g. `FitnessStorageTests`, `FitnessTrainingTests`) are **not** in the app scheme. Run them via the **package's own scheme** from the package directory:
+
+```bash
+cd ~/Documents/repo/FitnessApp/Packages/FitnessStorage && DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer PATH="/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer/usr/bin:$PATH" xcodebuild test -scheme FitnessStorage -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' 2>&1 | grep -E "✔|✘|passed|failed|TEST" | head -40
+```
+
+Replace `FitnessStorage` with the package name to test other packages (e.g. `FitnessTraining`, `FitnessExercise`, `FitnessAnalytics`).
+
+**Important:** Add `PATH="/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer/usr/bin:$PATH"` so `simctl` is found.
+
+## UI Tests
+
+```bash
+cd ~/Documents/repo/FitnessApp && DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer xcodebuild test -scheme FitnessApp -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -only-testing:FitnessAppUITests 2>&1 | tail -30
+```
+
+## Notes
+
+- **Scheme**: Use `FitnessApp` for app/UI tests, use the package name for SPM package tests.
+- **Simulator**: `iPhone 17 Pro Max`. Boot it first if needed: `DEVELOPER_DIR=... .../usr/bin/simctl boot <UDID>`
+- To run a **single test**, append the test class and method: `-only-testing:FitnessAppUITests/TrainingUITests/testFullTrainingFlow`
+- To run **all UI tests**, use: `-only-testing:FitnessAppUITests`
+- Set `block_until_ms` to `300000` (5 min) since build + test takes ~90–120 seconds.
+- Do **not** use `swift build` for targets that use SwiftData `@Model` — the macros require the Xcode build system.

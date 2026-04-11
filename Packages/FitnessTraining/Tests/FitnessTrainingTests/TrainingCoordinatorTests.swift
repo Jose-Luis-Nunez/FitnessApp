@@ -96,6 +96,31 @@ struct FinishExerciseTests {
         #expect(receivedCategory == .arms)
     }
 
+    @Test func setsLastCompletedExerciseWhenAllSetsFinished() {
+        let (coordinator, _) = makeCoordinator()
+
+        let exercise = makeExercise(sets: 2)
+        coordinator.startTraining(for: exercise)
+
+        for _ in 0..<2 { coordinator.completeSet() }
+        coordinator.finishExercise()
+
+        #expect(coordinator.lastCompletedExercise != nil)
+        #expect(coordinator.lastCompletedExercise?.id == exercise.id)
+        #expect(coordinator.lastCompletedExercise?.isCompleted == true)
+    }
+
+    @Test func doesNotSetLastCompletedWhenNotAllSetsFinished() {
+        let (coordinator, _) = makeCoordinator()
+
+        let exercise = makeExercise(sets: 3)
+        coordinator.startTraining(for: exercise)
+        coordinator.completeSet()
+        coordinator.finishExercise()
+
+        #expect(coordinator.lastCompletedExercise == nil)
+    }
+
     @Test func doesNotMarkCompletedWhenLastSetNotFinished() {
         var receivedExercise: Exercise?
 

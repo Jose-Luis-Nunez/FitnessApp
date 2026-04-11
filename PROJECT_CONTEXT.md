@@ -4,13 +4,17 @@
 
 **Scope.** Persistent domain models live in `Packages/FitnessCore/Sources/FitnessCore/`: `Workout`, `Exercise`, `AnalyticsEntry`, `SetProgress` with `SetStatus`, and `MuscleCategoryGroup`. `WeightPhase` is a derived analytics shape (not loaded from its own file). `ExerciseEditMode` and `SetEditingMode` are UI flow enums, not stored entities.
 
-**Entity map (logical).** `Workout` holds metadata plus a loosely typed `exerciseData: [String: Any]` mirror (serialized as nested JSON `Data` on encode). `Exercise` instances are **not** embedded in that blob for list storage; they are saved per workout and muscle category. `AnalyticsEntry` carries `exerciseId`, `date`, and embedded `[SetProgress]`.
+**Entity map (logical).** `Workout` holds metadata and `selectedCategories`. `Exercise` instances are stored per workout via SwiftData relationships. `AnalyticsEntry` carries `exerciseId`, `date`, and embedded `[SetProgress]`.
 
-ER (text): `Workout` (1) — * `Exercise` (one JSON collection per `(workoutId, MuscleCategoryGroup)`); `Exercise` (1) — * `AnalyticsEntry` (append-only list per `exerciseId` file); each `AnalyticsEntry` contains value objects `SetProgress` (`SetStatus`, reps, weight).
+ER (text): `WorkoutModel` (1) —cascade→ * `ExerciseModel`; `AnalyticsEntryModel` (1) —cascade→ * `SetProgressModel`; `AnalyticsEntryModel.exerciseId` links to `ExerciseModel.id` (logical, not a SwiftData relationship).
 
-**Persistence strategy.** **Workouts:** `UserDefaults` — `JSONEncoder`/`JSONDecoder` on `[Workout]` (`stored_workouts`), plus UUID strings for current and default workout ids. **Exercises:** app **Documents** — `workout_{uuid}_{category}_{userId}.json`. Legacy `exercises_{category}_{userId}.json` is read once and copied into the first workout’s per-workout files when a workout-scoped file is missing. **Analytics:** Documents — `analytics_{exerciseId}_{userId}.json` with ISO-8601 dates. **User id for paths:** `UserDefaults` key `userId` (created on first use) suffixes exercise and analytics filenames. **Profile:** shell app uses `@AppStorage("userNickname")`. No SwiftData or Core Data in this stack.
+**Persistence strategy.** **SwiftData** is the primary persistence layer. `@Model` classes (`WorkoutModel`, `ExerciseModel`, `AnalyticsEntryModel`, `SetProgressModel`) live in `Packages/FitnessStorage/Sources/FitnessStorage/Models/`. A shared `ModelContainer` is registered as a Factory singleton (`\.modelContainer`). Each storage service creates its own `ModelContext`. **Current/default workout IDs** remain in `UserDefaults` (lightweight pointers). **Profile:** shell app uses `@AppStorage("userNickname")`. **Migration:** `DataMigrationService` runs on first launch to migrate legacy data to SwiftData (flag: `swiftdata_migration_complete`).
 
-**Weaknesses (summary).** Storage is convention-based only: weak linkage between `AnalyticsEntry.exerciseId` and live exercises; workout delete does not remove related JSON on disk; fragile `Workout.exerciseData` encode/decode; failures often `print` and yield empty collections; workout duplication reuses `Exercise.id`, coupling analytics across copies. Structured triggers, impact, and paths: **Risk Inventory**.
+**Former persistence (pre-Phase 4).** **Workouts:** `UserDefaults` — `JSONEncoder`/`JSONDecoder` on `[Workout]` (`stored_workouts`), plus UUID strings for current and default workout ids. **Exercises:** app **Documents** — `workout_{uuid}_{category}_{userId}.json`. Legacy `exercises_{category}_{userId}.json` is read once and copied into the first workout’s per-workout files when a workout-scoped file is missing. **Analytics:** Documents — `analytics_{exerciseId}_{userId}.json` with ISO-8601 dates. **User id for paths:** `UserDefaults` key `userId` (created on first use) suffixes exercise and analytics filenames. **Profile:** shell app uses `@AppStorage("userNickname")`. No SwiftData or Core Data in this stack.
+
+**Resolved risks (Phase 4).** `Workout.exerciseData: [String: Any]` removed (was dead code). `userId`-based file paths eliminated. Orphan exercise/analytics file risk eliminated (cascade delete rules). `try?` encode/decode replaced with do/catch.
+
+**Remaining weaknesses.** Workout duplication reuses `Exercise.id`, coupling analytics across copies. Structured triggers, impact, and paths: **Risk Inventory**.
 
 ## UI & State
 
@@ -135,15 +139,9 @@ TrainingActivityManager (app) → ActivityKit / UIKit (Live Activities only)
 
 ## Risk Inventory
 
-- **Risk:** Orphan exercise and analytics files after workout deletion  
-  **Trigger:** User removes a `Workout` from the `UserDefaults`-backed list while matching `workout_*_*.json` and `analytics_*_*.json` files are never deleted.  
-  **Impact:** Storage growth, confusing restores/migrations, and stale data if IDs or paths are ever reused.  
-  **Affected files:** `Packages/FitnessStorage/Sources/FitnessStorage/WorkoutStorageService.swift`, `ExerciseStorageService.swift`, `AnalyticsStorageService.swift`
+- ~~**Risk:** Orphan exercise and analytics files after workout deletion~~ **RESOLVED (Phase 4):** SwiftData cascade delete rules handle cleanup automatically.
 
-- **Risk:** Silent corruption or loss of `Workout.exerciseData`  
-  **Trigger:** JSON decode fails (substituted with `[:]`) or encode uses `try?` and drops the blob without surfacing an error.  
-  **Impact:** Opaque metadata loss; UI shows a workout shell with missing auxiliary payload.  
-  **Affected files:** `Packages/FitnessCore/Sources/FitnessCore/Workout.swift`, `Packages/FitnessStorage/Sources/FitnessStorage/WorkoutStorageService.swift`
+- ~~**Risk:** Silent corruption or loss of `Workout.exerciseData`~~ **RESOLVED (Phase 4):** `exerciseData` property removed (was dead code with 0 call sites).
 
 - **Risk:** Duplicated workouts share analytics by `Exercise.id`  
   **Trigger:** `WorkoutStorageService.duplicateWorkout` copies exercises with unchanged IDs into new per-workout files.  
@@ -162,7 +160,7 @@ TrainingActivityManager (app) → ActivityKit / UIKit (Live Activities only)
 
 ## Implicit Decisions
 
-- **Persistence:** `UserDefaults` for the workout catalog and current/default IDs; per-user JSON files in **Documents** for exercises and analytics; profile nickname via `@AppStorage` only—no SwiftData/Core Data stack.
+- **Persistence:** SwiftData for all domain data (workouts, exercises, analytics). `UserDefaults` retained only for current/default workout ID pointers and migration flag. Profile nickname via `@AppStorage`. `DataMigrationService` handles one-time migration from legacy JSON/UserDefaults on first launch.
 - **Modularity:** Journey-shaped SPM features (`FitnessExercise`, `FitnessTraining`, …) with `FitnessCore` + `FitnessStorage` as the domain/persistence hinge; `FitnessUI` centralizes `AppStyle` and shared chrome.
 - **Navigation ownership:** Global routing types (`AppRouter`, `NavigationDestination`) live in `FitnessExercise` while `FitnessAppApp.swift` hosts the `NavigationStack` wiring—shell vs. package boundary is a deliberate split (also noted as a possible future relocation under **Module Structure**).
 - **Reactivity:** Combine (`@Published`, `assign`, `sink`) and main-queue `DispatchQueue`/`TimerService` patterns over widespread `async`/`await`; shared `.shared` service hubs for storage and `SessionTrainingCache`.

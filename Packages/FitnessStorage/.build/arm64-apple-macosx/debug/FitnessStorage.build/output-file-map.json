@@ -9,6 +9,13 @@
     "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/AnalyticsStorageService.swiftdeps",
     "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/AnalyticsStorageService.dia"
   },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/DataMigrationService.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/DataMigrationService.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/DataMigrationService.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/DataMigrationService~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/DataMigrationService.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/DataMigrationService.dia"
+  },
   "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/ExerciseManagementService.swift": {
     "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseManagementService.d",
     "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseManagementService.swift.o",
@@ -22,6 +29,34 @@
     "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseStorageService~partial.swiftmodule",
     "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseStorageService.swiftdeps",
     "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseStorageService.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/AnalyticsEntryModel.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/AnalyticsEntryModel.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/AnalyticsEntryModel.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/AnalyticsEntryModel~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/AnalyticsEntryModel.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/AnalyticsEntryModel.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/ExerciseModel.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseModel.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseModel.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseModel~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseModel.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/ExerciseModel.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/SetProgressModel.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/SetProgressModel.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/SetProgressModel.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/SetProgressModel~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/SetProgressModel.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/SetProgressModel.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/Models/WorkoutModel.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/WorkoutModel.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/WorkoutModel.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/WorkoutModel~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/WorkoutModel.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/WorkoutModel.dia"
   },
   "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/StorageContainer.swift": {
     "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/.build/arm64-apple-macosx/debug/FitnessStorage.build/StorageContainer.d",

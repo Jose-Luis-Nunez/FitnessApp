@@ -13,14 +13,6 @@ import Factory
 private final class MockExerciseStorage: ExerciseStoring {
     var savedExercises: [MuscleCategoryGroup: [Exercise]] = [:]
 
-    func load(for group: MuscleCategoryGroup) -> [Exercise] {
-        savedExercises[group] ?? []
-    }
-
-    func save(_ exercises: [Exercise], for group: MuscleCategoryGroup) {
-        savedExercises[group] = exercises
-    }
-
     func loadForWorkout(workoutId: UUID, category: MuscleCategoryGroup) -> [Exercise] {
         savedExercises[category] ?? []
     }
@@ -28,6 +20,26 @@ private final class MockExerciseStorage: ExerciseStoring {
     func saveForWorkout(_ exercises: [Exercise], workoutId: UUID, category: MuscleCategoryGroup) {
         savedExercises[category] = exercises
     }
+}
+
+@MainActor
+private final class MockWorkoutStorage: WorkoutStoring {
+    var workouts: [Workout] = []
+    var currentWorkout: Workout?
+    var defaultWorkout: Workout?
+
+    func createWorkout(name: String, selectedCategories: Set<MuscleCategoryGroup>) -> Workout {
+        let w = Workout(name: name, selectedCategories: selectedCategories)
+        workouts.append(w)
+        return w
+    }
+    func duplicateWorkout(_ workout: Workout) -> Workout { workout }
+    func deleteWorkout(_ workout: Workout) {}
+    func updateWorkout(_ workout: Workout) {}
+    func setCurrentWorkout(_ workout: Workout) { currentWorkout = workout }
+    func setAsDefaultWorkout(_ workout: Workout) { defaultWorkout = workout }
+    func removeAsDefaultWorkout() { defaultWorkout = nil }
+    func renameWorkout(_ workout: Workout, newName: String) {}
 }
 
 // MARK: - Helpers
@@ -54,9 +66,11 @@ private func makeVM(
     exercises: [Exercise] = [],
     coordinator: TrainingCoordinator? = nil
 ) -> (MuscleCategoryViewModel, MockExerciseStorage) {
-    Container.shared.reset()
     let storage = MockExerciseStorage()
-    let workoutStorage = Container.shared.workoutStorage()
+    let workoutStorage = MockWorkoutStorage()
+    let testWorkout = Workout(name: "Test", selectedCategories: [.arms])
+    workoutStorage.currentWorkout = testWorkout
+    workoutStorage.workouts = [testWorkout]
     let activeSetVM = coordinator?.activeSetViewModel ?? ActiveSetViewModel()
     let vm = MuscleCategoryViewModel(
         group: .arms,
@@ -301,89 +315,69 @@ private func makeCoordinator() -> TrainingCoordinator {
     )
 }
 
-@Suite("auto-refresh after external training finish")
+@Suite("auto-refresh after exercise completion")
 @MainActor
 struct AutoRefreshTests {
 
-    @Test func refreshesWhenCoordinatorTrainingEnds() async throws {
+    @Test func updatesExerciseInPlaceWhenCoordinatorCompletesIt() async throws {
         let id = UUID()
         let original = makeExercise(id: id, isCompleted: false)
         let coordinator = makeCoordinator()
-        let (vm, storage) = makeVM(exercises: [original], coordinator: coordinator)
+        let (vm, _) = makeVM(exercises: [original], coordinator: coordinator)
 
-        // Allow observation task to start and register tracking
         try await Task.yield()
 
         coordinator.startTraining(for: original)
         #expect(coordinator.isTrainingActive == true)
 
-        // Allow the observation to see the active state and re-register
         try await Task.yield()
         try await Task.sleep(for: .milliseconds(50))
 
-        // Simulate: TrainingView completes the exercise and writes to storage
-        var completed = original
-        completed.isCompleted = true
-        storage.savedExercises[.arms] = [completed]
-
-        // Complete all sets then finish
         for _ in 0..<original.sets {
             coordinator.completeSet()
         }
         coordinator.finishExercise()
-        #expect(coordinator.isTrainingActive == false)
 
-        // Allow the observation to detect the transition and run refreshExercises
         try await Task.yield()
         try await Task.sleep(for: .milliseconds(100))
 
         #expect(vm.exercises.first?.isCompleted == true)
+        #expect(coordinator.lastCompletedExercise?.id == id)
     }
 
-    @Test func doesNotRefreshWhenNoTrainingWasActive() async throws {
+    @Test func doesNotUpdateWhenNoExerciseCompleted() async throws {
         let original = makeExercise(isCompleted: false)
         let coordinator = makeCoordinator()
-        let (vm, storage) = makeVM(exercises: [original], coordinator: coordinator)
+        let (vm, _) = makeVM(exercises: [original], coordinator: coordinator)
 
-        #expect(coordinator.isTrainingActive == false)
-
-        var completed = original
-        completed.isCompleted = true
-        storage.savedExercises[.arms] = [completed]
+        #expect(coordinator.lastCompletedExercise == nil)
 
         try await Task.sleep(for: .milliseconds(350))
 
         #expect(vm.exercises.first?.isCompleted == false)
     }
 
-    @Test func cachedCardViewModelUpdatesAfterAutoRefresh() async throws {
+    @Test func cachedCardViewModelUpdatesAfterCompletion() async throws {
         let id = UUID()
         let original = makeExercise(id: id, isCompleted: false)
         let coordinator = makeCoordinator()
-        let (vm, storage) = makeVM(exercises: [original], coordinator: coordinator)
+        let (vm, _) = makeVM(exercises: [original], coordinator: coordinator)
 
         let cardVM = vm.cardViewModel(for: original)
         #expect(cardVM.exercise.isCompleted == false)
 
-        // Allow observation task to start and register tracking
         try await Task.yield()
 
         coordinator.startTraining(for: original)
 
-        // Allow the observation to see the active state and re-register
         try await Task.yield()
         try await Task.sleep(for: .milliseconds(50))
-
-        var completed = original
-        completed.isCompleted = true
-        storage.savedExercises[.arms] = [completed]
 
         for _ in 0..<original.sets {
             coordinator.completeSet()
         }
         coordinator.finishExercise()
 
-        // Allow the observation to detect the transition and run refreshExercises
         try await Task.yield()
         try await Task.sleep(for: .milliseconds(100))
 

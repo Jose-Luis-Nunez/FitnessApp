@@ -14,6 +14,4 @@ public protocol WorkoutStoring: AnyObject {
     func setAsDefaultWorkout(_ workout: Workout)
     func removeAsDefaultWorkout()
     func renameWorkout(_ workout: Workout, newName: String)
-    func updateExerciseData(for workoutId: UUID, key: String, data: Any)
-    func getExerciseData(for workoutId: UUID, key: String) -> Any?
 }

@@ -5,7 +5,7 @@
 ## For the AI — Instructions
 
 This file evaluates the codebase against architecture principles
-and proposes changes. Always use Plan Mode.
+and creates implementation plans.
 
 When you read this file, first locate and read PROJECT_CONTEXT.md.
 If not found, stop: "No PROJECT_CONTEXT.md found. Run Phase 1 with Code_Evaluation_System.md first."
@@ -17,6 +17,8 @@ If not found, stop: "No PROJECT_CONTEXT.md found. Run Phase 1 with Code_Evaluati
 | `Evaluate`           | Full evaluation against all principles below.    |
 |                      | Check every principle. Check anti-pattern table. |
 |                      | Propose changes for every violation found.       |
+| `Create Plan`        | After decisions are made: Create phased           |
+|                      | implementation tasks in implementation_tasks/.    |
 | `Quick Check`        | Fast 🟢🟡🔴 of provided diff. Max 15 lines.      |
 | `Feature Review`     | Edge cases + architecture fit for named feature. |
 | `Architecture Review`| Deep layer/principle analysis of provided files. |
@@ -174,18 +176,22 @@ Check PROJECT_CONTEXT.md against every principle above.
 For each principle:
 - 🟢 if followed correctly — cite the code that proves it.
 - 🟡 if partially followed — explain what's missing.
-- 🔴 if violated — name the principle, name the file, propose fix.
+- 🔴 if violated — name the principle, name the file, explain the violation.
 
 Check every item in the anti-pattern table.
-Every match is 🔴 with proposed fix.
+Every match is 🔴.
 
-If a fix requires a decision from the Decisions section below,
+If violations require a decision from the Decisions section below,
 do NOT just reference the decision number. Instead:
 1. Explain which files in this project are affected by the decision.
 2. For each option: What does it mean concretely for this codebase?
    How many files change? What does the migration look like?
 3. Give a recommendation based on what the evaluation found.
-4. Ask the user to choose before proposing code.
+4. Ask the user to choose before proceeding.
+
+End with a summary table and the list of Decisions that need answers.
+After the user answers the Decisions, they will say `Create Plan`
+to generate the phased implementation tasks.
 
 ---
 
@@ -285,7 +291,7 @@ AnalyticsStorageService) and explain what happens to each under each option.
 
 **Impact:** Affects entire Data layer. Hard to switch later.
 **Recommendation:** [Based on evaluation findings, explain which is better for this project and why]
-**Decision:** SwiftData
+**Decision:** ___
 
 ---
 
@@ -312,7 +318,7 @@ Explain how each option replaces these patterns.
 
 **Impact:** How ViewModels and Services receive dependencies. Affects testability.
 **Recommendation:** [Based on singleton count and test goals, explain which fits best]
-**Decision:** Factory (hmlongco/Factory)
+**Decision:** ___
 
 ---
 
@@ -335,7 +341,7 @@ this decision is about migrating AppRouter to @Observable.
 
 **Impact:** Navigation consistency, Combine removal.
 **Recommendation:** [Based on current AppRouter assessment]
-**Decision:** @Observable Coordinator (migrate now)
+**Decision:** ___
 
 ---
 
@@ -362,7 +368,100 @@ Explain how each option builds on or changes what already exists.
 
 **Impact:** How strictly architecture is enforced by the compiler.
 **Recommendation:** [Based on current package structure and violation count]
-**Decision:** Use Cases inside existing packages (convention-based)
+**Decision:** ___
+
+---
+
+## Create Implementation Plan
+
+When the user says `Create Plan`:
+
+### Prerequisites
+
+1. An evaluation must have been completed (Evaluate, Architecture Review, or Deep Dive).
+2. All Decisions in Part 2 must have a chosen option filled in.
+   If any Decision field is still `___`, stop and ask:
+   "Decision [X] is not yet made. Please choose an option first."
+
+### What to do
+
+1. Read the evaluation findings (🔴 and 🟡 items).
+2. Read the chosen Decisions.
+3. Read PROJECT_CONTEXT.md for current codebase structure.
+4. Create `implementation_tasks/` folder.
+5. Break the work into **phases**. Each phase is a folder.
+   Phases have dependencies — a later phase may depend on an earlier one.
+   Tasks within a phase are independent and can run in parallel.
+
+### Phase Structure
+
+Order phases by dependency — later phases build on earlier ones:
+
+```
+📁 implementation_tasks/
+├── index.md                          ← Phase overview + execution order
+├── 📁 phase_1_[name]/
+│   ├── task_01_[description].md
+│   ├── task_02_[description].md
+│   └── ...
+├── 📁 phase_2_[name]/
+│   ├── task_01_[description].md
+│   └── ...
+└── 📁 phase_3_[name]/
+    └── ...
+```
+
+### index.md Format
+
+```markdown
+# Implementation Plan
+
+## Phase Overview
+- Phase 1: [Name] — [What it achieves] — [X tasks, Y parallel]
+- Phase 2: [Name] — [What it achieves] — [X tasks, Y parallel]
+- Phase 3: [Name] — [What it achieves] — [X tasks, Y parallel]
+
+## Execution Order
+Phase 1 must complete before Phase 2.
+Phase 2 must complete before Phase 3.
+Tasks within each phase are independent — execute in parallel.
+
+## How to Execute
+Open a new chat per phase.
+Drag this file + all task files from the phase folder.
+Say: "Execute all tasks in this phase."
+```
+
+### Task File Format
+
+Each task file must be self-contained. It must include:
+- What to change (specific files, specific code)
+- Why (which principle/anti-pattern it fixes)
+- Dependencies (what must exist before this task runs)
+- Acceptance criteria (how to verify the change is correct)
+
+The task file IS the context. A new chat with only this file
+and the affected code files must be enough to execute it.
+
+### Phase Naming
+
+Name phases based on what they achieve, not what they fix.
+Typical phase order for architecture migration:
+
+```
+Phase 1: Foundation     → Domain layer, persistence, core protocols
+Phase 2: Rewiring       → Use Cases, DI, ViewModel refactoring
+Phase 3: Modernization  → @Observable migration, Combine removal, Actors
+Phase 4: Cleanup        → Remove deprecated code, update tests
+```
+
+Actual phases depend on evaluation findings and chosen decisions.
+
+### After Creating
+
+Report to user:
+"Created [N] phases with [M] total tasks in implementation_tasks/.
+ Start with Phase 1: Open a new chat, drag index.md + phase_1 tasks."
 
 ---
 
@@ -384,7 +483,16 @@ Step 1:  Code_Evaluation_System.md → Agent Mode → "Phase 1"
 
 Step 2:  Architecture_Evaluation_Implementation.md → Plan Mode → "Evaluate"
          → Reads PROJECT_CONTEXT.md automatically
-         → 🟢🟡🔴 Findings + proposed changes → Click Apply
+         → 🟢🟡🔴 Findings + Decisions presented
+         → Answer the Decisions
+
+Step 3:  Architecture_Evaluation_Implementation.md → Plan Mode → "Create Plan"
+         → Creates implementation_tasks/ with phased task files
+
+Step 4:  New chat per phase:
+         → Drag index.md + phase folder tasks → Agent Mode
+         → "Execute all tasks in this phase"
+         → Repeat for each phase
 
 Daily:   Architecture_Evaluation_Implementation.md → Plan Mode → "Quick Check" + diff
          → 🟢🟡🔴 → Apply

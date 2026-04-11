@@ -1,100 +1,68 @@
 import Foundation
+import SwiftData
 import FitnessCore
 import Factory
 
 @MainActor
 public final class ExerciseStorageService: ExerciseStoring {
-    private let fileManager = FileManager.default
-    private var userId: String {
-        let defaults = UserDefaults.standard
-        if let storedUserId = defaults.string(forKey: "userId") {
-            return storedUserId } else {
-                let newUserId = UUID().uuidString
-                defaults.set(newUserId, forKey: "userId")
-                return newUserId
-            }
-    }
+    private let context: ModelContext
 
-    nonisolated public init() {}
-
-    private func fileURL(for group: MuscleCategoryGroup) -> URL {
-        let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        return documentsDirectory.appendingPathComponent("exercises_\(group.rawValue)_\(userId).json")
-    }
-
-    private func workoutFileURL(workoutId: UUID, category: MuscleCategoryGroup) -> URL {
-        let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        return documentsDirectory.appendingPathComponent("workout_\(workoutId.uuidString)_\(category.rawValue)_\(userId).json")
-    }
-
-    public func load(for group: MuscleCategoryGroup) -> [Exercise] {
-        let fileURL = fileURL(for: group)
-        guard fileManager.fileExists(atPath: fileURL.path) else {
-            print("No exercises file found at \(fileURL.path)")
-            return []
-        }
-
-        do {
-            let data = try Data(contentsOf: fileURL)
-            let decoder = JSONDecoder()
-            let exercises = try decoder.decode([Exercise].self, from: data)
-            return exercises
-        } catch {
-            print("Failed to load exercises: \(error)")
-            return []
-        }
-    }
-
-    public func save(_ exercises: [Exercise], for group: MuscleCategoryGroup) {
-        let fileURL = fileURL(for: group)
-        do {
-            let encoder = JSONEncoder()
-            encoder.dateEncodingStrategy = .iso8601
-            let data = try encoder.encode(exercises)
-            try data.write(to: fileURL, options: .atomic)
-        } catch {
-            print("Failed to save exercises: \(error)")
-        }
+    public init() {
+        let container = Container.shared.modelContainer()
+        self.context = ModelContext(container)
+        self.context.autosaveEnabled = true
     }
 
     public func loadForWorkout(workoutId: UUID, category: MuscleCategoryGroup) -> [Exercise] {
-        let fileURL = workoutFileURL(workoutId: workoutId, category: category)
+        let categoryRaw = category.rawValue
+        let descriptor = FetchDescriptor<ExerciseModel>(
+            predicate: #Predicate<ExerciseModel> {
+                $0.workout?.id == workoutId && $0.category == categoryRaw
+            },
+            sortBy: [SortDescriptor(\.sortOrder)]
+        )
 
-        if !fileManager.fileExists(atPath: fileURL.path) {
-            let isFirstWorkout = Container.shared.workoutStorage().workouts.first?.id == workoutId
-
-            if isFirstWorkout {
-                let oldExercises = load(for: category)
-                if !oldExercises.isEmpty {
-                    print("Migrating \(oldExercises.count) exercises from old format to first workout \(workoutId)")
-                    saveForWorkout(oldExercises, workoutId: workoutId, category: category)
-                    return oldExercises
-                }
-            }
-            print("No workout exercises file found at \(fileURL.path)")
-            return []
-        }
-
-        do {
-            let data = try Data(contentsOf: fileURL)
-            let decoder = JSONDecoder()
-            let exercises = try decoder.decode([Exercise].self, from: data)
-            return exercises
-        } catch {
-            print("Failed to load workout exercises: \(error)")
-            return []
-        }
+        let models = (try? context.fetch(descriptor)) ?? []
+        return models.map { $0.toDomain() }
     }
 
     public func saveForWorkout(_ exercises: [Exercise], workoutId: UUID, category: MuscleCategoryGroup) {
-        let fileURL = workoutFileURL(workoutId: workoutId, category: category)
+        let categoryRaw = category.rawValue
+        let deleteDescriptor = FetchDescriptor<ExerciseModel>(
+            predicate: #Predicate<ExerciseModel> {
+                $0.workout?.id == workoutId && $0.category == categoryRaw
+            }
+        )
+
+        if let existing = try? context.fetch(deleteDescriptor) {
+            for model in existing {
+                context.delete(model)
+            }
+        }
+
+        let workoutModel = fetchWorkoutModel(id: workoutId)
+
+        for (index, exercise) in exercises.enumerated() {
+            let model = ExerciseModel.from(exercise, sortOrder: index, workout: workoutModel)
+            context.insert(model)
+        }
+
+        saveContext()
+    }
+
+    private func fetchWorkoutModel(id: UUID) -> WorkoutModel? {
+        var descriptor = FetchDescriptor<WorkoutModel>(
+            predicate: #Predicate { $0.id == id }
+        )
+        descriptor.fetchLimit = 1
+        return try? context.fetch(descriptor).first
+    }
+
+    private func saveContext() {
         do {
-            let encoder = JSONEncoder()
-            encoder.dateEncodingStrategy = .iso8601
-            let data = try encoder.encode(exercises)
-            try data.write(to: fileURL, options: .atomic)
+            try context.save()
         } catch {
-            print("Failed to save workout exercises: \(error)")
+            print("ExerciseStorageService: Failed to save context: \(error)")
         }
     }
 }

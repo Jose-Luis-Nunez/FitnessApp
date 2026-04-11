@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import SwiftData
 import FitnessCore
 import Factory
 
@@ -10,156 +11,165 @@ public final class WorkoutStorageService: WorkoutStoring {
     public var currentWorkout: Workout?
     public var defaultWorkout: Workout?
 
-    private let userDefaults = UserDefaults.standard
-    private let workoutsKey = "stored_workouts"
+    @ObservationIgnored
+    private let context: ModelContext
+    @ObservationIgnored
+    private let userDefaults: UserDefaults
+    @ObservationIgnored
     private let currentWorkoutKey = "current_workout_id"
+    @ObservationIgnored
     private let defaultWorkoutKey = "default_workout_id"
+    @ObservationIgnored
+    private lazy var exerciseStorage: ExerciseStoring = Container.shared.exerciseStorage()
 
-    public init() {
-        loadWorkouts()
-        loadCurrentWorkout()
-        loadDefaultWorkout()
+    public init(defaults: UserDefaults = .standard) {
+        let container = Container.shared.modelContainer()
+        self.context = ModelContext(container)
+        self.context.autosaveEnabled = true
+        self.userDefaults = defaults
+        reload()
 
         if workouts.isEmpty {
             let firstWorkout = Workout(name: "Workout 1")
-            workouts.append(firstWorkout)
+            let model = WorkoutModel.from(firstWorkout, isDefault: true)
+            context.insert(model)
+            saveContext()
+            workouts = [firstWorkout]
             currentWorkout = firstWorkout
             defaultWorkout = firstWorkout
-            saveWorkouts()
-            saveCurrentWorkout()
-            saveDefaultWorkout()
+            userDefaults.set(firstWorkout.id.uuidString, forKey: currentWorkoutKey)
+            userDefaults.set(firstWorkout.id.uuidString, forKey: defaultWorkoutKey)
         }
     }
 
     public func createWorkout(name: String, selectedCategories: Set<MuscleCategoryGroup> = Set(MuscleCategoryGroup.allCases)) -> Workout {
         let newWorkout = Workout(name: name, selectedCategories: selectedCategories)
-        workouts.append(newWorkout)
-        saveWorkouts()
+        let model = WorkoutModel.from(newWorkout)
+        context.insert(model)
+        saveContext()
+        reload()
         return newWorkout
     }
 
     public func duplicateWorkout(_ workout: Workout) -> Workout {
-        let duplicatedWorkout = workout.copy(withName: "\(workout.name) Copy")
-        workouts.append(duplicatedWorkout)
-        saveWorkouts()
+        let duplicated = workout.copy(withName: "\(workout.name) Copy")
+        let model = WorkoutModel.from(duplicated)
+        context.insert(model)
 
-        let exercises = Container.shared.exerciseStorage()
         for category in workout.selectedCategories {
-            let loaded = exercises.loadForWorkout(workoutId: workout.id, category: category)
+            let loaded = exerciseStorage.loadForWorkout(workoutId: workout.id, category: category)
             if !loaded.isEmpty {
-                exercises.saveForWorkout(loaded, workoutId: duplicatedWorkout.id, category: category)
+                exerciseStorage.saveForWorkout(loaded, workoutId: duplicated.id, category: category)
             }
         }
 
-        return duplicatedWorkout
+        saveContext()
+        reload()
+        return duplicated
     }
 
     public func deleteWorkout(_ workout: Workout) {
-        workouts.removeAll { $0.id == workout.id }
+        let workoutId = workout.id
+        var descriptor = FetchDescriptor<WorkoutModel>(
+            predicate: #Predicate { $0.id == workoutId }
+        )
+        descriptor.fetchLimit = 1
 
-        if currentWorkout?.id == workout.id {
-            currentWorkout = workouts.first
-            saveCurrentWorkout()
+        if let model = try? context.fetch(descriptor).first {
+            context.delete(model)
+            saveContext()
         }
 
-        saveWorkouts()
+        if currentWorkout?.id == workout.id {
+            reload()
+            currentWorkout = workouts.first
+            if let cw = currentWorkout {
+                userDefaults.set(cw.id.uuidString, forKey: currentWorkoutKey)
+            } else {
+                userDefaults.removeObject(forKey: currentWorkoutKey)
+            }
+        } else {
+            reload()
+        }
     }
 
     public func updateWorkout(_ workout: Workout) {
-        if let index = workouts.firstIndex(where: { $0.id == workout.id }) {
-            var updatedWorkout = workout
-            updatedWorkout.updateLastModified()
-            workouts[index] = updatedWorkout
+        let workoutId = workout.id
+        var descriptor = FetchDescriptor<WorkoutModel>(
+            predicate: #Predicate { $0.id == workoutId }
+        )
+        descriptor.fetchLimit = 1
 
-            if currentWorkout?.id == workout.id {
-                currentWorkout = updatedWorkout
-            }
-
-            saveWorkouts()
+        if let model = try? context.fetch(descriptor).first {
+            model.name = workout.name
+            model.selectedCategories = workout.selectedCategories.map(\.rawValue)
+            model.lastModified = Date()
+            saveContext()
+            reload()
         }
     }
 
     public func setCurrentWorkout(_ workout: Workout) {
         currentWorkout = workout
-        saveCurrentWorkout()
+        userDefaults.set(workout.id.uuidString, forKey: currentWorkoutKey)
     }
 
     public func setAsDefaultWorkout(_ workout: Workout) {
+        let allId = workout.id
+        if let allModels = try? context.fetch(FetchDescriptor<WorkoutModel>()) {
+            for m in allModels { m.isDefault = (m.id == allId) }
+        }
+        saveContext()
         defaultWorkout = workout
-        saveDefaultWorkout()
+        userDefaults.set(workout.id.uuidString, forKey: defaultWorkoutKey)
     }
 
     public func removeAsDefaultWorkout() {
+        if let allModels = try? context.fetch(FetchDescriptor<WorkoutModel>()) {
+            for m in allModels { m.isDefault = false }
+        }
+        saveContext()
         defaultWorkout = nil
         userDefaults.removeObject(forKey: defaultWorkoutKey)
     }
 
     public func renameWorkout(_ workout: Workout, newName: String) {
-        if let index = workouts.firstIndex(where: { $0.id == workout.id }) {
-            workouts[index].name = newName
-            workouts[index].updateLastModified()
+        let workoutId = workout.id
+        var descriptor = FetchDescriptor<WorkoutModel>(
+            predicate: #Predicate { $0.id == workoutId }
+        )
+        descriptor.fetchLimit = 1
 
-            if currentWorkout?.id == workout.id {
-                currentWorkout = workouts[index]
-            }
-
-            saveWorkouts()
+        if let model = try? context.fetch(descriptor).first {
+            model.name = newName
+            model.lastModified = Date()
+            saveContext()
+            reload()
         }
     }
 
-    public func updateExerciseData(for workoutId: UUID, key: String, data: Any) {
-        if let index = workouts.firstIndex(where: { $0.id == workoutId }) {
-            workouts[index].exerciseData[key] = data
-            workouts[index].updateLastModified()
-
-            if currentWorkout?.id == workoutId {
-                currentWorkout = workouts[index]
-            }
-
-            saveWorkouts()
+    private func saveContext() {
+        do {
+            try context.save()
+        } catch {
+            print("WorkoutStorageService: Failed to save context: \(error)")
         }
     }
 
-    public func getExerciseData(for workoutId: UUID, key: String) -> Any? {
-        return workouts.first(where: { $0.id == workoutId })?.exerciseData[key]
-    }
+    private func reload() {
+        let descriptor = FetchDescriptor<WorkoutModel>(
+            sortBy: [SortDescriptor(\.createdDate)]
+        )
 
-    private func saveWorkouts() {
-        if let encoded = try? JSONEncoder().encode(workouts) {
-            userDefaults.set(encoded, forKey: workoutsKey)
-        }
-    }
+        let models = (try? context.fetch(descriptor)) ?? []
+        workouts = models.map { $0.toDomain() }
 
-    private func loadWorkouts() {
-        if let data = userDefaults.data(forKey: workoutsKey),
-           let decoded = try? JSONDecoder().decode([Workout].self, from: data) {
-            workouts = decoded
-        }
-    }
+        let currentId = userDefaults.string(forKey: currentWorkoutKey)
+            .flatMap(UUID.init(uuidString:))
+        currentWorkout = workouts.first { $0.id == currentId } ?? workouts.first
 
-    private func saveCurrentWorkout() {
-        if let currentWorkout = currentWorkout {
-            userDefaults.set(currentWorkout.id.uuidString, forKey: currentWorkoutKey)
-        }
-    }
-
-    private func loadCurrentWorkout() {
-        if let currentWorkoutIdString = userDefaults.string(forKey: currentWorkoutKey),
-           let currentWorkoutId = UUID(uuidString: currentWorkoutIdString) {
-            currentWorkout = workouts.first(where: { $0.id == currentWorkoutId })
-        }
-    }
-
-    private func saveDefaultWorkout() {
-        if let defaultWorkout = defaultWorkout {
-            userDefaults.set(defaultWorkout.id.uuidString, forKey: defaultWorkoutKey)
-        }
-    }
-
-    private func loadDefaultWorkout() {
-        if let defaultWorkoutIdString = userDefaults.string(forKey: defaultWorkoutKey),
-           let defaultWorkoutId = UUID(uuidString: defaultWorkoutIdString) {
-            defaultWorkout = workouts.first(where: { $0.id == defaultWorkoutId })
-        }
+        let defaultId = userDefaults.string(forKey: defaultWorkoutKey)
+            .flatMap(UUID.init(uuidString:))
+        defaultWorkout = workouts.first { $0.id == defaultId }
     }
 }

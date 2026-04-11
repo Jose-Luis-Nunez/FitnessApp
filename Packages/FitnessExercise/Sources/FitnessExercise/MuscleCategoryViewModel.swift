@@ -30,7 +30,7 @@ public final class MuscleCategoryViewModel {
         if let currentWorkout = ws.currentWorkout {
             self.exercises = es.loadForWorkout(workoutId: currentWorkout.id, category: group)
         } else {
-            self.exercises = es.load(for: group)
+            self.exercises = []
         }
         self.activeSetViewModel = Container.shared.sessionTrainingCache().viewModel(for: group)
 
@@ -59,25 +59,23 @@ public final class MuscleCategoryViewModel {
         coordinatorObservationTask?.cancel()
     }
 
-    /// Reactively watches the shared TrainingCoordinator: when `isTrainingActive`
-    /// transitions from true to false (training finished), reload exercises from storage.
+    /// Observes `lastCompletedExercise` on the coordinator. When an exercise is
+    /// completed, updates the local `exercises` array in-place — no DB roundtrip.
     private func startCoordinatorObservation(_ coordinator: TrainingCoordinator) {
-        var wasActive = coordinator.isTrainingActive
         coordinatorObservationTask = Task { [weak self] in
             while !Task.isCancelled {
                 await withCheckedContinuation { continuation in
                     withObservationTracking {
-                        _ = coordinator.isTrainingActive
+                        _ = coordinator.lastCompletedExercise
                     } onChange: {
                         continuation.resume()
                     }
                 }
                 guard let self, !Task.isCancelled else { return }
-                let currentlyActive = coordinator.isTrainingActive
-                if wasActive && !currentlyActive {
-                    self.refreshExercises()
+                if let completed = coordinator.lastCompletedExercise,
+                   let index = self.exercises.firstIndex(where: { $0.id == completed.id }) {
+                    self.exercises[index] = completed
                 }
-                wasActive = currentlyActive
             }
         }
     }
@@ -138,19 +136,16 @@ public final class MuscleCategoryViewModel {
     }
 
     public func saveExercises() {
-        if let currentWorkout = workoutStorageService.currentWorkout {
-            storageService.saveForWorkout(exercises, workoutId: currentWorkout.id, category: group)
-        } else {
-            storageService.save(exercises, for: group)
-        }
+        guard let currentWorkout = workoutStorageService.currentWorkout else { return }
+        storageService.saveForWorkout(exercises, workoutId: currentWorkout.id, category: group)
     }
 
     public func refreshExercises() {
-        if let currentWorkout = workoutStorageService.currentWorkout {
-            exercises = storageService.loadForWorkout(workoutId: currentWorkout.id, category: group)
-        } else {
-            exercises = storageService.load(for: group)
+        guard let currentWorkout = workoutStorageService.currentWorkout else {
+            exercises = []
+            return
         }
+        exercises = storageService.loadForWorkout(workoutId: currentWorkout.id, category: group)
     }
 
     public func resetExercise(_ exercise: Exercise) {

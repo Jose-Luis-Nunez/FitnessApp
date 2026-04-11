@@ -5,7 +5,6 @@ public struct Workout: Identifiable, Codable, Hashable, Equatable {
     public var name: String
     public var createdDate: Date
     public var lastModified: Date
-    public var exerciseData: [String: Any]
     public var selectedCategories: Set<MuscleCategoryGroup>
 
     public init(name: String, selectedCategories: Set<MuscleCategoryGroup> = Set(MuscleCategoryGroup.allCases)) {
@@ -13,16 +12,14 @@ public struct Workout: Identifiable, Codable, Hashable, Equatable {
         self.name = name
         self.createdDate = Date()
         self.lastModified = Date()
-        self.exerciseData = [:]
         self.selectedCategories = selectedCategories
     }
 
-    public init(id: UUID, name: String, createdDate: Date, lastModified: Date, exerciseData: [String: Any] = [:], selectedCategories: Set<MuscleCategoryGroup> = Set(MuscleCategoryGroup.allCases)) {
+    public init(id: UUID, name: String, createdDate: Date, lastModified: Date, selectedCategories: Set<MuscleCategoryGroup> = Set(MuscleCategoryGroup.allCases)) {
         self.id = id
         self.name = name
         self.createdDate = createdDate
         self.lastModified = lastModified
-        self.exerciseData = exerciseData
         self.selectedCategories = selectedCategories
     }
 
@@ -31,7 +28,7 @@ public struct Workout: Identifiable, Codable, Hashable, Equatable {
     }
 
     enum CodingKeys: CodingKey {
-        case id, name, createdDate, lastModified, exerciseData, selectedCategories
+        case id, name, createdDate, lastModified, selectedCategories
     }
 
     public init(from decoder: Decoder) throws {
@@ -40,13 +37,6 @@ public struct Workout: Identifiable, Codable, Hashable, Equatable {
         name = try container.decode(String.self, forKey: .name)
         createdDate = try container.decode(Date.self, forKey: .createdDate)
         lastModified = try container.decode(Date.self, forKey: .lastModified)
-
-        if let data = try? container.decode(Data.self, forKey: .exerciseData),
-           let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            exerciseData = dict
-        } else {
-            exerciseData = [:]
-        }
 
         if let categories = try? container.decode(Set<MuscleCategoryGroup>.self, forKey: .selectedCategories) {
             selectedCategories = categories
@@ -62,10 +52,6 @@ public struct Workout: Identifiable, Codable, Hashable, Equatable {
         try container.encode(createdDate, forKey: .createdDate)
         try container.encode(lastModified, forKey: .lastModified)
         try container.encode(selectedCategories, forKey: .selectedCategories)
-
-        if let data = try? JSONSerialization.data(withJSONObject: exerciseData) {
-            try container.encode(data, forKey: .exerciseData)
-        }
     }
 }
 
@@ -86,7 +72,6 @@ extension Workout {
             name: newName ?? "\(self.name) Copy",
             createdDate: Date(),
             lastModified: Date(),
-            exerciseData: self.exerciseData,
             selectedCategories: self.selectedCategories
         )
     }

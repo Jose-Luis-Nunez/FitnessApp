@@ -101,7 +101,7 @@ public final class TotalAnalyticsViewModel {
         var totalIncreases = 0
 
         for exercise in exercises {
-            let entries = storageService.analyticsStorage.load(for: exercise.id)
+            let entries = storageService.loadAnalytics(for: exercise.id)
 
             let maxWeightPerDay: [(date: Date, weight: Double)] = Dictionary(
                 grouping: entries,
@@ -183,7 +183,7 @@ public final class TotalAnalyticsViewModel {
     public func getExerciseProgressSummary() -> [ExerciseProgressSummary] {
         let exercises = getAllExercisesWithAnalytics()
         return exercises.compactMap { exercise in
-            let entries = storageService.analyticsStorage.load(for: exercise.id)
+            let entries = storageService.loadAnalytics(for: exercise.id)
             guard let latestEntry = entries.max(by: { $0.date < $1.date }),
                   let currentWeight = latestEntry.setProgress.first?.weight else {
                 return nil
@@ -282,7 +282,7 @@ public final class TotalAnalyticsViewModel {
         return categories.map { category in
             let categoryExercises = exercises.filter { $0.category == category }
             let exerciseProgressData = categoryExercises.compactMap { exercise -> ExerciseProgressData? in
-                let entries = storageService.analyticsStorage.load(for: exercise.id)
+                let entries = storageService.loadAnalytics(for: exercise.id)
                 guard !entries.isEmpty else { return nil }
 
                 let sortedEntries = entries.sorted { $0.date < $1.date }
@@ -339,7 +339,7 @@ public final class TotalAnalyticsViewModel {
 
         let calendar = Calendar.current
         let completedExercises = allExercises.filter { exercise in
-            let entries = storageService.analyticsStorage.load(for: exercise.id)
+            let entries = storageService.loadAnalytics(for: exercise.id)
             return entries.contains { entry in
                 calendar.isDate(entry.date, inSameDayAs: date)
             }
@@ -371,7 +371,7 @@ public final class TotalAnalyticsViewModel {
             guard !categoryExercises.isEmpty else { continue }
 
             let exerciseDetails = categoryExercises.map { exercise in
-                let entries = storageService.analyticsStorage.load(for: exercise.id)
+                let entries = storageService.loadAnalytics(for: exercise.id)
                 let isCompleted = entries.contains { entry in
                     calendar.isDate(entry.date, inSameDayAs: date)
                 }
@@ -539,7 +539,7 @@ public final class TotalAnalyticsViewModel {
         var allMilestones: [(date: Date, frequency: Double)] = []
 
         for exerciseData in allExercises {
-            let entries = storageService.analyticsStorage.load(for: exerciseData.exercise.id)
+            let entries = storageService.loadAnalytics(for: exerciseData.exercise.id)
             guard entries.count > 1 else { continue }
 
             let sortedEntries = entries.sorted { $0.date < $1.date }
@@ -569,7 +569,7 @@ public final class TotalAnalyticsViewModel {
     }
 
     public func getExerciseFrequencyHistory(for exerciseId: UUID) -> [(weight: Double, frequency: Double)] {
-        let entries = storageService.analyticsStorage.load(for: exerciseId)
+        let entries = storageService.loadAnalytics(for: exerciseId)
         guard entries.count >= 2 else { return [] }
 
         let sortedEntries = entries.sorted { $0.date < $1.date }
