@@ -26,6 +26,7 @@ private func makeExercise(
 // MARK: - syncExercise
 
 @Suite("syncExercise")
+@MainActor
 struct SyncExerciseTests {
 
     @Test func updatesExerciseWhenContentDiffers() {
@@ -81,6 +82,7 @@ struct SyncExerciseTests {
 // MARK: - Direct mutation via update methods
 
 @Suite("Direct mutation methods")
+@MainActor
 struct DirectMutationTests {
 
     @Test func updateWeightCallsOnUpdate() {
@@ -128,6 +130,7 @@ struct DirectMutationTests {
 // MARK: - didSet guard with id-only Equatable
 
 @Suite("didSet guard uses content equality")
+@MainActor
 struct DidSetGuardTests {
 
     @Test func didSetFiresOnUpdateWhenContentChanges() {

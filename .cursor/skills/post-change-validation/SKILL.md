@@ -95,6 +95,49 @@ When `@Published` properties are restructured (moved, renamed, wrapped in struct
 - **objectWillChange suppression:** `didSet` guards on `@Published` must not silently swallow content-level changes due to id-only equality.
 - **Conditional View rendering:** Trace mutation → `@Published` → `objectWillChange` → View body → condition switch. Any broken link = stale UI.
 
+### 7. Architecture Quality (after new services, protocols, caches, coordinators, or shared state)
+
+Run this section when the change introduces or modifies: a service, protocol, cache, coordinator, shared state object, ViewModel with injected dependencies, or reactive observation pattern. Skip for pure UI/View changes.
+
+Check every item. For each failing item, cite the concrete file and line. **Fix findings immediately** — do not just report them.
+
+#### 7a. Single Source of Truth
+
+- Shared mutable state (training status, exercise data, workout selection) has exactly **one** owner.
+- No duplicated instances of the same coordinator/cache/state across views.
+- Views that need the same data read from the same shared instance (via DI, not local `@State` copies).
+
+#### 7b. Reactive over Polling
+
+- No `Task.sleep` polling loops to detect state changes on `@Observable` objects.
+- Use `withObservationTracking` + `withCheckedContinuation` for programmatic observation outside SwiftUI views.
+- `onChange(of:)` / `onAppear` are acceptable only as safety nets, not as primary state propagation.
+
+#### 7c. Protocol-Based Dependencies
+
+- Every service/cache dependency used by a ViewModel has a protocol.
+- Factory registrations return the **protocol type**, not the concrete class.
+- ViewModels accept dependencies via init (constructor injection) or `@Injected` with protocol types.
+- A mock for each protocol can be written in <20 lines.
+
+#### 7d. API Safety
+
+- Closures/callbacks on shared objects are not `public var` (prevents accidental overwrite).
+- Mutable callbacks use explicit setter methods (`setOnX(_:)`) to signal intent.
+- Core callbacks (`onUpdate`, `onReset`) that the owner sets are `private let`.
+
+#### 7e. Testability
+
+- Every new ViewModel has a test-friendly init that accepts mocked dependencies.
+- At least one test exists for each reactive observation (training-end triggers refresh, workout-change triggers category update, etc.).
+- Tests use mocks — not real storage/UserDefaults/disk IO.
+
+#### 7f. Consistency
+
+- The same observation pattern is used everywhere (don't mix polling and `withObservationTracking` for the same kind of change).
+- Protocol naming follows project convention: `*Storing`, `*Managing`, `*Caching`.
+- All protocols live in `FitnessCore` (cross-package boundary types).
+
 ## Report Format
 
 ```
@@ -120,5 +163,9 @@ When `@Published` properties are restructured (moved, renamed, wrapped in struct
 ### State Propagation
 - `FileName.swift:LINE` — `$computedProperty` subscriber will not compile after refactoring
 
-**Summary:** N dead code, N reuse, N style, N referential, N cleanup, N state propagation items found.
+### Architecture Quality
+- `FileName.swift:LINE` — `ExerciseManagementService` used as concrete type, needs protocol
+- `FileName.swift:LINE` — polling loop for `@Observable` property, replace with `withObservationTracking`
+
+**Summary:** N dead code, N reuse, N style, N referential, N cleanup, N state, N architecture items found.
 ```

@@ -1,0 +1,103 @@
+{
+  "": {
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/master.swiftdeps"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/checkouts/Factory/Sources/Factory/Factory/Aliases.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Aliases.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Aliases.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Aliases~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Aliases.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Aliases.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/checkouts/Factory/Sources/Factory/Factory/Containers.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Containers.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Containers.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Containers~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Containers.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Containers.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/checkouts/Factory/Sources/Factory/Factory/Contexts.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Contexts.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Contexts.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Contexts~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Contexts.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Contexts.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/checkouts/Factory/Sources/Factory/Factory/Factory.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Factory.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Factory.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Factory~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Factory.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Factory.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/checkouts/Factory/Sources/Factory/Factory/Globals.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Globals.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Globals.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Globals~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Globals.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Globals.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/checkouts/Factory/Sources/Factory/Factory/Injections.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Injections.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Injections.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Injections~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Injections.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Injections.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/checkouts/Factory/Sources/Factory/Factory/Key.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Key.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Key.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Key~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Key.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Key.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/checkouts/Factory/Sources/Factory/Factory/Locking.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Locking.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Locking.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Locking~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Locking.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Locking.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/checkouts/Factory/Sources/Factory/Factory/Modifiers.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Modifiers.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Modifiers.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Modifiers~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Modifiers.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Modifiers.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/checkouts/Factory/Sources/Factory/Factory/Registrations.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Registrations.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Registrations.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Registrations~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Registrations.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Registrations.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/checkouts/Factory/Sources/Factory/Factory/Resolutions.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Resolutions.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Resolutions.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Resolutions~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Resolutions.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Resolutions.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/checkouts/Factory/Sources/Factory/Factory/Resolver.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Resolver.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Resolver.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Resolver~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Resolver.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Resolver.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/checkouts/Factory/Sources/Factory/Factory/Scopes.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Scopes.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Scopes.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Scopes~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Scopes.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/Scopes.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/DerivedSources/resource_bundle_accessor.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/resource_bundle_accessor.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/resource_bundle_accessor.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/resource_bundle_accessor~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/resource_bundle_accessor.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessUI/.build/arm64-apple-macosx/debug/Factory.build/resource_bundle_accessor.dia"
+  }
+}

@@ -9,6 +9,13 @@
     "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AddAnalyticsEntryView.swiftdeps",
     "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AddAnalyticsEntryView.dia"
   },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/AnalyticsContainer.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsContainer.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsContainer.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsContainer~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsContainer.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsContainer.dia"
+  },
   "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/AnalyticsDetailSection.swift": {
     "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsDetailSection.d",
     "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/AnalyticsDetailSection.swift.o",
@@ -78,5 +85,26 @@
     "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/TotalAnalyticsViewModel~partial.swiftmodule",
     "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/TotalAnalyticsViewModel.swiftdeps",
     "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/TotalAnalyticsViewModel.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/UseCases/DeleteAnalyticsSetUseCase.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/DeleteAnalyticsSetUseCase.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/DeleteAnalyticsSetUseCase.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/DeleteAnalyticsSetUseCase~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/DeleteAnalyticsSetUseCase.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/DeleteAnalyticsSetUseCase.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/UseCases/SaveAnalyticsUseCase.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/SaveAnalyticsUseCase.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/SaveAnalyticsUseCase.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/SaveAnalyticsUseCase~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/SaveAnalyticsUseCase.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/SaveAnalyticsUseCase.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/UseCases/SaveOrReplaceAnalyticsUseCase.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/SaveOrReplaceAnalyticsUseCase.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/SaveOrReplaceAnalyticsUseCase.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/SaveOrReplaceAnalyticsUseCase~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/SaveOrReplaceAnalyticsUseCase.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessAnalytics.build/SaveOrReplaceAnalyticsUseCase.dia"
   }
 }

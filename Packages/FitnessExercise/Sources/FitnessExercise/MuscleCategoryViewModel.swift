@@ -15,8 +15,9 @@ public final class MuscleCategoryViewModel {
     public let formViewModel: ExerciseFormViewModel
     public let activeSetViewModel: ActiveSetViewModel
     private let storageService: ExerciseStoring
-    private let workoutStorageService: WorkoutStorageService
+    private let workoutStorageService: WorkoutStoring
     private var cardViewModels: [UUID: ExerciseCardViewModel] = [:]
+    nonisolated(unsafe) private var coordinatorObservationTask: Task<Void, Never>?
 
     public init(group: MuscleCategoryGroup) {
         self.group = group
@@ -32,14 +33,18 @@ public final class MuscleCategoryViewModel {
             self.exercises = es.load(for: group)
         }
         self.activeSetViewModel = Container.shared.sessionTrainingCache().viewModel(for: group)
+
+        let coordinator = Container.shared.trainingCoordinatorCache().coordinator(for: group)
+        startCoordinatorObservation(coordinator)
     }
 
     public init(
         group: MuscleCategoryGroup,
         exercises: [Exercise],
         storageService: ExerciseStoring,
-        workoutStorageService: WorkoutStorageService,
-        activeSetViewModel: ActiveSetViewModel
+        workoutStorageService: WorkoutStoring,
+        activeSetViewModel: ActiveSetViewModel,
+        coordinator: TrainingCoordinator? = nil
     ) {
         self.group = group
         self.exercises = exercises
@@ -47,6 +52,34 @@ public final class MuscleCategoryViewModel {
         self.workoutStorageService = workoutStorageService
         self.formViewModel = ExerciseFormViewModel()
         self.activeSetViewModel = activeSetViewModel
+        if let coordinator { startCoordinatorObservation(coordinator) }
+    }
+
+    deinit {
+        coordinatorObservationTask?.cancel()
+    }
+
+    /// Reactively watches the shared TrainingCoordinator: when `isTrainingActive`
+    /// transitions from true to false (training finished), reload exercises from storage.
+    private func startCoordinatorObservation(_ coordinator: TrainingCoordinator) {
+        var wasActive = coordinator.isTrainingActive
+        coordinatorObservationTask = Task { [weak self] in
+            while !Task.isCancelled {
+                await withCheckedContinuation { continuation in
+                    withObservationTracking {
+                        _ = coordinator.isTrainingActive
+                    } onChange: {
+                        continuation.resume()
+                    }
+                }
+                guard let self, !Task.isCancelled else { return }
+                let currentlyActive = coordinator.isTrainingActive
+                if wasActive && !currentlyActive {
+                    self.refreshExercises()
+                }
+                wasActive = currentlyActive
+            }
+        }
     }
 
     public var hasActiveExercise: Bool {

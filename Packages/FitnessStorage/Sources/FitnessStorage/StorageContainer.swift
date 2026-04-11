@@ -2,7 +2,7 @@ import Factory
 import FitnessCore
 
 public extension Container {
-    var workoutStorage: Factory<WorkoutStorageService> {
+    var workoutStorage: Factory<WorkoutStoring> {
         self { MainActor.assumeIsolated { WorkoutStorageService() } }.singleton
     }
     var exerciseStorage: Factory<ExerciseStorageService> {
@@ -11,10 +11,17 @@ public extension Container {
     var analyticsStorage: Factory<AnalyticsStorageService> {
         self { AnalyticsStorageService() }.singleton
     }
-    var exerciseManagement: Factory<ExerciseManagementService> {
+    var exerciseManagement: Factory<ExerciseManaging> {
         self { ExerciseManagementService() }.singleton
     }
     var totalAnalyticsStorage: Factory<TotalAnalyticsStorageService> {
         self { TotalAnalyticsStorageService() }.singleton
+    }
+
+    var deleteWorkoutUseCase: Factory<DeleteWorkoutUseCase> {
+        self { MainActor.assumeIsolated { DeleteWorkoutUseCase() } }
+    }
+    var duplicateWorkoutUseCase: Factory<DuplicateWorkoutUseCase> {
+        self { MainActor.assumeIsolated { DuplicateWorkoutUseCase() } }
     }
 }

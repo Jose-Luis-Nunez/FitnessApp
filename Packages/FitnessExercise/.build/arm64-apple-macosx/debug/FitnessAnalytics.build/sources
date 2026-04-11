@@ -1,4 +1,5 @@
 /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/AddAnalyticsEntryView.swift
+/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/AnalyticsContainer.swift
 /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/AnalyticsDetailSection.swift
 /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/AnalyticsTileViews.swift
 /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/AnalyticsView.swift
@@ -9,3 +10,6 @@
 /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/ProgressChartCalculator.swift
 /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/TotalAnalyticsView.swift
 /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/TotalAnalyticsViewModel.swift
+/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/UseCases/DeleteAnalyticsSetUseCase.swift
+/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/UseCases/SaveAnalyticsUseCase.swift
+/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/Sources/FitnessAnalytics/UseCases/SaveOrReplaceAnalyticsUseCase.swift

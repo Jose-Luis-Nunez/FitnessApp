@@ -16,6 +16,13 @@
     "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/ExerciseCardViewModelTests.swiftdeps",
     "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/ExerciseCardViewModelTests.dia"
   },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Tests/FitnessExerciseTests/MuscleCategorySelectionViewModelTests.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/MuscleCategorySelectionViewModelTests.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/MuscleCategorySelectionViewModelTests.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/MuscleCategorySelectionViewModelTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/MuscleCategorySelectionViewModelTests.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/MuscleCategorySelectionViewModelTests.dia"
+  },
   "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Tests/FitnessExerciseTests/MuscleCategoryViewModelTests.swift": {
     "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/MuscleCategoryViewModelTests.d",
     "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExerciseTests.build/MuscleCategoryViewModelTests.swift.o",

@@ -12,7 +12,7 @@ struct TrainingView: View {
     let category: MuscleCategoryGroup
     
     @Environment(AppRouter.self) private var router
-    @State private var trainingCoordinator: TrainingCoordinator
+    private var trainingCoordinator: TrainingCoordinator
     @State private var analyticsViewModel: AnalyticsViewModel
     @Environment(UIOverlayState.self) private var overlayState
     
@@ -25,23 +25,12 @@ struct TrainingView: View {
         self.exercise = exercise
         self.category = category
         
-        let categoryActiveSetVM = Container.shared.sessionTrainingCache().viewModel(for: category)
-        let sharedAnalyticsVM = AnalyticsViewModel()
+        let coordinatorCache = Container.shared.trainingCoordinatorCache()
+        let coordinator = coordinatorCache.coordinator(for: category)
+        self.trainingCoordinator = coordinator
+        
+        self._analyticsViewModel = State(wrappedValue: coordinator.analyticsViewModel)
         let managementService = Container.shared.exerciseManagement()
-        
-        self._trainingCoordinator = State(wrappedValue: TrainingCoordinator(
-            findCategory: { _ in category },
-            onExerciseUpdate: { updatedExercise, _ in
-                managementService.updateExercise(updatedExercise, category: category)
-            },
-            onExerciseReset: { exerciseToReset, _ in
-                managementService.resetExercise(exerciseToReset, category: category)
-            },
-            activeSetViewModel: categoryActiveSetVM,
-            analyticsViewModel: sharedAnalyticsVM
-        ))
-        
-        self._analyticsViewModel = State(wrappedValue: sharedAnalyticsVM)
         self._cardViewModel = State(wrappedValue: ExerciseCardViewModel(exercise: exercise) { updatedExercise in
             managementService.updateExercise(updatedExercise, category: category)
         })

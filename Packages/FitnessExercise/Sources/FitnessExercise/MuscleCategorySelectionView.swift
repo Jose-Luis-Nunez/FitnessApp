@@ -27,14 +27,13 @@ private enum ViewMode {
 
 public struct MuscleCategorySelectionView: View {
     @State private var viewModel = MuscleCategorySelectionViewModel()
-    @State private var trainingCoordinator: TrainingCoordinator
     @Environment(AppRouter.self) private var router
     @Environment(UIOverlayState.self) private var overlayState
     @State private var currentViewMode: ViewMode = .overview
     @State private var filterPillBounce: Bool = false
     @State private var filterBounceMode: ViewMode? = nil
     @Namespace private var filterNamespace
-    @State private var analyticsViewModel: AnalyticsViewModel
+    @State private var analyticsViewModel = AnalyticsViewModel()
     @State private var isShowingExercisePicker = false
     @State private var editingExercise: Exercise?
     @State private var editingCategory: MuscleCategoryGroup?
@@ -43,27 +42,26 @@ public struct MuscleCategorySelectionView: View {
     @State private var isFilterBarVisible = true
     @State private var lastScrollOffset: CGFloat = 0
 
+    private var coordinatorCache: TrainingCoordinatorCaching
+
+    private var trainingCoordinator: TrainingCoordinator? {
+        coordinatorCache.activeCoordinator
+    }
+
+    private var isTrainingActive: Bool {
+        trainingCoordinator?.isTrainingActive ?? false
+    }
+
+    private var activeExercise: Exercise? {
+        trainingCoordinator?.currentExercise
+    }
+
+    private var activeSetVM: ActiveSetViewModel? {
+        trainingCoordinator?.activeSetViewModel
+    }
+
     public init() {
-        let selectionViewModel = MuscleCategorySelectionViewModel()
-        let sharedAnalyticsVM = AnalyticsViewModel()
-
-        self._trainingCoordinator = State(wrappedValue: TrainingCoordinator(
-            findCategory: { exercise in
-                selectionViewModel.findCategoryForExercise(exercise)
-            },
-            onExerciseUpdate: { exercise, category in
-                selectionViewModel.updateExercise(exercise, category: category)
-            },
-            onExerciseReset: { exercise, category in
-                selectionViewModel.resetExercise(exercise, category: category)
-            },
-            onAddExercise: {},
-            onResetAllExercises: {},
-            analyticsViewModel: sharedAnalyticsVM
-        ))
-
-        self._viewModel = State(wrappedValue: selectionViewModel)
-        self._analyticsViewModel = State(wrappedValue: sharedAnalyticsVM)
+        self.coordinatorCache = Container.shared.trainingCoordinatorCache()
     }
 
     private var adaptiveColumns: [GridItem] {
@@ -146,54 +144,44 @@ public struct MuscleCategorySelectionView: View {
                             }
                             .padding(.horizontal, SelectionLayoutConstants.horizontalPadding)
                         } else {
-                            let isActiveSetVisible = trainingCoordinator.isTrainingActive
+                            if isTrainingActive, let coordinator = trainingCoordinator,
+                               let exercise = activeExercise {
+                                let exerciseCategory = viewModel.findCategoryForExercise(exercise)
+                                LazyVStack(spacing: 16) {
+                                    ExerciseCardContainerView(
+                                        viewModel: viewModel.cardViewModel(for: exercise, category: exerciseCategory ?? .arms),
+                                        onEdit: { exerciseToEdit, _ in
+                                            if let category = viewModel.findCategoryForExercise(exerciseToEdit) {
+                                                router.navigate(to: .muscleCategory(category))
+                                            }
+                                        },
+                                        isEditable: !(activeSetVM?.isSetInProgress ?? false),
+                                        analyticsViewModel: analyticsViewModel,
+                                        activeSetViewModel: coordinator.activeSetViewModel,
+                                        onStart: { exerciseToStart in
+                                            if let category = viewModel.findCategoryForExercise(exerciseToStart) {
+                                                router.navigate(to: .training(exerciseToStart, category))
+                                            }
+                                        },
+                                        onReset: { exerciseToReset in
+                                            if let category = viewModel.findCategoryForExercise(exerciseToReset) {
+                                                viewModel.resetExercise(exerciseToReset, category: category)
+                                            }
+                                        },
+                                        isActiveSetVisible: true,
+                                        isResetEnabled: exercise.isCompleted
+                                    )
 
-                            if isActiveSetVisible {
-                                if let exercise = trainingCoordinator.currentExercise {
-                                    let exerciseCategory = viewModel.findCategoryForExercise(exercise)
-                                    LazyVStack(spacing: 16) {
-                                        ExerciseCardContainerView(
-                                            viewModel: viewModel.cardViewModel(for: exercise, category: exerciseCategory ?? .arms),
-                                            onEdit: { exerciseToEdit, _ in
-                                                if let category = viewModel.findCategoryForExercise(exerciseToEdit) {
-                                                    router.navigate(to: .muscleCategory(category))
-                                                }
-                                            },
-                                            isEditable: !trainingCoordinator.activeSetViewModel.isSetInProgress,
-                                            analyticsViewModel: analyticsViewModel,
-                                            activeSetViewModel: trainingCoordinator.activeSetViewModel,
-                                            onStart: { exerciseToStart in
-                                                if let category = viewModel.findCategoryForExercise(exerciseToStart) {
-                                                    router.navigate(to: .training(exerciseToStart, category))
-                                                }
-                                            },
-                                            onReset: { exerciseToReset in
-                                                if let category = viewModel.findCategoryForExercise(exerciseToReset) {
-                                                    viewModel.resetExercise(exerciseToReset, category: category)
-                                                }
-                                            },
-                                            isActiveSetVisible: isActiveSetVisible,
-                                            isResetEnabled: exercise.isCompleted
-                                        )
-
-                                        TrainingSessionComponent(
-                                            coordinator: trainingCoordinator,
-                                            analyticsViewModel: analyticsViewModel
-                                        )
-                                    }
+                                    TrainingSessionComponent(
+                                        coordinator: coordinator,
+                                        analyticsViewModel: analyticsViewModel
+                                    )
                                 }
                             } else {
-                                if trainingCoordinator.isTrainingActive && trainingCoordinator.currentExercise != nil {
-                                    LazyVStack(spacing: CategoryTileViewConstants.CategoryTile.verticalSpacing) {
-                                        activeTrainingOnlyList
-                                    }
-                                    .padding(.horizontal, 0)
-                                } else {
-                                    LazyVStack(spacing: CategoryTileViewConstants.CategoryTile.verticalSpacing) {
-                                        allExercisesList
-                                    }
-                                    .padding(.horizontal, 0)
+                                LazyVStack(spacing: CategoryTileViewConstants.CategoryTile.verticalSpacing) {
+                                    allExercisesList
                                 }
+                                .padding(.horizontal, 0)
                             }
                         }
                         Spacer(minLength: safeAreaInset + 24)
@@ -213,7 +201,7 @@ public struct MuscleCategorySelectionView: View {
                             .contentShape(Rectangle())
                             .allowsHitTesting(true)
 
-                        if !trainingCoordinator.isTrainingActive {
+                        if !isTrainingActive {
                             HStack {
                                 Spacer()
                                 filterToggleView
@@ -233,15 +221,17 @@ public struct MuscleCategorySelectionView: View {
                 .transition(.opacity)
             }
 
-            TrainingActionBarComponent(
-                coordinator: trainingCoordinator,
-                exercises: viewModel.allExercises(),
-                hasActiveExercise: trainingCoordinator.isTrainingActive
-            )
-            .padding(.bottom, safeAreaInset + 12)
+            if let coordinator = trainingCoordinator {
+                TrainingActionBarComponent(
+                    coordinator: coordinator,
+                    exercises: viewModel.allExercises(),
+                    hasActiveExercise: isTrainingActive
+                )
+                .padding(.bottom, safeAreaInset + 12)
 
-            TrainingPickerComponent(coordinator: trainingCoordinator)
-                .zIndex(1001)
+                TrainingPickerComponent(coordinator: coordinator)
+                    .zIndex(1001)
+            }
 
             if overlayState.showWorkoutDropdown {
                 Color.black.opacity(0.001)
@@ -296,7 +286,7 @@ public struct MuscleCategorySelectionView: View {
             }
         }
         .background(AppStyle.Color.backgroundColor)
-        .id("picker-\(trainingCoordinator.activeSetViewModel.isEditing)")
+        .id("picker-\(activeSetVM?.isEditing ?? false)")
 #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
@@ -522,11 +512,12 @@ public struct MuscleCategorySelectionView: View {
 
     private var activeTrainingOnlyList: some View {
         Group {
-            if let activeExercise = trainingCoordinator.currentExercise,
-               let category = viewModel.findCategoryForExercise(activeExercise) {
+            if let exercise = activeExercise,
+               let coordinator = trainingCoordinator,
+               let category = viewModel.findCategoryForExercise(exercise) {
                 Section {
                     ExerciseCardContainerView(
-                        viewModel: viewModel.cardViewModel(for: activeExercise, category: category),
+                        viewModel: viewModel.cardViewModel(for: exercise, category: category),
                         onEdit: { exerciseToEdit, mode in
                             editingExercise = exerciseToEdit
                             editingCategory = category
@@ -536,15 +527,15 @@ public struct MuscleCategorySelectionView: View {
                         },
                         isEditable: true,
                         analyticsViewModel: analyticsViewModel,
-                        activeSetViewModel: trainingCoordinator.activeSetViewModel,
+                        activeSetViewModel: coordinator.activeSetViewModel,
                         onStart: { exerciseToStart in
                             router.navigate(to: .training(exerciseToStart, category))
                         },
                         onReset: { exerciseToReset in
                             viewModel.resetExercise(exerciseToReset, category: category)
                         },
-                        isActiveSetVisible: trainingCoordinator.isTrainingActive,
-                        isResetEnabled: activeExercise.isCompleted
+                        isActiveSetVisible: isTrainingActive,
+                        isResetEnabled: exercise.isCompleted
                     )
                 }
             } else {
@@ -569,14 +560,15 @@ public struct MuscleCategorySelectionView: View {
         .onAppear {
             viewModel.updateExerciseCounts()
 
-            if trainingCoordinator.isTrainingActive && trainingCoordinator.currentExercise != nil {
+            if isTrainingActive && activeExercise != nil {
                 currentViewMode = .list
             }
         }
     }
 
     private func exerciseCard(for exercise: Exercise, category: MuscleCategoryGroup) -> some View {
-        ExerciseCardContainerView(
+        let categoryCoordinator = coordinatorCache.coordinator(for: category)
+        return ExerciseCardContainerView(
             viewModel: viewModel.cardViewModel(for: exercise, category: category),
             onEdit: { exerciseToEdit, mode in
                 if currentViewMode == .list {
@@ -591,9 +583,9 @@ public struct MuscleCategorySelectionView: View {
             },
             isEditable: true,
             analyticsViewModel: analyticsViewModel,
-            activeSetViewModel: trainingCoordinator.activeSetViewModel,
+            activeSetViewModel: categoryCoordinator.activeSetViewModel,
             onStart: { exerciseToStart in
-                if trainingCoordinator.isTrainingActive && trainingCoordinator.currentExercise?.id != exerciseToStart.id {
+                if isTrainingActive && activeExercise?.id != exerciseToStart.id {
                     return
                 }
 
@@ -607,7 +599,7 @@ public struct MuscleCategorySelectionView: View {
             onReset: { exerciseToReset in
                 viewModel.resetExercise(exerciseToReset, category: category)
             },
-            isActiveSetVisible: trainingCoordinator.isTrainingActive,
+            isActiveSetVisible: isTrainingActive,
             isResetEnabled: exercise.isCompleted
         )
     }

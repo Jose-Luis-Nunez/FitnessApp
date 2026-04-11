@@ -58,6 +58,13 @@
     "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExercise.build/ExerciseCardViewModel.swiftdeps",
     "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExercise.build/ExerciseCardViewModel.dia"
   },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Sources/FitnessExercise/ExerciseContainer.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExercise.build/ExerciseContainer.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExercise.build/ExerciseContainer.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExercise.build/ExerciseContainer~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExercise.build/ExerciseContainer.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExercise.build/ExerciseContainer.dia"
+  },
   "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Sources/FitnessExercise/ExerciseFormViewModel.swift": {
     "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExercise.build/ExerciseFormViewModel.d",
     "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExercise.build/ExerciseFormViewModel.swift.o",
@@ -169,6 +176,13 @@
     "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExercise.build/SetTileView~partial.swiftmodule",
     "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExercise.build/SetTileView.swiftdeps",
     "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExercise.build/SetTileView.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Sources/FitnessExercise/UseCases/ResetAllExercisesUseCase.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExercise.build/ResetAllExercisesUseCase.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExercise.build/ResetAllExercisesUseCase.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExercise.build/ResetAllExercisesUseCase~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExercise.build/ResetAllExercisesUseCase.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExercise.build/ResetAllExercisesUseCase.dia"
   },
   "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Sources/FitnessExercise/WeightPhaseTileView.swift": {
     "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/.build/arm64-apple-macosx/debug/FitnessExercise.build/WeightPhaseTileView.d",

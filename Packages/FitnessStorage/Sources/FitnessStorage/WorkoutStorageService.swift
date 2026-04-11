@@ -5,7 +5,7 @@ import Factory
 
 @Observable
 @MainActor
-public final class WorkoutStorageService {
+public final class WorkoutStorageService: WorkoutStoring {
     public var workouts: [Workout] = []
     public var currentWorkout: Workout?
     public var defaultWorkout: Workout?

@@ -9,6 +9,13 @@
     "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/SessionTrainingCacheTests.swiftdeps",
     "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/SessionTrainingCacheTests.dia"
   },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/TrainingCoordinatorCacheTests.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/TrainingCoordinatorCacheTests.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/TrainingCoordinatorCacheTests.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/TrainingCoordinatorCacheTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/TrainingCoordinatorCacheTests.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/TrainingCoordinatorCacheTests.dia"
+  },
   "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/Tests/FitnessTrainingTests/TrainingCoordinatorTests.swift": {
     "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/TrainingCoordinatorTests.d",
     "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessTraining/.build/arm64-apple-macosx/debug/FitnessTrainingTests.build/TrainingCoordinatorTests.swift.o",

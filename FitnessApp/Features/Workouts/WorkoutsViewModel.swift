@@ -19,6 +19,8 @@ final class WorkoutsViewModel {
     
     @ObservationIgnored @Injected(\.workoutStorage) var storageService
     @ObservationIgnored @Injected(\.exerciseStorage) private var exerciseStorageService
+    @ObservationIgnored @Injected(\.deleteWorkoutUseCase) private var deleteWorkoutUseCase
+    @ObservationIgnored @Injected(\.duplicateWorkoutUseCase) private var duplicateWorkoutUseCase
     
     var workouts: [Workout] { storageService.workouts }
     var currentWorkout: Workout? { storageService.currentWorkout }
@@ -45,13 +47,13 @@ final class WorkoutsViewModel {
     }
     
     func duplicateWorkout(_ workout: Workout) {
-        let duplicatedWorkout = storageService.duplicateWorkout(workout)
+        let duplicatedWorkout = duplicateWorkoutUseCase.execute(workout)
         storageService.setCurrentWorkout(duplicatedWorkout)
         showingFABOptions = false
     }
     
     func deleteWorkout(_ workout: Workout) {
-        storageService.deleteWorkout(workout)
+        deleteWorkoutUseCase.execute(workout)
         showingFABOptions = false
     }
     

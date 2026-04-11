@@ -15,41 +15,81 @@ public final class MuscleCategorySelectionViewModel {
 
     private var exerciseCounts: [MuscleCategoryGroup: (total: Int, active: Int)] = [:]
     private var cardViewModels: [UUID: ExerciseCardViewModel] = [:]
-    private var workoutObservationTask: Task<Void, Never>?
+    nonisolated(unsafe) private var workoutObservationTask: Task<Void, Never>?
+    nonisolated(unsafe) private var coordinatorObservationTasks: [Task<Void, Never>] = []
 
-    public init() {
+    @ObservationIgnored private let coordinatorCache: TrainingCoordinatorCaching
+
+    public init(coordinatorCache: TrainingCoordinatorCaching? = nil) {
+        self.coordinatorCache = coordinatorCache ?? Container.shared.trainingCoordinatorCache()
         updateExerciseCounts()
         updateCategories(for: workoutStorageService.currentWorkout)
         startWorkoutObservation()
+        restartCoordinatorObservations()
+    }
+
+    deinit {
+        workoutObservationTask?.cancel()
+        coordinatorObservationTasks.forEach { $0.cancel() }
     }
 
     private func startWorkoutObservation() {
         workoutObservationTask?.cancel()
-        var lastWorkoutId: UUID? = workoutStorageService.currentWorkout?.id
+        let ws = workoutStorageService
         workoutObservationTask = Task { [weak self] in
             while !Task.isCancelled {
-                guard let self else { return }
-                let current = self.workoutStorageService.currentWorkout
-                if current?.id != lastWorkoutId {
-                    lastWorkoutId = current?.id
-                    self.updateCategories(for: current)
-                    self.updateExerciseCounts()
+                await withCheckedContinuation { continuation in
+                    withObservationTracking {
+                        _ = ws.currentWorkout
+                    } onChange: {
+                        continuation.resume()
+                    }
                 }
-                try? await Task.sleep(for: .milliseconds(200))
+                guard let self, !Task.isCancelled else { return }
+                self.updateCategories(for: ws.currentWorkout)
+                self.updateExerciseCounts()
+                self.restartCoordinatorObservations()
             }
         }
     }
 
+    private func restartCoordinatorObservations() {
+        coordinatorObservationTasks.forEach { $0.cancel() }
+        coordinatorObservationTasks.removeAll()
+        for group in categories {
+            let coordinator = coordinatorCache.coordinator(for: group)
+            startCoordinatorObservation(coordinator)
+        }
+    }
+
+    private func startCoordinatorObservation(_ coordinator: TrainingCoordinator) {
+        var wasActive = coordinator.isTrainingActive
+        let task = Task { [weak self] in
+            while !Task.isCancelled {
+                await withCheckedContinuation { continuation in
+                    withObservationTracking {
+                        _ = coordinator.isTrainingActive
+                    } onChange: {
+                        continuation.resume()
+                    }
+                }
+                guard let self, !Task.isCancelled else { return }
+                let currentlyActive = coordinator.isTrainingActive
+                if wasActive && !currentlyActive {
+                    self.updateExerciseCounts()
+                }
+                wasActive = currentlyActive
+            }
+        }
+        coordinatorObservationTasks.append(task)
+    }
+
     @ObservationIgnored @Injected(\.sessionTrainingCache) private var sessionTrainingCache
+    @ObservationIgnored @Injected(\.resetAllExercisesUseCase) private var resetAllExercisesUseCase
 
     public func resetAllExercises() {
         guard workoutStorageService.currentWorkout != nil else { return }
-
-        for (_, activeSetVM) in sessionTrainingCache.activeSetVMs {
-            activeSetVM.cancelActiveSet()
-        }
-
-        exerciseManagementService.resetAllExercises(for: MuscleCategoryGroup.allCases)
+        resetAllExercisesUseCase.execute(for: MuscleCategoryGroup.allCases)
         updateExerciseCounts()
     }
 

@@ -1,9 +1,10 @@
 ---
 name: post-change-validator
 description: >-
-  Validates code changes for dead code, missed reuse, and consistency after
-  refactoring, feature additions or deletions, multi-file edits, service API
-  changes, or enum case modifications in Swift files.
+  Validates code changes for dead code, missed reuse, consistency, state
+  propagation, and architecture quality after refactoring, feature additions or
+  deletions, multi-file edits, service/protocol/cache/coordinator changes, or
+  enum case modifications in Swift files.
 model: fast
 readonly: true
 is_background: true
@@ -66,6 +67,12 @@ When `@Published` properties are restructured (moved, renamed, wrapped in struct
 - **objectWillChange suppression:** Verify that `didSet` guards on `@Published` properties don't suppress `objectWillChange` for legitimate state changes. A `guard exercise != oldValue` with id-only `Equatable` will silently swallow updates where only a non-id field changed.
 - **Conditional View rendering:** When a SwiftUI View switches between sub-views based on a ViewModel property (e.g. `if viewModel.exercise.isCompleted { InactiveCardView } else { IdleActiveCardView }`), trace the full chain: mutation → `@Published` fires → `objectWillChange` → View body re-evaluates → condition switches. Any broken link in this chain means the UI won't update.
 
+### 6. Architecture Quality
+
+Run this section when the change introduces or modifies: a service, protocol, cache, coordinator, shared state object, ViewModel with injected dependencies, or reactive observation pattern. Skip for pure UI/View changes.
+
+Follow the full checklist from **Section 7 (Architecture Quality)** in the `post-change-validation` skill (`post-change-validation/SKILL.md`). Check all 6 sub-items (7a–7f) and report findings.
+
 ## Report Format
 
 ```
@@ -86,6 +93,9 @@ When `@Published` properties are restructured (moved, renamed, wrapped in struct
 - findings or "None"
 
 ### State Propagation
+- findings or "None"
+
+### Architecture Quality
 - findings or "None"
 
 **Summary:** N total findings.

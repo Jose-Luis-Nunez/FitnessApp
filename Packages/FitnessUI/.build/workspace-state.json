@@ -7,6 +7,23 @@
       {
         "basedOn" : null,
         "packageRef" : {
+          "identity" : "factory",
+          "kind" : "remoteSourceControl",
+          "location" : "https://github.com/hmlongco/Factory.git",
+          "name" : "Factory"
+        },
+        "state" : {
+          "checkoutState" : {
+            "revision" : "ccc898f21992ebc130bc04cc197460a5ae230bcf",
+            "version" : "2.5.3"
+          },
+          "name" : "sourceControlCheckout"
+        },
+        "subpath" : "Factory"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
           "identity" : "fitnesscore",
           "kind" : "fileSystem",
           "location" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore",

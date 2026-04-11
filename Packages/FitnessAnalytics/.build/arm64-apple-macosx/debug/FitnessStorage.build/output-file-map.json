@@ -37,6 +37,20 @@
     "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessStorage.build/TotalAnalyticsStorageService.swiftdeps",
     "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessStorage.build/TotalAnalyticsStorageService.dia"
   },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/UseCases/DeleteWorkoutUseCase.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessStorage.build/DeleteWorkoutUseCase.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessStorage.build/DeleteWorkoutUseCase.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessStorage.build/DeleteWorkoutUseCase~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessStorage.build/DeleteWorkoutUseCase.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessStorage.build/DeleteWorkoutUseCase.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/UseCases/DuplicateWorkoutUseCase.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessStorage.build/DuplicateWorkoutUseCase.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessStorage.build/DuplicateWorkoutUseCase.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessStorage.build/DuplicateWorkoutUseCase~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessStorage.build/DuplicateWorkoutUseCase.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessStorage.build/DuplicateWorkoutUseCase.dia"
+  },
   "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessStorage/Sources/FitnessStorage/WorkoutStorageService.swift": {
     "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessStorage.build/WorkoutStorageService.d",
     "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessStorage.build/WorkoutStorageService.swift.o",

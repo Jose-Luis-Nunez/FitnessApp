@@ -7,11 +7,11 @@ import FitnessExercise
 struct UITestLaunchStrategy: AppLaunchStrategy {
     let config: UITestLaunchConfig
 
-    func prepare(workoutService: WorkoutStorageService) {
+    func prepare(workoutService: WorkoutStoring) {
         workoutService.setCurrentWorkout(Workout(name: "Test Workout"))
     }
 
-    func initialNavigationStack(workoutService: WorkoutStorageService) -> [NavigationDestination] {
+    func initialNavigationStack(workoutService: WorkoutStoring) -> [NavigationDestination] {
         switch config.screen {
         case .training:
             guard let name = config.exerciseName,

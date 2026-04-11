@@ -3,7 +3,7 @@ import FitnessCore
 import Factory
 
 @MainActor
-public final class ExerciseManagementService {
+public final class ExerciseManagementService: ExerciseManaging {
     @Injected(\.exerciseStorage) private var storageService
     @Injected(\.analyticsStorage) private var analyticsStorage
     @Injected(\.workoutStorage) private var workoutStorageService

@@ -40,6 +40,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/ExerciseManaging.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/ExerciseStoring.swift"
         },
         {
@@ -64,6 +68,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/WorkoutStoring.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
         },
         {
@@ -83,12 +91,14 @@
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/AnalyticsStoring.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/Exercise.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/ExerciseEditMode.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/ExerciseManaging.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/ExerciseStoring.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/MuscleCategoryGroup.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/SetEditingMode.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/SetProgress.swift.o",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/WeightPhase.swift.o",
-        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/Workout.swift.o"
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/Workout.swift.o",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/WorkoutStoring.swift.o"
       ],
       "otherArguments" : [
         "-target",
@@ -153,6 +163,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/ExerciseManaging.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/ExerciseStoring.swift.o"
         },
         {
@@ -177,6 +191,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/WorkoutStoring.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/Modules/FitnessCore.swiftmodule"
         }
       ],
@@ -186,12 +204,14 @@
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/AnalyticsStoring.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/Exercise.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/ExerciseEditMode.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/ExerciseManaging.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/ExerciseStoring.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/MuscleCategoryGroup.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/SetEditingMode.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/SetProgress.swift",
         "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/WeightPhase.swift",
-        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/Workout.swift"
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/Workout.swift",
+        "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/WorkoutStoring.swift"
       ],
       "tempsPath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build",
       "wholeModuleOptimization" : false
@@ -297,12 +317,14 @@
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/AnalyticsStoring.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/Exercise.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/ExerciseEditMode.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/ExerciseManaging.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/ExerciseStoring.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/MuscleCategoryGroup.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/SetEditingMode.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/SetProgress.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/WeightPhase.swift",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/Workout.swift",
+      "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/WorkoutStoring.swift",
       "-I",
       "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/Modules",
       "-target",
@@ -449,6 +471,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/ExerciseManaging.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/ExerciseStoring.swift"
         },
         {
@@ -470,6 +496,10 @@
         {
           "kind" : "file",
           "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/Workout.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/WorkoutStoring.swift"
         }
       ],
       "outputFilePath" : "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/.build/arm64-apple-macosx/debug/FitnessCore.build/sources"

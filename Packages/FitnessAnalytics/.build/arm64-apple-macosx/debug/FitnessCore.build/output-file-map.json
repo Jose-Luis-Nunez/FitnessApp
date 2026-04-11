@@ -30,6 +30,13 @@
     "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessCore.build/ExerciseEditMode.swiftdeps",
     "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessCore.build/ExerciseEditMode.dia"
   },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/ExerciseManaging.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessCore.build/ExerciseManaging.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessCore.build/ExerciseManaging.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessCore.build/ExerciseManaging~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessCore.build/ExerciseManaging.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessCore.build/ExerciseManaging.dia"
+  },
   "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/ExerciseStoring.swift": {
     "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessCore.build/ExerciseStoring.d",
     "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessCore.build/ExerciseStoring.swift.o",
@@ -71,5 +78,12 @@
     "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessCore.build/Workout~partial.swiftmodule",
     "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessCore.build/Workout.swiftdeps",
     "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessCore.build/Workout.dia"
+  },
+  "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessCore/Sources/FitnessCore/WorkoutStoring.swift": {
+    "dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessCore.build/WorkoutStoring.d",
+    "object": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessCore.build/WorkoutStoring.swift.o",
+    "swiftmodule": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessCore.build/WorkoutStoring~partial.swiftmodule",
+    "swift-dependencies": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessCore.build/WorkoutStoring.swiftdeps",
+    "diagnostics": "/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessAnalytics/.build/arm64-apple-macosx/debug/FitnessCore.build/WorkoutStoring.dia"
   }
 }

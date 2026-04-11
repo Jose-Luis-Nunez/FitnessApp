@@ -13,35 +13,27 @@ public struct MuscleCategoryView: View {
     public let group: MuscleCategoryGroup
     @State private var viewModel: MuscleCategoryViewModel
     @State private var formViewModel: ExerciseFormViewModel
-    @State private var trainingCoordinator: TrainingCoordinator
+    private var trainingCoordinator: TrainingCoordinator
     @State private var analyticsViewModel: AnalyticsViewModel
     @Environment(AppRouter.self) private var router
 
     public init(group: MuscleCategoryGroup) {
         self.group = group
         let muscleCategoryViewModel = MuscleCategoryViewModel(group: group)
-        let sharedAnalyticsVM = AnalyticsViewModel()
         self._viewModel = State(wrappedValue: muscleCategoryViewModel)
         self._formViewModel = State(wrappedValue: muscleCategoryViewModel.formViewModel)
-        self._analyticsViewModel = State(wrappedValue: sharedAnalyticsVM)
 
-        self._trainingCoordinator = State(wrappedValue: TrainingCoordinator(
-            findCategory: { _ in group },
-            onExerciseUpdate: { exercise, _ in
-                muscleCategoryViewModel.updateExercise(exercise)
-            },
-            onExerciseReset: { exercise, _ in
-                muscleCategoryViewModel.resetExercise(exercise)
-            },
-            onAddExercise: {
-                withAnimation {
-                    muscleCategoryViewModel.formViewModel.loadExercise(nil, category: group)
-                    muscleCategoryViewModel.formViewModel.toggleForm()
-                }
-            },
-            onResetAllExercises: {},
-            analyticsViewModel: sharedAnalyticsVM
-        ))
+        let coordinatorCache = Container.shared.trainingCoordinatorCache()
+        let coordinator = coordinatorCache.coordinator(for: group)
+        self.trainingCoordinator = coordinator
+        self._analyticsViewModel = State(wrappedValue: coordinator.analyticsViewModel)
+
+        coordinator.setOnAddExercise {
+            withAnimation {
+                muscleCategoryViewModel.formViewModel.loadExercise(nil, category: group)
+                muscleCategoryViewModel.formViewModel.toggleForm()
+            }
+        }
     }
 
     private var bottomListPadding: CGFloat {

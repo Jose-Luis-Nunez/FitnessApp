@@ -15,6 +15,9 @@ public final class AnalyticsViewModel {
     private let storageService: AnalyticsStoring
     @ObservationIgnored @Injected(\.exerciseStorage) private var exerciseStorageService
     @ObservationIgnored @Injected(\.workoutStorage) private var workoutStorageService
+    @ObservationIgnored @Injected(\.saveAnalyticsUseCase) private var saveAnalyticsUseCase
+    @ObservationIgnored @Injected(\.deleteAnalyticsSetUseCase) private var deleteAnalyticsSetUseCase
+    @ObservationIgnored @Injected(\.saveOrReplaceAnalyticsUseCase) private var saveOrReplaceAnalyticsUseCase
     
     nonisolated public init(storageService: AnalyticsStoring? = nil) {
         self.storageService = storageService ?? Container.shared.analyticsStorage()
@@ -27,21 +30,8 @@ public final class AnalyticsViewModel {
     }
     
     public func saveAnalytics(exerciseId: UUID, setProgress: [SetProgress], date: Date = Date()) {
-        guard !setProgress.isEmpty else {
-            print("No set progress to save for analytics")
-            return
-        }
-        
-        let analyticsEntry = AnalyticsEntry(
-            exerciseId: exerciseId,
-            date: date,
-            setProgress: setProgress
-        )
-        
-        var existingEntries = storageService.load(for: exerciseId)
-        existingEntries.append(analyticsEntry)
-        storageService.save(existingEntries, for: exerciseId)
-
+        guard !setProgress.isEmpty else { return }
+        saveAnalyticsUseCase.execute(exerciseId: exerciseId, setProgress: setProgress, date: date)
         lastUpdatedExerciseId = exerciseId
     }
     
@@ -74,26 +64,8 @@ public final class AnalyticsViewModel {
         setProgress: [SetProgress],
         date: Date
     ) {
-        guard !setProgress.isEmpty else {
-            print("No set progress to save for analytics")
-            return
-        }
-        
-        let analyticsEntry = AnalyticsEntry(
-            exerciseId: exerciseId,
-            date: date,
-            setProgress: setProgress
-        )
-        
-        var existingEntries = storageService.load(for: exerciseId)
-        let calendar = Calendar.current
-        if let idx = existingEntries.firstIndex(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
-            existingEntries[idx] = analyticsEntry
-        } else {
-            existingEntries.append(analyticsEntry)
-        }
-        storageService.save(existingEntries, for: exerciseId)
-
+        guard !setProgress.isEmpty else { return }
+        saveOrReplaceAnalyticsUseCase.execute(exerciseId: exerciseId, setProgress: setProgress, date: date)
         lastUpdatedExerciseId = exerciseId
     }
     
@@ -102,40 +74,7 @@ public final class AnalyticsViewModel {
         entryId: UUID,
         setIndex: Int
     ) {
-        var existingEntries = storageService.load(for: exerciseId)
-        
-        guard let entryIndex = existingEntries.firstIndex(where: { $0.id == entryId }) else {
-            print("Entry not found for deletion")
-            return
-        }
-        
-        let entry = existingEntries[entryIndex]
-        guard setIndex < entry.setProgress.count else {
-            print("Set index out of bounds")
-            return
-        }
-        
-        var updatedSetProgress = entry.setProgress
-        updatedSetProgress.remove(at: setIndex)
-        
-        if updatedSetProgress.isEmpty {
-            existingEntries.remove(at: entryIndex)
-        } else {
-            let updatedEntry = AnalyticsEntry(
-                id: entry.id,
-                exerciseId: entry.exerciseId,
-                date: entry.date,
-                setProgress: updatedSetProgress
-            )
-            existingEntries[entryIndex] = updatedEntry
-        }
-        
-        storageService.save(existingEntries, for: exerciseId)
-        
-        if existingEntries.isEmpty {
-            updateExerciseCompletionStatus(exerciseId: exerciseId, isCompleted: false)
-        }
-        
+        deleteAnalyticsSetUseCase.execute(exerciseId: exerciseId, entryId: entryId, setIndex: setIndex)
         lastUpdatedExerciseId = exerciseId
     }
     
@@ -195,26 +134,6 @@ extension AnalyticsViewModel {
         return increases
     }
     
-    private func updateExerciseCompletionStatus(exerciseId: UUID, isCompleted: Bool) {
-        guard let currentWorkout = workoutStorageService.currentWorkout else { 
-            print("No current workout found")
-            return 
-        }
-        
-        // Load exercises from all categories to find the exercise
-        for category in MuscleCategoryGroup.allCases {
-            var exercises = exerciseStorageService.loadForWorkout(workoutId: currentWorkout.id, category: category)
-            
-            if let exerciseIndex = exercises.firstIndex(where: { $0.id == exerciseId }) {
-                exercises[exerciseIndex].isCompleted = isCompleted
-                exerciseStorageService.saveForWorkout(exercises, workoutId: currentWorkout.id, category: category)
-                print("Updated exercise \(exerciseId) completion status to \(isCompleted)")
-                return
-            }
-        }
-        
-        print("Exercise \(exerciseId) not found in any category")
-    }
     
     public func trainingSessionsUntilWeightIncrease(for exerciseId: UUID) -> Int {
         let entries = loadAnalytics(for: exerciseId)

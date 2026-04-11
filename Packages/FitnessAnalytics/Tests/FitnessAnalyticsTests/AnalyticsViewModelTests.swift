@@ -6,6 +6,7 @@ import Factory
 
 // MARK: - Mock Storage
 
+@MainActor
 final class MockAnalyticsStorage: AnalyticsStoring {
     private var store: [UUID: [AnalyticsEntry]] = [:]
 
@@ -41,6 +42,7 @@ private func date(_ offset: Int) -> Date {
 // MARK: - getDailyRepsProgression
 
 @Suite("getDailyRepsProgression")
+@MainActor
 struct GetDailyRepsProgressionTests {
 
     @Test func returnsEmptyForNoData() {
@@ -113,6 +115,7 @@ struct GetDailyRepsProgressionTests {
 // MARK: - totalRepsIncreases
 
 @Suite("totalRepsIncreases")
+@MainActor
 struct TotalRepsIncreasesTests {
 
     @Test func returnsZeroForNoData() {
@@ -176,6 +179,7 @@ struct TotalRepsIncreasesTests {
 // MARK: - trainingSessionsUntilRepsIncrease
 
 @Suite("trainingSessionsUntilRepsIncrease")
+@MainActor
 struct TrainingSessionsUntilRepsIncreaseTests {
 
     @Test func returnsZeroForLessThanThreeDays() {
@@ -228,6 +232,7 @@ struct TrainingSessionsUntilRepsIncreaseTests {
 // MARK: - repsPhases
 
 @Suite("repsPhases")
+@MainActor
 struct RepsPhasesTests {
 
     @Test func returnsEmptyForNoData() {

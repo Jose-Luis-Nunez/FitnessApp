@@ -30,6 +30,7 @@ let package = Package(
                 "FitnessCore",
                 "FitnessStorage",
                 "FitnessTraining",
+                "FitnessAnalytics",
                 .product(name: "Testing", package: "swift-testing"),
                 .product(name: "Factory", package: "Factory"),
             ]

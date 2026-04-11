@@ -5,6 +5,7 @@ import FitnessCore
 import Factory
 
 @Suite("SessionTrainingCache")
+@MainActor
 struct SessionTrainingCacheTests {
 
     @Test func returnsSameInstanceForSameGroup() {

@@ -6,6 +6,7 @@
 /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Sources/FitnessExercise/ExerciseAccessibilityIDs.swift
 /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Sources/FitnessExercise/ExerciseCardContainerView.swift
 /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Sources/FitnessExercise/ExerciseCardViewModel.swift
+/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Sources/FitnessExercise/ExerciseContainer.swift
 /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Sources/FitnessExercise/ExerciseFormViewModel.swift
 /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Sources/FitnessExercise/ExerciseNamePickerView.swift
 /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Sources/FitnessExercise/ExercisePickerShared.swift
@@ -22,4 +23,5 @@
 /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Sources/FitnessExercise/MuscleCategoryViewModel.swift
 /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Sources/FitnessExercise/NavigationDestination.swift
 /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Sources/FitnessExercise/SetTileView.swift
+/Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Sources/FitnessExercise/UseCases/ResetAllExercisesUseCase.swift
 /Users/jose.nunez/Documents/repo/FitnessApp/Packages/FitnessExercise/Sources/FitnessExercise/WeightPhaseTileView.swift

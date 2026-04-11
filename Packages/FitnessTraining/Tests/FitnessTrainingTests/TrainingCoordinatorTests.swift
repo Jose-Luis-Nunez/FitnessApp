@@ -24,30 +24,34 @@ private func makeExercise(
     )
 }
 
+@MainActor
 private final class MockAnalyticsStorageForCoord: AnalyticsStoring {
     func save(_ entries: [AnalyticsEntry], for exerciseId: UUID) {}
     func load(for exerciseId: UUID) -> [AnalyticsEntry] { [] }
 }
 
+@MainActor
 private func makeCoordinator(
-    activeSetVM: ActiveSetViewModel = ActiveSetViewModel(),
+    activeSetVM: ActiveSetViewModel? = nil,
     onExerciseUpdate: @escaping (Exercise, MuscleCategoryGroup) -> Void = { _, _ in },
     onExerciseReset: @escaping (Exercise, MuscleCategoryGroup) -> Void = { _, _ in }
 ) -> (TrainingCoordinator, ActiveSetViewModel) {
     Container.shared.reset()
+    let vm = activeSetVM ?? ActiveSetViewModel()
     let coordinator = TrainingCoordinator(
         findCategory: { _ in .arms },
         onExerciseUpdate: onExerciseUpdate,
         onExerciseReset: onExerciseReset,
-        activeSetViewModel: activeSetVM,
+        activeSetViewModel: vm,
         analyticsViewModel: AnalyticsViewModel(storageService: MockAnalyticsStorageForCoord())
     )
-    return (coordinator, activeSetVM)
+    return (coordinator, vm)
 }
 
 // MARK: - finishExercise
 
 @Suite("finishExercise")
+@MainActor
 struct FinishExerciseTests {
 
     @Test func setsCurrentExerciseToNilAndIsTrainingActiveToFalse() {
@@ -126,6 +130,7 @@ struct FinishExerciseTests {
 // MARK: - Tracking observer
 
 @Suite("tracking observer")
+@MainActor
 struct TrackingObserverTests {
 
     @Test func mapsTrackingCurrentExerciseToCoordinatorCurrentExercise() async throws {
@@ -144,6 +149,7 @@ struct TrackingObserverTests {
 // MARK: - cancelTraining
 
 @Suite("cancelTraining")
+@MainActor
 struct CancelTrainingTests {
 
     @Test func resetsCoordinatorState() {
@@ -161,6 +167,7 @@ struct CancelTrainingTests {
 // MARK: - handleQuickDone
 
 @Suite("handleQuickDone")
+@MainActor
 struct HandleQuickDoneTests {
 
     @Test func setsAllSetsCompletedAndLastSetCompleted() {

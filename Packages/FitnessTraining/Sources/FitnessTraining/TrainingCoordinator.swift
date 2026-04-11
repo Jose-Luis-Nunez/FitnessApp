@@ -57,8 +57,8 @@ public final class TrainingCoordinator {
     private let findCategory: (Exercise) -> MuscleCategoryGroup?
     private let onExerciseUpdate: @MainActor (Exercise, MuscleCategoryGroup) -> Void
     private let onExerciseReset: @MainActor (Exercise, MuscleCategoryGroup) -> Void
-    private let onAddExercise: @MainActor () -> Void
-    private let onResetAllExercises: @MainActor () -> Void
+    private var _onAddExercise: @MainActor () -> Void
+    private var _onResetAllExercises: @MainActor () -> Void
 
     private var observationTask: Task<Void, Never>?
 
@@ -80,8 +80,19 @@ public final class TrainingCoordinator {
         self.findCategory = findCategory
         self.onExerciseUpdate = onExerciseUpdate
         self.onExerciseReset = onExerciseReset
-        self.onAddExercise = onAddExercise
-        self.onResetAllExercises = onResetAllExercises
+        self._onAddExercise = onAddExercise
+        self._onResetAllExercises = onResetAllExercises
+    }
+
+    /// Replaces the add-exercise callback. Only the currently visible view
+    /// should call this; the coordinator itself never mutates it internally.
+    public func setOnAddExercise(_ handler: @escaping @MainActor () -> Void) {
+        _onAddExercise = handler
+    }
+
+    /// Replaces the reset-all callback.
+    public func setOnResetAllExercises(_ handler: @escaping @MainActor () -> Void) {
+        _onResetAllExercises = handler
     }
 
     // MARK: - Training Actions
@@ -253,10 +264,10 @@ public final class TrainingCoordinator {
                 self?.finishExercise()
             },
             onAddExercise: { [weak self] in
-                self?.onAddExercise()
+                self?._onAddExercise()
             },
             onResetAllExercises: { [weak self] in
-                self?.onResetAllExercises()
+                self?._onResetAllExercises()
             }
         )
     }
@@ -285,17 +296,24 @@ public final class TrainingCoordinator {
 
     private func setupActiveSetViewModelObserver() {
         observationTask?.cancel()
-        var lastExerciseId: UUID? = activeSetViewModel.tracking.currentExercise?.id
+        let vm = activeSetViewModel
+        var lastExerciseId: UUID? = vm.tracking.currentExercise?.id
         observationTask = Task { [weak self] in
             while !Task.isCancelled {
-                guard let self else { return }
-                let newExercise = self.activeSetViewModel.tracking.currentExercise
+                await withCheckedContinuation { continuation in
+                    withObservationTracking {
+                        _ = vm.currentExercise
+                    } onChange: {
+                        continuation.resume()
+                    }
+                }
+                guard let self, !Task.isCancelled else { return }
+                let newExercise = vm.tracking.currentExercise
                 if newExercise?.id != lastExerciseId {
                     lastExerciseId = newExercise?.id
                     self.currentExercise = newExercise
                     self.isTrainingActive = newExercise != nil
                 }
-                try? await Task.sleep(for: .milliseconds(100))
             }
         }
     }
