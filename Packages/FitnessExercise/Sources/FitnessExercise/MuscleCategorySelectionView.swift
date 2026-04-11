@@ -201,36 +201,16 @@ public struct MuscleCategorySelectionView: View {
                             .contentShape(Rectangle())
                             .allowsHitTesting(true)
 
-                        if !isTrainingActive {
-                            HStack {
-                                Spacer()
-                                filterToggleView
-                            }
-                            .padding(.horizontal, SelectionLayoutConstants.horizontalPadding)
-                            .padding(.bottom, safeAreaInset + 24)
-                        } else {
-                            Text("Training Active")
-                                .font(.headline)
-                                .foregroundColor(AppStyle.Color.green)
-                                .padding(.horizontal, SelectionLayoutConstants.horizontalPadding)
-                                .padding(.bottom, safeAreaInset + 24)
+                        HStack {
+                            Spacer()
+                            filterToggleView
                         }
+                        .padding(.horizontal, SelectionLayoutConstants.horizontalPadding)
+                        .padding(.bottom, safeAreaInset + 24)
                     }
                 }
                 .zIndex(3)
                 .transition(.opacity)
-            }
-
-            if let coordinator = trainingCoordinator {
-                TrainingActionBarComponent(
-                    coordinator: coordinator,
-                    exercises: viewModel.allExercises(),
-                    hasActiveExercise: isTrainingActive
-                )
-                .padding(.bottom, safeAreaInset + 12)
-
-                TrainingPickerComponent(coordinator: coordinator)
-                    .zIndex(1001)
             }
 
             if overlayState.showWorkoutDropdown {
