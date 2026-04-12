@@ -81,7 +81,6 @@ public final class MuscleCategorySelectionViewModel {
         coordinatorObservationTasks.append(task)
     }
 
-    @ObservationIgnored @Injected(\.sessionTrainingCache) private var sessionTrainingCache
     @ObservationIgnored @Injected(\.resetAllExercisesUseCase) private var resetAllExercisesUseCase
 
     public func resetAllExercises() {

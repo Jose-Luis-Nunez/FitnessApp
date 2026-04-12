@@ -2,26 +2,7 @@ import Testing
 import Foundation
 @testable import FitnessExercise
 import FitnessCore
-
-private func makeExercise(
-    id: UUID = UUID(),
-    name: String = "Bicep Curl",
-    weight: Double = 20,
-    reps: Int = 10,
-    sets: Int = 3,
-    isCompleted: Bool = false
-) -> Exercise {
-    Exercise(
-        id: id,
-        name: name,
-        weight: weight,
-        reps: reps,
-        sets: sets,
-        isCompleted: isCompleted,
-        iconName: "defaultArmsIcon",
-        category: .arms
-    )
-}
+import FitnessTestSupport
 
 // MARK: - syncExercise
 

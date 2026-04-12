@@ -67,15 +67,14 @@ public final class MuscleCategoryViewModel {
         coordinatorObservationTask?.cancel()
     }
 
-    /// Observes `lastCompletedExercise` and `activeSessions` on the coordinator.
-    /// When an exercise is completed or a session ends, updates the local array.
+    /// Observes `lastCompletedExercise` on the coordinator.
+    /// When an exercise is completed, updates it in-place in the local array.
     private func startCoordinatorObservation(_ coordinator: TrainingCoordinator) {
         coordinatorObservationTask = Task { [weak self] in
             while !Task.isCancelled {
                 await withCheckedContinuation { continuation in
                     withObservationTracking {
                         _ = coordinator.lastCompletedExercise
-                        _ = coordinator.activeSessions
                     } onChange: {
                         continuation.resume()
                     }
@@ -85,8 +84,6 @@ public final class MuscleCategoryViewModel {
                 if let completed = coordinator.lastCompletedExercise,
                    let index = self.exercises.firstIndex(where: { $0.id == completed.id }) {
                     self.exercises[index] = completed
-                } else {
-                    self.refreshExercises()
                 }
             }
         }
@@ -165,9 +162,6 @@ public final class MuscleCategoryViewModel {
     public func resetExercise(_ exercise: Exercise) {
         var updatedExercise = exercise
         updatedExercise.isCompleted = false
-        updatedExercise.sets = exercise.sets
-        updatedExercise.reps = exercise.reps
-        updatedExercise.weight = exercise.weight
         updateExercise(updatedExercise)
     }
 

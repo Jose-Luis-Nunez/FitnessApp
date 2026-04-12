@@ -14,6 +14,7 @@ let package = Package(
         .package(path: "../FitnessUI"),
         .package(url: "https://github.com/swiftlang/swift-testing.git", from: "6.0.0"),
         .package(url: "https://github.com/hmlongco/Factory.git", from: "2.5.0"),
+        .package(path: "../FitnessTestSupport"),
     ],
     targets: [
         .target(
@@ -25,6 +26,7 @@ let package = Package(
             dependencies: [
                 "FitnessAnalytics",
                 "FitnessCore",
+                "FitnessTestSupport",
                 .product(name: "Testing", package: "swift-testing"),
                 .product(name: "Factory", package: "Factory"),
             ]

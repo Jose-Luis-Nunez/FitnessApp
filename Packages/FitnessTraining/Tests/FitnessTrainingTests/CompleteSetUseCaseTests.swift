@@ -2,25 +2,13 @@ import Testing
 import Foundation
 @testable import FitnessTraining
 import FitnessCore
+import FitnessTestSupport
 
 @Suite("CompleteSetUseCase")
 @MainActor
 struct CompleteSetUseCaseTests {
 
     private let sut = CompleteSetUseCase()
-
-    private func makeExercise(sets: Int = 3) -> Exercise {
-        Exercise(
-            id: UUID(),
-            name: "Curl",
-            weight: 20,
-            reps: 10,
-            sets: sets,
-            isCompleted: false,
-            iconName: "defaultArmsIcon",
-            category: .arms
-        )
-    }
 
     @Test func completesSetAndStartsNext() {
         let vm = ActiveSetViewModel()

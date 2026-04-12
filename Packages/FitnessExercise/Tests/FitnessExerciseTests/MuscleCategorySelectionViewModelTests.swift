@@ -4,6 +4,7 @@ import Foundation
 import FitnessCore
 import FitnessStorage
 import FitnessTraining
+import FitnessTestSupport
 import Factory
 
 // MARK: - Mock Coordinator Cache
@@ -23,10 +24,6 @@ private final class MockCoordinatorCache: TrainingCoordinatorCaching {
         )
         coordinators[group] = coordinator
         return coordinator
-    }
-
-    var activeCoordinator: TrainingCoordinator? {
-        coordinators.values.first { $0.hasActiveSessions }
     }
 
     func findCoordinator(for exercise: Exercise) -> (TrainingCoordinator, MuscleCategoryGroup)? {
@@ -103,24 +100,6 @@ private final class MockExerciseManagement: ExerciseManaging {
 
 // MARK: - Helpers
 
-private func makeExercise(
-    id: UUID = UUID(),
-    name: String = "Curl",
-    isCompleted: Bool = false,
-    category: MuscleCategoryGroup = .arms
-) -> Exercise {
-    Exercise(
-        id: id,
-        name: name,
-        weight: 20,
-        reps: 10,
-        sets: 3,
-        isCompleted: isCompleted,
-        iconName: "defaultArmsIcon",
-        category: category
-    )
-}
-
 @MainActor
 private func registerMockExerciseManagement(_ mock: MockExerciseManagement) {
     Container.shared.exerciseManagement.register { mock }
@@ -162,13 +141,11 @@ struct CategoriesTests {
         let vm = MuscleCategorySelectionViewModel(coordinatorCache: MockCoordinatorCache())
         #expect(vm.categories == [.arms])
 
-        await Task.yield()
         try await Task.sleep(for: .milliseconds(50))
 
         ws.setCurrentWorkout(Workout(name: "W2", selectedCategories: [.chest, .legs]))
 
-        await Task.yield()
-        try await Task.sleep(for: .milliseconds(150))
+        try await waitUntil(timeout: .seconds(1)) { vm.categories.contains(.chest) }
 
         #expect(vm.categories.contains(.chest))
         #expect(vm.categories.contains(.legs))
@@ -219,10 +196,8 @@ struct ExerciseCountsTests {
         let coordinator = cache.coordinator(for: .arms)
         coordinator.startTraining(for: exercise)
 
-        await Task.yield()
-        try await Task.sleep(for: .milliseconds(50))
+        try await waitUntil { coordinator.isTrainingActive }
 
-        // Simulate exercise completed externally
         var completed = exercise
         completed.isCompleted = true
         mock.exercisesByCategory[.arms] = [completed]
@@ -230,8 +205,7 @@ struct ExerciseCountsTests {
         for _ in 0..<exercise.sets { coordinator.completeSet() }
         coordinator.finishExercise()
 
-        await Task.yield()
-        try await Task.sleep(for: .milliseconds(100))
+        try await waitUntil { vm.getExerciseCount(for: .arms)?.active == 0 }
 
         #expect(vm.getExerciseCount(for: .arms)?.active == 0)
     }

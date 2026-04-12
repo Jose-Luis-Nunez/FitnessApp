@@ -20,11 +20,41 @@ cd ~/Documents/repo/FitnessApp && DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcod
 cd ~/Documents/repo/FitnessApp && DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer xcodebuild test -scheme FitnessApp -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -only-testing:FitnessAppUITests 2>&1 | tail -30
 ```
 
+## Package Tests (SPM)
+
+Package tests run via `xcodebuild` from each package directory with `-skipMacroValidation` (required for swift-testing macros). Do **not** use `swift test` — SwiftData macros require the Xcode build system.
+
+### Single package
+
+```bash
+cd ~/Documents/repo/FitnessApp/Packages/FitnessTraining && DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer xcodebuild test -scheme FitnessTraining -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -skipMacroValidation 2>&1 | tail -30
+```
+
+### All packages
+
+```bash
+for pkg in FitnessExercise FitnessTraining FitnessAnalytics FitnessStorage; do
+  echo "=== Testing $pkg ===" && \
+  cd ~/Documents/repo/FitnessApp/Packages/$pkg && \
+  DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer xcodebuild test -scheme $pkg -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -skipMacroValidation 2>&1 | tail -10
+done
+```
+
+### Available package test targets
+
+| Package | Scheme | Test count |
+|---|---|---|
+| `FitnessTraining` | `FitnessTraining` | 45 |
+| `FitnessAnalytics` | `FitnessAnalytics` | 18 |
+| `FitnessExercise` | `FitnessExercise` | ~20 |
+| `FitnessStorage` | `FitnessStorage` | 28 |
+
 ## Notes
 
-- **Scheme**: Use `FitnessApp` (not `FitnessApp UITests`).
+- **Scheme**: Use `FitnessApp` for app-level tests (not `FitnessApp UITests`).
 - **Simulator**: `iPhone 17 Pro Max`.
 - To run a **single test**, append the test class and method: `-only-testing:FitnessAppUITests/TrainingUITests/testFullTrainingFlow`
 - To run **all UI tests**, use: `-only-testing:FitnessAppUITests`
 - Set `block_until_ms` to `300000` (5 min) since build + test takes ~90–120 seconds.
-- Do **not** use `swift build` for targets that use SwiftData `@Model` — the macros require the Xcode build system.
+- Do **not** use `swift test` or `swift build` — SwiftData macros require the Xcode build system.
+- Always add `-skipMacroValidation` when running package tests via CLI.

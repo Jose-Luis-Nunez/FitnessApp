@@ -2,7 +2,6 @@ import Foundation
 import Observation
 import FitnessCore
 import FitnessStorage
-import FitnessAnalytics
 import Factory
 
 // MARK: - Protocol
@@ -10,7 +9,6 @@ import Factory
 @MainActor
 public protocol TrainingCoordinatorCaching: AnyObject {
     func coordinator(for group: MuscleCategoryGroup) -> TrainingCoordinator
-    var activeCoordinator: TrainingCoordinator? { get }
     func findCoordinator(for exercise: Exercise) -> (TrainingCoordinator, MuscleCategoryGroup)?
 }
 
@@ -21,7 +19,6 @@ public protocol TrainingCoordinatorCaching: AnyObject {
 public final class TrainingCoordinatorCache: TrainingCoordinatorCaching {
     private var coordinators: [MuscleCategoryGroup: TrainingCoordinator] = [:]
 
-    @ObservationIgnored @Injected(\.sessionTrainingCache) private var sessionTrainingCache
     @ObservationIgnored @Injected(\.exerciseManagement) private var exerciseManagementService
 
     public init() {}
@@ -41,10 +38,6 @@ public final class TrainingCoordinatorCache: TrainingCoordinatorCaching {
         )
         coordinators[group] = coordinator
         return coordinator
-    }
-
-    public var activeCoordinator: TrainingCoordinator? {
-        coordinators.values.first { $0.hasActiveSessions }
     }
 
     public func findCoordinator(for exercise: Exercise) -> (TrainingCoordinator, MuscleCategoryGroup)? {

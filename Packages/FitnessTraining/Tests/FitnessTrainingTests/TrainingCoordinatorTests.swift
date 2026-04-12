@@ -3,32 +3,10 @@ import Foundation
 @testable import FitnessTraining
 import FitnessCore
 import FitnessAnalytics
+import FitnessTestSupport
 import Factory
 
 // MARK: - Helpers
-
-private func makeExercise(
-    id: UUID = UUID(),
-    sets: Int = 3,
-    isCompleted: Bool = false
-) -> Exercise {
-    Exercise(
-        id: id,
-        name: "Curl",
-        weight: 20,
-        reps: 10,
-        sets: sets,
-        isCompleted: isCompleted,
-        iconName: "defaultArmsIcon",
-        category: .arms
-    )
-}
-
-@MainActor
-private final class MockAnalyticsStorageForCoord: AnalyticsStoring {
-    func save(_ entries: [AnalyticsEntry], for exerciseId: UUID) {}
-    func load(for exerciseId: UUID) -> [AnalyticsEntry] { [] }
-}
 
 @MainActor
 private func makeCoordinator(
@@ -40,7 +18,7 @@ private func makeCoordinator(
         findCategory: { _ in .arms },
         onExerciseUpdate: onExerciseUpdate,
         onExerciseReset: onExerciseReset,
-        analyticsViewModel: AnalyticsViewModel(storageService: MockAnalyticsStorageForCoord())
+        analyticsViewModel: AnalyticsViewModel(storageService: StubAnalyticsStorage())
     )
     return coordinator
 }
@@ -400,5 +378,304 @@ struct HandleQuickDoneTests {
 
         #expect(barVM.showFinishButton == true)
         #expect(barVM.showSetControls == false)
+    }
+}
+
+// MARK: - editLess / editMore
+
+@Suite("editLess and editMore")
+@MainActor
+struct EditLessMoreTests {
+
+    @Test func editLessSetsEditingModeToLess() {
+        let coordinator = makeCoordinator()
+        let exercise = makeExercise(sets: 3)
+        coordinator.startTraining(for: exercise)
+
+        coordinator.editLess()
+
+        let vm = coordinator.activeSetViewModel
+        #expect(vm.isEditing == true)
+        #expect(vm.editMode == .less)
+        #expect(vm.pendingEditIndex == 0)
+    }
+
+    @Test func editMoreSetsEditingModeToMore() {
+        let coordinator = makeCoordinator()
+        let exercise = makeExercise(sets: 3)
+        coordinator.startTraining(for: exercise)
+
+        coordinator.editMore()
+
+        let vm = coordinator.activeSetViewModel
+        #expect(vm.isEditing == true)
+        #expect(vm.editMode == .more)
+        #expect(vm.pendingEditIndex == 0)
+    }
+
+    @Test func editLessDoesNothingWithoutActiveSets() {
+        let coordinator = makeCoordinator()
+
+        coordinator.editLess()
+
+        let vm = coordinator.activeSetViewModel
+        #expect(vm.isEditing == false)
+    }
+
+    @Test func editMoreDoesNothingWithoutActiveSets() {
+        let coordinator = makeCoordinator()
+
+        coordinator.editMore()
+
+        let vm = coordinator.activeSetViewModel
+        #expect(vm.isEditing == false)
+    }
+
+    @Test func editLessStopsTimer() {
+        let coordinator = makeCoordinator()
+        let exercise = makeExercise(sets: 3)
+        coordinator.startTraining(for: exercise)
+
+        let vm = coordinator.activeSetViewModel
+        #expect(vm.isSetInProgress == true)
+
+        coordinator.editLess()
+
+        #expect(vm.isEditing == true)
+    }
+
+    @Test func editLessEditsCorrectSetAfterCompletion() {
+        let coordinator = makeCoordinator()
+        let exercise = makeExercise(sets: 3)
+        coordinator.startTraining(for: exercise)
+
+        coordinator.completeSet()
+        coordinator.activeSetViewModel.startNextSet()
+
+        coordinator.editLess()
+
+        let vm = coordinator.activeSetViewModel
+        #expect(vm.pendingEditIndex == 1)
+        #expect(vm.editMode == .less)
+    }
+}
+
+// MARK: - setCurrentExercise
+
+@Suite("setCurrentExercise")
+@MainActor
+struct SetCurrentExerciseTests {
+
+    @Test func setsExerciseAndCreateSession() {
+        let coordinator = makeCoordinator()
+        let exercise = makeExercise()
+
+        coordinator.setCurrentExercise(exercise)
+
+        #expect(coordinator.focusedExerciseId == exercise.id)
+        #expect(coordinator.activeSessions[exercise.id] != nil)
+        #expect(coordinator.activeSetViewModel.currentExercise?.id == exercise.id)
+    }
+
+    @Test func settingNilClearsFocus() {
+        let coordinator = makeCoordinator()
+        let exercise = makeExercise()
+
+        coordinator.setCurrentExercise(exercise)
+        coordinator.setCurrentExercise(nil)
+
+        #expect(coordinator.focusedExerciseId == nil)
+    }
+
+    @Test func doesNotReplaceExistingSession() {
+        let coordinator = makeCoordinator()
+        let exercise = makeExercise()
+
+        coordinator.startTraining(for: exercise)
+        let originalVM = coordinator.activeSessions[exercise.id]
+
+        coordinator.setCurrentExercise(exercise)
+
+        #expect(coordinator.activeSessions[exercise.id] === originalVM)
+    }
+
+    @Test func switchesFocusBetweenExercises() {
+        let coordinator = makeCoordinator()
+        let exercise1 = makeExercise(sets: 2)
+        let exercise2 = makeExercise(sets: 3)
+
+        coordinator.setCurrentExercise(exercise1)
+        coordinator.setCurrentExercise(exercise2)
+
+        #expect(coordinator.focusedExerciseId == exercise2.id)
+        #expect(coordinator.activeSessions.count == 2)
+    }
+}
+
+// MARK: - createTrainingCallbacks
+
+@Suite("createTrainingCallbacks")
+@MainActor
+struct CreateTrainingCallbacksTests {
+
+    @Test func onCompleteSetDelegatesToCoordinator() {
+        let coordinator = makeCoordinator()
+        let exercise = makeExercise(sets: 3)
+        coordinator.startTraining(for: exercise)
+
+        let callbacks = coordinator.createTrainingCallbacks()
+        callbacks.onCompleteSet()
+
+        #expect(coordinator.activeSetViewModel.currentSet == 1)
+    }
+
+    @Test func onQuickDoneDelegatesToCoordinator() {
+        let coordinator = makeCoordinator()
+        let exercise = makeExercise(sets: 3)
+        coordinator.startTraining(for: exercise)
+
+        let callbacks = coordinator.createTrainingCallbacks()
+        callbacks.onQuickDone()
+
+        #expect(coordinator.activeSetViewModel.isLastSetCompleted == true)
+        #expect(coordinator.activeSetViewModel.setProgress.allSatisfy { $0.status == .completedDone })
+    }
+
+    @Test func onFinishDelegatesToCoordinator() {
+        let coordinator = makeCoordinator()
+        let exercise = makeExercise(sets: 1)
+        coordinator.startTraining(for: exercise)
+        coordinator.completeSet()
+
+        let callbacks = coordinator.createTrainingCallbacks()
+        callbacks.onFinish()
+
+        #expect(coordinator.currentExercise == nil)
+        #expect(coordinator.isTrainingActive == false)
+    }
+
+    @Test func onCategoryResetDelegatesToCoordinator() {
+        var resetCalled = false
+
+        let coordinator = makeCoordinator(
+            onExerciseReset: { _, _ in resetCalled = true }
+        )
+        let exercise = makeExercise(sets: 2)
+        coordinator.startTraining(for: exercise)
+
+        let callbacks = coordinator.createTrainingCallbacks()
+        callbacks.onCategoryReset()
+
+        #expect(resetCalled == true)
+        #expect(coordinator.activeSessions.isEmpty)
+    }
+
+    @Test func onAddExerciseDelegatesToCallback() {
+        var addCalled = false
+        let coordinator = TrainingCoordinator(
+            findCategory: { _ in .arms },
+            onExerciseUpdate: { _, _ in },
+            onExerciseReset: { _, _ in },
+            onAddExercise: { addCalled = true },
+            analyticsViewModel: AnalyticsViewModel(storageService: StubAnalyticsStorage())
+        )
+
+        let callbacks = coordinator.createTrainingCallbacks()
+        callbacks.onAddExercise()
+
+        #expect(addCalled == true)
+    }
+
+    @Test func onResetAllExercisesDelegatesToCallback() {
+        var resetAllCalled = false
+        let coordinator = TrainingCoordinator(
+            findCategory: { _ in .arms },
+            onExerciseUpdate: { _, _ in },
+            onExerciseReset: { _, _ in },
+            onResetAllExercises: { resetAllCalled = true },
+            analyticsViewModel: AnalyticsViewModel(storageService: StubAnalyticsStorage())
+        )
+
+        let callbacks = coordinator.createTrainingCallbacks()
+        callbacks.onResetAllExercises()
+
+        #expect(resetAllCalled == true)
+    }
+
+    @Test func onEditLessDelegatesToCoordinator() {
+        let coordinator = makeCoordinator()
+        let exercise = makeExercise(sets: 3)
+        coordinator.startTraining(for: exercise)
+
+        let callbacks = coordinator.createTrainingCallbacks()
+        callbacks.onEditLess()
+
+        #expect(coordinator.activeSetViewModel.isEditing == true)
+        #expect(coordinator.activeSetViewModel.editMode == .less)
+    }
+
+    @Test func onEditMoreDelegatesToCoordinator() {
+        let coordinator = makeCoordinator()
+        let exercise = makeExercise(sets: 3)
+        coordinator.startTraining(for: exercise)
+
+        let callbacks = coordinator.createTrainingCallbacks()
+        callbacks.onEditMore()
+
+        #expect(coordinator.activeSetViewModel.isEditing == true)
+        #expect(coordinator.activeSetViewModel.editMode == .more)
+    }
+}
+
+// MARK: - resetExercise
+
+@Suite("resetExercise")
+@MainActor
+struct ResetExerciseCoordinatorTests {
+
+    @Test func removesSessionAndClearsFocus() {
+        var resetCalled = false
+        let coordinator = makeCoordinator(
+            onExerciseReset: { _, _ in resetCalled = true }
+        )
+        let exercise = makeExercise(sets: 2)
+        coordinator.startTraining(for: exercise)
+
+        #expect(coordinator.activeSessions.count == 1)
+
+        coordinator.resetExercise()
+
+        #expect(resetCalled == true)
+        #expect(coordinator.activeSessions.isEmpty)
+        #expect(coordinator.focusedExerciseId == nil)
+    }
+
+    @Test func doesNothingWithoutFocusedExercise() {
+        var resetCalled = false
+        let coordinator = makeCoordinator(
+            onExerciseReset: { _, _ in resetCalled = true }
+        )
+
+        coordinator.resetExercise()
+
+        #expect(resetCalled == false)
+    }
+
+    @Test func keepsOtherSessionsWhenResetting() {
+        let coordinator = makeCoordinator(
+            onExerciseReset: { _, _ in }
+        )
+        let exercise1 = makeExercise(sets: 2)
+        let exercise2 = makeExercise(sets: 3)
+
+        coordinator.startTraining(for: exercise1)
+        coordinator.startTraining(for: exercise2)
+
+        #expect(coordinator.activeSessions.count == 2)
+
+        coordinator.resetExercise()
+
+        #expect(coordinator.activeSessions.count == 1)
+        #expect(coordinator.activeSessions[exercise1.id] != nil)
     }
 }

@@ -44,14 +44,6 @@ public struct MuscleCategorySelectionView: View {
 
     private var coordinatorCache: TrainingCoordinatorCaching
 
-    private var trainingCoordinator: TrainingCoordinator? {
-        coordinatorCache.activeCoordinator
-    }
-
-    private var activeSetVM: ActiveSetViewModel? {
-        trainingCoordinator?.activeSetViewModel
-    }
-
     public init() {
         self.coordinatorCache = Container.shared.trainingCoordinatorCache()
     }
@@ -223,7 +215,6 @@ public struct MuscleCategorySelectionView: View {
             }
         }
         .background(AppStyle.Color.backgroundColor)
-        .id("picker-\(activeSetVM?.isEditing ?? false)")
 #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)

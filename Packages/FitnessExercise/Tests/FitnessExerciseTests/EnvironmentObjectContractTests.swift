@@ -10,8 +10,8 @@ import FitnessUI
 // MARK: - Test Host
 
 /// Wraps a SwiftUI View in a `UIHostingController` and forces view loading,
-/// which triggers `@Environment` resolution. A missing or mismatched
-/// environment value crashes here instead of in the shipping app.
+/// which triggers `@Environment` resolution and catches missing dependencies
+/// early in tests rather than at runtime.
 private func assertViewHosts<V: View>(
     _ view: V,
     sourceLocation: SourceLocation = #_sourceLocation
@@ -40,13 +40,11 @@ struct MuscleCategorySelectionViewContractTests {
 
     @Test
     @MainActor
-    func crashesWithoutAppRouter() {
+    func worksWithoutExplicitAppRouter() {
         let view = MuscleCategorySelectionView()
             .environment(UIOverlayState())
 
-        withKnownIssue("Missing AppRouter must crash") {
-            assertViewHosts(view)
-        }
+        assertViewHosts(view)
     }
 }
 

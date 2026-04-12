@@ -3,6 +3,12 @@ import FitnessAnalytics
 import FitnessCore
 import FitnessTraining
 
+public enum CardVariant: Equatable, Sendable {
+    case completed
+    case active
+    case idle
+}
+
 public struct ExerciseCardContainerView: View {
     public var viewModel: ExerciseCardViewModel
     public let onEdit: (Exercise, ExerciseEditMode) -> Void
@@ -39,8 +45,27 @@ public struct ExerciseCardContainerView: View {
         self.isInProgress = isInProgress
     }
 
+    public static func resolveVariant(
+        isCompleted: Bool,
+        isActiveSetVisible: Bool,
+        activeExerciseId: UUID?,
+        exerciseId: UUID
+    ) -> CardVariant {
+        if isCompleted { return .completed }
+        if isActiveSetVisible, activeExerciseId == exerciseId { return .active }
+        return .idle
+    }
+
     public var body: some View {
-        if viewModel.exercise.isCompleted {
+        let variant = Self.resolveVariant(
+            isCompleted: viewModel.exercise.isCompleted,
+            isActiveSetVisible: isActiveSetVisible,
+            activeExerciseId: activeSetViewModel.currentExercise?.id,
+            exerciseId: viewModel.exercise.id
+        )
+
+        switch variant {
+        case .completed:
             InactiveCardView(
                 viewModel: viewModel,
                 onEdit: onEdit,
@@ -50,7 +75,7 @@ public struct ExerciseCardContainerView: View {
                 isResetEnabled: true
             )
             .accessibilityIdentifier(ExerciseCardIDs.completedCard(viewModel.exercise.id))
-        } else if isActiveSetVisible && activeSetViewModel.currentExercise?.id == viewModel.exercise.id {
+        case .active:
             ActiveCardView(
                 viewModel: viewModel,
                 onEdit: onEdit,
@@ -58,7 +83,7 @@ public struct ExerciseCardContainerView: View {
                 analyticsViewModel: analyticsViewModel
             )
             .accessibilityIdentifier(ExerciseCardIDs.activeCard(viewModel.exercise.id))
-        } else {
+        case .idle:
             IdleActiveCardView(
                 viewModel: viewModel,
                 analyticsViewModel: analyticsViewModel,

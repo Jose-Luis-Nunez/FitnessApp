@@ -27,23 +27,6 @@ struct TrainingCoordinatorCacheTests {
         #expect(arms !== chest)
     }
 
-    @Test func activeCoordinatorReturnsNilWhenNoTraining() {
-        let cache = TrainingCoordinatorCache()
-        _ = cache.coordinator(for: .arms)
-        #expect(cache.activeCoordinator == nil)
-    }
-
-    @Test func activeCoordinatorReturnsActiveOne() {
-        let cache = TrainingCoordinatorCache()
-        let coordinator = cache.coordinator(for: .arms)
-        let exercise = Exercise(
-            id: UUID(), name: "Curl", weight: 20, reps: 10, sets: 3,
-            isCompleted: false, iconName: "defaultArmsIcon", category: .arms
-        )
-        coordinator.startTraining(for: exercise)
-        #expect(cache.activeCoordinator === coordinator)
-    }
-
     @Test func findCoordinatorForExerciseReturnsMatch() {
         let cache = TrainingCoordinatorCache()
         let coordinator = cache.coordinator(for: .chest)

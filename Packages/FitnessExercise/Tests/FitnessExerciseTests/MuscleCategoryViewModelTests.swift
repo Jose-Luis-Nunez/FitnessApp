@@ -5,6 +5,7 @@ import FitnessCore
 import FitnessStorage
 import FitnessTraining
 import FitnessAnalytics
+import FitnessTestSupport
 import Factory
 
 // MARK: - Mock Storage
@@ -44,29 +45,13 @@ private final class MockWorkoutStorage: WorkoutStoring {
 
 // MARK: - Helpers
 
-private func makeExercise(
-    id: UUID = UUID(),
-    name: String = "Curl",
-    isCompleted: Bool = false
-) -> Exercise {
-    Exercise(
-        id: id,
-        name: name,
-        weight: 20,
-        reps: 10,
-        sets: 3,
-        isCompleted: isCompleted,
-        iconName: "defaultArmsIcon",
-        category: .arms
-    )
-}
-
 @MainActor
 private func makeVM(
     exercises: [Exercise] = [],
     coordinator: TrainingCoordinator? = nil
 ) -> (MuscleCategoryViewModel, MockExerciseStorage) {
     let storage = MockExerciseStorage()
+    storage.savedExercises[.arms] = exercises
     let workoutStorage = MockWorkoutStorage()
     let testWorkout = Workout(name: "Test", selectedCategories: [.arms])
     workoutStorage.currentWorkout = testWorkout
@@ -256,7 +241,7 @@ struct RefreshExercisesTests {
         #expect(vm.exercises.first?.isCompleted == true)
     }
 
-    @Test func cachedCardViewModelReflectsRefreshedState() {
+    @Test func cachedCardViewModelReflectsRefreshedState() throws {
         let id = UUID()
         let original = makeExercise(id: id, isCompleted: false)
         let (vm, storage) = makeVM(exercises: [original])
@@ -270,7 +255,8 @@ struct RefreshExercisesTests {
 
         vm.refreshExercises()
 
-        let sameCardVM = vm.cardViewModel(for: vm.exercises.first!)
+        let refreshed = try #require(vm.exercises.first, "exercises should not be empty after refresh")
+        let sameCardVM = vm.cardViewModel(for: refreshed)
         #expect(cardVM === sameCardVM)
         #expect(cardVM.exercise.isCompleted == true)
     }
@@ -313,6 +299,115 @@ private func makeCoordinator() -> TrainingCoordinator {
     )
 }
 
+@Suite("observer stability — exercises must survive coordinator state changes")
+@MainActor
+struct ObserverStabilityTests {
+
+    @Test func startTrainingDoesNotRemoveExercises() async throws {
+        let ex1 = makeExercise(name: "Curl")
+        let ex2 = makeExercise(name: "Press")
+        let ex3 = makeExercise(name: "Fly")
+        let coordinator = makeCoordinator()
+        let (vm, _) = makeVM(exercises: [ex1, ex2, ex3], coordinator: coordinator)
+
+        #expect(vm.exercises.count == 3)
+
+        await Task.yield()
+
+        coordinator.startTraining(for: ex1)
+
+        try await waitUntil { coordinator.activeSessions[ex1.id] != nil }
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(vm.exercises.count == 3)
+        #expect(vm.exercises.contains(where: { $0.id == ex1.id }))
+        #expect(vm.exercises.contains(where: { $0.id == ex2.id }))
+        #expect(vm.exercises.contains(where: { $0.id == ex3.id }))
+    }
+
+    @Test func cancelTrainingDoesNotRemoveExercises() async throws {
+        let ex1 = makeExercise(name: "Curl")
+        let ex2 = makeExercise(name: "Press")
+        let coordinator = makeCoordinator()
+        let (vm, _) = makeVM(exercises: [ex1, ex2], coordinator: coordinator)
+
+        await Task.yield()
+
+        coordinator.startTraining(for: ex1)
+        try await waitUntil { coordinator.activeSessions[ex1.id] != nil }
+
+        #expect(vm.exercises.count == 2)
+
+        coordinator.cancelTraining(for: ex1.id)
+        try await waitUntil { coordinator.activeSessions[ex1.id] == nil }
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(vm.exercises.count == 2)
+        #expect(vm.exercises.contains(where: { $0.id == ex1.id }))
+        #expect(vm.exercises.contains(where: { $0.id == ex2.id }))
+    }
+
+    @Test func onlyCompletedExerciseUpdatesOthersStayUntouched() async throws {
+        let ex1 = makeExercise(name: "Curl")
+        let ex2 = makeExercise(name: "Press")
+        let ex3 = makeExercise(name: "Fly")
+        let coordinator = makeCoordinator()
+        let (vm, _) = makeVM(exercises: [ex1, ex2, ex3], coordinator: coordinator)
+
+        await Task.yield()
+
+        coordinator.startTraining(for: ex1)
+        try await waitUntil { coordinator.currentExercise != nil }
+
+        for _ in 0..<ex1.sets {
+            coordinator.completeSet()
+        }
+        coordinator.finishExercise()
+
+        try await waitUntil { vm.exercises.first(where: { $0.id == ex1.id })?.isCompleted == true }
+
+        let completedEx = try #require(vm.exercises.first(where: { $0.id == ex1.id }))
+        #expect(completedEx.isCompleted == true)
+
+        let untouched2 = try #require(vm.exercises.first(where: { $0.id == ex2.id }))
+        #expect(untouched2.isCompleted == false)
+        #expect(untouched2.name == "Press")
+
+        let untouched3 = try #require(vm.exercises.first(where: { $0.id == ex3.id }))
+        #expect(untouched3.isCompleted == false)
+        #expect(untouched3.name == "Fly")
+    }
+
+    @Test func exerciseCountStableAcrossMultipleSessionChanges() async throws {
+        let ex1 = makeExercise(name: "Curl")
+        let ex2 = makeExercise(name: "Press")
+        let coordinator = makeCoordinator()
+        let (vm, _) = makeVM(exercises: [ex1, ex2], coordinator: coordinator)
+
+        await Task.yield()
+
+        coordinator.startTraining(for: ex1)
+        try await waitUntil { coordinator.activeSessions[ex1.id] != nil }
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(vm.exercises.count == 2)
+
+        coordinator.startTraining(for: ex2)
+        try await waitUntil { coordinator.activeSessions[ex2.id] != nil }
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(vm.exercises.count == 2)
+
+        coordinator.cancelTraining(for: ex1.id)
+        try await waitUntil { coordinator.activeSessions[ex1.id] == nil }
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(vm.exercises.count == 2)
+
+        coordinator.cancelTraining(for: ex2.id)
+        try await waitUntil { coordinator.activeSessions[ex2.id] == nil }
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(vm.exercises.count == 2)
+    }
+}
+
 @Suite("auto-refresh after exercise completion")
 @MainActor
 struct AutoRefreshTests {
@@ -323,21 +418,19 @@ struct AutoRefreshTests {
         let coordinator = makeCoordinator()
         let (vm, _) = makeVM(exercises: [original], coordinator: coordinator)
 
-        try await Task.yield()
+        await Task.yield()
 
         coordinator.startTraining(for: original)
         #expect(coordinator.isTrainingActive == true)
 
-        try await Task.yield()
-        try await Task.sleep(for: .milliseconds(50))
+        try await waitUntil { coordinator.currentExercise != nil }
 
         for _ in 0..<original.sets {
             coordinator.completeSet()
         }
         coordinator.finishExercise()
 
-        try await Task.yield()
-        try await Task.sleep(for: .milliseconds(100))
+        try await waitUntil { vm.exercises.first?.isCompleted == true }
 
         #expect(vm.exercises.first?.isCompleted == true)
         #expect(coordinator.lastCompletedExercise?.id == id)
@@ -350,7 +443,7 @@ struct AutoRefreshTests {
 
         #expect(coordinator.lastCompletedExercise == nil)
 
-        try await Task.sleep(for: .milliseconds(350))
+        try await Task.sleep(for: .milliseconds(200))
 
         #expect(vm.exercises.first?.isCompleted == false)
     }
@@ -364,24 +457,46 @@ struct AutoRefreshTests {
         let cardVM = vm.cardViewModel(for: original)
         #expect(cardVM.exercise.isCompleted == false)
 
-        try await Task.yield()
+        await Task.yield()
 
         coordinator.startTraining(for: original)
 
-        try await Task.yield()
-        try await Task.sleep(for: .milliseconds(50))
+        try await waitUntil { coordinator.currentExercise != nil }
 
         for _ in 0..<original.sets {
             coordinator.completeSet()
         }
         coordinator.finishExercise()
 
-        try await Task.yield()
-        try await Task.sleep(for: .milliseconds(100))
+        try await waitUntil { vm.exercises.first?.isCompleted == true }
 
-        let refreshedExercise = vm.exercises.first!
+        let refreshedExercise = try #require(vm.exercises.first, "exercises should not be empty after finishExercise")
         let sameCardVM = vm.cardViewModel(for: refreshedExercise)
         #expect(cardVM === sameCardVM)
         #expect(cardVM.exercise.isCompleted == true)
+    }
+
+    @Test func ignoresCompletionForUnknownExerciseId() async throws {
+        let knownExercise = makeExercise(name: "Curl")
+        let unknownExercise = makeExercise(name: "Unknown")
+        let coordinator = makeCoordinator()
+        let (vm, _) = makeVM(exercises: [knownExercise], coordinator: coordinator)
+
+        await Task.yield()
+
+        coordinator.startTraining(for: unknownExercise)
+        try await waitUntil { coordinator.currentExercise != nil }
+
+        for _ in 0..<unknownExercise.sets {
+            coordinator.completeSet()
+        }
+        coordinator.finishExercise()
+
+        try await waitUntil { coordinator.lastCompletedExercise != nil }
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(vm.exercises.count == 1)
+        #expect(vm.exercises.first?.id == knownExercise.id)
+        #expect(vm.exercises.first?.isCompleted == false)
     }
 }

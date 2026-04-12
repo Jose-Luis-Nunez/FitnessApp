@@ -3,6 +3,7 @@ import Foundation
 @testable import FitnessTraining
 import FitnessCore
 import FitnessAnalytics
+import FitnessTestSupport
 import Factory
 
 @Suite("FinishExerciseUseCase")
@@ -10,19 +11,6 @@ import Factory
 struct FinishExerciseUseCaseTests {
 
     private let sut = FinishExerciseUseCase()
-
-    private func makeExercise(sets: Int = 3) -> Exercise {
-        Exercise(
-            id: UUID(),
-            name: "Curl",
-            weight: 20,
-            reps: 10,
-            sets: sets,
-            isCompleted: false,
-            iconName: "defaultArmsIcon",
-            category: .arms
-        )
-    }
 
     @Test func returnsCompletedExerciseWhenAllSetsDone() {
         Container.shared.reset()
@@ -34,7 +22,7 @@ struct FinishExerciseUseCaseTests {
         vm.completeCurrentSet()
 
         var updatedExercise: Exercise?
-        let analyticsVM = AnalyticsViewModel(storageService: MockAnalyticsStorage())
+        let analyticsVM = AnalyticsViewModel(storageService: StubAnalyticsStorage())
 
         let result = sut.execute(
             activeSetViewModel: vm,
@@ -57,7 +45,7 @@ struct FinishExerciseUseCaseTests {
         vm.startSet(for: exercise, category: .arms)
         vm.completeCurrentSet()
 
-        let analyticsVM = AnalyticsViewModel(storageService: MockAnalyticsStorage())
+        let analyticsVM = AnalyticsViewModel(storageService: StubAnalyticsStorage())
 
         let result = sut.execute(
             activeSetViewModel: vm,
@@ -72,7 +60,7 @@ struct FinishExerciseUseCaseTests {
     @Test func returnsNilWhenNoExercise() {
         Container.shared.reset()
         let vm = ActiveSetViewModel()
-        let analyticsVM = AnalyticsViewModel(storageService: MockAnalyticsStorage())
+        let analyticsVM = AnalyticsViewModel(storageService: StubAnalyticsStorage())
 
         let result = sut.execute(
             activeSetViewModel: vm,
@@ -92,7 +80,7 @@ struct FinishExerciseUseCaseTests {
         vm.quickDoneModeActive = true
         vm.completeCurrentSet()
 
-        let analyticsVM = AnalyticsViewModel(storageService: MockAnalyticsStorage())
+        let analyticsVM = AnalyticsViewModel(storageService: StubAnalyticsStorage())
 
         _ = sut.execute(
             activeSetViewModel: vm,
@@ -103,10 +91,4 @@ struct FinishExerciseUseCaseTests {
 
         #expect(vm.quickDoneModeActive == false)
     }
-}
-
-@MainActor
-private final class MockAnalyticsStorage: AnalyticsStoring {
-    func save(_ entries: [AnalyticsEntry], for exerciseId: UUID) {}
-    func load(for exerciseId: UUID) -> [AnalyticsEntry] { [] }
 }
