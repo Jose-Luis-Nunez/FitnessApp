@@ -221,7 +221,7 @@ public struct MuscleCategorySelectionView: View {
         .navigationBarHidden(true)
 #endif
         .onAppear {
-            viewModel.updateExerciseCounts()
+            viewModel.refreshExercises()
         }
     }
 
@@ -435,7 +435,7 @@ public struct MuscleCategorySelectionView: View {
 
     private var allExercisesWithCategory: [(exercise: Exercise, category: MuscleCategoryGroup)] {
         MuscleCategoryGroup.allCases.flatMap { category in
-            viewModel.getExercises(for: category).map { (exercise: $0, category: category) }
+            (viewModel.exercisesByCategory[category] ?? []).map { (exercise: $0, category: category) }
         }
         .sorted { !$0.exercise.isCompleted && $1.exercise.isCompleted }
     }
@@ -447,7 +447,7 @@ public struct MuscleCategorySelectionView: View {
             exerciseCard(for: item.exercise, category: item.category)
         }
         .onAppear {
-            viewModel.updateExerciseCounts()
+            viewModel.refreshExercises()
         }
     }
 

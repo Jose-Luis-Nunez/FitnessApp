@@ -9,11 +9,17 @@ import Factory
 @MainActor
 public final class MuscleCategorySelectionViewModel {
     public var categories: [MuscleCategoryGroup] = []
+    public var exercisesByCategory: [MuscleCategoryGroup: [Exercise]] = [:]
 
     @ObservationIgnored @Injected(\.exerciseManagement) private var exerciseManagementService
     @ObservationIgnored @Injected(\.workoutStorage) private var workoutStorageService
 
-    private var exerciseCounts: [MuscleCategoryGroup: (total: Int, active: Int)] = [:]
+    private var exerciseCounts: [MuscleCategoryGroup: (total: Int, active: Int)] {
+        exercisesByCategory.mapValues { exercises in
+            (total: exercises.count, active: exercises.filter { !$0.isCompleted }.count)
+        }
+    }
+
     private var cardViewModels: [UUID: ExerciseCardViewModel] = [:]
     nonisolated(unsafe) private var workoutObservationTask: Task<Void, Never>?
     nonisolated(unsafe) private var coordinatorObservationTasks: [Task<Void, Never>] = []
@@ -22,8 +28,8 @@ public final class MuscleCategorySelectionViewModel {
 
     public init(coordinatorCache: TrainingCoordinatorCaching? = nil) {
         self.coordinatorCache = coordinatorCache ?? Container.shared.trainingCoordinatorCache()
-        updateExerciseCounts()
         updateCategories(for: workoutStorageService.currentWorkout)
+        refreshExercises()
         startWorkoutObservation()
         restartCoordinatorObservations()
     }
@@ -47,7 +53,7 @@ public final class MuscleCategorySelectionViewModel {
                 }
                 guard let self, !Task.isCancelled else { return }
                 self.updateCategories(for: ws.currentWorkout)
-                self.updateExerciseCounts()
+                self.refreshExercises()
                 self.restartCoordinatorObservations()
             }
         }
@@ -73,8 +79,16 @@ public final class MuscleCategorySelectionViewModel {
                     }
                 }
                 guard let self, !Task.isCancelled else { return }
-                if coordinator.lastCompletedExercise != nil {
-                    self.updateExerciseCounts()
+                if let completed = coordinator.lastCompletedExercise {
+                    for (category, exercises) in self.exercisesByCategory {
+                        if let index = exercises.firstIndex(where: { $0.id == completed.id }) {
+                            var patched = exercises
+                            patched[index] = completed
+                            self.exercisesByCategory[category] = patched
+                            break
+                        }
+                    }
+                    self.cardViewModels[completed.id]?.syncExercise(completed)
                 }
             }
         }
@@ -86,11 +100,15 @@ public final class MuscleCategorySelectionViewModel {
     public func resetAllExercises() {
         guard workoutStorageService.currentWorkout != nil else { return }
         resetAllExercisesUseCase.execute(for: MuscleCategoryGroup.allCases)
-        updateExerciseCounts()
+        refreshExercises()
     }
 
-    public func updateExerciseCounts() {
-        exerciseCounts = exerciseManagementService.getAllExerciseCounts(for: MuscleCategoryGroup.allCases)
+    public func refreshExercises() {
+        var updated: [MuscleCategoryGroup: [Exercise]] = [:]
+        for category in categories {
+            updated[category] = exerciseManagementService.getExercises(for: category)
+        }
+        exercisesByCategory = updated
     }
 
     public func getExerciseCount(for group: MuscleCategoryGroup) -> (total: Int, active: Int)? {
@@ -114,27 +132,45 @@ public final class MuscleCategorySelectionViewModel {
     }
 
     public func getExercises(for category: MuscleCategoryGroup) -> [Exercise] {
-        exerciseManagementService.getExercises(for: category)
+        exercisesByCategory[category] ?? []
     }
 
     public func updateExercise(_ updatedExercise: Exercise, category: MuscleCategoryGroup) {
         exerciseManagementService.updateExercise(updatedExercise, category: category)
-        updateExerciseCounts()
+        if var exercises = exercisesByCategory[category],
+           let index = exercises.firstIndex(where: { $0.id == updatedExercise.id }) {
+            exercises[index] = updatedExercise
+            exercisesByCategory[category] = exercises
+        }
     }
 
     public func addExercise(_ exercise: Exercise, category: MuscleCategoryGroup) {
         exerciseManagementService.addExercise(exercise, category: category, atTop: true)
-        updateExerciseCounts()
+        var exercises = exercisesByCategory[category] ?? []
+        exercises.insert(exercise, at: 0)
+        exercisesByCategory[category] = exercises
     }
 
     public func completeExercise(_ exercise: Exercise, category: MuscleCategoryGroup, setProgress: [SetProgress]) {
         exerciseManagementService.completeExercise(exercise, category: category, setProgress: setProgress)
-        updateExerciseCounts()
+        if var exercises = exercisesByCategory[category],
+           let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
+            var updated = exercise
+            updated.isCompleted = true
+            exercises[index] = updated
+            exercisesByCategory[category] = exercises
+        }
     }
 
     public func resetExercise(_ exercise: Exercise, category: MuscleCategoryGroup) {
         exerciseManagementService.resetExercise(exercise, category: category)
-        updateExerciseCounts()
+        if var exercises = exercisesByCategory[category],
+           let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
+            var updated = exercise
+            updated.isCompleted = false
+            exercises[index] = updated
+            exercisesByCategory[category] = exercises
+        }
     }
 
     public func findCategoryForExercise(_ exercise: Exercise) -> MuscleCategoryGroup? {

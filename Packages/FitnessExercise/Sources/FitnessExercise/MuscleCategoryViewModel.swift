@@ -68,7 +68,8 @@ public final class MuscleCategoryViewModel {
     }
 
     /// Observes `lastCompletedExercise` on the coordinator.
-    /// When an exercise is completed, updates it in-place in the local array.
+    /// When an exercise is completed, updates it in-place in the local array
+    /// and syncs the cached card view model so the UI switches to InactiveCardView.
     private func startCoordinatorObservation(_ coordinator: TrainingCoordinator) {
         coordinatorObservationTask = Task { [weak self] in
             while !Task.isCancelled {
@@ -84,6 +85,7 @@ public final class MuscleCategoryViewModel {
                 if let completed = coordinator.lastCompletedExercise,
                    let index = self.exercises.firstIndex(where: { $0.id == completed.id }) {
                     self.exercises[index] = completed
+                    self.cardViewModels[completed.id]?.syncExercise(completed)
                 }
             }
         }
