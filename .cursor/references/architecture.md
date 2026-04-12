@@ -6,7 +6,7 @@
 Features/
   Analytics/          — Exercise analytics, charts, total analytics overview
   BottomBar/          — Bottom navigation bar, bottom action bar
-    Profile/          — User profile screen
+    Profile/          — User profile: nickname, body data (weight/height/age), BMI via API
   Exercise/
     ActiveSet/        — Active set tracking during training, timer service
     ExerciseCard/     — Card UI for exercises (idle, active, inactive states)
@@ -57,6 +57,7 @@ All services are registered in a [hmlongco/Factory](https://github.com/hmlongco/
 | `TotalAnalyticsStorageService` | `Packages/FitnessStorage/.../TotalAnalyticsStorageService.swift` | `\.totalAnalyticsStorage` | singleton | Cross-exercise analytics loading, workout-scoped. Conforms to `TotalAnalyticsStoring` protocol (`FitnessCore`). |
 | `DataMigrationService` | `Packages/FitnessStorage/.../DataMigrationService.swift` | — | static | One-time migration from JSON/UserDefaults to SwiftData. Runs on first launch after update. |
 | `ModelContainer` | via `StorageContainer.swift` | `\.modelContainer` | singleton | Shared SwiftData container for all `@Model` types (`WorkoutModel`, `ExerciseModel`, `AnalyticsEntryModel`, `SetProgressModel`). |
+| `BMIService` | `Features/BottomBar/Profile/BMIService.swift` | — | per-use | Fetches BMI from external API (bmicalculatorapi.vercel.app), with local fallback |
 | `TimerService` | `Packages/FitnessTraining/.../TimerService.swift` | — | per-use | Rest timer during active sets |
 | `SessionTrainingCache` | `Packages/FitnessTraining/.../SessionTrainingCache.swift` | `\.sessionTrainingCache` | singleton | Per-category `ActiveSetViewModel` cache. Conforms to `SessionTrainingCaching` protocol. Use `viewModel(for:)` for typed access. |
 | `TrainingCoordinatorCache` | `Packages/FitnessTraining/.../TrainingCoordinatorCache.swift` | `\.trainingCoordinatorCache` | singleton | Per-category `TrainingCoordinator` cache. Conforms to `TrainingCoordinatorCaching` protocol. Ensures all views share the same coordinator per `MuscleCategoryGroup`. Use `coordinator(for:)` for category-scoped access, `findCoordinator(for:)` to locate the coordinator for a specific exercise. |
@@ -163,7 +164,7 @@ All tokens in `Shared/Design/AppStyle.swift`. When no token exists for a value, 
 
 ### Layout
 
-`cardHorizontalPadding` (16), `chipHeight` (32), `activeCardContentHeight` (80), `activeCardMaxWidth` (400), `categoryIconSize` (50), `checkmarkSize` (36), `playButtonSize` (36), `playIconSize` (16), `completedBarWidth` (8), `setRowBadgeSize` (26), `analyticsImageSize` (60), `seatIconSize` (22), `analyticsEntryIconSize` (24), `separatorHeight` (28), `doneButtonWidth` (80), `doneButtonHeight` (28)
+`cardHorizontalPadding` (16), `chipHeight` (32), `activeCardContentHeight` (80), `activeCardMaxWidth` (400), `categoryIconSize` (50), `checkmarkSize` (36), `playButtonSize` (36), `playIconSize` (16), `completedBarWidth` (8), `setRowBadgeSize` (26), `analyticsImageSize` (60), `seatIconSize` (22), `analyticsEntryIconSize` (24), `separatorHeight` (28), `doneButtonWidth` (80), `doneButtonHeight` (28), `profileCardMinHeight` (100), `profileAvatarSize` (80)
 
 ### CornerRadius
 
@@ -220,10 +221,17 @@ All tokens in `Shared/Design/AppStyle.swift`. When no token exists for a value, 
 | `detailCaption` | 12 | medium |
 | `streakLabel` | 11 | medium |
 | `streakValue` | 16 | bold |
+| `profileGreeting` | 26 | bold |
+| `profileSubtitle` | 15 | medium |
+| `profileCardTitle` | 13 | medium |
+| `profileCardValue` | 28 | bold |
+| `profileCardUnit` | 14 | semibold |
+| `profileBMICategory` | 14 | semibold |
+| `profileInputLabel` | 14 | semibold |
 
 ### Color
 
-`backgroundColor`, `primaryButton`, `exerciseCardBackground`, `chipsBackground`, `white`, `black`, `yellow`, `gray`, `grayDark`, `greenBlack`, `greenDark`, `green`, `greenLight`, `greenGlow`, `sheetBackground`, `sheetInputBackground`, `metricChipBackground`, `progressTrack`, `numberPadGray`, `trainingAccent`
+`backgroundColor`, `primaryButton`, `exerciseCardBackground`, `chipsBackground`, `white`, `black`, `yellow`, `gray`, `grayDark`, `greenBlack`, `greenDark`, `green`, `greenLight`, `greenGlow`, `sheetBackground`, `sheetInputBackground`, `metricChipBackground`, `progressTrack`, `numberPadGray`, `trainingAccent`, `profileCardBackground`, `bmiUnderweight`, `bmiNormal`, `bmiOverweight`, `bmiObese`
 
 ### Opacity
 

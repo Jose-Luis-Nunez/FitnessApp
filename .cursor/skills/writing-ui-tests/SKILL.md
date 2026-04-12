@@ -8,7 +8,7 @@ description: >-
 
 # Writing New UI Tests
 
-For shared conventions (DSL, constraints, template, naming) see [ui-test-conventions/reference.md](../ui-test-conventions/reference.md).
+For shared conventions (DSL, constraints, template, naming) see [ui-test-conventions.md](../../references/ui-test-conventions.md).
 
 ## Workflow
 
@@ -24,7 +24,7 @@ Break the feature into a sequence of user-visible actions:
 
 ### Step 2 — Run the Prep Agent
 
-Launch `uitest-prep-agent` with the screen name or flow description. It scans the production Views and reports which elements have identifiers, selectors, and DSL coverage — and which don't.
+Launch `ui-test-selector-creator` with the screen name or flow description. It scans the production Views and reports which elements have identifiers, selectors, and DSL coverage — and which don't.
 
 The prep agent is read-only. **You** fix all findings it reports before writing the test:
 
@@ -35,7 +35,7 @@ The prep agent is read-only. **You** fix all findings it reports before writing 
 
 ### Step 3 — Write the Test
 
-Use the test template from [ui-test-conventions/reference.md](../ui-test-conventions/reference.md). Key rules:
+Use the test template from [ui-test-conventions.md](../../references/ui-test-conventions.md). Key rules:
 
 - Inherit from `BaseTest`
 - Mark test methods `@MainActor`
@@ -46,4 +46,4 @@ Use the test template from [ui-test-conventions/reference.md](../ui-test-convent
 
 ### Step 4 — Review the Result
 
-Launch `uitest-reviewer-agent` on the finished test file. Fix any reported violations before considering the test done.
+Launch `ui-test-reviewer` on the finished test file. Fix any reported violations before considering the test done.

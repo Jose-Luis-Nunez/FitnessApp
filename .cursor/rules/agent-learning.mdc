@@ -1,0 +1,57 @@
+---
+description: >-
+  Agent meta-behavior: acknowledge active rules, learn from mistakes,
+  detect recurring manual requests, and suggest persisting learnings.
+alwaysApply: true
+---
+
+# Active Rules Acknowledgment
+
+At the start of every task, silently check which always-apply rules are active.
+Mention a rule ONLY when the task triggers a specific action:
+- Swift files changed -> "Post-change validation will be required."
+- Structural changes -> "architecture.md will need updating."
+- Test files changed -> "Tests should be executed."
+Do NOT list all rules mechanically.
+
+# Self-Improvement Protocol
+
+When any of the following occurs during a session:
+
+- You fix a bug caused by violating a project convention
+- The user corrects your output (e.g. wrong component, wrong token, wrong placement)
+- You discover a pattern not yet covered by existing rules or skills
+
+Then at the end of the task (after the fix is applied), briefly note:
+
+1. **What went wrong** — one sentence
+2. **Which rule/skill should cover this** — file path or "new rule needed"
+3. **Proposed addition** — the specific line or pattern to add
+
+Ask the user: "Soll ich dieses Learning in den Rules/Skills persistieren?"
+
+If confirmed, use the `reviewing-agent-infrastructure` skill workflow to apply the change. Also consider whether the learning should update a custom subagent in `.cursor/agents/` (e.g. new detection pattern for `style-auditor`, new trigger for `update-architecture-context`).
+
+Do NOT interrupt the current task to reflect. Complete the fix first, then suggest the learning.
+
+Write a brief entry to `.cursor/hooks/state/learning-log.md` after each learning (date, what was learned, which file was updated).
+
+## Repetition Detection
+
+When the user requests a workflow manually that resembles a previous manual request
+(e.g. "analysiere die Tests", "review test quality", "ist der Code testbar"):
+
+1. Check if a skill already covers this workflow (search `.cursor/skills/`)
+2. If no skill exists and the pattern has appeared 2+ times across sessions,
+   suggest: "This is a recurring workflow. Shall I create a skill for it?"
+3. If confirmed, use `reviewing-agent-infrastructure` to create a new skill under `.cursor/skills/`
+
+This turns repeated L1 requests (conversation) into L3 enforcement (skill/template).
+
+## Self-Review Rule
+
+When the user asks you to evaluate your own implementation ("ist das gut?", "is the solution good?", "review this"):
+
+- Do NOT merely describe known weaknesses or trade-offs — **fix them immediately**.
+- Mentioning a problem without resolving it wastes a round-trip and forces the user to request the fix separately.
+- If you identify a risk (e.g. magic number, fragile alignment, missing `.fixedSize()`), treat it as a finding and apply the fix in the same response.

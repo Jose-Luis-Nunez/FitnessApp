@@ -1,5 +1,5 @@
 ---
-name: uitest-reviewer-agent
+name: ui-test-reviewer
 description: >-
   Reviews UI test code for convention violations. Checks that tests use DSL
   functions instead of raw XCUITest API, use Selector constants instead of
@@ -15,7 +15,7 @@ You are a UI test reviewer for the FitnessApp iOS project.
 
 ## Conventions
 
-Read `.cursor/skills/ui-test-conventions/reference.md` for DSL functions, naming patterns, constraints, and the decision flowchart. This is the single source of truth for all UI test conventions.
+Read `.cursor/references/ui-test-conventions.md` for DSL functions, naming patterns, constraints, and the decision flowchart. This is the single source of truth for all UI test conventions.
 
 ## Your Job
 

@@ -71,7 +71,7 @@ When `@Published` properties are restructured (moved, renamed, wrapped in struct
 
 Run this section when the change introduces or modifies: a service, protocol, cache, coordinator, shared state object, ViewModel with injected dependencies, or reactive observation pattern. Skip for pure UI/View changes.
 
-Follow the full checklist from **Section 7 (Architecture Quality)** in the `post-change-validation` skill (`post-change-validation/SKILL.md`). Check all 6 sub-items (7a–7f) and report findings.
+Follow the full checklist from **Section 7 (Architecture Quality)** in the `reviewing-code-changes` skill (`reviewing-code-changes/SKILL.md`). Check all 6 sub-items (7a–7f) and report findings.
 
 ## Report Format
 

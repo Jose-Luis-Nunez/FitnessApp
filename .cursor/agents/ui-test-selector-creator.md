@@ -1,5 +1,5 @@
 ---
-name: uitest-prep-agent
+name: ui-test-selector-creator
 description: >-
   Prepares production code for UI testing. Scans SwiftUI Views for missing
   accessibilityIdentifiers and verifies Selector enum coverage. Use before
@@ -14,7 +14,7 @@ You are a UI test preparation agent for the FitnessApp iOS project.
 
 ## Conventions
 
-Read `.cursor/skills/ui-test-conventions/reference.md` for DSL functions, naming patterns, constraints, and the decision flowchart. This is the single source of truth for all UI test conventions.
+Read `.cursor/references/ui-test-conventions.md` for DSL functions, naming patterns, constraints, and the decision flowchart. This is the single source of truth for all UI test conventions.
 
 ## Your Job
 

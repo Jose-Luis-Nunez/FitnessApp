@@ -1,6 +1,17 @@
+---
+description: >-
+  DEVELOPER_DIR setup and xcodebuild commands for building and testing.
+  NEVER use swift test or swift build — SwiftData macros require Xcode.
+alwaysApply: true
+---
+
 # Xcode Build & Test
 
+**NEVER** use `swift test` or `swift build` — SwiftData macros require the Xcode build system. Always use `xcodebuild`.
+
 **DEVELOPER_DIR** must point to `~/Downloads/Xcode.app/Contents/Developer` because `xcode-select` is set to Command Line Tools, not full Xcode. **Always** prefix every `xcodebuild` call with this environment variable.
+
+For SPM package tests, also add `PATH="/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer/usr/bin:$PATH"` so `simctl` is found.
 
 ## Build
 
@@ -22,12 +33,12 @@ cd ~/Documents/repo/FitnessApp && DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcod
 
 ## Package Tests (SPM)
 
-Package tests run via `xcodebuild` from each package directory with `-skipMacroValidation` (required for swift-testing macros). Do **not** use `swift test` — SwiftData macros require the Xcode build system.
+SPM test targets are **not** in the app scheme. Run them via the **package's own scheme** from the package directory. Always add `-skipMacroValidation` (required for swift-testing macros).
 
 ### Single package
 
 ```bash
-cd ~/Documents/repo/FitnessApp/Packages/FitnessTraining && DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer xcodebuild test -scheme FitnessTraining -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -skipMacroValidation 2>&1 | tail -30
+cd ~/Documents/repo/FitnessApp/Packages/FitnessTraining && DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer PATH="/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer/usr/bin:$PATH" xcodebuild test -scheme FitnessTraining -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -skipMacroValidation 2>&1 | tail -30
 ```
 
 ### All packages
@@ -36,25 +47,15 @@ cd ~/Documents/repo/FitnessApp/Packages/FitnessTraining && DEVELOPER_DIR=/Users/
 for pkg in FitnessExercise FitnessTraining FitnessAnalytics FitnessStorage; do
   echo "=== Testing $pkg ===" && \
   cd ~/Documents/repo/FitnessApp/Packages/$pkg && \
-  DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer xcodebuild test -scheme $pkg -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -skipMacroValidation 2>&1 | tail -10
+  DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer PATH="/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer/usr/bin:$PATH" xcodebuild test -scheme $pkg -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -skipMacroValidation 2>&1 | tail -10
 done
 ```
 
-### Available package test targets
-
-| Package | Scheme | Test count |
-|---|---|---|
-| `FitnessTraining` | `FitnessTraining` | 45 |
-| `FitnessAnalytics` | `FitnessAnalytics` | 18 |
-| `FitnessExercise` | `FitnessExercise` | ~20 |
-| `FitnessStorage` | `FitnessStorage` | 28 |
-
 ## Notes
 
-- **Scheme**: Use `FitnessApp` for app-level tests (not `FitnessApp UITests`).
-- **Simulator**: `iPhone 17 Pro Max`.
+- **Scheme**: Use `FitnessApp` for app/UI tests, use the package name for SPM package tests.
+- **Simulator**: `iPhone 17 Pro Max`. Boot it first if needed: `DEVELOPER_DIR=... .../usr/bin/simctl boot <UDID>`
 - To run a **single test**, append the test class and method: `-only-testing:FitnessAppUITests/TrainingUITests/testFullTrainingFlow`
 - To run **all UI tests**, use: `-only-testing:FitnessAppUITests`
 - Set `block_until_ms` to `300000` (5 min) since build + test takes ~90–120 seconds.
-- Do **not** use `swift test` or `swift build` — SwiftData macros require the Xcode build system.
 - Always add `-skipMacroValidation` when running package tests via CLI.

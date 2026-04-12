@@ -1,5 +1,5 @@
 ---
-name: docs-sync-agent
+name: update-architecture-context
 description: >-
   Updates architecture.md when code structure changes. Use when new features
   are created, feature folders are added or removed, NavigationDestination
@@ -41,7 +41,7 @@ Check `git diff --name-only HEAD` for changes matching these triggers:
 
 ## UI Test Docs
 
-When changes touch `FitnessAppUITests/`, also sync `.cursor/skills/ui-test-conventions/reference.md`:
+When changes touch `FitnessAppUITests/`, also sync `.cursor/references/ui-test-conventions.md`:
 
 | Change Detected | Section to Update |
 |---|---|
@@ -52,13 +52,13 @@ When changes touch `FitnessAppUITests/`, also sync `.cursor/skills/ui-test-conve
 | `BaseTest` API changed | **Test Template** and rules |
 | New/deleted file under `FitnessAppUITests/` | **Project Structure** tree |
 
-Also update `.cursor/agents/uitest-reviewer-agent.md` and `uitest-prep-agent.md` if their validation rules are affected.
+Also update `.cursor/agents/ui-test-reviewer.md` and `ui-test-selector-creator.md` if their validation rules are affected.
 
 ## Also Check Skills
 
 If the change adds a new shared component or utility, also update:
 - `reviewing-swift-code/SKILL.md` — add detection pattern to "Duplicated UI Patterns" or "Utility Usage"
-- `creating-feature-module/SKILL.md` — add to checklist if relevant
+- `create-feature/SKILL.md` — add to checklist if relevant
 
 ## Report
 

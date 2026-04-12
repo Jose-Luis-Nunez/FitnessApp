@@ -24,6 +24,12 @@ When you edit Swift files, check if the change affects any of the items below. I
 | Deleted feature folder | **Feature Map** tree — remove entry |
 | New utility in `Shared/Utilities/` | **Utilities** section — add entry |
 | Changed coordinator or state object | **State & Navigation** section — update |
+| New/deleted test suite or test file under `Packages/*/Tests/` | **Feature Map** tree — update test inventory |
+| New/deleted shared test utility in `FitnessTestSupport` | **Feature Map** tree — update `FitnessTestSupport` entry |
+| New/deleted/renamed Rule in `.cursor/rules/` | `references/enforcement-layers.md` — update L2/L2g table |
+| New/deleted/renamed Skill in `.cursor/skills/` | `references/enforcement-layers.md` — update L3 Skills table |
+| New/deleted/renamed Agent in `.cursor/agents/` | `references/enforcement-layers.md` — update L3 Agents table |
+| New/changed Hook in `.cursor/hooks/` | `references/enforcement-layers.md` — update L4/L5 table |
 
 ## How to Update
 
@@ -34,7 +40,7 @@ When you edit Swift files, check if the change affects any of the items below. I
 
 ## UI Test Sync
 
-When you edit files under `FitnessAppUITests/`, check if the change affects `ui-test-conventions/reference.md` and update it in the **same task**:
+When you edit files under `FitnessAppUITests/`, check if the change affects `references/ui-test-conventions.md` and update it in the **same task**:
 
 | What changed | What to update in `reference.md` |
 |---|---|
@@ -46,11 +52,11 @@ When you edit files under `FitnessAppUITests/`, check if the change affects `ui-
 | New file/folder under `FitnessAppUITests/` | **Project Structure** tree |
 | Deleted file under `FitnessAppUITests/` | **Project Structure** tree — remove entry |
 
-Also update `uitest-reviewer-agent.md` and `uitest-prep-agent.md` if the change affects their validation rules or report format.
+Also update `ui-test-reviewer.md` and `ui-test-selector-creator.md` if the change affects their validation rules or report format.
 
 ## Skill References
 
-If the change affects what the skills check for (e.g. a new shared component that `reviewing-swift-code` should detect, or a new checklist item for `creating-feature-module`), update the skill's `SKILL.md` as well:
+If the change affects what the skills check for (e.g. a new shared component that `reviewing-swift-code` should detect, or a new checklist item for `create-feature`), update the skill's `SKILL.md` as well:
 
 - New shared component -> add detection pattern to `reviewing-swift-code/SKILL.md` "Duplicated UI Patterns" list
 - New utility -> add usage check to `reviewing-swift-code/SKILL.md` "Utility Usage" list

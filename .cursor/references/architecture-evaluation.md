@@ -8,7 +8,7 @@ This file evaluates the codebase against architecture principles
 and creates implementation plans.
 
 When you read this file, first locate and read PROJECT_CONTEXT.md.
-If not found, stop: "No PROJECT_CONTEXT.md found. Run Phase 1 with Code_Evaluation_System.md first."
+If not found, stop: "No PROJECT_CONTEXT.md found. Run Phase 1 with code-evaluation-system.md first."
 
 ### Routing
 
@@ -478,15 +478,15 @@ Report to user:
 ## For the User — Workflow
 
 ```
-Step 1:  Code_Evaluation_System.md → Agent Mode → "Phase 1"
+Step 1:  code-evaluation-system.md → Agent Mode → "Phase 1"
          → Creates PROJECT_CONTEXT.md
 
-Step 2:  Architecture_Evaluation_Implementation.md → Plan Mode → "Evaluate"
+Step 2:  architecture-evaluation.md → Plan Mode → "Evaluate"
          → Reads PROJECT_CONTEXT.md automatically
          → 🟢🟡🔴 Findings + Decisions presented
          → Answer the Decisions
 
-Step 3:  Architecture_Evaluation_Implementation.md → Plan Mode → "Create Plan"
+Step 3:  architecture-evaluation.md → Plan Mode → "Create Plan"
          → Creates implementation_tasks/ with phased task files
 
 Step 4:  New chat per phase:
@@ -494,6 +494,6 @@ Step 4:  New chat per phase:
          → "Execute all tasks in this phase"
          → Repeat for each phase
 
-Daily:   Architecture_Evaluation_Implementation.md → Plan Mode → "Quick Check" + diff
+Daily:   architecture-evaluation.md → Plan Mode → "Quick Check" + diff
          → 🟢🟡🔴 → Apply
 ```

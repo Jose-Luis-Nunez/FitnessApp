@@ -232,12 +232,12 @@ If clean: "PROJECT_CONTEXT.md complete. Ready for evaluation."
 
 ```
 📁 Project Root/
-├── Code_Evaluation_System.md       ← This file
+├── code-evaluation-system.md       ← This file
 ├── PROJECT_CONTEXT.md               ← Created by Phase 1
 ├── 📁 eval_tasks/                   ← Task files
 ```
 
 ### Next Step
 
-Open Architecture_Evaluation_Implementation.md in Plan Mode
+Open architecture-evaluation.md in Plan Mode
 and type `Evaluate` to assess the codebase.

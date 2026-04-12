@@ -28,6 +28,13 @@ public enum AppStyle {
         public static let separatorHeight: CGFloat = 28
         public static let doneButtonWidth: CGFloat = 80
         public static let doneButtonHeight: CGFloat = 28
+        public static let profileCardMinHeight: CGFloat = 100
+        public static let profileAvatarSize: CGFloat = 80
+        public static let profileInputPadding: CGFloat = 12
+        public static let profileButtonPadding: CGFloat = 10
+        public static let profileBMIBarHeight: CGFloat = 8
+        public static let profileBMIThumbSize: CGFloat = 14
+        public static let profileBottomSpacer: CGFloat = 100
     }
 
     public enum CornerRadius {
@@ -94,6 +101,17 @@ public enum AppStyle {
         public static let detailCaption = SwiftUI.Font.system(size: 12, weight: .medium)
         public static let streakLabel = SwiftUI.Font.system(size: 11, weight: .medium)
         public static let streakValue = SwiftUI.Font.system(size: 16, weight: .bold)
+
+        public static let profileGreeting = SwiftUI.Font.system(size: 26, weight: .bold)
+        public static let profileSubtitle = SwiftUI.Font.system(size: 15, weight: .medium)
+        public static let profileCardTitle = SwiftUI.Font.system(size: 13, weight: .medium)
+        public static let profileCardValue = SwiftUI.Font.system(size: 28, weight: .bold)
+        public static let profileCardUnit = SwiftUI.Font.system(size: 14, weight: .semibold)
+        public static let profileBMICategory = SwiftUI.Font.system(size: 14, weight: .semibold)
+        public static let profileInputLabel = SwiftUI.Font.system(size: 14, weight: .semibold)
+        public static let profileAvatarIcon = SwiftUI.Font.system(size: 36, weight: .medium)
+        public static let profileEditIcon = SwiftUI.Font.system(size: 24, weight: .regular)
+        public static let profileSmallIcon = SwiftUI.Font.system(size: 12, weight: .semibold)
     }
 
     public enum Color {
@@ -124,6 +142,12 @@ public enum AppStyle {
         public static let progressTrack = SwiftUI.Color(hex: "#0A2726")
         public static let numberPadGray = SwiftUI.Color(hex: "#555555")
         public static let trainingAccent = SwiftUI.Color(hex: "#077484")
+
+        public static let profileCardBackground = SwiftUI.Color(hex: "#1A1920")
+        public static let bmiUnderweight = SwiftUI.Color(hex: "#5BA4CF")
+        public static let bmiNormal = SwiftUI.Color(hex: "#3CC8A6")
+        public static let bmiOverweight = SwiftUI.Color(hex: "#E8A838")
+        public static let bmiObese = SwiftUI.Color(hex: "#E85A5A")
     }
 
     public enum Opacity {

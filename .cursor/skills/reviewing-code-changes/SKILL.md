@@ -1,13 +1,13 @@
 ---
-name: post-change-validation
+name: reviewing-code-changes
 description: >-
-  Validate code changes for dead code, missed reuse opportunities, and
-  consistency violations. Use after refactoring, cleanup, large edits, or when
-  the user asks to verify changes, check for unused code, or validate
-  refactoring results.
+  Final validation pass after code changes. Checks for dead code,
+  missed reuse, AppStyle consistency, and referential integrity.
+  Use after refactoring, cleanup, large edits, or when asked to
+  verify or validate changes.
 ---
 
-# Post-Change Validation
+# Reviewing Code Changes
 
 ## Context
 

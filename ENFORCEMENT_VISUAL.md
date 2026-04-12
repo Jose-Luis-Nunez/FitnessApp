@@ -119,7 +119,7 @@
     │  │  │ RULE: Post-change validation required.   │     │  │
     │  │  │ VIOLATION: 5 Swift files changed,        │     │  │
     │  │  │   no validation-stamp.md found.          │     │  │
-    │  │  │ FIX: Run post-change-validation skill.   │     │  │
+    │  │  │ FIX: Run reviewing-code-changes skill.   │     │  │
     │  │  │ FILES: TrainingCoordinator.swift, ...     │     │  │
     │  │  └──────────────────────────────────────────┘     │  │
     │  │       │                                           │  │
@@ -172,7 +172,7 @@
     ║  STOP HOOK FEUERT                        ║
     ║                                          ║
     ║  1. Liest Scratchpad:                    ║
-    ║     .cursor/hooks/state/scratchpad.md    ║
+    ║     .cursor/hooks/state/scratchpad.json  ║
     ║                                          ║
     ║  2. Prüft:                               ║
     ║     ┌─────────────────────────┐          ║
@@ -188,7 +188,7 @@
     ║            NEIN  │                       ║
     ║                  ▼                       ║
     ║     ┌─────────────────────────┐          ║
-    ║     │ Iteration < 5?          │          ║
+    ║     │ Iteration < 3?          │          ║
     ║     └───────────┬─────────────┘          ║
     ║            JA    │                       ║
     ║                  ▼                       ║
@@ -197,9 +197,9 @@
     ║     status: validation_pending           ║
     ║                                          ║
     ║  4. Sendet followup_message:             ║
-    ║     "[Iteration 2/5] 5 Swift files       ║
+    ║     "[Iteration 2/3] 5 Swift files       ║
     ║      changed. No validation report       ║
-    ║      found. Run post-change-validation   ║
+    ║      found. Run reviewing-code-changes   ║
     ║      skill now."                         ║
     ╚══════════════╤═══════════════════════════╝
                    │

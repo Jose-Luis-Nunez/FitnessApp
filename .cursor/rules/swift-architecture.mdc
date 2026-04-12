@@ -81,6 +81,28 @@ Before implementing a fix, determine where the fix belongs:
 
 4. **Always** write at least one integration test that verifies the new behavior through the Coordinator (not just the Use Case in isolation). If the fix involves state transitions (e.g. switching exercises, completing training), test the full sequence: setup → action → assert state + side effects.
 
+## Services — Protocol + DI
+
+Every new service must:
+
+1. Define a **protocol** (e.g. `BMIProviding`) that declares the public API.
+2. Have the concrete class conform to that protocol (e.g. `BMIService: BMIProviding`).
+3. Be registered in a **Factory container** so consumers receive the protocol type, not the concrete class.
+
+This enables test doubles (mocks/stubs) without modifying production code.
+
+```swift
+// BAD — concrete dependency, not testable
+class ProfileViewModel: ObservableObject {
+    private let bmiService = BMIService()
+}
+
+// GOOD — injected via protocol
+class ProfileViewModel: ObservableObject {
+    @Injected(\.bmiService) private var bmiService: BMIProviding
+}
+```
+
 ## MVVM Structure
 
 - Feature folder: `Features/<FeatureName>/`

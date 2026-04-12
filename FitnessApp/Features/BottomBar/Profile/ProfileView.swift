@@ -2,115 +2,459 @@ import SwiftUI
 import FitnessUI
 
 struct ProfileView: View {
-    @AppStorage("userNickname") private var nickname: String = ""
-    @State private var inputNickname: String = ""
-    @State private var showAlert = false
-    @State private var isEditing = false
-    
-    let textColor: Color = AppStyle.Color.white
-    let backgroundColor = AppStyle.Color.black
-    let saveButtonBackgroundEnabledColor: Color = AppStyle.Color.green
-    let saveButtonBackgroundDisabledColor: Color = AppStyle.Color.green.opacity(0.15)
-    let saveButtonTextEnabledColor: Color = AppStyle.Color.white
-    let saveButtonTextDisabledColor: Color = AppStyle.Color.white
-    let cancelButtonTextColor: Color = AppStyle.Color.white
-    
+    @StateObject private var viewModel = ProfileViewModel()
+
     var body: some View {
-        VStack(spacing: 16) {
-            if !nickname.isEmpty && !isEditing {
-                Button(action: {
-                    isEditing = true
-                    inputNickname = nickname
-                }) {
-                    Text("Hey \(nickname)")
-                        .font(.largeTitle)
-                        .foregroundColor(textColor)
+        ZStack {
+            AppStyle.Color.backgroundColor.ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: AppStyle.Padding.card) {
+                    headerSection
+                    nicknameSection
+                    bodyDataSection
+                    bmiSection
+                    Spacer(minLength: AppStyle.Layout.profileBottomSpacer)
                 }
-                Text("Willkommen zurück!")
-                    .font(.title2)
-                    .foregroundColor(textColor)
-            } else {
-                Text(nickname.isEmpty ? "Profile" : "Hey \(nickname)")
-                    .font(.largeTitle)
-                    .foregroundColor(textColor)
-                
-                if isEditing || nickname.isEmpty {
-                    TextField("Nickname", text: $inputNickname)
-                        .foregroundColor(textColor)
-                        .padding()
-                        .background(backgroundColor)
-                        .cornerRadius(8)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.gray.opacity(0.5), lineWidth: 1)
-                        )
-                        .frame(width: 250)
-                    
-                    HStack {
-                        Spacer()
-                        
-                        Text("Cancel")
-                            .foregroundColor(cancelButtonTextColor)
-                            .font(AppStyle.Font.pickerAction)
-                            .padding(5)
-                            .frame(width: 120)
-                            .cornerRadius(8)
-                            .onTapGesture {
-                                inputNickname = ""
-                                isEditing = false
-                            }
-                            .frame(maxWidth: .infinity, alignment: .center)
-                        
-                        Spacer()
-                        
-                        Button(action: {
-                            if inputNickname.isEmpty {
-                                showAlert = true
-                            } else {
-                                nickname = inputNickname
-                                inputNickname = ""
-                                isEditing = false
-                                print("Nickname saved successfully")
-                            }
-                        }) {
-                            Text("Save")
-                                .foregroundColor(inputNickname.isEmpty ? saveButtonTextDisabledColor : saveButtonTextEnabledColor)
-                                .font(AppStyle.Font.pickerAction)
-                                .padding(5)
-                                .frame(width: 140, height: 40)
-                                .background(inputNickname.isEmpty ? saveButtonBackgroundDisabledColor : saveButtonBackgroundEnabledColor)
-                                .cornerRadius(8)
-                        }
-                        .disabled(inputNickname.isEmpty)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        
-                        Spacer()
-                    }
-                    .padding(.horizontal, 5)
-                }
-                
-                if nickname.isEmpty {
-                    Text("Willkommen zurück!")
-                        .font(.title2)
-                        .foregroundColor(textColor)
-                }
+                .padding(.horizontal, AppStyle.Padding.horizontal)
+                .padding(.top, AppStyle.Padding.titleTop)
             }
-            
-            if showAlert {
-                Text("Nickname cannot be empty!")
-                    .foregroundColor(.red)
-                    .padding()
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(backgroundColor)
-        .padding()
-        .alert(isPresented: $showAlert) {
-            Alert(title: Text("Error"), message: Text("Nickname cannot be empty!"), dismissButton: .default(Text("OK")))
         }
         .onAppear {
-            print("Minimal ProfileView appeared")
+            viewModel.loadInitialBMI()
+        }
+        .alert("Fehler", isPresented: $viewModel.showNicknameAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Nickname darf nicht leer sein.")
+        }
+    }
+
+    // MARK: - Header
+
+    private var headerSection: some View {
+        VStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
+            ZStack {
+                Circle()
+                    .fill(AppStyle.Color.greenDark)
+                    .frame(
+                        width: AppStyle.Layout.profileAvatarSize,
+                        height: AppStyle.Layout.profileAvatarSize
+                    )
+
+                Image(systemName: "person.fill")
+                    .font(AppStyle.Font.profileAvatarIcon)
+                    .foregroundColor(AppStyle.Color.greenGlow)
+            }
+            .accessibilityIdentifier("id_profile_avatar")
+
+            if viewModel.hasProfile {
+                Text("Hey \(viewModel.nickname)")
+                    .font(AppStyle.Font.profileGreeting)
+                    .foregroundColor(AppStyle.Color.white)
+                    .accessibilityIdentifier("id_profile_greeting")
+
+                Text("Willkommen zurück!")
+                    .font(AppStyle.Font.profileSubtitle)
+                    .foregroundColor(AppStyle.Color.greenLight)
+                    .accessibilityIdentifier("id_profile_subtitle")
+            } else {
+                Text("Profil")
+                    .font(AppStyle.Font.profileGreeting)
+                    .foregroundColor(AppStyle.Color.white)
+            }
+        }
+        .padding(.top, AppStyle.Padding.titleTop)
+    }
+
+    // MARK: - Nickname
+
+    private var nicknameSection: some View {
+        ProfileCard {
+            if viewModel.isEditingNickname || !viewModel.hasProfile {
+                VStack(spacing: AppStyle.CornerRadius.defaultButton) {
+                    Text("Nickname")
+                        .font(AppStyle.Font.profileInputLabel)
+                        .foregroundColor(AppStyle.Color.greenLight)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .fixedSize()
+
+                    TextField("Dein Nickname", text: $viewModel.inputNickname)
+                        .foregroundColor(AppStyle.Color.white)
+                        .font(AppStyle.Font.tileValue)
+                        .padding(AppStyle.Layout.profileInputPadding)
+                        .background(AppStyle.Color.sheetInputBackground)
+                        .cornerRadius(AppStyle.CornerRadius.tile)
+                        .accessibilityIdentifier("id_profile_nickname_input")
+
+                    HStack(spacing: AppStyle.CornerRadius.defaultButton) {
+                        if viewModel.hasProfile {
+                            Button {
+                                viewModel.cancelNicknameEdit()
+                            } label: {
+                                Text("Abbrechen")
+                                    .font(AppStyle.Font.pickerAction)
+                                    .foregroundColor(AppStyle.Color.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, AppStyle.Layout.profileButtonPadding)
+                            }
+                            .accessibilityIdentifier("id_profile_nickname_cancel")
+                        }
+
+                        Button {
+                            viewModel.saveNickname()
+                        } label: {
+                            Text("Speichern")
+                                .font(AppStyle.Font.pickerAction)
+                                .foregroundColor(AppStyle.Color.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, AppStyle.Layout.profileButtonPadding)
+                                .background(
+                                    viewModel.inputNickname.trimmingCharacters(in: .whitespaces).isEmpty
+                                    ? AppStyle.Color.green.opacity(AppStyle.Opacity.subtleStroke)
+                                    : AppStyle.Color.green
+                                )
+                                .cornerRadius(AppStyle.CornerRadius.defaultButton)
+                        }
+                        .disabled(viewModel.inputNickname.trimmingCharacters(in: .whitespaces).isEmpty)
+                        .accessibilityIdentifier("id_profile_nickname_save")
+                    }
+                }
+                .onAppear {
+                    if !viewModel.hasProfile {
+                        viewModel.inputNickname = ""
+                    }
+                }
+            } else {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Nickname")
+                            .font(AppStyle.Font.profileCardTitle)
+                            .foregroundColor(AppStyle.Color.greenLight)
+                            .fixedSize()
+                        Text(viewModel.nickname)
+                            .font(AppStyle.Font.sectionHeadline)
+                            .foregroundColor(AppStyle.Color.white)
+                    }
+
+                    Spacer()
+
+                    Button {
+                        viewModel.startEditingNickname()
+                    } label: {
+                        Image(systemName: "pencil.circle.fill")
+                            .font(AppStyle.Font.profileEditIcon)
+                            .foregroundColor(AppStyle.Color.green)
+                    }
+                    .contentShape(Rectangle())
+                    .accessibilityIdentifier("id_profile_nickname_edit")
+                }
+            }
+        }
+    }
+
+    // MARK: - Body Data
+
+    private var bodyDataSection: some View {
+        ProfileCard {
+            VStack(spacing: AppStyle.Padding.card) {
+                HStack {
+                    Text("Körperdaten")
+                        .font(AppStyle.Font.sectionHeadline)
+                        .foregroundColor(AppStyle.Color.white)
+                        .fixedSize()
+
+                    Spacer()
+
+                    if !viewModel.isEditingBody {
+                        Button {
+                            viewModel.startEditingBody()
+                        } label: {
+                            Image(systemName: "pencil.circle.fill")
+                                .font(AppStyle.Font.profileEditIcon)
+                                .foregroundColor(AppStyle.Color.green)
+                        }
+                        .contentShape(Rectangle())
+                        .accessibilityIdentifier("id_profile_body_edit")
+                    }
+                }
+
+                if viewModel.isEditingBody {
+                    bodyEditForm
+                } else {
+                    bodyDisplayGrid
+                }
+            }
+        }
+    }
+
+    private var bodyEditForm: some View {
+        VStack(spacing: AppStyle.CornerRadius.defaultButton) {
+            ProfileInputRow(
+                label: "Gewicht (kg)",
+                text: $viewModel.inputWeight,
+                placeholder: "z.B. 75,5",
+                keyboardType: .decimalPad,
+                accessibilityID: "id_profile_weight_input"
+            )
+
+            ProfileInputRow(
+                label: "Größe (cm)",
+                text: $viewModel.inputHeight,
+                placeholder: "z.B. 178",
+                keyboardType: .numberPad,
+                accessibilityID: "id_profile_height_input"
+            )
+
+            ProfileInputRow(
+                label: "Alter",
+                text: $viewModel.inputAge,
+                placeholder: "z.B. 28",
+                keyboardType: .numberPad,
+                accessibilityID: "id_profile_age_input"
+            )
+
+            HStack(spacing: AppStyle.CornerRadius.defaultButton) {
+                Button {
+                    viewModel.cancelBodyEdit()
+                } label: {
+                    Text("Abbrechen")
+                        .font(AppStyle.Font.pickerAction)
+                        .foregroundColor(AppStyle.Color.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, AppStyle.Layout.profileButtonPadding)
+                }
+                .accessibilityIdentifier("id_profile_body_cancel")
+
+                Button {
+                    viewModel.saveBodyData()
+                } label: {
+                    Text("Speichern")
+                        .font(AppStyle.Font.pickerAction)
+                        .foregroundColor(AppStyle.Color.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, AppStyle.Layout.profileButtonPadding)
+                        .background(AppStyle.Color.green)
+                        .cornerRadius(AppStyle.CornerRadius.defaultButton)
+                }
+                .accessibilityIdentifier("id_profile_body_save")
+            }
+        }
+    }
+
+    private var bodyDisplayGrid: some View {
+        HStack(spacing: AppStyle.CornerRadius.defaultButton) {
+            MetricTile(
+                label: "Gewicht",
+                value: viewModel.weightKg > 0 ? WeightFormatter.format(viewModel.weightKg) : "–",
+                unit: "kg",
+                accessibilityID: "id_profile_weight_tile"
+            )
+
+            MetricTile(
+                label: "Größe",
+                value: viewModel.heightCm > 0 ? String(format: "%.0f", viewModel.heightCm) : "–",
+                unit: "cm",
+                accessibilityID: "id_profile_height_tile"
+            )
+
+            MetricTile(
+                label: "Alter",
+                value: viewModel.age > 0 ? "\(viewModel.age)" : "–",
+                unit: "Jahre",
+                accessibilityID: "id_profile_age_tile"
+            )
+        }
+    }
+
+    // MARK: - BMI
+
+    @ViewBuilder
+    private var bmiSection: some View {
+        if viewModel.hasBodyData || viewModel.bmiResult != nil {
+            ProfileCard {
+                VStack(spacing: AppStyle.CornerRadius.defaultButton) {
+                    HStack {
+                        Text("BMI")
+                            .font(AppStyle.Font.sectionHeadline)
+                            .foregroundColor(AppStyle.Color.white)
+                            .fixedSize()
+
+                        Spacer()
+
+                        if viewModel.isLoadingBMI {
+                            ProgressView()
+                                .tint(AppStyle.Color.green)
+                        }
+                    }
+
+                    if let bmi = viewModel.bmiResult {
+                        HStack(alignment: .firstTextBaseline, spacing: AppStyle.DeviceLayout.cardSpacing) {
+                            Text(viewModel.formattedBMI)
+                                .font(AppStyle.Font.profileCardValue)
+                                .foregroundColor(bmiColor(for: bmi.category))
+                                .accessibilityIdentifier("id_profile_bmi_value")
+
+                            Text(bmi.category.displayName)
+                                .font(AppStyle.Font.profileBMICategory)
+                                .foregroundColor(bmiColor(for: bmi.category))
+                                .fixedSize()
+                                .accessibilityIdentifier("id_profile_bmi_category")
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        bmiBar(value: bmi.value)
+                    } else if !viewModel.hasBodyData {
+                        Text("Gib Gewicht und Größe ein, um deinen BMI zu berechnen.")
+                            .font(AppStyle.Font.profileCardTitle)
+                            .foregroundColor(AppStyle.Color.gray)
+                    }
+
+                    if let error = viewModel.bmiError {
+                        HStack(spacing: 4) {
+                            Image(systemName: "wifi.slash")
+                                .font(AppStyle.Font.profileSmallIcon)
+                            Text("Offline-Berechnung: \(error)")
+                                .font(AppStyle.Font.detailCaption)
+                        }
+                        .foregroundColor(AppStyle.Color.yellow)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+
+                    Button {
+                        viewModel.fetchBMI()
+                    } label: {
+                        HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
+                            Image(systemName: "arrow.clockwise")
+                                .font(AppStyle.Font.profileSmallIcon)
+                            Text("Aktualisieren")
+                                .font(AppStyle.Font.pickerAction)
+                                .fixedSize()
+                        }
+                        .foregroundColor(AppStyle.Color.green)
+                    }
+                    .accessibilityIdentifier("id_profile_bmi_refresh")
+                }
+            }
+        }
+    }
+
+    // MARK: - BMI Bar
+
+    private func bmiBar(value: Double) -> some View {
+        GeometryReader { geo in
+            let barWidth = geo.size.width
+            let clampedBMI = min(max(value, 15), 40)
+            let position = (clampedBMI - 15) / 25.0
+
+            ZStack(alignment: .leading) {
+                HStack(spacing: 0) {
+                    Rectangle().fill(AppStyle.Color.bmiUnderweight)
+                    Rectangle().fill(AppStyle.Color.bmiNormal)
+                    Rectangle().fill(AppStyle.Color.bmiOverweight)
+                    Rectangle().fill(AppStyle.Color.bmiObese)
+                }
+                .frame(height: AppStyle.Layout.profileBMIBarHeight)
+                .cornerRadius(AppStyle.Layout.profileBMIBarHeight / 2)
+
+                Circle()
+                    .fill(AppStyle.Color.white)
+                    .frame(
+                        width: AppStyle.Layout.profileBMIThumbSize,
+                        height: AppStyle.Layout.profileBMIThumbSize
+                    )
+                    .shadow(color: AppStyle.Shadow.cardColor, radius: AppStyle.Shadow.cardRadius, y: AppStyle.Shadow.cardY)
+                    .offset(x: barWidth * position - AppStyle.Layout.profileBMIThumbSize / 2)
+            }
+        }
+        .frame(height: AppStyle.Layout.profileBMIThumbSize)
+        .accessibilityIdentifier("id_profile_bmi_bar")
+    }
+
+    // MARK: - Helpers
+
+    private func bmiColor(for category: BMICategory) -> Color {
+        switch category {
+        case .underweight: return AppStyle.Color.bmiUnderweight
+        case .normal: return AppStyle.Color.bmiNormal
+        case .overweight: return AppStyle.Color.bmiOverweight
+        case .obese: return AppStyle.Color.bmiObese
+        case .unknown: return AppStyle.Color.gray
         }
     }
 }
 
+// MARK: - Profile Card Container
+
+private struct ProfileCard<Content: View>: View {
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            content()
+        }
+        .padding(AppStyle.Padding.card)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AppStyle.Color.profileCardBackground)
+        .cornerRadius(AppStyle.CornerRadius.card)
+    }
+}
+
+// MARK: - Metric Tile
+
+private struct MetricTile: View {
+    let label: String
+    let value: String
+    let unit: String
+    let accessibilityID: String
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(label)
+                .font(AppStyle.Font.profileCardTitle)
+                .foregroundColor(AppStyle.Color.greenLight)
+                .fixedSize()
+
+            Text(value)
+                .font(AppStyle.Font.profileCardValue)
+                .foregroundColor(AppStyle.Color.white)
+
+            Text(unit)
+                .font(AppStyle.Font.profileCardUnit)
+                .foregroundColor(AppStyle.Color.gray)
+                .fixedSize()
+        }
+        .frame(maxWidth: .infinity, minHeight: AppStyle.Layout.profileCardMinHeight)
+        .background(AppStyle.Color.sheetInputBackground)
+        .cornerRadius(AppStyle.CornerRadius.tile)
+        .accessibilityIdentifier(accessibilityID)
+    }
+}
+
+// MARK: - Input Row
+
+private struct ProfileInputRow: View {
+    let label: String
+    @Binding var text: String
+    let placeholder: String
+    let keyboardType: UIKeyboardType
+    let accessibilityID: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(AppStyle.Font.profileInputLabel)
+                .foregroundColor(AppStyle.Color.greenLight)
+                .fixedSize()
+
+            TextField(placeholder, text: $text)
+                .foregroundColor(AppStyle.Color.white)
+                .font(AppStyle.Font.tileValue)
+                .keyboardType(keyboardType)
+                .padding(AppStyle.Layout.profileInputPadding)
+                .background(AppStyle.Color.sheetInputBackground)
+                .cornerRadius(AppStyle.CornerRadius.tile)
+                .accessibilityIdentifier(accessibilityID)
+        }
+    }
+}

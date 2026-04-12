@@ -1,5 +1,7 @@
 # Deep Research: Zuverlässige Pflichtschritte in AI-Agent-Workflows erzwingen
-> Generated 2026-04-11, updated 2026-04-11 | Depth: standard + community cross-reference | Sources: 30+
+> Generated 2026-04-11, updated 2026-04-12 | Depth: standard + community cross-reference | Sources: 30+
+>
+> **Note:** This is a historical research document. Some file names referenced below (e.g. `auto-validation.mdc`, `scratchpad.md`) have since been renamed. The concepts and findings remain valid. See `enforcement-layers.md` for current file names.
 
 ## TL;DR
 
@@ -70,7 +72,7 @@ Das offizielle "Grind Loop"-Pattern [19] verwendet ein Scratchpad-File um Sessio
 
 ```
 1. stop-Hook feuert
-2. Hook liest .cursor/hooks/state/scratchpad.md
+2. Hook liest .cursor/hooks/state/scratchpad.json
 3. Prüft: Tests bestanden? Validierung gelaufen?
 4. Wenn NEIN und Iteration < limit:
    → Schreibt Iteration+1 ins Scratchpad
@@ -107,7 +109,7 @@ Layer 3 — Git Pre-Commit Hooks (AI-optimierte Fehlermeldungen)
       NICHT: "Error: validation missing"
       SONDERN: "RULE: Post-change validation required.
                VIOLATION: 5 Swift files changed, no validation report found.
-               FIX: Run post-change-validation skill checklist.
+               FIX: Run reviewing-code-changes skill checklist.
                FILES: TrainingCoordinator.swift, StartTrainingUseCase.swift, ..."
     → Agent liest den Error-Output und korrigiert sich selbst [21]
 
@@ -218,7 +220,7 @@ Ein Praktiker formuliert es so: "Stop asking your agent to be good. Make it stru
 
 ### Sofort umsetzbar (Cursor)
 
-- [ ] **Stop-Hook auf Grind Loop umbauen:** Scratchpad-File (`.cursor/hooks/state/scratchpad.md`) statt Diff-Hash-Marker verwenden. Iterationszähler mit `loop_limit: 5` in `hooks.json`. Hook sendet kontextabhängige Follow-up-Messages mit Iteration-Counter.
+- [ ] **Stop-Hook auf Grind Loop umbauen:** Scratchpad-File (`.cursor/hooks/state/scratchpad.json`) statt Diff-Hash-Marker verwenden. Iterationszähler mit `loop_limit: 5` in `hooks.json`. Hook sendet kontextabhängige Follow-up-Messages mit Iteration-Counter.
 - [ ] **Artefakt-basierte Validation:** Hook prüft ob eine Datei `.cursor/hooks/state/validation-stamp.md` existiert und aktuell ist (Timestamp < 10 min) — nicht ob der Agent-Output Textmarker enthält. Der Agent muss ein sichtbares Artefakt produzieren.
 - [ ] **Pre-Commit Hook mit AI-optimierten Fehlermeldungen:** Erstellen eines `.git/hooks/pre-commit` der Swift-Lint + `swift test` prüft und Fehlermeldungen im Format RULE/VIOLATION/FIX ausgibt (Fleek-Pattern). Der Agent korrigiert sich automatisch aus dem Error-Output.
 - [ ] **Rules kürzen + EXECUTION SEQUENCE:** `auto-validation.mdc` auf <100 Zeilen kürzen, nur Mechanismus-Dokumentation. EXECUTION SEQUENCE Technik: Agent muss "Applying rules: auto-validation, docs-sync" antworten — macht Non-Compliance sichtbar.

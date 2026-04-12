@@ -9,7 +9,7 @@ description: >-
 
 # Updating Existing UI Tests
 
-For shared conventions (DSL, constraints, template, naming) see [ui-test-conventions/reference.md](../ui-test-conventions/reference.md).
+For shared conventions (DSL, constraints, template, naming) see [ui-test-conventions.md](../../references/ui-test-conventions.md).
 
 ## Workflow
 
@@ -17,8 +17,8 @@ For shared conventions (DSL, constraints, template, naming) see [ui-test-convent
 
 Launch both agents in parallel:
 
-- `uitest-reviewer-agent` on the existing test file — reports convention violations (raw API usage, hardcoded strings, structure issues, selector mismatches)
-- `uitest-prep-agent` with the existing test file as input — checks whether identifiers still exist in production, finds new untested elements, and flags stale selectors
+- `ui-test-reviewer` on the existing test file — reports convention violations (raw API usage, hardcoded strings, structure issues, selector mismatches)
+- `ui-test-selector-creator` with the existing test file as input — checks whether identifiers still exist in production, finds new untested elements, and flags stale selectors
 
 Both agents are read-only. **You** apply all fixes in Step 2.
 
@@ -37,4 +37,4 @@ Based on both agent reports, apply fixes:
 
 ### Step 3 — Review the Result
 
-Launch `uitest-reviewer-agent` on the updated test file. Fix any remaining violations before considering the update done.
+Launch `ui-test-reviewer` on the updated test file. Fix any remaining violations before considering the update done.
