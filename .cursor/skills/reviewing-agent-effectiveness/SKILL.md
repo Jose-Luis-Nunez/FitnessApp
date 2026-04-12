@@ -21,7 +21,6 @@ The FitnessApp project uses a layered defense-in-depth architecture:
 - **L4 — Pre-Commit Hook** (`.git/hooks/pre-commit`): Blocks bad commits. 100% execution.
 - **L2 — Subagents** (`.cursor/agents/*.md`): Specialized analysis agents, called by skills/rules.
 
-For the full research basis see [agent-workflow-enforcement.md](../../references/agent-workflow-enforcement.md).
 
 ## When to Use
 
@@ -50,7 +49,7 @@ Walk through every mechanism and determine: FIRED / NOT FIRED / NOT APPLICABLE.
 |---|---|---|---|
 | R1 | Triggered Rule Notice | `code-changes-enforcement.mdc` | Did the agent mention "post-change validation will be required" early? |
 | R2 | DEVELOPER_DIR | `build-and-test.mdc` | Were all `xcodebuild` calls prefixed with `DEVELOPER_DIR`? Was `swift test`/`swift build` avoided? |
-| R3 | Architecture Sync | `architecture-sync.mdc` | Was `architecture.md` updated when structural changes occurred? See `reviewing-code-changes` skill for trigger map. |
+| R3 | Architecture Sync | `architecture-documentation-sync.mdc` | Was `architecture-documentation.md` updated when structural changes occurred? See `reviewing-code-changes` skill for trigger map. |
 | R4 | Co-Author Trailer | AGENTS.md rule | If a commit was made, does it include the `Co-authored-by: Cursor` trailer? |
 | R5 | Agent Infra Enforcement | `agent-infrastructure-enforcement.mdc` | If .cursor/ files changed, was agent-infrastructure validation mentioned early? Did the agent suggest learnings after mistakes? |
 
@@ -69,12 +68,12 @@ Walk through every mechanism and determine: FIRED / NOT FIRED / NOT APPLICABLE.
 | ID | Hook | File | What to Check |
 |---|---|---|---|
 | H1 | Check 1: Validation Stamp | `post-task-check.sh` | Was `validation-stamp.md` present and fresh (< 10 min)? Did the grind loop fire? |
-| H2 | Check 2: Docs-Sync | `post-task-check.sh` | Were structural changes detected? Was `architecture.md` updated? |
+| H2 | Check 2: Docs-Sync | `post-task-check.sh` | Were structural changes detected? Was `architecture-documentation.md` updated? |
 | H3 | Check 3: Test-Run Stamp | `post-task-check.sh` | Were test files changed? Was `test-stamp.md` present? |
 | H4 | Check 4: Tests Exist | `post-task-check.sh` | Were new ViewModel/Service files created? Do corresponding test files exist? |
 | H5 | Pre-Commit: Validation | `.git/hooks/pre-commit` | Would a commit be blocked for missing validation? |
 | H6 | Pre-Commit: No print() | `.git/hooks/pre-commit` | Are there `print()` statements in production code? |
-| H7 | Pre-Commit: architecture.md | `.git/hooks/pre-commit` | Would a commit be blocked for stale architecture.md? |
+| H7 | Pre-Commit: architecture-documentation.md | `.git/hooks/pre-commit` | Would a commit be blocked for stale architecture-documentation.md? |
 
 #### E: Subagents
 

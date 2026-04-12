@@ -46,7 +46,7 @@ flowchart TD
 |---|---|---|
 | `code-changes-enforcement.mdc` | Enforces post-change validation for 1+ Swift files. Three layers: advisory rule, stop hook, pre-commit. | `post-task-check.sh`, `validation-stamp.md`, `reviewing-code-changes/SKILL.md`, `post-change-validator.md` |
 | `build-and-test.mdc` | All xcodebuild commands (build, unit/UI/package tests). DEVELOPER_DIR setup. Forbids swift test/swift build. | Referenced by hook, command, 2 skills |
-| `architecture-sync.mdc` | Enforces architecture.md sync when structural Swift changes occur. Stop hook Check 2 verifies at task end. | `architecture.md`, `reviewing-code-changes/SKILL.md` |
+| `architecture-documentation-sync.mdc` | Enforces architecture-documentation.md sync when structural Swift changes occur. Stop hook Check 2 verifies at task end. | `architecture-documentation.md`, `reviewing-code-changes/SKILL.md` |
 
 ## L2g — Glob-Triggered Rules
 
@@ -58,9 +58,9 @@ flowchart TD
 
 | File | What it does | Triggers/References |
 |---|---|---|
-| `create-feature/SKILL.md` | Scaffold new SwiftUI features with MVVM, AppStyle, navigation, tests. | `architecture.md`, `ui-test-conventions.md` |
-| `reviewing-code-changes/SKILL.md` | Code review + post-change validation. Dead code, reuse, AppStyle, layout, MVVM, navigation, architecture principles, anti-patterns, referential integrity, architecture sync. | `architecture.md`, `validation-stamp.md` |
-| `reviewing-test-quality/SKILL.md` | Unit/integration test quality review. | `architecture.md`, `test-stamp.md` |
+| `create-feature/SKILL.md` | Scaffold new SwiftUI features with MVVM, AppStyle, navigation, tests. | `architecture-documentation.md`, `ui-test-conventions.md` |
+| `reviewing-code-changes/SKILL.md` | Code review + post-change validation. Dead code, reuse, AppStyle, layout, MVVM, navigation, architecture principles, anti-patterns, referential integrity, architecture sync. | `architecture-documentation.md`, `validation-stamp.md` |
+| `reviewing-test-quality/SKILL.md` | Unit/integration test quality review. | `architecture-documentation.md`, `test-stamp.md` |
 | `reviewing-agent-effectiveness/SKILL.md` | Diagnose which enforcement mechanisms fired (FIRED/NOT FIRED/N/A report). Hands off gaps to `reviewing-agent-infrastructure` skill. | All rules, skills, hooks, agents |
 | `writing-ui-tests/SKILL.md` | Create new XCUITests. | `ui-test-conventions.md`, `ui-test-selector-creator.md`, `ui-test-reviewer.md` |
 | `updating-ui-tests/SKILL.md` | Fix/modernize existing XCUITests. | `ui-test-conventions.md`, `ui-test-selector-creator.md`, `ui-test-reviewer.md` |
@@ -77,7 +77,7 @@ flowchart TD
 
 | File | What it does | Triggers/References |
 |---|---|---|
-| `ui-test-selector-creator.md` | Prepare production code for UI testing (accessibility IDs, selectors). | `ui-test-conventions.md`, `architecture.md` |
+| `ui-test-selector-creator.md` | Prepare production code for UI testing (accessibility IDs, selectors). | `ui-test-conventions.md`, `architecture-documentation.md` |
 | `ui-test-reviewer.md` | Review UI tests against conventions. | `ui-test-conventions.md` |
 | `post-change-validator.md` | Run post-change validation checklist. | `reviewing-code-changes/SKILL.md` |
 
@@ -91,17 +91,16 @@ flowchart TD
 
 | File | What it checks |
 |---|---|
-| `post-task-check.sh` | Check 1: Validation stamp fresh? Check 2: architecture.md updated? Check 3: Tests run if test files changed? Check 4: Tests exist for new ViewModels/Services? Check 5: Enforcement-Audit hint for 5+ files. Check 6: Agent-infrastructure stamp fresh if .cursor/ files changed? |
+| `post-task-check.sh` | Check 1: Validation stamp fresh? Check 2: architecture-documentation.md updated? Check 3: Tests run if test files changed? Check 4: Tests exist for new ViewModels/Services? Check 5: Enforcement-Audit hint for 5+ files. Check 6: Agent-infrastructure stamp fresh if .cursor/ files changed? |
 | `hooks.json` | Registers `post-task-check.sh` as stop hook with loop_limit 4. |
 
 ## References (no enforcement level)
 
 | File | What it contains |
 |---|---|
-| `architecture.md` | Feature Map, packages, navigation, services, domain models, AppStyle tokens. |
+| `architecture-documentation.md` | Feature Map, packages, navigation, services, domain models, AppStyle tokens. |
 | `ui-test-conventions.md` | DSL functions, selector patterns, timeout defaults, test templates. |
 | `agent-system-overview.md` | This file — layer map and trigger chains. |
-| `agent-workflow-enforcement.md` | Deep research on enforcing agent workflows (historical). |
 
 ## State Files
 

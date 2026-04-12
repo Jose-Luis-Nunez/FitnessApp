@@ -5,10 +5,10 @@ Kurzer Einstieg; Details stehen in den versionierten Cursor-Dateien.
 ## Konventionen und Architektur
 
 - **Projektregeln (verbindlich):** `.cursor/rules/` — u. a. Swift-Architektur, AppStyle, Docs-Sync, Self-Improvement.
-- **Struktur-Inventar (Feature Map, Services, Models, Navigation, Shared Components):** `.cursor/references/architecture.md` — bei strukturellen Swift-/Design-Änderungen **mitpflegen** (Trigger siehe Rule `architecture-sync.mdc` und `reviewing-code-changes` Skill, Sektion "Architecture Sync").
+- **Struktur-Inventar (Feature Map, Services, Models, Navigation, Shared Components):** `.cursor/references/architecture-documentation.md` — bei strukturellen Swift-/Design-Änderungen **mitpflegen** (Trigger siehe Rule `architecture-documentation-sync.mdc` und `reviewing-code-changes` Skill, Sektion "Architecture Sync").
 - **Workflows:** `.cursor/skills/` (SKILL.md pro Skill), Subagents unter `.cursor/agents/`.
 
-`architecture.md` ist **kein** Ersatz für die Rules: Es dokumentiert die **Ist-Struktur**; Vorgaben stehen in den `.mdc`-Rules.
+`architecture-documentation.md` ist **kein** Ersatz für die Rules: Es dokumentiert die **Ist-Struktur**; Vorgaben stehen in den `.mdc`-Rules.
 
 ## Build und Tests (Xcode)
 
@@ -24,5 +24,5 @@ xcodebuild -scheme FitnessApp -destination 'platform=iOS Simulator,name=iPhone 1
 
 ## Was ihr **nicht** tun müsst
 
-- `architecture.md` **nicht** in `AGENTS.md` umbenennen — anderer Zweck und fest in Rules, Hooks und Skills verankert.
-- Keine zweite, parallele Architektur-Doku anlegen; `architecture.md` ist die kanonische Referenz.
+- `architecture-documentation.md` **nicht** in `AGENTS.md` umbenennen — anderer Zweck und fest in Rules, Hooks und Skills verankert.
+- Keine zweite, parallele Architektur-Doku anlegen; `architecture-documentation.md` ist die kanonische Referenz.

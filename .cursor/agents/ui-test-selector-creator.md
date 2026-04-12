@@ -31,7 +31,7 @@ You receive one of:
 
 ### 0. Read Architecture Context
 
-Read `.cursor/references/architecture.md` and extract:
+Read `.cursor/references/architecture-documentation.md` and extract:
 - **Feature Map** — locate the correct folder for the given screen/flow
 - **Navigation** — understand the route between screens (which `NavigationDestination` cases are involved)
 - **Shared Components** — identify reusable components that contain interactive elements (e.g. `TrainingSessionComponent`, `TrainingPickerComponent`)

@@ -14,7 +14,7 @@ For shared conventions (DSL, constraints, template, naming) see [ui-test-convent
 
 ### Step 1 — Identify the User Flow
 
-Read the **Navigation** and **Feature Map** sections in `.cursor/references/architecture.md` to understand the route between screens. Map each step to a `NavigationDestination` case.
+Read the **Navigation** and **Feature Map** sections in `.cursor/references/architecture-documentation.md` to understand the route between screens. Map each step to a `NavigationDestination` case.
 
 Break the feature into a sequence of user-visible actions:
 

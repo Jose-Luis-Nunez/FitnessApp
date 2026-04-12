@@ -582,7 +582,7 @@ do or know? Written for stakeholders who will not read the full report.)
 - [ ] [Action 1 — one sentence, concrete and actionable]
 - [ ] [Action 2 — ...]
 - [ ] ...
-(Reference codebase / architecture.md where applicable)
+(Reference codebase / architecture-documentation.md where applicable)
 
 ## 5. Open Questions & Caveats
 (What could not be conclusively answered — include unresolved
@@ -631,7 +631,7 @@ section's overall confidence (e.g. a `[High]` section may contain one
 | Status Quo | Established patterns, current best practice, market adoption |
 | Emerging Trends | Conference talks, blog posts, GitHub activity, community buzz |
 | Critical Assessment | Failure modes, scalability concerns, complexity trade-offs |
-| Action Plan | Markdown checklist (`- [ ]`). Each item: one concrete, actionable step. Tie to **this** project; reference architecture.md if relevant |
+| Action Plan | Markdown checklist (`- [ ]`). Each item: one concrete, actionable step. Tie to **this** project; reference architecture-documentation.md if relevant |
 | Open Questions | Honest gaps, unresolved contradictions, Critique-phase caveats |
 | Methodology | Transparency: how the research was conducted |
 | Source Extracts | Raw subagent data (summary, key quotes, source type, credibility tier per source). Enables follow-up sessions without re-fetching |
@@ -661,7 +661,7 @@ section's overall confidence (e.g. a `[High]` section may contain one
 ## Output
 
 - Save report to project root: `DEEP_RESEARCH_[TOPIC].md`
-- If the topic is project-specific, also note relevant architecture.md sections.
+- If the topic is project-specific, also note relevant architecture-documentation.md sections.
 - After writing, do a self-check: scan for `[N]` references without a matching
   Bibliography entry. Fix before delivering.
 

@@ -70,7 +70,7 @@ If `.cursor/hooks/post-task-check.sh` was changed or references were updated:
 
 At the start of every task, silently check which always-apply rules are active. Mention a rule ONLY when the task triggers a specific action:
 - Swift files changed -> "Post-change validation will be required."
-- Structural changes -> "architecture.md will need updating."
+- Structural changes -> "architecture-documentation.md will need updating."
 - Test files changed -> "Tests should be executed."
 - `.cursor/` files changed -> "Agent-infrastructure validation will be required."
 
@@ -123,7 +123,7 @@ When findings come from mistakes or corrections (not just rename/restructure), c
 | **Missed reuse** | Built custom sheet instead of using `WorkoutFormSheet` | Update `reviewing-code-changes` skill reuse table |
 | **Architecture drift** | Put business logic in View | Already covered — no action needed |
 | **New pattern** | Recurring workflow not yet documented | Create new skill |
-| **Project-specific** | Naming convention, file placement | Update `architecture.md` |
+| **Project-specific** | Naming convention, file placement | Update `architecture-documentation.md` |
 | **Personal habit** | Forgetting to run validation after refactoring | Create personal rule in `~/.cursor/rules/` |
 
 ### Apply Changes
@@ -131,7 +131,7 @@ When findings come from mistakes or corrections (not just rename/restructure), c
 After the user approves findings:
 
 1. **Skill update** — edit the relevant `SKILL.md`
-2. **Architecture update** — edit `.cursor/references/architecture.md`
+2. **Architecture update** — edit `.cursor/references/architecture-documentation.md`
 3. **New skill** — create a new folder under `.cursor/skills/` with `SKILL.md`
 
 Write a brief entry to `.cursor/hooks/state/learning-log.md` after each learning (date, what was learned, which file was updated).
@@ -164,7 +164,7 @@ Never apply learning changes without user confirmation.
 - `reviewing-code-changes/SKILL.md` — description says "post-change" but skill was renamed
 
 ### Learnings Applied
-- Added "check SessionTrainingCache" to architecture.md Known Notes
+- Added "check SessionTrainingCache" to architecture-documentation.md Known Notes
 
 **Summary:** N reference, N sync, N description, N learning items found.
 ```

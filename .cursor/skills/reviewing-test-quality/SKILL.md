@@ -15,7 +15,7 @@ description: >-
 - **Shared test utilities:** `FitnessTestSupport` package — `makeExercise()`, `MockAnalyticsStorage`, `StubAnalyticsStorage`, `waitUntil()`
 - **Package structure:** Tests live under `Packages/<PackageName>/Tests/<PackageName>Tests/`
 - **Build system:** Always use `xcodebuild` with `DEVELOPER_DIR` and `-skipMacroValidation` (see `build-and-test` rule)
-- For domain models, services, and project structure see [architecture.md](../../references/architecture.md)
+- For domain models, services, and project structure see [architecture-documentation.md](../../references/architecture-documentation.md)
 
 ## Context Management
 

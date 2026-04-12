@@ -12,7 +12,7 @@ description: >-
 
 ## Context
 
-For domain models, services, shared components, utilities, AppStyle tokens, and project structure see [architecture.md](../../references/architecture.md).
+For domain models, services, shared components, utilities, AppStyle tokens, and project structure see [architecture-documentation.md](../../references/architecture-documentation.md).
 
 ## Context Management
 
@@ -331,11 +331,11 @@ findings: 3
 
 ## Architecture Sync
 
-When you edit Swift files, check if the change affects any of the items below. If it does, update `.cursor/references/architecture.md` in the **same commit/task** — do not defer.
+When you edit Swift files, check if the change affects any of the items below. If it does, update `.cursor/references/architecture-documentation.md` in the **same commit/task** — do not defer.
 
 ### Trigger Map
 
-| What changed | Section to update in `architecture.md` |
+| What changed | Section to update in `architecture-documentation.md` |
 |---|---|
 | `Shared/Design/AppStyle.swift` — new/renamed/removed token | **AppStyle Tokens** — add/rename/remove the token entry |
 | New file in `Shared/View/`, `Shared/Design/`, `Shared/Components/` | **Shared Components** table — add row with component, file, purpose |
@@ -353,7 +353,7 @@ When you edit Swift files, check if the change affects any of the items below. I
 
 ### How to Update
 
-1. Read `.cursor/references/architecture.md`
+1. Read `.cursor/references/architecture-documentation.md`
 2. Find the relevant section from the trigger map
 3. Apply the minimal change (add/edit/remove the affected entry)
 4. Do not rewrite unrelated sections
