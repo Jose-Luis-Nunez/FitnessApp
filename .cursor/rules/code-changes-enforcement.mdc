@@ -5,7 +5,7 @@ description: >-
 alwaysApply: true
 ---
 
-# Validation Enforcement
+# Code Changes Enforcement
 
 Validation is enforced by **three layers** — not by this rule alone.
 

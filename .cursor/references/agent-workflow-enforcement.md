@@ -1,7 +1,7 @@
 # Deep Research: Zuverlässige Pflichtschritte in AI-Agent-Workflows erzwingen
 > Generated 2026-04-11, updated 2026-04-12 | Depth: standard + community cross-reference | Sources: 30+
 >
-> **Note:** This is a historical research document. Some file names referenced below (e.g. `auto-validation.mdc`, `scratchpad.md`) have since been renamed. The concepts and findings remain valid. See `enforcement-layers.md` for current file names.
+> **Note:** This is a historical research document. Some file names referenced below (e.g. `auto-validation.mdc`, `scratchpad.md`) have since been renamed. The concepts and findings remain valid. See `agent-system-overview.md` for current file names.
 
 ## TL;DR
 

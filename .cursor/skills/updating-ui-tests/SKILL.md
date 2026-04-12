@@ -38,3 +38,19 @@ Based on both agent reports, apply fixes:
 ### Step 3 — Review the Result
 
 Launch `ui-test-reviewer` on the updated test file. Fix any remaining violations before considering the update done.
+
+## Documentation Sync
+
+When you edit files under `FitnessAppUITests/`, check if the change affects `references/ui-test-conventions.md` and update it in the **same task**:
+
+| What changed | What to update in `ui-test-conventions.md` |
+|---|---|
+| DSL function added/renamed/removed in `ElementActions.swift` | **DSL Function Reference** table |
+| `TestDefaults` constant added/changed | **Timeout Defaults** table |
+| Selector enum added/renamed/removed | **Project Structure** tree + examples if affected |
+| Selector constant added/renamed/removed | Check examples and **Reference Example** for stale references |
+| `BaseTest` API changed | **Test Template** and rules |
+| New file/folder under `FitnessAppUITests/` | **Project Structure** tree |
+| Deleted file under `FitnessAppUITests/` | **Project Structure** tree — remove entry |
+
+Also update `ui-test-reviewer.md` and `ui-test-selector-creator.md` if the change affects their validation rules or report format.

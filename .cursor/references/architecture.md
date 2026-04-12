@@ -21,6 +21,11 @@ Features/
 Packages/
   FitnessTraining/    — SPM library mirroring training flow types from the app (`TrainingCoordinator`, active set VM/cache/timer, bottom action bar, session/picker components). Sources: `Packages/FitnessTraining/Sources/FitnessTraining/`.
   FitnessTestSupport/ — Shared test utilities: `makeExercise` factory, `MockAnalyticsStorage`, `StubAnalyticsStorage`, `waitUntil` with timeout assertion. Depends on `FitnessCore` + `Testing`.
+
+Tests/
+  FitnessAppTests/        — App-level unit tests (BMIServiceTests, ProfileViewModelTests)
+  FitnessAppUITests/      — UI tests (XCUITest)
+  Packages/*/Tests/       — Package-level unit tests per SPM module
 ```
 
 ## Domain Models

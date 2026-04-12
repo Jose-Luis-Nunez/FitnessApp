@@ -1,0 +1,18 @@
+---
+description: >-
+  Enforces architecture.md sync when structural Swift changes occur.
+  Stop hook Check 2 verifies at task end.
+alwaysApply: true
+---
+
+# Architecture Sync Enforcement
+
+When you make **structural changes** (new features, services, models, navigation,
+AppStyle tokens, shared components, utilities, tests), update
+`.cursor/references/architecture.md` before reporting done.
+
+For the full trigger map (which change updates which section), see the
+`reviewing-code-changes` skill, section "Architecture Sync".
+
+The stop hook (`post-task-check.sh` Check 2) verifies `architecture.md` was
+updated when structural changes are detected.

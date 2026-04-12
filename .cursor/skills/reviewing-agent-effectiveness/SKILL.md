@@ -48,32 +48,19 @@ Walk through every mechanism and determine: FIRED / NOT FIRED / NOT APPLICABLE.
 
 | ID | Rule | File | What to Check |
 |---|---|---|---|
-| R1 | Triggered Rule Notice | `validation-enforcement.mdc` | Did the agent mention "post-change validation will be required" early? |
+| R1 | Triggered Rule Notice | `code-changes-enforcement.mdc` | Did the agent mention "post-change validation will be required" early? |
 | R2 | DEVELOPER_DIR | `build-and-test.mdc` | Were all `xcodebuild` calls prefixed with `DEVELOPER_DIR`? Was `swift test`/`swift build` avoided? |
-| R3 | AppStyle Tokens | `swift-architecture.mdc` | Were new UI elements styled with `AppStyle` tokens, not hardcoded values? |
-| R4 | MVVM Structure | `swift-architecture.mdc` | Do new Views use `@StateObject` + ViewModel with `@Published`? No logic in View? |
-| R5 | Shared Utilities | `swift-architecture.mdc` | Was `WeightFormatter`, `AnalyticsDateHelper`, etc. used instead of manual formatting? |
-| R6 | Shared Components | `swift-architecture.mdc` | Were existing components (`MetricChipView`, `WorkoutFormSheet`, etc.) reused instead of duplicated? |
-| R7 | Docs-Sync | `docs-sync.mdc` | Was `architecture.md` updated when structural changes occurred? Check trigger map. |
-| R8 | Self-Improvement | `agent-learning.mdc` | If the agent made a mistake and corrected it, did it suggest a learning? |
-| R9 | Repetition Detection | `agent-learning.mdc` | If the user requested a recurring workflow, did the agent suggest creating a skill? |
-| R10 | Co-Author Trailer | AGENTS.md rule | If a commit was made, does it include the `Co-authored-by: Cursor` trailer? |
-| R11 | Protocol/DI for Services | `swift-architecture.mdc` | Do new services have a protocol for testability? Are they injected via Factory, not instantiated directly? |
-
-#### B: Conditional Rules
-
-| ID | Rule | File | Trigger Condition | What to Check |
-|---|---|---|---|---|
-| C1 | Post-Refactoring Checklist | `post-refactoring-checklist.mdc` | `*ViewModel*.swift` or `*Coordinator*.swift` edited | Were state propagation checks performed? |
+| R3 | Architecture Sync | `architecture-sync.mdc` | Was `architecture.md` updated when structural changes occurred? See `reviewing-code-changes` skill for trigger map. |
+| R4 | Co-Author Trailer | AGENTS.md rule | If a commit was made, does it include the `Co-authored-by: Cursor` trailer? |
+| R5 | Agent Infra Enforcement | `agent-infrastructure-enforcement.mdc` | If .cursor/ files changed, was agent-infrastructure validation mentioned early? Did the agent suggest learnings after mistakes? |
 
 #### C: Skills
 
 | ID | Skill | File | Trigger Condition | What to Check |
 |---|---|---|---|---|
 | S1 | Create Feature | `create-feature/SKILL.md` | User asks to create new feature/screen/view | Was the skill read and followed? Were tests written? |
-| S2 | Reviewing Swift Code | `reviewing-swift-code/SKILL.md` | User asks to review code | Was the checklist followed? |
+| S2 | Reviewing Code Changes | `reviewing-code-changes/SKILL.md` | Swift files changed OR user asks to review code | Was the full checklist followed? Was stamp written (if post-change)? |
 | S3 | Reviewing Test Quality | `reviewing-test-quality/SKILL.md` | User asks to review tests | Was the checklist followed? |
-| S4 | Reviewing Code Changes | `reviewing-code-changes/SKILL.md` | 2+ Swift files changed | Was validation run and stamp written? |
 | S5 | Writing UI Tests | `writing-ui-tests/SKILL.md` | User asks to write UI tests | Was the skill read? |
 | S6 | Updating UI Tests | `updating-ui-tests/SKILL.md` | User asks to fix/update UI tests | Was the skill read? |
 
@@ -94,8 +81,8 @@ Walk through every mechanism and determine: FIRED / NOT FIRED / NOT APPLICABLE.
 | ID | Agent | File | Trigger Condition | What to Check |
 |---|---|---|---|---|
 | A1 | Post-Change Validator | `post-change-validator.md` | Called by validation skill/command | Was it launched? What did it find? |
-| A2 | Style Auditor | `style-auditor.md` | Called for style review | Was it launched if styling changes were made? |
-| A3 | Update Architecture Context | `update-architecture-context.md` | Called for docs updates | Was it launched if structural changes occurred? |
+| A2 | UI Test Selector Creator | `ui-test-selector-creator.md` | Called when writing/updating UI tests | Were accessibility IDs prepared? |
+| A3 | UI Test Reviewer | `ui-test-reviewer.md` | Called when writing/updating UI tests | Was test quality reviewed? |
 
 ### Step 3: Build the Report
 

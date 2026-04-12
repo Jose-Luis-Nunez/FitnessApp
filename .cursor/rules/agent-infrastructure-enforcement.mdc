@@ -1,0 +1,29 @@
+---
+description: >-
+  Enforces agent-infrastructure validation when .cursor/ files change.
+  Two layers: this rule (advisory) and stop hook (grind loop hint).
+globs: ".cursor/**/*.md,.cursor/**/*.mdc,.cursor/**/*.sh"
+---
+
+# Agent Infrastructure Enforcement
+
+When you change **1+ files** under `.cursor/` (rules, skills, hooks, agents, references), run the `reviewing-agent-infrastructure` skill before reporting done. Write a stamp to `.cursor/hooks/state/agent-validation-stamp.md`.
+
+## Layer 1: This Rule (L2g — Advisory)
+
+Tells you to validate. Fires when glob-matched `.cursor/` files are edited.
+
+Skip **only** for changes limited to `.cursor/hooks/state/` (runtime artifacts like stamps and hashes).
+
+## Layer 2: Stop Hook — Hint (L5 — Enforced)
+
+`post-task-check.sh` Check 6 verifies `agent-validation-stamp.md` exists and is fresh (< 10 min). If missing, it sends a `followup_message` once per unique set of changed files.
+
+## How to Validate
+
+Follow the `reviewing-agent-infrastructure` skill checklist manually. Write a stamp to `.cursor/hooks/state/agent-validation-stamp.md`.
+
+## Triggered Rule Notice
+
+When this rule applies, mention it early:
+"This touches .cursor/ infrastructure — agent-infrastructure validation will be required."

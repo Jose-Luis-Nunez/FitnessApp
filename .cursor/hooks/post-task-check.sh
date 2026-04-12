@@ -247,11 +247,54 @@ if [ -n "$all_swift" ]; then
   fi
 fi
 
+# --- Check 6: Agent infrastructure files changed? (once per diff) ---
+
+agent_infra_reasons=""
+AGENT_STAMP="$STATE_DIR/agent-validation-stamp.md"
+AGENT_HINT_FILE="$STATE_DIR/agent-infra-hint-hash.txt"
+
+changed_cursor=$(git diff --name-only HEAD 2>/dev/null | grep '^\.cursor/' | grep -v '/state/' || true)
+new_cursor=$(git ls-files --others --exclude-standard 2>/dev/null | grep '^\.cursor/' | grep -v '/state/' || true)
+all_cursor=$(printf '%s\n%s' "$changed_cursor" "$new_cursor" | grep -v '^$' || true)
+
+if [ -n "$all_cursor" ]; then
+  cursor_count=$(echo "$all_cursor" | wc -l | tr -d ' ')
+
+  HAS_AGENT_STAMP=false
+  if [ -f "$AGENT_STAMP" ]; then
+    AGENT_STAMP_AGE=$(python3 -c "
+import os, time
+try:
+    age = time.time() - os.path.getmtime('$AGENT_STAMP')
+    print('fresh' if age < 600 else 'stale')
+except: print('stale')
+" 2>/dev/null || echo "stale")
+    if [ "$AGENT_STAMP_AGE" = "fresh" ]; then
+      HAS_AGENT_STAMP=true
+    fi
+  fi
+
+  RAN_AGENT_VALIDATION=$(echo "$CONTENT" | grep -ciE 'Agent Infrastructure Validation Report|agent-validation-stamp' || true)
+
+  if [ "$HAS_AGENT_STAMP" = false ] && [ "$RAN_AGENT_VALIDATION" -eq 0 ]; then
+    AGENT_HASH=$(echo "$all_cursor" | sort | shasum -a 256 | cut -d' ' -f1)
+    LAST_AGENT_HASH=""
+    if [ -f "$AGENT_HINT_FILE" ]; then
+      LAST_AGENT_HASH=$(cat "$AGENT_HINT_FILE" 2>/dev/null || echo "")
+    fi
+    if [ "$AGENT_HASH" != "$LAST_AGENT_HASH" ]; then
+      cursor_file_list=$(echo "$all_cursor" | head -10 | tr '\n' ', ' | sed 's/,$//')
+      agent_infra_reasons="[Agent Infrastructure Validation Required] ${cursor_count} .cursor/ files changed but no agent-infrastructure validation found. Run the reviewing-agent-infrastructure skill checklist. Write results to .cursor/hooks/state/agent-validation-stamp.md. Changed files: ${cursor_file_list}."
+      echo "$AGENT_HASH" > "$AGENT_HINT_FILE"
+    fi
+  fi
+fi
+
 # --- Output ---
 
 all_reasons="${validation_reasons}"
 if [ -n "$docs_reasons" ]; then
-  all_reasons="${all_reasons} [Docs Sync Required]${docs_reasons} Update .cursor/references/architecture.md now. Check the docs-sync rule for the trigger map."
+  all_reasons="${all_reasons} [Architecture Sync Required]${docs_reasons} Update .cursor/references/architecture.md now. See the reviewing-code-changes skill, section 'Architecture Sync', for the trigger map."
 fi
 if [ -n "$test_reasons" ]; then
   all_reasons="${all_reasons} ${test_reasons}"
@@ -261,6 +304,9 @@ if [ -n "$test_coverage_reasons" ]; then
 fi
 if [ -n "$enforcement_hint" ]; then
   all_reasons="${all_reasons} ${enforcement_hint}"
+fi
+if [ -n "$agent_infra_reasons" ]; then
+  all_reasons="${all_reasons} ${agent_infra_reasons}"
 fi
 
 if [ -n "$all_reasons" ]; then

@@ -2,7 +2,7 @@
 name: reviewing-agent-infrastructure
 description: >-
   Validate and fix agent infrastructure after changes to .cursor/ files.
-  Checks reference integrity, enforcement-layers sync, description accuracy,
+  Checks reference integrity, agent-system-overview sync, description accuracy,
   handoff links, and hook alignment. Also turns corrections and audit findings
   into permanent rule and skill updates. Use after editing rules, skills, hooks,
   agents, or when the user asks to reflect or improve the agent system.
@@ -34,9 +34,9 @@ rg "old-skill-name" .cursor/
 
 Zero hits required. If any remain, update them.
 
-### 2. enforcement-layers.md Sync
+### 2. agent-system-overview.md Sync
 
-Compare the actual files on disk with the tables in `.cursor/references/enforcement-layers.md`:
+Compare the actual files on disk with the tables in `.cursor/references/agent-system-overview.md`:
 
 - Every `.mdc` file in `.cursor/rules/` has a row in the L2 or L2g table
 - Every `SKILL.md` in `.cursor/skills/*/` has a row in the L3 Skills table
@@ -66,6 +66,51 @@ If `.cursor/hooks/post-task-check.sh` was changed or references were updated:
 - The YAML `name:` field matches the folder name
 - The H1 heading (`# ...`) matches the skill/rule purpose (not a leftover from a previous name)
 
+## Active Rules Acknowledgment
+
+At the start of every task, silently check which always-apply rules are active. Mention a rule ONLY when the task triggers a specific action:
+- Swift files changed -> "Post-change validation will be required."
+- Structural changes -> "architecture.md will need updating."
+- Test files changed -> "Tests should be executed."
+- `.cursor/` files changed -> "Agent-infrastructure validation will be required."
+
+Do NOT list all rules mechanically.
+
+## Self-Improvement Protocol
+
+When any of the following occurs during a session:
+- You fix a bug caused by violating a project convention
+- The user corrects your output (e.g. wrong component, wrong token, wrong placement)
+- You discover a pattern not yet covered by existing rules or skills
+
+Then at the end of the task (after the fix is applied), briefly note:
+
+1. **What went wrong** — one sentence
+2. **Which rule/skill should cover this** — file path or "new rule needed"
+3. **Proposed addition** — the specific line or pattern to add
+
+Ask the user: "Soll ich dieses Learning in den Rules/Skills persistieren?"
+
+Do NOT interrupt the current task to reflect. Complete the fix first, then suggest the learning.
+
+## Repetition Detection
+
+When the user requests a workflow manually that resembles a previous manual request (e.g. "analysiere die Tests", "review test quality", "ist der Code testbar"):
+
+1. Check if a skill already covers this workflow (search `.cursor/skills/`)
+2. If no skill exists and the pattern has appeared 2+ times across sessions, suggest: "This is a recurring workflow. Shall I create a skill for it?"
+3. If confirmed, create a new skill under `.cursor/skills/`
+
+This turns repeated L1 requests (conversation) into L3 enforcement (skill/template).
+
+## Self-Review Rule
+
+When the user asks you to evaluate your own implementation ("ist das gut?", "is the solution good?", "review this"):
+
+- Do NOT merely describe known weaknesses or trade-offs — **fix them immediately**.
+- Mentioning a problem without resolving it wastes a round-trip and forces the user to request the fix separately.
+- If you identify a risk (e.g. magic number, fragile alignment, missing `.fixedSize()`), treat it as a finding and apply the fix in the same response.
+
 ## Learning Workflow
 
 When findings come from mistakes or corrections (not just rename/restructure), classify and persist them:
@@ -74,23 +119,22 @@ When findings come from mistakes or corrections (not just rename/restructure), c
 
 | Category | Example | Destination |
 |---|---|---|
-| **Style violation** | Used hardcoded color instead of AppStyle token | Update `swift-architecture.mdc` **AND** `reviewing-swift-code` skill |
-| **Missed reuse** | Built custom sheet instead of using `WorkoutFormSheet` | Update `reviewing-swift-code` skill **AND** `reviewing-code-changes` reuse table |
+| **Style violation** | Used hardcoded color instead of AppStyle token | Update `reviewing-code-changes` skill |
+| **Missed reuse** | Built custom sheet instead of using `WorkoutFormSheet` | Update `reviewing-code-changes` skill reuse table |
 | **Architecture drift** | Put business logic in View | Already covered — no action needed |
-| **New pattern** | Recurring workflow not yet documented | Create new rule or skill |
+| **New pattern** | Recurring workflow not yet documented | Create new skill |
 | **Project-specific** | Naming convention, file placement | Update `architecture.md` |
 | **Personal habit** | Forgetting to run validation after refactoring | Create personal rule in `~/.cursor/rules/` |
-
-**Important:** Style violations and missed-reuse findings affect multiple files. Always update both the rule and the reviewing skill so the pattern is both enforced during writing and detected during review.
 
 ### Apply Changes
 
 After the user approves findings:
 
-1. **Rule update** — edit the `.mdc` file in `.cursor/rules/`
-2. **Skill update** — edit the relevant `SKILL.md`
-3. **Architecture update** — edit `.cursor/references/architecture.md`
-4. **New rule** — create a new `.mdc` file with proper frontmatter
+1. **Skill update** — edit the relevant `SKILL.md`
+2. **Architecture update** — edit `.cursor/references/architecture.md`
+3. **New skill** — create a new folder under `.cursor/skills/` with `SKILL.md`
+
+Write a brief entry to `.cursor/hooks/state/learning-log.md` after each learning (date, what was learned, which file was updated).
 
 Never apply learning changes without user confirmation.
 
@@ -111,10 +155,10 @@ Never apply learning changes without user confirmation.
 **Files inspected:** N files under .cursor/
 
 ### Reference Integrity
-- `enforcement-layers.md:68` — references `old-skill-name/SKILL.md`, should be `new-skill-name/SKILL.md`
+- `agent-system-overview.md:68` — references `old-skill-name/SKILL.md`, should be `new-skill-name/SKILL.md`
 
 ### Sync Issues
-- `style-auditor.md` exists on disk but missing from L3 Agents table
+- `some-agent.md` exists on disk but missing from L3 Agents table
 
 ### Description Drift
 - `reviewing-code-changes/SKILL.md` — description says "post-change" but skill was renamed

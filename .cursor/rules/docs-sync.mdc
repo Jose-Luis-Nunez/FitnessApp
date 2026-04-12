@@ -56,8 +56,8 @@ Also update `ui-test-reviewer.md` and `ui-test-selector-creator.md` if the chang
 
 ## Skill References
 
-If the change affects what the skills check for (e.g. a new shared component that `reviewing-swift-code` should detect, or a new checklist item for `create-feature`), update the skill's `SKILL.md` as well:
+If the change affects what the skills check for (e.g. a new shared component that `reviewing-code-changes` should detect, or a new checklist item for `create-feature`), update the skill's `SKILL.md` as well:
 
-- New shared component -> add detection pattern to `reviewing-swift-code/SKILL.md` "Duplicated UI Patterns" list
-- New utility -> add usage check to `reviewing-swift-code/SKILL.md` "Utility Usage" list
-- New AppStyle token category -> add pattern to `reviewing-swift-code/SKILL.md` "Hardcoded Styling" table
+- New shared component -> add detection pattern to `reviewing-code-changes/SKILL.md` "Reuse Opportunities" table
+- New utility -> add usage check to `reviewing-code-changes/SKILL.md` "Utility Usage" list
+- New AppStyle token category -> add pattern to `reviewing-code-changes/SKILL.md` "AppStyle Consistency" table
