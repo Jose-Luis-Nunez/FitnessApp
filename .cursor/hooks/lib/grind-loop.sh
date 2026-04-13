@@ -3,7 +3,7 @@
 #
 # Usage:
 #   source "$HOOKS_DIR/lib/grind-loop.sh"
-#   run_grind_loop <scratchpad> <stamp_file> <diff_hash> <content_pattern> <followup_msg>
+#   run_grind_loop <scratchpad> <stamp_file> <diff_hash> <content_pattern> <followup_msg> [required_fields...]
 #
 # Env (set by orchestrator): CONTENT, STATE_DIR, MAX_GRIND_ITERATIONS, HAS_QUESTION
 #
@@ -11,6 +11,7 @@
 #   1. If agent is asking a question ($HAS_QUESTION > 0), skip silently.
 #   2. If diff_hash changed since last run, reset iteration counter.
 #   3. If stamp file is fresh (< 10 min) OR content matches pattern, mark done.
+#      When required_fields are provided, the stamp must also contain ALL of them.
 #   4. If iteration cap reached, mark cap_reached and stop retrying.
 #   5. Otherwise, emit followup_msg and increment iteration.
 #
@@ -18,12 +19,38 @@
 # a stale stamp alone does NOT trigger a re-validation. Only a new set of
 # changed files (= new diff_hash) resets the loop.
 
+# Validates that a stamp file contains all required fields.
+# Returns 0 if all fields are present, 1 if any are missing.
+# Usage: validate_stamp_content <stamp_file> <field1> [field2] ...
+validate_stamp_content() {
+  local stamp_file="$1"
+  shift
+  local required_fields=("$@")
+
+  if [ ${#required_fields[@]} -eq 0 ]; then
+    return 0
+  fi
+
+  if [ ! -f "$stamp_file" ]; then
+    return 1
+  fi
+
+  for field in "${required_fields[@]}"; do
+    if ! grep -q "$field" "$stamp_file"; then
+      return 1
+    fi
+  done
+  return 0
+}
+
 run_grind_loop() {
   local scratchpad="$1"
   local stamp_file="$2"
   local diff_hash="$3"
   local content_pattern="$4"
   local followup_msg="$5"
+  shift 5
+  local required_fields=("$@")
 
   if [ "$HAS_QUESTION" -gt 0 ]; then
     return 0
@@ -51,7 +78,7 @@ run_grind_loop() {
     return 0
   fi
 
-  # Check for fresh stamp
+  # Check for fresh stamp WITH content validation
   local has_stamp=false
   if [ -f "$stamp_file" ]; then
     local stamp_age
@@ -63,7 +90,13 @@ try:
 except: print('stale')
 " 2>/dev/null || echo "stale")
     if [ "$stamp_age" = "fresh" ]; then
-      has_stamp=true
+      if [ ${#required_fields[@]} -gt 0 ]; then
+        if validate_stamp_content "$stamp_file" "${required_fields[@]}"; then
+          has_stamp=true
+        fi
+      else
+        has_stamp=true
+      fi
     fi
   fi
 

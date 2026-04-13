@@ -142,6 +142,7 @@ public enum AppStyle {
         public static let progressTrack = SwiftUI.Color(hex: "#0A2726")
         public static let numberPadGray = SwiftUI.Color(hex: "#555555")
         public static let trainingAccent = SwiftUI.Color(hex: "#077484")
+        public static let inProgressGold = SwiftUI.Color(hex: "#D4A843")
 
         public static let profileCardBackground = SwiftUI.Color(hex: "#1A1920")
         public static let bmiUnderweight = SwiftUI.Color(hex: "#5BA4CF")

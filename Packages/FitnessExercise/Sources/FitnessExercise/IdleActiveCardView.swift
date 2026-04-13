@@ -272,16 +272,27 @@ private extension IdleActiveCardView {
     var playButton: some View {
         if let onStart = onStart, !viewModel.exercise.isCompleted {
             Button(action: { onStart(viewModel.exercise) }) {
-                ZStack {
-                    Circle()
-                        .fill(isInProgress ? AppStyle.Color.white.opacity(0.15) : AppStyle.Color.greenGlow)
-                        .frame(width: AppStyle.Layout.playButtonSize, height: AppStyle.Layout.playButtonSize)
-
-                    Image(systemName: isInProgress ? "figure.run" : "play.fill")
+                if isInProgress {
+                    Image("trainin_progress")
+                        .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: AppStyle.Layout.playIconSize, height: AppStyle.Layout.playIconSize)
-                        .foregroundColor(isInProgress ? AppStyle.Color.greenGlow : AppStyle.Color.exerciseCardBackground)
+                        .foregroundColor(AppStyle.Color.yellow)
+                        .frame(width: AppStyle.Layout.checkmarkSize * 2, height: AppStyle.Layout.checkmarkSize * 2)
+                        .frame(width: AppStyle.Layout.checkmarkSize, height: AppStyle.Layout.checkmarkSize)
+                        .clipped()
+                } else {
+                    ZStack {
+                        Circle()
+                            .fill(AppStyle.Color.greenGlow)
+                            .frame(width: AppStyle.Layout.playButtonSize, height: AppStyle.Layout.playButtonSize)
+
+                        Image(systemName: "play.fill")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: AppStyle.Layout.playIconSize, height: AppStyle.Layout.playIconSize)
+                            .foregroundColor(AppStyle.Color.exerciseCardBackground)
+                    }
                 }
             }
             .accessibilityIdentifier(MuscleCategoryIDs.startExercise)

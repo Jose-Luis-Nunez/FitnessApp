@@ -269,58 +269,86 @@ When fixing a bug involving stale UI or missing updates:
 - If a fix requires observing **more than 2 properties** to detect a single logical event, it is likely a symptom fix — introduce a dedicated event property instead.
 - After a bug fix, ask: "If a new similar event is added tomorrow, does the fix still work, or do I need to add another observed property?" If the latter, the fix is fragile.
 
-## Output
+## Output: Orchestrated Subagent Review
 
-### 1. Full Report (in agent response)
+After the main agent completes code changes, this skill **orchestrates** independent subagents for review and testing. The review checklist above serves as reference for the reviewer subagent and for manual reviews.
 
-Print the detailed report in your response so the user can see all findings:
+### Parallel Execution Pattern
+
+Determine which subagents to spawn based on what changed:
 
 ```
-## Code Review Report
+# Swift files changed + .cursor/ files changed:
+Parallel: [ROLE:reviewer] + [ROLE:tester] + [ROLE:verifier]
 
-**Files inspected:** N files
+# Only Swift files changed:
+Parallel: [ROLE:reviewer] + [ROLE:tester]
 
-### Dead Code
-- `FileName.swift:LINE` — `unusedFunction()` has 0 references, safe to remove
-
-### Missed Reuse
-- `FileName.swift:LINE` — reimplements chip pattern, use `MetricChipView` instead
-
-### Style Violations
-- `FileName.swift:LINE` — hardcoded `.padding(16)`, use `AppStyle.Padding.card`
-
-### Layout Issues
-- `FileName.swift:LINE` — short label without `.fixedSize()`
-
-### MVVM Violations
-- `FileName.swift:LINE` — service call in View body, move to ViewModel
-
-### Navigation Issues
-- `FileName.swift:LINE` — manual NavigationLink, use router
-
-### Architecture Principles
-- `FileName.swift:LINE` — `try?` swallowing error, use do/catch
-
-### Referential Issues
-- `NavigationDestination` missing case for new `FeatureView`
-
-### Cleanup
-- `FileName.swift:LINE` — stale TODO from resolved task
-
-### State Propagation
-- `FileName.swift:LINE` — `$computedProperty` subscriber will not compile after refactoring
-
-### Architecture Quality
-- `FileName.swift:LINE` — `ExerciseManagementService` used as concrete type, needs protocol
-
-**Summary:** N dead code, N reuse, N style, N layout, N MVVM, N navigation, N architecture, N referential, N cleanup, N state, N quality items found.
+# Only .cursor/ files changed:
+Single: [ROLE:verifier]  (handled by reviewing-agent-infrastructure skill)
 ```
 
-### 2. Stamp file (for the hook)
+### Step 1: Spawn Subagents in Parallel
 
-Write a **minimal** stamp to `.cursor/hooks/state/code-changes.stamp.md` so the grind-loop hook knows validation ran. This file is a checkpoint, not a report — it gets overwritten each run.
+Spawn reviewer and tester **in the same message** (parallel Task calls). Each subagent runs independently with fresh context. The `subagentStop` hook validates each one via role-specific gates.
 
-When triggered by a user review request (not post-change validation), the stamp is optional.
+**Reviewer subagent:**
+
+```
+Task(
+  subagent_type: "generalPurpose",
+  model: "fast",
+  description: "Review Swift code changes",
+  prompt: """
+[ROLE:reviewer]
+
+Read .cursor/agent-roles/reviewer.md for your full role definition and review checklist.
+
+CHANGED FILES:
+<paste list of changed Swift files>
+
+GIT DIFF:
+<paste the git diff of changed files>
+
+For architecture context, read .cursor/references/architecture-documentation.md.
+
+Return the full findings report.
+"""
+)
+```
+
+**Tester subagent:**
+
+```
+Task(
+  subagent_type: "generalPurpose",
+  model: "fast",
+  description: "Run affected package tests",
+  prompt: """
+[ROLE:tester]
+
+Read .cursor/agent-roles/tester.md for your full role definition and test commands.
+
+CHANGED FILES:
+<paste list of changed Swift files>
+
+Determine affected packages and run their tests via xcodebuild.
+Return a summary of test results.
+"""
+)
+```
+
+### Step 2: Handle Results
+
+After both subagents return:
+
+1. **Reviewer result:** If Bug-severity findings exist, fix them immediately. Nit-severity findings can be noted.
+2. **Tester result:** If tests failed, fix the failures and re-run.
+3. If both pass, the task is complete — stamps were written by the subagents.
+
+### Fallback: Direct Review
+
+When the user explicitly asks to "review" or "check" code (not post-change validation), you may perform the review directly using the checklist above instead of spawning subagents. In this case, write a **minimal** stamp to `.cursor/hooks/state/code-changes.stamp.md`:
 
 ```
 date: 2026-04-11T14:30:00
@@ -328,6 +356,8 @@ result: PASS
 files_inspected: 5
 findings: 3
 ```
+
+When triggered by a user review request, the stamp is optional.
 
 ## Architecture Sync
 

@@ -6,6 +6,12 @@
         "command": ".cursor/hooks/post-task-check.sh",
         "loop_limit": 3
       }
+    ],
+    "subagentStop": [
+      {
+        "command": ".cursor/hooks/subagent-gate.sh",
+        "loop_limit": 2
+      }
     ]
   }
 }

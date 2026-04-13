@@ -98,7 +98,7 @@ For each NOT FIRED finding:
 1. **Is it a gap or correct behavior?** (N/A = correct, NOT FIRED = potential gap)
 2. **Severity: should this be fixed?** (critical = blocks quality, minor = nice-to-have, skip = correct behavior)
 
-### Step 5.1: Hand Off to Improving-Agent-Infrastructure
+### Step 5.1: Hand Off to reviewing-agent-infrastructure
 
 For each gap with status NOT FIRED that represents a real deficiency (not N/A):
 run the `reviewing-agent-infrastructure` skill to persist the fix as a rule or skill update.

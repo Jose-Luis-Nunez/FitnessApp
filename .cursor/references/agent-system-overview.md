@@ -13,6 +13,7 @@ Central map of all enforcement mechanisms grouped by reliability level.
 | L3 | Commands | ~95% | Explicit user-triggered `/command` |
 | L4 | Pre-Commit Hook | 100% | Deterministic, blocks bad commits |
 | L5 | Stop Hook / Grind Loop | 100% | Deterministic, fires when agent says "done" |
+| L5s | SubagentStop Hook | 100% | Deterministic, fires when a subagent completes |
 
 ## Execution Order
 
@@ -27,8 +28,14 @@ flowchart TD
     L2gRules -->|No| SkillCheck
     GlobRule --> SkillCheck{User keyword?}
     SkillCheck -->|Yes| L3Skill[L3: Skill activated]
-    SkillCheck -->|No| Done
-    L3Skill --> Done[Agent says done]
+    SkillCheck -->|No| SpawnSubs
+    L3Skill --> SpawnSubs{Spawn subagents?}
+    SpawnSubs -->|Yes| Subagents["Parallel: reviewer + tester (+ verifier)"]
+    SpawnSubs -->|No| Done
+    Subagents --> L5sHook[L5s: SubagentStop Hook]
+    L5sHook -->|Gate failed| RetrySubagent[Retry subagent up to 2x]
+    L5sHook -->|Gate passed| Done[Agent says done]
+    RetrySubagent --> Subagents
     Done --> L5Hook[L5: Stop Hook fires]
     L5Hook -->|Missing validation| GrindLoop[Grind Loop: send back]
     L5Hook -->|All checks pass| Commit{User commits?}
@@ -58,12 +65,12 @@ flowchart TD
 | File | What it does | Triggers/References |
 |---|---|---|
 | `create-feature/SKILL.md` | Scaffold new SwiftUI features with MVVM, AppStyle, navigation, tests. | `architecture-documentation.md`, `ui-test-conventions.md` |
-| `reviewing-code-changes/SKILL.md` | Code review + post-change validation. Dead code, reuse, AppStyle, layout, MVVM, navigation, architecture principles, anti-patterns, referential integrity, architecture sync. | `architecture-documentation.md`, `code-changes.stamp.md` |
+| `reviewing-code-changes/SKILL.md` | Orchestrator: spawns reviewer + tester subagents in parallel. Review checklist: dead code, reuse, AppStyle, layout, MVVM, navigation, architecture principles, anti-patterns, referential integrity, architecture sync. | `architecture-documentation.md`, `code-changes.stamp.md`, `agent-roles/reviewer.md`, `agent-roles/tester.md` |
 | `reviewing-test-quality/SKILL.md` | Unit/integration test quality review. | `architecture-documentation.md`, `test-execution.stamp.md` |
 | `reviewing-agent-effectiveness/SKILL.md` | Diagnose which enforcement mechanisms fired (FIRED/NOT FIRED/N/A report). Hands off gaps to `reviewing-agent-infrastructure` skill. | All rules, skills, hooks |
 | `writing-ui-tests/SKILL.md` | Create new XCUITests. | `ui-test-conventions.md` |
 | `updating-ui-tests/SKILL.md` | Fix/modernize existing XCUITests. | `ui-test-conventions.md` |
-| `reviewing-agent-infrastructure/SKILL.md` | Validate and fix agent infrastructure after .cursor/ changes. Reference integrity, agent-system-overview sync, learning persistence. | `reviewing-agent-effectiveness/SKILL.md`, `reviewing-code-changes/SKILL.md` |
+| `reviewing-agent-infrastructure/SKILL.md` | Validate and fix agent infrastructure after .cursor/ changes. Reference integrity, agent-system-overview sync, learning persistence. Spawns verifier subagent. | `reviewing-agent-effectiveness/SKILL.md`, `reviewing-code-changes/SKILL.md`, `agent-roles/verifier.md` |
 | `deep-research/SKILL.md` | Citation-backed deep research workflow. | None |
 
 ## L3 — Commands
@@ -80,7 +87,7 @@ flowchart TD
 
 ## L5 — Stop Hook
 
-Two enforcement patterns: **Grind Loop** (agent is sent back up to 3 times) and **Hint** (one-time suggestion).
+Three enforcement patterns: **Grind Loop** (agent is sent back up to 3 times), **Grind Loop + Verifier** (stamp content validated, Verifier subagent writes stamp), and **Hint** (one-time suggestion).
 
 | File | Pattern | What it checks |
 |---|---|---|
@@ -91,8 +98,50 @@ Two enforcement patterns: **Grind Loop** (agent is sent back up to 3 times) and 
 | `checks/test-execution.sh` | Grind Loop | Test files changed — tests actually run? |
 | `checks/test-coverage.sh` | Hint | New ViewModel/Service — corresponding test file exists? |
 | `checks/enforcement-audit.sh` | Hint | 5+ Swift files — suggest enforcement audit? |
-| `checks/agent-infrastructure.sh` | Grind Loop | .cursor/ files changed — infra stamp fresh? |
-| `lib/grind-loop.sh` | Library | Shared grind-loop logic (stamp check, scratchpad, iteration). |
+| `checks/agent-infrastructure.sh` | Grind Loop + Verifier | .cursor/ files changed — stamp fresh + content-validated (8 required fields)? |
+| `lib/grind-loop.sh` | Library | Shared grind-loop logic (stamp check, scratchpad, iteration, optional stamp content validation). |
+
+## L5s — SubagentStop Hook
+
+The `subagentStop` hook fires when a subagent (Task tool) completes. It parses `[ROLE:name]` from the task prompt and applies role-specific quality gates. Two retries allowed (`loop_limit: 2`).
+
+| File | Role | What it checks |
+|---|---|---|
+| `subagent-gate.sh` | `verifier` | `agent-infrastructure.stamp.md` exists + has 8 required fields (result, verified_by, 6 checklist items) |
+| `subagent-gate.sh` | `reviewer` | Output contains severity tags (Bug/Nit/Pre-existing) or "No issues found" + Summary section + `code-changes.stamp.md` with `verified_by` |
+| `subagent-gate.sh` | `tester` | `test-execution.stamp.md` exists + contains success marker (all passed / TEST SUCCEEDED) |
+| `hooks.json` | — | Registers `subagent-gate.sh` as `subagentStop` hook with `loop_limit: 2` |
+
+## Agent Roles
+
+Reusable prompt templates for specialized subagents. Each role file lives in `.cursor/agent-roles/` and defines purpose, checklist, output format, and stamp-writing instructions.
+
+| Role | File | Spawned by | Gate | Stamp |
+|---|---|---|---|---|
+| Verifier | `agent-roles/verifier.md` | `reviewing-agent-infrastructure/SKILL.md` | 8 required stamp fields | `agent-infrastructure.stamp.md` |
+| Reviewer | `agent-roles/reviewer.md` | `reviewing-code-changes/SKILL.md` | Severity tags + summary | `code-changes.stamp.md` |
+| Tester | `agent-roles/tester.md` | `reviewing-code-changes/SKILL.md` | xcodebuild success | `test-execution.stamp.md` |
+
+### Parallel Execution Pattern
+
+After the main agent completes work, the orchestrating skill spawns applicable subagents **in parallel** (multiple Task calls in one message):
+
+```
+# Swift files changed + .cursor/ files changed:
+Parallel: [ROLE:reviewer] + [ROLE:tester] + [ROLE:verifier]
+
+# Only Swift files changed:
+Parallel: [ROLE:reviewer] + [ROLE:tester]
+
+# Only .cursor/ files changed:
+Single: [ROLE:verifier]
+```
+
+### Defense in Depth
+
+Two independent layers catch failures:
+1. **`subagentStop` hook (L5s)** — catches bad subagent output immediately (before main agent sees it)
+2. **`stop` hook (L5)** — catches cases where main agent skips spawning subagents entirely
 
 ## References (no enforcement level)
 
@@ -106,11 +155,11 @@ Two enforcement patterns: **Grind Loop** (agent is sent back up to 3 times) and 
 
 | File | Written by (Skill) | Read by (Hook) | What it contains |
 |---|---|---|---|
-| `code-changes.stamp.md` | `reviewing-code-changes` | `code-validation.sh` | Proof that code validation ran |
+| `code-changes.stamp.md` | `reviewing-code-changes`, reviewer subagent | `code-validation.sh`, `subagent-gate.sh` | Proof that code validation ran |
 | `code-changes.scratchpad.json` | `code-validation.sh` | `code-validation.sh` | Grind loop state (iteration, diff hash) |
-| `test-execution.stamp.md` | `reviewing-test-quality`, `build-and-test` | `test-execution.sh` | Proof that tests ran |
+| `test-execution.stamp.md` | `reviewing-test-quality`, `build-and-test`, tester subagent | `test-execution.sh`, `subagent-gate.sh` | Proof that tests ran |
 | `test-execution.scratchpad.json` | `test-execution.sh` | `test-execution.sh` | Grind loop state (iteration, diff hash) |
-| `agent-infrastructure.stamp.md` | `reviewing-agent-infrastructure` | `agent-infrastructure.sh` | Proof that infra validation ran |
+| `agent-infrastructure.stamp.md` | Verifier subagent (spawned by `reviewing-agent-infrastructure`) | `agent-infrastructure.sh`, `subagent-gate.sh` | Proof that infra validation ran. Content-validated: must contain result, verified_by, and 6 checklist fields. |
 | `agent-infrastructure.scratchpad.json` | `agent-infrastructure.sh` | `agent-infrastructure.sh` | Grind loop state (iteration, diff hash) |
 | `agent-infrastructure.log.md` | `reviewing-agent-infrastructure` | — | Cumulative log of agent learnings |
 | `enforcement-audit.hint-hash.txt` | `enforcement-audit.sh` | `enforcement-audit.sh` | Dedup hint for enforcement audit |

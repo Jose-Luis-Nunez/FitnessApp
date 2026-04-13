@@ -1,7 +1,10 @@
 #!/bin/bash
-# Check 6: .cursor/ files changed — is agent-infrastructure stamp fresh?
-# Pattern: Grind Loop (agent is sent back up to MAX_GRIND_ITERATIONS times)
+# Check 6: .cursor/ files changed — is agent-infrastructure stamp fresh + valid?
+# Pattern: Grind Loop with stamp content validation (Verifier Subagent Pattern)
 # Env: CONTENT, STATE_DIR, HOOKS_DIR, MAX_GRIND_ITERATIONS, HAS_QUESTION
+#
+# The stamp must contain required fields (result, verified_by, checklist items).
+# A stamp without these fields is treated as missing — the grind loop fires.
 
 source "$HOOKS_DIR/lib/grind-loop.sh"
 
@@ -21,5 +24,6 @@ run_grind_loop \
   "$STATE_DIR/agent-infrastructure.scratchpad.json" \
   "$STATE_DIR/agent-infrastructure.stamp.md" \
   "$DIFF_HASH" \
-  "Agent Infrastructure Validation Report|agent-infrastructure\.stamp" \
-  "${cursor_count} .cursor/ files changed but no agent-infrastructure validation found. Run the reviewing-agent-infrastructure skill checklist. Write results to .cursor/hooks/state/agent-infrastructure.stamp.md. Changed files: ${cursor_file_list}."
+  "Agent Infrastructure Validation Report|verified_by: verifier-subagent" \
+  "${cursor_count} .cursor/ files changed but no agent-infrastructure validation found. Run the reviewing-agent-infrastructure skill checklist, then spawn the Verifier subagent. The stamp must contain: result, verified_by, and all 6 checklist fields. Changed files: ${cursor_file_list}." \
+  "result:" "verified_by:" "reference_integrity:" "overview_sync:" "description_consistency:" "handoff_links:" "hook_alignment:" "name_consistency:"
