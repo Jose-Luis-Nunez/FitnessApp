@@ -5,7 +5,7 @@ description: >-
   Checks reference integrity, agent-system-overview sync, description accuracy,
   handoff links, and hook alignment. Also turns corrections and audit findings
   into permanent rule and skill updates. Use after editing rules, skills, hooks,
-  agents, or when the user asks to reflect or improve the agent system.
+  references, or when the user asks to reflect or improve the agent system.
 ---
 
 # Reviewing Agent Infrastructure
@@ -14,7 +14,7 @@ Validate that agent-system files (.cursor/) are consistent after changes, and pe
 
 ## When to Activate
 
-- After modifying files under `.cursor/` (rules, skills, hooks, agents, references)
+- After modifying files under `.cursor/` (rules, skills, hooks, references)
 - After `reviewing-agent-effectiveness` identifies gaps (NOT FIRED findings)
 - User says "reflect", "was habe ich falsch gemacht", "learn from this", "improve agent system"
 - After the user manually corrects agent output
@@ -26,13 +26,15 @@ Work through each category. Fix findings immediately — do not defer.
 
 ### 1. Reference Integrity
 
-Grep for any **old names** of renamed/deleted skills, rules, agents, or hooks across all `.cursor/` files:
+Grep for any **old names** of renamed/deleted skills, rules, or hooks across all `.cursor/` files:
 
 ```bash
 rg "old-skill-name" .cursor/
 ```
 
 Zero hits required. If any remain, update them.
+
+When an entire **folder or conceptual layer** was deleted (not just a single file), also grep for the layer name in prose text — descriptions, frontmatter, examples, and "When to Activate" sections. Stale references hide in prose that no import or path check catches.
 
 ### 2. agent-system-overview.md Sync
 
@@ -138,6 +140,30 @@ Write a brief entry to `.cursor/hooks/state/learning-log.md` after each learning
 
 Never apply learning changes without user confirmation.
 
+## Structural Principles
+
+These are hard-won lessons. Check for violations when reviewing infrastructure changes.
+
+### No Duplicated Logic
+
+Every piece of knowledge (checklist, convention, process) must have **one** canonical location. Other files reference it — they never copy it.
+
+| Pattern | Problem | Fix |
+|---|---|---|
+| File A copies checklist from Skill B | A drifts out of sync when B is updated | A references B as single source of truth |
+| Two files define the same validation rules | Updates to one miss the other | Consolidate into one file, reference from the other |
+| Hook message duplicates skill instructions | Message becomes stale when skill changes | Hook message points to skill path |
+
+When reviewing changes: if the same logic appears in 2+ files, flag it. One must become the reference, the other must link to it.
+
+### Two Layers Only
+
+The system has exactly two enforcement layers:
+- **Rules** — enforce (when something must happen)
+- **Skills** — execute (how to do it)
+
+References (`.cursor/references/`) are shared knowledge files read by skills. Hooks are deterministic checks. Neither is a separate conceptual layer.
+
 ## What NOT to Persist
 
 - One-off mistakes that won't recur
@@ -158,7 +184,7 @@ Never apply learning changes without user confirmation.
 - `agent-system-overview.md:68` — references `old-skill-name/SKILL.md`, should be `new-skill-name/SKILL.md`
 
 ### Sync Issues
-- `some-agent.md` exists on disk but missing from L3 Agents table
+- `some-skill/SKILL.md` exists on disk but missing from L3 Skills table
 
 ### Description Drift
 - `reviewing-code-changes/SKILL.md` — description says "post-change" but skill was renamed

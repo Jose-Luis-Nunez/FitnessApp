@@ -7,7 +7,7 @@ globs: ".cursor/**/*.md,.cursor/**/*.mdc,.cursor/**/*.sh"
 
 # Agent Infrastructure Enforcement
 
-When you change **1+ files** under `.cursor/` (rules, skills, hooks, agents, references), run the `reviewing-agent-infrastructure` skill before reporting done. Write a stamp to `.cursor/hooks/state/agent-validation-stamp.md`.
+When you change **1+ files** under `.cursor/` (rules, skills, hooks, references), run the `reviewing-agent-infrastructure` skill before reporting done. Write a stamp to `.cursor/hooks/state/agent-validation-stamp.md`.
 
 ## Layer 1: This Rule (L2g — Advisory)
 
