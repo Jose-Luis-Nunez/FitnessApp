@@ -2,12 +2,24 @@ import Foundation
 import SwiftUI
 import FitnessUI
 
+/// Isolates UserDefaults persistence from `@Published` state so that
+/// reads/writes don't trigger `objectWillChange` on every keystroke.
 @MainActor
-final class ProfileViewModel: ObservableObject {
+final class ProfileStore {
     @AppStorage("userNickname") var nickname: String = ""
     @AppStorage("userWeight") var weightKg: Double = 0
     @AppStorage("userHeight") var heightCm: Double = 0
     @AppStorage("userAge") var age: Int = 0
+}
+
+@MainActor
+final class ProfileViewModel: ObservableObject {
+    let store = ProfileStore()
+
+    @Published var nickname: String = ""
+    @Published var weightKg: Double = 0
+    @Published var heightCm: Double = 0
+    @Published var age: Int = 0
 
     @Published var inputNickname: String = ""
     @Published var inputWeight: String = ""
@@ -23,6 +35,13 @@ final class ProfileViewModel: ObservableObject {
     @Published var bmiError: String?
 
     private let bmiService = BMIService()
+
+    init() {
+        nickname = store.nickname
+        weightKg = store.weightKg
+        heightCm = store.heightCm
+        age = store.age
+    }
 
     var hasProfile: Bool {
         !nickname.isEmpty
@@ -41,6 +60,10 @@ final class ProfileViewModel: ObservableObject {
         return String(format: "%.1f", bmi.value)
     }
 
+    var isNicknameInputEmpty: Bool {
+        inputNickname.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
     func startEditingNickname() {
         inputNickname = nickname
         isEditingNickname = true
@@ -53,6 +76,7 @@ final class ProfileViewModel: ObservableObject {
             return
         }
         nickname = trimmed
+        store.nickname = trimmed
         inputNickname = ""
         isEditingNickname = false
     }
@@ -72,12 +96,15 @@ final class ProfileViewModel: ObservableObject {
     func saveBodyData() {
         if let w = WeightFormatter.parse(inputWeight) {
             weightKg = w
+            store.weightKg = w
         }
         if let h = WeightFormatter.parse(inputHeight) {
             heightCm = h
+            store.heightCm = h
         }
         if let a = Int(inputAge) {
             age = a
+            store.age = a
         }
         isEditingBody = false
         fetchBMI()
@@ -97,11 +124,12 @@ final class ProfileViewModel: ObservableObject {
             do {
                 let result = try await bmiService.fetchBMI(weightKg: weightKg, heightM: heightM)
                 bmiResult = result
+                bmiError = nil
             } catch {
                 if let local = bmiService.calculateBMILocally(weightKg: weightKg, heightM: heightM) {
                     bmiResult = local
                 }
-                bmiError = error.localizedDescription
+                bmiError = "API nicht erreichbar – lokale Berechnung verwendet."
             }
             isLoadingBMI = false
         }

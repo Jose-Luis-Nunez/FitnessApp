@@ -110,13 +110,13 @@ struct ProfileView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, AppStyle.Layout.profileButtonPadding)
                                 .background(
-                                    viewModel.inputNickname.trimmingCharacters(in: .whitespaces).isEmpty
+                                    viewModel.isNicknameInputEmpty
                                     ? AppStyle.Color.green.opacity(AppStyle.Opacity.subtleStroke)
                                     : AppStyle.Color.green
                                 )
                                 .cornerRadius(AppStyle.CornerRadius.defaultButton)
                         }
-                        .disabled(viewModel.inputNickname.trimmingCharacters(in: .whitespaces).isEmpty)
+                        .disabled(viewModel.isNicknameInputEmpty)
                         .accessibilityIdentifier("id_profile_nickname_save")
                     }
                 }

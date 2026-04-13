@@ -35,6 +35,7 @@ struct BottomMenuBarView: View {
     private var selectedTab: BottomTab {
         switch router.currentScene {
         case .workouts, .home, .category, .training: return .home
+        case .analytics:                              return .chart
         case .schedule:                               return .calendar
         case .profile:                                return .profile
         }

@@ -116,6 +116,18 @@ struct ProfileViewModelTests {
         vm.nickname = ""
     }
 
+    @Test func isNicknameInputEmpty_whitespaceOnly_returnsTrue() {
+        let vm = ProfileViewModel()
+        vm.inputNickname = "   "
+        #expect(vm.isNicknameInputEmpty == true)
+    }
+
+    @Test func isNicknameInputEmpty_withText_returnsFalse() {
+        let vm = ProfileViewModel()
+        vm.inputNickname = "Max"
+        #expect(vm.isNicknameInputEmpty == false)
+    }
+
     @Test func cancelNicknameEdit_resetsState() {
         let vm = ProfileViewModel()
         vm.inputNickname = "Test"

@@ -104,7 +104,7 @@ struct FitnessAppApp: App {
                             overlayState.showCategoryMiniMenu.toggle()
                         case .workouts:
                             overlayState.showWorkoutsMiniMenu.toggle()
-                        case .profile, .schedule:
+                        case .profile, .schedule, .analytics:
                             break
                         case .training:
                             overlayState.showTrainingMiniMenu.toggle()

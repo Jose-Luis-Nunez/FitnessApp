@@ -2,7 +2,7 @@ import SwiftUI
 import Observation
 
 public enum AppCurrentScene: Sendable {
-    case workouts, home, profile, category, training, schedule
+    case workouts, home, profile, category, training, schedule, analytics
 }
 
 @Observable
@@ -85,7 +85,7 @@ public final class AppRouter {
         switch last {
         case .home:               currentScene = .home
         case .profile:            currentScene = .profile
-        case .totalAnalytics:     currentScene = .home
+        case .totalAnalytics:     currentScene = .analytics
         case .schedule:           currentScene = .schedule
         case .muscleCategory:     currentScene = .category
         case .training:           currentScene = .training
