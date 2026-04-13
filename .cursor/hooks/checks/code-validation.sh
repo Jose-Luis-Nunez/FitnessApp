@@ -34,7 +34,7 @@ except: print('stale')
   fi
 fi
 
-RAN_VALIDATION=$(echo "$CONTENT" | grep -ciE 'Post-Change Validation Report|post-change-validator|Validation Report' || true)
+RAN_VALIDATION=$(echo "$CONTENT" | grep -ciE 'Post-Change Validation Report|Validation Report|Code Review Report' || true)
 
 if [ "$HAS_ARTIFACT" = true ] || [ "$RAN_VALIDATION" -gt 0 ]; then
   python3 -c "
@@ -57,5 +57,5 @@ json.dump(data, open('$SCRATCHPAD', 'w'), indent=2)
 " 2>/dev/null
 
   file_list=$(echo "$all_swift" | head -15 | tr '\n' ', ' | sed 's/,$//')
-  echo "[Grind Loop — Iteration ${NEW_ITER}/${MAX_GRIND_ITERATIONS}] ${swift_count} Swift files changed but no validation found. Run code-change validation NOW. Either: (1) launch the post-change-validator subagent, or (2) follow the reviewing-code-changes skill checklist manually. Write results to .cursor/hooks/state/validation-stamp.md. Changed files: ${file_list}."
+  echo "[Grind Loop — Iteration ${NEW_ITER}/${MAX_GRIND_ITERATIONS}] ${swift_count} Swift files changed but no validation found. Run code-change validation NOW: follow the reviewing-code-changes skill checklist (.cursor/skills/reviewing-code-changes/SKILL.md). Write results to .cursor/hooks/state/validation-stamp.md. Changed files: ${file_list}."
 fi

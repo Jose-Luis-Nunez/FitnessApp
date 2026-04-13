@@ -11,7 +11,6 @@ Central map of all enforcement mechanisms grouped by reliability level.
 | L2g | Glob-Triggered Rules | ~80% | Loaded when matching files are edited |
 | L3 | Skills | ~85-90% | Keyword match from user prompt |
 | L3 | Commands | ~95% | Explicit user-triggered `/command` |
-| L3 | Agents | ~85-90% | Called by skills or rules |
 | L4 | Pre-Commit Hook | 100% | Deterministic, blocks bad commits |
 | L5 | Stop Hook / Grind Loop | 100% | Deterministic, fires when agent says "done" |
 
@@ -44,7 +43,7 @@ flowchart TD
 
 | File | What it does | Triggers/References |
 |---|---|---|
-| `code-changes-enforcement.mdc` | Enforces post-change validation for 1+ Swift files. Three layers: advisory rule, stop hook, pre-commit. | `post-task-check.sh`, `validation-stamp.md`, `reviewing-code-changes/SKILL.md`, `post-change-validator.md` |
+| `code-changes-enforcement.mdc` | Enforces post-change validation for 1+ Swift files. Three layers: advisory rule, stop hook, pre-commit. | `post-task-check.sh`, `validation-stamp.md`, `reviewing-code-changes/SKILL.md` |
 | `build-and-test.mdc` | All xcodebuild commands (build, unit/UI/package tests). DEVELOPER_DIR setup. Forbids swift test/swift build. | Referenced by hook, command, 2 skills |
 | `architecture-documentation-sync.mdc` | Enforces architecture-documentation.md sync when structural Swift changes occur. Stop hook Check 2 verifies at task end. | `architecture-documentation.md`, `reviewing-code-changes/SKILL.md` |
 
@@ -61,9 +60,9 @@ flowchart TD
 | `create-feature/SKILL.md` | Scaffold new SwiftUI features with MVVM, AppStyle, navigation, tests. | `architecture-documentation.md`, `ui-test-conventions.md` |
 | `reviewing-code-changes/SKILL.md` | Code review + post-change validation. Dead code, reuse, AppStyle, layout, MVVM, navigation, architecture principles, anti-patterns, referential integrity, architecture sync. | `architecture-documentation.md`, `validation-stamp.md` |
 | `reviewing-test-quality/SKILL.md` | Unit/integration test quality review. | `architecture-documentation.md`, `test-stamp.md` |
-| `reviewing-agent-effectiveness/SKILL.md` | Diagnose which enforcement mechanisms fired (FIRED/NOT FIRED/N/A report). Hands off gaps to `reviewing-agent-infrastructure` skill. | All rules, skills, hooks, agents |
-| `writing-ui-tests/SKILL.md` | Create new XCUITests. | `ui-test-conventions.md`, `ui-test-selector-creator.md`, `ui-test-reviewer.md` |
-| `updating-ui-tests/SKILL.md` | Fix/modernize existing XCUITests. | `ui-test-conventions.md`, `ui-test-selector-creator.md`, `ui-test-reviewer.md` |
+| `reviewing-agent-effectiveness/SKILL.md` | Diagnose which enforcement mechanisms fired (FIRED/NOT FIRED/N/A report). Hands off gaps to `reviewing-agent-infrastructure` skill. | All rules, skills, hooks |
+| `writing-ui-tests/SKILL.md` | Create new XCUITests. | `ui-test-conventions.md` |
+| `updating-ui-tests/SKILL.md` | Fix/modernize existing XCUITests. | `ui-test-conventions.md` |
 | `reviewing-agent-infrastructure/SKILL.md` | Validate and fix agent infrastructure after .cursor/ changes. Reference integrity, agent-system-overview sync, learning persistence. | `reviewing-agent-effectiveness/SKILL.md`, `reviewing-code-changes/SKILL.md` |
 | `deep-research/SKILL.md` | Citation-backed deep research workflow. | None |
 
@@ -72,14 +71,6 @@ flowchart TD
 | File | What it does |
 |---|---|
 | `validate.md` | `/validate` — run post-change validation, tests, write stamps. |
-
-## L3 — Agents (Subagents)
-
-| File | What it does | Triggers/References |
-|---|---|---|
-| `ui-test-selector-creator.md` | Prepare production code for UI testing (accessibility IDs, selectors). | `ui-test-conventions.md`, `architecture-documentation.md` |
-| `ui-test-reviewer.md` | Review UI tests against conventions. | `ui-test-conventions.md` |
-| `post-change-validator.md` | Run post-change validation checklist. | `reviewing-code-changes/SKILL.md` |
 
 ## L4 — Pre-Commit Hook
 

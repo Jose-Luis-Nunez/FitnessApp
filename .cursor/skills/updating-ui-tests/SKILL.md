@@ -13,14 +13,14 @@ For shared conventions (DSL, constraints, template, naming) see [ui-test-convent
 
 ## Workflow
 
-### Step 1 — Review Test and Check Production Code (parallel)
+### Step 1 — Review Test and Check Production Code
 
-Launch both agents in parallel:
+Perform two analyses on the existing test:
 
-- `ui-test-reviewer` on the existing test file — reports convention violations (raw API usage, hardcoded strings, structure issues, selector mismatches)
-- `ui-test-selector-creator` with the existing test file as input — checks whether identifiers still exist in production, finds new untested elements, and flags stale selectors
+1. **Convention review** — check the test against the **Review Checklist** in [ui-test-conventions.md](../../references/ui-test-conventions.md) (raw API usage, hardcoded strings, structure issues, selector mismatches)
+2. **Production scan** — read the test, extract all test ID references, find the production Views containing those identifiers. Check whether identifiers still exist in production `enum AID` constants, find new untested interactive elements, and flag stale selectors
 
-Both agents are read-only. **You** apply all fixes in Step 2.
+Apply all fixes in Step 2.
 
 ### Step 2 — Fix and Extend
 
@@ -37,7 +37,7 @@ Based on both agent reports, apply fixes:
 
 ### Step 3 — Review the Result
 
-Launch `ui-test-reviewer` on the updated test file. Fix any remaining violations before considering the update done.
+Review the updated test file against the **Review Checklist** in [ui-test-conventions.md](../../references/ui-test-conventions.md). Fix any remaining violations before considering the update done.
 
 ## Documentation Sync
 
@@ -53,4 +53,4 @@ When you edit files under `FitnessAppUITests/`, check if the change affects `ref
 | New file/folder under `FitnessAppUITests/` | **Project Structure** tree |
 | Deleted file under `FitnessAppUITests/` | **Project Structure** tree — remove entry |
 
-Also update `ui-test-reviewer.md` and `ui-test-selector-creator.md` if the change affects their validation rules or report format.
+Also update the **Review Checklist** in `ui-test-conventions.md` if the change affects validation rules.

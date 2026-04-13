@@ -40,7 +40,7 @@ Compare the actual files on disk with the tables in `.cursor/references/agent-sy
 
 - Every `.mdc` file in `.cursor/rules/` has a row in the L2 or L2g table
 - Every `SKILL.md` in `.cursor/skills/*/` has a row in the L3 Skills table
-- Every `.md` in `.cursor/agents/` has a row in the L3 Agents table
+
 - Every hook in `.cursor/hooks/` has a row in the L4/L5 table
 - No rows reference files that no longer exist
 

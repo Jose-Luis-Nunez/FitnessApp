@@ -27,11 +27,7 @@ The hook checks for: `.cursor/hooks/state/validation-stamp.md` (< 10 min old) OR
 
 ## How to Validate
 
-```
-Task(subagent_type: "post-change-validator", prompt: "Validate changes. Files: <list>.")
-```
-
-Or follow the `reviewing-code-changes` skill manually. Write a stamp to `.cursor/hooks/state/validation-stamp.md`.
+Read and follow the `reviewing-code-changes` skill (`.cursor/skills/reviewing-code-changes/SKILL.md`). Write a stamp to `.cursor/hooks/state/validation-stamp.md`.
 
 ## Triggered Rule Notice
 

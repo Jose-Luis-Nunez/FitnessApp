@@ -1,7 +1,7 @@
 ---
 name: reviewing-agent-effectiveness
 description: >-
-  Diagnose which agent enforcement mechanisms (rules, hooks, skills, subagents)
+  Diagnose which agent enforcement mechanisms (rules, hooks, skills)
   fired during a task and which did not. Produces a FIRED / NOT FIRED / N/A
   report per mechanism. Use when the user asks to review what worked, check
   enforcement, audit the agent system, or evaluate whether rules gripped.
@@ -19,8 +19,6 @@ The FitnessApp project uses a layered defense-in-depth architecture:
 - **L3 — Commands** (`.cursor/commands/*.md`): Explicit user-triggered workflows. ~85-90% compliance.
 - **L5 — Stop Hook** (`.cursor/hooks/post-task-check.sh`): Deterministic checks after agent finishes. 100% execution.
 - **L4 — Pre-Commit Hook** (`.git/hooks/pre-commit`): Blocks bad commits. 100% execution.
-- **L2 — Subagents** (`.cursor/agents/*.md`): Specialized analysis agents, called by skills/rules.
-
 
 ## When to Use
 
@@ -74,14 +72,6 @@ Walk through every mechanism and determine: FIRED / NOT FIRED / NOT APPLICABLE.
 | H5 | Pre-Commit: Validation | `.git/hooks/pre-commit` | Would a commit be blocked for missing validation? |
 | H6 | Pre-Commit: No print() | `.git/hooks/pre-commit` | Are there `print()` statements in production code? |
 | H7 | Pre-Commit: architecture-documentation.md | `.git/hooks/pre-commit` | Would a commit be blocked for stale architecture-documentation.md? |
-
-#### E: Subagents
-
-| ID | Agent | File | Trigger Condition | What to Check |
-|---|---|---|---|---|
-| A1 | Post-Change Validator | `post-change-validator.md` | Called by validation skill/command | Was it launched? What did it find? |
-| A2 | UI Test Selector Creator | `ui-test-selector-creator.md` | Called when writing/updating UI tests | Were accessibility IDs prepared? |
-| A3 | UI Test Reviewer | `ui-test-reviewer.md` | Called when writing/updating UI tests | Was test quality reviewed? |
 
 ### Step 3: Build the Report
 
