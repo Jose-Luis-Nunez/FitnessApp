@@ -2,12 +2,16 @@
 # Stop Hook Orchestrator: runs all checks when the agent completes a task.
 #
 # Checks (each in its own script under checks/):
-#   1. code-validation.sh     — Validation stamp fresh for Swift changes? (grind loop)
-#   2. architecture-sync.sh   — architecture-documentation.md updated for structural changes?
-#   3. test-execution.sh      — Tests run when test files changed?
-#   4. test-coverage.sh       — New ViewModel/Service has corresponding tests?
-#   5. enforcement-audit.sh   — Suggest audit for 5+ Swift file changes?
-#   6. agent-infrastructure.sh — Agent-infra stamp fresh for .cursor/ changes?
+#   1. code-validation.sh     — Grind loop: validation stamp fresh for Swift changes?
+#   2. architecture-sync.sh   — Stateless: architecture-documentation.md updated?
+#   3. test-execution.sh      — Grind loop: tests run when test files changed?
+#   4. test-coverage.sh       — Hint: new ViewModel/Service has corresponding tests?
+#   5. enforcement-audit.sh   — Hint: suggest audit for 5+ Swift file changes?
+#   6. agent-infrastructure.sh — Grind loop: agent-infra stamp fresh for .cursor/ changes?
+#
+# Two enforcement patterns:
+#   Grind Loop — agent is sent back up to MAX_GRIND_ITERATIONS times (checks 1, 3, 6)
+#   Hint       — one-time suggestion, no retry (checks 2, 4, 5)
 
 set -euo pipefail
 
@@ -21,31 +25,18 @@ if [ "$STATUS" != "completed" ]; then
   exit 0
 fi
 
-HAS_QUESTION=$(echo "$CONTENT" | grep -ciE '\?\s*$|soll ich|shall I|should I|do you want|möchtest du|willst du' || true)
-if [ "$HAS_QUESTION" -gt 0 ]; then
-  echo '{}'
-  exit 0
-fi
-
 # --- Shared state ---
 
 export STATE_DIR=".cursor/hooks/state"
-export SCRATCHPAD="$STATE_DIR/scratchpad.json"
 export MAX_GRIND_ITERATIONS=3
 export CONTENT
+export HOOKS_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Question detection: grind-loop checks skip when agent is asking the user.
+# Hints still fire so the agent sees them when it resumes.
+export HAS_QUESTION=$(echo "$CONTENT" | grep -ciE '\?\s*$|soll ich|shall I|should I|do you want|möchtest du|willst du' || true)
 
 mkdir -p "$STATE_DIR"
-
-# Read scratchpad
-if [ -f "$SCRATCHPAD" ]; then
-  export SP_STATUS=$(python3 -c "import sys,json; print(json.load(open('$SCRATCHPAD')).get('status','pending'))" 2>/dev/null || echo "pending")
-  export SP_ITERATION=$(python3 -c "import sys,json; print(json.load(open('$SCRATCHPAD')).get('iteration',0))" 2>/dev/null || echo "0")
-  export SP_DIFF_HASH=$(python3 -c "import sys,json; print(json.load(open('$SCRATCHPAD')).get('diff_hash',''))" 2>/dev/null || echo "")
-else
-  export SP_STATUS="pending"
-  export SP_ITERATION=0
-  export SP_DIFF_HASH=""
-fi
 
 # Detect changed Swift files (shared across checks)
 changed_swift=$(git diff --name-only HEAD 2>/dev/null | grep '\.swift$' || true)
@@ -54,7 +45,7 @@ export all_swift=$(printf '%s\n%s' "$changed_swift" "$new_swift" | grep -v '^$' 
 
 # --- Run checks ---
 
-CHECKS_DIR="$(dirname "$0")/checks"
+CHECKS_DIR="$HOOKS_DIR/checks"
 all_reasons=""
 
 for check in \

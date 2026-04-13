@@ -134,4 +134,4 @@ xcodebuild test -scheme <Package> -destination 'platform=iOS Simulator,name=iPho
 -skipMacroValidation 2>&1 | tail -30
 ```
 
-Write a test stamp to `.cursor/hooks/state/test-stamp.md` after successful execution.
+Write a test stamp to `.cursor/hooks/state/test-execution.stamp.md` after successful execution.

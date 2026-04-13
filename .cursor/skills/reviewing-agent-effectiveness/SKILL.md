@@ -65,13 +65,15 @@ Walk through every mechanism and determine: FIRED / NOT FIRED / NOT APPLICABLE.
 
 | ID | Hook | File | What to Check |
 |---|---|---|---|
-| H1 | Check 1: Validation Stamp | `post-task-check.sh` | Was `validation-stamp.md` present and fresh (< 10 min)? Did the grind loop fire? |
-| H2 | Check 2: Docs-Sync | `post-task-check.sh` | Were structural changes detected? Was `architecture-documentation.md` updated? |
-| H3 | Check 3: Test-Run Stamp | `post-task-check.sh` | Were test files changed? Was `test-stamp.md` present? |
-| H4 | Check 4: Tests Exist | `post-task-check.sh` | Were new ViewModel/Service files created? Do corresponding test files exist? |
-| H5 | Pre-Commit: Validation | `.git/hooks/pre-commit` | Would a commit be blocked for missing validation? |
-| H6 | Pre-Commit: No print() | `.git/hooks/pre-commit` | Are there `print()` statements in production code? |
-| H7 | Pre-Commit: architecture-documentation.md | `.git/hooks/pre-commit` | Would a commit be blocked for stale architecture-documentation.md? |
+| H1 | Check 1: Code Validation (Grind Loop) | `code-validation.sh` | Was `code-changes.stamp.md` present and fresh (< 10 min)? Did the grind loop fire? |
+| H2 | Check 2: Docs-Sync (Stateless) | `architecture-sync.sh` | Were structural changes detected? Was `architecture-documentation.md` updated? |
+| H3 | Check 3: Test Execution (Grind Loop) | `test-execution.sh` | Were test files changed? Was `test-execution.stamp.md` present? Did the grind loop fire? |
+| H4 | Check 4: Test Coverage (Hint) | `test-coverage.sh` | Were new ViewModel/Service files created? Do corresponding test files exist? |
+| H5 | Check 5: Enforcement Audit (Hint) | `enforcement-audit.sh` | 5+ Swift files changed — was enforcement audit suggested? |
+| H6 | Check 6: Agent Infrastructure (Grind Loop) | `agent-infrastructure.sh` | .cursor/ files changed — was `agent-infrastructure.stamp.md` present? Did the grind loop fire? |
+| H7 | Pre-Commit: Validation | `.git/hooks/pre-commit` | Would a commit be blocked for missing validation? |
+| H8 | Pre-Commit: No print() | `.git/hooks/pre-commit` | Are there `print()` statements in production code? |
+| H9 | Pre-Commit: architecture-documentation.md | `.git/hooks/pre-commit` | Would a commit be blocked for stale architecture-documentation.md? |
 
 ### Step 3: Build the Report
 

@@ -2,7 +2,7 @@
 # Check 5: 5+ Swift files changed — suggest enforcement audit.
 # Env: STATE_DIR, all_swift
 
-ENFORCEMENT_SHOWN="$STATE_DIR/enforcement-hint-hash.txt"
+ENFORCEMENT_SHOWN="$STATE_DIR/enforcement-audit.hint-hash.txt"
 
 if [ -z "$all_swift" ]; then
   exit 0

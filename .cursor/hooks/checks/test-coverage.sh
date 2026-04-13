@@ -2,7 +2,7 @@
 # Check 4: New ViewModel/Service without corresponding test file?
 # Env: STATE_DIR, all_swift
 
-COVERAGE_HINT_SHOWN="$STATE_DIR/coverage-hint-hash.txt"
+COVERAGE_HINT_SHOWN="$STATE_DIR/test-coverage.hint-hash.txt"
 
 new_vm_or_service=$(echo "$all_swift" | grep -v 'Tests' | grep -v 'TestSupport' | grep -iE 'ViewModel\.swift$|Service\.swift$' || true)
 

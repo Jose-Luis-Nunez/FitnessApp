@@ -136,7 +136,7 @@ After the user approves findings:
 2. **Architecture update** — edit `.cursor/references/architecture-documentation.md`
 3. **New skill** — create a new folder under `.cursor/skills/` with `SKILL.md`
 
-Write a brief entry to `.cursor/hooks/state/learning-log.md` after each learning (date, what was learned, which file was updated).
+Write a brief entry to `.cursor/hooks/state/agent-infrastructure.log.md` after each learning (date, what was learned, which file was updated).
 
 Never apply learning changes without user confirmation.
 
@@ -197,7 +197,7 @@ References (`.cursor/references/`) are shared knowledge files read by skills. Ho
 
 ### 2. Stamp file (for the hook)
 
-Write a **minimal** stamp to `.cursor/hooks/state/agent-validation-stamp.md`:
+Write a **minimal** stamp to `.cursor/hooks/state/agent-infrastructure.stamp.md`:
 
 ```
 date: 2026-04-12T17:00:00

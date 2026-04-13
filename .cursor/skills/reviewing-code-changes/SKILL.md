@@ -318,7 +318,7 @@ Print the detailed report in your response so the user can see all findings:
 
 ### 2. Stamp file (for the hook)
 
-Write a **minimal** stamp to `.cursor/hooks/state/validation-stamp.md` so the grind-loop hook knows validation ran. This file is a checkpoint, not a report — it gets overwritten each run.
+Write a **minimal** stamp to `.cursor/hooks/state/code-changes.stamp.md` so the grind-loop hook knows validation ran. This file is a checkpoint, not a report — it gets overwritten each run.
 
 When triggered by a user review request (not post-change validation), the stamp is optional.
 

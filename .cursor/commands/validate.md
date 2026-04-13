@@ -21,9 +21,9 @@ Execute the following steps in order:
    - Section 6: State Propagation (if ViewModels/Coordinators changed)
    - Section 7: Architecture Quality (if services/protocols/coordinators changed)
 
-5. If test files (`*Tests*.swift` or `*TestSupport*`) are among the changed files, run the affected package tests using `xcodebuild` (see `build-and-test` rule). Write a test stamp to `.cursor/hooks/state/test-stamp.md` (date, PASS/FAIL, package, test count).
+5. If test files (`*Tests*.swift` or `*TestSupport*`) are among the changed files, run the affected package tests using `xcodebuild` (see `build-and-test` rule). Write a test stamp to `.cursor/hooks/state/test-execution.stamp.md` (date, PASS/FAIL, package, test count).
 
-6. Write a validation stamp to `.cursor/hooks/state/validation-stamp.md` (date, PASS/FAIL, file count, finding count).
+6. Write a validation stamp to `.cursor/hooks/state/code-changes.stamp.md` (date, PASS/FAIL, file count, finding count).
 
 7. If test files changed, note whether the `reviewing-test-quality` skill would be relevant (but do NOT run it automatically — that is a separate, explicit review the user can request).
 

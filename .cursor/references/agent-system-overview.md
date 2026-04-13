@@ -43,7 +43,7 @@ flowchart TD
 
 | File | What it does | Triggers/References |
 |---|---|---|
-| `code-changes-enforcement.mdc` | Enforces post-change validation for 1+ Swift files. Three layers: advisory rule, stop hook, pre-commit. | `post-task-check.sh`, `validation-stamp.md`, `reviewing-code-changes/SKILL.md` |
+| `code-changes-enforcement.mdc` | Enforces post-change validation for 1+ Swift files. Three layers: advisory rule, stop hook, pre-commit. | `post-task-check.sh`, `code-changes.stamp.md`, `reviewing-code-changes/SKILL.md` |
 | `build-and-test.mdc` | All xcodebuild commands (build, unit/UI/package tests). DEVELOPER_DIR setup. Forbids swift test/swift build. | Referenced by hook, command, 2 skills |
 | `architecture-documentation-sync.mdc` | Enforces architecture-documentation.md sync when structural Swift changes occur. Stop hook Check 2 verifies at task end. | `architecture-documentation.md`, `reviewing-code-changes/SKILL.md` |
 
@@ -58,8 +58,8 @@ flowchart TD
 | File | What it does | Triggers/References |
 |---|---|---|
 | `create-feature/SKILL.md` | Scaffold new SwiftUI features with MVVM, AppStyle, navigation, tests. | `architecture-documentation.md`, `ui-test-conventions.md` |
-| `reviewing-code-changes/SKILL.md` | Code review + post-change validation. Dead code, reuse, AppStyle, layout, MVVM, navigation, architecture principles, anti-patterns, referential integrity, architecture sync. | `architecture-documentation.md`, `validation-stamp.md` |
-| `reviewing-test-quality/SKILL.md` | Unit/integration test quality review. | `architecture-documentation.md`, `test-stamp.md` |
+| `reviewing-code-changes/SKILL.md` | Code review + post-change validation. Dead code, reuse, AppStyle, layout, MVVM, navigation, architecture principles, anti-patterns, referential integrity, architecture sync. | `architecture-documentation.md`, `code-changes.stamp.md` |
+| `reviewing-test-quality/SKILL.md` | Unit/integration test quality review. | `architecture-documentation.md`, `test-execution.stamp.md` |
 | `reviewing-agent-effectiveness/SKILL.md` | Diagnose which enforcement mechanisms fired (FIRED/NOT FIRED/N/A report). Hands off gaps to `reviewing-agent-infrastructure` skill. | All rules, skills, hooks |
 | `writing-ui-tests/SKILL.md` | Create new XCUITests. | `ui-test-conventions.md` |
 | `updating-ui-tests/SKILL.md` | Fix/modernize existing XCUITests. | `ui-test-conventions.md` |
@@ -76,14 +76,23 @@ flowchart TD
 
 | File | What it checks |
 |---|---|
-| `.git/hooks/pre-commit` | 1+ staged Swift files without fresh validation-stamp.md. Blocks commit with RULE/VIOLATION/FIX message. |
+| `.git/hooks/pre-commit` | 1+ staged Swift files without fresh `code-changes.stamp.md`. Blocks commit with RULE/VIOLATION/FIX message. |
 
-## L5 — Stop Hook (Grind Loop)
+## L5 — Stop Hook
 
-| File | What it checks |
-|---|---|
-| `post-task-check.sh` | Check 1: Validation stamp fresh? Check 2: architecture-documentation.md updated? Check 3: Tests run if test files changed? Check 4: Tests exist for new ViewModels/Services? Check 5: Enforcement-Audit hint for 5+ files. Check 6: Agent-infrastructure stamp fresh if .cursor/ files changed? |
-| `hooks.json` | Registers `post-task-check.sh` as stop hook with loop_limit 4. |
+Two enforcement patterns: **Grind Loop** (agent is sent back up to 3 times) and **Hint** (one-time suggestion).
+
+| File | Pattern | What it checks |
+|---|---|---|
+| `post-task-check.sh` | Orchestrator | Runs all 6 checks below, collects followup messages. |
+| `hooks.json` | — | Registers `post-task-check.sh` as stop hook with `loop_limit: 3`. |
+| `checks/code-validation.sh` | Grind Loop | Swift files changed — validation stamp fresh? |
+| `checks/architecture-sync.sh` | Stateless | Structural changes — architecture-documentation.md updated? |
+| `checks/test-execution.sh` | Grind Loop | Test files changed — tests actually run? |
+| `checks/test-coverage.sh` | Hint | New ViewModel/Service — corresponding test file exists? |
+| `checks/enforcement-audit.sh` | Hint | 5+ Swift files — suggest enforcement audit? |
+| `checks/agent-infrastructure.sh` | Grind Loop | .cursor/ files changed — infra stamp fresh? |
+| `lib/grind-loop.sh` | Library | Shared grind-loop logic (stamp check, scratchpad, iteration). |
 
 ## References (no enforcement level)
 
@@ -95,10 +104,14 @@ flowchart TD
 
 ## State Files
 
-| File | What it contains |
-|---|---|
-| `hooks/state/validation-stamp.md` | Proof that validation ran (date, PASS/FAIL, files, findings). |
-| `hooks/state/test-stamp.md` | Proof that tests ran (date, PASS/FAIL, target, counts). |
-| `hooks/state/learning-log.md` | Log of agent learnings (date, what was learned, which file updated). |
-| `hooks/state/scratchpad.json` | Grind loop state (iteration count, diff hash). |
-| `hooks/state/agent-validation-stamp.md` | Proof that agent-infrastructure validation ran (date, PASS/FAIL, files, findings). |
+| File | Written by (Skill) | Read by (Hook) | What it contains |
+|---|---|---|---|
+| `code-changes.stamp.md` | `reviewing-code-changes` | `code-validation.sh` | Proof that code validation ran |
+| `code-changes.scratchpad.json` | `code-validation.sh` | `code-validation.sh` | Grind loop state (iteration, diff hash) |
+| `test-execution.stamp.md` | `reviewing-test-quality`, `build-and-test` | `test-execution.sh` | Proof that tests ran |
+| `test-execution.scratchpad.json` | `test-execution.sh` | `test-execution.sh` | Grind loop state (iteration, diff hash) |
+| `agent-infrastructure.stamp.md` | `reviewing-agent-infrastructure` | `agent-infrastructure.sh` | Proof that infra validation ran |
+| `agent-infrastructure.scratchpad.json` | `agent-infrastructure.sh` | `agent-infrastructure.sh` | Grind loop state (iteration, diff hash) |
+| `agent-infrastructure.log.md` | `reviewing-agent-infrastructure` | — | Cumulative log of agent learnings |
+| `enforcement-audit.hint-hash.txt` | `enforcement-audit.sh` | `enforcement-audit.sh` | Dedup hint for enforcement audit |
+| `test-coverage.hint-hash.txt` | `test-coverage.sh` | `test-coverage.sh` | Dedup hint for test coverage |
