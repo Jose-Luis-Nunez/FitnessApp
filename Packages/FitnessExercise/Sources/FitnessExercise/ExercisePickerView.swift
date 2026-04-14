@@ -12,7 +12,6 @@ public struct ExercisePickerView: View {
     @Binding public var isPresented: Bool
     public let onSave: () -> Void
     public let onCancel: () -> Void
-    public let saveDisabled: Bool
     public let repsRange: ClosedRange<Int>
     public let weightOptions: [String]
     public let setsRange: ClosedRange<Int>
@@ -33,7 +32,6 @@ public struct ExercisePickerView: View {
         isPresented: Binding<Bool>,
         onSave: @escaping () -> Void,
         onCancel: @escaping () -> Void,
-        saveDisabled: Bool,
         repsRange: ClosedRange<Int>,
         weightOptions: [String],
         setsRange: ClosedRange<Int>,
@@ -45,7 +43,6 @@ public struct ExercisePickerView: View {
         _isPresented = isPresented
         self.onSave = onSave
         self.onCancel = onCancel
-        self.saveDisabled = saveDisabled
         self.repsRange = repsRange
         self.weightOptions = weightOptions
         self.setsRange = setsRange
@@ -218,7 +215,7 @@ public struct ExercisePickerView: View {
                 )
 
                 ExercisePickerActionButtons(
-                    saveDisabled: saveDisabled,
+                    saveDisabled: !formViewModel.isFormValid,
                     onCancel: {
                         onCancel()
                         isPresented = false

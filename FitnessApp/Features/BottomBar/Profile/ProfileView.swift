@@ -1,23 +1,52 @@
 import SwiftUI
 import FitnessUI
+import FitnessProfile
 
 struct ProfileView: View {
-    @StateObject private var viewModel = ProfileViewModel()
+    @State private var viewModel = ProfileViewModel()
+    @FocusState private var focusedField: ProfileField?
+
+    enum ProfileField: Hashable {
+        case nickname
+        case weight
+        case height
+        case age
+    }
 
     var body: some View {
         ZStack {
             AppStyle.Color.backgroundColor.ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: AppStyle.Padding.card) {
-                    headerSection
-                    nicknameSection
-                    bodyDataSection
-                    bmiSection
-                    Spacer(minLength: AppStyle.Layout.profileBottomSpacer)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: AppStyle.Padding.card) {
+                        headerSection
+                        nicknameSection
+                        bodyDataSection
+                        bmiSection
+                        Spacer(minLength: AppStyle.Layout.profileBottomSpacer)
+                    }
+                    .padding(.horizontal, AppStyle.Padding.horizontal)
+                    .padding(.top, AppStyle.Padding.titleTop)
                 }
-                .padding(.horizontal, AppStyle.Padding.horizontal)
-                .padding(.top, AppStyle.Padding.titleTop)
+                .onChange(of: focusedField) { field in
+                    guard let field else { return }
+                    withAnimation {
+                        proxy.scrollTo(field, anchor: .center)
+                    }
+                }
+            }
+        }
+        .onTapGesture {
+            focusedField = nil
+        }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button(keyboardButtonLabel) {
+                    handleKeyboardAction()
+                }
+                .foregroundColor(AppStyle.Color.green)
             }
         }
         .onAppear {
@@ -27,6 +56,31 @@ struct ProfileView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text("Nickname darf nicht leer sein.")
+        }
+    }
+
+    private var keyboardButtonLabel: String {
+        switch focusedField {
+        case .weight: return "Weiter"
+        case .height: return "Weiter"
+        case .nickname, .age: return "Fertig"
+        case nil: return "Fertig"
+        }
+    }
+
+    private func handleKeyboardAction() {
+        switch focusedField {
+        case .nickname:
+            viewModel.saveNickname()
+        case .weight:
+            focusedField = .height
+        case .height:
+            focusedField = .age
+        case .age:
+            focusedField = nil
+            viewModel.saveBodyData()
+        case nil:
+            break
         }
     }
 
@@ -85,11 +139,16 @@ struct ProfileView: View {
                         .padding(AppStyle.Layout.profileInputPadding)
                         .background(AppStyle.Color.sheetInputBackground)
                         .cornerRadius(AppStyle.CornerRadius.tile)
+                        .focused($focusedField, equals: .nickname)
+                        .submitLabel(.done)
+                        .onSubmit { viewModel.saveNickname() }
                         .accessibilityIdentifier("id_profile_nickname_input")
+                        .id(ProfileField.nickname)
 
                     HStack(spacing: AppStyle.CornerRadius.defaultButton) {
                         if viewModel.hasProfile {
                             Button {
+                                focusedField = nil
                                 viewModel.cancelNicknameEdit()
                             } label: {
                                 Text("Abbrechen")
@@ -102,6 +161,7 @@ struct ProfileView: View {
                         }
 
                         Button {
+                            focusedField = nil
                             viewModel.saveNickname()
                         } label: {
                             Text("Speichern")
@@ -124,6 +184,7 @@ struct ProfileView: View {
                     if !viewModel.hasProfile {
                         viewModel.inputNickname = ""
                     }
+                    focusedField = .nickname
                 }
             } else {
                 HStack {
@@ -195,7 +256,10 @@ struct ProfileView: View {
                 text: $viewModel.inputWeight,
                 placeholder: "z.B. 75,5",
                 keyboardType: .decimalPad,
-                accessibilityID: "id_profile_weight_input"
+                accessibilityID: "id_profile_weight_input",
+                field: .weight,
+                focusedField: $focusedField,
+                onSubmit: { focusedField = .height }
             )
 
             ProfileInputRow(
@@ -203,7 +267,10 @@ struct ProfileView: View {
                 text: $viewModel.inputHeight,
                 placeholder: "z.B. 178",
                 keyboardType: .numberPad,
-                accessibilityID: "id_profile_height_input"
+                accessibilityID: "id_profile_height_input",
+                field: .height,
+                focusedField: $focusedField,
+                onSubmit: { focusedField = .age }
             )
 
             ProfileInputRow(
@@ -211,11 +278,18 @@ struct ProfileView: View {
                 text: $viewModel.inputAge,
                 placeholder: "z.B. 28",
                 keyboardType: .numberPad,
-                accessibilityID: "id_profile_age_input"
+                accessibilityID: "id_profile_age_input",
+                field: .age,
+                focusedField: $focusedField,
+                onSubmit: {
+                    focusedField = nil
+                    viewModel.saveBodyData()
+                }
             )
 
             HStack(spacing: AppStyle.CornerRadius.defaultButton) {
                 Button {
+                    focusedField = nil
                     viewModel.cancelBodyEdit()
                 } label: {
                     Text("Abbrechen")
@@ -227,6 +301,7 @@ struct ProfileView: View {
                 .accessibilityIdentifier("id_profile_body_cancel")
 
                 Button {
+                    focusedField = nil
                     viewModel.saveBodyData()
                 } label: {
                     Text("Speichern")
@@ -239,6 +314,9 @@ struct ProfileView: View {
                 }
                 .accessibilityIdentifier("id_profile_body_save")
             }
+        }
+        .onAppear {
+            focusedField = .weight
         }
     }
 
@@ -439,6 +517,9 @@ private struct ProfileInputRow: View {
     let placeholder: String
     let keyboardType: UIKeyboardType
     let accessibilityID: String
+    let field: ProfileView.ProfileField
+    var focusedField: FocusState<ProfileView.ProfileField?>.Binding
+    var onSubmit: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -454,7 +535,11 @@ private struct ProfileInputRow: View {
                 .padding(AppStyle.Layout.profileInputPadding)
                 .background(AppStyle.Color.sheetInputBackground)
                 .cornerRadius(AppStyle.CornerRadius.tile)
+                .focused(focusedField, equals: field)
+                .submitLabel(field == .age ? .done : .next)
+                .onSubmit { onSubmit?() }
                 .accessibilityIdentifier(accessibilityID)
+                .id(field)
         }
     }
 }

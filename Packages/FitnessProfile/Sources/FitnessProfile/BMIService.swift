@@ -7,14 +7,14 @@ struct BMIResponse: Codable {
     let height: Double
 }
 
-enum BMICategory: String {
+public enum BMICategory: String {
     case underweight = "Underweight"
     case normal = "Normal weight"
     case overweight = "Overweight"
     case obese = "Obese"
     case unknown = "Unknown"
 
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .underweight: return "Untergewicht"
         case .normal: return "Normalgewicht"
@@ -24,7 +24,7 @@ enum BMICategory: String {
         }
     }
 
-    init(from apiCategory: String) {
+    public init(from apiCategory: String) {
         switch apiCategory.lowercased() {
         case let s where s.contains("underweight"):
             self = .underweight
@@ -32,29 +32,44 @@ enum BMICategory: String {
             self = .normal
         case let s where s.contains("overweight"):
             self = .overweight
-        case let s where s.contains("obese"):
+        case let s where s.contains("obese") || s.contains("obesity"):
             self = .obese
         default:
             self = .unknown
         }
     }
+
+    /// Derives category from the numeric BMI value (WHO thresholds).
+    public init(fromValue bmi: Double) {
+        switch bmi {
+        case ..<18.5: self = .underweight
+        case 18.5..<25: self = .normal
+        case 25..<30: self = .overweight
+        default: self = .obese
+        }
+    }
 }
 
-struct BMIResult {
-    let value: Double
-    let category: BMICategory
+public struct BMIResult {
+    public let value: Double
+    public let category: BMICategory
+
+    public init(value: Double, category: BMICategory) {
+        self.value = value
+        self.category = category
+    }
 }
 
-final class BMIService {
+public final class BMIService {
     private let baseURL = "https://bmicalculatorapi.vercel.app/api/bmi"
     private let session: URLSession
 
-    init(session: URLSession = .shared) {
+    public init(session: URLSession = .shared) {
         self.session = session
     }
 
     /// Fetches BMI from the API. Weight in kg, height in meters.
-    func fetchBMI(weightKg: Double, heightM: Double) async throws -> BMIResult {
+    public func fetchBMI(weightKg: Double, heightM: Double) async throws -> BMIResult {
         guard weightKg > 0, heightM > 0 else {
             throw BMIError.invalidInput
         }
@@ -72,34 +87,25 @@ final class BMIService {
         }
 
         let decoded = try JSONDecoder().decode(BMIResponse.self, from: data)
-        return BMIResult(
-            value: decoded.bmi,
-            category: BMICategory(from: decoded.Category)
-        )
+        let parsed = BMICategory(from: decoded.Category)
+        let category = (parsed == .unknown) ? BMICategory(fromValue: decoded.bmi) : parsed
+        return BMIResult(value: decoded.bmi, category: category)
     }
 
     /// Local fallback: BMI = weight / height^2
-    func calculateBMILocally(weightKg: Double, heightM: Double) -> BMIResult? {
+    public func calculateBMILocally(weightKg: Double, heightM: Double) -> BMIResult? {
         guard weightKg > 0, heightM > 0 else { return nil }
-
         let bmi = weightKg / (heightM * heightM)
-        let category: BMICategory
-        switch bmi {
-        case ..<18.5: category = .underweight
-        case 18.5..<25: category = .normal
-        case 25..<30: category = .overweight
-        default: category = .obese
-        }
-        return BMIResult(value: (bmi * 10).rounded() / 10, category: category)
+        return BMIResult(value: (bmi * 10).rounded() / 10, category: BMICategory(fromValue: bmi))
     }
 }
 
-enum BMIError: LocalizedError {
+public enum BMIError: LocalizedError, Equatable {
     case invalidInput
     case invalidURL
     case serverError
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .invalidInput: return "Ungültige Eingabe für Gewicht oder Größe."
         case .invalidURL: return "Ungültige URL."

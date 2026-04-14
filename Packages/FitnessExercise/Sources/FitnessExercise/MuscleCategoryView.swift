@@ -196,7 +196,6 @@ public struct MuscleCategoryView: View {
                 isPresented: $formViewModel.showForm,
                 onSave: onSave,
                 onCancel: onCancel,
-                saveDisabled: !formViewModel.isFormValid,
                 repsRange: 1...30,
                 weightOptions: WeightOptionsGenerator.exerciseWeightOptions,
                 setsRange: 1...10,

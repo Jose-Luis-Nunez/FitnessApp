@@ -21,9 +21,7 @@ cd ~/Documents/repo/FitnessApp && DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcod
 
 ## Unit Tests
 
-```bash
-cd ~/Documents/repo/FitnessApp && DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer xcodebuild test -scheme FitnessApp -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -only-testing:FitnessAppTests 2>&1 | tail -30
-```
+All unit tests live in SPM packages — there is no app-level `FitnessAppTests` target. Use the "Package Tests" section below to run them without building the app.
 
 ## UI Tests
 
@@ -44,7 +42,7 @@ cd ~/Documents/repo/FitnessApp/Packages/FitnessTraining && DEVELOPER_DIR=/Users/
 ### All packages
 
 ```bash
-for pkg in FitnessExercise FitnessTraining FitnessAnalytics FitnessStorage; do
+for pkg in FitnessExercise FitnessTraining FitnessAnalytics FitnessStorage FitnessProfile; do
   echo "=== Testing $pkg ===" && \
   cd ~/Documents/repo/FitnessApp/Packages/$pkg && \
   DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer PATH="/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer/usr/bin:$PATH" xcodebuild test -scheme $pkg -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -skipMacroValidation 2>&1 | tail -10

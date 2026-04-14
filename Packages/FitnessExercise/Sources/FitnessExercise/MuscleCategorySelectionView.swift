@@ -38,6 +38,7 @@ public struct MuscleCategorySelectionView: View {
     @State private var editingExercise: Exercise?
     @State private var editingCategory: MuscleCategoryGroup?
     @State private var exerciseFormViewModel = ExerciseFormViewModel()
+    @State private var pickerViewModel: MuscleCategoryViewModel?
     @State private var showCategorySelection = false
     @State private var isFilterBarVisible = true
     @State private var lastScrollOffset: CGFloat = 0
@@ -291,6 +292,7 @@ public struct MuscleCategorySelectionView: View {
         editingCategory = category
         editingExercise = nil
         exerciseFormViewModel.loadExercise(nil, category: category)
+        pickerViewModel = MuscleCategoryViewModel(group: category)
         isShowingExercisePicker = true
     }
 
@@ -298,6 +300,7 @@ public struct MuscleCategorySelectionView: View {
         isShowingExercisePicker = false
         editingExercise = nil
         editingCategory = nil
+        pickerViewModel = nil
         exerciseFormViewModel.clearForm()
     }
 
@@ -319,28 +322,31 @@ public struct MuscleCategorySelectionView: View {
 
         switch exerciseFormViewModel.editMode {
         case .full:
-            ExercisePickerView(
-                formViewModel: exerciseFormViewModel,
-                title: editingExercise != nil ? "Edit Exercise" : "New Exercise",
-                isPresented: $isShowingExercisePicker,
-                onSave: onSave,
-                onCancel: onCancel,
-                saveDisabled: !exerciseFormViewModel.isFormValid,
-                repsRange: 1...50,
-                weightOptions: WeightOptionsGenerator.exerciseWeightOptions,
-                setsRange: 1...10,
-                viewModel: MuscleCategoryViewModel(group: category),
-                editingExercise: editingExercise
-            )
+            if let vm = pickerViewModel {
+                ExercisePickerView(
+                    formViewModel: exerciseFormViewModel,
+                    title: editingExercise != nil ? "Edit Exercise" : "New Exercise",
+                    isPresented: $isShowingExercisePicker,
+                    onSave: onSave,
+                    onCancel: onCancel,
+                    repsRange: 1...50,
+                    weightOptions: WeightOptionsGenerator.exerciseWeightOptions,
+                    setsRange: 1...10,
+                    viewModel: vm,
+                    editingExercise: editingExercise
+                )
+            }
         case .name:
-            ExerciseNamePickerView(
-                formViewModel: exerciseFormViewModel,
-                isPresented: $isShowingExercisePicker,
-                onSave: onSave,
-                onCancel: onCancel,
-                viewModel: MuscleCategoryViewModel(group: category),
-                editingExercise: editingExercise
-            )
+            if let vm = pickerViewModel {
+                ExerciseNamePickerView(
+                    formViewModel: exerciseFormViewModel,
+                    isPresented: $isShowingExercisePicker,
+                    onSave: onSave,
+                    onCancel: onCancel,
+                    viewModel: vm,
+                    editingExercise: editingExercise
+                )
+            }
         case .weight:
             ExerciseWeightPickerView(
                 formViewModel: exerciseFormViewModel,
@@ -461,6 +467,9 @@ public struct MuscleCategorySelectionView: View {
                     editingCategory = category
                     exerciseFormViewModel.loadExercise(exerciseToEdit, category: category)
                     exerciseFormViewModel.editMode = mode
+                    if mode == .full || mode == .name {
+                        pickerViewModel = MuscleCategoryViewModel(group: category)
+                    }
                     isShowingExercisePicker = true
                 } else {
                     router.navigate(to: .muscleCategory(category))

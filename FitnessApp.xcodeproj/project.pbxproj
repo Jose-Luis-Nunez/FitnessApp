@@ -160,6 +160,7 @@
 				BB000002AA00000000000007 /* FitnessExercise */,
 				BB000002AA00000000000008 /* FitnessSchedule */,
 				BB000002AA00000000000009 /* Factory */,
+				BB000002AA0000000000000A /* FitnessProfile */,
 			);
 			productName = FitnessApp;
 			productReference = 00181AF22DABCCE300884E28 /* FitnessApp.app */;
@@ -252,6 +253,7 @@
 				BB000003AA00000000000006 /* XCLocalSwiftPackageReference "Packages/FitnessTraining" */,
 				BB000003AA00000000000007 /* XCLocalSwiftPackageReference "Packages/FitnessExercise" */,
 				BB000003AA00000000000008 /* XCLocalSwiftPackageReference "Packages/FitnessSchedule" */,
+				BB000003AA0000000000000A /* XCLocalSwiftPackageReference "Packages/FitnessProfile" */,
 				BB000003AA00000000000009 /* XCRemoteSwiftPackageReference "Factory" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -851,6 +853,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/FitnessSchedule;
 		};
+		BB000003AA0000000000000A /* XCLocalSwiftPackageReference "Packages/FitnessProfile" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/FitnessProfile;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -901,6 +907,10 @@
 			isa = XCSwiftPackageProductDependency;
 			package = BB000003AA00000000000009 /* XCRemoteSwiftPackageReference "Factory" */;
 			productName = Factory;
+		};
+		BB000002AA0000000000000A /* FitnessProfile */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FitnessProfile;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

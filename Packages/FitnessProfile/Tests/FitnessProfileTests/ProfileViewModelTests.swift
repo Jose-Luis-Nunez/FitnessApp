@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import FitnessApp
+@testable import FitnessProfile
 
 @Suite("ProfileViewModel Tests")
 @MainActor

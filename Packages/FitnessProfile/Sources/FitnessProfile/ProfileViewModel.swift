@@ -2,74 +2,77 @@ import Foundation
 import SwiftUI
 import FitnessUI
 
-/// Isolates UserDefaults persistence from `@Published` state so that
-/// reads/writes don't trigger `objectWillChange` on every keystroke.
+/// Isolates UserDefaults persistence from `@Observable` state so that
+/// reads/writes don't trigger observation on every keystroke.
 @MainActor
-final class ProfileStore {
-    @AppStorage("userNickname") var nickname: String = ""
-    @AppStorage("userWeight") var weightKg: Double = 0
-    @AppStorage("userHeight") var heightCm: Double = 0
-    @AppStorage("userAge") var age: Int = 0
+public final class ProfileStore {
+    @AppStorage("userNickname") public var nickname: String = ""
+    @AppStorage("userWeight") public var weightKg: Double = 0
+    @AppStorage("userHeight") public var heightCm: Double = 0
+    @AppStorage("userAge") public var age: Int = 0
+
+    public init() {}
 }
 
+@Observable
 @MainActor
-final class ProfileViewModel: ObservableObject {
-    let store = ProfileStore()
+public final class ProfileViewModel {
+    public let store = ProfileStore()
 
-    @Published var nickname: String = ""
-    @Published var weightKg: Double = 0
-    @Published var heightCm: Double = 0
-    @Published var age: Int = 0
+    public var nickname: String = ""
+    public var weightKg: Double = 0
+    public var heightCm: Double = 0
+    public var age: Int = 0
 
-    @Published var inputNickname: String = ""
-    @Published var inputWeight: String = ""
-    @Published var inputHeight: String = ""
-    @Published var inputAge: String = ""
+    public var inputNickname: String = ""
+    public var inputWeight: String = ""
+    public var inputHeight: String = ""
+    public var inputAge: String = ""
 
-    @Published var isEditingNickname = false
-    @Published var isEditingBody = false
-    @Published var showNicknameAlert = false
+    public var isEditingNickname = false
+    public var isEditingBody = false
+    public var showNicknameAlert = false
 
-    @Published var bmiResult: BMIResult?
-    @Published var isLoadingBMI = false
-    @Published var bmiError: String?
+    public var bmiResult: BMIResult?
+    public var isLoadingBMI = false
+    public var bmiError: String?
 
     private let bmiService = BMIService()
 
-    init() {
+    public init() {
         nickname = store.nickname
         weightKg = store.weightKg
         heightCm = store.heightCm
         age = store.age
     }
 
-    var hasProfile: Bool {
+    public var hasProfile: Bool {
         !nickname.isEmpty
     }
 
-    var hasBodyData: Bool {
+    public var hasBodyData: Bool {
         weightKg > 0 && heightCm > 0 && age > 0
     }
 
-    var heightM: Double {
+    public var heightM: Double {
         heightCm / 100.0
     }
 
-    var formattedBMI: String {
+    public var formattedBMI: String {
         guard let bmi = bmiResult else { return "–" }
         return String(format: "%.1f", bmi.value)
     }
 
-    var isNicknameInputEmpty: Bool {
+    public var isNicknameInputEmpty: Bool {
         inputNickname.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    func startEditingNickname() {
+    public func startEditingNickname() {
         inputNickname = nickname
         isEditingNickname = true
     }
 
-    func saveNickname() {
+    public func saveNickname() {
         let trimmed = inputNickname.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else {
             showNicknameAlert = true
@@ -81,19 +84,19 @@ final class ProfileViewModel: ObservableObject {
         isEditingNickname = false
     }
 
-    func cancelNicknameEdit() {
+    public func cancelNicknameEdit() {
         inputNickname = ""
         isEditingNickname = false
     }
 
-    func startEditingBody() {
+    public func startEditingBody() {
         inputWeight = weightKg > 0 ? WeightFormatter.format(weightKg) : ""
         inputHeight = heightCm > 0 ? String(format: "%.0f", heightCm) : ""
         inputAge = age > 0 ? "\(age)" : ""
         isEditingBody = true
     }
 
-    func saveBodyData() {
+    public func saveBodyData() {
         if let w = WeightFormatter.parse(inputWeight) {
             weightKg = w
             store.weightKg = w
@@ -110,11 +113,11 @@ final class ProfileViewModel: ObservableObject {
         fetchBMI()
     }
 
-    func cancelBodyEdit() {
+    public func cancelBodyEdit() {
         isEditingBody = false
     }
 
-    func fetchBMI() {
+    public func fetchBMI() {
         guard weightKg > 0, heightCm > 0 else { return }
 
         isLoadingBMI = true
@@ -135,7 +138,7 @@ final class ProfileViewModel: ObservableObject {
         }
     }
 
-    func loadInitialBMI() {
+    public func loadInitialBMI() {
         if hasBodyData, bmiResult == nil {
             fetchBMI()
         }

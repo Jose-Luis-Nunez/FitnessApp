@@ -16,9 +16,6 @@ while IFS= read -r file; do
   basename_no_ext=$(basename "$file" .swift)
   has_test=$(find . -path '*/Tests/*' -name "${basename_no_ext}Tests.swift" 2>/dev/null | head -1)
   if [ -z "$has_test" ]; then
-    has_test=$(find ./FitnessAppTests -name "${basename_no_ext}Tests.swift" 2>/dev/null | head -1)
-  fi
-  if [ -z "$has_test" ]; then
     missing_tests="${missing_tests}  - ${file}\n"
   fi
 done <<< "$new_vm_or_service"
@@ -30,7 +27,7 @@ if [ -n "$missing_tests" ]; then
     LAST_COVERAGE_HASH=$(cat "$COVERAGE_HINT_SHOWN" 2>/dev/null || echo "")
   fi
   if [ "$COVERAGE_HASH" != "$LAST_COVERAGE_HASH" ]; then
-    echo "[Tests Missing] New ViewModel/Service files without corresponding test files. Write unit tests for these: $(echo -e "$missing_tests" | tr '\n' ' '). Place tests in FitnessAppTests/ or the relevant Packages/*/Tests/ target."
+    echo "[Tests Missing] New ViewModel/Service files without corresponding test files. Write unit tests for these: $(echo -e "$missing_tests" | tr '\n' ' '). Place tests in the relevant Packages/*/Tests/ target."
     echo "$COVERAGE_HASH" > "$COVERAGE_HINT_SHOWN"
   fi
 fi

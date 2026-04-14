@@ -20,7 +20,7 @@ Map changed files to packages:
 | `Packages/FitnessTraining/` | FitnessTraining |
 | `Packages/FitnessAnalytics/` | FitnessAnalytics |
 | `Packages/FitnessStorage/` | FitnessStorage |
-| `FitnessApp/` (app sources) | FitnessApp (app scheme) |
+| `Packages/FitnessProfile/` | FitnessProfile |
 
 If changed files span multiple packages, test all affected packages.
 
@@ -38,16 +38,7 @@ xcodebuild test \
   -skipMacroValidation 2>&1 | tail -30
 ```
 
-For app-level changes:
-
-```bash
-cd ~/Documents/repo/FitnessApp && \
-DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer \
-xcodebuild test \
-  -scheme FitnessApp \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' \
-  -only-testing:FitnessAppTests 2>&1 | tail -30
-```
+All unit tests live in SPM packages. There is no app-level `FitnessAppTests` target. For app-level View changes (e.g. `ProfileView.swift`), test the corresponding package (e.g. `FitnessProfile`).
 
 Set `block_until_ms` to `300000` (5 min) — builds take 90-120 seconds.
 

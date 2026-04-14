@@ -119,6 +119,7 @@ public struct ExercisePickerInputFieldStyle: ViewModifier {
 public struct ExercisePickerInputField: View {
     public var prompt: String?
     @Binding public var text: String
+    @FocusState private var isFocused: Bool
 
     public init(prompt: String? = nil, text: Binding<String>) {
         self.prompt = prompt
@@ -137,12 +138,18 @@ public struct ExercisePickerInputField: View {
                         .accentColor(AppStyle.Color.white)
                         .foregroundColor(AppStyle.Color.white)
                         .textFieldStyle(PlainTextFieldStyle())
+                        .focused($isFocused)
+                        .submitLabel(.done)
+                        .onSubmit { isFocused = false }
                 }
             } else {
                 TextField("", text: $text)
                     .accentColor(AppStyle.Color.white)
                     .foregroundColor(AppStyle.Color.white)
                     .textFieldStyle(PlainTextFieldStyle())
+                    .focused($isFocused)
+                    .submitLabel(.done)
+                    .onSubmit { isFocused = false }
             }
 
             if !text.isEmpty {

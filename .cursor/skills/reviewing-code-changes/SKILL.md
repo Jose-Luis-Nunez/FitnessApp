@@ -379,7 +379,7 @@ When you edit Swift files, check if the change affects any of the items below. I
 | Changed coordinator or state object | **State & Navigation** section — update |
 | New/deleted test suite or test file under `Packages/*/Tests/` | **Feature Map** tree — update test inventory |
 | New/deleted shared test utility in `FitnessTestSupport` | **Feature Map** tree — update `FitnessTestSupport` entry |
-| New/deleted test file under `FitnessAppTests/` | **Feature Map** tree — update test inventory |
+| New/deleted test file under `Packages/*/Tests/` | **Feature Map** tree — update test inventory |
 
 ### How to Update
 

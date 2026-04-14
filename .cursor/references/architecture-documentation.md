@@ -19,11 +19,11 @@ Features/
   Workouts/           — Workout CRUD, workout list
 
 Packages/
+  FitnessProfile/     — SPM library for profile feature (`BMIService`, `ProfileViewModel`, `ProfileStore`). Depends on `FitnessUI`. Tests: `BMIServiceTests` (stubbed API), `ProfileViewModelTests`.
   FitnessTraining/    — SPM library mirroring training flow types from the app (`TrainingCoordinator`, active set VM/cache/timer, bottom action bar, session/picker components). Sources: `Packages/FitnessTraining/Sources/FitnessTraining/`.
   FitnessTestSupport/ — Shared test utilities: `makeExercise` factory, `MockAnalyticsStorage`, `StubAnalyticsStorage`, `waitUntil` with timeout assertion. Depends on `FitnessCore` + `Testing`.
 
 Tests/
-  FitnessAppTests/        — App-level unit tests (BMIServiceTests, ProfileViewModelTests)
   FitnessAppUITests/      — UI tests (XCUITest)
   Packages/*/Tests/       — Package-level unit tests per SPM module
 ```
@@ -62,7 +62,7 @@ All services are registered in a [hmlongco/Factory](https://github.com/hmlongco/
 | `TotalAnalyticsStorageService` | `Packages/FitnessStorage/.../TotalAnalyticsStorageService.swift` | `\.totalAnalyticsStorage` | singleton | Cross-exercise analytics loading, workout-scoped. Conforms to `TotalAnalyticsStoring` protocol (`FitnessCore`). |
 | `DataMigrationService` | `Packages/FitnessStorage/.../DataMigrationService.swift` | — | static | One-time migration from JSON/UserDefaults to SwiftData. Runs on first launch after update. |
 | `ModelContainer` | via `StorageContainer.swift` | `\.modelContainer` | singleton | Shared SwiftData container for all `@Model` types (`WorkoutModel`, `ExerciseModel`, `AnalyticsEntryModel`, `SetProgressModel`). |
-| `BMIService` | `Features/BottomBar/Profile/BMIService.swift` | — | per-use | Fetches BMI from external API (bmicalculatorapi.vercel.app), with local fallback |
+| `BMIService` | `Packages/FitnessProfile/Sources/FitnessProfile/BMIService.swift` | — | per-use | Fetches BMI from external API (bmicalculatorapi.vercel.app), parses category (Underweight/Normal/Overweight/Obesity), with BMI-value fallback for unknown categories |
 | `TimerService` | `Packages/FitnessTraining/.../TimerService.swift` | — | per-use | Rest timer during active sets |
 | `SessionTrainingCache` | `Packages/FitnessTraining/.../SessionTrainingCache.swift` | `\.sessionTrainingCache` | singleton | Per-category `ActiveSetViewModel` cache. Conforms to `SessionTrainingCaching` protocol. Use `viewModel(for:)` for typed access. |
 | `TrainingCoordinatorCache` | `Packages/FitnessTraining/.../TrainingCoordinatorCache.swift` | `\.trainingCoordinatorCache` | singleton | Per-category `TrainingCoordinator` cache. Conforms to `TrainingCoordinatorCaching` protocol. Ensures all views share the same coordinator per `MuscleCategoryGroup`. Use `coordinator(for:)` for category-scoped access, `findCoordinator(for:)` to locate the coordinator for a specific exercise. |

@@ -144,5 +144,5 @@ Pickers belong in `Features/Picker/`, not in a feature folder. Use existing pick
 - [ ] `AppCurrentScene` enum updated if new scene type
 - [ ] All interactive elements (buttons, text fields, tappable views) have `.accessibilityIdentifier("id_<context>_<element>")` — see naming patterns in [ui-test-conventions.md](../../references/ui-test-conventions.md)
 - [ ] Matching Selector constants added in `FitnessAppUITests/Selectors/<ScreenName>Selectors.swift`
-- [ ] Unit tests written for ViewModel and Service logic (at minimum: initial state, main action, edge case). Place in `FitnessAppTests/` or the relevant `Packages/*/Tests/` target. New services must have a protocol so they can be mocked in tests.
+- [ ] Unit tests written for ViewModel and Service logic (at minimum: initial state, main action, edge case). Place in the relevant `Packages/*/Tests/` target. New services must have a protocol so they can be mocked in tests.
 - [ ] `architecture-documentation.md` updated (Feature Map, Navigation, new shared components/services)
