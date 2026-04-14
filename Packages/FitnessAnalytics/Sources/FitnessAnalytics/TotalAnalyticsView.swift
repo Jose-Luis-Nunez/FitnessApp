@@ -56,6 +56,7 @@ public struct TotalAnalyticsView: View {
         .background(AppStyle.Color.backgroundColor)
         .standardToolbar(title: "Total Analytics")
         .onAppear {
+            viewModel.refreshData()
             datesWithData = viewModel.allDatesWithData()
         }
     }

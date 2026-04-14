@@ -33,18 +33,29 @@ public final class ScheduleViewModel {
 
     private let totalAnalyticsVM = TotalAnalyticsViewModel()
 
+    @ObservationIgnored private var cachedStreakData: StreakData?
+    @ObservationIgnored private var cachedTrainingDays: [Date]?
+    @ObservationIgnored private var cachedWeekSummaries: [Date: WeekSummaryData] = [:]
+
     nonisolated public init() {
     }
 
     public func reloadData() {
-        trainingDaySet = Set(totalAnalyticsVM.getTrainingDays())
+        totalAnalyticsVM.refreshData()
+        cachedTrainingDays = nil
+        cachedStreakData = nil
+        cachedWeekSummaries = [:]
+        trainingDaySet = Set(trainingDays())
         datesWithData = totalAnalyticsVM.allDatesWithData()
     }
 
     // MARK: - Training Days
 
     public func trainingDays() -> [Date] {
-        totalAnalyticsVM.getTrainingDays()
+        if let cached = cachedTrainingDays { return cached }
+        let days = totalAnalyticsVM.getTrainingDays()
+        cachedTrainingDays = days
+        return days
     }
 
     public func allDatesWithData() -> Set<Date> {
@@ -54,11 +65,14 @@ public final class ScheduleViewModel {
     // MARK: - Streak Calculation
 
     public func streakData() -> StreakData {
+        if let cached = cachedStreakData { return cached }
         let days = trainingDays()
         let current = currentStreak(from: days)
         let longest = longestStreak(from: days)
         let rhythm = totalAnalyticsVM.getTrainingRhythm()
-        return StreakData(current: current, longest: longest, rhythmLabel: rhythm)
+        let result = StreakData(current: current, longest: longest, rhythmLabel: rhythm)
+        cachedStreakData = result
+        return result
     }
 
     private func currentStreak(from sortedDays: [Date]) -> Int {
@@ -105,6 +119,11 @@ public final class ScheduleViewModel {
     public func weekSummary(for referenceDate: Date) -> WeekSummaryData {
         var calendar = Calendar(identifier: .iso8601)
         calendar.firstWeekday = 2
+
+        let weekStart = calendar.dateInterval(of: .weekOfYear, for: referenceDate)?.start
+            ?? calendar.startOfDay(for: referenceDate)
+        if let cached = cachedWeekSummaries[weekStart] { return cached }
+
         let weekOfYear = calendar.component(.weekOfYear, from: referenceDate)
 
         guard let weekInterval = calendar.dateInterval(of: .weekOfYear, for: referenceDate) else {
@@ -137,12 +156,14 @@ public final class ScheduleViewModel {
             if isTrained { trainingCount += 1 }
         }
 
-        return WeekSummaryData(
+        let result = WeekSummaryData(
             calendarWeek: weekOfYear,
             days: days,
             totalExercises: totalExercises,
             trainingDayCount: trainingCount
         )
+        cachedWeekSummaries[weekStart] = result
+        return result
     }
 
     private func germanWeekdaySymbols() -> [String] {

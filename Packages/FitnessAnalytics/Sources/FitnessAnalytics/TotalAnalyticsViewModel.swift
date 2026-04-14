@@ -68,17 +68,34 @@ public final class TotalAnalyticsViewModel {
     @ObservationIgnored @Injected(\.workoutStorage) private var workoutStorage
     @ObservationIgnored @Injected(\.exerciseStorage) private var exerciseStorage
 
+    // MARK: - Cached Data
+
+    @ObservationIgnored private var cachedAllEntries: [AnalyticsEntry]?
+    @ObservationIgnored private var cachedCategoryProgress: [CategoryProgressData]?
+
     nonisolated public init() {
+    }
+
+    /// Clears all cached data, forcing the next access to re-fetch from storage.
+    /// Call from `onAppear` or when the underlying data changes.
+    public func refreshData() {
+        cachedAllEntries = nil
+        cachedCategoryProgress = nil
     }
 
     // MARK: - Data Loading
 
     public func loadAllAnalytics() -> [AnalyticsEntry] {
-        return storageService.loadAllAnalytics()
+        if let cached = cachedAllEntries { return cached }
+        let entries = storageService.loadAllAnalytics()
+        cachedAllEntries = entries
+        return entries
     }
 
     public func loadAnalytics(for date: Date) -> [AnalyticsEntry] {
-        return storageService.loadAllAnalytics(for: date)
+        let allEntries = loadAllAnalytics()
+        let calendar = Calendar.current
+        return allEntries.filter { calendar.isDate($0.date, inSameDayAs: date) }
     }
 
     public func getAllExercisesWithAnalytics() -> [Exercise] {
@@ -276,10 +293,12 @@ public final class TotalAnalyticsViewModel {
     }
 
     public func getCategoryProgressData() -> [CategoryProgressData] {
+        if let cached = cachedCategoryProgress { return cached }
+
         let exercises = getAllExercisesWithAnalytics()
         let categories: [MuscleCategoryGroup] = [.arms, .abs, .back, .legs, .chest]
 
-        return categories.map { category in
+        let result = categories.map { category in
             let categoryExercises = exercises.filter { $0.category == category }
             let exerciseProgressData = categoryExercises.compactMap { exercise -> ExerciseProgressData? in
                 let entries = storageService.loadAnalytics(for: exercise.id)
@@ -308,6 +327,9 @@ public final class TotalAnalyticsViewModel {
                 exercises: exerciseProgressData
             )
         }
+
+        cachedCategoryProgress = result
+        return result
     }
 
     // MARK: - Workout Completion Analysis
