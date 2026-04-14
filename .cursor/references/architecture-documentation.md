@@ -171,11 +171,11 @@ All tokens in `Shared/Design/AppStyle.swift`. When no token exists for a value, 
 
 ### Layout
 
-`cardHorizontalPadding` (16), `chipHeight` (32), `activeCardContentHeight` (80), `activeCardMaxWidth` (400), `categoryIconSize` (50), `checkmarkSize` (36), `playButtonSize` (36), `playIconSize` (16), `completedBarWidth` (8), `setRowBadgeSize` (26), `analyticsImageSize` (60), `seatIconSize` (22), `analyticsEntryIconSize` (24), `separatorHeight` (28), `doneButtonWidth` (80), `doneButtonHeight` (28), `profileCardMinHeight` (100), `profileAvatarSize` (80)
+`cardHorizontalPadding` (16), `chipHeight` (32), `activeCardContentHeight` (80), `activeCardMaxWidth` (400), `categoryIconSize` (50), `checkmarkSize` (36), `playButtonSize` (36), `playIconSize` (16), `completedBarWidth` (8), `setRowBadgeSize` (26), `analyticsImageSize` (60), `seatIconSize` (22), `analyticsEntryIconSize` (24), `separatorHeight` (28), `doneButtonWidth` (80), `doneButtonHeight` (28), `profileCardMinHeight` (100), `profileAvatarSize` (80), `numberPadKeySize` (60), `numberPadSpacing` (12), `scrollWheelItemHeight` (60), `scrollWheelVisibleItems` (5), `scrollWheelSnapTolerance` (18)
 
 ### CornerRadius
 
-`card` (16), `bottomBarButton` (12), `editPickerViewButton` (12), `defaultButton` (12), `sheet` (22), `tile` (10), `timerCard` (12)
+`card` (16), `bottomBarButton` (12), `editPickerViewButton` (12), `defaultButton` (12), `sheet` (22), `tile` (10), `timerCard` (12), `numberPadKey` (12), `pill` (20)
 
 ### Font
 
@@ -235,6 +235,10 @@ All tokens in `Shared/Design/AppStyle.swift`. When no token exists for a value, 
 | `profileCardUnit` | 14 | semibold |
 | `profileBMICategory` | 14 | semibold |
 | `profileInputLabel` | 14 | semibold |
+| `sheetTitle` | 22 | bold |
+| `sheetSectionLabel` | 17 | semibold |
+| `sheetCaption` | 12 | regular |
+| `numberPadSelectedValue` | 48 | bold |
 
 ### Color
 
@@ -242,7 +246,7 @@ All tokens in `Shared/Design/AppStyle.swift`. When no token exists for a value, 
 
 ### Opacity
 
-`overlayBackdrop` (0.55), `subtleBackground` (0.06), `subtleStroke` (0.15), `grabberHandle` (0.35)
+`overlayBackdrop` (0.55), `subtleBackground` (0.06), `subtleStroke` (0.15), `grabberHandle` (0.35), `disabledElement` (0.3), `fadedOverlay` (0.4), `numberPadInactive` (0.5), `numberPadFade` (0.2)
 
 ### Shadow
 
@@ -265,6 +269,10 @@ Centralized responsive layout tokens replacing scattered `UIScreen.main.bounds.w
 | `setRowRepsMinWidth` | 110 | 120 | 120 | 120 |
 | `trainingSessionSpacing` | 8 | 10 | 12 | 16 |
 | `timerFontSize` | 15 | 16 | 18 | 20 |
+
+### Animation
+
+`keyboardSpring` (response 0.32, damping 0.88), `snapSpring` (response 0.3, damping 0.8)
 
 ### Blur
 

@@ -34,6 +34,35 @@ Activate this skill after any of these events:
 3. **Suggest fixes** using the correct AppStyle token or shared component.
 4. **Fix, don't just mention.** When reviewing your own code (e.g. user asks "ist die Lösung gut?"), do not merely describe known weaknesses — fix them immediately. Mentioning a problem without resolving it wastes a round-trip.
 
+## Pre-Flight Checklist
+
+Before reporting the review as complete, verify every item.
+Mark each as PASS / FAIL(n) / N/A where n = number of findings.
+
+### Validation Categories
+- [ ] 1. Dead Code — unused imports, functions, properties grepped
+- [ ] 2. Reuse Opportunities — compared against shared components table
+- [ ] 3. AppStyle Consistency — no hardcoded Color/Font/Padding/CornerRadius/Opacity
+- [ ] 4. Utility Usage — WeightFormatter, AnalyticsDateHelper used where applicable
+- [ ] 5. Layout Robustness — no magic offsets, tap targets >= 8pt, alignment checked
+- [ ] 6. MVVM Violations — no business logic in View body
+- [ ] 7. Navigation — NavigationDestination cases match navigable views
+- [ ] 8. Architecture Principles — unidirectional flow, single source of truth, explicit errors, thread safety
+- [ ] 9. Anti-Patterns — every item in the anti-pattern table checked
+- [ ] 10. Referential Integrity — all consumers of changed APIs updated
+- [ ] 11. Cleanup Sweep — no print(), TODO/FIXME, commented-out code
+- [ ] 12. State Propagation — @Published chain traced, tests run
+- [ ] 13. Architecture Quality — 13a–13g sub-checks (skip if pure UI change)
+
+### Process Steps
+- [ ] P1. Removed/renamed symbols grepped project-wide (zero hits = dead code)
+- [ ] P2. BUG-severity findings fixed immediately (not just reported)
+- [ ] P3. Own-code findings fixed immediately ("fix, don't just mention")
+- [ ] P4. architecture-documentation.md updated if trigger map matched
+- [ ] P5. This SKILL.md updated if new shared component/utility/token category added
+- [ ] P6. Tests run for affected packages
+- [ ] P7. Stamp written to code-changes.stamp.md
+
 ## Validation Checklist
 
 Work through each category. For each failing item, cite the concrete file and line.

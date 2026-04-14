@@ -161,6 +161,13 @@ public final class MuscleCategoryViewModel {
         exercises = storageService.loadForWorkout(workoutId: currentWorkout.id, category: group)
     }
 
+    public func deleteExercise(_ exercise: Exercise) {
+        if let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
+            exercises.remove(at: index)
+            saveExercises()
+        }
+    }
+
     public func resetExercise(_ exercise: Exercise) {
         var updatedExercise = exercise
         updatedExercise.isCompleted = false

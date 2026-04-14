@@ -16,6 +16,9 @@ public struct ExerciseNamePickerView: View {
 
     @State private var isContentVisible: Bool = false
     @State private var validIconOptions: [String] = []
+    #if canImport(UIKit)
+    @State private var keyboard = KeyboardObserver()
+    #endif
 
     private let textColor: Color = AppStyle.Color.white
 
@@ -53,19 +56,15 @@ public struct ExerciseNamePickerView: View {
 
                 VStack(spacing: 8) {
                     Text(L10n.cardEditNameTitle)
-                        .font(.title2)
+                        .font(AppStyle.Font.sheetTitle)
                         .foregroundColor(textColor)
-                        .fontWeight(.bold)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity, alignment: .center)
 
                     HStack {
                         if let exercise = editingExercise {
                             Button(action: {
-                                if let index = viewModel.exercises.firstIndex(where: { $0.id == exercise.id }) {
-                                    viewModel.exercises.remove(at: index)
-                                    viewModel.saveExercises()
-                                }
+                                viewModel.deleteExercise(exercise)
                                 onCancel()
                                 isPresented = false
                             }) {
@@ -78,11 +77,11 @@ public struct ExerciseNamePickerView: View {
                     }
                     .padding(.horizontal, AppStyle.Padding.horizontal)
                 }
-                .padding(.bottom, 18)
+                .padding(.bottom, AppStyle.Padding.horizontal)
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Category")
-                        .font(.headline)
+                        .font(AppStyle.Font.sheetSectionLabel)
                         .foregroundColor(textColor)
 
                     Text(formViewModel.selectedCategory.displayName)
@@ -92,11 +91,11 @@ public struct ExerciseNamePickerView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, AppStyle.Padding.horizontal)
-                .padding(.bottom, 16)
+                .padding(.bottom, AppStyle.Padding.card)
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Name of Exercise")
-                        .font(.headline)
+                        .font(AppStyle.Font.sheetSectionLabel)
                         .foregroundColor(textColor)
 
                     ExercisePickerInputField(text: $formViewModel.name)
@@ -104,29 +103,36 @@ public struct ExerciseNamePickerView: View {
                 .padding(.horizontal, AppStyle.Padding.horizontal)
                 .padding(.bottom, 20)
 
-                if validIconOptions.count > 1 {
-                    Divider().padding(.top, 0)
+                #if canImport(UIKit)
+                let hideChrome = keyboard.isVisible
+                #else
+                let hideChrome = false
+                #endif
+                if !hideChrome {
+                    if validIconOptions.count > 1 {
+                        Divider().padding(.top, 0)
 
-                    IconPickerView(
-                        selectedIcon: $formViewModel.selectedIconName,
-                        icons: validIconOptions
-                    )
-                    .padding(.horizontal, AppStyle.Padding.horizontal)
-                    .padding(.top, 4)
-                    .padding(.bottom, 8)
-                }
-
-                ExercisePickerActionButtons(
-                    saveDisabled: formViewModel.name.isEmpty,
-                    onCancel: {
-                        onCancel()
-                        isPresented = false
-                    },
-                    onSave: {
-                        onSave()
-                        isPresented = false
+                        IconPickerView(
+                            selectedIcon: $formViewModel.selectedIconName,
+                            icons: validIconOptions
+                        )
+                        .padding(.horizontal, AppStyle.Padding.horizontal)
+                        .padding(.top, 4)
+                        .padding(.bottom, 8)
                     }
-                )
+
+                    ExercisePickerActionButtons(
+                        saveDisabled: formViewModel.name.isEmpty,
+                        onCancel: {
+                            onCancel()
+                            isPresented = false
+                        },
+                        onSave: {
+                            onSave()
+                            isPresented = false
+                        }
+                    )
+                }
             }
             .exercisePickerSheet(isContentVisible: isContentVisible)
             .gesture(
@@ -150,7 +156,7 @@ public struct ExerciseNamePickerView: View {
             }
             withAnimation(.easeOut(duration: 0.18)) { isContentVisible = true }
         }
-        .onChange(of: isPresented) { newValue in
+        .onChange(of: isPresented) { _, newValue in
             if !newValue { isContentVisible = false }
         }
     }

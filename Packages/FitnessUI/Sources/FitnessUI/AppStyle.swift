@@ -35,6 +35,11 @@ public enum AppStyle {
         public static let profileBMIBarHeight: CGFloat = 8
         public static let profileBMIThumbSize: CGFloat = 14
         public static let profileBottomSpacer: CGFloat = 100
+        public static let numberPadKeySize: CGFloat = 60
+        public static let numberPadSpacing: CGFloat = 12
+        public static let scrollWheelItemHeight: CGFloat = 60
+        public static let scrollWheelVisibleItems: Int = 5
+        public static let scrollWheelSnapTolerance: CGFloat = 18
     }
 
     public enum CornerRadius {
@@ -45,6 +50,8 @@ public enum AppStyle {
         public static let sheet: CGFloat = 22
         public static let tile: CGFloat = 10
         public static let timerCard: CGFloat = 12
+        public static let numberPadKey: CGFloat = 12
+        public static let pill: CGFloat = 20
     }
 
     public enum Font {
@@ -112,6 +119,11 @@ public enum AppStyle {
         public static let profileAvatarIcon = SwiftUI.Font.system(size: 36, weight: .medium)
         public static let profileEditIcon = SwiftUI.Font.system(size: 24, weight: .regular)
         public static let profileSmallIcon = SwiftUI.Font.system(size: 12, weight: .semibold)
+
+        public static let sheetTitle = SwiftUI.Font.system(size: 22, weight: .bold)
+        public static let sheetSectionLabel = SwiftUI.Font.system(size: 17, weight: .semibold)
+        public static let sheetCaption = SwiftUI.Font.system(size: 12, weight: .regular)
+        public static let numberPadSelectedValue = SwiftUI.Font.system(size: 48, weight: .bold)
     }
 
     public enum Color {
@@ -156,6 +168,10 @@ public enum AppStyle {
         public static let subtleBackground: Double = 0.06
         public static let subtleStroke: Double = 0.15
         public static let grabberHandle: Double = 0.35
+        public static let disabledElement: Double = 0.3
+        public static let fadedOverlay: Double = 0.4
+        public static let numberPadInactive: Double = 0.5
+        public static let numberPadFade: Double = 0.2
     }
 
     public enum Shadow {
@@ -255,6 +271,11 @@ public enum AppStyle {
             case .extraLarge: return 20
             }
         }
+    }
+
+    public enum Animation {
+        public static let keyboardSpring = SwiftUI.Animation.spring(response: 0.32, dampingFraction: 0.88)
+        public static let snapSpring = SwiftUI.Animation.spring(response: 0.3, dampingFraction: 0.8)
     }
 
     public enum Blur {
