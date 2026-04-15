@@ -10,9 +10,20 @@ public struct ExerciseSeatPickerView: View {
 
     @State private var seatPart1: String = ""
     @State private var seatPart2: String = ""
-    @State private var isContentVisible: Bool = false
+
+    #if canImport(UIKit)
+    @State private var keyboard = KeyboardObserver()
+    #endif
 
     private let textColor: Color = AppStyle.Color.white
+
+    private var hideChrome: Bool {
+        #if canImport(UIKit)
+        keyboard.isVisible
+        #else
+        false
+        #endif
+    }
 
     public init(
         formViewModel: ExerciseFormViewModel,
@@ -27,32 +38,35 @@ public struct ExerciseSeatPickerView: View {
     }
 
     public var body: some View {
-        ZStack {
-            Color.black.opacity(AppStyle.Opacity.overlayBackdrop)
-                .ignoresSafeArea()
-                .onTapGesture {
-                    onCancel()
-                    isPresented = false
+        OverlaySheetContainer(
+            isPresented: $isPresented,
+            onCancel: onCancel,
+            actions: {
+                if !hideChrome {
+                    ExercisePickerActionButtons(
+                        saveDisabled: false,
+                        onCancel: {
+                            onCancel()
+                            isPresented = false
+                        },
+                        onSave: {
+                            onSave()
+                            isPresented = false
+                        }
+                    )
                 }
-
-            VStack(spacing: 0) {
-                Capsule()
-                    .fill(Color.white.opacity(AppStyle.Opacity.grabberHandle))
-                    .frame(width: 44, height: 5)
-                    .padding(.top, 8)
-                    .padding(.bottom, 10)
-
+            },
+            content: {
                 Text(L10n.cardEditSeatTitle)
-                    .font(.title2)
+                    .font(AppStyle.Font.sheetTitle)
                     .foregroundColor(textColor)
-                    .fontWeight(.bold)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.bottom, 18)
+                    .padding(.bottom, AppStyle.Padding.sectionSpacing)
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Seat Settings")
-                        .font(.headline)
+                        .font(AppStyle.Font.sheetSectionLabel)
                         .foregroundColor(textColor)
 
                     HStack(spacing: 12) {
@@ -73,39 +87,10 @@ public struct ExerciseSeatPickerView: View {
                         ))
                     }
                 }
-                .padding(.horizontal, AppStyle.Padding.horizontal)
                 .padding(.bottom, 20)
-
-                ExercisePickerActionButtons(
-                    saveDisabled: false,
-                    onCancel: {
-                        onCancel()
-                        isPresented = false
-                    },
-                    onSave: {
-                        onSave()
-                        isPresented = false
-                    }
-                )
             }
-            .exercisePickerSheet(isContentVisible: isContentVisible)
-            .gesture(
-                DragGesture().onEnded { value in
-                    if value.translation.height > 80 {
-                        onCancel()
-                        isPresented = false
-                    }
-                }
-            )
-        }
-        .frame(maxWidth: .infinity)
-        .onAppear {
-            loadSeatParts()
-            withAnimation(.easeOut(duration: 0.18)) { isContentVisible = true }
-        }
-        .onChange(of: isPresented) { newValue in
-            if !newValue { isContentVisible = false }
-        }
+        )
+        .onAppear { loadSeatParts() }
     }
 
     private func updateSeat() {

@@ -20,7 +20,6 @@ public struct ExercisePickerView: View {
 
     @State private var seatPart1: String = ""
     @State private var seatPart2: String = ""
-    @State private var isContentVisible: Bool = false
     @State private var showDecimal: Bool = false
     @State private var noSeats: Bool = false
     @State private var noWeight: Bool = false
@@ -28,6 +27,14 @@ public struct ExercisePickerView: View {
     #if canImport(UIKit)
     @State private var keyboard = KeyboardObserver()
     #endif
+
+    private var hideChrome: Bool {
+        #if canImport(UIKit)
+        keyboard.isVisible
+        #else
+        false
+        #endif
+    }
 
     public init(
         formViewModel: ExerciseFormViewModel,
@@ -60,21 +67,25 @@ public struct ExercisePickerView: View {
     private let textColor: Color = AppStyle.Color.white
 
     public var body: some View {
-        ZStack {
-            Color.black.opacity(AppStyle.Opacity.overlayBackdrop)
-                .ignoresSafeArea()
-                .onTapGesture {
-                    onCancel()
-                    isPresented = false
+        OverlaySheetContainer(
+            isPresented: $isPresented,
+            onCancel: onCancel,
+            actions: {
+                if !hideChrome {
+                    ExercisePickerActionButtons(
+                        saveDisabled: !formViewModel.isFormValid,
+                        onCancel: {
+                            onCancel()
+                            isPresented = false
+                        },
+                        onSave: {
+                            onSave()
+                            isPresented = false
+                        }
+                    )
                 }
-
-            VStack(spacing: 0) {
-                Capsule()
-                    .fill(Color.white.opacity(AppStyle.Opacity.grabberHandle))
-                    .frame(width: 44, height: 5)
-                    .padding(.top, 8)
-                    .padding(.bottom, 10)
-
+            },
+            content: {
                 Text(title)
                     .font(AppStyle.Font.sheetTitle)
                     .foregroundColor(textColor)
@@ -105,9 +116,7 @@ public struct ExercisePickerView: View {
                             .foregroundColor(AppStyle.Color.green)
                             .padding(.leading, 2)
                     }
-
                 }
-                .padding(.horizontal, AppStyle.Padding.horizontal)
                 .padding(.bottom, AppStyle.Padding.card)
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -117,7 +126,6 @@ public struct ExercisePickerView: View {
 
                     ExercisePickerInputField(text: $formViewModel.name)
                 }
-                .padding(.horizontal, AppStyle.Padding.horizontal)
                 .padding(.bottom, 20)
 
                 HStack {
@@ -131,7 +139,6 @@ public struct ExercisePickerView: View {
                             .toggleStyle(CapsuleToggleStyle(onColor: AppStyle.Color.greenGlow, offColor: AppStyle.Color.gray.opacity(AppStyle.Opacity.fadedOverlay)))
                     }
                 }
-                .padding(.horizontal, AppStyle.Padding.horizontal)
                 .padding(.bottom, AppStyle.Padding.titleTop)
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -157,16 +164,10 @@ public struct ExercisePickerView: View {
                         ))
                     }
                 }
-                .padding(.horizontal, AppStyle.Padding.horizontal)
                 .padding(.bottom, 20)
                 .opacity(noSeats ? AppStyle.Opacity.disabledElement : 1)
                 .disabled(noSeats)
 
-                #if canImport(UIKit)
-                let hideChrome = keyboard.isVisible
-                #else
-                let hideChrome = false
-                #endif
                 if !hideChrome {
                     if validIconOptions.count > 1 {
                         Divider().padding(.top, 0)
@@ -175,7 +176,6 @@ public struct ExercisePickerView: View {
                             selectedIcon: $formViewModel.selectedIconName,
                             icons: validIconOptions
                         )
-                        .padding(.horizontal, AppStyle.Padding.horizontal)
                         .padding(.top, 4)
                         .padding(.bottom, 8)
                     }
@@ -203,7 +203,6 @@ public struct ExercisePickerView: View {
                                 .toggleStyle(CapsuleToggleStyle(onColor: AppStyle.Color.greenGlow, offColor: AppStyle.Color.gray.opacity(AppStyle.Opacity.fadedOverlay)))
                         }
                     }
-                    .padding(.horizontal, AppStyle.Padding.horizontal)
                     .padding(.bottom, 8)
 
                     ExerciseWheelPickerRow(
@@ -218,32 +217,9 @@ public struct ExercisePickerView: View {
                         weightOptions: filteredWeightOptions,
                         showWeight: !noWeight
                     )
-
-                    ExercisePickerActionButtons(
-                        saveDisabled: !formViewModel.isFormValid,
-                        onCancel: {
-                            onCancel()
-                            isPresented = false
-                        },
-                        onSave: {
-                            onSave()
-                            isPresented = false
-                        }
-                    )
                 }
             }
-            .exercisePickerSheet(isContentVisible: isContentVisible)
-            .frame(minHeight: 520, alignment: .bottom)
-            .gesture(
-                DragGesture().onEnded { value in
-                    if value.translation.height > 80 {
-                        onCancel()
-                        isPresented = false
-                    }
-                }
-            )
-        }
-        .frame(maxWidth: .infinity)
+        )
         .onAppear {
             loadSeatParts()
             validIconOptions = formViewModel.selectedCategory.availableIcons.filter { name in
@@ -267,10 +243,6 @@ public struct ExercisePickerView: View {
                     formViewModel.weight = 20
                 }
             }
-            withAnimation(.easeOut(duration: 0.18)) { isContentVisible = true }
-        }
-        .onChange(of: isPresented) { _, newValue in
-            if !newValue { isContentVisible = false }
         }
         .onChange(of: noSeats) { _, isNoSeats in
             formViewModel.noSeats = isNoSeats

@@ -6,10 +6,18 @@ public struct AddAnalyticsEntryView: View {
     public let date: Date
     public let exercise: Exercise
     public let existingEntry: AnalyticsEntry?
+    @Binding public var isPresented: Bool
     public var onSave: (AnalyticsEntry) -> Void
     public var onCancel: () -> Void
 
     @State private var sets: [SetProgressInput] = []
+    @State private var editingSetIndex: Int?
+    @State private var editingField: EditingField?
+    @State private var showDecimal: Bool = false
+
+    private enum EditingField {
+        case reps, weight
+    }
 
     public struct SetProgressInput: Identifiable {
         public let id: UUID
@@ -23,24 +31,27 @@ public struct AddAnalyticsEntryView: View {
         }
     }
 
-    @State private var showNumberPad = false
-    @State private var editingField: EditingField?
-    @State private var editingSetIndex: Int?
+    private let repsRange = 1...99
+    private let textColor: Color = AppStyle.Color.white
+    private let pickerColor: Color = AppStyle.Color.greenLight
 
-    private enum EditingField {
-        case weight, reps
+    private var weightOptions: [String] {
+        let all = WeightOptionsGenerator.exerciseWeightOptions
+        return showDecimal ? all : all.filter { !$0.contains(",") && !$0.contains(".") }
     }
 
     public init(
         date: Date,
         exercise: Exercise,
         existingEntry: AnalyticsEntry? = nil,
+        isPresented: Binding<Bool>,
         onSave: @escaping (AnalyticsEntry) -> Void,
         onCancel: @escaping () -> Void
     ) {
         self.date = date
         self.exercise = exercise
         self.existingEntry = existingEntry
+        _isPresented = isPresented
         self.onSave = onSave
         self.onCancel = onCancel
 
@@ -55,127 +66,175 @@ public struct AddAnalyticsEntryView: View {
         }
     }
 
-    public var body: some View {
-        VStack(spacing: 0) {
-            dataEntryCard
-
-            if showNumberPad {
-                CustomNumberPadView(
-                    currentValue: getCurrentValue(),
-                    isWeight: editingField == .weight,
-                    valueType: editingField == .weight ? .decimal : .integer,
-                    onValueChange: { newValue in
-                        updateCurrentValue(newValue)
-                    },
-                    onDismiss: {
-                        withAnimation(AppStyle.Animation.snapSpring) {
-                            showNumberPad = false
-                        }
-                        editingField = nil
-                        editingSetIndex = nil
-                    }
-                )
-                .id("\(editingSetIndex ?? -1)-\(String(describing: editingField))")
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-        }
-        .frame(maxWidth: 370)
+    private var isSaveDisabled: Bool {
+        exercise.hasWeight
+            ? sets.contains(where: { $0.weight == 0 || $0.reps == 0 })
+            : sets.contains(where: { $0.reps == 0 })
     }
 
-    private var dataEntryCard: some View {
+    private var isEditing: Bool { editingSetIndex != nil && editingField != nil }
+
+    private func dismissPicker() {
+        editingSetIndex = nil
+        editingField = nil
+    }
+
+    private func dismiss() {
+        onCancel()
+        isPresented = false
+    }
+
+    private func saveAndDismiss() {
+        let entry = AnalyticsEntry(
+            exerciseId: exercise.id,
+            date: date,
+            setProgress: sets.map { input in
+                SetProgress(
+                    status: .completedDone,
+                    currentReps: input.reps,
+                    weight: input.weight
+                )
+            }
+        )
+        onSave(entry)
+        isPresented = false
+    }
+
+    // MARK: - Body
+
+    public var body: some View {
+        OverlaySheetContainer(
+            isPresented: $isPresented,
+            allowBackdropDismiss: !isEditing,
+            onCancel: {
+                if isEditing {
+                    dismissPicker()
+                } else {
+                    onCancel()
+                }
+            },
+            actions: {
+                if isEditing {
+                    ExercisePickerActionButtons(
+                        saveLabel: "Select",
+                        saveDisabled: false,
+                        onCancel: { dismissPicker() },
+                        onSave: { dismissPicker() }
+                    )
+                } else {
+                    ExercisePickerActionButtons(
+                        saveDisabled: isSaveDisabled,
+                        onCancel: { dismiss() },
+                        onSave: { saveAndDismiss() }
+                    )
+                }
+            },
+            content: {
+                if let idx = editingSetIndex, let field = editingField {
+                    wheelPickerContent(index: idx, field: field)
+                } else {
+                    dataEntryContent
+                }
+            }
+        )
+        .onAppear {
+            if sets.contains(where: { $0.weight != floor($0.weight) }) {
+                showDecimal = true
+            }
+        }
+    }
+
+    // MARK: - Fields View
+
+    private var dataEntryContent: some View {
         VStack(spacing: 16) {
-            Text(existingEntry != nil ? "Edit your data for \(DateFormatter.germanMedium.string(from: date))" : "Add your data for \(DateFormatter.germanMedium.string(from: date))")
-                .font(AppStyle.Font.sectionHeadline)
-                .foregroundColor(AppStyle.Color.white)
-                .padding(.top, AppStyle.Padding.card)
+            Text(existingEntry != nil
+                 ? "Edit data for \(DateFormatter.germanMedium.string(from: date))"
+                 : "Data for \(DateFormatter.germanMedium.string(from: date))")
+                .font(AppStyle.Font.sheetTitle)
+                .foregroundColor(textColor)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.bottom, AppStyle.Padding.titleTop)
 
             HStack(spacing: AppStyle.Layout.numberPadSpacing) {
                 if exercise.hasWeight {
                     Text("Weight")
-                        .font(AppStyle.Font.sheetCaption)
-                        .foregroundColor(AppStyle.Color.white)
-                        .frame(width: 60, alignment: .leading)
+                        .font(AppStyle.Font.sheetSectionLabel)
+                        .foregroundColor(textColor)
+                        .frame(maxWidth: .infinity, alignment: .center)
                 }
 
-                Text("Reps.")
-                    .font(AppStyle.Font.sheetCaption)
-                    .foregroundColor(AppStyle.Color.white)
-                    .frame(width: 60, alignment: .leading)
+                Text("Reps")
+                    .font(AppStyle.Font.sheetSectionLabel)
+                    .foregroundColor(textColor)
+                    .frame(maxWidth: .infinity, alignment: .center)
 
-                Spacer()
+                if sets.count > 1 {
+                    Color.clear.frame(width: 28)
+                }
             }
             .padding(.bottom, 4)
 
-            ForEach(Array(sets.enumerated()), id: \.element.id) { index, set in
-                HStack(spacing: AppStyle.Layout.numberPadSpacing) {
-                    if exercise.hasWeight {
-                        let isEditingWeight = showNumberPad && editingSetIndex == index && editingField == .weight
-                        Button(action: {
-                            editingSetIndex = index
-                            editingField = .weight
-                            withAnimation(AppStyle.Animation.snapSpring) {
-                                showNumberPad = true
-                            }
-                        }) {
-                            let weightValue = index < sets.count ? sets[index].weight : 0.0
-                            Text(WeightFormatter.format(weightValue))
-                                .font(AppStyle.Font.tileValue)
-                                .foregroundColor(AppStyle.Color.white)
-                                .frame(width: 60, height: 38)
-                                .background(isEditingWeight ? AppStyle.Color.green.opacity(AppStyle.Opacity.subtleStroke) : AppStyle.Color.white.opacity(AppStyle.Opacity.subtleBackground))
-                                .cornerRadius(AppStyle.CornerRadius.tile)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile)
-                                        .stroke(isEditingWeight ? AppStyle.Color.green : AppStyle.Color.white.opacity(AppStyle.Opacity.subtleStroke), lineWidth: isEditingWeight ? 2 : 1)
-                                )
-                        }
-                    }
-
-                    let isEditingReps = showNumberPad && editingSetIndex == index && editingField == .reps
-                    Button(action: {
-                        editingSetIndex = index
-                        editingField = .reps
-                        withAnimation(AppStyle.Animation.snapSpring) {
-                            showNumberPad = true
-                        }
-                    }) {
-                        Text("\(index < sets.count ? sets[index].reps : 0)")
-                            .font(AppStyle.Font.tileValue)
-                            .foregroundColor(AppStyle.Color.white)
-                            .frame(width: 60, height: 38)
-                            .background(isEditingReps ? AppStyle.Color.green.opacity(AppStyle.Opacity.subtleStroke) : AppStyle.Color.white.opacity(AppStyle.Opacity.subtleBackground))
-                            .cornerRadius(AppStyle.CornerRadius.tile)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile)
-                                    .stroke(isEditingReps ? AppStyle.Color.green : AppStyle.Color.white.opacity(AppStyle.Opacity.subtleStroke), lineWidth: isEditingReps ? 2 : 1)
-                            )
-                    }
-
-                    Spacer()
-
-                    if sets.count > 1 {
-                        Button(action: {
-                            if index < sets.count {
-                                withAnimation {
-                                    sets.remove(at: index)
+            ScrollView {
+                VStack(spacing: 0) {
+                    ForEach(Array(sets.enumerated()), id: \.element.id) { index, set in
+                        HStack(spacing: AppStyle.Layout.numberPadSpacing) {
+                            if exercise.hasWeight {
+                                Button(action: {
+                                    editingSetIndex = index
+                                    editingField = .weight
+                                }) {
+                                    Text(WeightFormatter.format(set.weight))
+                                        .font(AppStyle.Font.sectionTitle)
+                                        .foregroundColor(textColor)
+                                        .frame(maxWidth: .infinity, minHeight: 48)
+                                        .background(AppStyle.Color.white.opacity(AppStyle.Opacity.subtleBackground))
+                                        .cornerRadius(AppStyle.CornerRadius.tile)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile)
+                                                .stroke(AppStyle.Color.white.opacity(AppStyle.Opacity.subtleStroke), lineWidth: 1)
+                                        )
                                 }
                             }
-                        }) {
-                            Image(systemName: "minus.circle.fill")
-                                .foregroundColor(AppStyle.Color.greenGlow)
-                                .font(AppStyle.Font.numberPadSymbol)
+
+                            Button(action: {
+                                editingSetIndex = index
+                                editingField = .reps
+                            }) {
+                                Text("\(set.reps)")
+                                    .font(AppStyle.Font.sectionTitle)
+                                    .foregroundColor(textColor)
+                                    .frame(maxWidth: .infinity, minHeight: 48)
+                                    .background(AppStyle.Color.white.opacity(AppStyle.Opacity.subtleBackground))
+                                    .cornerRadius(AppStyle.CornerRadius.tile)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile)
+                                            .stroke(AppStyle.Color.white.opacity(AppStyle.Opacity.subtleStroke), lineWidth: 1)
+                                    )
+                            }
+
+                            if sets.count > 1 {
+                                Button(action: {
+                                    _ = sets.remove(at: index)
+                                }) {
+                                    Image(systemName: "minus.circle.fill")
+                                        .foregroundColor(AppStyle.Color.greenGlow)
+                                        .font(AppStyle.Font.numberPadSymbol)
+                                }
+                            }
                         }
+                        .padding(.vertical, 4)
                     }
                 }
-                .padding(.vertical, 4)
             }
+            .frame(maxHeight: 300)
+            .fixedSize(horizontal: false, vertical: true)
 
-            if !showNumberPad {
+            if !isEditing {
                 HStack {
+                    Spacer()
                     Button(action: {
-                        withAnimation {
-                            sets.append(SetProgressInput(weight: exercise.weight, reps: exercise.reps))
-                        }
+                        sets.append(SetProgressInput(weight: exercise.weight, reps: exercise.reps))
                     }) {
                         HStack {
                             Image(systemName: "plus.circle.fill")
@@ -184,83 +243,74 @@ public struct AddAnalyticsEntryView: View {
                         .foregroundColor(AppStyle.Color.greenGlow)
                         .padding(.vertical, 6)
                     }
-                    Spacer()
                 }
-
-                HStack {
-                    Button("Cancel") {
-                        onCancel()
-                    }
-                    .foregroundColor(AppStyle.Color.white)
-                    .padding(.vertical, 10)
-                    .padding(.horizontal, AppStyle.Padding.horizontal)
-                    .background(AppStyle.Color.white.opacity(AppStyle.Opacity.subtleBackground))
-                    .cornerRadius(AppStyle.CornerRadius.defaultButton)
-
-                    Spacer()
-
-                    Button("Save") {
-                        let entry = AnalyticsEntry(
-                            exerciseId: exercise.id,
-                            date: date,
-                            setProgress: sets.map { input in
-                                SetProgress(
-                                    status: .completedDone,
-                                    currentReps: input.reps,
-                                    weight: input.weight
-                                )
-                            }
-                        )
-                        onSave(entry)
-                    }
-                    .disabled(exercise.hasWeight
-                        ? sets.contains(where: { $0.weight == 0 || $0.reps == 0 })
-                        : sets.contains(where: { $0.reps == 0 })
-                    )
-                    .foregroundColor(AppStyle.Color.white)
-                    .padding(.vertical, 10)
-                    .padding(.horizontal, 22)
-                    .background(
-                        (exercise.hasWeight
-                            ? sets.allSatisfy { $0.weight > 0 && $0.reps > 0 }
-                            : sets.allSatisfy { $0.reps > 0 })
-                        ? AppStyle.Color.green
-                        : AppStyle.Color.green.opacity(AppStyle.Opacity.subtleStroke)
-                    )
-                    .cornerRadius(AppStyle.CornerRadius.defaultButton)
-                }
-                .padding(.horizontal, AppStyle.Layout.numberPadSpacing)
-                .padding(.top, AppStyle.Layout.numberPadSpacing)
+                .padding(.bottom, AppStyle.Layout.sheetContentBottomPad)
             }
         }
-        .padding(.horizontal, AppStyle.Padding.horizontal)
-        .padding(.top, AppStyle.Padding.titleTop)
-        .padding(.bottom, showNumberPad ? AppStyle.Padding.titleTop : AppStyle.CornerRadius.sheet)
-        .background(AppStyle.Color.exerciseCardBackground)
-        .cornerRadius(AppStyle.CornerRadius.card)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
-    private func getCurrentValue() -> Double {
-        guard let setIndex = editingSetIndex, setIndex < sets.count else { return 0.0 }
-        switch editingField {
-        case .weight:
-            return sets[setIndex].weight
-        case .reps:
-            return Double(sets[setIndex].reps)
-        case .none:
-            return 0.0
+    // MARK: - Wheel Picker Content
+
+    @ViewBuilder
+    private func wheelPickerContent(index: Int, field: EditingField) -> some View {
+        VStack(spacing: 8) {
+            Text(field == .reps ? "Reps" : "Weight")
+                .font(AppStyle.Font.sheetTitle)
+                .foregroundColor(textColor)
+                .frame(maxWidth: .infinity, alignment: .center)
+
+            HStack {
+                Spacer()
+                HStack(spacing: 6) {
+                    Text("Decimal")
+                        .font(AppStyle.Font.defaultFont)
+                        .foregroundColor(textColor.opacity(0.85))
+                    Toggle("", isOn: $showDecimal)
+                        .labelsHidden()
+                        .toggleStyle(CapsuleToggleStyle(onColor: AppStyle.Color.greenGlow, offColor: AppStyle.Color.gray.opacity(AppStyle.Opacity.fadedOverlay)))
+                }
+            }
+            .opacity(field == .weight ? 1 : 0)
         }
-    }
+        .padding(.bottom, AppStyle.Padding.titleTop)
 
-    private func updateCurrentValue(_ newValue: Double) {
-        guard let setIndex = editingSetIndex, setIndex < sets.count else { return }
-        switch editingField {
-        case .weight:
-            sets[setIndex].weight = newValue
+        switch field {
         case .reps:
-            sets[setIndex].reps = Int(newValue)
-        case .none:
-            break
+            Picker("Reps", selection: Binding(
+                get: { sets[index].reps },
+                set: { sets[index].reps = $0 }
+            )) {
+                ForEach(repsRange, id: \.self) { value in
+                    Text("\(value)").tag(value).foregroundColor(pickerColor)
+                }
+            }
+            #if os(iOS)
+            .pickerStyle(.wheel)
+            #else
+            .pickerStyle(.menu)
+            #endif
+            .frame(maxWidth: 200)
+            .clipped()
+            .frame(height: 150)
+
+        case .weight:
+            Picker("Weight", selection: Binding(
+                get: { WeightFormatter.format(sets[index].weight) },
+                set: { if let w = WeightFormatter.parse($0) { sets[index].weight = w } }
+            )) {
+                ForEach(weightOptions, id: \.self) { value in
+                    Text("\(value) kg").tag(value).foregroundColor(pickerColor)
+                }
+            }
+            #if os(iOS)
+            .pickerStyle(.wheel)
+            #else
+            .pickerStyle(.menu)
+            #endif
+            .frame(maxWidth: 200)
+            .clipped()
+            .frame(height: 150)
         }
     }
 }

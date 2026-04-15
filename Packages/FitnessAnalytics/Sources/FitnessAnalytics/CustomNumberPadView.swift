@@ -74,37 +74,44 @@ public struct CustomNumberPadView: View {
     }
 
     public var body: some View {
-        ZStack {
-            VStack(spacing: 0) {
-                NumberScrollWheel(
-                    displayText: $displayText,
-                    inputValue: $inputValue,
-                    showComma: $showComma,
-                    inputMode: $inputMode,
-                    valueType: valueType,
-                    statusText: statusText,
-                    statusTextColor: statusTextColor,
-                    onAdjust: { delta in adjustValue(delta) }
-                )
+        VStack(spacing: 0) {
+            NumberScrollWheel(
+                displayText: $displayText,
+                inputValue: $inputValue,
+                showComma: $showComma,
+                inputMode: $inputMode,
+                valueType: valueType,
+                statusText: statusText,
+                statusTextColor: statusTextColor,
+                onAdjust: { delta in adjustValue(delta) }
+            )
 
-                NumberKeypad(
-                    valueType: valueType,
-                    onDigit: { appendDigit($0) },
-                    onComma: { appendComma() },
-                    onClear: { clearValue() },
-                    onDelete: { deleteLastDigit() },
-                    onCancel: { onDismiss() },
-                    onConfirm: {
-                        onValueChange(inputValue)
-                        onDismiss()
-                    }
-                )
-            }
-            .background(AppStyle.Color.black)
-            .cornerRadius(AppStyle.CornerRadius.pill)
-            .shadow(radius: AppStyle.CornerRadius.pill)
-            .offset(x: shakeOffset)
+            NumberKeypad(
+                valueType: valueType,
+                onDigit: { appendDigit($0) },
+                onComma: { appendComma() },
+                onClear: { clearValue() },
+                onDelete: { deleteLastDigit() },
+                onCancel: { onDismiss() },
+                onConfirm: {
+                    onValueChange(inputValue)
+                    onDismiss()
+                }
+            )
         }
+        .background(
+            UnevenRoundedRectangle(
+                topLeadingRadius: AppStyle.CornerRadius.pill,
+                bottomLeadingRadius: 0,
+                bottomTrailingRadius: 0,
+                topTrailingRadius: AppStyle.CornerRadius.pill,
+                style: .continuous
+            )
+            .fill(AppStyle.Color.black)
+            .ignoresSafeArea(.container, edges: .bottom)
+        )
+        .shadow(radius: AppStyle.CornerRadius.pill)
+        .offset(x: shakeOffset)
         .onAppear {
             inputValue = currentValue
             showComma = currentValue != floor(currentValue)
@@ -460,7 +467,7 @@ private struct NumberKeypad: View {
             actionRow
         }
         .padding(.horizontal, AppStyle.Padding.card)
-        .padding(.bottom, 80)
+        .padding(.bottom, 120)
         .background(AppStyle.Color.sheetBackground)
     }
 

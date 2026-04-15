@@ -95,7 +95,8 @@ Compare new/changed code against existing shared components and utilities:
 | Custom chip with background + stroke | `MetricChipView` |
 | Full-screen sheet with header + save | `WorkoutFormSheet` |
 | Expandable card with greenBlack fill | `AnalyticsDetailSection` |
-| Bottom sheet with backdrop + grabber | `ExercisePickerSheetModifier` |
+| Overlay sheet with backdrop + grabber + dismiss | `OverlaySheetContainer` (full chrome) |
+| Bottom sheet inner styling only | `ExercisePickerSheetModifier` |
 | Cancel/Save button row | `ExercisePickerActionButtons` |
 | Wheel pickers for sets/reps/weight | `ExerciseWheelPickerRow` |
 | Styled text input in a sheet | `ExercisePickerInputField` |
@@ -167,6 +168,30 @@ Check against these principles (based on production architecture research: Uber,
 - **Explicit Error Handling** — No `try?` swallowing errors. Errors propagate to meaningful handlers with user feedback or logging.
 - **Thread Safety by Design** — Actors for storage/sync, `@MainActor` for UI. No unprotected shared mutable state, no GCD/DispatchQueue.
 - **Offline-First** — Local database is source of truth. Views never touch network directly.
+
+#### Component Extraction (DRY vs KISS Balance)
+
+When reviewing code for reuse opportunities, apply these guidelines to avoid both under- and over-abstraction:
+
+**Extract when ALL of these are true:**
+1. **3+ copies** of the same structural pattern exist (2 copies may be coincidence)
+2. The shared part is **purely structural/presentational** (chrome, layout, animation) — not business logic
+3. The extraction **reduces** each call site (the component is simpler to use than the code it replaces)
+4. The component has a **stable contract** — it won't need constant parameter additions as features diverge
+
+**Keep as copy when ANY of these are true:**
+1. Only 2 instances exist and they may diverge in the future
+2. The "shared" code contains **business logic** that differs subtly between call sites
+3. Extracting would require **more parameters than lines saved** (the abstraction leaks)
+4. The component would need `if/switch` branches for each call site (shotgun surgery)
+
+**SwiftUI-specific guidance:**
+- Use **`@ViewBuilder` container views** for structural wrappers (sheet chrome, card containers, overlay patterns)
+- Use **ViewModifiers** for behavior/styling additions (keyboard handling, animation, styling)
+- Use **helper functions/types** for shared logic (weight formatting, date filtering, seat parsing)
+- Never mix structural containers with business logic — the container provides the *frame*, the caller provides the *content*
+
+**Rule of thumb:** If extracting a component means the call site reads like a sentence describing what the UI *is* rather than *how it's built*, the abstraction is at the right level.
 
 ### 9. Anti-Patterns (always flag)
 

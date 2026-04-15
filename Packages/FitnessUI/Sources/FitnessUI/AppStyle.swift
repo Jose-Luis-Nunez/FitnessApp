@@ -9,6 +9,7 @@ public enum AppStyle {
         public static let titleBottom: CGFloat = 17
         public static let activeCardIconOverflow: CGFloat = 20
         public static let titleBottomBeforeActiveCard: CGFloat = titleBottom - activeCardIconOverflow
+        public static let sectionSpacing: CGFloat = 18
     }
 
     public enum Layout {
@@ -40,6 +41,8 @@ public enum AppStyle {
         public static let scrollWheelItemHeight: CGFloat = 60
         public static let scrollWheelVisibleItems: Int = 5
         public static let scrollWheelSnapTolerance: CGFloat = 18
+        /// Bottom padding for short sheet content to match wheel picker height.
+        public static let sheetContentBottomPad: CGFloat = 23
     }
 
     public enum CornerRadius {

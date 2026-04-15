@@ -62,15 +62,20 @@ public struct ExercisePickerSheetModifier: ViewModifier {
 
     public func body(content: Content) -> some View {
         content
-            .padding(.horizontal, AppStyle.Padding.horizontal)
-            .padding(.top, AppStyle.Padding.titleTop)
             .padding(.bottom, 28)
             #if canImport(UIKit)
             .environment(\.keyboardIsVisible, keyboard.isVisible)
             #endif
             .background(
-                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.sheet, style: .continuous)
-                    .fill(AppStyle.Color.sheetBackground)
+                UnevenRoundedRectangle(
+                    topLeadingRadius: AppStyle.CornerRadius.sheet,
+                    bottomLeadingRadius: 0,
+                    bottomTrailingRadius: 0,
+                    topTrailingRadius: AppStyle.CornerRadius.sheet,
+                    style: .continuous
+                )
+                .fill(AppStyle.Color.sheetBackground)
+                .ignoresSafeArea(.container, edges: .bottom)
             )
             .frame(maxWidth: .infinity)
             #if canImport(UIKit)
@@ -88,14 +93,145 @@ public extension View {
     }
 }
 
+// MARK: - Sheet Action Bar
+
+public struct SheetActionBar<Actions: View>: View {
+    @ViewBuilder let actions: () -> Actions
+
+    public init(@ViewBuilder actions: @escaping () -> Actions) {
+        self.actions = actions
+    }
+
+    public var body: some View {
+        actions()
+            .padding(.top, 24)
+    }
+}
+
+// MARK: - Overlay Sheet Container
+
+public struct OverlaySheetContainer<Content: View, Actions: View, Overlay: View>: View {
+    @Binding var isPresented: Bool
+    let allowBackdropDismiss: Bool
+    let onCancel: () -> Void
+    @ViewBuilder let overlay: () -> Overlay
+    @ViewBuilder let actions: () -> Actions
+    @ViewBuilder let content: () -> Content
+
+    @State private var isContentVisible: Bool = false
+
+    public init(
+        isPresented: Binding<Bool>,
+        allowBackdropDismiss: Bool = true,
+        onCancel: @escaping () -> Void,
+        @ViewBuilder overlay: @escaping () -> Overlay,
+        @ViewBuilder actions: @escaping () -> Actions,
+        @ViewBuilder content: @escaping () -> Content
+    ) {
+        _isPresented = isPresented
+        self.allowBackdropDismiss = allowBackdropDismiss
+        self.onCancel = onCancel
+        self.overlay = overlay
+        self.actions = actions
+        self.content = content
+    }
+
+    private func dismiss() {
+        onCancel()
+        isPresented = false
+    }
+
+    public var body: some View {
+        ZStack(alignment: .bottom) {
+            Color.black.opacity(AppStyle.Opacity.overlayBackdrop)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    if allowBackdropDismiss { dismiss() }
+                }
+
+            VStack(spacing: 0) {
+                Capsule()
+                    .fill(Color.white.opacity(AppStyle.Opacity.grabberHandle))
+                    .frame(width: 44, height: 5)
+                    .padding(.top, 8)
+                    .padding(.bottom, 10)
+
+                content()
+
+                SheetActionBar { actions() }
+            }
+            .padding(.horizontal, AppStyle.Padding.horizontal)
+            .padding(.top, AppStyle.Padding.titleTop)
+            .exercisePickerSheet(isContentVisible: isContentVisible)
+            .gesture(
+                DragGesture().onEnded { value in
+                    if allowBackdropDismiss && value.translation.height > 80 { dismiss() }
+                }
+            )
+
+            overlay()
+                .zIndex(1)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .ignoresSafeArea(edges: .bottom)
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.18)) { isContentVisible = true }
+        }
+        .onChange(of: isPresented) { _, newValue in
+            if !newValue { isContentVisible = false }
+        }
+    }
+}
+
+// Convenience: no overlay, no actions (content-only)
+public extension OverlaySheetContainer where Overlay == EmptyView, Actions == EmptyView {
+    init(
+        isPresented: Binding<Bool>,
+        allowBackdropDismiss: Bool = true,
+        onCancel: @escaping () -> Void,
+        @ViewBuilder content: @escaping () -> Content
+    ) {
+        self.init(
+            isPresented: isPresented,
+            allowBackdropDismiss: allowBackdropDismiss,
+            onCancel: onCancel,
+            overlay: { EmptyView() },
+            actions: { EmptyView() },
+            content: content
+        )
+    }
+}
+
+// Convenience: no overlay, with actions
+public extension OverlaySheetContainer where Overlay == EmptyView {
+    init(
+        isPresented: Binding<Bool>,
+        allowBackdropDismiss: Bool = true,
+        onCancel: @escaping () -> Void,
+        @ViewBuilder actions: @escaping () -> Actions,
+        @ViewBuilder content: @escaping () -> Content
+    ) {
+        self.init(
+            isPresented: isPresented,
+            allowBackdropDismiss: allowBackdropDismiss,
+            onCancel: onCancel,
+            overlay: { EmptyView() },
+            actions: actions,
+            content: content
+        )
+    }
+}
+
 // MARK: - Shared Action Buttons
 
 public struct ExercisePickerActionButtons: View {
+    let saveLabel: String
     let saveDisabled: Bool
     let onCancel: () -> Void
     let onSave: () -> Void
 
-    public init(saveDisabled: Bool, onCancel: @escaping () -> Void, onSave: @escaping () -> Void) {
+    public init(saveLabel: String = "Save", saveDisabled: Bool, onCancel: @escaping () -> Void, onSave: @escaping () -> Void) {
+        self.saveLabel = saveLabel
         self.saveDisabled = saveDisabled
         self.onCancel = onCancel
         self.onSave = onSave
@@ -105,19 +241,18 @@ public struct ExercisePickerActionButtons: View {
         HStack {
             Spacer()
 
-            Text("Cancel")
-                .foregroundColor(.white)
+            Button("Cancel") { onCancel() }
+                .foregroundColor(AppStyle.Color.white)
                 .font(AppStyle.Font.pickerAction)
                 .padding(5)
                 .frame(width: 120)
                 .cornerRadius(AppStyle.CornerRadius.editPickerViewButton)
-                .onTapGesture { onCancel() }
                 .frame(maxWidth: .infinity, alignment: .center)
 
             Spacer()
 
-            Button("Save") { onSave() }
-                .foregroundColor(.white)
+            Button(saveLabel) { onSave() }
+                .foregroundColor(AppStyle.Color.white)
                 .font(AppStyle.Font.pickerAction)
                 .padding(5)
                 .frame(width: 140, height: 40)

@@ -160,7 +160,7 @@ public struct AnalyticsView: View {
     }()
 
     private func dynamicMilestonePointView(point: ProgressChartCalculator.ChartPoint, geometry: GeometryProxy) -> some View {
-        let weightText = point.weight == floor(point.weight) ? "\(Int(point.weight))" : String(point.weight).replacingOccurrences(of: ".", with: ",")
+        let weightText = WeightFormatter.format(point.weight)
 
         return ZStack {
             Path { path in
@@ -227,6 +227,8 @@ public struct AnalyticsView: View {
 
     @ViewBuilder
     private var resultsView: some View {
+        // Force observation so swipe-delete triggers a re-render
+        let _ = viewModel.lastUpdatedExerciseId
         let entries = viewModel.loadAnalytics(for: exercise.id, on: selectedDate)
 
         if entries.isEmpty {
@@ -323,12 +325,12 @@ public struct AnalyticsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             if exercise.hasWeight {
-                Text(progress.weight == floor(progress.weight) ? "\(Int(progress.weight))" : String(progress.weight).replacingOccurrences(of: ".", with: ","))
-                    .font(.system(size: 30))
+                Text(WeightFormatter.format(progress.weight))
+                    .font(AppStyle.Font.analyticsBigNumber)
                     .foregroundColor(AppStyle.Color.greenGlow)
 
                 Text("kg")
-                    .font(.system(size: 35))
+                    .font(AppStyle.Font.analyticsBigNumber)
                     .foregroundColor(AppStyle.Color.green)
             }
 
@@ -357,39 +359,23 @@ public struct AnalyticsView: View {
     private var addDataOverlay: some View {
         Group {
             if showAddDataSheet {
-                ZStack {
-                    Color.black.opacity(0.5)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            showAddDataSheet = false
-                        }
-
-                    VStack {
-                        Spacer()
-
-                        AddAnalyticsEntryView(
-                            date: selectedDate,
-                            exercise: exercise,
-                            existingEntry: editingEntry,
-                            onSave: { newEntry in
-                                viewModel.saveOrReplaceAnalyticsEntry(
-                                    exerciseId: exercise.id,
-                                    setProgress: newEntry.setProgress,
-                                    date: selectedDate
-                                )
-                                showAddDataSheet = false
-                                editingEntry = nil
-                            },
-                            onCancel: {
-                                showAddDataSheet = false
-                                editingEntry = nil
-                            }
+                AddAnalyticsEntryView(
+                    date: selectedDate,
+                    exercise: exercise,
+                    existingEntry: editingEntry,
+                    isPresented: $showAddDataSheet,
+                    onSave: { newEntry in
+                        viewModel.saveOrReplaceAnalyticsEntry(
+                            exerciseId: exercise.id,
+                            setProgress: newEntry.setProgress,
+                            date: selectedDate
                         )
-
-                        Spacer()
+                        editingEntry = nil
+                    },
+                    onCancel: {
+                        editingEntry = nil
                     }
-                }
-                .transition(.opacity)
+                )
             }
         }
     }
@@ -553,7 +539,7 @@ public struct AnalyticsView: View {
 
     private var goalTileNumber: String {
         if let goal = exercise.goal {
-            return goal == floor(goal) ? "\(Int(goal))" : String(goal).replacingOccurrences(of: ".", with: ",")
+            return WeightFormatter.format(goal)
         }
         return "Set"
     }

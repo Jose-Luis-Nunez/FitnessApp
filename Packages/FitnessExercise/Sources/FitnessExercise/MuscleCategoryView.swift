@@ -74,9 +74,8 @@ public struct MuscleCategoryView: View {
                 editPickerView
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                     .shadow(radius: 5)
-                    .transition(.move(edge: .bottom))
+                    .transition(.identity)
                     .zIndex(3)
-                    .ignoresSafeArea(edges: .bottom)
                     .onDisappear { overlayState.isEditingSheetVisible = false }
             }
         }

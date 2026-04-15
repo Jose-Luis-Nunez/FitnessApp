@@ -119,12 +119,11 @@ When adding to an existing feature (new view, new service method, new chart type
 Pickers belong in `Features/Picker/`, not in a feature folder. Use existing picker infrastructure:
 
 1. **Create the picker view** in `Features/Picker/<Name>PickerView.swift`.
-2. **Use `ExercisePickerSheetModifier`** for the bottom-sheet chrome (rounded background, backdrop).
-3. **Use `ExercisePickerActionButtons`** for the Cancel/Save button row.
+2. **Use `OverlaySheetContainer`** as the outermost wrapper — provides backdrop, grabber, swipe-dismiss, appear animation, and `exercisePickerSheet` styling automatically.
+3. **Use `ExercisePickerActionButtons`** for the Cancel/Save button row (inside the container content).
 4. **Use `ExerciseWheelPickerRow`** if the picker involves sets, reps, or weight wheels.
 5. **Use `ExercisePickerInputField`** for any text input inside the picker.
 6. **Use `WeightOptionsGenerator`** for weight option arrays.
-7. **Present the picker** via a `.modifier(ExercisePickerSheetModifier(...))` on the parent view.
 8. **Run the checklist** below.
 
 ---
