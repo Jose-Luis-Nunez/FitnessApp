@@ -8,13 +8,11 @@ let package = Package(
     products: [
         .library(name: "FitnessCore", targets: ["FitnessCore"]),
     ],
-    dependencies: [
-        .package(path: "../FitnessResources"),
-    ],
+    dependencies: [],
     targets: [
         .target(
             name: "FitnessCore",
-            dependencies: ["FitnessResources"]
+            dependencies: []
         ),
         .testTarget(
             name: "FitnessCoreTests",

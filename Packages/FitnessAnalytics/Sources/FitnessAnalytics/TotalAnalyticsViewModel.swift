@@ -40,7 +40,7 @@ public struct ExerciseDetailData {
 // MARK: - Training Rhythm Detail Data Models
 
 public struct TrainingRhythmDetailData {
-    public let trainingDates: [Date]
+    public let trainingDates: [IdentifiableDate]
     public let gaps: [Int]
     public let averageGap: Double
     public let rhythmLabel: String
@@ -53,11 +53,21 @@ public struct TrainingRhythmDetailData {
         rhythmLabel: String,
         explanation: String
     ) {
-        self.trainingDates = trainingDates
+        self.trainingDates = trainingDates.enumerated().map { IdentifiableDate(index: $0.offset, date: $0.element) }
         self.gaps = gaps
         self.averageGap = averageGap
         self.rhythmLabel = rhythmLabel
         self.explanation = explanation
+    }
+}
+
+public struct IdentifiableDate: Identifiable {
+    public let id: Int
+    public let date: Date
+
+    public init(index: Int, date: Date) {
+        self.id = index
+        self.date = date
     }
 }
 
@@ -658,7 +668,8 @@ public final class TotalAnalyticsViewModel {
 
 // MARK: - Category Helper Models
 
-public struct CategoryProgressData {
+public struct CategoryProgressData: Identifiable {
+    public var id: String { category.rawValue }
     public let category: MuscleCategoryGroup
     public let exercises: [ExerciseProgressData]
 
@@ -676,7 +687,8 @@ public struct CategoryProgressData {
     }
 }
 
-public struct ExerciseProgressData {
+public struct ExerciseProgressData: Identifiable {
+    public var id: UUID { exercise.id }
     public let exercise: Exercise
     public let initialWeight: Double
     public let currentWeight: Double

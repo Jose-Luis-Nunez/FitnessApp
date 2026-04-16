@@ -4,7 +4,8 @@ import SwiftUI
 // MARK: - Progress Chart Calculator
 
 public class ProgressChartCalculator {
-    public struct ChartPoint {
+    public struct ChartPoint: Identifiable {
+        public let id: Int
         public let weight: Double
         public let date: Date?
         public let xPosition: CGFloat
@@ -12,12 +13,14 @@ public class ProgressChartCalculator {
         public let isCurrentWeight: Bool
 
         public init(
+            id: Int = 0,
             weight: Double,
             date: Date?,
             xPosition: CGFloat,
             yPosition: CGFloat,
             isCurrentWeight: Bool
         ) {
+            self.id = id
             self.weight = weight
             self.date = date
             self.xPosition = xPosition
@@ -52,6 +55,7 @@ public class ProgressChartCalculator {
                 let xProgress = filteredMilestones.count == 1 ? 0.5 : CGFloat(index) / CGFloat(filteredMilestones.count - 1)
                 let xPosition = width * (0.15 + xProgress * 0.7)
                 chartPoints.append(ChartPoint(
+                    id: index,
                     weight: milestone.value,
                     date: milestone.date,
                     xPosition: xPosition,
@@ -72,6 +76,7 @@ public class ProgressChartCalculator {
             let yPosition = chartBottomY - (chartRange * valueProgress)
 
             chartPoints.append(ChartPoint(
+                id: index,
                 weight: milestone.value,
                 date: milestone.date,
                 xPosition: xPosition,

@@ -1,7 +1,10 @@
 import Foundation
+import os
 import SwiftData
 import FitnessCore
 import Factory
+
+private let logger = Logger(subsystem: "FitnessStorage", category: "AnalyticsStorageService")
 
 @MainActor
 public final class AnalyticsStorageService: AnalyticsStoring {
@@ -18,10 +21,13 @@ public final class AnalyticsStorageService: AnalyticsStoring {
             predicate: #Predicate<AnalyticsEntryModel> { $0.exerciseId == exerciseId }
         )
 
-        if let existing = try? context.fetch(deleteDescriptor) {
+        do {
+            let existing = try context.fetch(deleteDescriptor)
             for model in existing {
                 context.delete(model)
             }
+        } catch {
+            logger.error("Failed to fetch analytics entries for deletion: \(error)")
         }
 
         for entry in entries {
@@ -38,15 +44,20 @@ public final class AnalyticsStorageService: AnalyticsStoring {
             sortBy: [SortDescriptor(\.date)]
         )
 
-        let models = (try? context.fetch(descriptor)) ?? []
-        return models.map { $0.toDomain() }
+        do {
+            let models = try context.fetch(descriptor)
+            return models.map { $0.toDomain() }
+        } catch {
+            logger.error("Failed to fetch analytics for exercise \(exerciseId): \(error)")
+            return []
+        }
     }
 
     private func saveContext() {
         do {
             try context.save()
         } catch {
-            print("AnalyticsStorageService: Failed to save context: \(error)")
+            logger.error("Failed to save context: \(error)")
         }
     }
 }

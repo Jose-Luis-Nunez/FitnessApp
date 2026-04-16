@@ -15,10 +15,10 @@ public struct SimpleActiveSetView: View {
 
     public var body: some View {
         VStack(spacing: 8) {
-            ForEach(setProgress.indices, id: \.self) { index in
+            ForEach(Array(setProgress.enumerated()), id: \.element.id) { index, progress in
                 SetRowView(
                     index: index,
-                    progress: setProgress[index],
+                    progress: progress,
                     exercise: exercise,
                     viewModel: viewModel,
                     isQuickDoneMode: viewModel.quickDoneModeActive

@@ -151,8 +151,7 @@ private extension InactiveCardView {
             HStack(spacing: spacing) {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: spacing) {
-                        ForEach(cachedSetProgress.indices, id: \.self) { index in
-                            let item = cachedSetProgress[index]
+                        ForEach(Array(cachedSetProgress.enumerated()), id: \.element.id) { index, item in
                             SetTileView(setNumber: index + 1, weight: item.weight, reps: item.currentReps, hasWeight: viewModel.exercise.hasWeight)
                                 .frame(width: tileWidth)
                         }

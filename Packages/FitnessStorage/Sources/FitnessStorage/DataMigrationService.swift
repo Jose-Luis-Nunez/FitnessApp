@@ -1,6 +1,9 @@
 import Foundation
+import os
 import SwiftData
 import FitnessCore
+
+private let logger = Logger(subsystem: "FitnessStorage", category: "DataMigrationService")
 
 @MainActor
 public enum DataMigrationService {
@@ -30,7 +33,7 @@ public enum DataMigrationService {
             try performMigration(context: context, defaults: defaults, documentsDir: docsDir)
             defaults.set(true, forKey: migrationKey)
         } catch {
-            print("DataMigrationService: Migration failed, will retry on next launch: \(error)")
+            logger.error("Migration failed, will retry on next launch: \(error)")
         }
     }
 
@@ -87,7 +90,12 @@ public enum DataMigrationService {
 
     private static func loadLegacyWorkouts(defaults: UserDefaults) -> [Workout] {
         guard let data = defaults.data(forKey: workoutsKey) else { return [] }
-        return (try? JSONDecoder().decode([Workout].self, from: data)) ?? []
+        do {
+            return try JSONDecoder().decode([Workout].self, from: data)
+        } catch {
+            logger.error("Failed to decode legacy workouts: \(error)")
+            return []
+        }
     }
 
     private static func loadLegacyExercises(

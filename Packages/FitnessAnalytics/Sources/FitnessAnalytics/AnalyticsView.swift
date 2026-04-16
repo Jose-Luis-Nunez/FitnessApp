@@ -151,7 +151,7 @@ public struct AnalyticsView: View {
 
     private func milestonesView(geometry: GeometryProxy) -> some View {
         let points = chartPoints(geometry: geometry)
-        return ForEach(Array(points.enumerated()), id: \.offset) { index, point in
+        return ForEach(points) { point in
             dynamicMilestonePointView(point: point, geometry: geometry)
         }
     }

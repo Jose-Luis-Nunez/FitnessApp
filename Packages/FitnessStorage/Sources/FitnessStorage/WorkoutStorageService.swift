@@ -1,8 +1,11 @@
 import Foundation
 import Observation
+import os
 import SwiftData
 import FitnessCore
 import Factory
+
+private let logger = Logger(subsystem: "FitnessStorage", category: "WorkoutStorageService")
 
 @Observable
 @MainActor
@@ -76,9 +79,13 @@ public final class WorkoutStorageService: WorkoutStoring {
         )
         descriptor.fetchLimit = 1
 
-        if let model = try? context.fetch(descriptor).first {
-            context.delete(model)
-            saveContext()
+        do {
+            if let model = try context.fetch(descriptor).first {
+                context.delete(model)
+                saveContext()
+            }
+        } catch {
+            logger.error("Failed to fetch workout for deletion \(workoutId): \(error)")
         }
 
         if currentWorkout?.id == workout.id {
@@ -101,12 +108,16 @@ public final class WorkoutStorageService: WorkoutStoring {
         )
         descriptor.fetchLimit = 1
 
-        if let model = try? context.fetch(descriptor).first {
-            model.name = workout.name
-            model.selectedCategories = workout.selectedCategories.map(\.rawValue)
-            model.lastModified = Date()
-            saveContext()
-            reload()
+        do {
+            if let model = try context.fetch(descriptor).first {
+                model.name = workout.name
+                model.selectedCategories = workout.selectedCategories.map(\.rawValue)
+                model.lastModified = Date()
+                saveContext()
+                reload()
+            }
+        } catch {
+            logger.error("Failed to fetch workout for update \(workoutId): \(error)")
         }
     }
 
@@ -117,8 +128,11 @@ public final class WorkoutStorageService: WorkoutStoring {
 
     public func setAsDefaultWorkout(_ workout: Workout) {
         let allId = workout.id
-        if let allModels = try? context.fetch(FetchDescriptor<WorkoutModel>()) {
+        do {
+            let allModels = try context.fetch(FetchDescriptor<WorkoutModel>())
             for m in allModels { m.isDefault = (m.id == allId) }
+        } catch {
+            logger.error("Failed to fetch workouts for default assignment: \(error)")
         }
         saveContext()
         defaultWorkout = workout
@@ -126,8 +140,11 @@ public final class WorkoutStorageService: WorkoutStoring {
     }
 
     public func removeAsDefaultWorkout() {
-        if let allModels = try? context.fetch(FetchDescriptor<WorkoutModel>()) {
+        do {
+            let allModels = try context.fetch(FetchDescriptor<WorkoutModel>())
             for m in allModels { m.isDefault = false }
+        } catch {
+            logger.error("Failed to fetch workouts for default removal: \(error)")
         }
         saveContext()
         defaultWorkout = nil
@@ -141,11 +158,15 @@ public final class WorkoutStorageService: WorkoutStoring {
         )
         descriptor.fetchLimit = 1
 
-        if let model = try? context.fetch(descriptor).first {
-            model.name = newName
-            model.lastModified = Date()
-            saveContext()
-            reload()
+        do {
+            if let model = try context.fetch(descriptor).first {
+                model.name = newName
+                model.lastModified = Date()
+                saveContext()
+                reload()
+            }
+        } catch {
+            logger.error("Failed to fetch workout for rename \(workoutId): \(error)")
         }
     }
 
@@ -153,7 +174,7 @@ public final class WorkoutStorageService: WorkoutStoring {
         do {
             try context.save()
         } catch {
-            print("WorkoutStorageService: Failed to save context: \(error)")
+            logger.error("Failed to save context: \(error)")
         }
     }
 
@@ -162,8 +183,13 @@ public final class WorkoutStorageService: WorkoutStoring {
             sortBy: [SortDescriptor(\.createdDate)]
         )
 
-        let models = (try? context.fetch(descriptor)) ?? []
-        workouts = models.map { $0.toDomain() }
+        do {
+            let models = try context.fetch(descriptor)
+            workouts = models.map { $0.toDomain() }
+        } catch {
+            logger.error("Failed to fetch workouts during reload: \(error)")
+            workouts = []
+        }
 
         let currentId = userDefaults.string(forKey: currentWorkoutKey)
             .flatMap(UUID.init(uuidString:))

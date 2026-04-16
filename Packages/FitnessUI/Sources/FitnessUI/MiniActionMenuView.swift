@@ -90,8 +90,8 @@ public struct MiniActionMenuView: View {
 
     private var itemsView: some View {
         VStack(spacing: 0) {
-            ForEach(items.indices, id: \.self) { idx in
-                itemRow(item: items[idx])
+            ForEach(items) { item in
+                itemRow(item: item)
             }
         }
     }
