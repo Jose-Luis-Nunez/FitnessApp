@@ -11,8 +11,8 @@ public final class MuscleCategorySelectionViewModel {
     public var categories: [MuscleCategoryGroup] = []
     public var exercisesByCategory: [MuscleCategoryGroup: [Exercise]] = [:]
 
-    @ObservationIgnored @Injected(\.exerciseManagement) private var exerciseManagementService
-    @ObservationIgnored @Injected(\.workoutStorage) private var workoutStorageService
+    @ObservationIgnored private var exerciseManagementService: ExerciseManaging
+    @ObservationIgnored private var workoutStorageService: WorkoutStoring
 
     private var exerciseCounts: [MuscleCategoryGroup: (total: Int, active: Int)] {
         exercisesByCategory.mapValues { exercises in
@@ -26,8 +26,14 @@ public final class MuscleCategorySelectionViewModel {
 
     @ObservationIgnored private let coordinatorCache: TrainingCoordinatorCaching
 
-    public init(coordinatorCache: TrainingCoordinatorCaching? = nil) {
+    public init(
+        coordinatorCache: TrainingCoordinatorCaching? = nil,
+        exerciseManagement: ExerciseManaging? = nil,
+        workoutStorage: WorkoutStoring? = nil
+    ) {
         self.coordinatorCache = coordinatorCache ?? Container.shared.trainingCoordinatorCache()
+        self.exerciseManagementService = exerciseManagement ?? Container.shared.exerciseManagement()
+        self.workoutStorageService = workoutStorage ?? Container.shared.workoutStorage()
         updateCategories(for: workoutStorageService.currentWorkout)
         refreshExercises()
         startWorkoutObservation()

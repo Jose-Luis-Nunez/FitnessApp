@@ -12,7 +12,7 @@ Features/
     ExerciseCard/     — Card UI for exercises (idle, active, inactive states)
     MuscleCategory/   — Muscle category detail screen with exercises
     Storage/          — Exercise persistence and management services
-  MuscleGroupSelection/ — Home screen: muscle group category grid
+  MuscleGroupSelection/ — Home screen: muscle group category grid. MuscleCategorySelectionViewModel accepts optional `coordinatorCache`, `exerciseManagement`, and `workoutStorage` via constructor injection (defaults to Factory singleton).
   Picker/             — All picker sheets (exercise, weight, seat, icon, name, active-set edit)
   Schedule/           — Training calendar, streaks, week summary, day details (implementation: `Packages/FitnessSchedule` SPM target)
   Training/           — Training session screen
@@ -27,6 +27,7 @@ Tests/
   FitnessAppUITests/      — UI tests (XCUITest)
   Packages/*/Tests/       — Package-level unit tests per SPM module
     FitnessAnalyticsTests/  — AnalyticsViewModelTests, TotalAnalyticsViewModelTests
+    FitnessExerciseTests/   — MuscleCategorySelectionViewModelTests (categories, exercise counts, card VM cache, reset, find category, exercise mutations, coordinator completion integration, exercise stability)
     FitnessStorageTests/    — WorkoutStorageServiceTests, ExerciseStorageServiceTests, AnalyticsStorageServiceTests, ExerciseAndAnalyticsStorageTests, DataMigrationServiceTests
     FitnessScheduleTests/   — ScheduleViewModelTests
 ```
