@@ -10,7 +10,8 @@ public typealias DailyProgression = (date: Date, value: Double)
 @Observable
 @MainActor
 public final class AnalyticsViewModel {
-    public var lastUpdatedExerciseId: UUID?
+    public private(set) var entries: [AnalyticsEntry] = []
+    public private(set) var changeCount: Int = 0
 
     private let storageService: AnalyticsStoring
     @ObservationIgnored @Injected(\.exerciseStorage) private var exerciseStorageService
@@ -22,6 +23,11 @@ public final class AnalyticsViewModel {
     nonisolated public init(storageService: AnalyticsStoring? = nil) {
         self.storageService = storageService ?? Container.shared.analyticsStorage()
     }
+
+    public func reloadEntries(for exerciseId: UUID) {
+        entries = storageService.load(for: exerciseId)
+        changeCount += 1
+    }
     
     public func resolveLatestExercise(_ exercise: Exercise) -> Exercise {
         let workoutId = workoutStorageService.currentWorkout?.id ?? UUID()
@@ -32,21 +38,18 @@ public final class AnalyticsViewModel {
     public func saveAnalytics(exerciseId: UUID, setProgress: [SetProgress], date: Date = Date()) {
         guard !setProgress.isEmpty else { return }
         saveAnalyticsUseCase.execute(exerciseId: exerciseId, setProgress: setProgress, date: date)
-        lastUpdatedExerciseId = exerciseId
+        reloadEntries(for: exerciseId)
     }
     
     public func loadAnalytics(for exerciseId: UUID) -> [AnalyticsEntry] {
-        let entries = storageService.load(for: exerciseId)
-        return entries
+        storageService.load(for: exerciseId)
     }
     
     public func loadAnalytics(for exerciseId: UUID, on date: Date) -> [AnalyticsEntry] {
         let calendar = Calendar.current
-        let entries = loadAnalytics(for: exerciseId)
-        let filteredEntries = entries.filter { entry in
+        return loadAnalytics(for: exerciseId).filter { entry in
             calendar.isDate(entry.date, inSameDayAs: date)
         }
-        return filteredEntries
     }
     
     public func allDatesWithData(for exerciseId: UUID) -> Set<Date> {
@@ -55,8 +58,7 @@ public final class AnalyticsViewModel {
     }
     
     public func loadAnalyticsDates(for exerciseId: UUID) -> [Date] {
-        let entries = storageService.load(for: exerciseId)
-        return entries.map { $0.date }
+        storageService.load(for: exerciseId).map { $0.date }
     }
     
     public func saveOrReplaceAnalyticsEntry(
@@ -66,7 +68,7 @@ public final class AnalyticsViewModel {
     ) {
         guard !setProgress.isEmpty else { return }
         saveOrReplaceAnalyticsUseCase.execute(exerciseId: exerciseId, setProgress: setProgress, date: date)
-        lastUpdatedExerciseId = exerciseId
+        reloadEntries(for: exerciseId)
     }
     
     public func deleteSetFromEntry(
@@ -75,7 +77,7 @@ public final class AnalyticsViewModel {
         setIndex: Int
     ) {
         deleteAnalyticsSetUseCase.execute(exerciseId: exerciseId, entryId: entryId, setIndex: setIndex)
-        lastUpdatedExerciseId = exerciseId
+        reloadEntries(for: exerciseId)
     }
     
     public func saveGoal(for exercise: inout Exercise, goalText: String) {

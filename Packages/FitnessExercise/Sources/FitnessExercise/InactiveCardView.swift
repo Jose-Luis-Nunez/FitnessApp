@@ -64,8 +64,8 @@ public struct InactiveCardView: View {
             AnalyticsView(exercise: viewModel.exercise, viewModel: analyticsViewModel)
         }
         .onAppear { refreshSetProgress() }
-        .onChange(of: analyticsViewModel.lastUpdatedExerciseId) { _, newId in
-            if newId == viewModel.exercise.id { refreshSetProgress() }
+        .onChange(of: analyticsViewModel.changeCount) { _, _ in
+            refreshSetProgress()
         }
     }
 }

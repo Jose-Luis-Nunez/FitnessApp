@@ -55,6 +55,9 @@ public struct AnalyticsView: View {
         }
         .background(AppStyle.Color.backgroundColor)
         .presentationDragIndicator(.visible)
+        .onAppear {
+            viewModel.reloadEntries(for: exercise.id)
+        }
     }
 
     private var progressChartView: some View {
@@ -225,11 +228,16 @@ public struct AnalyticsView: View {
         .padding(.bottom, 10)
     }
 
+    private var entriesForSelectedDate: [AnalyticsEntry] {
+        let calendar = Calendar.current
+        return viewModel.entries.filter { entry in
+            calendar.isDate(entry.date, inSameDayAs: selectedDate)
+        }
+    }
+
     @ViewBuilder
     private var resultsView: some View {
-        // Force observation so swipe-delete triggers a re-render
-        let _ = viewModel.lastUpdatedExerciseId
-        let entries = viewModel.loadAnalytics(for: exercise.id, on: selectedDate)
+        let entries = entriesForSelectedDate
 
         if entries.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
@@ -290,7 +298,7 @@ public struct AnalyticsView: View {
     private func entryView(_ entry: AnalyticsEntry) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             List {
-                ForEach(Array(entry.setProgress.enumerated()), id: \.offset) { index, progress in
+                ForEach(Array(entry.setProgress.enumerated()), id: \.element.id) { index, progress in
                     setRowView(entry: entry, index: index, progress: progress)
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)

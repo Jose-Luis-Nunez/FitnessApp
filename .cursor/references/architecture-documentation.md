@@ -40,7 +40,7 @@ Located in `Core/Model/`.
 | `Exercise` | `Exercise.swift` | `id`, `name`, `weight`, `reps`, `sets`, `seatSetting`, `noSeats`, `isCompleted`, `iconName`, `category`, `goal`. **Note:** `Equatable` compares only `id`. Use `isContentEqual(to:)` for value-level comparison. |
 | `Workout` | `Workout.swift` | `id`, `name`, `createdDate`, `lastModified`, `selectedCategories` |
 | `MuscleCategoryGroup` | `MuscleCategoryGroup.swift` | Enum: `arms`, `chest`, `back`, `legs`, `abs` |
-| `SetProgress` | `SetProgress.swift` | `status` (enum: `notStarted`, `inProgress`, `completedDone/Less/More`), `currentReps`, `weight` |
+| `SetProgress` | `SetProgress.swift` | `id`, `status` (enum: `notStarted`, `inProgress`, `completedDone/Less/More`), `currentReps`, `weight`. Conforms to `Identifiable`. |
 | `WeightPhase` | `WeightPhase.swift` | `id`, `weight`, `sessionCount`, `durationDays`, `startSetsReps`, `startDate`, `endSetsReps`, `endDate`, `hasImproved`, `maxReps` |
 | `SetEditingMode` | `SetEditingMode.swift` | Enum: `less`, `more`, `edit` |
 | `ExerciseEditMode` | `ExerciseEditMode.swift` (SPM: `Packages/FitnessCore`) | Enum: `full`, `name`, `weight`, `seat` — shared with `FitnessTraining` |

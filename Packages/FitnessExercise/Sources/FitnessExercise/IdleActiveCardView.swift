@@ -97,8 +97,8 @@ public struct IdleActiveCardView: View {
         .padding(.horizontal, AppStyle.Padding.card)
         .shadow(color: AppStyle.Shadow.cardColor, radius: AppStyle.Shadow.cardRadius, x: 0, y: AppStyle.Shadow.cardY)
         .onAppear { refreshPhaseData() }
-        .onChange(of: analyticsViewModel.lastUpdatedExerciseId) { _, newId in
-            if newId == viewModel.exercise.id { refreshPhaseData() }
+        .onChange(of: analyticsViewModel.changeCount) { _, _ in
+            refreshPhaseData()
         }
     }
 }

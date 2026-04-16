@@ -583,3 +583,90 @@ struct WeightPhasesTests {
         #expect(firstPhase.hasImproved == true)
     }
 }
+
+// MARK: - entries reactive updates
+
+@Suite("entries reactive updates")
+@MainActor
+struct EntriesReactiveUpdateTests {
+
+    @Test func entriesUpdatesAfterDeleteSetFromEntry() {
+        let storage = MockAnalyticsStorage()
+        let id = UUID()
+        let entry = makeEntry(exerciseId: id, date: date(0), sets: [(60, 10), (65, 8)])
+        storage.save([entry], for: id)
+
+        Container.shared.analyticsStorage.register { storage }
+
+        let vm = AnalyticsViewModel(storageService: storage)
+        vm.reloadEntries(for: id)
+
+        #expect(vm.entries.count == 1)
+        #expect(vm.entries[0].setProgress.count == 2)
+
+        vm.deleteSetFromEntry(exerciseId: id, entryId: entry.id, setIndex: 0)
+
+        #expect(vm.entries.count == 1)
+        #expect(vm.entries[0].setProgress.count == 1)
+        #expect(vm.entries[0].setProgress[0].weight == 65)
+    }
+
+    @Test func entriesEmptyAfterDeletingAllSets() {
+        let storage = MockAnalyticsStorage()
+        let id = UUID()
+        let entry = makeEntry(exerciseId: id, date: date(0), sets: [(60, 10)])
+        storage.save([entry], for: id)
+
+        Container.shared.analyticsStorage.register { storage }
+
+        let vm = AnalyticsViewModel(storageService: storage)
+        vm.reloadEntries(for: id)
+
+        #expect(vm.entries.count == 1)
+
+        vm.deleteSetFromEntry(exerciseId: id, entryId: entry.id, setIndex: 0)
+
+        #expect(vm.entries.isEmpty)
+    }
+
+    @Test func changeCountIncrementsOnEachMutation() {
+        let storage = MockAnalyticsStorage()
+        let id = UUID()
+        let entry = makeEntry(exerciseId: id, date: date(0), sets: [(60, 10), (65, 8)])
+        storage.save([entry], for: id)
+
+        Container.shared.analyticsStorage.register { storage }
+
+        let vm = AnalyticsViewModel(storageService: storage)
+        let initial = vm.changeCount
+
+        vm.reloadEntries(for: id)
+        #expect(vm.changeCount == initial + 1)
+
+        vm.deleteSetFromEntry(exerciseId: id, entryId: entry.id, setIndex: 0)
+        #expect(vm.changeCount == initial + 2)
+    }
+
+    @Test func deleteTriggersObservationOnEntries() {
+        let storage = MockAnalyticsStorage()
+        let id = UUID()
+        let entry = makeEntry(exerciseId: id, date: date(0), sets: [(60, 10), (65, 8)])
+        storage.save([entry], for: id)
+
+        Container.shared.analyticsStorage.register { storage }
+
+        let vm = AnalyticsViewModel(storageService: storage)
+        vm.reloadEntries(for: id)
+
+        var observationFired = false
+        withObservationTracking {
+            _ = vm.entries
+        } onChange: {
+            observationFired = true
+        }
+
+        vm.deleteSetFromEntry(exerciseId: id, entryId: entry.id, setIndex: 0)
+
+        #expect(observationFired, "Deleting a set must trigger @Observable notification on entries")
+    }
+}

@@ -8,12 +8,14 @@ public enum SetStatus: String, Codable, Sendable {
     case completedMore
 }
 
-public struct SetProgress: Codable, Hashable, Equatable, Sendable {
+public struct SetProgress: Identifiable, Codable, Hashable, Equatable, Sendable {
+    public let id: UUID
     public var status: SetStatus
     public var currentReps: Int
     public var weight: Double
 
-    public init(status: SetStatus, currentReps: Int, weight: Double) {
+    public init(id: UUID = UUID(), status: SetStatus, currentReps: Int, weight: Double) {
+        self.id = id
         self.status = status
         self.currentReps = currentReps
         self.weight = weight
@@ -23,5 +25,11 @@ public struct SetProgress: Codable, Hashable, Equatable, Sendable {
         lhs.status == rhs.status &&
         lhs.currentReps == rhs.currentReps &&
         lhs.weight == rhs.weight
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(status)
+        hasher.combine(currentReps)
+        hasher.combine(weight)
     }
 }
