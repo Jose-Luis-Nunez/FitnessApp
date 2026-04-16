@@ -326,42 +326,44 @@ public struct AnalyticsView: View {
     }
 
     private func setRowView(entry: AnalyticsEntry, index: Int, progress: SetProgress) -> some View {
-        HStack {
-            Text("Set")
-                .font(AppStyle.Font.numberPadSymbol)
-                .foregroundColor(AppStyle.Color.white)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            if exercise.hasWeight {
-                Text(WeightFormatter.format(progress.weight))
-                    .font(AppStyle.Font.analyticsBigNumber)
-                    .foregroundColor(AppStyle.Color.greenGlow)
-
-                Text("kg")
-                    .font(AppStyle.Font.analyticsBigNumber)
-                    .foregroundColor(AppStyle.Color.green)
-            }
-
-            Text("\(progress.currentReps) / \(initialReps)")
-                .font(AppStyle.Font.numberPadSymbol)
-                .foregroundColor(AppStyle.Color.white)
-        }
-        .padding(.horizontal, AppStyle.Padding.horizontal)
-        .padding(.vertical, 20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.06))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
-                )
-        )
-        .padding(.top, 9)
-        .onTapGesture {
+        Button {
             editingEntry = entry
             showAddDataSheet = true
+        } label: {
+            HStack {
+                Text("Set")
+                    .font(AppStyle.Font.numberPadSymbol)
+                    .foregroundColor(AppStyle.Color.white)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                if exercise.hasWeight {
+                    Text(WeightFormatter.format(progress.weight))
+                        .font(AppStyle.Font.analyticsBigNumber)
+                        .foregroundColor(AppStyle.Color.greenGlow)
+
+                    Text("kg")
+                        .font(AppStyle.Font.analyticsBigNumber)
+                        .foregroundColor(AppStyle.Color.green)
+                }
+
+                Text("\(progress.currentReps) / \(initialReps)")
+                    .font(AppStyle.Font.numberPadSymbol)
+                    .foregroundColor(AppStyle.Color.white)
+            }
+            .padding(.horizontal, AppStyle.Padding.horizontal)
+            .padding(.vertical, 20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white.opacity(0.06))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                    )
+            )
+            .padding(.top, 9)
         }
+        .buttonStyle(.plain)
     }
 
     private var addDataOverlay: some View {
