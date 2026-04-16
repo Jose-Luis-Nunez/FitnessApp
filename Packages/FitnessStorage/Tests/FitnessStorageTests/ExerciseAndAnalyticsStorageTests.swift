@@ -5,7 +5,7 @@ import FitnessCore
 @testable import FitnessStorage
 import Factory
 
-@Suite("Exercise & Analytics Storage Roundtrips", .serialized)
+@Suite("Exercise & Analytics Storage Roundtrips")
 @MainActor
 struct ExerciseAndAnalyticsStorageTests {
 
@@ -18,7 +18,7 @@ struct ExerciseAndAnalyticsStorageTests {
     // MARK: - Exercise Save + Load Roundtrip
 
     @Test func saveAndLoadExercisesRoundtrip() {
-        let ws = WorkoutStorageService(container: container)
+        let ws = TestHelpers.makeWorkoutStorageService(container: container)
         let workout = ws.workouts.first!
         let es = ExerciseStorageService(container: container)
 
@@ -47,7 +47,7 @@ struct ExerciseAndAnalyticsStorageTests {
     }
 
     @Test func exerciseOrderPreserved() {
-        let ws = WorkoutStorageService(container: container)
+        let ws = TestHelpers.makeWorkoutStorageService(container: container)
         let workout = ws.workouts.first!
         let es = ExerciseStorageService(container: container)
 
@@ -61,7 +61,7 @@ struct ExerciseAndAnalyticsStorageTests {
     }
 
     @Test func exercisesIsolatedBetweenCategories() {
-        let ws = WorkoutStorageService(container: container)
+        let ws = TestHelpers.makeWorkoutStorageService(container: container)
         let workout = ws.workouts.first!
         let es = ExerciseStorageService(container: container)
 
@@ -77,7 +77,7 @@ struct ExerciseAndAnalyticsStorageTests {
     }
 
     @Test func exercisesIsolatedBetweenWorkouts() {
-        let ws = WorkoutStorageService(container: container)
+        let ws = TestHelpers.makeWorkoutStorageService(container: container)
         let workout1 = ws.workouts.first!
         let workout2 = ws.createWorkout(name: "Workout 2")
         let es = ExerciseStorageService(container: container)
@@ -93,7 +93,7 @@ struct ExerciseAndAnalyticsStorageTests {
     }
 
     @Test func saveOverwritesPreviousExercises() {
-        let ws = WorkoutStorageService(container: container)
+        let ws = TestHelpers.makeWorkoutStorageService(container: container)
         let workout = ws.workouts.first!
         let es = ExerciseStorageService(container: container)
 
@@ -200,7 +200,7 @@ struct ExerciseAndAnalyticsStorageTests {
     // MARK: - Cascade Delete
 
     @Test func deleteWorkoutCascadesExercises() {
-        let ws = WorkoutStorageService(container: container)
+        let ws = TestHelpers.makeWorkoutStorageService(container: container)
         let workout = ws.createWorkout(name: "To Delete")
         let es = ExerciseStorageService(container: container)
 
@@ -219,7 +219,7 @@ struct ExerciseAndAnalyticsStorageTests {
     // MARK: - Empty State
 
     @Test func loadFromEmptyDatabaseReturnsEmpty() {
-        let ws = WorkoutStorageService(container: container)
+        let ws = TestHelpers.makeWorkoutStorageService(container: container)
         let es = ExerciseStorageService(container: container)
         let as_ = AnalyticsStorageService(container: container)
 

@@ -88,6 +88,18 @@ Tests often reveal production code problems. Flag these:
 | Test requires complex setup (> 10 lines of Arrange) | Production type has too many responsibilities — consider splitting | Info |
 | Test uses `@Suite(.serialized)` without clear reason | Production code may have shared mutable state — investigate thread safety | Warning |
 | Test initializes type with two different init signatures | Dual-Init pattern — consider consolidating or documenting intent | Info |
+| Test uses real `Task.sleep` to exercise time-dependent production code | Production type lacks a clock/timer abstraction — introduce a protocol (e.g. `TimerClock`) + fake for deterministic tests | Warning |
+| Test drives the production tick loop with a real-time sleep + tolerance (`>= N`) | Tick cadence is hardcoded — extract as initializer parameter so tests can shorten it | Warning |
+
+#### E.1 — Diagnosing `.serialized`
+
+A `@Suite(.serialized)` trait is legitimate only when production code shares mutable state across tests in that suite. Before keeping it, perform this check:
+
+1. Grep the suite for `Container.shared` usage.
+2. Grep the suite for `UserDefaults.standard` or other process-global mutables.
+3. Grep for file-backed state under a shared path.
+
+If **none** of these are present, `.serialized` is legacy and can be removed. Parallel execution then gives a 3–5× run-time speedup within that suite at zero risk. If any are present, do NOT remove `.serialized` without first migrating the production code to constructor-injected dependencies (see `reviewing-code-changes` section 13c).
 
 ### F: Test Maintenance
 
@@ -97,6 +109,78 @@ Tests often reveal production code problems. Flag these:
 | Tests depend on execution order | Use `.serialized` trait explicitly or make tests independent | Critical |
 | Magic numbers in assertions without context | Use named constants or comment explaining expected value | Warning |
 | Test file > 300 lines without suite splitting | Split into focused `@Suite` structs | Info |
+
+### G: Performance Smells
+
+Slow tests are not just an inconvenience — they are a signal. Before accepting a slow test or "just making CI faster", diagnose the root cause using this matrix.
+
+#### G.1 — The three legitimate reasons for `Task.sleep` in a test
+
+| Purpose | Example | Verdict |
+|---------|---------|---------|
+| **Negative assertion** — "after N ms, state has NOT changed" | `sleep(200ms); #expect(!isCompleted)` | **Keep.** The sleep IS the test. |
+| **Observation-setup race** — `@Observable` subscription activates only after first read | Subscribe / sleep / mutate / wait | **Keep with comment.** Document why the sleep cannot be replaced. Ideally fix the observation-setup in the VM. |
+| **Waiting for async propagation after an event** | `event(); sleep(100ms); #expect(state)` | **Remove.** Use `waitUntil { state == expected }` instead. |
+
+Redundant sleep after `waitUntil` is always removable:
+
+```swift
+// BAD — sleep is redundant, waitUntil already observed the causal chain
+coordinator.startTraining(for: ex)
+try await waitUntil { coordinator.activeSessions[ex.id] != nil }
+try await Task.sleep(for: .milliseconds(100))  // ← delete
+#expect(vm.exercises.count == 2)
+
+// GOOD — assert on the observable state directly
+coordinator.startTraining(for: ex)
+try await waitUntil { coordinator.activeSessions[ex.id] != nil }
+#expect(vm.exercises.count == 2)
+
+// BETTER — wait on the observable state itself
+coordinator.startTraining(for: ex)
+try await waitUntil { vm.exercises.count == 2 }
+```
+
+#### G.2 — Clock abstraction for time-dependent code
+
+When production code reads `Date()` or drives a loop with `Task.sleep`, introduce a protocol (see `TimerService` / `TimerClock`). Tests inject a `FakeClock` that advances synchronously. Never test a 1 s `Task.sleep` with a 1 s real-time wait — that measures Foundation, not your code.
+
+Pattern:
+
+```swift
+public protocol TimerClock: Sendable { func now() -> Date }
+public struct SystemTimerClock: TimerClock {
+    public init() {}
+    public func now() -> Date { Date() }
+}
+
+// Production
+public init(clock: any TimerClock = SystemTimerClock(), tickInterval: Duration = .seconds(1)) { … }
+
+// Test
+let clock = FakeClock()
+let sut = Service(clock: clock, tickInterval: .milliseconds(5))
+clock.advance(by: 1)
+try await waitUntil { sut.publishedValue == 1 }
+```
+
+This gives **deterministic** coverage of the same production path, orders of magnitude faster than real-time sleeps.
+
+#### G.3 — Parallelisation diagnostic
+
+Swift Testing parallelises `@Test` functions by default unless suppressed by `.serialized`. A healthy suite has a parallelisation ratio (sum of per-test durations ÷ wall-clock) of 20–40× on Apple Silicon. Compute it from the package log:
+
+```bash
+sum=$(grep -E "^✔ Test .* passed after [0-9.]+ seconds" LOG | \
+      sed -E 's/.*after ([0-9.]+) seconds.*/\1/' | awk '{s+=$1} END {print s}')
+wall=$(grep -E "^✔ Test run with" LOG | sed -E 's/.*after ([0-9.]+) seconds.*/\1/')
+echo "ratio=$(echo "$sum / $wall" | bc -l)"
+```
+
+Ratio interpretation:
+- **>20×** — healthy, nothing to do.
+- **5–15×** — suppressed parallelism somewhere. Look for `.serialized`, shared `ModelContainer`, or process-global state.
+- **<5×** — either too few tests for meaningful signal, or a single slow test dominates (look at the top-5 slowest tests in the log).
 
 ## Report Format
 
@@ -118,6 +202,7 @@ End with a summary:
 - D (Coverage Gaps): N untested methods
 - E (Testability Hints): N production code issues
 - F (Test Maintenance): N findings
+- G (Performance Smells): N findings (parallelism ratio per package)
 
 Overall: PASS / NEEDS WORK / CRITICAL ISSUES
 ```

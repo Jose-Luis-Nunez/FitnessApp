@@ -3,6 +3,7 @@ import Observation
 import FitnessCore
 import FitnessAnalytics
 import FitnessUI
+import Factory
 
 // MARK: - Training Callbacks Protocol
 
@@ -94,11 +95,16 @@ public final class TrainingCoordinator {
     private var _onAddExercise: @MainActor () -> Void
     private var _onResetAllExercises: @MainActor () -> Void
 
-    private let startTrainingUseCase: StartTrainingUseCase
-    private let completeSetUseCase: CompleteSetUseCase
-    private let finishExerciseUseCase: FinishExerciseUseCase
-    private let cancelTrainingUseCase: CancelTrainingUseCase
-    private let resetExerciseUseCase: ResetExerciseUseCase
+    @ObservationIgnored @Injected(\.startTrainingUseCase)
+    private var startTrainingUseCase: StartTrainingUseCase
+    @ObservationIgnored @Injected(\.completeSetUseCase)
+    private var completeSetUseCase: CompleteSetUseCase
+    @ObservationIgnored @Injected(\.finishExerciseUseCase)
+    private var finishExerciseUseCase: FinishExerciseUseCase
+    @ObservationIgnored @Injected(\.cancelTrainingUseCase)
+    private var cancelTrainingUseCase: CancelTrainingUseCase
+    @ObservationIgnored @Injected(\.resetExerciseUseCase)
+    private var resetExerciseUseCase: ResetExerciseUseCase
 
     private let sessionFactory: @MainActor () -> ActiveSetViewModel
 
@@ -109,11 +115,6 @@ public final class TrainingCoordinator {
         onAddExercise: @escaping @MainActor () -> Void = {},
         onResetAllExercises: @escaping @MainActor () -> Void = {},
         analyticsViewModel: AnalyticsViewModel = AnalyticsViewModel(),
-        startTrainingUseCase: StartTrainingUseCase = StartTrainingUseCase(),
-        completeSetUseCase: CompleteSetUseCase = CompleteSetUseCase(),
-        finishExerciseUseCase: FinishExerciseUseCase = FinishExerciseUseCase(),
-        cancelTrainingUseCase: CancelTrainingUseCase = CancelTrainingUseCase(),
-        resetExerciseUseCase: ResetExerciseUseCase = ResetExerciseUseCase(),
         sessionFactory: @escaping @MainActor () -> ActiveSetViewModel = { ActiveSetViewModel() }
     ) {
         self.analyticsViewModel = analyticsViewModel
@@ -122,11 +123,6 @@ public final class TrainingCoordinator {
         self.onExerciseReset = onExerciseReset
         self._onAddExercise = onAddExercise
         self._onResetAllExercises = onResetAllExercises
-        self.startTrainingUseCase = startTrainingUseCase
-        self.completeSetUseCase = completeSetUseCase
-        self.finishExerciseUseCase = finishExerciseUseCase
-        self.cancelTrainingUseCase = cancelTrainingUseCase
-        self.resetExerciseUseCase = resetExerciseUseCase
         self.sessionFactory = sessionFactory
     }
 
@@ -155,14 +151,16 @@ public final class TrainingCoordinator {
         let vm = sessionFactory()
         vm.onCoordinatorUpdateNeeded = { }
 
-        let result = startTrainingUseCase.execute(
+        // Result intentionally unused: multi-session architecture gives each
+        // exercise its own VM, so .switchedFrom / finishPreviousTraining is never
+        // triggered from the coordinator (always nil). The use case still supports
+        // it for single-session callers.
+        _ = startTrainingUseCase.execute(
             exercise: exercise,
             category: category,
             activeSetViewModel: vm,
             finishPreviousTraining: nil
         )
-
-        _ = result
 
         activeSessions[exercise.id] = vm
         activeExercises[exercise.id] = exercise

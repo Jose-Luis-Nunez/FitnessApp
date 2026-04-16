@@ -68,6 +68,18 @@ enum TestHelpers {
         )
     }
 
+    static func makeWorkoutStorageService(
+        container: ModelContainer,
+        defaults: UserDefaults? = nil,
+        exerciseStorage: ExerciseStoring? = nil
+    ) -> WorkoutStorageService {
+        WorkoutStorageService(
+            container: container,
+            defaults: defaults ?? makeIsolatedDefaults(),
+            exerciseStorage: exerciseStorage ?? NoOpExerciseStorage()
+        )
+    }
+
     static func makeAnalyticsEntry(
         exerciseId: UUID,
         date: Date = Date(),
@@ -79,4 +91,11 @@ enum TestHelpers {
     ) -> AnalyticsEntry {
         AnalyticsEntry(exerciseId: exerciseId, date: date, setProgress: setProgress)
     }
+}
+
+@MainActor
+final class NoOpExerciseStorage: ExerciseStoring {
+    var changeVersion: Int = 0
+    func loadForWorkout(workoutId: UUID, category: MuscleCategoryGroup) -> [Exercise] { [] }
+    func saveForWorkout(_ exercises: [Exercise], workoutId: UUID, category: MuscleCategoryGroup) {}
 }

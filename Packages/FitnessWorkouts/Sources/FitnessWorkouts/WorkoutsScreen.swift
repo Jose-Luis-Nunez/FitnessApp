@@ -30,12 +30,14 @@ private enum Constants {
     }
 }
 
-struct WorkoutsScreen: View {
+public struct WorkoutsScreen: View {
     @State private var viewModel = WorkoutsViewModel()
     @Environment(AppRouter.self) private var router
     @Environment(UIOverlayState.self) private var overlayState
-    
-    var body: some View {
+
+    public init() {}
+
+    public var body: some View {
         ZStack {
             mainContent
             // Mini menu for creating a new workout, opened from the ellipsis in bottom bar
@@ -92,7 +94,7 @@ struct WorkoutsScreen: View {
         )
 
       }
-    
+
     private var mainContent: some View {
         VStack(spacing: 0) {
             headerView
@@ -106,7 +108,7 @@ struct WorkoutsScreen: View {
             }
         }
     }
-    
+
     private var headerView: some View {
         Text("Meine Workouts")
             .font(AppStyle.Font.navigationHeadline)
@@ -116,13 +118,13 @@ struct WorkoutsScreen: View {
             .padding(.top, Constants.titleTopPadding)
             .padding(.bottom, Constants.titleBottomSpacing)
     }
-    
+
     private var workoutsGrid: some View {
         let columns = [
             GridItem(.flexible(), spacing: Constants.verticalSpacing),
             GridItem(.flexible(), spacing: Constants.verticalSpacing)
         ]
-        
+
         return LazyVGrid(columns: columns, spacing: Constants.verticalSpacing) {
             ForEach(viewModel.workouts) { workout in
                 WorkoutTileView(
@@ -143,8 +145,8 @@ struct WorkoutsScreen: View {
             }
         }
     }
-    
-    
+
+
     private var settingsMiniMenu: some View {
         Group {
             if viewModel.showingFABOptions {
@@ -219,7 +221,7 @@ struct WorkoutsScreen: View {
             }
         }
     }
-    
+
     @Environment(\.safeAreaInsets) private var safeAreaInsets
     private var safeAreaInset: CGFloat { safeAreaInsets.bottom }
 }
@@ -231,7 +233,7 @@ private struct WorkoutTileView: View {
     let onTap: () -> Void
     let onLongPress: () -> Void
     let onSettingsTap: () -> Void
-    
+
     var body: some View {
         Button(action: onTap) {
             VStack(spacing: 12) {
@@ -248,16 +250,16 @@ private struct WorkoutTileView: View {
                     .buttonStyle(PlainButtonStyle())
                 }
                 .padding(.top, 6)
-                
+
                 Spacer()
-                
+
                 // Workout Name zentriert
                 Text(workout.name)
                     .font(AppStyle.Font.categorySelectionNameFont)
                     .foregroundColor(AppStyle.Color.white)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
-                
+
                 Spacer()
             }
             .padding(16)
@@ -283,7 +285,7 @@ private struct WorkoutTileView: View {
                                     lineWidth: 3
                                 )
                                 .frame(width: 34, height: 34)
-                            
+
                             // Innerer Ring (dünner)
                             Circle()
                                 .stroke(
@@ -291,14 +293,14 @@ private struct WorkoutTileView: View {
                                     lineWidth: 1
                                 )
                                 .frame(width: 26, height: 26)
-                            
+
                             Text("\(exerciseCount)")
                                 .font(AppStyle.Font.detailBadge)
                                 .foregroundColor(isDefault ? AppStyle.Color.green : Color.white)
                         }
                         .padding(.leading, 20)
                         .padding(.top, 20)
-                        
+
                         Spacer()
                     }
                     Spacer()
@@ -309,4 +311,4 @@ private struct WorkoutTileView: View {
             onLongPress()
         }
     }
-} 
+}

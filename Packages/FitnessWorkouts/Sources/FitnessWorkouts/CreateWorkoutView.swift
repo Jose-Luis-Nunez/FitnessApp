@@ -84,9 +84,9 @@ struct MuscleGroupTile: View {
     let group: MuscleCategoryGroup
     let isSelected: Bool
     let onTap: () -> Void
-    
+
     private let iconSize: CGFloat = 60
-    
+
     var body: some View {
         Button(action: onTap) {
             VStack(spacing: 8) {
@@ -98,7 +98,7 @@ struct MuscleGroupTile: View {
                             .blur(radius: 10)
                             .opacity(0.6)
                     }
-                    
+
                     Image(group.defaultIconName)
                         .resizable()
                         .scaledToFill()
@@ -107,7 +107,7 @@ struct MuscleGroupTile: View {
                         .foregroundColor(isSelected ? AppStyle.Color.green : AppStyle.Color.white)
                 }
                 .frame(width: iconSize, height: iconSize)
-                
+
                 Text(group.displayName)
                     .font(AppStyle.Font.detailCaption)
                     .foregroundColor(isSelected ? AppStyle.Color.green : AppStyle.Color.white)
@@ -129,4 +129,4 @@ struct MuscleGroupTile: View {
         }
         .buttonStyle(PlainButtonStyle())
     }
-} 
+}

@@ -39,15 +39,66 @@ SPM test targets are **not** in the app scheme. Run them via the **package's own
 cd ~/Documents/repo/FitnessApp/Packages/FitnessTraining && DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer PATH="/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer/usr/bin:$PATH" xcodebuild test -scheme FitnessTraining -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -skipMacroValidation 2>&1 | tail -30
 ```
 
-### All packages
+### All packages (sequential — for CI / debugging a single failure)
 
 ```bash
 for pkg in FitnessExercise FitnessTraining FitnessAnalytics FitnessStorage FitnessProfile; do
-  echo "=== Testing $pkg ===" && \
-  cd ~/Documents/repo/FitnessApp/Packages/$pkg && \
-  DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer PATH="/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer/usr/bin:$PATH" xcodebuild test -scheme $pkg -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -skipMacroValidation 2>&1 | tail -10
+ echo "=== Testing $pkg ===" && \
+ cd ~/Documents/repo/FitnessApp/Packages/$pkg && \
+ DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer PATH="/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer/usr/bin:$PATH" xcodebuild test -scheme $pkg -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -skipMacroValidation 2>&1 | tail -10
 done
 ```
+
+### Fast Test Loop (parallel — for local dev)
+
+The bottleneck when running multiple package schemes is not test execution — it's the `xcodebuild` process startup + simulator attach overhead (≈4 s per scheme). Running each scheme as an independent background shell reduces total wall-clock from ~34 s to ~8 s on an iPhone 17 Pro Max simulator with the current suite.
+
+Boot the simulator once, then run all packages in parallel. The simulator serialises concurrent test runners internally, so this is safe.
+
+```bash
+#!/bin/bash
+# Save as scripts/fast-test.sh
+set -e
+export DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer
+export PATH="$DEVELOPER_DIR/usr/bin:$PATH"
+
+PACKAGES=(FitnessExercise FitnessTraining FitnessAnalytics FitnessStorage FitnessProfile FitnessWorkouts)
+DEST='platform=iOS Simulator,name=iPhone 17 Pro Max'
+LOG_DIR=$(mktemp -d)
+
+# Boot simulator once (no-op if already booted)
+xcrun simctl boot 'iPhone 17 Pro Max' 2>/dev/null || true
+
+pids=()
+for pkg in "${PACKAGES[@]}"; do
+ (
+   cd ~/Documents/repo/FitnessApp/Packages/$pkg && \
+   xcodebuild test -scheme "$pkg" -destination "$DEST" -skipMacroValidation \
+     > "$LOG_DIR/$pkg.log" 2>&1
+   echo "$? $pkg" > "$LOG_DIR/$pkg.exit"
+ ) &
+ pids+=($!)
+done
+
+for pid in "${pids[@]}"; do wait "$pid"; done
+
+echo "=== Results ==="
+fail=0
+for pkg in "${PACKAGES[@]}"; do
+ status=$(cut -d' ' -f1 "$LOG_DIR/$pkg.exit")
+ if [ "$status" = "0" ]; then
+   summary=$(grep -E '^(Test Suite .* passed|\*\* TEST SUCCEEDED \*\*|Executed [0-9]+ tests)' "$LOG_DIR/$pkg.log" | tail -1)
+   printf "  OK  %-20s %s\n" "$pkg" "$summary"
+ else
+   printf "  FAIL %-20s (see $LOG_DIR/$pkg.log)\n" "$pkg"
+   fail=1
+ fi
+done
+
+exit $fail
+```
+
+When a package fails, the per-package log in `$LOG_DIR` has the full output. Use the sequential loop above only when debugging a single failure in isolation or when CI memory limits prevent parallel simulators.
 
 ## Notes
 

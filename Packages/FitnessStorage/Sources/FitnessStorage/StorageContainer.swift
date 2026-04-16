@@ -20,7 +20,9 @@ public extension Container {
     }
 
     var workoutStorage: Factory<WorkoutStoring> {
-        self { MainActor.assumeIsolated { WorkoutStorageService() } }.singleton
+        self { MainActor.assumeIsolated {
+            WorkoutStorageService(exerciseStorage: Container.shared.exerciseStorage())
+        } }.singleton
     }
     var exerciseStorage: Factory<ExerciseStoring> {
         self { MainActor.assumeIsolated { ExerciseStorageService() } }.singleton

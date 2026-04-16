@@ -3,6 +3,7 @@ import Foundation
 @testable import FitnessTraining
 import FitnessCore
 import FitnessAnalytics
+import FitnessStorage
 import FitnessTestSupport
 import Factory
 
@@ -29,12 +30,13 @@ private func makeCoordinator(
 @MainActor
 struct FinishExerciseTests {
 
-    @Test func setsCurrentExerciseToNilAndIsTrainingActiveToFalse() {
+    @Test func setsCurrentExerciseToNilAndIsTrainingActiveToFalse() throws {
         let coordinator = makeCoordinator()
 
         let exercise = makeExercise()
         coordinator.startTraining(for: exercise)
-        #expect(coordinator.currentExercise != nil)
+        let currentBefore = try #require(coordinator.currentExercise)
+        #expect(currentBefore.id == exercise.id)
         #expect(coordinator.isTrainingActive == true)
 
         for _ in 0..<exercise.sets {
@@ -71,7 +73,7 @@ struct FinishExerciseTests {
         #expect(receivedCategory == .arms)
     }
 
-    @Test func setsLastCompletedExerciseWhenAllSetsFinished() {
+    @Test func setsLastCompletedExerciseWhenAllSetsFinished() throws {
         let coordinator = makeCoordinator()
 
         let exercise = makeExercise(sets: 2)
@@ -80,9 +82,9 @@ struct FinishExerciseTests {
         for _ in 0..<2 { coordinator.completeSet() }
         coordinator.finishExercise()
 
-        #expect(coordinator.lastCompletedExercise != nil)
-        #expect(coordinator.lastCompletedExercise?.id == exercise.id)
-        #expect(coordinator.lastCompletedExercise?.isCompleted == true)
+        let completed = try #require(coordinator.lastCompletedExercise)
+        #expect(completed.id == exercise.id)
+        #expect(completed.isCompleted == true)
     }
 
     @Test func doesNotSetLastCompletedWhenNotAllSetsFinished() {
@@ -677,5 +679,97 @@ struct ResetExerciseCoordinatorTests {
 
         #expect(coordinator.activeSessions.count == 1)
         #expect(coordinator.activeSessions[exercise1.id] != nil)
+    }
+}
+
+// MARK: - Factory integration (via TrainingCoordinatorCache)
+
+@MainActor
+private final class StubExerciseManagement: ExerciseManaging {
+    var updatedExercises: [Exercise] = []
+    var resetExercises: [Exercise] = []
+
+    func updateExercise(_ updatedExercise: Exercise, category: MuscleCategoryGroup) {
+        updatedExercises.append(updatedExercise)
+    }
+    func getExercises(for category: MuscleCategoryGroup) -> [Exercise] { [] }
+    func addExercise(_ exercise: Exercise, category: MuscleCategoryGroup, atTop: Bool) {}
+    func completeExercise(_ exercise: Exercise, category: MuscleCategoryGroup, setProgress: [SetProgress]) {}
+    func resetExercise(_ exercise: Exercise, category: MuscleCategoryGroup) {
+        resetExercises.append(exercise)
+    }
+    func resetAllExercises(for categories: [MuscleCategoryGroup]) {}
+    func getExerciseCount(for category: MuscleCategoryGroup) -> (total: Int, active: Int) { (0, 0) }
+    func getAllExerciseCounts(for categories: [MuscleCategoryGroup]) -> [MuscleCategoryGroup: (total: Int, active: Int)] { [:] }
+    func hasInactiveExercises(for categories: [MuscleCategoryGroup]) -> Bool { false }
+}
+
+@Suite("Factory integration")
+@MainActor
+struct FactoryIntegrationTests {
+
+    init() {
+        Container.shared.reset()
+    }
+
+    @Test func coordinatorFromCacheStartsAndFinishesTraining() {
+        let stub = StubExerciseManagement()
+        Container.shared.exerciseManagement.register { stub }
+
+        let cache = TrainingCoordinatorCache()
+        let coordinator = cache.coordinator(for: .arms)
+
+        let exercise = makeExercise(sets: 2)
+        coordinator.startTraining(for: exercise)
+
+        #expect(coordinator.isTrainingActive == true)
+        #expect(coordinator.currentExercise?.id == exercise.id)
+
+        for _ in 0..<2 { coordinator.completeSet() }
+        coordinator.finishExercise()
+
+        #expect(coordinator.currentExercise == nil)
+        #expect(coordinator.isTrainingActive == false)
+        #expect(stub.updatedExercises.count == 1)
+        #expect(stub.updatedExercises.first?.isCompleted == true)
+    }
+
+    @Test func coordinatorFromCacheResetsExercise() {
+        let stub = StubExerciseManagement()
+        Container.shared.exerciseManagement.register { stub }
+
+        let cache = TrainingCoordinatorCache()
+        let coordinator = cache.coordinator(for: .chest)
+
+        let exercise = makeExercise(sets: 3, category: .chest)
+        coordinator.startTraining(for: exercise)
+        coordinator.resetExercise()
+
+        #expect(coordinator.activeSessions.isEmpty)
+        #expect(stub.resetExercises.count == 1)
+    }
+}
+
+// MARK: - startTraining edge cases
+
+@Suite("startTraining edge cases")
+@MainActor
+struct StartTrainingEdgeCaseTests {
+
+    @Test func findCategoryReturningNilIsNoOp() {
+        Container.shared.reset()
+        let coordinator = TrainingCoordinator(
+            findCategory: { _ in nil },
+            onExerciseUpdate: { _, _ in },
+            onExerciseReset: { _, _ in },
+            analyticsViewModel: AnalyticsViewModel(storageService: StubAnalyticsStorage())
+        )
+
+        let exercise = makeExercise()
+        coordinator.startTraining(for: exercise)
+
+        #expect(coordinator.currentExercise == nil)
+        #expect(coordinator.isTrainingActive == false)
+        #expect(coordinator.activeSessions.isEmpty)
     }
 }

@@ -8,6 +8,7 @@ import FitnessExercise
 import FitnessAnalytics
 import FitnessSchedule
 import FitnessTraining
+import FitnessWorkouts
 import Factory
 
 @main

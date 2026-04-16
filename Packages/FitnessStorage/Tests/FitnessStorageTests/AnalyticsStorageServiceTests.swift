@@ -5,7 +5,7 @@ import FitnessCore
 @testable import FitnessStorage
 import Factory
 
-@Suite("AnalyticsStorageService", .serialized)
+@Suite("AnalyticsStorageService")
 @MainActor
 struct AnalyticsStorageServiceTests {
 

@@ -10,6 +10,7 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../FitnessCore"),
+        .package(path: "../FitnessTestSupport"),
         .package(url: "https://github.com/hmlongco/Factory.git", from: "2.5.0"),
     ],
     targets: [
@@ -19,7 +20,7 @@ let package = Package(
         ),
         .testTarget(
             name: "FitnessStorageTests",
-            dependencies: ["FitnessStorage"]
+            dependencies: ["FitnessStorage", "FitnessTestSupport"]
         ),
     ]
 )

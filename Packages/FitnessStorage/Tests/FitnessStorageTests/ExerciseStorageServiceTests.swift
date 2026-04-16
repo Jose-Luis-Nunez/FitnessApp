@@ -5,7 +5,7 @@ import FitnessCore
 @testable import FitnessStorage
 import Factory
 
-@Suite("ExerciseStorageService", .serialized)
+@Suite("ExerciseStorageService")
 @MainActor
 struct ExerciseStorageServiceTests {
 
@@ -16,7 +16,7 @@ struct ExerciseStorageServiceTests {
     }
 
     private func makeSUT() -> (ExerciseStorageService, Workout) {
-        let ws = WorkoutStorageService(container: container)
+        let ws = TestHelpers.makeWorkoutStorageService(container: container)
         let workout = ws.workouts.first!
         let es = ExerciseStorageService(container: container)
         return (es, workout)
@@ -167,7 +167,7 @@ struct ExerciseStorageServiceTests {
     // MARK: - Workout Isolation
 
     @Test func exercisesIsolatedBetweenDifferentWorkouts() {
-        let ws = WorkoutStorageService(container: container)
+        let ws = TestHelpers.makeWorkoutStorageService(container: container)
         let workout1 = ws.workouts.first!
         let workout2 = ws.createWorkout(name: "Second")
         let sut = ExerciseStorageService(container: container)
@@ -249,7 +249,7 @@ struct ExerciseStorageServiceTests {
     // MARK: - Persistence Across Service Instances
 
     @Test func dataPersistedAcrossServiceInstances() {
-        let ws = WorkoutStorageService(container: container)
+        let ws = TestHelpers.makeWorkoutStorageService(container: container)
         let workout = ws.workouts.first!
 
         let sut1 = ExerciseStorageService(container: container)

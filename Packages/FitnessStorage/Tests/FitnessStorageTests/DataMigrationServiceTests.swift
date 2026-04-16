@@ -5,7 +5,7 @@ import FitnessCore
 @testable import FitnessStorage
 import Factory
 
-@Suite("DataMigrationService", .serialized)
+@Suite("DataMigrationService")
 @MainActor
 struct DataMigrationServiceTests {
 

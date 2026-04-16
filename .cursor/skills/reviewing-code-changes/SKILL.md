@@ -282,6 +282,59 @@ class ProfileViewModel: ObservableObject {
 }
 ```
 
+##### `@Injected` vs Constructor-DI — choosing the right flavour
+
+Both are legitimate uses of the Factory DI container. The difference is **where the lookup happens** and what that means for tests, ownership, and Swift 6 concurrency.
+
+| Flavour | Pattern | When to use |
+|---------|---------|-------------|
+| **Property** (`@Injected`) | `@Injected(\.x) private var x` — resolved from `Container.shared` at first access | Views, long-lived caches/singletons, coordinators that don't need unit-test mocking. Ownership is implicit via the global container. |
+| **Constructor with Factory default** | `init(x: X? = nil) { self.x = x ?? Container.shared.x() }` | ViewModels, services, use cases, anything with unit tests. Tests pass mocks directly; production gets the Factory default. |
+
+Decision criteria:
+
+1. **Has the type got unit tests?** If yes → constructor-DI. Tests should not need `Container.shared.register { … }` + `.serialized` to isolate.
+2. **Do you care who owns the dependency?** If yes → constructor-DI (the signature tells the story).
+3. **Is the type `@MainActor` with a `nonisolated init`?** Property `@Injected` forces `MainActor.assumeIsolated` gymnastics in the Factory registration. Constructor-DI avoids this.
+4. **Is the dependency short-lived or request-scoped?** Use constructor-DI; `@Injected` is for long-lived singletons.
+
+Migration pattern (same shape used in `WorkoutsViewModel`):
+
+```swift
+// BEFORE — Property injection
+public final class ExerciseManagementService: ExerciseManaging {
+    @Injected(\.exerciseStorage) private var storageService
+    @Injected(\.analyticsStorage) private var analyticsStorage
+    @Injected(\.workoutStorage) private var workoutStorageService
+    public init() {}
+}
+
+// AFTER — Constructor injection with Factory default
+public final class ExerciseManagementService: ExerciseManaging {
+    private let storageService: ExerciseStoring
+    private let analyticsStorage: AnalyticsStoring
+    private let workoutStorageService: WorkoutStoring
+
+    public init(
+        exerciseStorage: ExerciseStoring? = nil,
+        analyticsStorage: AnalyticsStoring? = nil,
+        workoutStorage: WorkoutStoring? = nil
+    ) {
+        self.storageService = exerciseStorage ?? Container.shared.exerciseStorage()
+        self.analyticsStorage = analyticsStorage ?? Container.shared.analyticsStorage()
+        self.workoutStorageService = workoutStorage ?? Container.shared.workoutStorage()
+    }
+}
+```
+
+The production call-site stays `ExerciseManagementService()` (Factory factory in `StorageContainer.swift` is unchanged). Tests now write `ExerciseManagementService(exerciseStorage: mockES, …)` with no global state touched.
+
+##### Common misconception
+
+"Property `@Injected` is a service-locator antipattern and should be removed project-wide." Wrong. `@Injected` IS dependency injection (via Factory), just in a weaker flavour. Views and caches are legitimate users. The goal is **not** to eliminate `@Injected` — it is to **use constructor-DI where unit-testability matters**, and to keep `@Injected` where it doesn't.
+
+This is DI-**evolution**, not DI-**reversal**. The Factory container and protocol registrations remain. Only the access pattern changes, selectively.
+
 #### 13d. API Safety
 
 - Closures/callbacks on shared objects are not `public var` (prevents accidental overwrite).

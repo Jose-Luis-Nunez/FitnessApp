@@ -53,4 +53,4 @@ struct RenameWorkoutView: View {
             .padding(.top, 32)
         }
     }
-} 
+}

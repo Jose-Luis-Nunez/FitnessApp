@@ -18,7 +18,7 @@ public final class MuscleCategoryViewModel {
     private let storageService: ExerciseStoring
     private let workoutStorageService: WorkoutStoring
     private var cardViewModels: [UUID: ExerciseCardViewModel] = [:]
-    nonisolated(unsafe) private var coordinatorObservationTask: Task<Void, Never>?
+    nonisolated(unsafe) private var storageObservationTask: Task<Void, Never>?
 
     public init(group: MuscleCategoryGroup) {
         self.group = group
@@ -38,7 +38,7 @@ public final class MuscleCategoryViewModel {
         self.coordinator = coord
         self.activeSetViewModel = coord.activeSetViewModel
 
-        startCoordinatorObservation(coord)
+        startStorageObservation()
     }
 
     public init(
@@ -60,32 +60,30 @@ public final class MuscleCategoryViewModel {
             onExerciseUpdate: { _, _ in },
             onExerciseReset: { _, _ in }
         )
-        if let coordinator { startCoordinatorObservation(coordinator) }
+        startStorageObservation()
     }
 
     deinit {
-        coordinatorObservationTask?.cancel()
+        storageObservationTask?.cancel()
     }
 
-    /// Observes `lastCompletedExercise` on the coordinator.
-    /// When an exercise is completed, updates it in-place in the local array
-    /// and syncs the cached card view model so the UI switches to InactiveCardView.
-    private func startCoordinatorObservation(_ coordinator: TrainingCoordinator) {
-        coordinatorObservationTask = Task { [weak self] in
+    /// Observes `storageService.changeVersion` — a monotonic counter that
+    /// increments on every write. When it changes, re-fetches exercises
+    /// from the single source of truth (SwiftData) and syncs card VMs.
+    private func startStorageObservation() {
+        storageObservationTask = Task { [weak self] in
             while !Task.isCancelled {
-                await withCheckedContinuation { continuation in
+                let changed: Bool = await withCheckedContinuation { continuation in
                     withObservationTracking {
-                        _ = coordinator.lastCompletedExercise
+                        _ = self?.storageService.changeVersion
                     } onChange: {
-                        continuation.resume()
+                        continuation.resume(returning: true)
                     }
                 }
-                guard let self, !Task.isCancelled else { return }
-
-                if let completed = coordinator.lastCompletedExercise,
-                   let index = self.exercises.firstIndex(where: { $0.id == completed.id }) {
-                    self.exercises[index] = completed
-                    self.cardViewModels[completed.id]?.syncExercise(completed)
+                guard changed, let self, !Task.isCancelled else { return }
+                self.refreshExercises()
+                for exercise in self.exercises {
+                    self.cardViewModels[exercise.id]?.syncExercise(exercise)
                 }
             }
         }

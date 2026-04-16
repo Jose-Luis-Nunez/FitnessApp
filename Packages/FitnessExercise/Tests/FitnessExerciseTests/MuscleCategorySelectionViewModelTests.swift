@@ -7,19 +7,36 @@ import FitnessTraining
 import FitnessTestSupport
 import Factory
 
+// MARK: - Observable Exercise Storage (change-version tracker)
+
+@Observable
+@MainActor
+private final class ObservableMockExerciseStorage: ExerciseStoring {
+    private(set) var changeVersion: Int = 0
+
+    func loadForWorkout(workoutId: UUID, category: MuscleCategoryGroup) -> [Exercise] { [] }
+    func saveForWorkout(_ exercises: [Exercise], workoutId: UUID, category: MuscleCategoryGroup) {
+        changeVersion += 1
+    }
+
+    func bumpVersion() { changeVersion += 1 }
+}
+
 // MARK: - Mock Coordinator Cache
 
 @MainActor
 private final class MockCoordinatorCache: TrainingCoordinatorCaching {
     private var coordinators: [MuscleCategoryGroup: TrainingCoordinator] = [:]
+    var exerciseStorage: ObservableMockExerciseStorage?
 
     func coordinator(for group: MuscleCategoryGroup) -> TrainingCoordinator {
         if let existing = coordinators[group] {
             return existing
         }
+        let storage = exerciseStorage
         let coordinator = TrainingCoordinator(
             findCategory: { _ in group },
-            onExerciseUpdate: { _, _ in },
+            onExerciseUpdate: { _, _ in storage?.bumpVersion() },
             onExerciseReset: { _, _ in }
         )
         coordinators[group] = coordinator
@@ -163,6 +180,9 @@ struct CategoriesTests {
         )
         #expect(vm.categories == [.arms])
 
+        // Observation subscription activates only after the first `vm.categories` read.
+        // Yield so the observer is installed before we mutate upstream state —
+        // otherwise the second `setCurrentWorkout` fires before the VM is listening.
         try await Task.sleep(for: .milliseconds(50))
 
         ws.setCurrentWorkout(Workout(name: "W2", selectedCategories: [.chest, .legs]))
@@ -207,11 +227,14 @@ struct ExerciseCountsTests {
         let ws = MockWorkoutStorage()
         ws.setCurrentWorkout(Workout(name: "Test", selectedCategories: [.arms]))
 
+        let exerciseStorage = ObservableMockExerciseStorage()
         let cache = MockCoordinatorCache()
+        cache.exerciseStorage = exerciseStorage
         let vm = MuscleCategorySelectionViewModel(
             coordinatorCache: cache,
             exerciseManagement: mock,
-            workoutStorage: ws
+            workoutStorage: ws,
+            exerciseStorage: exerciseStorage
         )
         #expect(vm.getExerciseCount(for: .arms)?.active == 1)
 
@@ -298,17 +321,32 @@ struct SelectionCardViewModelCacheTests {
 @MainActor
 struct ResetAllExercisesTests {
 
-    @Test func doesNothingWithoutWorkout() {
+    @Test func resetAllExercises_whenNoCurrentWorkout_doesNotMutateExercises() {
+        Container.shared.reset()
+
+        let mock = MockExerciseManagement()
+        let completed = makeExercise(isCompleted: true)
+        mock.exercisesByCategory[.arms] = [completed]
+        Container.shared.exerciseManagement.register { mock }
+
         let ws = MockWorkoutStorage()
+        // currentWorkout intentionally left nil — guard in production code must short-circuit.
 
         let vm = MuscleCategorySelectionViewModel(
             coordinatorCache: MockCoordinatorCache(),
+            exerciseManagement: mock,
             workoutStorage: ws
         )
+
         vm.resetAllExercises()
+
+        // Invariant: without a currentWorkout the VM must not touch exercises.
+        #expect(mock.exercisesByCategory[.arms]?.first?.isCompleted == true)
     }
 
     @Test func resetsExercisesAndUpdatesCounts() {
+        Container.shared.reset()
+
         let mock = MockExerciseManagement()
         mock.exercisesByCategory[.arms] = [makeExercise(isCompleted: true)]
         Container.shared.exerciseManagement.register { mock }
@@ -467,7 +505,9 @@ struct CoordinatorCompletionIntegrationTests {
         let mock = MockExerciseManagement()
         mock.exercisesByCategory[.arms] = [exercise]
 
+        let exerciseStorage = ObservableMockExerciseStorage()
         let cache = MockCoordinatorCache()
+        cache.exerciseStorage = exerciseStorage
 
         let ws = MockWorkoutStorage()
         ws.setCurrentWorkout(Workout(name: "Test", selectedCategories: [.arms]))
@@ -475,7 +515,8 @@ struct CoordinatorCompletionIntegrationTests {
         let vm = MuscleCategorySelectionViewModel(
             coordinatorCache: cache,
             exerciseManagement: mock,
-            workoutStorage: ws
+            workoutStorage: ws,
+            exerciseStorage: exerciseStorage
         )
         let coordinator = cache.coordinator(for: .arms)
 
@@ -533,7 +574,9 @@ struct CoordinatorCompletionIntegrationTests {
         let mock = MockExerciseManagement()
         mock.exercisesByCategory[.arms] = [exercise]
 
+        let exerciseStorage = ObservableMockExerciseStorage()
         let cache = MockCoordinatorCache()
+        cache.exerciseStorage = exerciseStorage
 
         let ws = MockWorkoutStorage()
         ws.setCurrentWorkout(Workout(name: "Test", selectedCategories: [.arms]))
@@ -541,7 +584,8 @@ struct CoordinatorCompletionIntegrationTests {
         let vm = MuscleCategorySelectionViewModel(
             coordinatorCache: cache,
             exerciseManagement: mock,
-            workoutStorage: ws
+            workoutStorage: ws,
+            exerciseStorage: exerciseStorage
         )
         let coordinator = cache.coordinator(for: .arms)
 

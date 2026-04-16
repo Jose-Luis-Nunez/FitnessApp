@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import Observation
 @testable import FitnessExercise
 import FitnessCore
 import FitnessStorage
@@ -10,9 +11,16 @@ import Factory
 
 // MARK: - Mock Storage
 
+@Observable
 @MainActor
+/// NOTE: Intentional local variant of `FitnessTestSupport.MockExerciseStorage`.
+/// The 16 test call-sites in this file use `storage.savedExercises[.arms] = ...` as a
+/// test-DSL idiom. The shared support type exposes the same shape under the name
+/// `exercisesByCategory`; renaming here would be a 16-point churn with no functional
+/// gain. Keep this file-private alias until the Support variant is restructured.
 private final class MockExerciseStorage: ExerciseStoring {
     var savedExercises: [MuscleCategoryGroup: [Exercise]] = [:]
+    private(set) var changeVersion: Int = 0
 
     func loadForWorkout(workoutId: UUID, category: MuscleCategoryGroup) -> [Exercise] {
         savedExercises[category] ?? []
@@ -20,38 +28,26 @@ private final class MockExerciseStorage: ExerciseStoring {
 
     func saveForWorkout(_ exercises: [Exercise], workoutId: UUID, category: MuscleCategoryGroup) {
         savedExercises[category] = exercises
+        changeVersion += 1
     }
 }
 
-@MainActor
-private final class MockWorkoutStorage: WorkoutStoring {
-    var workouts: [Workout] = []
-    var currentWorkout: Workout?
-    var defaultWorkout: Workout?
-
-    func createWorkout(name: String, selectedCategories: Set<MuscleCategoryGroup>) -> Workout {
-        let w = Workout(name: name, selectedCategories: selectedCategories)
-        workouts.append(w)
-        return w
-    }
-    func duplicateWorkout(_ workout: Workout) -> Workout { workout }
-    func deleteWorkout(_ workout: Workout) {}
-    func updateWorkout(_ workout: Workout) {}
-    func setCurrentWorkout(_ workout: Workout) { currentWorkout = workout }
-    func setAsDefaultWorkout(_ workout: Workout) { defaultWorkout = workout }
-    func removeAsDefaultWorkout() { defaultWorkout = nil }
-    func renameWorkout(_ workout: Workout, newName: String) {}
-}
+// (MockWorkoutStorage is reused from FitnessTestSupport — the stateful mock
+// with create/delete/duplicate/rename semantics is a strict superset of the
+// previous file-private version.)
 
 // MARK: - Helpers
 
 @MainActor
 private func makeVM(
     exercises: [Exercise] = [],
-    coordinator: TrainingCoordinator? = nil
+    coordinator: TrainingCoordinator? = nil,
+    storage: MockExerciseStorage? = nil
 ) -> (MuscleCategoryViewModel, MockExerciseStorage) {
-    let storage = MockExerciseStorage()
-    storage.savedExercises[.arms] = exercises
+    let storage = storage ?? MockExerciseStorage()
+    if storage.savedExercises[.arms] == nil {
+        storage.savedExercises[.arms] = exercises
+    }
     let workoutStorage = MockWorkoutStorage()
     let testWorkout = Workout(name: "Test", selectedCategories: [.arms])
     workoutStorage.currentWorkout = testWorkout
@@ -290,11 +286,20 @@ struct RefreshExercisesTests {
 
 // MARK: - Auto-refresh on external training completion
 
+private let testWorkoutId = UUID()
+
 @MainActor
-private func makeCoordinator() -> TrainingCoordinator {
+private func makeCoordinator(storage: MockExerciseStorage? = nil) -> TrainingCoordinator {
     return TrainingCoordinator(
         findCategory: { _ in .arms },
-        onExerciseUpdate: { _, _ in },
+        onExerciseUpdate: { exercise, category in
+            guard let storage else { return }
+            var exercises = storage.savedExercises[category] ?? []
+            if let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
+                exercises[index] = exercise
+            }
+            storage.saveForWorkout(exercises, workoutId: testWorkoutId, category: category)
+        },
         onExerciseReset: { _, _ in }
     )
 }
@@ -317,7 +322,6 @@ struct ObserverStabilityTests {
         coordinator.startTraining(for: ex1)
 
         try await waitUntil { coordinator.activeSessions[ex1.id] != nil }
-        try await Task.sleep(for: .milliseconds(100))
 
         #expect(vm.exercises.count == 3)
         #expect(vm.exercises.contains(where: { $0.id == ex1.id }))
@@ -340,7 +344,6 @@ struct ObserverStabilityTests {
 
         coordinator.cancelTraining(for: ex1.id)
         try await waitUntil { coordinator.activeSessions[ex1.id] == nil }
-        try await Task.sleep(for: .milliseconds(100))
 
         #expect(vm.exercises.count == 2)
         #expect(vm.exercises.contains(where: { $0.id == ex1.id }))
@@ -351,8 +354,10 @@ struct ObserverStabilityTests {
         let ex1 = makeExercise(name: "Curl")
         let ex2 = makeExercise(name: "Press")
         let ex3 = makeExercise(name: "Fly")
-        let coordinator = makeCoordinator()
-        let (vm, _) = makeVM(exercises: [ex1, ex2, ex3], coordinator: coordinator)
+        let storage = MockExerciseStorage()
+        storage.savedExercises[.arms] = [ex1, ex2, ex3]
+        let coordinator = makeCoordinator(storage: storage)
+        let (vm, _) = makeVM(exercises: [ex1, ex2, ex3], coordinator: coordinator, storage: storage)
 
         await Task.yield()
 
@@ -388,22 +393,18 @@ struct ObserverStabilityTests {
 
         coordinator.startTraining(for: ex1)
         try await waitUntil { coordinator.activeSessions[ex1.id] != nil }
-        try await Task.sleep(for: .milliseconds(50))
         #expect(vm.exercises.count == 2)
 
         coordinator.startTraining(for: ex2)
         try await waitUntil { coordinator.activeSessions[ex2.id] != nil }
-        try await Task.sleep(for: .milliseconds(50))
         #expect(vm.exercises.count == 2)
 
         coordinator.cancelTraining(for: ex1.id)
         try await waitUntil { coordinator.activeSessions[ex1.id] == nil }
-        try await Task.sleep(for: .milliseconds(50))
         #expect(vm.exercises.count == 2)
 
         coordinator.cancelTraining(for: ex2.id)
         try await waitUntil { coordinator.activeSessions[ex2.id] == nil }
-        try await Task.sleep(for: .milliseconds(50))
         #expect(vm.exercises.count == 2)
     }
 }
@@ -415,8 +416,10 @@ struct AutoRefreshTests {
     @Test func updatesExerciseInPlaceWhenCoordinatorCompletesIt() async throws {
         let id = UUID()
         let original = makeExercise(id: id, isCompleted: false)
-        let coordinator = makeCoordinator()
-        let (vm, _) = makeVM(exercises: [original], coordinator: coordinator)
+        let storage = MockExerciseStorage()
+        storage.savedExercises[.arms] = [original]
+        let coordinator = makeCoordinator(storage: storage)
+        let (vm, _) = makeVM(exercises: [original], coordinator: coordinator, storage: storage)
 
         await Task.yield()
 
@@ -451,8 +454,10 @@ struct AutoRefreshTests {
     @Test func cachedCardViewModelUpdatesAfterCompletion() async throws {
         let id = UUID()
         let original = makeExercise(id: id, isCompleted: false)
-        let coordinator = makeCoordinator()
-        let (vm, _) = makeVM(exercises: [original], coordinator: coordinator)
+        let storage = MockExerciseStorage()
+        storage.savedExercises[.arms] = [original]
+        let coordinator = makeCoordinator(storage: storage)
+        let (vm, _) = makeVM(exercises: [original], coordinator: coordinator, storage: storage)
 
         let cardVM = vm.cardViewModel(for: original)
         #expect(cardVM.exercise.isCompleted == false)
@@ -479,8 +484,10 @@ struct AutoRefreshTests {
     @Test func ignoresCompletionForUnknownExerciseId() async throws {
         let knownExercise = makeExercise(name: "Curl")
         let unknownExercise = makeExercise(name: "Unknown")
-        let coordinator = makeCoordinator()
-        let (vm, _) = makeVM(exercises: [knownExercise], coordinator: coordinator)
+        let storage = MockExerciseStorage()
+        storage.savedExercises[.arms] = [knownExercise]
+        let coordinator = makeCoordinator(storage: storage)
+        let (vm, _) = makeVM(exercises: [knownExercise], coordinator: coordinator, storage: storage)
 
         await Task.yield()
 

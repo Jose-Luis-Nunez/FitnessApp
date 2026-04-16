@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 import os
 import SwiftData
 import FitnessCore
@@ -6,8 +7,14 @@ import Factory
 
 private let logger = Logger(subsystem: "FitnessStorage", category: "ExerciseStorageService")
 
+@Observable
 @MainActor
 public final class ExerciseStorageService: ExerciseStoring {
+    /// Monotonically increasing counter; increments on every write.
+    /// Observers re-fetch exercises when this changes.
+    public private(set) var changeVersion: Int = 0
+
+    @ObservationIgnored
     private let context: ModelContext
 
     public init(container: ModelContainer? = nil) {
@@ -58,7 +65,9 @@ public final class ExerciseStorageService: ExerciseStoring {
             context.insert(model)
         }
 
-        saveContext()
+        if saveContext() {
+            changeVersion += 1
+        }
     }
 
     private func fetchWorkoutModel(id: UUID) -> WorkoutModel? {
@@ -74,11 +83,14 @@ public final class ExerciseStorageService: ExerciseStoring {
         }
     }
 
-    private func saveContext() {
+    @discardableResult
+    private func saveContext() -> Bool {
         do {
             try context.save()
+            return true
         } catch {
             logger.error("Failed to save context: \(error)")
+            return false
         }
     }
 }

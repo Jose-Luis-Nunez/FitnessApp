@@ -12,24 +12,31 @@ Features/
     ExerciseCard/     — Card UI for exercises (idle, active, inactive states)
     MuscleCategory/   — Muscle category detail screen with exercises
     Storage/          — Exercise persistence and management services
-  MuscleGroupSelection/ — Home screen: muscle group category grid. MuscleCategorySelectionViewModel accepts optional `coordinatorCache`, `exerciseManagement`, and `workoutStorage` via constructor injection (defaults to Factory singleton).
+  MuscleGroupSelection/ — Home screen: muscle group category grid. MuscleCategorySelectionViewModel accepts optional `coordinatorCache`, `exerciseManagement`, `workoutStorage`, and `exerciseStorage` via constructor injection (defaults to Factory singleton). Observes `exerciseStorage.changeVersion` to reactively refetch exercises from storage.
   Picker/             — All picker sheets (exercise, weight, seat, icon, name, active-set edit)
   Schedule/           — Training calendar, streaks, week summary, day details (implementation: `Packages/FitnessSchedule` SPM target)
   Training/           — Training session screen
-  Workouts/           — Workout CRUD, workout list
+  Workouts/           — (removed; extracted into `Packages/FitnessWorkouts` SPM target)
 
 Packages/
   FitnessProfile/     — SPM library for profile feature (`BMIService`, `ProfileViewModel`, `ProfileStore`). Depends on `FitnessUI`. Tests: `BMIServiceTests` (stubbed API), `ProfileViewModelTests`.
   FitnessTraining/    — SPM library mirroring training flow types from the app (`TrainingCoordinator`, active set VM/cache/timer, bottom action bar, session/picker components). Sources: `Packages/FitnessTraining/Sources/FitnessTraining/`.
-  FitnessTestSupport/ — Shared test utilities: `makeExercise` factory, `MockAnalyticsStorage`, `StubAnalyticsStorage`, `MockExerciseStorage`, `MockWorkoutStorage`, `MockTotalAnalyticsStorage`, `waitUntil` with timeout assertion. Depends on `FitnessCore` + `Testing`.
+  FitnessWorkouts/    — SPM library for the workouts feature: `WorkoutsScreen` (entry view), `WorkoutsViewModel` (workout CRUD + UI state; constructor-DI with Factory-container fallbacks, enforces "must keep ≥1 workout" invariant in `deleteWorkout`), `CreateWorkoutView`, `RenameWorkoutView`, `MuscleGroupTile`. Depends on `FitnessCore`, `FitnessStorage`, `FitnessUI`, `FitnessExercise` (for `AppRouter`). Tests: `WorkoutsViewModelTests` (via `MockWorkoutStorage` + `MockExerciseStorage`, constructor-injected; no `.serialized` needed).
+  FitnessTestSupport/ — Shared test utilities: `makeExercise` factory, `MockAnalyticsStorage`, `StubAnalyticsStorage`, `MockExerciseStorage`, `MockWorkoutStorage` (mutates state on delete/rename/duplicate), `MockTotalAnalyticsStorage`, `waitUntil` with timeout assertion. Depends on `FitnessCore` + `Testing`.
 
 Tests/
   FitnessAppUITests/      — UI tests (XCUITest)
   Packages/*/Tests/       — Package-level unit tests per SPM module
-    FitnessAnalyticsTests/  — AnalyticsViewModelTests, TotalAnalyticsViewModelTests
-    FitnessExerciseTests/   — MuscleCategorySelectionViewModelTests (categories, exercise counts, card VM cache, reset, find category, exercise mutations, coordinator completion integration, exercise stability)
-    FitnessStorageTests/    — WorkoutStorageServiceTests, ExerciseStorageServiceTests, AnalyticsStorageServiceTests, ExerciseAndAnalyticsStorageTests, DataMigrationServiceTests
+    FitnessAnalyticsTests/  — AnalyticsViewModelTests, TotalAnalyticsViewModelTests, SaveAnalyticsUseCaseTests, DeleteAnalyticsSetUseCaseTests, SaveOrReplaceAnalyticsUseCaseTests
+    FitnessExerciseTests/   — MuscleCategorySelectionViewModelTests (categories, exercise counts, card VM cache, reset, find category, exercise mutations, coordinator completion integration, exercise stability), ExerciseFormViewModelTests, ResetAllExercisesUseCaseTests
+    FitnessStorageTests/    — WorkoutStorageServiceTests (with SpyExerciseStorage for duplicate verification), ExerciseStorageServiceTests, AnalyticsStorageServiceTests, ExerciseAndAnalyticsStorageTests, DataMigrationServiceTests, ExerciseManagementServiceTests, TotalAnalyticsStorageServiceTests, DeleteWorkoutUseCaseTests, DuplicateWorkoutUseCaseTests. TestHelpers provides `makeWorkoutStorageService` and `NoOpExerciseStorage`.
+    FitnessTrainingTests/   — TrainingCoordinatorTests (including FactoryIntegrationTests, StartTrainingEdgeCaseTests), TrainingCoordinatorCacheTests, StartTrainingUseCaseTests, CompleteSetUseCaseTests, FinishExerciseUseCaseTests, CancelTrainingUseCaseTests, ResetExerciseUseCaseTests, SessionTrainingCacheTests, ActiveSetViewModelTests, TimerServiceTests
     FitnessScheduleTests/   — ScheduleViewModelTests
+    FitnessWorkoutsTests/   — WorkoutsViewModelTests (create/rename/delete/duplicate/default workout, muscle group toggle, FAB flow, exercise-count aggregation; includes invariant test that `deleteWorkout` ignores the last remaining workout)
+
+### TimerService (Clock abstraction)
+
+`FitnessTraining.TimerService` injects a `TimerClock` protocol for deterministic tests. The default `SystemTimerClock` wraps `Date()`; tests substitute a `FakeClock` to advance time synchronously. `TimerService.elapsedSeconds()` is a synchronous derived query for unit tests. The `init(clock:tickInterval:)` initializer also accepts a short `tickInterval` (defaults to 1 s in production), which the live `Task`-based tick loop uses to publish into `timerSeconds` — tests shorten this to a few ms and advance the `FakeClock` to verify the publication path deterministically.
 ```
 
 ## Domain Models
@@ -59,8 +66,8 @@ All services are registered in a [hmlongco/Factory](https://github.com/hmlongco/
 
 | Service | File | Container Key | Scope | Purpose |
 |---------|------|---------------|-------|---------|
-| `WorkoutStorageService` | `Packages/FitnessStorage/.../WorkoutStorageService.swift` | `\.workoutStorage` | singleton | Workout CRUD, current workout selection, default workout. SwiftData-backed. Errors logged via `os.Logger`. Accepts optional `ModelContainer` via constructor injection (defaults to Factory singleton). Conforms to `WorkoutStoring` protocol (`FitnessCore`). |
-| `ExerciseStorageService` | `Packages/FitnessStorage/.../ExerciseStorageService.swift` | `\.exerciseStorage` | singleton | Exercise persistence per workout/category. SwiftData-backed. Errors logged via `os.Logger`. Accepts optional `ModelContainer` via constructor injection (defaults to Factory singleton). Conforms to `ExerciseStoring` protocol (`FitnessCore`). |
+| `WorkoutStorageService` | `Packages/FitnessStorage/.../WorkoutStorageService.swift` | `\.workoutStorage` | singleton | Workout CRUD, current workout selection, default workout. SwiftData-backed. Errors logged via `os.Logger`. Requires `ExerciseStoring` via constructor injection; accepts optional `ModelContainer` and `UserDefaults` (default to Factory singleton / `.standard`). Factory registration in `StorageContainer` passes `exerciseStorage` explicitly. Conforms to `WorkoutStoring` protocol (`FitnessCore`). |
+| `ExerciseStorageService` | `Packages/FitnessStorage/.../ExerciseStorageService.swift` | `\.exerciseStorage` | singleton | Exercise persistence per workout/category. SwiftData-backed, `@Observable`. Exposes `changeVersion` (monotonic counter incremented on each successful write); ViewModels observe this to refetch from the single source of truth instead of maintaining local copies. Errors logged via `os.Logger`. Accepts optional `ModelContainer` via constructor injection (defaults to Factory singleton). Conforms to `ExerciseStoring` protocol (`FitnessCore`). |
 | `ExerciseManagementService` | `Packages/FitnessStorage/.../ExerciseManagementService.swift` | `\.exerciseManagement` | singleton | Exercise business logic (add, remove, reorder). Conforms to `ExerciseManaging` protocol (`FitnessCore`). |
 | `AnalyticsStorageService` | `Packages/FitnessStorage/.../AnalyticsStorageService.swift` | `\.analyticsStorage` | singleton | Per-exercise analytics entry persistence. SwiftData-backed. Errors logged via `os.Logger`. Accepts optional `ModelContainer` via constructor injection (defaults to Factory singleton). Conforms to `AnalyticsStoring` protocol (`FitnessCore`). |
 | `TotalAnalyticsStorageService` | `Packages/FitnessStorage/.../TotalAnalyticsStorageService.swift` | `\.totalAnalyticsStorage` | singleton | Cross-exercise analytics loading, workout-scoped. Conforms to `TotalAnalyticsStoring` protocol (`FitnessCore`). |
@@ -144,7 +151,7 @@ Located in `Shared/Utilities/`.
 | `AppCurrentScene` | `Packages/FitnessExercise/Sources/FitnessExercise/AppRouter.swift` | Enum: `workouts`, `home`, `profile`, `category`, `training`, `schedule`, `analytics` — derived automatically by `AppRouter` |
 | `NavigationDestination` | `Packages/FitnessExercise/Sources/FitnessExercise/NavigationDestination.swift` | Enum with all navigation cases, shared across app and packages |
 | `AppLaunchStrategy` | `Shared/Navigation/AppLaunchStrategy.swift` | Protocol for app launch configuration; `ProductionLaunchStrategy` (default) and `UITestLaunchStrategy` (`Shared/Navigation/UITestLaunchStrategy.swift`, `#if UITESTING`) |
-| `TrainingCoordinator` | `Packages/FitnessTraining/.../TrainingCoordinator.swift` | Thin state-holder + orchestrator; delegates business logic to Use Cases |
+| `TrainingCoordinator` | `Packages/FitnessTraining/.../TrainingCoordinator.swift` | Thin state-holder + orchestrator; delegates business logic to Use Cases via `@Injected` (`startTrainingUseCase`, `completeSetUseCase`, `finishExerciseUseCase`, `cancelTrainingUseCase`, `resetExerciseUseCase`) |
 | `UIOverlayState` | `Shared/State/UIOverlayState.swift` | Global overlay/menu visibility state |
 
 ## Navigation

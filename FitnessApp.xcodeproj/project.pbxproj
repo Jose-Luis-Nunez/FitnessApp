@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		00181BFD2DABFA8500884E28 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 00181BFC2DABFA7C00884E28 /* .gitignore */; };
+		23DA6CEA2F914E74007A93EB /* FitnessProfile in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA0000000000000A /* FitnessProfile */; };
 		BB000001AA00000000000001 /* FitnessResources in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA00000000000001 /* FitnessResources */; };
 		BB000001AA00000000000002 /* FitnessCore in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA00000000000002 /* FitnessCore */; };
 		BB000001AA00000000000003 /* FitnessStorage in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA00000000000003 /* FitnessStorage */; };
@@ -17,6 +18,7 @@
 		BB000001AA00000000000007 /* FitnessExercise in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA00000000000007 /* FitnessExercise */; };
 		BB000001AA00000000000008 /* FitnessSchedule in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA00000000000008 /* FitnessSchedule */; };
 		BB000001AA00000000000009 /* Factory in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA00000000000009 /* Factory */; };
+		BB000001AA0000000000000B /* FitnessWorkouts in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA0000000000000B /* FitnessWorkouts */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -81,6 +83,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				23DA6CEA2F914E74007A93EB /* FitnessProfile in Frameworks */,
 				BB000001AA00000000000001 /* FitnessResources in Frameworks */,
 				BB000001AA00000000000002 /* FitnessCore in Frameworks */,
 				BB000001AA00000000000003 /* FitnessStorage in Frameworks */,
@@ -89,6 +92,7 @@
 				BB000001AA00000000000006 /* FitnessTraining in Frameworks */,
 				BB000001AA00000000000007 /* FitnessExercise in Frameworks */,
 				BB000001AA00000000000008 /* FitnessSchedule in Frameworks */,
+				BB000001AA0000000000000B /* FitnessWorkouts in Frameworks */,
 				BB000001AA00000000000009 /* Factory in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -161,6 +165,7 @@
 				BB000002AA00000000000008 /* FitnessSchedule */,
 				BB000002AA00000000000009 /* Factory */,
 				BB000002AA0000000000000A /* FitnessProfile */,
+				BB000002AA0000000000000B /* FitnessWorkouts */,
 			);
 			productName = FitnessApp;
 			productReference = 00181AF22DABCCE300884E28 /* FitnessApp.app */;
@@ -254,6 +259,7 @@
 				BB000003AA00000000000007 /* XCLocalSwiftPackageReference "Packages/FitnessExercise" */,
 				BB000003AA00000000000008 /* XCLocalSwiftPackageReference "Packages/FitnessSchedule" */,
 				BB000003AA0000000000000A /* XCLocalSwiftPackageReference "Packages/FitnessProfile" */,
+				BB000003AA0000000000000B /* XCLocalSwiftPackageReference "Packages/FitnessWorkouts" */,
 				BB000003AA00000000000009 /* XCRemoteSwiftPackageReference "Factory" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -857,6 +863,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/FitnessProfile;
 		};
+		BB000003AA0000000000000B /* XCLocalSwiftPackageReference "Packages/FitnessWorkouts" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/FitnessWorkouts;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -911,6 +921,10 @@
 		BB000002AA0000000000000A /* FitnessProfile */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = FitnessProfile;
+		};
+		BB000002AA0000000000000B /* FitnessWorkouts */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FitnessWorkouts;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
