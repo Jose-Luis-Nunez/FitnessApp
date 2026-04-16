@@ -25,10 +25,10 @@ public final class WorkoutStorageService: WorkoutStoring {
     @ObservationIgnored
     private let exerciseStorage: ExerciseStoring
 
-    public init(defaults: UserDefaults = .standard, exerciseStorage: ExerciseStoring? = nil) {
+    public init(container: ModelContainer? = nil, defaults: UserDefaults = .standard, exerciseStorage: ExerciseStoring? = nil) {
         self.exerciseStorage = exerciseStorage ?? Container.shared.exerciseStorage()
-        let container = Container.shared.modelContainer()
-        self.context = ModelContext(container)
+        let resolved = container ?? Container.shared.modelContainer()
+        self.context = ModelContext(resolved)
         self.context.autosaveEnabled = true
         self.userDefaults = defaults
         reload()

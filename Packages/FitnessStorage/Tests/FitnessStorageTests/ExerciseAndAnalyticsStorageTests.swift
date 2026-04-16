@@ -9,16 +9,18 @@ import Factory
 @MainActor
 struct ExerciseAndAnalyticsStorageTests {
 
+    private let container: ModelContainer
+
     init() {
-        TestHelpers.registerInMemoryContainer()
+        container = TestHelpers.makeInMemoryContainer()
     }
 
     // MARK: - Exercise Save + Load Roundtrip
 
     @Test func saveAndLoadExercisesRoundtrip() {
-        let ws = WorkoutStorageService()
+        let ws = WorkoutStorageService(container: container)
         let workout = ws.workouts.first!
-        let es = ExerciseStorageService()
+        let es = ExerciseStorageService(container: container)
 
         let exercises = [
             TestHelpers.makeExercise(name: "Bench Press", weight: 80, reps: 8, sets: 4, seatSetting: "3", category: .chest, goal: 100),
@@ -45,9 +47,9 @@ struct ExerciseAndAnalyticsStorageTests {
     }
 
     @Test func exerciseOrderPreserved() {
-        let ws = WorkoutStorageService()
+        let ws = WorkoutStorageService(container: container)
         let workout = ws.workouts.first!
-        let es = ExerciseStorageService()
+        let es = ExerciseStorageService(container: container)
 
         let names = ["Third", "First", "Second"]
         let exercises = names.map { TestHelpers.makeExercise(name: $0, category: .arms) }
@@ -59,9 +61,9 @@ struct ExerciseAndAnalyticsStorageTests {
     }
 
     @Test func exercisesIsolatedBetweenCategories() {
-        let ws = WorkoutStorageService()
+        let ws = WorkoutStorageService(container: container)
         let workout = ws.workouts.first!
-        let es = ExerciseStorageService()
+        let es = ExerciseStorageService(container: container)
 
         let armExercises = [TestHelpers.makeExercise(name: "Curl", category: .arms)]
         let chestExercises = [TestHelpers.makeExercise(name: "Bench", category: .chest)]
@@ -75,10 +77,10 @@ struct ExerciseAndAnalyticsStorageTests {
     }
 
     @Test func exercisesIsolatedBetweenWorkouts() {
-        let ws = WorkoutStorageService()
+        let ws = WorkoutStorageService(container: container)
         let workout1 = ws.workouts.first!
         let workout2 = ws.createWorkout(name: "Workout 2")
-        let es = ExerciseStorageService()
+        let es = ExerciseStorageService(container: container)
 
         es.saveForWorkout(
             [TestHelpers.makeExercise(name: "Curl", category: .arms)],
@@ -91,9 +93,9 @@ struct ExerciseAndAnalyticsStorageTests {
     }
 
     @Test func saveOverwritesPreviousExercises() {
-        let ws = WorkoutStorageService()
+        let ws = WorkoutStorageService(container: container)
         let workout = ws.workouts.first!
-        let es = ExerciseStorageService()
+        let es = ExerciseStorageService(container: container)
 
         es.saveForWorkout(
             [TestHelpers.makeExercise(name: "Old", category: .chest)],
@@ -119,8 +121,7 @@ struct ExerciseAndAnalyticsStorageTests {
     // MARK: - Analytics Save + Load Roundtrip
 
     @Test func saveAndLoadAnalyticsRoundtrip() {
-        let _ = WorkoutStorageService()
-        let as_ = AnalyticsStorageService()
+        let as_ = AnalyticsStorageService(container: container)
         let exerciseId = UUID()
 
         let entries = [
@@ -151,8 +152,7 @@ struct ExerciseAndAnalyticsStorageTests {
     }
 
     @Test func analyticsSetProgressOrderPreserved() {
-        let _ = WorkoutStorageService()
-        let as_ = AnalyticsStorageService()
+        let as_ = AnalyticsStorageService(container: container)
         let exerciseId = UUID()
 
         let progress: [SetProgress] = (1...5).map {
@@ -169,8 +169,7 @@ struct ExerciseAndAnalyticsStorageTests {
     }
 
     @Test func analyticsSaveOverwritesPrevious() {
-        let _ = WorkoutStorageService()
-        let as_ = AnalyticsStorageService()
+        let as_ = AnalyticsStorageService(container: container)
         let exerciseId = UUID()
 
         let first = [TestHelpers.makeAnalyticsEntry(exerciseId: exerciseId)]
@@ -186,8 +185,7 @@ struct ExerciseAndAnalyticsStorageTests {
     }
 
     @Test func analyticsIsolatedBetweenExercises() {
-        let _ = WorkoutStorageService()
-        let as_ = AnalyticsStorageService()
+        let as_ = AnalyticsStorageService(container: container)
         let id1 = UUID()
         let id2 = UUID()
 
@@ -202,9 +200,9 @@ struct ExerciseAndAnalyticsStorageTests {
     // MARK: - Cascade Delete
 
     @Test func deleteWorkoutCascadesExercises() {
-        let ws = WorkoutStorageService()
+        let ws = WorkoutStorageService(container: container)
         let workout = ws.createWorkout(name: "To Delete")
-        let es = ExerciseStorageService()
+        let es = ExerciseStorageService(container: container)
 
         es.saveForWorkout(
             [TestHelpers.makeExercise(name: "Curl", category: .arms)],
@@ -221,9 +219,9 @@ struct ExerciseAndAnalyticsStorageTests {
     // MARK: - Empty State
 
     @Test func loadFromEmptyDatabaseReturnsEmpty() {
-        let ws = WorkoutStorageService()
-        let es = ExerciseStorageService()
-        let as_ = AnalyticsStorageService()
+        let ws = WorkoutStorageService(container: container)
+        let es = ExerciseStorageService(container: container)
+        let as_ = AnalyticsStorageService(container: container)
 
         #expect(es.loadForWorkout(workoutId: ws.workouts.first!.id, category: .arms).isEmpty)
         #expect(as_.load(for: UUID()).isEmpty)

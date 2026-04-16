@@ -9,15 +9,16 @@ import Factory
 @MainActor
 struct WorkoutStorageServiceTests {
 
+    private let container: ModelContainer
     private let defaults: UserDefaults
 
     init() {
-        TestHelpers.registerInMemoryContainer()
+        container = TestHelpers.makeInMemoryContainer()
         defaults = TestHelpers.makeIsolatedDefaults()
     }
 
     private func makeSUT() -> WorkoutStorageService {
-        WorkoutStorageService(defaults: defaults)
+        WorkoutStorageService(container: container, defaults: defaults)
     }
 
     // MARK: - Init / Auto-Create

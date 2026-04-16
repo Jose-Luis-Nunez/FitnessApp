@@ -8,8 +8,7 @@ import Factory
 enum TestHelpers {
     private static let testSuiteName = "com.fitnessapp.tests"
 
-    static func registerInMemoryContainer() {
-        Container.shared.reset()
+    static func makeInMemoryContainer() -> ModelContainer {
         let schema = Schema([
             WorkoutModel.self,
             ExerciseModel.self,
@@ -17,7 +16,12 @@ enum TestHelpers {
             SetProgressModel.self
         ])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try! ModelContainer(for: schema, configurations: [config])
+        return try! ModelContainer(for: schema, configurations: [config])
+    }
+
+    static func registerInMemoryContainer() {
+        Container.shared.reset()
+        let container = makeInMemoryContainer()
         Container.shared.modelContainer.register { container }
 
         let defaults = UserDefaults.standard

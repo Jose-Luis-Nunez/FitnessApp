@@ -10,9 +10,9 @@ private let logger = Logger(subsystem: "FitnessStorage", category: "AnalyticsSto
 public final class AnalyticsStorageService: AnalyticsStoring {
     private let context: ModelContext
 
-    public init() {
-        let container = Container.shared.modelContainer()
-        self.context = ModelContext(container)
+    public init(container: ModelContainer? = nil) {
+        let resolved = container ?? Container.shared.modelContainer()
+        self.context = ModelContext(resolved)
         self.context.autosaveEnabled = true
     }
 

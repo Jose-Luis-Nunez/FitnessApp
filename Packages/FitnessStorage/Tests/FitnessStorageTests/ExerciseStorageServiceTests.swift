@@ -9,14 +9,16 @@ import Factory
 @MainActor
 struct ExerciseStorageServiceTests {
 
+    private let container: ModelContainer
+
     init() {
-        TestHelpers.registerInMemoryContainer()
+        container = TestHelpers.makeInMemoryContainer()
     }
 
     private func makeSUT() -> (ExerciseStorageService, Workout) {
-        let ws = WorkoutStorageService()
+        let ws = WorkoutStorageService(container: container)
         let workout = ws.workouts.first!
-        let es = ExerciseStorageService()
+        let es = ExerciseStorageService(container: container)
         return (es, workout)
     }
 
@@ -165,10 +167,10 @@ struct ExerciseStorageServiceTests {
     // MARK: - Workout Isolation
 
     @Test func exercisesIsolatedBetweenDifferentWorkouts() {
-        let ws = WorkoutStorageService()
+        let ws = WorkoutStorageService(container: container)
         let workout1 = ws.workouts.first!
         let workout2 = ws.createWorkout(name: "Second")
-        let sut = ExerciseStorageService()
+        let sut = ExerciseStorageService(container: container)
 
         sut.saveForWorkout(
             [TestHelpers.makeExercise(name: "W1 Curl", category: .arms)],
@@ -247,17 +249,17 @@ struct ExerciseStorageServiceTests {
     // MARK: - Persistence Across Service Instances
 
     @Test func dataPersistedAcrossServiceInstances() {
-        let ws = WorkoutStorageService()
+        let ws = WorkoutStorageService(container: container)
         let workout = ws.workouts.first!
 
-        let sut1 = ExerciseStorageService()
+        let sut1 = ExerciseStorageService(container: container)
         sut1.saveForWorkout(
             [TestHelpers.makeExercise(name: "Persistent", category: .chest)],
             workoutId: workout.id,
             category: .chest
         )
 
-        let sut2 = ExerciseStorageService()
+        let sut2 = ExerciseStorageService(container: container)
         let loaded = sut2.loadForWorkout(workoutId: workout.id, category: .chest)
         #expect(loaded.count == 1)
         #expect(loaded.first!.name == "Persistent")

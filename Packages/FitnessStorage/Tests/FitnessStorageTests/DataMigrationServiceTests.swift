@@ -13,14 +13,14 @@ struct DataMigrationServiceTests {
     private let workoutsKey = "stored_workouts"
     private let currentWorkoutKey = "current_workout_id"
     private let defaultWorkoutKey = "default_workout_id"
+    private let container: ModelContainer
 
     init() {
-        TestHelpers.registerInMemoryContainer()
+        container = TestHelpers.makeInMemoryContainer()
     }
 
     private func makeContext() -> ModelContext {
-        let container = Container.shared.modelContainer()
-        return ModelContext(container)
+        ModelContext(container)
     }
 
     // MARK: - Migration Flag

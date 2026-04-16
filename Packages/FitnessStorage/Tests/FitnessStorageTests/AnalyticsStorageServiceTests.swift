@@ -9,12 +9,14 @@ import Factory
 @MainActor
 struct AnalyticsStorageServiceTests {
 
+    private let container: ModelContainer
+
     init() {
-        TestHelpers.registerInMemoryContainer()
+        container = TestHelpers.makeInMemoryContainer()
     }
 
     private func makeSUT() -> AnalyticsStorageService {
-        AnalyticsStorageService()
+        AnalyticsStorageService(container: container)
     }
 
     // MARK: - Save & Load
