@@ -53,6 +53,9 @@ struct PainRegionTile: View {
                     .resizable()
                     .scaledToFit()
                     .padding(6)
+                    .saturation(1.07)
+                    .brightness(0.03)
+                    .colorMultiply(AppStyle.Color.greenLight)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 120)

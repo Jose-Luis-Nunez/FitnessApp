@@ -2,12 +2,28 @@ import SwiftUI
 import FitnessCore
 import FitnessUI
 
-/// Connects the TrainingCoordinator's feedback presentation flag to the
-/// FeedbackSheetView. The ViewModel is created lazily (and recreated on each
-/// presentation) so that each open starts from a clean state. While the sheet
-/// is visible, the global `UIOverlayState.isEditingSheetVisible` flag is set
-/// to true — this hides the bottom action bar (see `FitnessAppApp.swift`),
-/// matching how the Training picker and category edit sheets behave.
+/// Connects the `TrainingCoordinator`'s feedback presentation flag to the
+/// `FeedbackSheetView` via a native `.sheet(...)` with `.large` detent —
+/// the **same presentation pattern as `AnalyticsView`** (see
+/// `InactiveCardView` / `ActiveCardView` / `IdleActiveCardView`). The
+/// component itself is a zero-size `Color.clear` mount point inside the
+/// training flow's view tree — its only job is to own the presentation
+/// modifier and to lazily instantiate `FeedbackViewModel` per presentation.
+///
+/// Why `.sheet` (and not `.fullScreenCover` or `OverlaySheetContainer`):
+/// - Native sheet renders the iOS-system **grabber** automatically, matching
+///   the look of `AnalyticsView` exactly (where the user expects to see a
+///   small horizontal handle at the top).
+/// - `.large` detent makes the sheet effectively full-screen for the form
+///   content, while still leaving the status bar visible and a thin strip of
+///   the underlying view above the grabber.
+/// - Native pull-to-dismiss is the system-standard gesture and routes through
+///   our `presentationBinding.set(false)` automatically, no custom gesture
+///   handling required.
+///
+/// The `UIOverlayState.isEditingSheetVisible` flag is set while the sheet is
+/// visible so the app-level bottom action bar hides, matching the behaviour
+/// of `TrainingPickerComponent` and `MuscleCategoryView`.
 public struct FeedbackSheetComponent: View {
     @Bindable public var coordinator: TrainingCoordinator
     public let category: MuscleCategoryGroup?
@@ -21,32 +37,41 @@ public struct FeedbackSheetComponent: View {
     }
 
     public var body: some View {
-        Group {
-            if coordinator.isFeedbackSheetPresented, let vm = viewModel {
-                FeedbackSheetView(
-                    viewModel: vm,
-                    isPresented: Binding(
-                        get: { coordinator.isFeedbackSheetPresented },
-                        set: { newValue in
-                            if !newValue { coordinator.closeFeedback() }
-                        }
+        Color.clear
+            .frame(width: 0, height: 0)
+            .sheet(isPresented: presentationBinding) {
+                if let vm = viewModel {
+                    FeedbackSheetView(
+                        viewModel: vm,
+                        isPresented: presentationBinding
                     )
-                )
-                .zIndex(99998)
-            } else {
-                EmptyView()
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
+                    .presentationBackground(AppStyle.Color.black)
+                }
             }
-        }
-        .onChange(of: coordinator.isFeedbackSheetPresented) { _, isPresented in
-            overlayState.isEditingSheetVisible = isPresented
-            if isPresented, let exercise = coordinator.currentExercise {
-                viewModel = FeedbackViewModel(
-                    exerciseId: exercise.id,
-                    exerciseCategory: category
-                )
-            } else if !isPresented {
-                viewModel = nil
+            .onChange(of: coordinator.isFeedbackSheetPresented) { _, isPresented in
+                overlayState.isEditingSheetVisible = isPresented
+                if isPresented, let exercise = coordinator.currentExercise {
+                    viewModel = FeedbackViewModel(
+                        exerciseId: exercise.id,
+                        exerciseCategory: category
+                    )
+                } else if !isPresented {
+                    viewModel = nil
+                }
             }
-        }
+    }
+
+    /// Two-way bridge between SwiftUI's presentation API and the coordinator's
+    /// state. Writing `false` closes the feedback flow via the coordinator so
+    /// any downstream consumers (e.g. overlay flags, analytics) react.
+    private var presentationBinding: Binding<Bool> {
+        Binding(
+            get: { coordinator.isFeedbackSheetPresented },
+            set: { newValue in
+                if !newValue { coordinator.closeFeedback() }
+            }
+        )
     }
 }
