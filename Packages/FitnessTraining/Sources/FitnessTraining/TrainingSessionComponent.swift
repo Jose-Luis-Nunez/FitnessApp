@@ -164,7 +164,8 @@ public struct TrainingActionBarComponent: View {
             },
             onFinish: originalCallbacks.onFinish,
             onAddExercise: originalCallbacks.onAddExercise,
-            onResetAllExercises: originalCallbacks.onResetAllExercises
+            onResetAllExercises: originalCallbacks.onResetAllExercises,
+            onOpenFeedback: originalCallbacks.onOpenFeedback
         )
     }
 
@@ -184,7 +185,8 @@ public struct TrainingActionBarComponent: View {
                 onEditMore: trainingCallbacks.onEditMore,
                 onFinish: trainingCallbacks.onFinish,
                 onAddExercise: trainingCallbacks.onAddExercise,
-                onResetAllExercises: trainingCallbacks.onResetAllExercises
+                onResetAllExercises: trainingCallbacks.onResetAllExercises,
+                onOpenFeedback: trainingCallbacks.onOpenFeedback
             )
             .zIndex(5)
             .onChange(of: currentViewModel.isLastSetCompleted) { _ in

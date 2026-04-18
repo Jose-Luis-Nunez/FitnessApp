@@ -17,6 +17,7 @@ public struct BottomActionBarView: View {
     public let onFinish: () -> Void
     public let onAddExercise: () -> Void
     public let onResetAllExercises: () -> Void
+    public let onOpenFeedback: () -> Void
 
     private let barHeight: CGFloat = 0
     private let backgroundColor = AppStyle.Color.backgroundColor
@@ -32,7 +33,8 @@ public struct BottomActionBarView: View {
         onEditMore: @escaping () -> Void,
         onFinish: @escaping () -> Void,
         onAddExercise: @escaping () -> Void,
-        onResetAllExercises: @escaping () -> Void
+        onResetAllExercises: @escaping () -> Void,
+        onOpenFeedback: @escaping () -> Void = {}
     ) {
         self.viewModel = viewModel
         self.onStart = onStart
@@ -45,6 +47,7 @@ public struct BottomActionBarView: View {
         self.onFinish = onFinish
         self.onAddExercise = onAddExercise
         self.onResetAllExercises = onResetAllExercises
+        self.onOpenFeedback = onOpenFeedback
     }
 
     public var body: some View {
@@ -62,6 +65,7 @@ public struct BottomActionBarView: View {
                     onFinish: onFinish,
                     onAddExercise: onAddExercise,
                     onResetAllExercises: onResetAllExercises,
+                    onOpenFeedback: onOpenFeedback,
                     barHeight: barHeight,
                     backgroundColor: backgroundColor
                 )
@@ -84,6 +88,7 @@ public struct FloatingActionButtonsView: View {
     public let onFinish: () -> Void
     public let onAddExercise: () -> Void
     public let onResetAllExercises: () -> Void
+    public let onOpenFeedback: () -> Void
     public let barHeight: CGFloat
     public let backgroundColor: Color
 
@@ -115,6 +120,7 @@ public struct FloatingActionButtonsView: View {
         onFinish: @escaping () -> Void,
         onAddExercise: @escaping () -> Void,
         onResetAllExercises: @escaping () -> Void,
+        onOpenFeedback: @escaping () -> Void = {},
         barHeight: CGFloat,
         backgroundColor: Color
     ) {
@@ -129,6 +135,7 @@ public struct FloatingActionButtonsView: View {
         self.onFinish = onFinish
         self.onAddExercise = onAddExercise
         self.onResetAllExercises = onResetAllExercises
+        self.onOpenFeedback = onOpenFeedback
         self.barHeight = barHeight
         self.backgroundColor = backgroundColor
     }
@@ -136,11 +143,20 @@ public struct FloatingActionButtonsView: View {
     public var body: some View {
         ZStack(alignment: .bottom) {
             if viewModel.showQuickDoneBeendenButton {
-                glassCapsuleButton(
-                    text: "Beenden",
-                    action: onFinish,
-                    style: .finish
-                )
+                HStack(spacing: 6) {
+                    glassCapsuleButton(
+                        text: "Beenden",
+                        action: onFinish,
+                        style: .finish
+                    )
+                    .frame(maxWidth: .infinity)
+
+                    menuIconItem(
+                        systemIcon: "cross.fill",
+                        action: onOpenFeedback,
+                        style: .feedback
+                    )
+                }
             } else if viewModel.showQuickDoneDoneButton {
                 glassCapsuleButton(
                     text: "All Done",
@@ -199,6 +215,12 @@ public struct FloatingActionButtonsView: View {
                             action: onQuickDone,
                             style: .quickDone
                         )
+                    } else if viewModel.showFeedbackButton {
+                        menuIconItem(
+                            systemIcon: "cross.fill",
+                            action: onOpenFeedback,
+                            style: .feedback
+                        )
                     }
                 }
             }
@@ -210,7 +232,7 @@ public struct FloatingActionButtonsView: View {
     }
 
     enum MenuItemStyle {
-        case control, done, start, finish, allDone, quickDone
+        case control, done, start, finish, allDone, quickDone, feedback
     }
 
     @ViewBuilder
@@ -291,6 +313,38 @@ public struct FloatingActionButtonsView: View {
         .frame(width: 44, height: 44)
         .contentShape(Circle())
         .buttonStyle(.plain)
+        .accessibilityIdentifier(accessibilityID(for: style, text: ""))
+    }
+
+    @ViewBuilder
+    private func menuIconItem(
+        systemIcon: String,
+        action: @escaping () -> Void,
+        style: MenuItemStyle
+    ) -> some View {
+        let iconColor: Color = (style == .feedback) ? AppStyle.Color.painAccent : AppStyle.Color.white
+        let glowOpacity: Double = (style == .feedback) ? 0.35 : 0
+        let glowRadius: CGFloat = (style == .feedback) ? 4 : 0
+
+        Button(action: action) {
+            ZStack {
+                TrainingGlassEffectCompat.circleGlass()
+                    .overlay(
+                        Circle().stroke(AppStyle.Color.white.opacity(0.10), lineWidth: 1)
+                    )
+
+                Image(systemName: systemIcon)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 22, height: 22)
+                    .foregroundColor(iconColor)
+                    .shadow(color: iconColor.opacity(glowOpacity), radius: glowRadius)
+            }
+        }
+        .frame(width: 44, height: 44)
+        .contentShape(Circle())
+        .buttonStyle(.plain)
+        .accessibilityIdentifier(accessibilityID(for: style, text: ""))
     }
 
     private func accessibilityID(for style: MenuItemStyle, text: String) -> String {
@@ -301,6 +355,7 @@ public struct FloatingActionButtonsView: View {
         case .allDone:   return TrainingIDs.allDoneButton
         case .control:   return TrainingIDs.controlButton(text)
         case .quickDone: return TrainingIDs.quickDoneButton
+        case .feedback:  return TrainingIDs.feedbackButton
         }
     }
 }

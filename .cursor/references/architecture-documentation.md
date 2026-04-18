@@ -29,8 +29,9 @@ Tests/
   Packages/*/Tests/       — Package-level unit tests per SPM module
     FitnessAnalyticsTests/  — AnalyticsViewModelTests, TotalAnalyticsViewModelTests, SaveAnalyticsUseCaseTests, DeleteAnalyticsSetUseCaseTests, SaveOrReplaceAnalyticsUseCaseTests
     FitnessExerciseTests/   — MuscleCategorySelectionViewModelTests (categories, exercise counts, card VM cache, reset, find category, exercise mutations, coordinator completion integration, exercise stability), ExerciseFormViewModelTests, ResetAllExercisesUseCaseTests
-    FitnessStorageTests/    — WorkoutStorageServiceTests (with SpyExerciseStorage for duplicate verification), ExerciseStorageServiceTests, AnalyticsStorageServiceTests, ExerciseAndAnalyticsStorageTests, DataMigrationServiceTests, ExerciseManagementServiceTests, TotalAnalyticsStorageServiceTests, DeleteWorkoutUseCaseTests, DuplicateWorkoutUseCaseTests. TestHelpers provides `makeWorkoutStorageService` and `NoOpExerciseStorage`.
-    FitnessTrainingTests/   — TrainingCoordinatorTests (including FactoryIntegrationTests, StartTrainingEdgeCaseTests), TrainingCoordinatorCacheTests, StartTrainingUseCaseTests, CompleteSetUseCaseTests, FinishExerciseUseCaseTests, CancelTrainingUseCaseTests, ResetExerciseUseCaseTests, SessionTrainingCacheTests, ActiveSetViewModelTests, TimerServiceTests
+    FitnessStorageTests/    — WorkoutStorageServiceTests (with SpyExerciseStorage for duplicate verification), ExerciseStorageServiceTests, AnalyticsStorageServiceTests, ExerciseAndAnalyticsStorageTests, DataMigrationServiceTests, ExerciseManagementServiceTests, TotalAnalyticsStorageServiceTests, DeleteWorkoutUseCaseTests, DuplicateWorkoutUseCaseTests, FeedbackStorageServiceTests, SaveFeedbackUseCaseTests. TestHelpers provides `makeWorkoutStorageService` and `NoOpExerciseStorage`.
+    FitnessTrainingTests/   — TrainingCoordinatorTests (including FactoryIntegrationTests, StartTrainingEdgeCaseTests), TrainingCoordinatorCacheTests, StartTrainingUseCaseTests, CompleteSetUseCaseTests, FinishExerciseUseCaseTests, CancelTrainingUseCaseTests, ResetExerciseUseCaseTests, SessionTrainingCacheTests, ActiveSetViewModelTests, TimerServiceTests, FeedbackViewModelTests, TrainingCoordinatorFeedbackTests
+    FitnessCoreTests/       — BodyRegionTests, ExerciseFeedbackTests
     FitnessScheduleTests/   — ScheduleViewModelTests
     FitnessWorkoutsTests/   — WorkoutsViewModelTests (create/rename/delete/duplicate/default workout, muscle group toggle, FAB flow, exercise-count aggregation; includes invariant test that `deleteWorkout` ignores the last remaining workout)
 
@@ -53,13 +54,17 @@ Located in `Core/Model/`.
 | `WeightPhase` | `WeightPhase.swift` | `id`, `weight`, `sessionCount`, `durationDays`, `startSetsReps`, `startDate`, `endSetsReps`, `endDate`, `hasImproved`, `maxReps` |
 | `SetEditingMode` | `SetEditingMode.swift` | Enum: `less`, `more`, `edit` |
 | `ExerciseEditMode` | `ExerciseEditMode.swift` (SPM: `Packages/FitnessCore`) | Enum: `full`, `name`, `weight`, `seat` — shared with `FitnessTraining` |
+| `ExerciseFeedback` | `Packages/FitnessCore/Sources/FitnessCore/ExerciseFeedback.swift` | `id`, `exerciseId`, `date`, optional `energyLevel` (1...5), optional `painCategory` (`BodyCategory`), `painRegions` (`Set<BodyRegion>` — multi-select; may be empty), `symptoms` (`Set<Symptom>`), optional `note`. `hasAnyContent` gates persistence (empty feedback is skipped). |
+| `BodyCategory` | `Packages/FitnessCore/Sources/FitnessCore/BodyCategory.swift` | Enum: `back`, `abs`, `chest`, `arm`, `legs`. `from(muscleGroup:)` maps `MuscleCategoryGroup` -> feedback category. |
+| `BodyRegion` | `Packages/FitnessCore/Sources/FitnessCore/BodyRegion.swift` | Enum of 32 regions (neck L/R, shoulders L/R, upper/middle/lower back, abs, obliques L/R, chest L/R/full, biceps L/R, triceps L/R, forearm L/R, hand L/R, wrist L/R, thigh front/back/inner/outer, knees L/R, calf, foot, ankle). `category` maps each region to a `BodyCategory`, `regions(in:)` filters by category, `iconAssetName` returns the asset-catalog image name used by the pain-region grid (fehlende Assets → leerer Platz, Tile-Rahmen + Titel bleiben sichtbar). English display names. |
+| `Symptom` | `Packages/FitnessCore/Sources/FitnessCore/Symptom.swift` | Enum: `pain`, `dizziness`, `nausea`, `muscleWeakness` |
 
 ## Services
 
 All services are registered in a [hmlongco/Factory](https://github.com/hmlongco/Factory) DI container. Access via `@Injected(\.keyPath)` or `Container.shared.keyPath()`. No more `static let shared` singletons — use the container instead.
 
 **Container registrations:**
-- `Packages/FitnessStorage/Sources/FitnessStorage/StorageContainer.swift` — `workoutStorage`, `exerciseStorage`, `analyticsStorage`, `exerciseManagement`, `totalAnalyticsStorage`, `deleteWorkoutUseCase`, `duplicateWorkoutUseCase`
+- `Packages/FitnessStorage/Sources/FitnessStorage/StorageContainer.swift` — `workoutStorage`, `exerciseStorage`, `analyticsStorage`, `exerciseManagement`, `totalAnalyticsStorage`, `feedbackStorage`, `deleteWorkoutUseCase`, `duplicateWorkoutUseCase`, `saveFeedbackUseCase`
 - `Packages/FitnessAnalytics/Sources/FitnessAnalytics/AnalyticsContainer.swift` — `saveAnalyticsUseCase`, `deleteAnalyticsSetUseCase`, `saveOrReplaceAnalyticsUseCase`
 - `Packages/FitnessExercise/Sources/FitnessExercise/ExerciseContainer.swift` — `resetAllExercisesUseCase`
 - `Packages/FitnessTraining/Sources/FitnessTraining/TrainingContainer.swift` — `sessionTrainingCache`, `trainingCoordinatorCache`, `startTrainingUseCase`, `completeSetUseCase`, `finishExerciseUseCase`, `cancelTrainingUseCase`, `resetExerciseUseCase`
@@ -71,8 +76,9 @@ All services are registered in a [hmlongco/Factory](https://github.com/hmlongco/
 | `ExerciseManagementService` | `Packages/FitnessStorage/.../ExerciseManagementService.swift` | `\.exerciseManagement` | singleton | Exercise business logic (add, remove, reorder). Conforms to `ExerciseManaging` protocol (`FitnessCore`). |
 | `AnalyticsStorageService` | `Packages/FitnessStorage/.../AnalyticsStorageService.swift` | `\.analyticsStorage` | singleton | Per-exercise analytics entry persistence. SwiftData-backed. Errors logged via `os.Logger`. Accepts optional `ModelContainer` via constructor injection (defaults to Factory singleton). Conforms to `AnalyticsStoring` protocol (`FitnessCore`). |
 | `TotalAnalyticsStorageService` | `Packages/FitnessStorage/.../TotalAnalyticsStorageService.swift` | `\.totalAnalyticsStorage` | singleton | Cross-exercise analytics loading, workout-scoped. Conforms to `TotalAnalyticsStoring` protocol (`FitnessCore`). |
+| `FeedbackStorageService` | `Packages/FitnessStorage/.../FeedbackStorageService.swift` | `\.feedbackStorage` | singleton | Persists subjective post-exercise feedback (energy level, pain category + **multi-select** pain regions, symptoms, note). SwiftData-backed via `ExerciseFeedbackModel` (`painRegionsRaw: [String]`; legacy `painRegionRaw: String?` is still read at load time to merge pre-migration entries into the array). Conforms to `FeedbackStoring` protocol (`FitnessCore`). Multiple feedback entries per exercise are supported (append-only, sorted by date). |
 | `DataMigrationService` | `Packages/FitnessStorage/.../DataMigrationService.swift` | — | static | One-time migration from JSON/UserDefaults to SwiftData. Runs on first launch after update. |
-| `ModelContainer` | via `StorageContainer.swift` | `\.modelContainer` | singleton | Shared SwiftData container for all `@Model` types (`WorkoutModel`, `ExerciseModel`, `AnalyticsEntryModel`, `SetProgressModel`). |
+| `ModelContainer` | via `StorageContainer.swift` | `\.modelContainer` | singleton | Shared SwiftData container for all `@Model` types (`WorkoutModel`, `ExerciseModel`, `AnalyticsEntryModel`, `SetProgressModel`, `ExerciseFeedbackModel`). |
 | `BMIService` | `Packages/FitnessProfile/Sources/FitnessProfile/BMIService.swift` | — | per-use | Fetches BMI from external API (bmicalculatorapi.vercel.app), parses category (Underweight/Normal/Overweight/Obesity), with BMI-value fallback for unknown categories |
 | `TimerService` | `Packages/FitnessTraining/.../TimerService.swift` | — | per-use | Rest timer during active sets |
 | `SessionTrainingCache` | `Packages/FitnessTraining/.../SessionTrainingCache.swift` | `\.sessionTrainingCache` | singleton | Per-category `ActiveSetViewModel` cache. Conforms to `SessionTrainingCaching` protocol. Use `viewModel(for:)` for typed access. |
@@ -95,6 +101,7 @@ Single-responsibility types with one `execute(...)` method. ViewModels call Use 
 | `FinishExerciseUseCase` | `Packages/FitnessTraining/.../UseCases/FinishExerciseUseCase.swift` | `\.finishExerciseUseCase` | Stop timer, save analytics, mark exercise completed, reset state |
 | `CancelTrainingUseCase` | `Packages/FitnessTraining/.../UseCases/CancelTrainingUseCase.swift` | `\.cancelTrainingUseCase` | Cancel active set and clear training state |
 | `ResetExerciseUseCase` | `Packages/FitnessTraining/.../UseCases/ResetExerciseUseCase.swift` | `\.resetExerciseUseCase` | Stop timer, trigger exercise reset callback, clear progress |
+| `SaveFeedbackUseCase` | `Packages/FitnessStorage/.../UseCases/SaveFeedbackUseCase.swift` | `\.saveFeedbackUseCase` | Persists `ExerciseFeedback` via `feedbackStorage`. Returns `false` for empty feedback (skipped — nothing written). |
 
 ## Shared Components
 
@@ -112,13 +119,18 @@ Located in `Shared/`.
 | `TrainingIDs` | `Packages/FitnessUI/Sources/FitnessUI/TrainingIDs.swift` | Accessibility identifiers for training FABs and set rows |
 | `UIOverlayState` | `Packages/FitnessUI/Sources/FitnessUI/UIOverlayState.swift` | Global overlay/menu visibility (also still in app `Shared/State/UIOverlayState.swift` until unified) |
 | `ActiveSetEditPickerView` | `Packages/FitnessUI/Sources/FitnessUI/ActiveSetEditPickerView.swift` | Reps/weight wheel sheet for active-set edits |
-| `OverlaySheetContainer` | `Packages/FitnessUI/Sources/FitnessUI/ExercisePickerSheetChrome.swift` | Reusable overlay sheet with backdrop, grabber, swipe-dismiss, appear animation. Separates content (scrollable), actions (fixed bottom), and overlay (e.g. numpad). All picker sheets use this. |
+| `OverlaySheetContainer` | `Packages/FitnessUI/Sources/FitnessUI/ExercisePickerSheetChrome.swift` | Reusable overlay sheet with backdrop, grabber, swipe-dismiss, appear animation. Separates content (scrollable), actions (fixed bottom), and overlay (e.g. numpad). All picker sheets use this. Optional `backgroundColor` parameter (default `AppStyle.Color.sheetBackground`) overrides the sheet body fill — used by `FeedbackSheetView` to switch to `AppStyle.Color.black` for stronger contrast with the glass-effect tiles. |
 | `ExercisePickerActionButtons` / `exercisePickerSheet` | `Packages/FitnessUI/Sources/FitnessUI/ExercisePickerSheetChrome.swift` | Shared picker sheet chrome (inner styling + action buttons) |
 | `MetricChipView` | `Features/Exercise/ExerciseCard/MetricChipView.swift` | Generic chip container with background/stroke |
 | `WeightPhaseTileView` | `Features/Exercise/ExerciseCard/WeightPhaseTileView.swift` | Weight/reps phase tile for analytics display |
 | `CardBackground` | `Features/Exercise/ExerciseCard/CardBackground.swift` | Card wrapper with `Style` enum (`.glass`, `.gradient(Color)`) |
 | `SetTileView` | `Features/Exercise/ExerciseCard/SetTileView.swift` | Completed set display tile (weight/reps) |
 | `SetRowChipStyle` | `Features/Exercise/ActiveSet/SimpleActiveSetView.swift` | ViewModifier for set row chips — use `.setRowChipStyle(minWidth:)` |
+| `FeedbackSheetComponent` | `Packages/FitnessTraining/.../Feedback/FeedbackSheetComponent.swift` | Presents `FeedbackSheetView` when `TrainingCoordinator.isFeedbackSheetPresented` is true. Instantiates `FeedbackViewModel` lazily per presentation, scoped to the current exercise and pre-selects the body category from the exercise's `MuscleCategoryGroup`. Sets `UIOverlayState.isEditingSheetVisible` while visible so the bottom action bar hides — matching `TrainingPickerComponent` and `MuscleCategoryView`. |
+| `FeedbackSheetView` | `Packages/FitnessTraining/.../Feedback/FeedbackSheetView.swift` | Post-exercise feedback sheet using `OverlaySheetContainer` mit schwarzem Hintergrund (`AppStyle.Color.black`) für besseren Kontrast zu den Glass-Tiles. Sticky "How was the exercise?" title outside the scroll view, no height cap. Sections (top→bottom): Pain region (`PainRegionGrid`), Symptoms (`SymptomChipsView`), Energy level (`EnergyLevelSlider`), Note (multiline `TextEditor`). Save button disabled while the form is empty; cancel discards. All English copy. |
+| `EnergyLevelSlider` | `Packages/FitnessTraining/.../Feedback/EnergyLevelSlider.swift` | Horizontal 1...5 slider (dark-green tint, `AppStyle.Color.greenDark`) with integer snap. `Low` / current value / `High` labels above, tick labels 1–5 below. Binds directly to `FeedbackViewModel.energyLevel`. Identifier `TrainingIDs.energyLevelSlider`. |
+| `SymptomChipsView` | `Packages/FitnessTraining/.../Feedback/SymptomChipsView.swift` | 2-column `LazyVGrid` von gro\u00dfen `SymptomTile`s (Pain, Dizziness, Nausea, Weakness). Jeder Tile zeigt einen Icon-Kreis (mit Glow bei Selektion), UPPERCASE-Titel (`Symptom.displayName`) und Subtitle (`Symptom.description`, z.B. "Acute or sharp discomfort"). Highlight via `AppStyle.Color.greenGlow` (Border + Title + Icon) plus leichte gr\u00fcne Tile-T\u00f6nung. Tile-Hintergrund über `TrainingGlassEffectCompat.rectCard` (Liquid Glass auf iOS 26+, `ultraThinMaterial` sonst); grüne Tile-Tönung wird zusätzlich auf das Glas gelegt. SF-Symbol-Icons: `bolt.fill`, `tornado`, `face.dashed`, `dumbbell.fill`. |
+| `PainRegionGrid` | `Packages/FitnessTraining/.../Feedback/PainRegionGrid.swift` | 3-column `LazyVGrid` of `PainRegionTile`s, pre-scoped to the exercise's `BodyCategory`. **Multi-select**: `selectedRegions: Set<BodyRegion>` + `onToggle` — beliebig viele Regionen können gleichzeitig aktiv sein (z. B. Lower back + Obliques). Image-only Tiles (120pt hoch, `scaledToFit`) mit `TrainingGlassEffectCompat.rectCard` als Tile-Hintergrund (Liquid Glass auf iOS 26+, `ultraThinMaterial` sonst); kein Text-Label — der Regions-Name dient nur als `accessibilityLabel` für VoiceOver. Selektion durch grünen Rahmen + weicher Glow-Kreis; Tippen auf ein bereits ausgewähltes Tile entfernt es aus der Auswahl (ersetzt die frühere "None"-Option des Wheel-Pickers). Asset-Name pro Region via `BodyRegion.iconAssetName`; fehlende Assets → leerer Kasten (nur Rahmen, kein Inhalt). |
 
 
 ## Utilities
@@ -252,7 +264,7 @@ All tokens in `Shared/Design/AppStyle.swift`. When no token exists for a value, 
 
 ### Color
 
-`backgroundColor`, `primaryButton`, `exerciseCardBackground`, `chipsBackground`, `white`, `black`, `yellow`, `gray`, `grayDark`, `greenBlack`, `greenDark`, `green`, `greenLight`, `greenGlow`, `sheetBackground`, `sheetInputBackground`, `metricChipBackground`, `progressTrack`, `numberPadGray`, `trainingAccent`, `inProgressGold`, `profileCardBackground`, `bmiUnderweight`, `bmiNormal`, `bmiOverweight`, `bmiObese`
+`backgroundColor`, `primaryButton`, `exerciseCardBackground`, `chipsBackground`, `white`, `black`, `yellow`, `gray`, `grayDark`, `greenBlack`, `greenDark`, `green`, `greenLight`, `greenGlow`, `sheetBackground`, `sheetInputBackground`, `metricChipBackground`, `progressTrack`, `numberPadGray`, `trainingAccent`, `inProgressGold`, `profileCardBackground`, `bmiUnderweight`, `bmiNormal`, `bmiOverweight`, `bmiObese`, `painAccent` (red/orange for the feedback-sheet entry icon in `BottomActionBarView`)
 
 ### Opacity
 

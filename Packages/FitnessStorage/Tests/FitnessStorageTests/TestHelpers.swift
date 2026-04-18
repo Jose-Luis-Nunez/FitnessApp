@@ -13,7 +13,8 @@ enum TestHelpers {
             WorkoutModel.self,
             ExerciseModel.self,
             AnalyticsEntryModel.self,
-            SetProgressModel.self
+            SetProgressModel.self,
+            ExerciseFeedbackModel.self
         ])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         return try! ModelContainer(for: schema, configurations: [config])

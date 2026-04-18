@@ -164,6 +164,8 @@ public enum AppStyle {
         public static let bmiNormal = SwiftUI.Color(hex: "#3CC8A6")
         public static let bmiOverweight = SwiftUI.Color(hex: "#E8A838")
         public static let bmiObese = SwiftUI.Color(hex: "#E85A5A")
+
+        public static let painAccent = SwiftUI.Color(hex: "#FF6B3D")
     }
 
     public enum Opacity {

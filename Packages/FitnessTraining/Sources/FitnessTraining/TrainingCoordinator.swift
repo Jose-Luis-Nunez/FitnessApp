@@ -18,6 +18,7 @@ public struct TrainingCallbacks {
     public let onFinish: () -> Void
     public let onAddExercise: () -> Void
     public let onResetAllExercises: () -> Void
+    public let onOpenFeedback: () -> Void
 
     public init(
         onStart: @escaping () -> Void,
@@ -29,7 +30,8 @@ public struct TrainingCallbacks {
         onEditMore: @escaping () -> Void,
         onFinish: @escaping () -> Void,
         onAddExercise: @escaping () -> Void,
-        onResetAllExercises: @escaping () -> Void
+        onResetAllExercises: @escaping () -> Void,
+        onOpenFeedback: @escaping () -> Void = {}
     ) {
         self.onStart = onStart
         self.onCompleteSet = onCompleteSet
@@ -41,6 +43,7 @@ public struct TrainingCallbacks {
         self.onFinish = onFinish
         self.onAddExercise = onAddExercise
         self.onResetAllExercises = onResetAllExercises
+        self.onOpenFeedback = onOpenFeedback
     }
 }
 
@@ -53,6 +56,11 @@ public final class TrainingCoordinator {
     public var activeExercises: [Exercise.ID: Exercise] = [:]
     public var focusedExerciseId: Exercise.ID?
     public var lastCompletedExercise: Exercise?
+
+    /// Controls the presentation of the post-exercise feedback sheet. Flipped
+    /// by `openFeedback()` / `closeFeedback()` and observed by views via
+    /// `@Bindable`.
+    public var isFeedbackSheetPresented: Bool = false
 
     /// Backwards-compatible computed property: returns the focused session's VM,
     /// falling back to a shared idle instance so callers never deal with nil.
@@ -268,6 +276,17 @@ public final class TrainingCoordinator {
         }
     }
 
+    // MARK: - Feedback Sheet
+
+    public func openFeedback() {
+        guard currentExercise != nil else { return }
+        isFeedbackSheetPresented = true
+    }
+
+    public func closeFeedback() {
+        isFeedbackSheetPresented = false
+    }
+
     // MARK: - BottomActionBar Integration
 
     public func createBottomActionBarViewModel(exercises: [Exercise], hasActiveExercise: Bool) -> BottomActionBarViewModel {
@@ -323,6 +342,9 @@ public final class TrainingCoordinator {
             },
             onResetAllExercises: { [weak self] in
                 self?._onResetAllExercises()
+            },
+            onOpenFeedback: { [weak self] in
+                self?.openFeedback()
             }
         )
     }

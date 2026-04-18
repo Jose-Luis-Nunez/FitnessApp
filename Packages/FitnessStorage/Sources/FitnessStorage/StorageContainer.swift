@@ -9,7 +9,8 @@ public extension Container {
                 WorkoutModel.self,
                 ExerciseModel.self,
                 AnalyticsEntryModel.self,
-                SetProgressModel.self
+                SetProgressModel.self,
+                ExerciseFeedbackModel.self
             ])
             do {
                 return try ModelContainer(for: schema)
@@ -36,11 +37,17 @@ public extension Container {
     var totalAnalyticsStorage: Factory<TotalAnalyticsStoring> {
         self { TotalAnalyticsStorageService() }.singleton
     }
+    var feedbackStorage: Factory<FeedbackStoring> {
+        self { MainActor.assumeIsolated { FeedbackStorageService() } }.singleton
+    }
 
     var deleteWorkoutUseCase: Factory<DeleteWorkoutUseCase> {
         self { MainActor.assumeIsolated { DeleteWorkoutUseCase() } }
     }
     var duplicateWorkoutUseCase: Factory<DuplicateWorkoutUseCase> {
         self { MainActor.assumeIsolated { DuplicateWorkoutUseCase() } }
+    }
+    var saveFeedbackUseCase: Factory<SaveFeedbackUseCase> {
+        self { MainActor.assumeIsolated { SaveFeedbackUseCase() } }
     }
 }

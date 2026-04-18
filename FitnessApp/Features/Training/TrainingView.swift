@@ -98,6 +98,12 @@ struct TrainingView: View {
                 
                 // Training Picker Component
                 TrainingPickerComponent(coordinator: trainingCoordinator)
+
+                // Feedback Sheet (post-exercise subjective feedback)
+                FeedbackSheetComponent(
+                    coordinator: trainingCoordinator,
+                    category: category
+                )
             }
             
             // Training Mini Menu Overlay

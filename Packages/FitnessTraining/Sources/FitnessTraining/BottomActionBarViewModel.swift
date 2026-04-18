@@ -72,6 +72,13 @@ public struct BottomActionBarViewModel {
         (isLastSetCompleted || didEditCompleteSet) && currentExercise != nil
     }
 
+    /// The feedback icon-card is rendered whenever "Beenden" is visible — i.e.
+    /// right at the end of an exercise. Uses the same slot (right of the main
+    /// capsule) that hosts the quick-done icon-card at set 0.
+    public var showFeedbackButton: Bool {
+        showFinishButton || showQuickDoneBeendenButton
+    }
+
     public var showAddExerciseButton: Bool {
         let isStartSetState = showStartButton && (currentSet != 0 || didJustEditSet)
         return !isSetInProgress && !isStartSetState

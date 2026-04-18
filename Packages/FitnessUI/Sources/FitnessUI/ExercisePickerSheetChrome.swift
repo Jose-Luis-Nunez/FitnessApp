@@ -51,13 +51,15 @@ public extension EnvironmentValues {
 
 public struct ExercisePickerSheetModifier: ViewModifier {
     let isContentVisible: Bool
+    let backgroundColor: Color
 
     #if canImport(UIKit)
     @State private var keyboard = KeyboardObserver()
     #endif
 
-    public init(isContentVisible: Bool) {
+    public init(isContentVisible: Bool, backgroundColor: Color = AppStyle.Color.sheetBackground) {
         self.isContentVisible = isContentVisible
+        self.backgroundColor = backgroundColor
     }
 
     public func body(content: Content) -> some View {
@@ -74,7 +76,7 @@ public struct ExercisePickerSheetModifier: ViewModifier {
                     topTrailingRadius: AppStyle.CornerRadius.sheet,
                     style: .continuous
                 )
-                .fill(AppStyle.Color.sheetBackground)
+                .fill(backgroundColor)
                 .ignoresSafeArea(.container, edges: .bottom)
             )
             .frame(maxWidth: .infinity)
@@ -88,8 +90,11 @@ public struct ExercisePickerSheetModifier: ViewModifier {
 }
 
 public extension View {
-    func exercisePickerSheet(isContentVisible: Bool) -> some View {
-        modifier(ExercisePickerSheetModifier(isContentVisible: isContentVisible))
+    func exercisePickerSheet(
+        isContentVisible: Bool,
+        backgroundColor: Color = AppStyle.Color.sheetBackground
+    ) -> some View {
+        modifier(ExercisePickerSheetModifier(isContentVisible: isContentVisible, backgroundColor: backgroundColor))
     }
 }
 
@@ -113,6 +118,7 @@ public struct SheetActionBar<Actions: View>: View {
 public struct OverlaySheetContainer<Content: View, Actions: View, Overlay: View>: View {
     @Binding var isPresented: Bool
     let allowBackdropDismiss: Bool
+    let backgroundColor: Color
     let onCancel: () -> Void
     @ViewBuilder let overlay: () -> Overlay
     @ViewBuilder let actions: () -> Actions
@@ -123,6 +129,7 @@ public struct OverlaySheetContainer<Content: View, Actions: View, Overlay: View>
     public init(
         isPresented: Binding<Bool>,
         allowBackdropDismiss: Bool = true,
+        backgroundColor: Color = AppStyle.Color.sheetBackground,
         onCancel: @escaping () -> Void,
         @ViewBuilder overlay: @escaping () -> Overlay,
         @ViewBuilder actions: @escaping () -> Actions,
@@ -130,6 +137,7 @@ public struct OverlaySheetContainer<Content: View, Actions: View, Overlay: View>
     ) {
         _isPresented = isPresented
         self.allowBackdropDismiss = allowBackdropDismiss
+        self.backgroundColor = backgroundColor
         self.onCancel = onCancel
         self.overlay = overlay
         self.actions = actions
@@ -162,7 +170,7 @@ public struct OverlaySheetContainer<Content: View, Actions: View, Overlay: View>
             }
             .padding(.horizontal, AppStyle.Padding.horizontal)
             .padding(.top, AppStyle.Padding.titleTop)
-            .exercisePickerSheet(isContentVisible: isContentVisible)
+            .exercisePickerSheet(isContentVisible: isContentVisible, backgroundColor: backgroundColor)
             .gesture(
                 DragGesture().onEnded { value in
                     if allowBackdropDismiss && value.translation.height > 80 { dismiss() }
@@ -188,12 +196,14 @@ public extension OverlaySheetContainer where Overlay == EmptyView, Actions == Em
     init(
         isPresented: Binding<Bool>,
         allowBackdropDismiss: Bool = true,
+        backgroundColor: Color = AppStyle.Color.sheetBackground,
         onCancel: @escaping () -> Void,
         @ViewBuilder content: @escaping () -> Content
     ) {
         self.init(
             isPresented: isPresented,
             allowBackdropDismiss: allowBackdropDismiss,
+            backgroundColor: backgroundColor,
             onCancel: onCancel,
             overlay: { EmptyView() },
             actions: { EmptyView() },
@@ -207,6 +217,7 @@ public extension OverlaySheetContainer where Overlay == EmptyView {
     init(
         isPresented: Binding<Bool>,
         allowBackdropDismiss: Bool = true,
+        backgroundColor: Color = AppStyle.Color.sheetBackground,
         onCancel: @escaping () -> Void,
         @ViewBuilder actions: @escaping () -> Actions,
         @ViewBuilder content: @escaping () -> Content
@@ -214,6 +225,7 @@ public extension OverlaySheetContainer where Overlay == EmptyView {
         self.init(
             isPresented: isPresented,
             allowBackdropDismiss: allowBackdropDismiss,
+            backgroundColor: backgroundColor,
             onCancel: onCancel,
             overlay: { EmptyView() },
             actions: actions,
