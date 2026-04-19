@@ -2,9 +2,18 @@ import Foundation
 import SwiftData
 import FitnessCore
 
-/// `@_spi(PersistenceUI)` exposes this `@Model` to the
-/// `FitnessPersistenceUI` package only. Other modules that import
-/// `FitnessStorage` plain see no change. See ADR-0002 for rationale.
+/// `@_spi(PersistenceUI)` exposes this `@Model` to consumers that opt in
+/// with `@_spi(PersistenceUI) import FitnessStorage`. Plain
+/// `import FitnessStorage` callers see only the `public` service API.
+///
+/// Allowed consumers (per ADR-0002):
+/// - `FitnessPersistenceUI` — primary integration surface
+/// - `FitnessStorage`'s own tests via `@_spi(PersistenceUI) @testable import`
+/// - Specific views in `FitnessExercise` that act as `@Query`-host for
+///   ModelViews from `FitnessPersistenceUI` (T7a/T7b/T8a)
+///
+/// Every new SPI consumer outside `FitnessPersistenceUI` is a deliberate
+/// boundary loosening and is review-required.
 @_spi(PersistenceUI)
 @Model
 public final class ExerciseModel {

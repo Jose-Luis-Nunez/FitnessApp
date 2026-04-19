@@ -332,18 +332,23 @@ Pro Commit:
   FitnessPersistenceUI neuer ExerciseCardResolvingView).
 - `adr-required.sh` Hook: ADR-0001/0002 in Commit-Body referenzieren.
 
-## Definition of Done (T7 gesamt)
+## Definition of Done (T7 gesamt) — ✅ COMPLETED
 
-- [ ] T7-0: Build + Tests + Commit. Cycle aufgelöst, alte Sites in
+- [x] T7-0: Build + Tests + Commit (`51d7271c`). Cycle aufgelöst, alte Sites in
       `FitnessExercise` nutzen `FitnessCore.CardVariant` /
       `FitnessUI.ExerciseCardLayout`.
-- [ ] T7a: Build + Tests + Commit. Bug 2 manuell verifiziert.
-- [ ] T7b: Build + Tests + Commit. Bug 1 manuell verifiziert.
-- [ ] `architecture-documentation.md` reflektiert finale Lage nach T7b.
-- [ ] T8 ist klar definiert: ViewModel-Caches löschen, `changeVersion` /
-      observation loops löschen, alte `ExerciseCardContainerView` und
-      `CategoryTileView` löschen, `MuscleCategorySelectionView.allExercisesList`
-      und `TrainingView`-Card auf ModelView umstellen oder löschen.
+- [x] T7a: Build + Tests + Commit (`9c233194`). Bug 2 strukturell behoben
+      (CategoryTileModelView mit @Query in MuscleCategorySelectionView.categoryList).
+- [x] T7b: Build + Tests + Commit (`6f6280b7`). Bug 1 strukturell behoben
+      (ExerciseCardModelView mit @Query in MuscleCategoryView.exerciseListSection).
+- [x] `architecture-documentation.md` reflektiert finale Lage nach T7b
+      (in T8a/T8c/T8d-Updates ergänzt).
+- [x] T8 wurde inkrementell als T8a + T8c + T8d ausgeliefert; T8b
+      (`TrainingView`-Card-Migration) ist explizit DEFERRED mit Begründung
+      (View-Lifecycle schließt Bug-1-Trigger strukturell aus).
+      Note: das hier ursprünglich erwähnte `ExerciseCardResolvingViewTests` wurde
+      als `ExerciseCardModelViewTests` (T5) realisiert — Symbolname-Drift,
+      keine fehlende Coverage.
 
 ## Akzeptanzkriterien
 

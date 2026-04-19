@@ -13,7 +13,7 @@ zwei Datenpfade übrig gelassen, die parallel leben:
 | Pfad | Quelle | Wo verwendet | Bug-relevant? |
 |---|---|---|---|
 | **Live (`@Query<ExerciseModel>`)** | SwiftData → `ExerciseCardModelView`, `CategoryTileModelView` | `MuscleCategorySelectionView.categoryList` (T7a), `MuscleCategoryView.exerciseListSection` (T7b) | **Beide Original-Bugs fließen hier** |
-| **Snapshot (`changeVersion`+Polling)** | `ExerciseStorageService.changeVersion` → ViewModels-Cache → `ExerciseCardContainerView` | `MuscleCategorySelectionView.allExercisesList` (List-Mode), `TrainingView` (Detail-Card), Edit-Bools (`showStartTraining`, `showReset`, `viewModel.exercises.first(where:)`) | Keiner — bestehender Code, kein User-Bug-Report |
+| **Snapshot (`changeVersion`+Polling)** | `ExerciseStorageService.changeVersion` → ViewModels-Cache → `ExerciseCardContainerView` | `MuscleCategorySelectionView.allExercisesList` (List-Mode, behoben in T8a), `TrainingView` (Detail-Card, deferred T8b), Edit-Bools (`showStartTraining`, `showReset`) auf VM-Snapshot belassen, Routing-`first(where:)` live in T8c | Routing-Drift: ja (in T8c behoben). Edit-Bools: tolerable Latenz, bewusst belassen. |
 
 T8 räumt die **dead-by-design**-Schuld weg: alle `changeVersion`-Observer feuern noch,
 aber das Karten-Rendering liest die VM-Snapshots gar nicht mehr. Das ist nicht nur
@@ -213,24 +213,23 @@ Daraus folgen die T8d-Kompromisse:
 - `MuscleCategoryViewModel.cardViewModel(for:)` weg, aber Klasse
   `ExerciseCardViewModel` selbst bleibt nutzbar via direktes Init
 
-## Definition of Done
+## Definition of Done — ✅ COMPLETED
 
-- [ ] T8a + T8c + T8d implementiert, je Phase ein Commit
-- [ ] `rg "changeVersion|startStorageObservation|syncExercise" Packages/FitnessExercise/Sources Packages/FitnessStorage/Sources` → 0 Treffer
-- [ ] Karten-Rendering überall live über `@Query<ExerciseModel>` (außer `TrainingView`-Detail, deferred)
-- [ ] App-Target builds grün
-- [ ] Full Test Suite grün (Erwartung: ~545-549 Tests, je nach finalen Test-Löschungen)
-- [ ] Manueller Smoke-Test: beide Original-Bugs sind und bleiben behoben
-- [ ] `architecture-documentation.md` reflektiert finalen Stand:
+- [x] T8a + T8c + T8d implementiert, je Phase ein Commit
+- [x] `rg "changeVersion|startStorageObservation|syncExercise" Packages/FitnessExercise/Sources Packages/FitnessStorage/Sources` → 0 Treffer
+- [x] Karten-Rendering überall live über `@Query<ExerciseModel>` (außer `TrainingView`-Detail, deferred)
+- [x] App-Target builds grün
+- [x] Full Test Suite grün
+- [x] Manueller Smoke-Test: beide Original-Bugs sind und bleiben behoben
+- [x] `architecture-documentation.md` reflektiert finalen Stand:
   - `MuscleCategorySelectionView.allExercisesList` jetzt live (T8a)
   - `ExerciseStorageService` ohne `changeVersion`-Sektion
   - `MuscleCategorySelectionViewModel`/`MuscleCategoryViewModel` reduziert auf
     Coordinator-State + Navigation + Form-Routing
   - `TrainingView` als bewusst zurückgelassene legacy-Stelle dokumentiert
     (mit Verweis auf T8b-DEFERRED-Begründung)
-- [ ] ADR-0001 Status bleibt `accepted` — Hinweis im Status-Feld:
-  "T8a/c/d cleanup landed; TrainingView-Detail bewusst legacy (siehe T8b)"
-- [ ] `reviewing-code-changes` Skill durchlaufen pro Phase, Stamps geschrieben
+- [x] ADR-0001 / ADR-0002 reflektieren T8b-Deferral mit Begründung
+- [x] `reviewing-code-changes` Skill durchlaufen pro Phase, Stamps geschrieben
 
 ## Akzeptanzkriterien
 

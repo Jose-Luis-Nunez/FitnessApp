@@ -72,7 +72,16 @@ UI-Komponenten konsumieren `@Model`-Instanzen direkt:
 - `struct Exercise` (in `FitnessCore`) bleibt für nicht-UI-Konzerne:
   Analytics-Snapshots, Cross-Package-DTOs, pure Logic-Tests, Persistierungs-Helpers
   außerhalb des `@Model`-Lebenszyklus.
-  **Aber: UI darf nur `@Model`-Referenzen halten.** Kein `@State` mit `Exercise`-struct.
+  **Neue UI darf nur `@Model`-Referenzen halten.** Kein `@State` mit
+  `Exercise`-struct.
+  **Bewusste Ausnahme**: `FitnessApp/Features/Training/TrainingView.swift` hält
+  weiterhin `@State private var cardViewModel: ExerciseCardViewModel` mit einer
+  `Exercise`-Struct-Kopie. Begründung: Der Bug-1-Trigger (UI-Flip nach
+  `coordinator.finishExercise()`) existiert in dieser View strukturell nicht
+  (sie navigiert weg, bevor die Mutation den Render-Pass erreicht). Migration
+  per T8b deferred — Re-Aufnahme bei User-Bug-Report im Training-Detail oder
+  als Aufräum-Sprint. Andere neue Views, die den gleichen "deferred"-Status
+  beanspruchen wollen, müssen das hier per Patch-ADR ergänzen.
 
 ### Non-Goals
 
@@ -139,7 +148,8 @@ einführen. Ein paralleler Stack ist tödlich.
 
 - ADR-0002 (FitnessPersistenceUI als Schicht für SwiftData-UI-Code)
 - ADR-0003 (Coordinator-Session-Vertrag — wer hält was während Training)
-- Plan: `~/.cursor/projects/.../observable_models_sot_a761f7b8.plan.md`
+- Plan-Files: [`.cursor/plans/observable-models-sot/`](../../.cursor/plans/observable-models-sot/)
+  (T0–T8 inkrementelle Tasks, README.md als Index)
 - T0a `ui-state-sync-enforcement.mdc` (verbietet alte Counter-Pattern fortan)
 - T0e Skill §14 (Predicate-Anti-Patterns als Reviewer-Pflicht)
 - Apple `@Query`: <https://developer.apple.com/documentation/swiftdata/query>

@@ -1,13 +1,18 @@
 // FitnessPersistenceUI
 //
-// Single SwiftUI integration surface for SwiftData `@Model` types.
-// Hosts `@Query`/`@Bindable`-driven views (e.g. ExerciseCardModelView,
-// CategoryTileModelView) introduced in T5+. Per ADR-0002, this is the
-// only module that may carry `@_spi(PersistenceUI) import FitnessStorage`;
-// other feature packages stay DTO-oriented and consume `Exercise`/`Workout`
-// value types from FitnessCore.
+// Primary SwiftUI integration surface for SwiftData `@Model` types. Hosts
+// `@Query`/`@Bindable`-driven views (ExerciseCardModelView,
+// CategoryTileModelView, …) introduced in T5+.
 //
-// Skeleton-only in T4. Pilot views land in T5/T6/T7.
+// Per ADR-0002 this is the **primary** consumer of `@_spi(PersistenceUI)
+// import FitnessStorage`, but not the only one: specific views in
+// `FitnessExercise` (e.g. `MuscleCategorySelectionView`,
+// `MuscleCategoryView`) also import the SPI to host `@Query`s that drive
+// the ModelViews exported here (T7a/T7b/T8a). Every new such consumer is
+// a deliberate boundary loosening and is review-required.
+//
+// Other feature packages remain DTO-oriented and consume `Exercise` /
+// `Workout` value types from `FitnessCore`.
 
 import SwiftData
 import SwiftUI

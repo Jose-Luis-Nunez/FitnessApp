@@ -2,8 +2,10 @@ import Foundation
 import SwiftData
 import FitnessCore
 
-/// `@_spi(PersistenceUI)` exposes this `@Model` to the
-/// `FitnessPersistenceUI` package only. See ADR-0002 for rationale.
+/// `@_spi(PersistenceUI)` exposes this `@Model` to consumers that opt in
+/// with `@_spi(PersistenceUI) import FitnessStorage`. See ADR-0002 for the
+/// allowed-consumer list and the rationale (also documented on
+/// `ExerciseModel`).
 @_spi(PersistenceUI)
 @Model
 public final class WorkoutModel {

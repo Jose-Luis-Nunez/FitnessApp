@@ -91,21 +91,33 @@ als Zugriffsmarker für `@Model`-Klassen aus `FitnessStorage`.
   - `FitnessCore` — für Enums (z.B. `MuscleCategoryGroup`), DTOs (`Exercise` als
     Grenz-Typ wo nötig), Domain-Helpers
 - **Imports**: `SwiftData`, `SwiftUI`
-- **Exports** (initial):
-  - `ExerciseCardModelView` — verbraucht `@Bindable ExerciseModel`
-  - `CategoryTileModelView` — verbraucht `@Query` mit Filter auf `workoutId`
-  - `TrainingModelView` — Wrapper der die zwei Pilot-Views integriert
-  - ViewModifier für `.modelContainer(...)`-Setup falls separater Test-Container
-    nötig
+- **Exports** (Stand nach T5–T8d):
+  - `ExerciseCardModelView` — Variant-Resolver-Container auf `@Bindable ExerciseModel`
+  - `ActiveCardModelView`, `IdleActiveCardModelView`, `InactiveCardModelView`
+    — Variant-spezifische Karten-Views (alle `@_spi(PersistenceUI) public`)
+  - `CategoryTileModelView` — `@Query<ExerciseModel>` mit `#Predicate` auf
+    `workoutId` + `category`
+  - `ExerciseModel+UI` Convenience-Properties (`hasWeight`, `displayIconName`,
+    `categoryGroup`, `iconAlignment`)
+  - `enum FitnessPersistenceUI { static let moduleVersion }` als nicht-SPI
+    Public-Surface
+  - **Nicht ausgeliefert**: `TrainingModelView` Wrapper — siehe T8b-Deferral.
 
 ### Verbleibende Verantwortungen
 
-- `FitnessExercise` bleibt DTO-orientiert: `struct Exercise`, View-Logik die
-  ohne SwiftData-Import auskommt (z.B. `ExerciseCardViewModel` solange er
-  noch existiert in der Übergangsphase, später entfernt in T8).
-- `FitnessStorage` exponiert seine `@Model`-Klassen ausschließlich nach
-  `FitnessPersistenceUI` via `@_spi(PersistenceUI) public final class`.
-  Keine andere SPM-Library darf den `@_spi`-Marker importieren.
+- `FitnessExercise` bleibt **primär** DTO-orientiert: `struct Exercise`, View-Logik
+  die ohne SwiftData-Import auskommt. Konkrete Views, die als `@Query`-Host für
+  `FitnessPersistenceUI`-ModelViews dienen (`MuscleCategorySelectionView`,
+  `MuscleCategoryView` seit T7a/T7b/T8a), dürfen `@_spi(PersistenceUI) import
+  FitnessPersistenceUI` **und** `@_spi(PersistenceUI) import FitnessStorage`
+  importieren. Diese Stellen sind bewusste Boundary-Aufweichungen, im
+  Code-Comment + PR-Review begründet, nicht Disziplinverstöße.
+- `FitnessStorage` exponiert seine `@Model`-Klassen via `@_spi(PersistenceUI)
+  public final class`. Konsumenten sind: (a) `FitnessPersistenceUI` als primäre
+  Integration-Schicht, (b) `FitnessStorage`'s eigene Tests (`@_spi(PersistenceUI)
+  @testable import`), (c) **vereinzelt** Feature-Views in `FitnessExercise` die
+  als `@Query`-Host für ModelViews aus (a) dienen. Jede neue Stelle in (c) ist
+  Review-pflichtig.
 
 ## Konsequenzen
 
@@ -126,17 +138,30 @@ als Zugriffsmarker für `@Model`-Klassen aus `FitnessStorage`.
 - Ein zusätzliches SPM-Package erhöht die Build-Matrix marginal.
 - `FitnessExercise` (mit `ExerciseCardView` auf `struct Exercise`) und
   `FitnessPersistenceUI` (mit `ExerciseCardModelView` auf `@Bindable
-  ExerciseModel`) haben für eine Übergangszeit parallele Card/Tile-Views.
-  Aufgelöst in T8 (Legacy-Cleanup).
+  ExerciseModel`) haben parallele Card/Tile-Views. Im Home/MuscleCategory-
+  Subtree ist die Migration mit T7a/T7b/T8a/T8c/T8d abgeschlossen — dort
+  rendert ausschließlich `FitnessPersistenceUI`. **`TrainingView` (T8b)
+  bleibt bewusst auf der Legacy-`ExerciseCardContainerView`-Schiene**, da
+  ihr Lebenszyklus den Bug-1-Trigger strukturell ausschließt (View navigiert
+  weg, bevor `coordinator.finishExercise()` einen UI-Flip auslösen könnte).
+  Re-Aufnahme bei User-Bug-Report im Training-Detail oder als Aufräum-Sprint.
 
 ### Neutral
 
 - App-Target depends jetzt auf 7 statt 6 Packages — vernachlässigbar.
-- `@_spi`-Marker erfordert dass nur `FitnessPersistenceUI` importiert. Schutz
-  ist Compiler-erzwungen (Verstoß = Compile-Error), nicht Disziplin-basiert.
-  Zusätzliche Belt-and-Braces: Reviewer-Subagent prüft per neuem Skill-Item
-  dass `@_spi(PersistenceUI) import` außerhalb von `FitnessPersistenceUI` nie
-  vorkommt. PR-Diffs zeigen den Marker explizit, Verstoß ist sofort sichtbar.
+- `@_spi(PersistenceUI)` ist **nicht** sandbox-artig single-consumer. Der Marker
+  zwingt jeden Importeur zu einer expliziten, im Diff sichtbaren Opt-in-Geste
+  — das ist die eigentliche Schutzwirkung. Erlaubte Konsumenten:
+  - `FitnessPersistenceUI` (primäre Integration-Schicht)
+  - `FitnessStorage`'s eigene Tests (`@_spi(PersistenceUI) @testable import`)
+  - Spezifische Views in `FitnessExercise` die als `@Query`-Host für
+    ModelViews aus `FitnessPersistenceUI` dienen (T7a/T7b/T8a:
+    `MuscleCategorySelectionView`, `MuscleCategoryView`)
+
+  Jeder neue Importer in `FitnessExercise` (oder einem anderen Feature-Package)
+  ist eine bewusste Boundary-Aufweichung und im Code-Review begründungspflichtig.
+  PR-Diffs zeigen den Marker explizit; ein Reviewer kann die Ergänzung sofort
+  sehen.
 
 ### Lock-in / Exit-Strategie
 
@@ -156,5 +181,6 @@ es jemals deprecated werden:
 - T4 (Package-Skeleton + Workspace-Integration)
 - T5 (Pilot `ExerciseCardModelView`)
 - T6 (Pilot `CategoryTileModelView`)
-- T7 (`TrainingModelView` Wrapper)
+- T7 (inkrementelle Migration: T7-0 Cycle-Break, T7a Tile-Live, T7b Card-Live)
+- T8 (Cleanup: T8a list-mode live, T8c routing live, T8d dead-code-sweep; T8b TrainingView deferred)
 - Swift `@_spi`-Doc: <https://github.com/apple/swift/blob/main/docs/ReferenceGuides/UnderscoredAttributes.md#_spi>

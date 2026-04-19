@@ -298,9 +298,14 @@ struct ObserverStabilityTests {
     }
 }
 
-@Suite("auto-refresh after exercise completion")
+/// Snapshot-refresh after exercise completion. Since T8d removed VM-side
+/// polling, callers must explicitly invoke `vm.refreshExercises()` to pull
+/// new state from storage. The live UI does **not** do this — it observes
+/// SwiftData via `@Query` directly. These tests guard the legacy Form/Picker
+/// write path's snapshot consistency.
+@Suite("snapshot-refresh after coordinator finish (manual refresh path)")
 @MainActor
-struct AutoRefreshTests {
+struct SnapshotRefreshAfterFinishTests {
 
     @Test func updatesExerciseInPlaceWhenCoordinatorCompletesIt() async throws {
         let id = UUID()
