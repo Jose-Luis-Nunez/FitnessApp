@@ -16,7 +16,7 @@ neue Entity, optionale Property entfernen). Bei nicht-trivialen Änderungen
 backfillen) wirft SwiftData beim Container-Bootstrap zur Laufzeit — also
 **Crash beim App-Start nach Update**.
 
-Konkreter Trigger: **T3** fügt eine neue Property `workoutId: UUID` auf
+Konkreter Trigger: **T3** fügt eine neue Property `workoutId: UUID?` auf
 `ExerciseModel` ein und muss bestehende Einträge backfillen
 (jeder `ExerciseModel.workout?.id` → eigener `workoutId`-Slot). Das ist die
 **erste** Schema-Änderung die nicht trivial rückwärtskompatibel ist —
@@ -82,14 +82,19 @@ Layout und Test-Pflicht pro Migrations-Stage.
 
 ```
 Packages/FitnessStorage/Sources/FitnessStorage/
-├── Models/                     # aktuelle Live-Modelle (re-exported aus
-│   ├── WorkoutModel.swift      # SchemaVN — die "neueste" Version)
+├── Models/                     # Live-Definitionen (= jüngste Schema-
+│   ├── WorkoutModel.swift      # Version), App-Code importiert von hier
 │   ├── ExerciseModel.swift
 │   └── ...
 ├── Schema/
-│   ├── SchemaV1.swift          # enum SchemaV1: VersionedSchema { ... }
-│   ├── SchemaV2.swift          # enum SchemaV2: VersionedSchema { ... }
-│   ├── SchemaVN.swift          # aktuelle Version (= was Models/ exportiert)
+│   ├── SchemaV1.swift          # enum SchemaV1: VersionedSchema {
+│   │                           #   nested @Model class für jede Klasse
+│   │                           #   die SEITDEM geändert wurde;
+│   │                           #   models = [Snapshot..., LiveRef...]
+│   │                           # }
+│   ├── SchemaV2.swift          # analog für V2
+│   ├── SchemaVN.swift          # jüngste Version: nur Live-Refs in models
+│   │                           # (keine Snapshots, weil = aktueller Stand)
 │   └── MigrationPlan.swift     # enum AppMigrationPlan: SchemaMigrationPlan
 └── StorageContainer.swift      # nutzt AppMigrationPlan + SchemaVN.self
 ```
@@ -99,14 +104,76 @@ Packages/FitnessStorage/Sources/FitnessStorage/
 Jede `SchemaVN.swift` enthält:
 
 1. `enum SchemaVN: VersionedSchema` mit `static var versionIdentifier`
-2. `static var models: [any PersistentModel.Type]` — **Kopien** aller `@Model`-
-   Klassen unter `SchemaVN.WorkoutModel`, `SchemaVN.ExerciseModel`, …
-   (kein Re-Use älterer Versionen; jede Version ist self-contained)
+2. `static var models: [any PersistentModel.Type]` — die Liste aller
+   persistierten `@Model`-Klassen wie sie in **dieser** Schema-Version
+   aussehen.
 
-Die "Live"-Klassen unter `Models/` sind **typealiases** auf die jüngste
-Schema-Version (`typealias ExerciseModel = SchemaVN.ExerciseModel`). So
-referenziert App-Code immer den aktuellen Stand, alte Versionen leben isoliert
-in ihren Schema-Files.
+Welche Klassen davon eine **eigene Snapshot-Definition** brauchen, regelt
+die Snapshot-Pflicht (siehe nächster Abschnitt).
+
+### Snapshot-Pflicht (Hybrid-Regel)
+
+Eine `@Model`-Klasse muss **nur dann** als Snapshot-Kopie unter
+`SchemaVN.<Klasse>` geschrieben werden, **wenn sich ihre persistierte Form**
+in einer späteren Schema-Version **geändert hat** (Property hinzugefügt
+non-optional, Property entfernt, Typ geändert, Beziehung umstrukturiert,
+Index/Unique-Constraint geändert).
+
+Solange eine Klasse über mehrere Schema-Versionen **identisch** bleibt,
+referenzieren `SchemaV{N-1}.models` und `SchemaVN.models` denselben
+Live-Type aus `Models/`.
+
+**Mechanik beim nächsten Schema-Change**:
+
+1. Identifiziere die zu ändernde(n) Klasse(n).
+2. **Snapshot ihre AKTUELLE (= V{N})-Form** unter
+   `Schema/SchemaV{N}.swift` als nested `@Model class`. Inhalt =
+   1:1 Kopie der `Models/<Klasse>.swift` *bevor* du sie änderst.
+3. Editiere `Models/<Klasse>.swift` auf die neue Form (= `V{N+1}`).
+4. Erstelle `Schema/SchemaV{N+1}.swift`. `models:` referenziert die
+   neuen Live-Klassen plus alle unveränderten Live-Klassen.
+5. `SchemaV{N}.models:` ersetzt den Eintrag der geänderten Klasse durch
+   den Snapshot (`SchemaV{N}.<Klasse>.self`); unveränderte Klassen
+   bleiben Live-Refs.
+6. Erweitere `MigrationPlan.swift` um `migrateV{N}toV{N+1}_<intent>`.
+7. Schreibe Test (siehe Test-Pflicht).
+
+**Beziehungs-Closure-Regel**: Eine `@Relationship` (inverse oder direkt)
+referenziert immer einen konkreten Swift-Type. Wenn die geänderte
+Klasse `Z` mit Beziehung von Klasse `A` ist (`A` hält `[Z]` oder
+`A: \Z`-inverse), dann sind in V_old und V_new **zwei distincte**
+Swift-Typen für `Z` aktiv. SwiftData kann eine Live-Klasse `A` nicht
+gleichzeitig auf zwei Typen für `Z` registrieren — also muss **`A`
+ebenfalls snapshot't werden**, auch wenn `A` selbst feldgleich
+bleibt. Der Snapshot ist dann eine 1:1-Kopie der Live-Klasse, deren
+einzige Funktion ist, in V_old auf den V_old-`Z`-Typ zu zeigen.
+
+Reine FK-Felder (`var fooId: UUID`) sind **keine** Beziehung im
+Sinne dieser Regel und triggern den Closure-Snapshot nicht.
+
+Folge dieser Regel rekursiv bis kein Klassen-Cluster mehr Verbindungen
+über die "geänderte" Menge hinweg hat. Andere `@Model`-Klassen ohne
+Beziehung in diesen Cluster bleiben Live-Refs.
+
+### Begründung der Hybrid-Regel
+
+Die strikte "alle Klassen jeder Version snapshotten"-Variante ist
+korrekt aber teuer: bei 5 Models und 4 Migrations-Schritten ergibt sie
+20 Snapshot-Definitionen, davon 15 Klone identischer Code. Die
+"alle Klassen sind Live-Refs in allen Versionen"-Variante ist billig
+aber bricht den Migrations-Test (man kann V1-Daten mit V2-Form nicht
+erzeugen, also auch nicht testweise migrieren).
+
+Die Hybrid-Regel snapshot't **nur die tatsächlich geänderten Klassen**.
+Diff-Cost = Cost-of-Change. Die Reviewability bleibt erhalten
+("Welche Klasse hat sich geändert?" = "welche hat einen Snapshot in
+diesem Commit?"), und Migration-Tests bleiben schreibbar weil V_old
+und V_new für die geänderte Klasse zwei distincte Swift-Types sind.
+
+Apple's WWDC23 SampleTrips folgt exakt diesem Hybrid (Trip wird
+snapshot't weil Trip sich ändert; LivingAccommodation und
+BucketListItem bleiben Live-Refs zwischen V1/V2 weil sie unverändert
+sind).
 
 ### Pattern pro Migration
 
@@ -126,7 +193,8 @@ enum AppMigrationPlan: SchemaMigrationPlan {
         toVersion: SchemaV2.self,
         willMigrate: nil,
         didMigrate: { context in
-            // Backfill: jede ExerciseModel.workoutId = workout?.id ?? UUID()
+            // Backfill: jede ExerciseModel.workoutId = workout?.id
+            // (orphans bleiben mit nil, werden beim nächsten Save überschrieben)
         }
     )
 }
@@ -135,6 +203,54 @@ enum AppMigrationPlan: SchemaMigrationPlan {
 Jede `MigrationStage` ist eine **benannte** static-Property
 (`migrateVNtoVNplus1_<intent>`). Anonym im Array funktioniert auch, schadet
 aber Lesbarkeit und macht Test-Referenzierung umständlich.
+
+### Optionalitäts-Regel für neue Properties (Lightweight-Limit)
+
+**Regel**: Eine neue Property die in `V_old` nicht existiert und in `V_new`
+hinzugefügt wird, **muss als Optional deklariert sein** (`var foo: Bar?`),
+auch wenn sie semantisch nie `nil` sein darf.
+
+**Begründung (mit Apple-Doku belegt)**:
+
+SwiftData führt vor jeder Custom-`MigrationStage` einen impliziten
+Lightweight-Schritt durch. Der ergänzt die persistierten Tabellen um die
+neue Spalte **bevor** `willMigrate`/`didMigrate` läuft. Dieser Schritt
+validiert die Spalte gegen das neue Schema und failt mit
+`Validation error missing attribute values on mandatory destination
+attribute` wenn die Spalte non-optional ist und für existierende Rows
+kein Wert da ist. Das `init`-Default greift hier nicht — das gilt nur
+für **neu insertierte** Objekte, nicht für die Migration bestehender Rows.
+
+Belegt durch:
+
+- Apple Developer Forum thread "SwiftData Migration Error: Missing
+  Attribute Values" — Apple-Engineer-Antwort empfiehlt Optional + custom
+  stage für Backfill: <https://developer.apple.com/forums/thread/746577>
+- Apple Developer Forum thread "Migrating schemas in SwiftData":
+  <https://developer.apple.com/forums/thread/764236>
+
+**Alternativen die bewertet und verworfen wurden**:
+
+| Variante | Verworfen weil |
+|---|---|
+| Property non-optional + `init`-Default | Crash beim ersten Container-Open nach Update (init greift bei Migration nicht) |
+| 3-Schema-Kette V1 → V1.5 (optional) → V2 (non-optional) | Doppelter Snapshot/Stage/Test-Aufwand pro FK-Field; rebenefit nur kosmetisch (`UUID` statt `UUID?` im Live-Code) |
+| Delete-and-recreate in `didMigrate` | Bricht externe Referenzen (andere Models halten die alte ID), Insertion-Order-abhängig, korrumpiert Beziehungen |
+
+**Predicate-Safety bei `UUID?`-Vergleich**: Der §14a-Anti-Pattern
+(`reviewing-code-changes` Skill) verbietet **Optional-Chains** in
+`#Predicate` (`$0.relation?.id == foo`), nicht den direkten Vergleich
+zweier Optionals. `$0.workoutId == workoutId` mit
+`workoutId: UUID?` vs Funktionsparameter `UUID` kompiliert in einen
+flachen SQL-Vergleich (`WHERE workoutId = ?`), nicht in einen Join.
+Das ist **kein** Anti-Pattern und voll indexable.
+
+**Konsequenz für Production-Code**: Production-Save-Pfade
+(`ExerciseModel.from(_:sortOrder:workout:)`, alle direkten Erzeuger)
+müssen weiter den realen `workoutId` setzen. Der `nil`-Zustand existiert
+nur transient während `didMigrate` und für orphans (rows ohne
+`@Relationship`-Partner). Reviewer prüfen: jeder neue Erzeuger ruft
+den Helper oder setzt `workoutId` explizit.
 
 ### Test-Pflicht (verbindlich)
 
@@ -186,19 +302,21 @@ return try ModelContainer(
 
 ### Negativ
 
-- Mehr Dateien pro `@Model`. Bei 5 aktuellen Models und jährlichen
-  Schema-Changes wachsen die `Schema/`-Files linear (V1, V2, …). Mitigation:
-  alte Versionen die niemand mehr migriert (alle Production-User längst auf
-  V≥N) können entfernt werden — separater ADR wenn so weit, default ist
-  konservativ alle behalten.
+- Bei jedem Schema-Change muss der Engineer **vor** der Code-Änderung
+  einen Snapshot der aktuellen Form schreiben (Hybrid-Regel Schritt 2).
+  Vergisst er das, ist der Migrations-Test nicht schreibbar und der
+  pre-commit Hook (adr-required) blockt den Commit. Das ist Disziplin-
+  Aufwand; der Hybrid macht ihn aber so klein wie möglich (nur die
+  tatsächlich geänderte Klasse).
 - Initiale Umstellung in T3 hat mehr Aufwand als "schnell `workoutId: UUID`
   auf `ExerciseModel`". Das ist der Preis dafür dass T4, T5, … alle billig sind.
 
 ### Neutral
 
-- `typealias`-Indirection in `Models/` ist eine Schicht mehr aber für die
-  meisten Konsumenten unsichtbar. App-Code schreibt weiter `ExerciseModel`,
-  nicht `SchemaV2.ExerciseModel`.
+- App-Code referenziert weiter `ExerciseModel`, `WorkoutModel` etc. ohne
+  Schema-Präfix — die `Models/`-Dateien sind die Live-Definitionen
+  (= jüngste Version). Snapshot-Klassen unter `SchemaVN.<Name>` werden
+  nur intern in Schema/Migration/Test-Code referenziert.
 - CloudKit-Migration (zukünftiges ADR-0004) profitiert von versioniertem Schema
   weil CloudKit-Schemas auch versioniert sind und ein 1:1-Mapping zu unserem
   `SchemaVN` erlauben.

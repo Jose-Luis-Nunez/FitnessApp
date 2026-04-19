@@ -10,7 +10,7 @@
 Zwei zusammenhängende Ergebnisse:
 
 1. **Schema-Versionierung einführen** (per ADR-0005): heutiges flaches `Schema([...])` umstellen auf `VersionedSchema` + `SchemaMigrationPlan`. T3 ist die erste Anwendung dieses Patterns; jeder zukünftige Schema-Change folgt mechanisch denselben Schritten.
-2. **`ExerciseModel` bekommt indexed `workoutId: UUID`** als Denormalisierung der `workout` Relationship-ID. Das eliminiert die Notwendigkeit von `$0.workout?.id == X` Optional-Chain in `@Query`-Predicates (Anti-Pattern §14a, historisch broken bis iOS 17.5).
+2. **`ExerciseModel` bekommt `workoutId: UUID?`** als Denormalisierung der `workout` Relationship-ID. Das eliminiert die Notwendigkeit von `$0.workout?.id == X` Optional-Chain in `@Query`-Predicates (Anti-Pattern §14a, historisch broken bis iOS 17.5). Optional ist hier **Pflicht**, nicht Stilwahl: ADR-0005 § "Optionalitäts-Regel für neue Properties (Lightweight-Limit)" erklärt warum (SwiftData-Lightweight-Add validiert non-optional gegen existierende Rows bevor `didMigrate` läuft → Crash). `#Index<ExerciseModel>([\.workoutId])` wenn min target ≥ iOS 18.
 
 Die Backfill-Logik (workoutId aus `workout?.id` ableiten) lebt als **Custom MigrationStage** zwischen `SchemaV1` und `SchemaV2` und ist via dediziertem Test verifiziert.
 
@@ -24,9 +24,16 @@ Spike:
 
 ## Schritte
 
-### 1. SchemaV1 — den heutigen Stand einfrieren
+### 1. SchemaV1 — den heutigen Stand als Snapshot einfrieren
 
-Per ADR-0005 ist Datei-Layout `Packages/FitnessStorage/Sources/FitnessStorage/Schema/`.
+Per ADR-0005 § Snapshot-Pflicht + Beziehungs-Closure-Regel:
+- `ExerciseModel` ändert sich (bekommt `workoutId`) → Snapshot.
+- `WorkoutModel` hat `@Relationship(inverse: \ExerciseModel.workout)` →
+  muss laut Closure-Regel ebenfalls snapshot't werden, obwohl seine
+  eigene Form unverändert bleibt.
+- `SetProgressModel`, `AnalyticsEntryModel`, `ExerciseFeedbackModel`
+  haben keine Beziehung in den ExerciseModel/WorkoutModel-Cluster
+  → Live-Refs.
 
 `Datei: Packages/FitnessStorage/Sources/FitnessStorage/Schema/SchemaV1.swift`
 
@@ -34,65 +41,132 @@ Per ADR-0005 ist Datei-Layout `Packages/FitnessStorage/Sources/FitnessStorage/Sc
 import SwiftData
 import Foundation
 
-/// Initial schema (no versioning before T3).
-/// Contains ExerciseModel WITHOUT workoutId — the way it shipped to users.
+/// Initial schema — die Form in der die App vor T3 zu Usern ausgeliefert wurde.
+/// Snapshot nur für ExerciseModel (geändert in V2); andere Klassen sind
+/// Live-Refs weil unverändert.
 enum SchemaV1: VersionedSchema {
     static var versionIdentifier = Schema.Version(1, 0, 0)
 
     static var models: [any PersistentModel.Type] {
         [
-            WorkoutModel.self,
-            ExerciseModel.self,         // current shape — no workoutId
-            SetProgressModel.self,
-            AnalyticsEntryModel.self,
-            ExerciseFeedbackModel.self
+            WorkoutModel.self,            // unverändert -> Live-Ref
+            ExerciseModel.self,           // <-- Snapshot V1: SchemaV1.ExerciseModel
+            SetProgressModel.self,        // unverändert -> Live-Ref
+            AnalyticsEntryModel.self,     // unverändert -> Live-Ref
+            ExerciseFeedbackModel.self    // unverändert -> Live-Ref
         ]
+    }
+
+    /// V1-Form von ExerciseModel: 1:1 Kopie der Live-Klasse VOR der
+    /// workoutId-Einführung. Nur intern für Migration und Migrations-Tests.
+    @Model
+    final class ExerciseModel {
+        @Attribute(.unique) var id: UUID
+        var name: String
+        var weight: Double
+        var reps: Int
+        var sets: Int
+        var seatSetting: String?
+        var noSeats: Bool
+        var isCompleted: Bool
+        var iconName: String
+        var category: String
+        var goal: Double?
+        var sortOrder: Int
+        var workout: WorkoutModel?     // Beziehung auf Live-Klasse erlaubt,
+                                       // weil WorkoutModel in V1->V2 unverändert
+        init(
+            id: UUID, name: String, weight: Double, reps: Int, sets: Int,
+            seatSetting: String? = nil, noSeats: Bool = false,
+            isCompleted: Bool = false, iconName: String, category: String,
+            goal: Double? = nil, sortOrder: Int = 0,
+            workout: WorkoutModel? = nil
+        ) {
+            self.id = id
+            self.name = name
+            self.weight = weight
+            self.reps = reps
+            self.sets = sets
+            self.seatSetting = seatSetting
+            self.noSeats = noSeats
+            self.isCompleted = isCompleted
+            self.iconName = iconName
+            self.category = category
+            self.goal = goal
+            self.sortOrder = sortOrder
+            self.workout = workout
+        }
     }
 }
 ```
 
-**Wichtig**: `SchemaV1` referenziert die *heutigen* `@Model`-Klassen. Da `@Model`-Typen pro Build nur in einer Form existieren können, ist die V1-Definition primär ein **Marker** für die Migration-Plan-Pipeline. Bei einem zukünftigen V3 würden V1-Snapshot-Definitionen via Conditional Compilation oder `typealias` archiviert (siehe ADR-0005 § "Wann V_n eingefroren werden muss").
+`SchemaV1.ExerciseModel` ist **ein eigener Swift-Type** (qualified name).
+Live-Code referenziert weiterhin `ExerciseModel` ohne Präfix; nur
+`SchemaV1.swift`, `MigrationPlan.swift`, und der Migrations-Test
+referenzieren den Snapshot.
 
-### 2. SchemaV2 — neues `workoutId` Property einführen
+### 2. SchemaV2 — neues `workoutId` Property auf der Live-Klasse
 
-`Datei: Packages/FitnessStorage/Sources/FitnessStorage/Models/ExerciseModel.swift`
+`Datei: Packages/FitnessStorage/Sources/FitnessStorage/Models/ExerciseModel.swift` (Live = V2-Form):
 
 ```swift
 @Model
 final class ExerciseModel {
     @Attribute(.unique) var id: UUID
-    @Attribute(.indexed) var workoutId: UUID  // NEU in SchemaV2 — denormalisierte Foreign-Key
+    /// NEU in V2. Optional weil SwiftData-Lightweight-Add für existierende
+    /// Rows kein Default setzen kann (siehe ADR-0005 § Optionalitäts-Regel).
+    /// `didMigrate` backfilled aus `workout?.id`. TODO: `#Index<ExerciseModel>([\.workoutId])`
+    /// einführen sobald min target ≥ iOS 18.
+    var workoutId: UUID?
     var name: String
-    var category: String
-    var sets: Int
-    var reps: Int
     var weight: Double
+    var reps: Int
+    var sets: Int
+    var seatSetting: String?
+    var noSeats: Bool
     var isCompleted: Bool
+    var iconName: String
+    var category: String
+    var goal: Double?
     var sortOrder: Int
     var workout: WorkoutModel?
-    // ...
 
-    init(id: UUID, workoutId: UUID, name: String, ...) {
+    init(
+        id: UUID, workoutId: UUID? = nil, name: String, weight: Double,
+        reps: Int, sets: Int, seatSetting: String? = nil,
+        noSeats: Bool = false, isCompleted: Bool = false,
+        iconName: String, category: String, goal: Double? = nil,
+        sortOrder: Int = 0, workout: WorkoutModel? = nil
+    ) {
         self.id = id
         self.workoutId = workoutId
-        // ...
+        self.name = name
+        // ... rest wie heute
     }
 }
 ```
 
-`Datei: Packages/FitnessStorage/Sources/FitnessStorage/Schema/SchemaV2.swift`
+`Datei: Packages/FitnessStorage/Sources/FitnessStorage/Schema/SchemaV2.swift`:
 
 ```swift
 import SwiftData
 import Foundation
 
-/// Adds `workoutId: UUID` (indexed, non-optional) to ExerciseModel
-/// to enable predicate-safe queries (avoids §14a Optional-Chain anti-pattern).
+/// Adds `workoutId: UUID?` to ExerciseModel um Optional-Chain-Predicates
+/// (§14a) zu vermeiden. Optional weil Lightweight-Add (siehe ADR-0005).
+/// Live-Form von ExerciseModel (= Models/ExerciseModel.swift).
+/// Hybrid-Regel: keine Snapshots, weil V2 = aktueller Live-Stand.
 enum SchemaV2: VersionedSchema {
     static var versionIdentifier = Schema.Version(2, 0, 0)
 
     static var models: [any PersistentModel.Type] {
-        SchemaV1.models   // same set; only ExerciseModel shape changed
+        [
+            WorkoutModel.self,
+            ExerciseModel.self,           // = Live, jetzt mit workoutId
+            SetProgressModel.self,
+            AnalyticsEntryModel.self,
+            ExerciseFeedbackModel.self
+        ]
     }
 }
 ```
@@ -105,33 +179,49 @@ enum SchemaV2: VersionedSchema {
 import SwiftData
 import Foundation
 
-enum MigrationPlan: SchemaMigrationPlan {
+enum AppMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
         [SchemaV1.self, SchemaV2.self]
     }
 
     static var stages: [MigrationStage] {
-        [migrateV1toV2]
+        [migrateV1toV2_addWorkoutId]
     }
 
-    /// V1 → V2: backfill ExerciseModel.workoutId from the existing workout relationship.
-    /// Custom stage (not lightweight) because workoutId is non-Optional and needs derivation.
-    static let migrateV1toV2 = MigrationStage.custom(
+    /// V1 → V2: SwiftData fügt `workoutId` als neue Property hinzu (default-initialisiert
+    /// auf UUID() durch den lightweight-Init der neuen non-optionalen Property), aber wir
+    /// müssen sie aus der bestehenden `workout`-Beziehung backfillen.
+    ///
+    /// `didMigrate` läuft NACHDEM SwiftData die neue Spalte in V2-Form angelegt hat —
+    /// hier sehen wir bereits ExerciseModel (V2) mit `workoutId == <default>` und
+    /// `workout?.id == <korrekter Wert>`. Backfill ist deterministisch.
+    ///
+    /// Fehler-Verhalten: Wenn ein ExerciseModel keine workout-Beziehung hat (Daten-
+    /// korruption aus alter Version), bleibt workoutId beim Default — wir loggen
+    /// das und lassen den Eintrag bestehen statt zu crashen. Logger statt fatalError,
+    /// weil eine fehlgeschlagene Migration sonst die App-Installation killt.
+    static let migrateV1toV2_addWorkoutId = MigrationStage.custom(
         fromVersion: SchemaV1.self,
         toVersion: SchemaV2.self,
         willMigrate: nil,
         didMigrate: { context in
-            // ADR-0005 mandates: every custom stage MUST have a dedicated test (see § 4 below).
             let descriptor = FetchDescriptor<ExerciseModel>()
             let all = try context.fetch(descriptor)
             var fixed = 0
+            var orphaned = 0
             for model in all {
-                if let realId = model.workout?.id, model.workoutId != realId {
-                    model.workoutId = realId
-                    fixed += 1
+                if let realId = model.workout?.id {
+                    if model.workoutId != realId {
+                        model.workoutId = realId
+                        fixed += 1
+                    }
+                } else {
+                    orphaned += 1
                 }
             }
-            if fixed > 0 {
+            if fixed > 0 || orphaned > 0 {
+                let logger = Logger(subsystem: "com.fitnessapp.storage", category: "migration")
+                logger.info("V1->V2: backfilled workoutId for \(fixed) rows; \(orphaned) orphans kept with default workoutId")
                 try context.save()
             }
         }
@@ -153,12 +243,12 @@ Nach T3 (per ADR-0005):
 ```swift
 let container = try ModelContainer(
     for: SchemaV2.self,
-    migrationPlan: MigrationPlan.self,
+    migrationPlan: AppMigrationPlan.self,
     configurations: [config]
 )
 ```
 
-Identische Umstellung für `InMemoryStorageStack` (Test-Helper aus T2) — sonst gilt die Migration im In-Memory-Container nicht und Tests laufen am Production-Pfad vorbei.
+Identische Umstellung für `TestHelpers.makeInMemoryContainer()` (aus T2 vorhanden) — sonst gilt die Migration im In-Memory-Container nicht und Tests laufen am Production-Pfad vorbei.
 
 ### 4. Write-Pfade in den Services aktualisieren
 
@@ -188,7 +278,9 @@ Falls Mutation der `workout`-Relationship später passiert → `workoutId` mitzi
 
 ### 5. Tests für das Schema
 
-ADR-0005 verlangt **mindestens einen dedizierten Test pro Custom MigrationStage** der einen V_n-Container füllt, auf V_{n+1} migriert und die Invariante prüft.
+ADR-0005 verlangt **mindestens einen dedizierten Test pro Custom MigrationStage**.
+Mit dem Hybrid (Snapshot-Klasse `SchemaV1.ExerciseModel`) können wir den **echten**
+Container-Wechsel V1→V2 testen, nicht nur die Backfill-Closure isoliert.
 
 `Datei: Packages/FitnessStorage/Tests/FitnessStorageTests/Schema/MigrationV1toV2Tests.swift`
 
@@ -199,80 +291,158 @@ import Foundation
 @testable import FitnessStorage
 import FitnessCore
 
-@Suite("V1 → V2 migration backfills workoutId from workout.id")
+@Suite("V1 → V2 migration backfills workoutId from workout.id", .serialized)
 @MainActor
 struct MigrationV1toV2Tests {
 
-    @Test("New ExerciseModel.from has workoutId == workout.id")
+    /// Hilfsfunktion: temporäre URL für sql-Store auf Disk, damit Container-Close
+    /// + Reopen einen echten Migrations-Run auslöst (in-memory hat kein File,
+    /// kann aber AUCH funktionieren — wir nutzen disk weil das der Production-Path ist).
+    private func makeStoreURL() -> URL {
+        let dir = FileManager.default.temporaryDirectory
+            .appending(path: "MigrationV1toV2-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir.appending(path: "store.sqlite")
+    }
+
+    @Test("Live ExerciseModel.from sets workoutId from workout.id")
     func newModelHasWorkoutId() throws {
         let workout = WorkoutModel(id: UUID(), name: "Test")
-        let exercise = Exercise(id: UUID(), name: "Curl", category: .arms, sets: 3, reps: 10, weight: 20, isCompleted: false)
+        let exercise = Exercise(
+            id: UUID(), name: "Curl", weight: 20, reps: 10, sets: 3,
+            iconName: "x", category: .arms
+        )
         let model = ExerciseModel.from(exercise, sortOrder: 0, workout: workout)
         #expect(model.workoutId == workout.id)
     }
 
-    @Test("Custom stage migrateV1toV2 backfills workoutId for legacy rows")
-    func backfillCorrectsMismatch() throws {
-        // Arrange: in-memory container with a row whose workoutId is the
-        // "wrong" placeholder (simulates what V1 data looks like after
-        // SwiftData auto-creates the new column).
-        let stack = try InMemoryStorageStack()
-        let ctx = ModelContext(stack.container)
+    @Test("Container migration V1->V2 backfills workoutId from V1 relationship")
+    func endToEndMigrationBackfills() throws {
+        let url = makeStoreURL()
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
 
-        let workout = WorkoutModel(id: UUID(), name: "Test")
-        let placeholder = UUID()
-        let model = ExerciseModel(
-            id: UUID(),
-            workoutId: placeholder,        // simulates V1 default after lightweight column add
-            name: "X", category: "arms", sets: 3, reps: 10, weight: 20,
-            isCompleted: false, sortOrder: 0
+        // 1) V1-Container öffnen, V1-Daten schreiben
+        let workoutId = UUID()
+        let exerciseId = UUID()
+        do {
+            let v1Container = try ModelContainer(
+                for: SchemaV1.self,
+                configurations: [ModelConfiguration(url: url)]
+            )
+            let ctx = ModelContext(v1Container)
+            let workout = WorkoutModel(id: workoutId, name: "Test")
+            let v1Exercise = SchemaV1.ExerciseModel(
+                id: exerciseId, name: "Curl", weight: 20, reps: 10, sets: 3,
+                iconName: "x", category: "arms", sortOrder: 0
+            )
+            v1Exercise.workout = workout
+            ctx.insert(workout); ctx.insert(v1Exercise)
+            try ctx.save()
+        }
+
+        // 2) V2-Container mit MigrationPlan öffnen — löst migrateV1toV2 aus
+        let v2Container = try ModelContainer(
+            for: SchemaV2.self,
+            migrationPlan: AppMigrationPlan.self,
+            configurations: [ModelConfiguration(url: url)]
         )
-        model.workout = workout
-        ctx.insert(workout); ctx.insert(model); try ctx.save()
+        let ctx = ModelContext(v2Container)
 
-        // Act: invoke the same closure the MigrationStage runs.
-        try MigrationPlan.migrateV1toV2.didMigrate?(ctx)
-
-        // Assert: workoutId now matches the relationship target.
+        // 3) Asserts: workoutId ist gebackfilled
         let fetched = try ctx.fetch(FetchDescriptor<ExerciseModel>(
-            predicate: #Predicate { $0.id == model.id }
+            predicate: #Predicate { $0.id == exerciseId }
         )).first
-        #expect(fetched?.workoutId == workout.id)
-        #expect(fetched?.workoutId != placeholder)
+        let unwrapped = try #require(fetched)
+        #expect(unwrapped.workoutId == workoutId)
+        #expect(unwrapped.workout?.id == workoutId)
     }
 
-    @Test("Stage is idempotent — running twice changes nothing on already-correct rows")
-    func stageIsIdempotent() throws {
-        let stack = try InMemoryStorageStack()
-        let ctx = ModelContext(stack.container)
-        let workout = WorkoutModel(id: UUID(), name: "Test")
-        let model = ExerciseModel(
-            id: UUID(), workoutId: workout.id,
-            name: "X", category: "arms", sets: 1, reps: 1, weight: 0,
-            isCompleted: false, sortOrder: 0
+    @Test("Migration is idempotent — second container open changes nothing")
+    func migrationIsIdempotent() throws {
+        let url = makeStoreURL()
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        let workoutId = UUID()
+        let exerciseId = UUID()
+
+        do {
+            let v1 = try ModelContainer(
+                for: SchemaV1.self,
+                configurations: [ModelConfiguration(url: url)]
+            )
+            let ctx = ModelContext(v1)
+            let w = WorkoutModel(id: workoutId, name: "Test")
+            let e = SchemaV1.ExerciseModel(
+                id: exerciseId, name: "X", weight: 0, reps: 1, sets: 1,
+                iconName: "x", category: "arms"
+            )
+            e.workout = w
+            ctx.insert(w); ctx.insert(e)
+            try ctx.save()
+        }
+
+        // Erste V2-Migration
+        _ = try ModelContainer(
+            for: SchemaV2.self,
+            migrationPlan: AppMigrationPlan.self,
+            configurations: [ModelConfiguration(url: url)]
         )
-        model.workout = workout
-        ctx.insert(workout); ctx.insert(model); try ctx.save()
+        // Zweite V2-Öffnung (keine Migration mehr nötig)
+        let v2Again = try ModelContainer(
+            for: SchemaV2.self,
+            migrationPlan: AppMigrationPlan.self,
+            configurations: [ModelConfiguration(url: url)]
+        )
+        let ctx = ModelContext(v2Again)
+        let unwrapped = try #require(try ctx.fetch(FetchDescriptor<ExerciseModel>(
+            predicate: #Predicate { $0.id == exerciseId }
+        )).first)
+        #expect(unwrapped.workoutId == workoutId)
+    }
 
-        try MigrationPlan.migrateV1toV2.didMigrate?(ctx)
-        try MigrationPlan.migrateV1toV2.didMigrate?(ctx)  // second run
-
+    @Test("Orphan exercise (no workout relationship) survives migration")
+    func orphanedExerciseSurvivesMigration() throws {
+        let url = makeStoreURL()
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        let exerciseId = UUID()
+        do {
+            let v1 = try ModelContainer(
+                for: SchemaV1.self,
+                configurations: [ModelConfiguration(url: url)]
+            )
+            let ctx = ModelContext(v1)
+            let orphan = SchemaV1.ExerciseModel(
+                id: exerciseId, name: "Orphan", weight: 0, reps: 1, sets: 1,
+                iconName: "x", category: "arms"
+            )
+            // Kein workout = nil
+            ctx.insert(orphan); try ctx.save()
+        }
+        let v2 = try ModelContainer(
+            for: SchemaV2.self,
+            migrationPlan: AppMigrationPlan.self,
+            configurations: [ModelConfiguration(url: url)]
+        )
+        let ctx = ModelContext(v2)
         let fetched = try ctx.fetch(FetchDescriptor<ExerciseModel>(
-            predicate: #Predicate { $0.id == model.id }
+            predicate: #Predicate { $0.id == exerciseId }
         )).first
-        #expect(fetched?.workoutId == workout.id)
+        #expect(fetched != nil)  // not deleted, not crashed
     }
 }
 ```
 
-### 6. Verify-T2-Bug-2-Test umstellbar
+### 6. Bestehende Predicates auf workoutId umstellen
 
-Wenn T2 einen Predicate mit `workout?.id` benutzt hatte, jetzt umstellen auf `workoutId`:
+`ExerciseStorageService.loadForWorkout(...)` (Production):
 ```swift
-FetchDescriptor<ExerciseModel>(
-    predicate: #Predicate { $0.workoutId == workoutId && $0.category == "arms" }
-)
+// vorher
+predicate: #Predicate<ExerciseModel> { $0.workout?.id == workoutId }
+// nachher
+predicate: #Predicate<ExerciseModel> { $0.workoutId == workoutId }
 ```
+
+T2-Test (`CoordinatorPersistsCompletionAfterFinishTests`) im Lockstep
+mitziehen — der NOTE-Kommentar dort zeigt explizit auf diese Stelle.
 
 ### 7. Tests laufen lassen
 
@@ -303,17 +473,18 @@ Auf Simulator mit existierenden Daten:
 
 ## Definition of Done
 
-- [ ] `Schema/SchemaV1.swift`, `Schema/SchemaV2.swift`, `Schema/MigrationPlan.swift` existieren (ADR-0005-Layout)
-- [ ] `ExerciseModel.workoutId: UUID` mit `.indexed` Attribut (Teil von SchemaV2)
-- [ ] `MigrationPlan.migrateV1toV2` ist eine Custom Stage mit dokumentierter `didMigrate`-Closure
-- [ ] `StorageContainer.swift` und `InMemoryStorageStack.swift` nutzen `ModelContainer(for: SchemaV2.self, migrationPlan: MigrationPlan.self, ...)`
-- [ ] `ExerciseModel.from(...)` und alle Erzeuger setzen `workoutId`
-- [ ] `MigrationV1toV2Tests` grün (mind. Backfill + Idempotenz)
-- [ ] App build grün, kein Test rot der vorher grün war
+- [ ] `Schema/SchemaV1.swift` (mit Snapshot `SchemaV1.ExerciseModel`), `Schema/SchemaV2.swift` (Live-Refs), `Schema/MigrationPlan.swift` (`AppMigrationPlan`) existieren
+- [ ] `ExerciseModel.workoutId: UUID?` (Live = V2-Form). `#Index<ExerciseModel>([\.workoutId])` als TODO für iOS 18+ vermerkt; `@Attribute(.indexed)` ist iOS 18+ und für unser iOS 17-Target nicht verfügbar
+- [ ] `AppMigrationPlan.migrateV1toV2_addWorkoutId` ist Custom Stage mit dokumentierter `didMigrate`-Closure und Orphan-Handling
+- [ ] `StorageContainer.swift` und `TestHelpers.makeInMemoryContainer()` nutzen `ModelContainer(for: SchemaV2.self, migrationPlan: AppMigrationPlan.self, ...)`
+- [ ] `ExerciseModel.from(...)` und alle Erzeuger (Recon-Schritt 4) setzen `workoutId`
+- [ ] `ExerciseStorageService.loadForWorkout(...)` Predicate umgestellt auf `$0.workoutId == workoutId`
+- [ ] T2-Test (`CoordinatorPersistsCompletionAfterFinishTests`) im Lockstep mitgezogen
+- [ ] `MigrationV1toV2Tests` grün (Backfill + Idempotenz + Orphan + Live `from()`)
+- [ ] App build grün, alle FitnessStorage-Tests grün
 - [ ] Reviewing-code-changes Skill durchlaufen (Predicate §14a, AppStyle, Architektur)
-- [ ] `architecture-documentation.md` Schema-Section aktualisiert (V1/V2/MigrationPlan)
+- [ ] `architecture-documentation.md` Schema-Section aktualisiert (V1/V2/AppMigrationPlan)
 - [ ] Stamp `.cursor/hooks/state/code-changes.stamp.md` geschrieben
-- [ ] adr-required.sh Hook lässt Commit passieren (Schema-Trigger → ADR-0001 + ADR-0005 als Verweise im Commit)
 - [ ] Commit-Message: "T3: introduce VersionedSchema (V1→V2) + denormalize workoutId per ADR-0005"
 
 ## Akzeptanzkriterien
