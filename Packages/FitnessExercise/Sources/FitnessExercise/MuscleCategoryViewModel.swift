@@ -101,6 +101,15 @@ public final class MuscleCategoryViewModel {
         exercises.contains { $0.isCompleted }
     }
 
+    /// Exposes the persisted ID of the currently selected workout so that
+    /// SwiftData-backed views (e.g. `ExerciseCardModelView` from
+    /// `FitnessPersistenceUI`) can build a `@Query` predicate filtered by
+    /// `workoutId`. Returns `nil` while no workout is selected; callers must
+    /// handle that case (no card is rendered then anyway).
+    public var currentWorkoutId: UUID? {
+        workoutStorageService.currentWorkout?.id
+    }
+
     public var showCancel: Bool { isTrainingInProgress }
     public var showNewExercise: Bool { !isTrainingInProgress }
     public var showStartTraining: Bool { !isTrainingInProgress && hasActiveExercise }

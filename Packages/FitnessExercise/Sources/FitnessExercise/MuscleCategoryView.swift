@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 #if canImport(UIKit)
 import UIKit
 #endif
@@ -7,6 +8,8 @@ import FitnessCore
 import FitnessResources
 import FitnessTraining
 import FitnessUI
+@_spi(PersistenceUI) import FitnessPersistenceUI
+@_spi(PersistenceUI) import FitnessStorage
 import Factory
 
 public struct MuscleCategoryView: View {
@@ -16,6 +19,16 @@ public struct MuscleCategoryView: View {
     private var trainingCoordinator: TrainingCoordinator
     @State private var analyticsViewModel: AnalyticsViewModel
     @Environment(AppRouter.self) private var router
+
+    /// T7b: Live-bound list of `ExerciseModel`s for the current workout + category.
+    /// Replaces the `viewModel.exercises` snapshot path for the card rendering
+    /// (Bug 1 fix): when the coordinator writes `model.isCompleted = true` after
+    /// a finished session, SwiftData dispatches the change into this `@Query` and
+    /// `ExerciseCardModelView` resolves the variant from the live `model.isCompleted`
+    /// — no `refreshExercises()` roundtrip needed. The legacy `viewModel.exercises`
+    /// path stays alive for the edit/picker/menu condition flags (`hasActiveExercise`,
+    /// `hasCompletedExercises`); T8 deletes that path together with the observation loop.
+    @Query private var categoryModels: [ExerciseModel]
 
     public init(group: MuscleCategoryGroup) {
         self.group = group
@@ -34,6 +47,18 @@ public struct MuscleCategoryView: View {
                 muscleCategoryViewModel.formViewModel.toggleForm()
             }
         }
+
+        // Build the @Query predicate against the denormalised `workoutId` (T3 schema)
+        // — avoids §14a/b predicate anti-patterns. If no workout is selected we fall
+        // back to a sentinel UUID so the predicate matches nothing; the view is
+        // rebound via `.id(viewModel.currentWorkoutId)` once a workout exists.
+        let raw = group.rawValue
+        let wid = muscleCategoryViewModel.currentWorkoutId ?? UUID()
+        _categoryModels = Query(
+            filter: #Predicate<ExerciseModel> { exercise in
+                exercise.workoutId == wid && exercise.category == raw
+            }
+        )
     }
 
     private var bottomListPadding: CGFloat {
@@ -84,7 +109,13 @@ public struct MuscleCategoryView: View {
         .navigationBarBackButtonHidden(true)
         .navigationBarHidden(true)
 #endif
+        .id(viewModel.currentWorkoutId)
         .onAppear {
+            // T7b: refresh keeps the legacy `viewModel.exercises` snapshot in sync
+            // for the edit/picker flow (`hasActiveExercise`, `hasCompletedExercises`,
+            // `add`, `updateExercise`). The card list itself is now `@Query`-driven
+            // and does not depend on this anymore. T8 deletes both the snapshot
+            // and this onAppear after the write side moves to SwiftData.
             viewModel.refreshExercises()
         }
         .onChange(of: trainingCoordinator.activeSessions.count) {
@@ -102,14 +133,14 @@ public struct MuscleCategoryView: View {
     }
 
     private func makeCardContainer(
-        exercise: Exercise,
+        model: ExerciseModel,
         isEditable: Bool,
         isActiveSetVisible: Bool,
         isResetEnabled: Bool,
         isInProgress: Bool = false
     ) -> some View {
-        ExerciseCardContainerView(
-            viewModel: viewModel.cardViewModel(for: exercise),
+        ExerciseCardModelView(
+            model: model,
             onEdit: { exercise, mode in
                 withAnimation {
                     formViewModel.loadExercise(exercise, category: group)
@@ -137,37 +168,41 @@ public struct MuscleCategoryView: View {
 
     @ViewBuilder
     private var exerciseListSection: some View {
+        // T7b: Bug 1 live-fix. Card rendering source is `categoryModels` (`@Query`),
+        // not `viewModel.exercises`. Sort buckets read `model.isCompleted` directly,
+        // matching the old DTO-based partitioning 1:1.
         let activeIds = Set(trainingCoordinator.activeSessions.keys)
+        let sorted = categoryModels.sorted { $0.sortOrder < $1.sortOrder }
 
-        let inProgressExercises = viewModel.exercises.filter { activeIds.contains($0.id) }
-        let incompleteExercises = viewModel.exercises.filter { !$0.isCompleted && !activeIds.contains($0.id) }
-        let completedExercises = viewModel.exercises.filter { $0.isCompleted && !activeIds.contains($0.id) }
+        let inProgressModels = sorted.filter { activeIds.contains($0.id) }
+        let incompleteModels = sorted.filter { !$0.isCompleted && !activeIds.contains($0.id) }
+        let completedModels = sorted.filter { $0.isCompleted && !activeIds.contains($0.id) }
 
-        ForEach(inProgressExercises, id: \.id) { exercise in
+        ForEach(inProgressModels, id: \.id) { model in
             makeCardContainer(
-                exercise: exercise,
+                model: model,
                 isEditable: true,
                 isActiveSetVisible: false,
-                isResetEnabled: exercise.isCompleted,
+                isResetEnabled: model.isCompleted,
                 isInProgress: true
             )
         }
 
-        ForEach(incompleteExercises, id: \.id) { exercise in
+        ForEach(incompleteModels, id: \.id) { model in
             makeCardContainer(
-                exercise: exercise,
+                model: model,
                 isEditable: true,
                 isActiveSetVisible: false,
-                isResetEnabled: exercise.isCompleted
+                isResetEnabled: model.isCompleted
             )
         }
 
-        ForEach(completedExercises, id: \.id) { exercise in
+        ForEach(completedModels, id: \.id) { model in
             makeCardContainer(
-                exercise: exercise,
+                model: model,
                 isEditable: true,
                 isActiveSetVisible: false,
-                isResetEnabled: exercise.isCompleted
+                isResetEnabled: model.isCompleted
             )
         }
     }
