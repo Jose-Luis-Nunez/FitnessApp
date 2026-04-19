@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 #if canImport(UIKit)
 import UIKit
 #endif
@@ -7,6 +8,7 @@ import FitnessCore
 import FitnessTraining
 import FitnessUI
 @_spi(PersistenceUI) import FitnessPersistenceUI
+@_spi(PersistenceUI) import FitnessStorage
 import Factory
 
 private struct ScrollOffsetPreferenceKey: PreferenceKey {
@@ -46,8 +48,31 @@ public struct MuscleCategorySelectionView: View {
 
     private var coordinatorCache: TrainingCoordinatorCaching
 
+    /// T8a: Live-bound list of all `ExerciseModel`s for the current workout
+    /// (across **all** categories). Replaces the legacy
+    /// `viewModel.exercisesByCategory` snapshot path used by `allExercisesList`.
+    /// View identity is rebound on workout switch via `.id(viewModel.currentWorkoutId)`
+    /// so SwiftData re-initialises this `@Query` with the new workout id.
+    @Query private var allWorkoutModels: [ExerciseModel]
+
     public init() {
         self.coordinatorCache = Container.shared.trainingCoordinatorCache()
+
+        // Build the @Query predicate against the denormalised `workoutId` (T3 schema).
+        // No category filter: list-mode renders every category in one flat list.
+        // We read currentWorkout directly from the Factory-registered storage to avoid
+        // instantiating a second ViewModel (the @State viewModel above is not yet
+        // available in init — property-wrapper ordering). DI returns the same
+        // singleton instance the @State viewModel will use.
+        // Falls back to a sentinel UUID when no workout is selected so the predicate
+        // matches nothing; the view rebinds via `.id(viewModel.currentWorkoutId)`
+        // once a workout exists.
+        let wid = Container.shared.workoutStorage().currentWorkout?.id ?? UUID()
+        _allWorkoutModels = Query(
+            filter: #Predicate<ExerciseModel> { exercise in
+                exercise.workoutId == wid
+            }
+        )
     }
 
     private var adaptiveColumns: [GridItem] {
@@ -222,7 +247,12 @@ public struct MuscleCategorySelectionView: View {
         .navigationBarBackButtonHidden(true)
         .navigationBarHidden(true)
 #endif
+        .id(viewModel.currentWorkoutId)
         .onAppear {
+            // T8a: refresh keeps the legacy `viewModel.exercisesByCategory` snapshot
+            // alive for any non-list-mode reader. The list-mode card grid itself is
+            // now `@Query`-driven and does not depend on this. T8d removes both the
+            // snapshot and this onAppear once `cardViewModel(for:category:)` is gone.
             viewModel.refreshExercises()
         }
     }
@@ -450,28 +480,27 @@ public struct MuscleCategorySelectionView: View {
         .clipShape(Capsule())
     }
 
-    private var allExercisesWithCategory: [(exercise: Exercise, category: MuscleCategoryGroup)] {
-        MuscleCategoryGroup.allCases.flatMap { category in
-            (viewModel.exercisesByCategory[category] ?? []).map { (exercise: $0, category: category) }
-        }
-        .sorted { !$0.exercise.isCompleted && $1.exercise.isCompleted }
-    }
-
     private var allExercisesList: some View {
-        let items = allExercisesWithCategory
-
-        return ForEach(items, id: \.exercise.id) { item in
-            exerciseCard(for: item.exercise, category: item.category)
+        // T8a: Bug-1-style live-fix for the list-mode. Source is `allWorkoutModels`
+        // (`@Query`), not `viewModel.exercisesByCategory`. Sorting partitions
+        // uncompleted-first (matches the legacy comparator) and keeps stable order
+        // within each bucket via (category.rawValue, sortOrder).
+        let sorted = allWorkoutModels.sorted { lhs, rhs in
+            if lhs.isCompleted != rhs.isCompleted { return !lhs.isCompleted }
+            if lhs.category != rhs.category { return lhs.category < rhs.category }
+            return lhs.sortOrder < rhs.sortOrder
         }
-        .onAppear {
-            viewModel.refreshExercises()
+
+        return ForEach(sorted, id: \.id) { model in
+            exerciseCard(for: model)
         }
     }
 
-    private func exerciseCard(for exercise: Exercise, category: MuscleCategoryGroup) -> some View {
+    private func exerciseCard(for model: ExerciseModel) -> some View {
+        let category = model.categoryGroup
         let categoryCoordinator = coordinatorCache.coordinator(for: category)
-        return ExerciseCardContainerView(
-            viewModel: viewModel.cardViewModel(for: exercise, category: category),
+        return ExerciseCardModelView(
+            model: model,
             onEdit: { exerciseToEdit, mode in
                 if currentViewMode == .list {
                     editingExercise = exerciseToEdit
@@ -501,8 +530,8 @@ public struct MuscleCategorySelectionView: View {
                 viewModel.resetExercise(exerciseToReset, category: category)
             },
             isActiveSetVisible: false,
-            isResetEnabled: exercise.isCompleted,
-            isInProgress: categoryCoordinator.isExerciseInProgress(exercise.id)
+            isResetEnabled: model.isCompleted,
+            isInProgress: categoryCoordinator.isExerciseInProgress(model.id)
         )
     }
 
