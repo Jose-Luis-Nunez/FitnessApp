@@ -27,7 +27,7 @@ public final class ExerciseStorageService: ExerciseStoring {
         let categoryRaw = category.rawValue
         let descriptor = FetchDescriptor<ExerciseModel>(
             predicate: #Predicate<ExerciseModel> {
-                $0.workout?.id == workoutId && $0.category == categoryRaw
+                $0.workoutId == workoutId && $0.category == categoryRaw
             },
             sortBy: [SortDescriptor(\.sortOrder)]
         )
@@ -45,7 +45,7 @@ public final class ExerciseStorageService: ExerciseStoring {
         let categoryRaw = category.rawValue
         let deleteDescriptor = FetchDescriptor<ExerciseModel>(
             predicate: #Predicate<ExerciseModel> {
-                $0.workout?.id == workoutId && $0.category == categoryRaw
+                $0.workoutId == workoutId && $0.category == categoryRaw
             }
         )
 

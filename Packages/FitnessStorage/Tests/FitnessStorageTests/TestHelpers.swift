@@ -9,15 +9,16 @@ enum TestHelpers {
     private static let testSuiteName = "com.fitnessapp.tests"
 
     static func makeInMemoryContainer() -> ModelContainer {
-        let schema = Schema([
-            WorkoutModel.self,
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        return try! ModelContainer(
+            for: WorkoutModel.self,
             ExerciseModel.self,
             AnalyticsEntryModel.self,
             SetProgressModel.self,
-            ExerciseFeedbackModel.self
-        ])
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        return try! ModelContainer(for: schema, configurations: [config])
+            ExerciseFeedbackModel.self,
+            migrationPlan: AppMigrationPlan.self,
+            configurations: config
+        )
     }
 
     static func registerInMemoryContainer() {

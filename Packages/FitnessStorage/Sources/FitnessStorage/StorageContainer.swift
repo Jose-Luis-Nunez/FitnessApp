@@ -5,15 +5,15 @@ import SwiftData
 public extension Container {
     var modelContainer: Factory<ModelContainer> {
         self {
-            let schema = Schema([
-                WorkoutModel.self,
-                ExerciseModel.self,
-                AnalyticsEntryModel.self,
-                SetProgressModel.self,
-                ExerciseFeedbackModel.self
-            ])
             do {
-                return try ModelContainer(for: schema)
+                return try ModelContainer(
+                    for: WorkoutModel.self,
+                    ExerciseModel.self,
+                    AnalyticsEntryModel.self,
+                    SetProgressModel.self,
+                    ExerciseFeedbackModel.self,
+                    migrationPlan: AppMigrationPlan.self
+                )
             } catch {
                 fatalError("Failed to create ModelContainer: \(error)")
             }

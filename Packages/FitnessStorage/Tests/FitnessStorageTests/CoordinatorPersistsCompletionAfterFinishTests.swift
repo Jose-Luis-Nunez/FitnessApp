@@ -163,21 +163,12 @@ struct CoordinatorPersistsCompletionAfterFinishTests {
         // A fresh context bypasses any per-service ModelContext that might
         // hold stale snapshots. If the persisted store is correct, this
         // count must match the management service's count.
-        //
-        // NOTE on §14a/b (predicate optional-chain): the `$0.workout?.id`
-        // predicate below intentionally MIRRORS the production predicate in
-        // ExerciseStorageService.loadForWorkout (line 30). Both are flagged
-        // by the predicate-smell hook and both will be replaced together in
-        // T3 (denormalised `workoutId: UUID` on ExerciseModel, per ADR-0005).
-        // Keeping them in lockstep guarantees the regression guard remains
-        // valid through the migration — a divergent test predicate would
-        // silently lose its coverage.
         let context = ModelContext(container)
         let categoryRaw = MuscleCategoryGroup.arms.rawValue
         let workoutId = workout.id
         let fetch = FetchDescriptor<ExerciseModel>(
             predicate: #Predicate<ExerciseModel> {
-                $0.workout?.id == workoutId && $0.category == categoryRaw
+                $0.workoutId == workoutId && $0.category == categoryRaw
             }
         )
         let models = try context.fetch(fetch)
