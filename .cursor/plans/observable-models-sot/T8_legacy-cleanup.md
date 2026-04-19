@@ -1,154 +1,250 @@
-# T8 — Legacy-Cleanup: Subtraktive Phase
+# T8 — Legacy-Cleanup: Inkrementelle subtraktive Phase
 
 > **Layer**: Cleanup
-> **Vorbedingung**: T7 (alle Pilots integriert, Bugs verifiziert behoben)
+> **Vorbedingung**: T7 abgeschlossen (T7-0 Cycle-Break, T7a Tile-Live, T7b Card-Live — beide Original-Bugs verifiziert behoben)
 > **Blockiert**: —
-> **Aufwand**: ~120 min
+> **Aufwand**: ~110-130 min (T8a 40 + T8c 30 + T8d 30 + Validate 10-30)
 
-## Ziel
+## Kontext: was hat T7 gelassen?
 
-Alle Reste der alten `changeVersion`+Polling-Architektur löschen. Nach diesem Task gibt es im Code keine Hinweise mehr auf die alte Lösung. `architecture-documentation.md` reflektiert den finalen Stand.
+T7 wurde inkrementell ausgeliefert (statt Big-Bang wie ursprünglich geplant). Das hat
+zwei Datenpfade übrig gelassen, die parallel leben:
 
-## Was gelöscht wird
+| Pfad | Quelle | Wo verwendet | Bug-relevant? |
+|---|---|---|---|
+| **Live (`@Query<ExerciseModel>`)** | SwiftData → `ExerciseCardModelView`, `CategoryTileModelView` | `MuscleCategorySelectionView.categoryList` (T7a), `MuscleCategoryView.exerciseListSection` (T7b) | **Beide Original-Bugs fließen hier** |
+| **Snapshot (`changeVersion`+Polling)** | `ExerciseStorageService.changeVersion` → ViewModels-Cache → `ExerciseCardContainerView` | `MuscleCategorySelectionView.allExercisesList` (List-Mode), `TrainingView` (Detail-Card), Edit-Bools (`showStartTraining`, `showReset`, `viewModel.exercises.first(where:)`) | Keiner — bestehender Code, kein User-Bug-Report |
 
-### In `Packages/FitnessStorage/Sources/FitnessStorage/ExerciseStorageService.swift`
-- `public private(set) var changeVersion: Int = 0`
-- Alle `changeVersion &+= 1` Statements
-- `@Observable` Marker bleibt **falls** noch andere fachliche Properties beobachtet werden, sonst entfernen
+T8 räumt die **dead-by-design**-Schuld weg: alle `changeVersion`-Observer feuern noch,
+aber das Karten-Rendering liest die VM-Snapshots gar nicht mehr. Das ist nicht nur
+CPU-Verschwendung, sondern verletzt ADR-0001 ("Model as UI Source of Truth") solange
+zwei Wahrheiten parallel existieren.
 
-### In `Packages/FitnessExercise/Sources/FitnessExercise/MuscleCategorySelectionViewModel.swift`
-- `private var storageObservationTask: Task<Void, Never>?`
-- Methode `startStorageObservation()` komplett
-- `private(set) var cardViewModels: [UUID: ExerciseCardViewModel]` — Cache komplett
-- Methode `cardViewModel(for:)`
-- `refreshExercises()` — falls nicht mehr von außen aufgerufen
-- Verkleinerter VM hält nur noch: Coordinator-State, Navigation-Helpers, `hasActiveSetForCategory`
+## Was T8 NICHT macht (ehemalige Plan-Annahmen, die jetzt falsch sind)
 
-### In `Packages/FitnessExercise/Sources/FitnessExercise/MuscleCategoryViewModel.swift`
-- Analoge `startStorageObservation`-Logik löschen
-- Falls die ganze Klasse obsolet → ganz löschen
+| Verworfene Annahme | Realität nach inkrementellem T7 |
+|---|---|
+| ~~`TrainingView.swift` löschen — ersetzt durch `TrainingModelView`~~ | `TrainingModelView` existiert nicht. T7-Plan hat das verworfen. View bleibt. |
+| ~~`MuscleCategorySelectionView.swift` löschen — ersetzt durch `MuscleCategorySelectionModelView`~~ | Existiert nicht. View ist App-Entrypoint, bleibt. |
+| ~~`MuscleCategoryView.swift` löschen~~ | Bleibt. T7b hat nur `exerciseListSection` migriert. |
+| ~~`MuscleCategorySelectionViewModel` ggf. ganz löschen~~ | Hostet Coordinator-State, Picker-Routing, Reset-Confirmation, Form-Routing — bleibt unentbehrlich. Schrumpft aber. |
+| ~~Alles in einem Big-Bang-Commit~~ | Inkrementell, mit Build+Tests+Commit zwischen jeder Phase. |
 
-### In `Packages/FitnessExercise/Sources/FitnessExercise/ExerciseCardViewModel.swift`
-- `syncExercise(_ exercise: Exercise)` — Methode löschen
-- Falls die Klasse nur noch in alten ungelöschten Views verwendet wird, evaluieren ob sie ganz raus kann
-- **Bevorzugt**: Klasse ganz löschen wenn keine Konsumenten mehr (alle Card-Konsumenten nutzen `ExerciseCardModelView`)
+## Inkrementelle Phasen
 
-### In `FitnessApp/Features/Training/TrainingView.swift`
-- Komplette Datei löschen (ersetzt durch `TrainingModelView`)
-- Routing schon in T7 umgestellt
+### T8a — `allExercisesList` live binden (~40 min)
 
-### In `Packages/FitnessExercise/Sources/FitnessExercise/MuscleCategorySelectionView.swift`
-- Komplette Datei löschen (ersetzt durch `MuscleCategorySelectionModelView`)
-- Aufrufer in T7 umgestellt
+**Ziel**: Den noch-nicht-migrierten List-Mode in `MuscleCategorySelectionView` auf
+`ExerciseCardModelView` umstellen, analog T7b.
 
-### In `Packages/FitnessExercise/Sources/FitnessExercise/CategoryTileView.swift`
-- Datei löschen (ersetzt durch `CategoryTileModelView`)
+**Geltungsbereich**:
+- `Packages/FitnessExercise/Sources/FitnessExercise/MuscleCategorySelectionView.swift`
+  - `allExercisesList` ViewBuilder
+  - `exerciseCard(for:category:)` private helper
+  - `allExercisesWithCategory` computed property
+- Keine Änderungen an `categoryList` (T7a-Pfad bleibt unangetastet)
 
-### In `Packages/FitnessExercise/Sources/FitnessExercise/ExerciseCardContainerView.swift`
-- Variant-Resolver bereits in T5 in eigene Datei extrahiert
-- Container selbst löschen
+**Schritte**:
+1. `@Query<ExerciseModel>` mit Predicate auf `workoutId == wid` (ohne Category-Filter
+   — wir wollen alle Kategorien) als View-Property in `MuscleCategorySelectionView`.
+   Init-Zeit-Lookup `viewModel.currentWorkoutId ?? UUID()` als Sentinel,
+   `.id(viewModel.currentWorkoutId)` am Body für Workout-Switch-Rebind.
+2. `allExercisesWithCategory` aus `allExercisesModels` ableiten:
+   - sortieren nach `(isCompleted, category, sortOrder)` für stabile UI
+   - jedes Element trägt seine `MuscleCategoryGroup` (aus `model.category` rehydrated)
+3. `exerciseCard(for:category:)` umschreiben auf `ExerciseCardModelView(model:...)`,
+   alle 7 Closure-Parameter analog T7b setzen.
+4. **Edit-Pfad-Subtilität**: Aktueller Code ruft im `onEdit` `pickerViewModel = MuscleCategoryViewModel(group: category)` mit der **Domain-`Exercise`** auf
+   (`exerciseFormViewModel.loadExercise(exerciseToEdit, category: category)`). Wir
+   konvertieren am Boundary: `model.toDomain()` → `Exercise`. Dieses Pattern ist die
+   gleiche Plain-Param-Boundary wie T5 C1c.
 
-### Tests
-- `Packages/FitnessExercise/Tests/FitnessExerciseTests/MuscleCategorySelectionViewModelTests.swift`:
-  - Komplette Suite "CoordinatorCompletionIntegrationTests" löschen (Mock-Theater laut Postmortem)
-  - Verbleibende Tests die `MockCoordinatorCache.bumpVersion()`-Pattern nutzen löschen oder umstellen auf `InMemoryStorageStack`
-  - Wenn der ganze ViewModel weg ist, ganze Datei löschen
-- `MockExerciseManagement` und `ObservableMockExerciseStorage` löschen falls nicht mehr von Tests benötigt
-- T2 `snapshotCardViewModelStaleAfterFinish` (Bug-Marker-Test) löschen
+**Validation**:
+- `xcodebuild build -scheme FitnessExercise` grün
+- `xcodebuild test -scheme FitnessExercise` grün (keine neuen Tests nötig — `cardViewModel(for:category:)` wird in T8d gelöscht, jetzt einfach nicht mehr aufgerufen)
+- `scripts/fast-test.sh` parallel grün
+- App-Build grün
+- Commit: `feat(home): live-bind allExercisesList via ExerciseCardModelView (T8a)`
 
-## Schritte
+### T8c — `MuscleCategoryView` von `viewModel.exercises` lösen (~30 min)
 
-### 1. Verifikation: nichts mehr nutzt die zu löschenden Symbole
+**Ziel**: Edit-Bools und Helper-Lookups in `MuscleCategoryView` aus `categoryModels`
+(dem T7b-`@Query`) ableiten statt aus dem Snapshot.
 
-```bash
-# Vor dem Löschen: wer importiert/nutzt das noch?
-rg -n 'changeVersion' Packages FitnessApp --glob '*.swift'
-rg -n 'startStorageObservation|syncExercise|cardViewModels\[' Packages FitnessApp --glob '*.swift'
-rg -n 'TrainingView\(' FitnessApp Packages --glob '*.swift' | rg -v 'TrainingModelView'
-rg -n 'CategoryTileView\(|MuscleCategorySelectionView\(' Packages FitnessApp --glob '*.swift' | rg -v Model
-rg -n 'ExerciseCardContainerView' Packages FitnessApp --glob '*.swift'
-rg -n 'MockCoordinatorCache|MockExerciseManagement|ObservableMockExerciseStorage' Packages --glob '*.swift'
+**Geltungsbereich**:
+- `Packages/FitnessExercise/Sources/FitnessExercise/MuscleCategoryView.swift`
+  - Zeile 298: `viewModel.exercises.first(where: { !$0.isCompleted })` →
+    `categoryModels.first(where: { !$0.isCompleted })?.toDomain()`
+  - `viewModel.showStartTraining` / `viewModel.showReset` müssen weg von
+    `viewModel.exercises` — entweder per neuer Property auf `MuscleCategoryView`
+    (computed aus `categoryModels`) oder VM bekommt einen Setter / die View
+    inlined die Logik.
+- `Packages/FitnessExercise/Sources/FitnessExercise/MuscleCategoryViewModel.swift`
+  - `hasActiveExercise`, `hasCompletedExercises`, `showStartTraining`, `showReset`,
+    `exercises`, `refreshExercises`, `startStorageObservation` werden in T8d gelöscht.
+    In T8c verschieben wir nur die **Aufrufer** — die VM-Properties bleiben temporär
+    bestehen damit Tests nicht brechen, werden aber `@available(*, deprecated)`
+    markiert für Sichtbarkeit.
+
+**Empfohlenes Pattern** (in der View):
+```swift
+private var hasActiveExercise: Bool {
+    categoryModels.contains { !$0.isCompleted }
+}
+private var hasCompletedExercises: Bool {
+    categoryModels.contains { $0.isCompleted }
+}
+private var showStartTraining: Bool {
+    !trainingCoordinator.isTrainingActive && hasActiveExercise
+}
+private var showReset: Bool {
+    !trainingCoordinator.isTrainingActive && hasCompletedExercises
+}
 ```
 
-Wenn ein Symbol noch genutzt wird das eigentlich raus soll → erst Aufrufer migrieren.
+**Validation**:
+- iso build + tests grün (FitnessExercise: erwartete 108/108, da keine Test-Logik
+  von den Bools direkt liest — die Bools werden nur in der View konsumiert)
+- parallel + App-Build grün
+- Commit: `refactor(category): derive Edit-Bools from categoryModels (T8c)`
 
-### 2. Schrittweises Löschen (per Symbol-Block)
+### T8d — Tote Symbole löschen (~30 min, Compiler-driven)
 
-In dieser Reihenfolge committen (jeder Schritt build+test grün):
+**Ziel**: Alles entfernen, was nach T8a+T8c keinen Aufrufer mehr hat. Reihenfolge
+ist Compiler-driven: nach jeder Löschung `xcodebuild` laufen lassen, der nächste
+Compile-Fehler zeigt, was als Nächstes geht.
 
-1. `changeVersion` aus `ExerciseStorageService` entfernen
-2. `startStorageObservation` aus `MuscleCategorySelectionViewModel` entfernen
-3. `cardViewModels`-Cache und `cardViewModel(for:)` entfernen
-4. `syncExercise` aus `ExerciseCardViewModel` entfernen, ggf. ganze Klasse
-5. `TrainingView.swift` löschen
-6. `MuscleCategorySelectionView.swift`, `CategoryTileView.swift`, `ExerciseCardContainerView.swift` löschen
-7. Mock-Test-Helfer und Test-Theater-Dateien löschen
-8. T2 Bug-Marker-Test löschen
+**Geltungsbereich**:
 
-Nach jedem Schritt:
-```bash
-.cursor/scripts/fast-test.sh
-```
+Storage-Schicht (Producer der Snapshots):
+1. `Packages/FitnessStorage/Sources/FitnessStorage/ExerciseStorageService.swift`
+   - `public private(set) var changeVersion: Int = 0`
+   - alle `changeVersion += 1` Statements
+2. `Packages/FitnessCore/Sources/FitnessCore/ExerciseStoring.swift`
+   - Protocol-Property `var changeVersion: Int { get }`
+3. Konformer-Mocks (alle synchron mit-löschen):
+   - `Packages/FitnessTestSupport/Sources/FitnessTestSupport/MockExerciseStorage.swift`
+   - `Packages/FitnessExercise/Tests/FitnessExerciseTests/MuscleCategoryViewModelTests.swift` (file-private MockExerciseStorage)
+   - `Packages/FitnessExercise/Tests/FitnessExerciseTests/MuscleCategorySelectionViewModelTests.swift` (file-private MockExerciseStorage)
+   - `Packages/FitnessStorage/Tests/FitnessStorageTests/WorkoutStorageServiceTests.swift` (`bumpVersion()` / Property)
+   - `Packages/FitnessStorage/Tests/FitnessStorageTests/TestHelpers.swift`
 
-### 3. Final Smoke-Verifikation
+ViewModel-Schicht (Consumer der Snapshots):
+4. `Packages/FitnessExercise/Sources/FitnessExercise/MuscleCategorySelectionViewModel.swift`
+   - `private var storageObservationTask: Task<Void, Never>?`
+   - `private func startStorageObservation()` komplett
+   - alle Init-Sites, die `startStorageObservation()` rufen
+   - `private(set) var cardViewModels: [UUID: ExerciseCardViewModel]` (Cache)
+   - `public func cardViewModel(for:category:)`
+   - `public var exercisesByCategory: [MuscleCategoryGroup: [Exercise]]`
+   - `public func refreshExercises()` (falls nicht mehr von außen aufgerufen)
+5. `Packages/FitnessExercise/Sources/FitnessExercise/MuscleCategoryViewModel.swift`
+   - `private var storageObservationTask`
+   - `startStorageObservation()`
+   - `cardViewModels` + `cardViewModel(for:)`
+   - `hasActiveExercise`, `hasCompletedExercises`, `showStartTraining`, `showReset`
+     (in T8c hatten wir die View migriert; jetzt VM-Properties weg)
+   - `public var exercises: [Exercise]` + `refreshExercises()`
+6. `MuscleCategoryView.swift` `.onAppear { viewModel.refreshExercises() }` /
+   `.onChange(of: trainingCoordinator.activeSessions.count) { ... }` entfernen.
 
-```bash
-# Soll 0 Treffer ergeben:
-rg "changeVersion|startStorageObservation|syncExercise" Packages/FitnessExercise/Sources Packages/FitnessStorage/Sources
+UI-Schicht (Consumer von ExerciseCardViewModel):
+7. `Packages/FitnessExercise/Sources/FitnessExercise/ExerciseCardViewModel.swift`
+   - `public func syncExercise(_ updated: Exercise)` löschen.
+   - **Ggf. ganze Klasse löschen** wenn keine Konsumenten mehr (Recon zur T8d-Zeit:
+     `ExerciseCardContainerView` initialisiert sie noch. Wenn `TrainingView` der
+     einzige Aufrufer von `ExerciseCardContainerView` bleibt (T8b deferred), bleibt
+     auch `ExerciseCardViewModel` bestehen. Sonst Klasse löschen.)
+8. `Packages/FitnessExercise/Tests/FitnessExerciseTests/ExerciseCardViewModelTests.swift`:
+   - "syncExercise" Suite löschen.
+   - Falls Klasse ganz weg: ganze Datei löschen.
 
-# Soll 0 Treffer für Snapshot-State-Pattern:
-rg '@State\s+private var cardViewModel' FitnessApp Packages --glob '*.swift'
-```
+UI-Schicht (Dead Views):
+9. `Packages/FitnessExercise/Sources/FitnessExercise/CategoryTileView.swift`:
+   - `struct CategoryTileView` wird nirgends mehr instantiiert (T7a hat alle
+     Aufrufer auf `CategoryTileModelView` migriert). **Struct löschen.**
+   - `public typealias CategoryTileViewConstants = ExerciseCardLayout` —
+     wird noch von `MuscleCategorySelectionView.swift:133` (LazyVStack-Spacing)
+     gelesen. Behalten ODER Aufrufer auf `ExerciseCardLayout.CategoryTile.verticalSpacing`
+     direkt umstellen (1 Stelle, trivial). Senior-Wahl: **typealias und Helper-Datei
+     ganz weg, Aufrufer direkt auf `ExerciseCardLayout` umstellen.**
+10. `Packages/FitnessExercise/Sources/FitnessExercise/ExerciseCardContainerView.swift`:
+    - Wird noch von `MuscleCategorySelectionView.swift:473` (vor T8a) und
+      `TrainingView.swift:62` benutzt. Nach T8a nur noch von `TrainingView`.
+    - **NICHT löschen** in T8d. Bleibt bestehen für T8b (deferred).
 
-### 4. Architektur-Doc final-sync
+Sentinel-Tests:
+11. `Packages/FitnessStorage/Tests/FitnessStorageTests/CoordinatorPersistsCompletionAfterFinishTests.swift`
+    - Bleibt — ist die T2-Invarianten-Suite und schützt gegen Bug-1-Regression.
+    - Falls einzelne Tests `changeVersion` direkt prüfen (nicht der Fall laut Recon
+      — der Test prüft `model.isCompleted` direkt am SwiftData-Container), nichts tun.
 
-`Datei: .cursor/references/architecture-documentation.md`
+**Validation pro Schritt** (Compiler-driven):
+- Nach jedem File-Edit: `xcodebuild build -scheme <package>` grün
+- Nach allen Edits: `scripts/fast-test.sh` parallel grün
+- Final-Smoke (sollte 0 Treffer geben):
+  ```bash
+  rg "changeVersion|startStorageObservation|syncExercise" \
+     Packages/FitnessExercise/Sources \
+     Packages/FitnessStorage/Sources \
+     Packages/FitnessTestSupport/Sources
+  ```
+- Commit: `chore(cleanup): remove changeVersion+polling architecture (T8d)`
 
-Updates:
-- **Feature Map**: TrainingView → TrainingModelView (FitnessPersistenceUI)
-- **Services**: `ExerciseStorageService` ohne `changeVersion`-Sektion mehr
-- **ViewModels**: `MuscleCategorySelectionViewModel` reduziert (nur Coordinator-State + Navigation)
-- **Packages**: FitnessPersistenceUI mit Beschreibung der Verantwortlichkeit
-- **Architectural Decisions**: Verweise auf ADR-0001/0002/0003
+### T8b — DEFERRED: TrainingView-Card-Migration
 
-### 5. Skill-Updates abgleichen
+**Status**: Nicht in T8 enthalten. **Senior-Begründung**:
 
-Nach Cleanup nochmal alle T0-Skill-Patches anschauen:
-- Sind die `rg`-Patterns noch akkurat? (Sie suchen nach Anti-Patterns die jetzt 0 Treffer haben)
-- `ui-state-sync.sh` Hook: synthetisch testen dass er den Pattern noch erkennen würde (z.B. via Test-Diff mit `changeVersion &+= 1`)
+- `TrainingView` lebt **nur, solange** der Coordinator aktiv ist. Sobald
+  `coordinator.finishExercise()` läuft, navigiert die View weg. Der "post-finish
+  UI-flip"-Bug (T7b-Fix-Anlass) **kann hier strukturell nicht auftreten** — die
+  View existiert nicht mehr, wenn der Bug-Trigger feuert.
+- Card hat Active-Set-Animation, Set-Counting, Phasen-Übergänge.
+  Bug-Blast-Radius bei Migration ist mittel-hoch.
+- ADR-0001 fordert "Model as UI SoT" **pro View-Subtree**, nicht
+  "eine View darf keine zwei Datenquellen haben". `TrainingView` ist in sich
+  konsistent (Card+ActionBar lesen aus `trainingCoordinator`).
+- **Trigger für Aufnahme**: User-Bug-Report im Training-Detail, oder
+  Schuld-Audit nach 6 Monaten priorisiert es als Aufräum-Sprint.
 
-### 6. UI-Test (manuell, dokumentiert)
-
-Auf Simulator den vollen Flow nochmal:
-- Workout starten
-- Übung A (Arme): 3 Sätze, finish → Card sofort completed, Tile-Count sofort runter
-- Übung B (Beine): startup, 1 Satz active → Card aktiv, Tile zeigt "active" Marker
-- Workout neu wählen → alle Tiles re-fetch korrekt (View-Identity via `.id` greift)
-- App killen mid-training → neu starten, Session-State weg (per ADR-0003 erwartet)
-
-### 7. Reviewing-code-changes Skill (Pflicht — viele Löschungen)
-
-Subagent über alle Cleanup-Commits laufen lassen, Stamp schreiben.
-
-### 8. Architektur-Sync-Hook lassen passieren
-
-`adr-required.sh` (Pre-Commit, Check 5 in `.git/hooks/pre-commit`) soll den Cleanup als Architektur-Änderung erkennen und auf ADR-0001/2/3 verweisen lassen. Da T8 viele alte Symbole entfernt **und** ggf. Schema-Konvenienzen verschwinden, prüfen ob auch ADR-0005 als Verweis im Commit-Body aufgeführt sein muss (falls SchemaV1-Reste mit weggeräumt werden).
+Daraus folgen die T8d-Kompromisse:
+- `ExerciseCardContainerView.swift` bleibt (für `TrainingView`)
+- `ExerciseCardViewModel` bleibt vermutlich (für `ExerciseCardContainerView`)
+- `MuscleCategoryViewModel.cardViewModel(for:)` weg, aber Klasse
+  `ExerciseCardViewModel` selbst bleibt nutzbar via direktes Init
 
 ## Definition of Done
 
-- [ ] Alle 6 Symbol-Bereiche aus "Was gelöscht wird" tatsächlich entfernt
-- [ ] `rg "changeVersion|startStorageObservation|syncExercise"` → 0 Treffer in Packages/FitnessExercise/Sources
+- [ ] T8a + T8c + T8d implementiert, je Phase ein Commit
+- [ ] `rg "changeVersion|startStorageObservation|syncExercise" Packages/FitnessExercise/Sources Packages/FitnessStorage/Sources` → 0 Treffer
+- [ ] Karten-Rendering überall live über `@Query<ExerciseModel>` (außer `TrainingView`-Detail, deferred)
 - [ ] App-Target builds grün
-- [ ] Full Test Suite grün
+- [ ] Full Test Suite grün (Erwartung: ~545-549 Tests, je nach finalen Test-Löschungen)
 - [ ] Manueller Smoke-Test: beide Original-Bugs sind und bleiben behoben
-- [ ] `architecture-documentation.md` reflektiert finalen Stand
-- [ ] Reviewing-code-changes Skill final durchlaufen, Stamp geschrieben
-- [ ] Stop-Hook prüft alle Pflichten
-- [ ] Commit-Message: "T8: remove legacy changeVersion+polling architecture per ADR-0001"
+- [ ] `architecture-documentation.md` reflektiert finalen Stand:
+  - `MuscleCategorySelectionView.allExercisesList` jetzt live (T8a)
+  - `ExerciseStorageService` ohne `changeVersion`-Sektion
+  - `MuscleCategorySelectionViewModel`/`MuscleCategoryViewModel` reduziert auf
+    Coordinator-State + Navigation + Form-Routing
+  - `TrainingView` als bewusst zurückgelassene legacy-Stelle dokumentiert
+    (mit Verweis auf T8b-DEFERRED-Begründung)
+- [ ] ADR-0001 Status bleibt `accepted` — Hinweis im Status-Feld:
+  "T8a/c/d cleanup landed; TrainingView-Detail bewusst legacy (siehe T8b)"
+- [ ] `reviewing-code-changes` Skill durchlaufen pro Phase, Stamps geschrieben
 
 ## Akzeptanzkriterien
 
-Repository enthält keine Reste der alten Sync-Architektur mehr. Bei einem zukünftigen
-Refactor 4 wäre der Code-Body so klein und klar dass die alte Architektur nicht
-"versehentlich" wiederbelebt werden kann. Architektur-Doku, ADRs und Agent-System-
-Skills/Rules/Hooks sind alle konsistent mit dem neuen Stand.
+Karten-Rendering im **Home/MuscleCategory**-Subtree fließt zu 100% über
+`@Query<ExerciseModel>`. `changeVersion`-Architektur ist vollständig entfernt.
+Repository enthält keinen toten Snapshot-Cache, keinen toten Polling-Observer.
+Die einzige verbleibende `ExerciseCardContainerView`-Verwendung ist `TrainingView`
+und ist im Code-Comment + arch-doc + diesem Plan-File als bewusst-zurückgelassen
+mit Trigger-Bedingung dokumentiert.
+
+## Nicht-Ziele
+
+- TrainingView-Card-Migration (siehe T8b-DEFERRED)
+- Refactor von `ExerciseFormViewModel` (out of scope für SoT-Initiative)
+- Neue Features oder Architektur-Tokens
+- Rule/Skill/Hook-Updates über das hinaus, was die Cleanup-Validation natürlich
+  erfordert (z.B. arch-doc sync ist Pflicht; aber kein neues Skill-Pattern)
