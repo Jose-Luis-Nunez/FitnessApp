@@ -17,8 +17,6 @@ public final class MuscleCategoryViewModel {
     private let coordinator: TrainingCoordinator
     private let storageService: ExerciseStoring
     private let workoutStorageService: WorkoutStoring
-    private var cardViewModels: [UUID: ExerciseCardViewModel] = [:]
-    nonisolated(unsafe) private var storageObservationTask: Task<Void, Never>?
 
     public init(group: MuscleCategoryGroup) {
         self.group = group
@@ -37,8 +35,6 @@ public final class MuscleCategoryViewModel {
         let coord = Container.shared.trainingCoordinatorCache().coordinator(for: group)
         self.coordinator = coord
         self.activeSetViewModel = coord.activeSetViewModel
-
-        startStorageObservation()
     }
 
     public init(
@@ -60,33 +56,6 @@ public final class MuscleCategoryViewModel {
             onExerciseUpdate: { _, _ in },
             onExerciseReset: { _, _ in }
         )
-        startStorageObservation()
-    }
-
-    deinit {
-        storageObservationTask?.cancel()
-    }
-
-    /// Observes `storageService.changeVersion` — a monotonic counter that
-    /// increments on every write. When it changes, re-fetches exercises
-    /// from the single source of truth (SwiftData) and syncs card VMs.
-    private func startStorageObservation() {
-        storageObservationTask = Task { [weak self] in
-            while !Task.isCancelled {
-                let changed: Bool = await withCheckedContinuation { continuation in
-                    withObservationTracking {
-                        _ = self?.storageService.changeVersion
-                    } onChange: {
-                        continuation.resume(returning: true)
-                    }
-                }
-                guard changed, let self, !Task.isCancelled else { return }
-                self.refreshExercises()
-                for exercise in self.exercises {
-                    self.cardViewModels[exercise.id]?.syncExercise(exercise)
-                }
-            }
-        }
     }
 
     public var hasActiveExercise: Bool {
@@ -179,21 +148,5 @@ public final class MuscleCategoryViewModel {
         var updatedExercise = exercise
         updatedExercise.isCompleted = false
         updateExercise(updatedExercise)
-    }
-
-    public func cardViewModel(for exercise: Exercise) -> ExerciseCardViewModel {
-        if let existing = cardViewModels[exercise.id] {
-            existing.syncExercise(exercise)
-            return existing
-        }
-        let vm = ExerciseCardViewModel(exercise: exercise) { [weak self] updated in
-            self?.updateExercise(updated)
-        }
-        cardViewModels[exercise.id] = vm
-        return vm
-    }
-
-    public func invalidateCardViewModels() {
-        cardViewModels.removeAll()
     }
 }

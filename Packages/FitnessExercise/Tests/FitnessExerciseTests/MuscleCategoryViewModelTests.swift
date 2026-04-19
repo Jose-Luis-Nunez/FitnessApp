@@ -20,7 +20,6 @@ import Factory
 /// gain. Keep this file-private alias until the Support variant is restructured.
 private final class MockExerciseStorage: ExerciseStoring {
     var savedExercises: [MuscleCategoryGroup: [Exercise]] = [:]
-    private(set) var changeVersion: Int = 0
 
     func loadForWorkout(workoutId: UUID, category: MuscleCategoryGroup) -> [Exercise] {
         savedExercises[category] ?? []
@@ -28,7 +27,6 @@ private final class MockExerciseStorage: ExerciseStoring {
 
     func saveForWorkout(_ exercises: [Exercise], workoutId: UUID, category: MuscleCategoryGroup) {
         savedExercises[category] = exercises
-        changeVersion += 1
     }
 }
 
@@ -62,82 +60,6 @@ private func makeVM(
         coordinator: coordinator
     )
     return (vm, storage)
-}
-
-// MARK: - CardViewModel Cache
-
-@Suite("cardViewModel cache")
-@MainActor
-struct CardViewModelCacheTests {
-
-    @Test func returnsSameInstanceForSameExerciseID() {
-        let exercise = makeExercise()
-        let (vm, _) = makeVM(exercises: [exercise])
-
-        let first = vm.cardViewModel(for: exercise)
-        let second = vm.cardViewModel(for: exercise)
-
-        #expect(first === second)
-    }
-
-    @Test func returnsDifferentInstancesForDifferentExercises() {
-        let ex1 = makeExercise(name: "Curl")
-        let ex2 = makeExercise(name: "Press")
-        let (vm, _) = makeVM(exercises: [ex1, ex2])
-
-        let vm1 = vm.cardViewModel(for: ex1)
-        let vm2 = vm.cardViewModel(for: ex2)
-
-        #expect(vm1 !== vm2)
-    }
-
-    @Test func syncsIsCompletedChangeToExistingCachedVM() {
-        let id = UUID()
-        let original = makeExercise(id: id, isCompleted: false)
-        let (vm, _) = makeVM(exercises: [original])
-
-        let cardVM = vm.cardViewModel(for: original)
-        #expect(cardVM.exercise.isCompleted == false)
-
-        var updated = original
-        updated.isCompleted = true
-        let sameCardVM = vm.cardViewModel(for: updated)
-
-        #expect(cardVM === sameCardVM)
-        #expect(cardVM.exercise.isCompleted == true)
-    }
-
-    @Test func syncsWeightChangeToExistingCachedVM() {
-        let id = UUID()
-        let original = makeExercise(id: id)
-        let (vm, _) = makeVM(exercises: [original])
-
-        let cardVM = vm.cardViewModel(for: original)
-        #expect(cardVM.exercise.weight == 20)
-
-        var updated = original
-        updated.weight = 50
-        vm.cardViewModel(for: updated)
-
-        #expect(cardVM.exercise.weight == 50)
-    }
-
-    @Test func syncDoesNotTriggerOnUpdateCallback() {
-        let id = UUID()
-        let original = makeExercise(id: id, isCompleted: false)
-        let (vm, storage) = makeVM(exercises: [original])
-
-        _ = vm.cardViewModel(for: original)
-
-        var updated = original
-        updated.isCompleted = true
-
-        let savedBefore = storage.savedExercises[.arms]
-        _ = vm.cardViewModel(for: updated)
-
-        // syncExercise must not call onUpdate -> updateExercise -> saveExercises
-        #expect(storage.savedExercises[.arms] == savedBefore)
-    }
 }
 
 // MARK: - updateExercise
@@ -197,24 +119,6 @@ struct ResetProgressTests {
     }
 }
 
-// MARK: - invalidateCardViewModels
-
-@Suite("invalidateCardViewModels")
-@MainActor
-struct InvalidateCacheTests {
-
-    @Test func newInstanceAfterInvalidation() {
-        let exercise = makeExercise()
-        let (vm, _) = makeVM(exercises: [exercise])
-
-        let first = vm.cardViewModel(for: exercise)
-        vm.invalidateCardViewModels()
-        let second = vm.cardViewModel(for: exercise)
-
-        #expect(first !== second)
-    }
-}
-
 // MARK: - refreshExercises (external change detection)
 
 @Suite("refreshExercises")
@@ -235,26 +139,6 @@ struct RefreshExercisesTests {
         vm.refreshExercises()
 
         #expect(vm.exercises.first?.isCompleted == true)
-    }
-
-    @Test func cachedCardViewModelReflectsRefreshedState() throws {
-        let id = UUID()
-        let original = makeExercise(id: id, isCompleted: false)
-        let (vm, storage) = makeVM(exercises: [original])
-
-        let cardVM = vm.cardViewModel(for: original)
-        #expect(cardVM.exercise.isCompleted == false)
-
-        var completed = original
-        completed.isCompleted = true
-        storage.savedExercises[.arms] = [completed]
-
-        vm.refreshExercises()
-
-        let refreshed = try #require(vm.exercises.first, "exercises should not be empty after refresh")
-        let sameCardVM = vm.cardViewModel(for: refreshed)
-        #expect(cardVM === sameCardVM)
-        #expect(cardVM.exercise.isCompleted == true)
     }
 
     @Test func refreshDoesNotLoseExercisesAddedExternally() {
@@ -369,7 +253,12 @@ struct ObserverStabilityTests {
         }
         coordinator.finishExercise()
 
-        try await waitUntil { vm.exercises.first(where: { $0.id == ex1.id })?.isCompleted == true }
+        // Polling-based auto-refresh was removed in T8d; the live UI now uses
+        // @Query against ExerciseModel for reactivity. The ViewModel's
+        // `exercises` array is only used as a backing store for the Form/Picker
+        // write path, so tests must request a refresh explicitly.
+        try await Task.sleep(for: .milliseconds(100))
+        vm.refreshExercises()
 
         let completedEx = try #require(vm.exercises.first(where: { $0.id == ex1.id }))
         #expect(completedEx.isCompleted == true)
@@ -433,7 +322,10 @@ struct AutoRefreshTests {
         }
         coordinator.finishExercise()
 
-        try await waitUntil { vm.exercises.first?.isCompleted == true }
+        // See note in onlyCompletedExerciseUpdatesOthersStayUntouched —
+        // VM-side polling is gone; explicit refresh is required.
+        try await Task.sleep(for: .milliseconds(100))
+        vm.refreshExercises()
 
         #expect(vm.exercises.first?.isCompleted == true)
         #expect(coordinator.lastCompletedExercise?.id == id)
@@ -449,36 +341,6 @@ struct AutoRefreshTests {
         try await Task.sleep(for: .milliseconds(200))
 
         #expect(vm.exercises.first?.isCompleted == false)
-    }
-
-    @Test func cachedCardViewModelUpdatesAfterCompletion() async throws {
-        let id = UUID()
-        let original = makeExercise(id: id, isCompleted: false)
-        let storage = MockExerciseStorage()
-        storage.savedExercises[.arms] = [original]
-        let coordinator = makeCoordinator(storage: storage)
-        let (vm, _) = makeVM(exercises: [original], coordinator: coordinator, storage: storage)
-
-        let cardVM = vm.cardViewModel(for: original)
-        #expect(cardVM.exercise.isCompleted == false)
-
-        await Task.yield()
-
-        coordinator.startTraining(for: original)
-
-        try await waitUntil { coordinator.currentExercise != nil }
-
-        for _ in 0..<original.sets {
-            coordinator.completeSet()
-        }
-        coordinator.finishExercise()
-
-        try await waitUntil { vm.exercises.first?.isCompleted == true }
-
-        let refreshedExercise = try #require(vm.exercises.first, "exercises should not be empty after finishExercise")
-        let sameCardVM = vm.cardViewModel(for: refreshedExercise)
-        #expect(cardVM === sameCardVM)
-        #expect(cardVM.exercise.isCompleted == true)
     }
 
     @Test func ignoresCompletionForUnknownExerciseId() async throws {

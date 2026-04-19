@@ -10,10 +10,6 @@ private let logger = Logger(subsystem: "FitnessStorage", category: "ExerciseStor
 @Observable
 @MainActor
 public final class ExerciseStorageService: ExerciseStoring {
-    /// Monotonically increasing counter; increments on every write.
-    /// Observers re-fetch exercises when this changes.
-    public private(set) var changeVersion: Int = 0
-
     @ObservationIgnored
     private let context: ModelContext
 
@@ -65,9 +61,7 @@ public final class ExerciseStorageService: ExerciseStoring {
             context.insert(model)
         }
 
-        if saveContext() {
-            changeVersion += 1
-        }
+        _ = saveContext()
     }
 
     private func fetchWorkoutModel(id: UUID) -> WorkoutModel? {

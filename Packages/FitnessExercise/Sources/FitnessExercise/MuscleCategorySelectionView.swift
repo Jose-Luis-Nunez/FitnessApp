@@ -155,7 +155,7 @@ public struct MuscleCategorySelectionView: View {
                             }
                             .padding(.horizontal, SelectionLayoutConstants.horizontalPadding)
                         } else {
-                            LazyVStack(spacing: CategoryTileViewConstants.CategoryTile.verticalSpacing) {
+                            LazyVStack(spacing: ExerciseCardLayout.CategoryTile.verticalSpacing) {
                                 allExercisesList
                             }
                             .padding(.horizontal, 0)
@@ -249,10 +249,9 @@ public struct MuscleCategorySelectionView: View {
 #endif
         .id(viewModel.currentWorkoutId)
         .onAppear {
-            // T8a: refresh keeps the legacy `viewModel.exercisesByCategory` snapshot
-            // alive for any non-list-mode reader. The list-mode card grid itself is
-            // now `@Query`-driven and does not depend on this. T8d removes both the
-            // snapshot and this onAppear once `cardViewModel(for:category:)` is gone.
+            // The card grid is `@Query`-driven for live updates. This refresh
+            // keeps `viewModel.exercisesByCategory` in sync as the backing
+            // store for the legacy Form/Picker write path.
             viewModel.refreshExercises()
         }
     }

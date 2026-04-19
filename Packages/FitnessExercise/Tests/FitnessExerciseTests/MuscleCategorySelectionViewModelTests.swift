@@ -252,7 +252,11 @@ struct ExerciseCountsTests {
         for _ in 0..<exercise.sets { coordinator.completeSet() }
         coordinator.finishExercise()
 
-        try await waitUntil(timeout: .seconds(2)) { vm.getExerciseCount(for: .arms)?.active == 0 }
+        // Polling-based auto-refresh was removed in T8d; the live UI uses
+        // @Query on ExerciseModel for reactivity. Tests must request a
+        // refresh explicitly to update the VM's snapshot.
+        try await Task.sleep(for: .milliseconds(100))
+        vm.refreshExercises()
 
         #expect(vm.getExerciseCount(for: .arms)?.active == 0)
     }
@@ -282,38 +286,6 @@ struct ExerciseCountsTests {
 }
 
 // MARK: - Card ViewModel Cache
-
-@Suite("card view model cache")
-@MainActor
-struct SelectionCardViewModelCacheTests {
-
-    @Test func returnsSameInstanceForSameExercise() {
-        let ws = MockWorkoutStorage()
-        ws.setCurrentWorkout(Workout(name: "Test", selectedCategories: [.arms]))
-
-        let vm = MuscleCategorySelectionViewModel(
-            coordinatorCache: MockCoordinatorCache(),
-            workoutStorage: ws
-        )
-        let exercise = makeExercise()
-        let first = vm.cardViewModel(for: exercise, category: .arms)
-        let second = vm.cardViewModel(for: exercise, category: .arms)
-        #expect(first === second)
-    }
-
-    @Test func returnsDifferentInstancesForDifferentExercises() {
-        let ws = MockWorkoutStorage()
-        ws.setCurrentWorkout(Workout(name: "Test", selectedCategories: [.arms]))
-
-        let vm = MuscleCategorySelectionViewModel(
-            coordinatorCache: MockCoordinatorCache(),
-            workoutStorage: ws
-        )
-        let ex1 = makeExercise(name: "Curl")
-        let ex2 = makeExercise(name: "Press")
-        #expect(vm.cardViewModel(for: ex1, category: .arms) !== vm.cardViewModel(for: ex2, category: .arms))
-    }
-}
 
 // MARK: - Reset All Exercises
 
@@ -490,138 +462,6 @@ struct ExerciseMutationTests {
         #expect(exercises.count == 2)
         #expect(exercises[0].name == "Curl")
         #expect(exercises[1].name == "Press")
-    }
-}
-
-// MARK: - Coordinator Completion Integration (Phase 1b)
-
-@Suite("coordinator completion integration")
-@MainActor
-struct CoordinatorCompletionIntegrationTests {
-
-    private func makeIntegrationSetup(
-        exercise: Exercise = makeExercise(sets: 3)
-    ) -> (vm: MuscleCategorySelectionViewModel, coordinator: TrainingCoordinator, mock: MockExerciseManagement) {
-        let mock = MockExerciseManagement()
-        mock.exercisesByCategory[.arms] = [exercise]
-
-        let exerciseStorage = ObservableMockExerciseStorage()
-        let cache = MockCoordinatorCache()
-        cache.exerciseStorage = exerciseStorage
-
-        let ws = MockWorkoutStorage()
-        ws.setCurrentWorkout(Workout(name: "Test", selectedCategories: [.arms]))
-
-        let vm = MuscleCategorySelectionViewModel(
-            coordinatorCache: cache,
-            exerciseManagement: mock,
-            workoutStorage: ws,
-            exerciseStorage: exerciseStorage
-        )
-        let coordinator = cache.coordinator(for: .arms)
-
-        return (vm, coordinator, mock)
-    }
-
-    @Test func completionFlowUpdatesCardVM() async throws {
-        let exercise = makeExercise(sets: 3)
-        let (vm, coordinator, mock) = makeIntegrationSetup(exercise: exercise)
-
-        let cardVM = vm.cardViewModel(for: exercise, category: .arms)
-        #expect(!cardVM.exercise.isCompleted)
-
-        await Task.yield()
-
-        coordinator.startTraining(for: exercise)
-        try await waitUntil(timeout: .seconds(2)) { coordinator.isTrainingActive }
-
-        for _ in 0..<exercise.sets { coordinator.completeSet() }
-
-        var completed = exercise
-        completed.isCompleted = true
-        mock.exercisesByCategory[.arms] = [completed]
-
-        coordinator.finishExercise()
-
-        try await waitUntil(timeout: .seconds(2)) { cardVM.exercise.isCompleted }
-        #expect(cardVM.exercise.isCompleted)
-    }
-
-    @Test func completionFlowUpdatesExerciseCounts() async throws {
-        let exercise = makeExercise(sets: 3)
-        let (vm, coordinator, mock) = makeIntegrationSetup(exercise: exercise)
-        #expect(vm.getExerciseCount(for: .arms)?.active == 1)
-
-        await Task.yield()
-
-        coordinator.startTraining(for: exercise)
-        try await waitUntil(timeout: .seconds(2)) { coordinator.isTrainingActive }
-
-        for _ in 0..<exercise.sets { coordinator.completeSet() }
-
-        var completed = exercise
-        completed.isCompleted = true
-        mock.exercisesByCategory[.arms] = [completed]
-
-        coordinator.finishExercise()
-
-        try await waitUntil(timeout: .seconds(2)) { vm.getExerciseCount(for: .arms)?.active == 0 }
-        #expect(vm.getExerciseCount(for: .arms)?.active == 0)
-    }
-
-    @Test func completionFlowWritesBackToStorage() async throws {
-        let exercise = makeExercise(sets: 3)
-        let mock = MockExerciseManagement()
-        mock.exercisesByCategory[.arms] = [exercise]
-
-        let exerciseStorage = ObservableMockExerciseStorage()
-        let cache = MockCoordinatorCache()
-        cache.exerciseStorage = exerciseStorage
-
-        let ws = MockWorkoutStorage()
-        ws.setCurrentWorkout(Workout(name: "Test", selectedCategories: [.arms]))
-
-        let vm = MuscleCategorySelectionViewModel(
-            coordinatorCache: cache,
-            exerciseManagement: mock,
-            workoutStorage: ws,
-            exerciseStorage: exerciseStorage
-        )
-        let coordinator = cache.coordinator(for: .arms)
-
-        await Task.yield()
-
-        coordinator.startTraining(for: exercise)
-        try await waitUntil(timeout: .seconds(2)) { coordinator.isTrainingActive }
-
-        for _ in 0..<exercise.sets { coordinator.completeSet() }
-
-        var completed = exercise
-        completed.isCompleted = true
-        mock.exercisesByCategory[.arms] = [completed]
-
-        coordinator.finishExercise()
-
-        try await waitUntil(timeout: .seconds(2)) { vm.getExerciseCount(for: .arms)?.active == 0 }
-
-        let storedExercises = mock.exercisesByCategory[.arms] ?? []
-        #expect(storedExercises.first?.isCompleted == true)
-    }
-
-    @Test func partialCompletionDoesNotMarkCompleted() async throws {
-        let exercise = makeExercise(sets: 3)
-        let (vm, coordinator, _) = makeIntegrationSetup(exercise: exercise)
-
-        let cardVM = vm.cardViewModel(for: exercise, category: .arms)
-
-        coordinator.startTraining(for: exercise)
-        try await waitUntil(timeout: .seconds(2)) { coordinator.isTrainingActive }
-
-        coordinator.completeSet()
-        coordinator.finishExercise()
-
-        try await Task.sleep(for: .milliseconds(200))
-        #expect(!cardVM.exercise.isCompleted)
     }
 }
 

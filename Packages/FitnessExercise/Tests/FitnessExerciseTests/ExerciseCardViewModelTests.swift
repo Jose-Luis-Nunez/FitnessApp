@@ -4,62 +4,6 @@ import Foundation
 import FitnessCore
 import FitnessTestSupport
 
-// MARK: - syncExercise
-
-@Suite("syncExercise")
-@MainActor
-struct SyncExerciseTests {
-
-    @Test func updatesExerciseWhenContentDiffers() {
-        let exercise = makeExercise()
-        let vm = ExerciseCardViewModel(exercise: exercise) { _ in }
-
-        var updated = exercise
-        updated.isCompleted = true
-        vm.syncExercise(updated)
-
-        #expect(vm.exercise.isCompleted == true)
-    }
-
-    @Test func doesNotCallOnUpdate() {
-        let exercise = makeExercise()
-        var onUpdateCalled = false
-        let vm = ExerciseCardViewModel(exercise: exercise) { _ in
-            onUpdateCalled = true
-        }
-
-        var updated = exercise
-        updated.weight = 999
-        vm.syncExercise(updated)
-
-        #expect(!onUpdateCalled)
-        #expect(vm.exercise.weight == 999)
-    }
-
-    @Test func skipsUpdateWhenContentIsIdentical() {
-        let exercise = makeExercise()
-        var onUpdateCalled = false
-        let vm = ExerciseCardViewModel(exercise: exercise) { _ in onUpdateCalled = true }
-
-        vm.syncExercise(exercise)
-
-        #expect(!onUpdateCalled)
-    }
-
-    @Test func detectsIsCompletedChange() {
-        let id = UUID()
-        let original = makeExercise(id: id, isCompleted: false)
-        let vm = ExerciseCardViewModel(exercise: original) { _ in }
-
-        var completed = original
-        completed.isCompleted = true
-
-        vm.syncExercise(completed)
-
-        #expect(vm.exercise.isCompleted == true)
-    }
-}
-
 // MARK: - Direct mutation via update methods
 
 @Suite("Direct mutation methods")

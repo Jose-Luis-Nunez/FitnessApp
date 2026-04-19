@@ -20,12 +20,9 @@ public final class MuscleCategorySelectionViewModel {
         }
     }
 
-    private var cardViewModels: [UUID: ExerciseCardViewModel] = [:]
     nonisolated(unsafe) private var workoutObservationTask: Task<Void, Never>?
-    nonisolated(unsafe) private var storageObservationTask: Task<Void, Never>?
 
     @ObservationIgnored private let coordinatorCache: TrainingCoordinatorCaching
-    @ObservationIgnored private var exerciseStorageService: ExerciseStoring
 
     public init(
         coordinatorCache: TrainingCoordinatorCaching? = nil,
@@ -36,16 +33,20 @@ public final class MuscleCategorySelectionViewModel {
         self.coordinatorCache = coordinatorCache ?? Container.shared.trainingCoordinatorCache()
         self.exerciseManagementService = exerciseManagement ?? Container.shared.exerciseManagement()
         self.workoutStorageService = workoutStorage ?? Container.shared.workoutStorage()
-        self.exerciseStorageService = exerciseStorage ?? Container.shared.exerciseStorage()
+        // The `exerciseStorage` parameter is kept in the public init signature for
+        // backwards-compat with existing call sites (Tests use it for DI). Its
+        // previous consumer (`startStorageObservation` polling) was removed in
+        // T8d — SwiftData @Query in the views is now the live read path. The
+        // form/picker write path still routes through `exerciseManagementService`
+        // -> Storage.
+        _ = exerciseStorage
         updateCategories(for: workoutStorageService.currentWorkout)
         refreshExercises()
         startWorkoutObservation()
-        startStorageObservation()
     }
 
     deinit {
         workoutObservationTask?.cancel()
-        storageObservationTask?.cancel()
     }
 
     private func startWorkoutObservation() {
@@ -63,30 +64,6 @@ public final class MuscleCategorySelectionViewModel {
                 guard let self, !Task.isCancelled else { return }
                 self.updateCategories(for: ws.currentWorkout)
                 self.refreshExercises()
-            }
-        }
-    }
-
-    /// Observes `exerciseStorageService.changeVersion` — re-fetches from
-    /// the single source of truth whenever any write occurs.
-    private func startStorageObservation() {
-        storageObservationTask?.cancel()
-        storageObservationTask = Task { [weak self] in
-            while !Task.isCancelled {
-                let changed: Bool = await withCheckedContinuation { continuation in
-                    withObservationTracking {
-                        _ = self?.exerciseStorageService.changeVersion
-                    } onChange: {
-                        continuation.resume(returning: true)
-                    }
-                }
-                guard changed, let self, !Task.isCancelled else { return }
-                self.refreshExercises()
-                for exercises in self.exercisesByCategory.values {
-                    for exercise in exercises {
-                        self.cardViewModels[exercise.id]?.syncExercise(exercise)
-                    }
-                }
             }
         }
     }
@@ -181,17 +158,5 @@ public final class MuscleCategorySelectionViewModel {
 
     public func selectWorkout(_ workout: Workout) {
         workoutStorageService.setCurrentWorkout(workout)
-    }
-
-    public func cardViewModel(for exercise: Exercise, category: MuscleCategoryGroup) -> ExerciseCardViewModel {
-        if let existing = cardViewModels[exercise.id] {
-            existing.syncExercise(exercise)
-            return existing
-        }
-        let vm = ExerciseCardViewModel(exercise: exercise) { [weak self] updated in
-            self?.updateExercise(updated, category: category)
-        }
-        cardViewModels[exercise.id] = vm
-        return vm
     }
 }

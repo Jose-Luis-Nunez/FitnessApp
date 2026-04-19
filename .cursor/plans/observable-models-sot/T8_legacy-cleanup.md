@@ -1,4 +1,4 @@
-# T8 — Legacy-Cleanup: Inkrementelle subtraktive Phase
+# T8 — Legacy-Cleanup: Inkrementelle subtraktive Phase ✅ COMPLETED (T8a + T8c + T8d)
 
 > **Layer**: Cleanup
 > **Vorbedingung**: T7 abgeschlossen (T7-0 Cycle-Break, T7a Tile-Live, T7b Card-Live — beide Original-Bugs verifiziert behoben)
