@@ -1,6 +1,5 @@
 import Testing
 import Foundation
-import Observation
 @testable import FitnessExercise
 import FitnessCore
 import FitnessTraining
@@ -98,38 +97,19 @@ private final class MockExerciseManagement: ExerciseManaging {
     }
 }
 
-// MARK: - Observable Mock Workout Storage (for reactive tests)
+// MARK: - Categories (workout-agnostic)
 
-@Observable
-@MainActor
-private final class ObservableMockWorkoutStorage: WorkoutStoring {
-    var workouts: [Workout] = []
-    var currentWorkout: Workout?
-    var defaultWorkout: Workout?
-
-    func createWorkout(name: String, selectedCategories: Set<MuscleCategoryGroup>) -> Workout {
-        let workout = Workout(name: name, selectedCategories: selectedCategories)
-        workouts.append(workout)
-        return workout
-    }
-
-    func duplicateWorkout(_ workout: Workout) -> Workout { workout }
-    func deleteWorkout(_ workout: Workout) {}
-    func updateWorkout(_ workout: Workout) {}
-
-    func setCurrentWorkout(_ workout: Workout) { currentWorkout = workout }
-    func setAsDefaultWorkout(_ workout: Workout) { defaultWorkout = workout }
-    func removeAsDefaultWorkout() { defaultWorkout = nil }
-    func renameWorkout(_ workout: Workout, newName: String) {}
-}
-
-// MARK: - Categories & Workout Observation
-
-@Suite("categories loaded from workout")
+/// Product decision: the overview tile-grid always shows **all** muscle
+/// categories regardless of `Workout.selectedCategories`. These tests pin
+/// that contract so a future refactor does not silently re-introduce the
+/// "single Abs tile" bug (where `categories` was sourced from
+/// `workout.selectedCategories` and the per-category "New Exercise" menu
+/// could write into categories the overview was hiding).
+@Suite("categories are always all cases")
 @MainActor
 struct CategoriesTests {
 
-    @Test func categoriesMatchWorkoutSelection() {
+    @Test func categoriesEqualAllCasesSortedByRawValue() {
         let ws = MockWorkoutStorage()
         ws.setCurrentWorkout(Workout(name: "Test", selectedCategories: [.arms, .chest]))
 
@@ -138,43 +118,35 @@ struct CategoriesTests {
             workoutStorage: ws
         )
 
+        let expected = MuscleCategoryGroup.allCases.sorted { $0.rawValue < $1.rawValue }
+        #expect(vm.categories == expected)
+    }
+
+    @Test func categoriesIgnoreWorkoutSelectedCategories() {
+        let ws = MockWorkoutStorage()
+        ws.setCurrentWorkout(Workout(name: "AbsOnly", selectedCategories: [.abs]))
+
+        let vm = MuscleCategorySelectionViewModel(
+            coordinatorCache: MockCoordinatorCache(),
+            workoutStorage: ws
+        )
+
+        #expect(vm.categories.count == MuscleCategoryGroup.allCases.count)
         #expect(vm.categories.contains(.arms))
         #expect(vm.categories.contains(.chest))
-        #expect(!vm.categories.contains(.legs))
-    }
-
-    @Test func categoriesEmptyWhenNoWorkout() {
-        let ws = MockWorkoutStorage()
-
-        let vm = MuscleCategorySelectionViewModel(
-            coordinatorCache: MockCoordinatorCache(),
-            workoutStorage: ws
-        )
-        #expect(vm.categories.isEmpty)
-    }
-
-    @Test func categoriesUpdateReactivelyWhenWorkoutChanges() async throws {
-        let ws = ObservableMockWorkoutStorage()
-        ws.setCurrentWorkout(Workout(name: "W1", selectedCategories: [.arms]))
-
-        let vm = MuscleCategorySelectionViewModel(
-            coordinatorCache: MockCoordinatorCache(),
-            workoutStorage: ws
-        )
-        #expect(vm.categories == [.arms])
-
-        // Observation subscription activates only after the first `vm.categories` read.
-        // Yield so the observer is installed before we mutate upstream state —
-        // otherwise the second `setCurrentWorkout` fires before the VM is listening.
-        try await Task.sleep(for: .milliseconds(50))
-
-        ws.setCurrentWorkout(Workout(name: "W2", selectedCategories: [.chest, .legs]))
-
-        try await waitUntil(timeout: .seconds(1)) { vm.categories.contains(.chest) }
-
-        #expect(vm.categories.contains(.chest))
+        #expect(vm.categories.contains(.back))
         #expect(vm.categories.contains(.legs))
-        #expect(!vm.categories.contains(.arms))
+        #expect(vm.categories.contains(.abs))
+    }
+
+    @Test func categoriesNonEmptyEvenWithoutWorkout() {
+        let ws = MockWorkoutStorage()
+        // currentWorkout intentionally nil
+        let vm = MuscleCategorySelectionViewModel(
+            coordinatorCache: MockCoordinatorCache(),
+            workoutStorage: ws
+        )
+        #expect(vm.categories.count == MuscleCategoryGroup.allCases.count)
     }
 }
 

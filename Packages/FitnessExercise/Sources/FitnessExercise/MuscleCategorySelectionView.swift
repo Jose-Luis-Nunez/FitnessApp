@@ -398,13 +398,12 @@ public struct MuscleCategorySelectionView: View {
     }
 
     private var categoryList: some View {
-        // T7a: live-fix Bug 2 — Tile-Count "X of Y" updated jetzt sofort, weil
-        // CategoryTileModelView ein @Query<ExerciseModel> mit Predicate auf
-        // (workoutId, category) hat. Ändert der Coordinator/Service einen
-        // ExerciseModel.isCompleted via SwiftData-Write, dispatcht der Container
-        // direkt in dieses @Query und die Tile rendert ohne refreshExercises()-Roundtrip.
-        // Das alte ViewModel-cached `exercisesByCategory` wird hier nicht mehr gelesen
-        // (wird aber für `allExercisesList`/`exerciseCard` weiter gebraucht — T8 räumt auf).
+        // Tile grid renders all `MuscleCategoryGroup` cases (via `viewModel.categories`,
+        // which is `allCases` since the post-T8 selectedCategories cleanup) so users
+        // always see every category regardless of `Workout.selectedCategories`. Each
+        // tile (`CategoryTileModelView`) hosts its own `@Query<ExerciseModel>` with a
+        // predicate on (workoutId, category) for live "X of Y" updates without going
+        // through `refreshExercises()`.
         ForEach(viewModel.categories, id: \.self) { group in
             if let workoutId = viewModel.currentWorkoutId {
                 CategoryTileModelView(

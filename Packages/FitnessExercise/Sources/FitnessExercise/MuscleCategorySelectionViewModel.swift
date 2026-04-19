@@ -8,7 +8,17 @@ import Factory
 @Observable
 @MainActor
 public final class MuscleCategorySelectionViewModel {
-    public var categories: [MuscleCategoryGroup] = []
+    /// Tile-grid + cache key set. Product decision: the overview always shows
+    /// **all** muscle categories regardless of `Workout.selectedCategories` —
+    /// users add exercises freely from the per-category menu, and a "hidden"
+    /// category would silently drop those exercises from the overview while
+    /// still showing them in list-mode (where the @Query has no category
+    /// filter). Keeping this as `allCases` makes the two view modes
+    /// consistent and removes a class of bug entirely.
+    /// `Workout.selectedCategories` survives at the persistence layer but no
+    /// longer drives any UI surface here.
+    public let categories: [MuscleCategoryGroup] = MuscleCategoryGroup.allCases
+        .sorted { $0.rawValue < $1.rawValue }
     public var exercisesByCategory: [MuscleCategoryGroup: [Exercise]] = [:]
 
     @ObservationIgnored private var exerciseManagementService: ExerciseManaging
@@ -32,7 +42,6 @@ public final class MuscleCategorySelectionViewModel {
         self.coordinatorCache = coordinatorCache ?? Container.shared.trainingCoordinatorCache()
         self.exerciseManagementService = exerciseManagement ?? Container.shared.exerciseManagement()
         self.workoutStorageService = workoutStorage ?? Container.shared.workoutStorage()
-        updateCategories(for: workoutStorageService.currentWorkout)
         refreshExercises()
         startWorkoutObservation()
     }
@@ -41,6 +50,11 @@ public final class MuscleCategorySelectionViewModel {
         workoutObservationTask?.cancel()
     }
 
+    /// Re-loads the per-category exercise snapshot when the user switches
+    /// workouts. The tile grid itself uses `MuscleCategoryGroup.allCases` and
+    /// is workout-agnostic, but `exercisesByCategory` (used by the legacy
+    /// Form/Picker path and by `findCategoryForExercise`) must be reseeded
+    /// from the new workout's persisted exercises.
     private func startWorkoutObservation() {
         workoutObservationTask?.cancel()
         let ws = workoutStorageService
@@ -54,7 +68,6 @@ public final class MuscleCategorySelectionViewModel {
                     }
                 }
                 guard let self, !Task.isCancelled else { return }
-                self.updateCategories(for: ws.currentWorkout)
                 self.refreshExercises()
             }
         }
@@ -92,18 +105,11 @@ public final class MuscleCategorySelectionViewModel {
     /// SwiftData-backed views (e.g. `CategoryTileModelView` from
     /// `FitnessPersistenceUI`) can build a `@Query` predicate filtered by
     /// `workoutId`. Returns `nil` while no workout is selected; callers must
-    /// handle that case (no tile is rendered then anyway because `categories`
-    /// is empty).
+    /// guard the tile rendering on this value (the tile-grid otherwise still
+    /// iterates `categories` = `allCases` even without a workout, but no
+    /// query can resolve without a `workoutId`).
     public var currentWorkoutId: UUID? {
         workoutStorageService.currentWorkout?.id
-    }
-
-    private func updateCategories(for workout: Workout?) {
-        if let workout = workout {
-            categories = Array(workout.selectedCategories).sorted { $0.rawValue < $1.rawValue }
-        } else {
-            categories = []
-        }
     }
 
     public func getExercises(for category: MuscleCategoryGroup) -> [Exercise] {
