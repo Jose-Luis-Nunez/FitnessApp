@@ -16,6 +16,7 @@
 		BB000001AA00000000000005 /* FitnessAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA00000000000005 /* FitnessAnalytics */; };
 		BB000001AA00000000000006 /* FitnessTraining in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA00000000000006 /* FitnessTraining */; };
 		BB000001AA00000000000007 /* FitnessExercise in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA00000000000007 /* FitnessExercise */; };
+		BB000001AA0000000000000C /* FitnessPersistenceUI in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA0000000000000C /* FitnessPersistenceUI */; };
 		BB000001AA00000000000008 /* FitnessSchedule in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA00000000000008 /* FitnessSchedule */; };
 		BB000001AA00000000000009 /* Factory in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA00000000000009 /* Factory */; };
 		BB000001AA0000000000000B /* FitnessWorkouts in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA0000000000000B /* FitnessWorkouts */; };
@@ -91,6 +92,7 @@
 				BB000001AA00000000000005 /* FitnessAnalytics in Frameworks */,
 				BB000001AA00000000000006 /* FitnessTraining in Frameworks */,
 				BB000001AA00000000000007 /* FitnessExercise in Frameworks */,
+				BB000001AA0000000000000C /* FitnessPersistenceUI in Frameworks */,
 				BB000001AA00000000000008 /* FitnessSchedule in Frameworks */,
 				BB000001AA0000000000000B /* FitnessWorkouts in Frameworks */,
 				BB000001AA00000000000009 /* Factory in Frameworks */,
@@ -162,6 +164,7 @@
 				BB000002AA00000000000005 /* FitnessAnalytics */,
 				BB000002AA00000000000006 /* FitnessTraining */,
 				BB000002AA00000000000007 /* FitnessExercise */,
+				BB000002AA0000000000000C /* FitnessPersistenceUI */,
 				BB000002AA00000000000008 /* FitnessSchedule */,
 				BB000002AA00000000000009 /* Factory */,
 				BB000002AA0000000000000A /* FitnessProfile */,
@@ -257,6 +260,7 @@
 				BB000003AA00000000000005 /* XCLocalSwiftPackageReference "Packages/FitnessAnalytics" */,
 				BB000003AA00000000000006 /* XCLocalSwiftPackageReference "Packages/FitnessTraining" */,
 				BB000003AA00000000000007 /* XCLocalSwiftPackageReference "Packages/FitnessExercise" */,
+				BB000003AA0000000000000C /* XCLocalSwiftPackageReference "Packages/FitnessPersistenceUI" */,
 				BB000003AA00000000000008 /* XCLocalSwiftPackageReference "Packages/FitnessSchedule" */,
 				BB000003AA0000000000000A /* XCLocalSwiftPackageReference "Packages/FitnessProfile" */,
 				BB000003AA0000000000000B /* XCLocalSwiftPackageReference "Packages/FitnessWorkouts" */,
@@ -855,6 +859,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/FitnessExercise;
 		};
+		BB000003AA0000000000000C /* XCLocalSwiftPackageReference "Packages/FitnessPersistenceUI" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/FitnessPersistenceUI;
+		};
 		BB000003AA00000000000008 /* XCLocalSwiftPackageReference "Packages/FitnessSchedule" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/FitnessSchedule;
@@ -908,6 +916,10 @@
 		BB000002AA00000000000007 /* FitnessExercise */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = FitnessExercise;
+		};
+		BB000002AA0000000000000C /* FitnessPersistenceUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FitnessPersistenceUI;
 		};
 		BB000002AA00000000000008 /* FitnessSchedule */ = {
 			isa = XCSwiftPackageProductDependency;

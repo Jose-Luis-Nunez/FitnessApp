@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 import Testing
 import FitnessCore
-@testable import FitnessStorage
+@_spi(PersistenceUI) @testable import FitnessStorage
 
 /// Tests for the SchemaV1 → SchemaV2 migration introduced in T3 (ADR-0005).
 ///

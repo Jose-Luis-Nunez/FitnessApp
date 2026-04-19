@@ -2,9 +2,13 @@ import Foundation
 import SwiftData
 import FitnessCore
 
+/// `@_spi(PersistenceUI)` exposes this `@Model` to the
+/// `FitnessPersistenceUI` package only. Other modules that import
+/// `FitnessStorage` plain see no change. See ADR-0002 for rationale.
+@_spi(PersistenceUI)
 @Model
-final class ExerciseModel {
-    @Attribute(.unique) var id: UUID
+public final class ExerciseModel {
+    @_spi(PersistenceUI) @Attribute(.unique) public var id: UUID
     /// Denormalised foreign key on the workout. Replaces the old optional-chain
     /// predicate `$0.workout?.id == workoutId` (§14a anti-pattern) with the
     /// flat scalar comparison `$0.workoutId == workoutId`.
@@ -24,22 +28,22 @@ final class ExerciseModel {
     /// always sets a real value; the `nil` state only ever exists for the
     /// brief window during a V1->V2 migration before `didMigrate` runs.
     /// TODO: add `#Index<ExerciseModel>([\.workoutId])` once min target ≥ iOS 18.
-    var workoutId: UUID?
-    var name: String
-    var weight: Double
-    var reps: Int
-    var sets: Int
-    var seatSetting: String?
-    var noSeats: Bool
-    var isCompleted: Bool
-    var iconName: String
-    var category: String
-    var goal: Double?
-    var sortOrder: Int
+    @_spi(PersistenceUI) public var workoutId: UUID?
+    @_spi(PersistenceUI) public var name: String
+    @_spi(PersistenceUI) public var weight: Double
+    @_spi(PersistenceUI) public var reps: Int
+    @_spi(PersistenceUI) public var sets: Int
+    @_spi(PersistenceUI) public var seatSetting: String?
+    @_spi(PersistenceUI) public var noSeats: Bool
+    @_spi(PersistenceUI) public var isCompleted: Bool
+    @_spi(PersistenceUI) public var iconName: String
+    @_spi(PersistenceUI) public var category: String
+    @_spi(PersistenceUI) public var goal: Double?
+    @_spi(PersistenceUI) public var sortOrder: Int
 
-    var workout: WorkoutModel?
+    @_spi(PersistenceUI) public var workout: WorkoutModel?
 
-    init(
+    @_spi(PersistenceUI) public init(
         id: UUID,
         workoutId: UUID? = nil,
         name: String,

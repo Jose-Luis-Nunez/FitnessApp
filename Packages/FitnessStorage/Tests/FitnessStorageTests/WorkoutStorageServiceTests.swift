@@ -2,7 +2,7 @@ import Testing
 import Foundation
 import SwiftData
 import FitnessCore
-@testable import FitnessStorage
+@_spi(PersistenceUI) @testable import FitnessStorage
 import Factory
 
 // MARK: - Spy for tracking ExerciseStoring calls

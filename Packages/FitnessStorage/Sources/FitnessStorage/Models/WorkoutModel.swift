@@ -2,19 +2,22 @@ import Foundation
 import SwiftData
 import FitnessCore
 
+/// `@_spi(PersistenceUI)` exposes this `@Model` to the
+/// `FitnessPersistenceUI` package only. See ADR-0002 for rationale.
+@_spi(PersistenceUI)
 @Model
-final class WorkoutModel {
-    @Attribute(.unique) var id: UUID
-    var name: String
-    var selectedCategories: [String]
-    var createdDate: Date
-    var lastModified: Date
-    var isDefault: Bool
+public final class WorkoutModel {
+    @_spi(PersistenceUI) @Attribute(.unique) public var id: UUID
+    @_spi(PersistenceUI) public var name: String
+    @_spi(PersistenceUI) public var selectedCategories: [String]
+    @_spi(PersistenceUI) public var createdDate: Date
+    @_spi(PersistenceUI) public var lastModified: Date
+    @_spi(PersistenceUI) public var isDefault: Bool
 
-    @Relationship(deleteRule: .cascade, inverse: \ExerciseModel.workout)
-    var exercises: [ExerciseModel]
+    @_spi(PersistenceUI) @Relationship(deleteRule: .cascade, inverse: \ExerciseModel.workout)
+    public var exercises: [ExerciseModel]
 
-    init(
+    @_spi(PersistenceUI) public init(
         id: UUID,
         name: String,
         selectedCategories: [String],
