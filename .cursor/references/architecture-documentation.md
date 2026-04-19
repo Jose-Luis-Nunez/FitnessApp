@@ -7,7 +7,7 @@ Project-wide architectural decisions live in [`docs/adr/`](../../docs/adr/README
 | ID | Title | Status |
 |----|-------|--------|
 | [0001](../../docs/adr/0001-model-as-ui-source-of-truth.md) | @Model als UI Single Source of Truth | accepted |
-| [0002](../../docs/adr/0002-persistence-ui-package.md) | FitnessPersistenceUI Package | accepted (skeleton landed in T4) |
+| [0002](../../docs/adr/0002-persistence-ui-package.md) | FitnessPersistenceUI Package | accepted (T4 skeleton + T5 first cards landed) |
 | [0003](../../docs/adr/0003-coordinator-session-contract.md) | Coordinator Session-State Vertrag | accepted |
 
 When making a structural change that conflicts with an existing ADR, write a new ADR superseding the old one. The stop-hook `adr-required.sh` (T0d) reminds the agent to do so.
@@ -35,7 +35,7 @@ Packages/
   FitnessTraining/    — SPM library mirroring training flow types from the app (`TrainingCoordinator`, active set VM/cache/timer, bottom action bar, session/picker components). Sources: `Packages/FitnessTraining/Sources/FitnessTraining/`.
   FitnessWorkouts/    — SPM library for the workouts feature: `WorkoutsScreen` (entry view), `WorkoutsViewModel` (workout CRUD + UI state; constructor-DI with Factory-container fallbacks, enforces "must keep ≥1 workout" invariant in `deleteWorkout`), `CreateWorkoutView`, `RenameWorkoutView`, `MuscleGroupTile`. Depends on `FitnessCore`, `FitnessStorage`, `FitnessUI`, `FitnessExercise` (for `AppRouter`). Tests: `WorkoutsViewModelTests` (via `MockWorkoutStorage` + `MockExerciseStorage`, constructor-injected; no `.serialized` needed).
   FitnessTestSupport/ — Shared test utilities: `makeExercise` factory, `MockAnalyticsStorage`, `StubAnalyticsStorage`, `MockExerciseStorage`, `MockWorkoutStorage` (mutates state on delete/rename/duplicate), `MockTotalAnalyticsStorage`, `waitUntil` with timeout assertion. Depends on `FitnessCore` + `Testing`.
-  FitnessPersistenceUI/ — SPM library and **only** consumer of `@_spi(PersistenceUI) import FitnessStorage`. Single integration surface for SwiftData `@Model`s in SwiftUI; will host `@Query`/`@Bindable`-driven views starting with T5 (`ExerciseCardModelView`) and T6 (`CategoryTileModelView`). Skeleton ships only `FitnessPersistenceUI.moduleVersion` plus three smoke-tests (`PackageSetupTests`) that build an in-memory `ModelContainer` over `WorkoutModel` + `ExerciseModel` and round-trip a write through cross-module property access — proving that the `@Model` macro and `@_spi` marker compose without the macro-bug ADR-0002 anticipated. Depends on `FitnessCore`, `FitnessStorage`, `FitnessUI`. See [ADR-0002](../../docs/adr/0002-persistence-ui-package.md).
+  FitnessPersistenceUI/ — SPM library and **only** consumer of `@_spi(PersistenceUI) import FitnessStorage`. Single integration surface for SwiftData `@Model`s in SwiftUI. T5 ships the first pilot: `ExerciseCardModelView` (variant-resolver Container) plus three live-bound variant views — `ActiveCardModelView`, `IdleActiveCardModelView`, `InactiveCardModelView` — each declared `@_spi(PersistenceUI) public struct` because their public API carries `@Bindable model: ExerciseModel` (an SPI-only type). All four views read directly from `model.X` (no `ExerciseCardViewModel` snapshot) and the Container resolves `CardVariant` live from `model.isCompleted` — fixing Bug 1's data path. T6 will add `CategoryTileModelView` (`@Query`-driven). The old `ExerciseCardContainerView` + 3 cards in `FitnessExercise` stay untouched until T7 (routing switch) and T8 (deletion). Module also exposes `ExerciseModel+UI` (`@_spi(PersistenceUI)` extension: `hasWeight`, `displayIconName`, `categoryGroup`, `iconAlignment`) so the variant views can read UI-shape conveniences without snapshotting via `model.toDomain()`. Depends on `FitnessCore`, `FitnessStorage`, `FitnessUI`, `FitnessAnalytics`, `FitnessTraining`, `FitnessExercise`. See [ADR-0001](../../docs/adr/0001-model-as-ui-source-of-truth.md), [ADR-0002](../../docs/adr/0002-persistence-ui-package.md).
 
 Tests/
   FitnessAppUITests/      — UI tests (XCUITest)
@@ -47,7 +47,7 @@ Tests/
     FitnessCoreTests/       — BodyRegionTests, ExerciseFeedbackTests
     FitnessScheduleTests/   — ScheduleViewModelTests
     FitnessWorkoutsTests/   — WorkoutsViewModelTests (create/rename/delete/duplicate/default workout, muscle group toggle, FAB flow, exercise-count aggregation; includes invariant test that `deleteWorkout` ignores the last remaining workout)
-    FitnessPersistenceUITests/ — PackageSetupTests (3 smoke-tests: module-version export, in-memory ModelContainer build, cross-module @Model property round-trip via `@_spi(PersistenceUI)`)
+    FitnessPersistenceUITests/ — PackageSetupTests (3 smoke-tests: module-version export, in-memory ModelContainer build, cross-module @Model property round-trip via `@_spi(PersistenceUI)`); ExerciseCardModelViewTests (T5: 4 ResolveVariant logic tests + 1 Bug-1 sanity test that mutates `model.isCompleted` on a real in-memory ModelContainer and asserts the resolved variant flips from `.idle` to `.completed`)
 
 ### TimerService (Clock abstraction)
 

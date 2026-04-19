@@ -1,10 +1,21 @@
 import SwiftUI
 import FitnessAnalytics
 import FitnessCore
+import FitnessExercise
 import FitnessUI
+@_spi(PersistenceUI) import FitnessStorage
 
-public struct InactiveCardView: View {
-    public var viewModel: ExerciseCardViewModel
+/// Live-bound spiegel von `InactiveCardView`. Layout 1:1 übernommen, Datenquelle
+/// auf `@Bindable ExerciseModel`.
+///
+/// Behält das `analyticsViewModel.changeCount`-Polling-Pattern der alten Card —
+/// das wird in T8 zugunsten direktem `@Observable`-Tracking aufgelöst (siehe
+/// ADR-0001, "Aufgeschoben für T8").
+///
+/// SPI-Marker: siehe `ExerciseCardModelView`.
+@_spi(PersistenceUI)
+public struct InactiveCardModelView: View {
+    @Bindable public var model: ExerciseModel
     public let onEdit: (Exercise, ExerciseEditMode) -> Void
     public let isEditable: Bool
     public var analyticsViewModel: AnalyticsViewModel
@@ -16,14 +27,14 @@ public struct InactiveCardView: View {
     @State private var cachedSetProgress: [SetProgress] = []
 
     public init(
-        viewModel: ExerciseCardViewModel,
+        model: ExerciseModel,
         onEdit: @escaping (Exercise, ExerciseEditMode) -> Void,
         isEditable: Bool,
         analyticsViewModel: AnalyticsViewModel,
         onReset: ((Exercise) -> Void)?,
         isResetEnabled: Bool
     ) {
-        self.viewModel = viewModel
+        self.model = model
         self.onEdit = onEdit
         self.isEditable = isEditable
         self.analyticsViewModel = analyticsViewModel
@@ -33,7 +44,7 @@ public struct InactiveCardView: View {
 
     private func refreshSetProgress() {
         let latestEntry = analyticsViewModel
-            .loadAnalytics(for: viewModel.exercise.id)
+            .loadAnalytics(for: model.id)
             .max(by: { $0.date < $1.date })
         cachedSetProgress = latestEntry?.setProgress ?? []
     }
@@ -61,7 +72,7 @@ public struct InactiveCardView: View {
         .padding(.horizontal, AppStyle.Padding.card)
         .shadow(color: AppStyle.Shadow.cardColor, radius: AppStyle.Shadow.cardRadius, x: 0, y: AppStyle.Shadow.cardY)
         .sheet(isPresented: $isShowingAnalytics) {
-            AnalyticsView(exercise: viewModel.exercise, viewModel: analyticsViewModel)
+            AnalyticsView(exercise: model.toDomain(), viewModel: analyticsViewModel)
         }
         .onAppear { refreshSetProgress() }
         .onChange(of: analyticsViewModel.changeCount) { _, _ in
@@ -72,7 +83,7 @@ public struct InactiveCardView: View {
 
 // MARK: - Header
 
-private extension InactiveCardView {
+private extension InactiveCardModelView {
 
     var headerRow: some View {
         HStack(spacing: 10) {
@@ -83,10 +94,10 @@ private extension InactiveCardView {
     }
 
     var categoryIconView: some View {
-        Image(viewModel.exercise.displayIconName)
+        Image(model.displayIconName)
             .resizable()
             .scaledToFill()
-            .frame(width: AppStyle.Layout.categoryIconSize, height: AppStyle.Layout.categoryIconSize, alignment: viewModel.exercise.iconAlignment)
+            .frame(width: AppStyle.Layout.categoryIconSize, height: AppStyle.Layout.categoryIconSize, alignment: model.iconAlignment)
             .clipped()
             .contentShape(Rectangle())
             .onTapGesture { isExpanded.toggle() }
@@ -94,14 +105,14 @@ private extension InactiveCardView {
 
     var titleSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(viewModel.exercise.name)
+            Text(model.name)
                 .font(AppStyle.Font.cardHeadline)
                 .foregroundColor(.white)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier(ExerciseIDs.nameLabel)
                 .onTapGesture {
-                    if isEditable { onEdit(viewModel.exercise, .name) }
+                    if isEditable { onEdit(model.toDomain(), .name) }
                 }
 
             HStack(spacing: 4) {
@@ -136,7 +147,7 @@ private extension InactiveCardView {
 
 // MARK: - Set Tiles
 
-private extension InactiveCardView {
+private extension InactiveCardModelView {
 
     var setTilesRow: some View {
         GeometryReader { geo in
@@ -144,7 +155,7 @@ private extension InactiveCardView {
             let hasMoreThan3 = cachedSetProgress.count > 3
             let scrollChevronWidth: CGFloat = 8
             let chevronArea: CGFloat = hasMoreThan3 ? scrollChevronWidth + spacing : 0
-            let resetTotal: CGFloat = isResetEnabled ? ResetButton.Constants.size + spacing : 0
+            let resetTotal: CGFloat = isResetEnabled ? InactiveCardView.ResetButton.Constants.size + spacing : 0
             let scrollAreaWidth = geo.size.width - resetTotal - chevronArea
             let tileWidth = (scrollAreaWidth - spacing * 2) / 3
 
@@ -152,7 +163,7 @@ private extension InactiveCardView {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: spacing) {
                         ForEach(Array(cachedSetProgress.enumerated()), id: \.element.id) { index, item in
-                            SetTileView(setNumber: index + 1, weight: item.weight, reps: item.currentReps, hasWeight: viewModel.exercise.hasWeight)
+                            SetTileView(setNumber: index + 1, weight: item.weight, reps: item.currentReps, hasWeight: model.hasWeight)
                                 .frame(width: tileWidth)
                         }
                     }
@@ -168,43 +179,9 @@ private extension InactiveCardView {
                 }
 
                 if isResetEnabled {
-                    ResetButton { onReset?(viewModel.exercise) }
+                    InactiveCardView.ResetButton { onReset?(model.toDomain()) }
                 }
             }
         }
     }
-}
-
-// MARK: - Subviews
-
-extension InactiveCardView {
-
-    public struct ResetButton: View {
-        public let onTap: () -> Void
-
-        public enum Constants {
-            public static let size: CGFloat = 40
-            public static let iconSize: CGFloat = 32
-        }
-
-        public init(onTap: @escaping () -> Void) {
-            self.onTap = onTap
-        }
-
-        public var body: some View {
-            Button(action: onTap) {
-                Image("repeat")
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: Constants.iconSize, height: Constants.iconSize)
-                    .foregroundColor(AppStyle.Color.greenGlow)
-                    .frame(width: Constants.size, height: Constants.size)
-                    .background(AppStyle.Color.exerciseCardBackground)
-                    .clipShape(Circle())
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
 }

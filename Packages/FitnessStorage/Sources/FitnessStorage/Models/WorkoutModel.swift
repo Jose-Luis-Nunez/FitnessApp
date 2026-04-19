@@ -37,7 +37,7 @@ public final class WorkoutModel {
 }
 
 extension WorkoutModel {
-    func toDomain() -> Workout {
+    @_spi(PersistenceUI) public func toDomain() -> Workout {
         let categories = Set(selectedCategories.compactMap { MuscleCategoryGroup(rawValue: $0) })
         return Workout(
             id: id,

@@ -77,7 +77,7 @@ public final class ExerciseModel {
 }
 
 extension ExerciseModel {
-    func toDomain() -> Exercise {
+    @_spi(PersistenceUI) public func toDomain() -> Exercise {
         Exercise(
             id: id,
             name: name,
