@@ -6,6 +6,7 @@ import FitnessAnalytics
 import FitnessCore
 import FitnessTraining
 import FitnessUI
+@_spi(PersistenceUI) import FitnessPersistenceUI
 import Factory
 
 private struct ScrollOffsetPreferenceKey: PreferenceKey {
@@ -368,15 +369,25 @@ public struct MuscleCategorySelectionView: View {
     }
 
     private var categoryList: some View {
+        // T7a: live-fix Bug 2 — Tile-Count "X of Y" updated jetzt sofort, weil
+        // CategoryTileModelView ein @Query<ExerciseModel> mit Predicate auf
+        // (workoutId, category) hat. Ändert der Coordinator/Service einen
+        // ExerciseModel.isCompleted via SwiftData-Write, dispatcht der Container
+        // direkt in dieses @Query und die Tile rendert ohne refreshExercises()-Roundtrip.
+        // Das alte ViewModel-cached `exercisesByCategory` wird hier nicht mehr gelesen
+        // (wird aber für `allExercisesList`/`exerciseCard` weiter gebraucht — T8 räumt auf).
         ForEach(viewModel.categories, id: \.self) { group in
-            Button(action: {
-                router.navigate(to: .muscleCategory(group))
-            }) {
-                CategoryTileView(group: group, viewModel: viewModel)
+            if let workoutId = viewModel.currentWorkoutId {
+                CategoryTileModelView(
+                    group: group,
+                    workoutId: workoutId,
+                    hasActiveSetForCategory: viewModel.hasActiveSetForCategory(group),
+                    onTap: { router.navigate(to: .muscleCategory(group)) }
+                )
+                .id(workoutId)
+                .contentShape(Rectangle())
+                .accessibilityIdentifier(HomeIDs.categoryTile(for: group.rawValue))
             }
-            .buttonStyle(.plain)
-            .contentShape(Rectangle())
-            .accessibilityIdentifier(HomeIDs.categoryTile(for: group.rawValue))
         }
     }
 

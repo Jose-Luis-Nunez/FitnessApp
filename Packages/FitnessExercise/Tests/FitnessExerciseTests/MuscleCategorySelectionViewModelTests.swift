@@ -688,3 +688,57 @@ struct ExerciseStabilityTests {
         #expect(vm.getExercises(for: .arms).count == exercisesBefore.count)
     }
 }
+
+// MARK: - Current Workout ID Exposure (T7a)
+
+@MainActor
+@Suite("MuscleCategorySelectionViewModel.currentWorkoutId")
+struct CurrentWorkoutIdTests {
+
+    @Test func returnsNilWhenNoWorkoutSelected() {
+        let ws = MockWorkoutStorage()
+
+        let vm = MuscleCategorySelectionViewModel(
+            coordinatorCache: MockCoordinatorCache(),
+            exerciseManagement: MockExerciseManagement(),
+            workoutStorage: ws,
+            exerciseStorage: ObservableMockExerciseStorage()
+        )
+
+        #expect(vm.currentWorkoutId == nil)
+    }
+
+    @Test func returnsIdOfSelectedWorkout() {
+        let workout = Workout(name: "Test", selectedCategories: [.arms])
+        let ws = MockWorkoutStorage()
+        ws.setCurrentWorkout(workout)
+
+        let vm = MuscleCategorySelectionViewModel(
+            coordinatorCache: MockCoordinatorCache(),
+            exerciseManagement: MockExerciseManagement(),
+            workoutStorage: ws,
+            exerciseStorage: ObservableMockExerciseStorage()
+        )
+
+        #expect(vm.currentWorkoutId == workout.id)
+    }
+
+    @Test func reflectsWorkoutSwitch() {
+        let w1 = Workout(name: "W1", selectedCategories: [.arms])
+        let w2 = Workout(name: "W2", selectedCategories: [.chest])
+        let ws = MockWorkoutStorage()
+        ws.setCurrentWorkout(w1)
+
+        let vm = MuscleCategorySelectionViewModel(
+            coordinatorCache: MockCoordinatorCache(),
+            exerciseManagement: MockExerciseManagement(),
+            workoutStorage: ws,
+            exerciseStorage: ObservableMockExerciseStorage()
+        )
+
+        #expect(vm.currentWorkoutId == w1.id)
+
+        ws.setCurrentWorkout(w2)
+        #expect(vm.currentWorkoutId == w2.id)
+    }
+}

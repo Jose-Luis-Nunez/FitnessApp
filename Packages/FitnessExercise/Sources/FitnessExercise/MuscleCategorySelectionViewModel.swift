@@ -119,6 +119,16 @@ public final class MuscleCategorySelectionViewModel {
         coordinatorCache.coordinator(for: group).hasActiveSessions
     }
 
+    /// Exposes the persisted ID of the currently selected workout so that
+    /// SwiftData-backed views (e.g. `CategoryTileModelView` from
+    /// `FitnessPersistenceUI`) can build a `@Query` predicate filtered by
+    /// `workoutId`. Returns `nil` while no workout is selected; callers must
+    /// handle that case (no tile is rendered then anyway because `categories`
+    /// is empty).
+    public var currentWorkoutId: UUID? {
+        workoutStorageService.currentWorkout?.id
+    }
+
     private func updateCategories(for workout: Workout?) {
         if let workout = workout {
             categories = Array(workout.selectedCategories).sorted { $0.rawValue < $1.rawValue }
