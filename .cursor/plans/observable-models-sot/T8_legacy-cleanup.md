@@ -66,47 +66,35 @@ zwei Wahrheiten parallel existieren.
 - App-Build grün
 - Commit: `feat(home): live-bind allExercisesList via ExerciseCardModelView (T8a)`
 
-### T8c — `MuscleCategoryView` von `viewModel.exercises` lösen (~30 min)
+### T8c — `MuscleCategoryView` Routing live binden (~5 min, IMPLEMENTIERT)
 
-**Ziel**: Edit-Bools und Helper-Lookups in `MuscleCategoryView` aus `categoryModels`
-(dem T7b-`@Query`) ableiten statt aus dem Snapshot.
+> **Status nach Implementierung**: Scope **bewusst reduziert** vs ursprünglicher Plan.
+> Begründung im T8c-Stamp + arch-doc. Die ursprünglich geplante Bool-Migration
+> wurde nicht durchgeführt, weil `viewModel.exercises` auch der Backing Store für
+> `add`/`updateExercise`/`deleteExercise`/`resetProgress`/`saveExercises` (Form-Path)
+> ist und ohne parallele Form-Migration (out of scope) nicht entfernt werden kann.
+> Die Bools (`showStartTraining` etc.) sind UI-Affordances, nicht Routing —
+> Snapshot-Latenz tolerierbar. Folge: T8d schmaler — `refreshExercises()` bleibt
+> als Form-Path Sync.
 
-**Geltungsbereich**:
+**Ziel (umgesetzt)**: Eine einzige Routing-Stelle live binden, die sonst in eine
+freshly-completed Exercise routen könnte (T7b-Bug-1-Fix wäre umgangen).
+
+**Geltungsbereich (umgesetzt)**:
 - `Packages/FitnessExercise/Sources/FitnessExercise/MuscleCategoryView.swift`
   - Zeile 298: `viewModel.exercises.first(where: { !$0.isCompleted })` →
     `categoryModels.first(where: { !$0.isCompleted })?.toDomain()`
-  - `viewModel.showStartTraining` / `viewModel.showReset` müssen weg von
-    `viewModel.exercises` — entweder per neuer Property auf `MuscleCategoryView`
-    (computed aus `categoryModels`) oder VM bekommt einen Setter / die View
-    inlined die Logik.
-- `Packages/FitnessExercise/Sources/FitnessExercise/MuscleCategoryViewModel.swift`
-  - `hasActiveExercise`, `hasCompletedExercises`, `showStartTraining`, `showReset`,
-    `exercises`, `refreshExercises`, `startStorageObservation` werden in T8d gelöscht.
-    In T8c verschieben wir nur die **Aufrufer** — die VM-Properties bleiben temporär
-    bestehen damit Tests nicht brechen, werden aber `@available(*, deprecated)`
-    markiert für Sichtbarkeit.
+- Inline-Erläuterungs-Comment der UI-Affordance-vs-Routing-Distinction
 
-**Empfohlenes Pattern** (in der View):
-```swift
-private var hasActiveExercise: Bool {
-    categoryModels.contains { !$0.isCompleted }
-}
-private var hasCompletedExercises: Bool {
-    categoryModels.contains { $0.isCompleted }
-}
-private var showStartTraining: Bool {
-    !trainingCoordinator.isTrainingActive && hasActiveExercise
-}
-private var showReset: Bool {
-    !trainingCoordinator.isTrainingActive && hasCompletedExercises
-}
-```
+**NICHT umgesetzt (mit Begründung im Stamp)**:
+- VM-Bool-Migration zu Computed-Properties auf der View
+- Entfernen der `viewModel.exercises` Snapshot-Backing-Store
+- Entfernen von `refreshExercises()`-Calls in `.onAppear` / `.onChange`
 
 **Validation**:
-- iso build + tests grün (FitnessExercise: erwartete 108/108, da keine Test-Logik
-  von den Bools direkt liest — die Bools werden nur in der View konsumiert)
-- parallel + App-Build grün
-- Commit: `refactor(category): derive Edit-Bools from categoryModels (T8c)`
+- iso build + tests grün (FitnessExercise: 108/108, kein Delta)
+- parallel + App-Build grün (549/549)
+- Commit: `refactor(category): live-route Mini-Menu Start Training via categoryModels (T8c)`
 
 ### T8d — Tote Symbole löschen (~30 min, Compiler-driven)
 
@@ -130,23 +118,34 @@ Storage-Schicht (Producer der Snapshots):
    - `Packages/FitnessStorage/Tests/FitnessStorageTests/TestHelpers.swift`
 
 ViewModel-Schicht (Consumer der Snapshots):
+
+> **Scope-Korrektur nach T8c-Realität**: `viewModel.exercises` und
+> `refreshExercises()` **bleiben bestehen** in beiden VMs. Sie sind der Backing
+> Store für den Form/Picker-Schreib-Pfad (`add`, `updateExercise`,
+> `deleteExercise`, `resetProgress`, `saveExercises`), den T8 nicht migriert.
+> `cardViewModels`-Cache und `startStorageObservation`-Polling sind aber tot —
+> `cardViewModels` hat keinen Reader mehr (T7b/T8a haben alle Aufrufer migriert),
+> und `startStorageObservation`'s einziger Effekt war `cardViewModels[id]?.syncExercise(...)`
+> + `refreshExercises()`. Letzteres deckt der Form-Pfad selbst ab via
+> `.onAppear`/`.onChange(activeSessions)`.
+
 4. `Packages/FitnessExercise/Sources/FitnessExercise/MuscleCategorySelectionViewModel.swift`
-   - `private var storageObservationTask: Task<Void, Never>?`
-   - `private func startStorageObservation()` komplett
-   - alle Init-Sites, die `startStorageObservation()` rufen
-   - `private(set) var cardViewModels: [UUID: ExerciseCardViewModel]` (Cache)
-   - `public func cardViewModel(for:category:)`
-   - `public var exercisesByCategory: [MuscleCategoryGroup: [Exercise]]`
-   - `public func refreshExercises()` (falls nicht mehr von außen aufgerufen)
+   - `private var storageObservationTask: Task<Void, Never>?` LÖSCHEN
+   - `private func startStorageObservation()` komplett LÖSCHEN
+   - alle Init-Sites, die `startStorageObservation()` rufen, ENTFERNEN
+   - `private(set) var cardViewModels: [UUID: ExerciseCardViewModel]` (Cache) LÖSCHEN
+   - `public func cardViewModel(for:category:)` LÖSCHEN
+   - `public var exercisesByCategory: [MuscleCategoryGroup: [Exercise]]` BEHALTEN solange Form-Pfad sie liest (Recon zur T8d-Zeit nochmal prüfen — falls keine Reader, löschen)
+   - `public func refreshExercises()` BEHALTEN (Form-Pfad-Sync)
 5. `Packages/FitnessExercise/Sources/FitnessExercise/MuscleCategoryViewModel.swift`
-   - `private var storageObservationTask`
-   - `startStorageObservation()`
-   - `cardViewModels` + `cardViewModel(for:)`
-   - `hasActiveExercise`, `hasCompletedExercises`, `showStartTraining`, `showReset`
-     (in T8c hatten wir die View migriert; jetzt VM-Properties weg)
-   - `public var exercises: [Exercise]` + `refreshExercises()`
+   - `private var storageObservationTask` LÖSCHEN
+   - `startStorageObservation()` LÖSCHEN
+   - `cardViewModels` + `cardViewModel(for:)` LÖSCHEN
+   - `hasActiveExercise`, `hasCompletedExercises`, `showStartTraining`, `showReset` BEHALTEN — Mini-Menu-Affordances, snapshot-latenz tolerierbar (T8c-Begründung)
+   - `public var exercises: [Exercise]` + `refreshExercises()` BEHALTEN — Form-Pfad-Backing-Store
 6. `MuscleCategoryView.swift` `.onAppear { viewModel.refreshExercises() }` /
-   `.onChange(of: trainingCoordinator.activeSessions.count) { ... }` entfernen.
+   `.onChange(of: trainingCoordinator.activeSessions.count) { ... }` BEHALTEN —
+   sie speisen den Form-Pfad-Snapshot. Inline-Comment aktualisieren auf "T8d clarified".
 
 UI-Schicht (Consumer von ExerciseCardViewModel):
 7. `Packages/FitnessExercise/Sources/FitnessExercise/ExerciseCardViewModel.swift`
@@ -184,11 +183,12 @@ Sentinel-Tests:
 - Nach allen Edits: `scripts/fast-test.sh` parallel grün
 - Final-Smoke (sollte 0 Treffer geben):
   ```bash
-  rg "changeVersion|startStorageObservation|syncExercise" \
+  rg "changeVersion|startStorageObservation|syncExercise|cardViewModels" \
      Packages/FitnessExercise/Sources \
      Packages/FitnessStorage/Sources \
      Packages/FitnessTestSupport/Sources
   ```
+  (`refreshExercises` und `viewModel.exercises` bleiben — Form-Pfad-Backing-Store)
 - Commit: `chore(cleanup): remove changeVersion+polling architecture (T8d)`
 
 ### T8b — DEFERRED: TrainingView-Card-Migration

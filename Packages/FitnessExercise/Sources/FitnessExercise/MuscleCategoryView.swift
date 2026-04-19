@@ -295,7 +295,14 @@ private extension MuscleCategoryView {
 
                                 if viewModel.showStartTraining {
                                     items.append(MiniActionMenuItem(icon: "play.fill", title: "Start Training", isDestructive: false) {
-                                        if let exercise = trainingCoordinator.currentExercise ?? viewModel.exercises.first(where: { !$0.isCompleted }) {
+                                        // T8c: route from the live `categoryModels` @Query instead of the
+                                        // legacy `viewModel.exercises` snapshot. The Mini-Menu Bools above
+                                        // (`showStartTraining`/`showReset`) still read the snapshot — they
+                                        // are UI affordances, not routing decisions, so snapshot-latency is
+                                        // tolerable. The routing target itself MUST be live: routing into a
+                                        // freshly-completed Exercise would defeat the T7b live-fix.
+                                        let nextDomain = categoryModels.first(where: { !$0.isCompleted })?.toDomain()
+                                        if let exercise = trainingCoordinator.currentExercise ?? nextDomain {
                                             router.navigate(to: .training(exercise, group))
                                         }
                                         overlayState.showCategoryMiniMenu = false
