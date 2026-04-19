@@ -397,25 +397,33 @@ public struct MuscleCategorySelectionView: View {
         }
     }
 
+    /// Tile grid for overview mode. Renders one `CategoryTileModelView` per
+    /// `MuscleCategoryGroup` (always all cases — see `MuscleCategorySelectionViewModel.categories`).
+    /// Identity is layered intentionally:
+    ///   • `ForEach(..., id: \.self)` gives each tile a stable per-row identity
+    ///     (the `MuscleCategoryGroup`), so SwiftUI diffs children correctly.
+    ///   • The container-level `.id(workoutId)` on the `ForEach` itself forces
+    ///     a fresh composition — and therefore a fresh `@Query<ExerciseModel>`
+    ///     in every child — when the user switches workouts (SwiftData
+    ///     captures the predicate at `@Query` init; identity reset is the
+    ///     supported way to rebind, see reviewing-code-changes §14d).
+    /// The `if let` lives at the container level: without a workout there are
+    /// simply no tiles to render. Putting the unwrap on every tile would just
+    /// duplicate the guard.
+    @ViewBuilder
     private var categoryList: some View {
-        // Tile grid renders all `MuscleCategoryGroup` cases (via `viewModel.categories`,
-        // which is `allCases` since the post-T8 selectedCategories cleanup) so users
-        // always see every category regardless of `Workout.selectedCategories`. Each
-        // tile (`CategoryTileModelView`) hosts its own `@Query<ExerciseModel>` with a
-        // predicate on (workoutId, category) for live "X of Y" updates without going
-        // through `refreshExercises()`.
-        ForEach(viewModel.categories, id: \.self) { group in
-            if let workoutId = viewModel.currentWorkoutId {
+        if let workoutId = viewModel.currentWorkoutId {
+            ForEach(viewModel.categories, id: \.self) { group in
                 CategoryTileModelView(
                     group: group,
                     workoutId: workoutId,
                     hasActiveSetForCategory: viewModel.hasActiveSetForCategory(group),
                     onTap: { router.navigate(to: .muscleCategory(group)) }
                 )
-                .id(workoutId)
                 .contentShape(Rectangle())
                 .accessibilityIdentifier(HomeIDs.categoryTile(for: group.rawValue))
             }
+            .id(workoutId)
         }
     }
 

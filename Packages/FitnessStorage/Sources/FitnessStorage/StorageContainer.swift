@@ -1,22 +1,14 @@
 import Factory
 import FitnessCore
+import os
 import SwiftData
+
+private let containerLogger = Logger(subsystem: "FitnessStorage", category: "ModelContainer")
 
 public extension Container {
     var modelContainer: Factory<ModelContainer> {
         self {
-            do {
-                return try ModelContainer(
-                    for: WorkoutModel.self,
-                    ExerciseModel.self,
-                    AnalyticsEntryModel.self,
-                    SetProgressModel.self,
-                    ExerciseFeedbackModel.self,
-                    migrationPlan: AppMigrationPlan.self
-                )
-            } catch {
-                fatalError("Failed to create ModelContainer: \(error)")
-            }
+            ModelContainerBootstrap.makeProductionContainer()
         }.singleton
     }
 

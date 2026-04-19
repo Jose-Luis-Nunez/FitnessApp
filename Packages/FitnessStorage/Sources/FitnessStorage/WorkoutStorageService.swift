@@ -31,20 +31,114 @@ public final class WorkoutStorageService: WorkoutStoring {
         self.context = ModelContext(resolved)
         self.context.autosaveEnabled = true
         self.userDefaults = defaults
-        reload()
 
-        if workouts.isEmpty {
-            let firstWorkout = Workout(name: "Workout 1")
-            let model = WorkoutModel.from(firstWorkout, isDefault: true)
-            context.insert(model)
-            saveContext()
-            workouts = [firstWorkout]
-            currentWorkout = firstWorkout
-            defaultWorkout = firstWorkout
-            userDefaults.set(firstWorkout.id.uuidString, forKey: currentWorkoutKey)
-            userDefaults.set(firstWorkout.id.uuidString, forKey: defaultWorkoutKey)
-        }
+        // Two-phase startup. Phase 1 repairs any inherited inconsistency from
+        // the pre-fix bug where the service was eagerly resolved before the
+        // JSON → SwiftData import landed (Lisa's iPhone 17 case). Phase 2 is
+        // the genuine cold-start path where we seed an initial workout for
+        // brand-new installs.
+        healInheritedAutoDefaultIfNeeded()
+        reload()
+        seedFirstWorkoutIfStoreIsEmpty()
     }
+
+    /// Repairs the specific corruption shape Lisa's phone exhibited: a
+    /// service-created auto-default workout (`name == defaultAutoWorkoutName`,
+    /// `isDefault == true`, **no exercises**, **no analytics**) sitting next to
+    /// the user's real, populated workouts that were imported afterwards. We
+    /// can recognise this only by structure — name + emptiness + the presence
+    /// of other workouts. Heuristic, but bounded: a deliberate, populated
+    /// "Workout 1" is never deleted, and a brand-new install (only the auto
+    /// workout, nothing else) is left untouched so phase 2 doesn't re-seed.
+    private func healInheritedAutoDefaultIfNeeded() {
+        let descriptor = FetchDescriptor<WorkoutModel>()
+        let allModels: [WorkoutModel]
+        do {
+            allModels = try context.fetch(descriptor)
+        } catch {
+            logger.error("Heal: failed to fetch workouts, skipping repair: \(error)")
+            return
+        }
+
+        guard allModels.count > 1 else { return }
+
+        // Heuristic uses **four** simultaneous markers — all four must hold to
+        // flag a workout as service-seeded auto-default. Any one of them
+        // failing leaves the workout untouched, biased toward false-negatives
+        // (better to leave one orphan empty workout than to delete a user's
+        // legitimate one).
+        //
+        //   1. `name == "Workout 1"` — the literal string the seeder uses.
+        //   2. `exercises.isEmpty` — service seed never has exercises; a user
+        //      who removed all exercises but kept the workout shell is rare
+        //      enough that we accept the false-positive risk in that corner.
+        //   3. `isDefault == true` — `createWorkout(name:)` and `duplicate`
+        //      both create with `isDefault = false`; only the seeder and the
+        //      explicit `setAsDefaultWorkout` user gesture set `true`. A user
+        //      who seeded "Workout 1" themselves and then explicitly made it
+        //      default has a structurally identical row to the seed — but
+        //      criterion (4) still discriminates.
+        //   4. Strictly newer than at least one other workout. The seed runs
+        //      on every cold start; if it wins the race against an import,
+        //      the imported rows carry their original (years-old) createdDate
+        //      and the seed carries `now`. A user creating "Workout 1" today
+        //      always creates it *as the latest* row, so this guard fires
+        //      false only if they *first* deleted an older workout — and even
+        //      then they'd see the "current → Workout 1" log line.
+        let candidates = allModels.filter {
+            $0.name == Self.defaultAutoWorkoutName && $0.exercises.isEmpty && $0.isDefault
+        }
+        guard !candidates.isEmpty else { return }
+        let suspects = candidates.filter { candidate in
+            allModels.contains { other in other !== candidate && other.createdDate < candidate.createdDate }
+        }
+        guard !suspects.isEmpty else { return }
+        let realWorkouts = allModels.filter { !suspects.contains($0) }
+        guard !realWorkouts.isEmpty else { return }
+
+        let suspectIds = Set(suspects.map(\.id))
+        let currentId = userDefaults.string(forKey: currentWorkoutKey).flatMap(UUID.init(uuidString:))
+        let defaultId = userDefaults.string(forKey: defaultWorkoutKey).flatMap(UUID.init(uuidString:))
+
+        let preferredFallback = realWorkouts.first { $0.isDefault } ?? realWorkouts.sorted { $0.createdDate < $1.createdDate }.first!
+
+        for suspect in suspects {
+            context.delete(suspect)
+        }
+        if !realWorkouts.contains(where: { $0.isDefault }) {
+            preferredFallback.isDefault = true
+        }
+        if let currentId, suspectIds.contains(currentId) {
+            userDefaults.set(preferredFallback.id.uuidString, forKey: currentWorkoutKey)
+        }
+        if let defaultId, suspectIds.contains(defaultId) {
+            userDefaults.set(preferredFallback.id.uuidString, forKey: defaultWorkoutKey)
+        }
+        saveContext()
+
+        logger.notice("Heal: removed \(suspects.count, privacy: .public) empty auto-default workout(s); \(realWorkouts.count, privacy: .public) real workouts retained; current → \(preferredFallback.name, privacy: .public).")
+    }
+
+    private func seedFirstWorkoutIfStoreIsEmpty() {
+        guard workouts.isEmpty else { return }
+
+        let firstWorkout = Workout(name: Self.defaultAutoWorkoutName)
+        let model = WorkoutModel.from(firstWorkout, isDefault: true)
+        context.insert(model)
+        saveContext()
+        workouts = [firstWorkout]
+        currentWorkout = firstWorkout
+        defaultWorkout = firstWorkout
+        userDefaults.set(firstWorkout.id.uuidString, forKey: currentWorkoutKey)
+        userDefaults.set(firstWorkout.id.uuidString, forKey: defaultWorkoutKey)
+    }
+
+    /// The literal name the cold-start seed uses. Centralised so the heal
+    /// detector and the seeder agree on the marker. NEVER localise this — the
+    /// healer matches on it byte-for-byte to distinguish a service-created
+    /// default from a user-created workout that happens to have the same name.
+    @ObservationIgnored
+    private static let defaultAutoWorkoutName = "Workout 1"
 
     public func createWorkout(name: String, selectedCategories: Set<MuscleCategoryGroup> = Set(MuscleCategoryGroup.allCases)) -> Workout {
         let newWorkout = Workout(name: name, selectedCategories: selectedCategories)

@@ -16,15 +16,34 @@ struct FitnessAppApp: App {
     private let launchStrategy: any AppLaunchStrategy
     private let modelContainer: ModelContainer
 
+    @State private var router = AppRouter()
+    @State private var overlayState = UIOverlayState()
+    @State private var workoutStorageService: WorkoutStorageService
+    @State private var didLaunch: Bool = false
+
     init() {
         let textFieldAppearance = UITextField.appearance()
         textFieldAppearance.layer.shadowOpacity = 0
         textFieldAppearance.layer.shadowRadius = 0
         textFieldAppearance.backgroundColor = .clear
 
+        // Resolve the container first; ModelContainerBootstrap runs the
+        // JSON → SwiftData import inside `makeProductionContainer()` so that
+        // any subsequent service resolution sees the post-migration state.
+        // The `WorkoutStorageService` initialiser MUST run after this — pulling
+        // it onto a `@State` default expression would resolve it as a
+        // stored-property default (i.e. before `init()`), which is exactly the
+        // race that caused Lisa's iPhone 17 to fall back to an empty
+        // auto-"Workout 1".
         let container = Container.shared.modelContainer()
         self.modelContainer = container
-        DataMigrationService.migrateIfNeeded(context: container.mainContext)
+
+        // Factory returns the protocol type `WorkoutStoring`; in practice
+        // `\.workoutStorage` always resolves to `WorkoutStorageService`, and
+        // SwiftUI views consume it as a concrete `@Observable` reference type
+        // (Bindings, `@Bindable`). Force-cast is intentional: a misregistration
+        // here is a programmer error, not a runtime condition to recover from.
+        _workoutStorageService = State(wrappedValue: Container.shared.workoutStorage() as! WorkoutStorageService)
 
         #if UITESTING
         if ProcessInfo.processInfo.arguments.contains("--uitesting"),
@@ -39,11 +58,6 @@ struct FitnessAppApp: App {
         launchStrategy = ProductionLaunchStrategy()
         #endif
     }
-
-    @State private var router = AppRouter()
-    @State private var overlayState = UIOverlayState()
-    @State private var workoutStorageService = Container.shared.workoutStorage()
-    @State private var didLaunch: Bool = false
 
     var body: some Scene {
         WindowGroup {
