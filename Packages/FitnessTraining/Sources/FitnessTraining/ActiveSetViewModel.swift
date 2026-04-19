@@ -78,6 +78,16 @@ public final class ActiveSetViewModel {
     public var pendingSetIndex: Int? = nil
     public var timerSeconds: Int = 0
 
+    /// Identifies this in-flight training session for downstream consumers.
+    /// Refreshed on every fresh `startSet(for:category:)` call so that
+    /// re-starting the same exercise (after Beenden / Cancel / Reset) yields a
+    /// new identity — the per-session feedback record then correctly inserts
+    /// instead of overwriting a previous session's record. Re-focusing an
+    /// already-active session in `TrainingCoordinator.startTraining` does
+    /// **not** call `startSet` again, so the id is preserved across
+    /// focus-switches.
+    public private(set) var sessionId: UUID = UUID()
+
     private let timerService: TimerService
     private var timerObservationTask: Task<Void, Never>?
 
@@ -204,6 +214,11 @@ public final class ActiveSetViewModel {
     // MARK: - Set Lifecycle
 
     public func startSet(for exercise: Exercise, category: MuscleCategoryGroup) {
+        // Fresh session = fresh identity. Feedback persisted during this
+        // session is bound to this id, so re-starting the same exercise gets
+        // its own feedback record instead of overwriting a previous one.
+        sessionId = UUID()
+
         tracking.currentExercise = exercise
         tracking.category = category
         if tracking.originalCategory == nil {
@@ -329,6 +344,11 @@ public final class ActiveSetViewModel {
     // MARK: - Quick Done
 
     public func startQuickDone(for exercise: Exercise, category: MuscleCategoryGroup) {
+        // Quick-done is also a fresh session start — same rationale as in
+        // `startSet`: feedback recorded after this call belongs to a new
+        // session and must not collide with a previous one's record.
+        sessionId = UUID()
+
         tracking.currentExercise = exercise
         tracking.category = category
         tracking.currentSet = 0

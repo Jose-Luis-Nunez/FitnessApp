@@ -62,6 +62,12 @@ public final class TrainingCoordinator {
     /// `@Bindable`.
     public var isFeedbackSheetPresented: Bool = false
 
+    /// In-memory store for the currently focused exercise's feedback draft.
+    /// Lives on the coordinator so any view that already has the coordinator
+    /// (e.g. `FeedbackSheetComponent`, `TrainingActionBarComponent`) can read
+    /// it without an extra environment slot. Drafts are never persisted.
+    public let draftStore = ExerciseFeedbackDraftStore()
+
     /// Backwards-compatible computed property: returns the focused session's VM,
     /// falling back to a shared idle instance so callers never deal with nil.
     public var activeSetViewModel: ActiveSetViewModel {
@@ -92,6 +98,16 @@ public final class TrainingCoordinator {
 
     public func isExerciseInProgress(_ exerciseId: Exercise.ID) -> Bool {
         activeSessions[exerciseId] != nil
+    }
+
+    /// Returns the in-flight session id for `exerciseId` if one is active.
+    /// Used by feedback consumers (`FeedbackEntryIconResolver`,
+    /// `FeedbackViewModel`) to bind a feedback record to the specific
+    /// training session it was captured in. Returns `nil` when the exercise
+    /// is not currently active — outside an active session there is no
+    /// feedback to bind, by design.
+    public func currentSessionId(for exerciseId: Exercise.ID) -> UUID? {
+        activeSessions[exerciseId]?.sessionId
     }
 
     private let _idleViewModel = ActiveSetViewModel()
@@ -145,13 +161,23 @@ public final class TrainingCoordinator {
         _onResetAllExercises = handler
     }
 
+    /// Centralised setter for `focusedExerciseId`. **All** internal writes go
+    /// through here so that the draft store's lifecycle hook
+    /// (`handleActiveExerciseChange(to:)`) fires consistently — switching to
+    /// or clearing the focused exercise must always discard a stale draft of
+    /// the previous exercise.
+    private func setFocusedExerciseId(_ newValue: Exercise.ID?) {
+        focusedExerciseId = newValue
+        draftStore.handleActiveExerciseChange(to: newValue)
+    }
+
     // MARK: - Training Actions
 
     public func startTraining(for exercise: Exercise) {
         guard let category = findCategory(exercise) else { return }
 
         if let existingVM = activeSessions[exercise.id] {
-            focusedExerciseId = exercise.id
+            setFocusedExerciseId(exercise.id)
             existingVM.onCoordinatorUpdateNeeded = { }
             return
         }
@@ -172,7 +198,7 @@ public final class TrainingCoordinator {
 
         activeSessions[exercise.id] = vm
         activeExercises[exercise.id] = exercise
-        focusedExerciseId = exercise.id
+        setFocusedExerciseId(exercise.id)
     }
 
     public func completeSet() {
@@ -192,7 +218,7 @@ public final class TrainingCoordinator {
         cancelTrainingUseCase.execute(activeSetViewModel: activeSetViewModel)
         activeSessions.removeValue(forKey: id)
         activeExercises.removeValue(forKey: id)
-        focusedExerciseId = nil
+        setFocusedExerciseId(nil)
     }
 
     public func cancelTraining(for exerciseId: Exercise.ID) {
@@ -201,7 +227,7 @@ public final class TrainingCoordinator {
         activeSessions.removeValue(forKey: exerciseId)
         activeExercises.removeValue(forKey: exerciseId)
         if focusedExerciseId == exerciseId {
-            focusedExerciseId = nil
+            setFocusedExerciseId(nil)
         }
     }
 
@@ -214,7 +240,7 @@ public final class TrainingCoordinator {
         )
         activeSessions.removeValue(forKey: id)
         activeExercises.removeValue(forKey: id)
-        focusedExerciseId = nil
+        setFocusedExerciseId(nil)
     }
 
     public func editLess() {
@@ -256,7 +282,7 @@ public final class TrainingCoordinator {
         }
         activeSessions.removeValue(forKey: id)
         activeExercises.removeValue(forKey: id)
-        focusedExerciseId = nil
+        setFocusedExerciseId(nil)
     }
 
     public func finishExercise(for exerciseId: Exercise.ID) {
@@ -272,7 +298,7 @@ public final class TrainingCoordinator {
         activeSessions.removeValue(forKey: exerciseId)
         activeExercises.removeValue(forKey: exerciseId)
         if focusedExerciseId == exerciseId {
-            focusedExerciseId = nil
+            setFocusedExerciseId(nil)
         }
     }
 
@@ -353,15 +379,15 @@ public final class TrainingCoordinator {
 
     public func setCurrentExercise(_ exercise: Exercise?) {
         if let exercise {
-            focusedExerciseId = exercise.id
             activeExercises[exercise.id] = exercise
             if activeSessions[exercise.id] == nil {
                 let vm = sessionFactory()
                 vm.currentExercise = exercise
                 activeSessions[exercise.id] = vm
             }
+            setFocusedExerciseId(exercise.id)
         } else {
-            focusedExerciseId = nil
+            setFocusedExerciseId(nil)
         }
     }
 }

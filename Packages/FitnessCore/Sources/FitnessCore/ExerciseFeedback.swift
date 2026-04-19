@@ -7,8 +7,17 @@ import Foundation
 ///
 /// `painRegions` is a `Set<BodyRegion>` because a single exercise can cause
 /// discomfort in multiple regions at once (e.g. lower back + obliques).
+///
+/// Identity is twofold:
+/// - `id` uniquely identifies the row in storage (used for diffing in views).
+/// - `sessionId` ties the feedback to a specific **training session** of the
+///   exercise. The same exercise started twice on the same day produces two
+///   sessions with two different `sessionId`s and therefore two records — the
+///   storage upserts on `sessionId`, not on `(exerciseId, day)`. This mirrors
+///   how analytics persist one entry per started/finished session.
 public struct ExerciseFeedback: Identifiable, Codable, Sendable, Equatable {
     public let id: UUID
+    public let sessionId: UUID
     public let exerciseId: UUID
     public let date: Date
     public var energyLevel: Int?
@@ -19,6 +28,7 @@ public struct ExerciseFeedback: Identifiable, Codable, Sendable, Equatable {
 
     public init(
         id: UUID = UUID(),
+        sessionId: UUID = UUID(),
         exerciseId: UUID,
         date: Date = Date(),
         energyLevel: Int? = nil,
@@ -28,6 +38,7 @@ public struct ExerciseFeedback: Identifiable, Codable, Sendable, Equatable {
         note: String? = nil
     ) {
         self.id = id
+        self.sessionId = sessionId
         self.exerciseId = exerciseId
         self.date = date
         self.energyLevel = energyLevel

@@ -18,6 +18,7 @@ public struct BottomActionBarView: View {
     public let onAddExercise: () -> Void
     public let onResetAllExercises: () -> Void
     public let onOpenFeedback: () -> Void
+    public let feedbackIconState: FeedbackEntryIconState
 
     private let barHeight: CGFloat = 0
     private let backgroundColor = AppStyle.Color.backgroundColor
@@ -34,7 +35,8 @@ public struct BottomActionBarView: View {
         onFinish: @escaping () -> Void,
         onAddExercise: @escaping () -> Void,
         onResetAllExercises: @escaping () -> Void,
-        onOpenFeedback: @escaping () -> Void = {}
+        onOpenFeedback: @escaping () -> Void = {},
+        feedbackIconState: FeedbackEntryIconState = .entry
     ) {
         self.viewModel = viewModel
         self.onStart = onStart
@@ -48,6 +50,7 @@ public struct BottomActionBarView: View {
         self.onAddExercise = onAddExercise
         self.onResetAllExercises = onResetAllExercises
         self.onOpenFeedback = onOpenFeedback
+        self.feedbackIconState = feedbackIconState
     }
 
     public var body: some View {
@@ -66,6 +69,7 @@ public struct BottomActionBarView: View {
                     onAddExercise: onAddExercise,
                     onResetAllExercises: onResetAllExercises,
                     onOpenFeedback: onOpenFeedback,
+                    feedbackIconState: feedbackIconState,
                     barHeight: barHeight,
                     backgroundColor: backgroundColor
                 )
@@ -89,6 +93,7 @@ public struct FloatingActionButtonsView: View {
     public let onAddExercise: () -> Void
     public let onResetAllExercises: () -> Void
     public let onOpenFeedback: () -> Void
+    public let feedbackIconState: FeedbackEntryIconState
     public let barHeight: CGFloat
     public let backgroundColor: Color
 
@@ -121,6 +126,7 @@ public struct FloatingActionButtonsView: View {
         onAddExercise: @escaping () -> Void,
         onResetAllExercises: @escaping () -> Void,
         onOpenFeedback: @escaping () -> Void = {},
+        feedbackIconState: FeedbackEntryIconState = .entry,
         barHeight: CGFloat,
         backgroundColor: Color
     ) {
@@ -136,6 +142,7 @@ public struct FloatingActionButtonsView: View {
         self.onAddExercise = onAddExercise
         self.onResetAllExercises = onResetAllExercises
         self.onOpenFeedback = onOpenFeedback
+        self.feedbackIconState = feedbackIconState
         self.barHeight = barHeight
         self.backgroundColor = backgroundColor
     }
@@ -151,11 +158,7 @@ public struct FloatingActionButtonsView: View {
                     )
                     .frame(maxWidth: .infinity)
 
-                    menuIconItem(
-                        systemIcon: "cross.fill",
-                        action: onOpenFeedback,
-                        style: .feedback
-                    )
+                    feedbackIconButton(state: feedbackIconState, action: onOpenFeedback)
                 }
             } else if viewModel.showQuickDoneDoneButton {
                 glassCapsuleButton(
@@ -216,11 +219,7 @@ public struct FloatingActionButtonsView: View {
                             style: .quickDone
                         )
                     } else if viewModel.showFeedbackButton {
-                        menuIconItem(
-                            systemIcon: "cross.fill",
-                            action: onOpenFeedback,
-                            style: .feedback
-                        )
+                        feedbackIconButton(state: feedbackIconState, action: onOpenFeedback)
                     }
                 }
             }
@@ -316,16 +315,18 @@ public struct FloatingActionButtonsView: View {
         .accessibilityIdentifier(accessibilityID(for: style, text: ""))
     }
 
+    /// Feedback entry-point icon — renders one of three bitmap assets that the
+    /// designer ships explicitly per state:
+    ///   - `.entry` → `feedback_entry`
+    ///   - `.draft` → `feedback_entry_draft`
+    ///   - `.done`  → `feedback_entry_done`
+    /// The assets are rendered in their **original** mode (no template tint)
+    /// so the per-state colour baked into each PNG is preserved.
     @ViewBuilder
-    private func menuIconItem(
-        systemIcon: String,
-        action: @escaping () -> Void,
-        style: MenuItemStyle
+    private func feedbackIconButton(
+        state: FeedbackEntryIconState,
+        action: @escaping () -> Void
     ) -> some View {
-        let iconColor: Color = (style == .feedback) ? AppStyle.Color.painAccent : AppStyle.Color.white
-        let glowOpacity: Double = (style == .feedback) ? 0.35 : 0
-        let glowRadius: CGFloat = (style == .feedback) ? 4 : 0
-
         Button(action: action) {
             ZStack {
                 TrainingGlassEffectCompat.circleGlass()
@@ -333,18 +334,34 @@ public struct FloatingActionButtonsView: View {
                         Circle().stroke(AppStyle.Color.white.opacity(0.10), lineWidth: 1)
                     )
 
-                Image(systemName: systemIcon)
+                Image(assetName(for: state))
+                    .renderingMode(.original)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 22, height: 22)
-                    .foregroundColor(iconColor)
-                    .shadow(color: iconColor.opacity(glowOpacity), radius: glowRadius)
+                    .frame(width: 44, height: 44)
             }
         }
-        .frame(width: 44, height: 44)
+        .frame(width: 48, height: 48)
         .contentShape(Circle())
         .buttonStyle(.plain)
-        .accessibilityIdentifier(accessibilityID(for: style, text: ""))
+        .accessibilityIdentifier(accessibilityID(for: .feedback, text: ""))
+        .accessibilityLabel(accessibilityLabel(for: state))
+    }
+
+    private func assetName(for state: FeedbackEntryIconState) -> String {
+        switch state {
+        case .entry: return "feedback_entry"
+        case .draft: return "feedback_entry_draft"
+        case .done:  return "feedback_entry_done"
+        }
+    }
+
+    private func accessibilityLabel(for state: FeedbackEntryIconState) -> String {
+        switch state {
+        case .entry: return "Add feedback"
+        case .draft: return "Feedback draft in progress"
+        case .done:  return "Feedback saved"
+        }
     }
 
     private func accessibilityID(for style: MenuItemStyle, text: String) -> String {

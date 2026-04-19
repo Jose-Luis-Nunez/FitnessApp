@@ -47,11 +47,10 @@ final class BodyRegionTests: XCTestCase {
         XCTAssertTrue(regions.contains(.wristRight))
     }
 
-    func testChestCategoryIncludesFull() {
+    func testChestCategoryIncludesLeftAndRight() {
         let regions = BodyRegion.regions(in: .chest)
         XCTAssertTrue(regions.contains(.chestLeft))
         XCTAssertTrue(regions.contains(.chestRight))
-        XCTAssertTrue(regions.contains(.chestFull))
     }
 
     func testMuscleGroupToBodyCategoryMapping() {
@@ -67,7 +66,6 @@ final class BodyRegionTests: XCTestCase {
         XCTAssertEqual(BodyRegion.bicepsRight.iconAssetName, "biceps_right")
         XCTAssertEqual(BodyRegion.tricepsLeft.iconAssetName, "triceps_left")
         XCTAssertEqual(BodyRegion.tricepsRight.iconAssetName, "triceps_right")
-        XCTAssertEqual(BodyRegion.chestFull.iconAssetName, "chest_full")
         XCTAssertEqual(BodyRegion.obliquesLeft.iconAssetName, "obliques_left")
         XCTAssertEqual(BodyRegion.shoulderLeft.iconAssetName, "shoulder_left")
         XCTAssertEqual(BodyRegion.abs.iconAssetName, "Abs")

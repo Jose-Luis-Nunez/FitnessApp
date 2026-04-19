@@ -166,6 +166,26 @@ public enum AppStyle {
         public static let bmiObese = SwiftUI.Color(hex: "#E85A5A")
 
         public static let painAccent = SwiftUI.Color(hex: "#FF6B3D")
+
+        // MARK: Symptom-icon palette
+        //
+        // One token per `Symptom` case. Values are tuned for the dark sheet
+        // (`AppStyle.Color.black` background, `chipsBackground` tile fill) and
+        // hit the WCAG AA non-text contrast minimum (≥ 3:1) against both. The
+        // app currently runs in `preferredColorScheme(.dark)` only — if a
+        // light mode is added later these need to grow `.colorSet` Any/Dark
+        // pairs.
+        /// Pain — reuses the existing `painAccent` warm orange so the symptom
+        /// chip and the bottom-bar feedback entry icon share one accent
+        /// vocabulary.
+        public static let symptomPain = painAccent
+        /// Dizziness — bright cyan-blue, reads as "lightheaded".
+        public static let symptomDizziness = SwiftUI.Color(hex: "#3FA9FF")
+        /// Nausea — lime green, deliberately distinct from the
+        /// forest-toned `green` used for energy/save accents.
+        public static let symptomNausea = SwiftUI.Color(hex: "#9CCC30")
+        /// Muscle weakness — dusty lavender, low-energy palette match.
+        public static let symptomWeakness = SwiftUI.Color(hex: "#A89BC9")
     }
 
     public enum Opacity {

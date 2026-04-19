@@ -1,7 +1,9 @@
 import SwiftUI
 import FitnessCore
 import FitnessAnalytics
+import FitnessStorage
 import FitnessUI
+import Factory
 
 // MARK: - Training Session Component
 
@@ -124,10 +126,27 @@ public struct TrainingActionBarComponent: View {
     public let exercises: [Exercise]
     public let hasActiveExercise: Bool
 
+    @Injected(\.feedbackStorage) private var feedbackStorage: FeedbackStoring
+
     public init(coordinator: TrainingCoordinator, exercises: [Exercise], hasActiveExercise: Bool) {
         self.coordinator = coordinator
         self.exercises = exercises
         self.hasActiveExercise = hasActiveExercise
+    }
+
+    /// Computes the entry-icon state for the currently focused exercise's
+    /// **active session**. Read inside `body` so any change to
+    /// `coordinator.draftStore.current`, `coordinator.focusedExerciseId`, or
+    /// the underlying storage triggers a recomputation via SwiftUI's
+    /// observation tracking.
+    private var feedbackIconState: FeedbackEntryIconState {
+        guard let exerciseId = coordinator.currentExercise?.id else { return .entry }
+        return FeedbackEntryIconResolver.state(
+            for: exerciseId,
+            sessionId: coordinator.currentSessionId(for: exerciseId),
+            draftStore: coordinator.draftStore,
+            storage: feedbackStorage
+        )
     }
 
     private var bottomActionBarViewModel: BottomActionBarViewModel {
@@ -186,7 +205,8 @@ public struct TrainingActionBarComponent: View {
                 onFinish: trainingCallbacks.onFinish,
                 onAddExercise: trainingCallbacks.onAddExercise,
                 onResetAllExercises: trainingCallbacks.onResetAllExercises,
-                onOpenFeedback: trainingCallbacks.onOpenFeedback
+                onOpenFeedback: trainingCallbacks.onOpenFeedback,
+                feedbackIconState: feedbackIconState
             )
             .zIndex(5)
             .onChange(of: currentViewModel.isLastSetCompleted) { _ in

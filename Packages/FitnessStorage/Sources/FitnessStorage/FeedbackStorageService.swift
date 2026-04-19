@@ -16,9 +16,24 @@ public final class FeedbackStorageService: FeedbackStoring {
         self.context.autosaveEnabled = true
     }
 
+    /// Upsert by `feedback.sessionId`: if a model bound to the same training
+    /// session already exists it is updated in place, otherwise a new model is
+    /// inserted. Two sessions of the **same exercise** on the same day (e.g.
+    /// the user starts the exercise again later) intentionally produce two
+    /// separate records — analogous to how analytics keep one entry per
+    /// completed session. Re-saving from the same open sheet (Done -> reopen
+    /// -> edit -> Save) overwrites the session's record so there is no
+    /// duplication.
     public func save(_ feedback: ExerciseFeedback) {
-        let model = ExerciseFeedbackModel.from(feedback)
-        context.insert(model)
+        let sessionId = feedback.sessionId
+        let descriptor = FetchDescriptor<ExerciseFeedbackModel>(
+            predicate: #Predicate<ExerciseFeedbackModel> { $0.sessionId == sessionId }
+        )
+        if let existing = (try? context.fetch(descriptor))?.first {
+            existing.update(from: feedback)
+        } else {
+            context.insert(ExerciseFeedbackModel.from(feedback))
+        }
         saveContext()
     }
 

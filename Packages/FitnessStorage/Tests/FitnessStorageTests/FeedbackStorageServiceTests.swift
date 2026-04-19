@@ -127,4 +127,99 @@ struct FeedbackStorageServiceTests {
 
         #expect(loaded?.symptoms == allSymptoms)
     }
+
+    // MARK: - Upsert by session id
+
+    @Test func saveInsertsWhenSessionIsNew() {
+        let sut = makeSUT()
+        let exerciseId = UUID()
+
+        sut.save(ExerciseFeedback(exerciseId: exerciseId, energyLevel: 3))
+
+        #expect(sut.load(for: exerciseId).count == 1)
+    }
+
+    @Test func saveUpdatesInPlaceWhenSessionAlreadyExists() {
+        let sut = makeSUT()
+        let exerciseId = UUID()
+        let sessionId = UUID()
+
+        sut.save(ExerciseFeedback(
+            sessionId: sessionId, exerciseId: exerciseId, energyLevel: 1
+        ))
+        sut.save(ExerciseFeedback(
+            sessionId: sessionId, exerciseId: exerciseId, energyLevel: 5
+        ))
+
+        let loaded = sut.load(for: exerciseId)
+        #expect(loaded.count == 1)
+        #expect(loaded.first?.energyLevel == 5)
+        #expect(loaded.first?.sessionId == sessionId)
+    }
+
+    @Test func saveUpdatedRecordReplacesAllFields() {
+        let sut = makeSUT()
+        let exerciseId = UUID()
+        let sessionId = UUID()
+
+        sut.save(ExerciseFeedback(
+            sessionId: sessionId,
+            exerciseId: exerciseId,
+            energyLevel: 1,
+            painCategory: .back,
+            painRegions: [.lowerBack],
+            symptoms: [.pain],
+            note: "first"
+        ))
+        sut.save(ExerciseFeedback(
+            sessionId: sessionId,
+            exerciseId: exerciseId,
+            energyLevel: 4,
+            painCategory: nil,
+            painRegions: [],
+            symptoms: [.dizziness, .nausea],
+            note: "second"
+        ))
+
+        let loaded = sut.latest(for: exerciseId)
+        #expect(loaded?.energyLevel == 4)
+        #expect(loaded?.painCategory == nil)
+        #expect(loaded?.painRegions.isEmpty == true)
+        #expect(loaded?.symptoms == [.dizziness, .nausea])
+        #expect(loaded?.note == "second")
+    }
+
+    @Test func twoDifferentSessionsForSameExerciseKeepBothRows() {
+        // Two sessions of the same exercise (e.g. started, finished, then
+        // started again on the same day) must produce two records — analogous
+        // to analytics that keep one row per completed session.
+        let sut = makeSUT()
+        let exerciseId = UUID()
+
+        sut.save(ExerciseFeedback(
+            sessionId: UUID(), exerciseId: exerciseId, energyLevel: 2
+        ))
+        sut.save(ExerciseFeedback(
+            sessionId: UUID(), exerciseId: exerciseId, energyLevel: 4
+        ))
+
+        #expect(sut.load(for: exerciseId).count == 2)
+    }
+
+    @Test func twoSessionsOnSameDayBothPersist() {
+        let sut = makeSUT()
+        let exerciseId = UUID()
+        let sameDay = Date()
+
+        sut.save(ExerciseFeedback(
+            sessionId: UUID(), exerciseId: exerciseId, date: sameDay, energyLevel: 1
+        ))
+        sut.save(ExerciseFeedback(
+            sessionId: UUID(), exerciseId: exerciseId, date: sameDay, energyLevel: 5
+        ))
+
+        let loaded = sut.load(for: exerciseId)
+        #expect(loaded.count == 2)
+        #expect(Set(loaded.map(\.energyLevel)) == [1, 5])
+    }
 }

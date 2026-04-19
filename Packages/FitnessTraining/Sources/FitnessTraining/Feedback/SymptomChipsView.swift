@@ -39,34 +39,36 @@ private struct SymptomTile: View {
         }
     }
 
+    private var accentColor: Color { symptom.iconColor }
+
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 10) {
+            VStack(spacing: 8) {
                 ZStack {
                     if isSelected {
                         Circle()
-                            .fill(AppStyle.Color.green.opacity(0.3))
-                            .frame(width: 70, height: 70)
+                            .fill(accentColor.opacity(0.3))
+                            .frame(width: 60, height: 60)
                             .blur(radius: AppStyle.Blur.iconGlow)
                             .opacity(0.7)
                     }
                     Circle()
                         .fill(isSelected
-                              ? AppStyle.Color.green.opacity(0.15)
+                              ? accentColor.opacity(0.15)
                               : AppStyle.Color.chipsBackground)
-                        .frame(width: 56, height: 56)
+                        .frame(width: 48, height: 48)
                     Image(systemName: iconName)
                         .font(AppStyle.Font.iconSymbol)
                         .foregroundColor(isSelected
-                                         ? AppStyle.Color.greenGlow
-                                         : AppStyle.Color.white.opacity(0.7))
+                                         ? accentColor
+                                         : accentColor.opacity(0.7))
                 }
-                .padding(.top, 6)
+                .padding(.top, 4)
 
                 Text(symptom.displayName.uppercased())
                     .font(AppStyle.Font.cardSmallBold)
                     .foregroundColor(isSelected
-                                     ? AppStyle.Color.greenGlow
+                                     ? accentColor
                                      : AppStyle.Color.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
@@ -75,10 +77,11 @@ private struct SymptomTile: View {
                     .font(AppStyle.Font.detailCaption)
                     .foregroundColor(AppStyle.Color.white.opacity(0.55))
                     .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .frame(minHeight: 28, alignment: .top)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+                    .frame(minHeight: 16, alignment: .top)
             }
-            .padding(.vertical, 14)
+            .padding(.vertical, 10)
             .padding(.horizontal, 10)
             .frame(maxWidth: .infinity)
             .background {
@@ -86,7 +89,7 @@ private struct SymptomTile: View {
                     TrainingGlassEffectCompat.rectCard(cornerRadius: AppStyle.CornerRadius.tile)
                     if isSelected {
                         RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile, style: .continuous)
-                            .fill(AppStyle.Color.green.opacity(0.10))
+                            .fill(accentColor.opacity(0.10))
                     }
                 }
             }
@@ -94,7 +97,7 @@ private struct SymptomTile: View {
             .overlay(
                 RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile, style: .continuous)
                     .stroke(isSelected
-                            ? AppStyle.Color.greenGlow
+                            ? accentColor
                             : AppStyle.Color.white.opacity(0.10),
                             lineWidth: isSelected ? 1.5 : 1)
             )

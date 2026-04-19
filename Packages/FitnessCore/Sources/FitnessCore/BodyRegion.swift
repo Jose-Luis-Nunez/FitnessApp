@@ -18,7 +18,6 @@ public enum BodyRegion: String, CaseIterable, Identifiable, Codable, Sendable {
     // Brust
     case chestLeft
     case chestRight
-    case chestFull
 
     // Arm
     case bicepsLeft
@@ -53,7 +52,7 @@ public enum BodyRegion: String, CaseIterable, Identifiable, Codable, Sendable {
             return .back
         case .abs, .obliquesLeft, .obliquesRight:
             return .abs
-        case .chestLeft, .chestRight, .chestFull:
+        case .chestLeft, .chestRight:
             return .chest
         case .bicepsLeft, .bicepsRight, .tricepsLeft, .tricepsRight, .forearmLeft, .forearmRight:
             return .arm
@@ -79,7 +78,6 @@ public enum BodyRegion: String, CaseIterable, Identifiable, Codable, Sendable {
         case .obliquesRight: return "Obliques right"
         case .chestLeft:     return "Chest left"
         case .chestRight:    return "Chest right"
-        case .chestFull:     return "Chest full"
         case .bicepsLeft:    return "Biceps left"
         case .bicepsRight:   return "Biceps right"
         case .tricepsLeft:   return "Triceps left"
@@ -119,7 +117,6 @@ public enum BodyRegion: String, CaseIterable, Identifiable, Codable, Sendable {
         case .obliquesRight: return "obliques_right"
         case .chestLeft:     return "chest_left"
         case .chestRight:    return "chest_right"
-        case .chestFull:     return "chest_full"
         case .bicepsLeft:    return "biceps_left"
         case .bicepsRight:   return "biceps_right"
         case .tricepsLeft:   return "triceps_left"

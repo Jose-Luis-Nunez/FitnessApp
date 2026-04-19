@@ -237,12 +237,20 @@ public extension OverlaySheetContainer where Overlay == EmptyView {
 // MARK: - Shared Action Buttons
 
 public struct ExercisePickerActionButtons: View {
+    let cancelLabel: String
     let saveLabel: String
     let saveDisabled: Bool
     let onCancel: () -> Void
     let onSave: () -> Void
 
-    public init(saveLabel: String = "Save", saveDisabled: Bool, onCancel: @escaping () -> Void, onSave: @escaping () -> Void) {
+    public init(
+        cancelLabel: String = "Cancel",
+        saveLabel: String = "Save",
+        saveDisabled: Bool,
+        onCancel: @escaping () -> Void,
+        onSave: @escaping () -> Void
+    ) {
+        self.cancelLabel = cancelLabel
         self.saveLabel = saveLabel
         self.saveDisabled = saveDisabled
         self.onCancel = onCancel
@@ -253,7 +261,7 @@ public struct ExercisePickerActionButtons: View {
         HStack {
             Spacer()
 
-            Button("Cancel") { onCancel() }
+            Button(cancelLabel) { onCancel() }
                 .foregroundColor(AppStyle.Color.white)
                 .font(AppStyle.Font.pickerAction)
                 .padding(5)
