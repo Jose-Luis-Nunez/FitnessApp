@@ -1,0 +1,241 @@
+#!/bin/bash
+# Pre-commit hook with AI-optimized error messages.
+#
+# Error messages are formatted as RULE/VIOLATION/FIX so AI agents
+# can self-correct from the output (Fleek/YC W22 pattern).
+#
+# Checks (in execution order, numbered to match the in-file labels):
+#   1. Post-change validation report required for 1+ Swift files
+#   2. No print() statements in production Swift code
+#   3. ADR required for structural architecture changes (see lib/adr-triggers.sh)
+#   4. UI-state-sync anti-pattern (Int-counter + while !Task.isCancelled polling loop)
+#   5. architecture-documentation.md freshness for structural changes
+
+set -euo pipefail
+
+ERRORS=""
+EXIT_CODE=0
+
+# --- Detect staged Swift files ---
+
+STAGED_SWIFT=$(git diff --cached --name-only --diff-filter=ACM | grep '\.swift$' || true)
+STAGED_SWIFT_COUNT=0
+if [ -n "$STAGED_SWIFT" ]; then
+  STAGED_SWIFT_COUNT=$(echo "$STAGED_SWIFT" | wc -l | tr -d ' ')
+fi
+
+# --- Check 1: Post-change validation for 1+ Swift files ---
+# Required when ANY Swift file is staged. Forces author to either run the
+# reviewing-code-changes skill or perform the validation verbally and touch
+# the stamp.
+
+if [ "$STAGED_SWIFT_COUNT" -ge 1 ]; then
+  REPORT=".cursor/hooks/state/code-changes.stamp.md"
+  REPORT_FRESH=false
+
+  if [ -f "$REPORT" ]; then
+    REPORT_AGE=$(python3 -c "
+import os, time
+try:
+    age = time.time() - os.path.getmtime('$REPORT')
+    print('fresh' if age < 1800 else 'stale')
+except: print('stale')
+" 2>/dev/null || echo "stale")
+    if [ "$REPORT_AGE" = "fresh" ]; then
+      REPORT_FRESH=true
+    fi
+  fi
+
+  if [ "$REPORT_FRESH" = false ]; then
+    FILE_LIST=$(echo "$STAGED_SWIFT" | head -10 | sed 's/^/  - /')
+    ERRORS="${ERRORS}
+═══════════════════════════════════════════════════════════════
+RULE: Post-change validation is required when committing 1+ Swift files.
+VIOLATION: ${STAGED_SWIFT_COUNT} Swift files staged for commit but no recent validation report found.
+  Expected: .cursor/hooks/state/code-changes.stamp.md (less than 30 min old)
+  Found: $([ -f "$REPORT" ] && echo "stale report" || echo "no report")
+FILES:
+${FILE_LIST}
+FIX: Run the post-change-validation skill checklist and write a stamp to
+  .cursor/hooks/state/code-changes.stamp.md before committing.
+  Alternatively, run: touch .cursor/hooks/state/code-changes.stamp.md
+  if validation was done verbally.
+═══════════════════════════════════════════════════════════════"
+    EXIT_CODE=1
+  fi
+fi
+
+# --- Check 2: No print() in production Swift code ---
+
+if [ -n "$STAGED_SWIFT" ]; then
+  PROD_SWIFT=$(echo "$STAGED_SWIFT" | grep -v 'Tests/' | grep -v 'test' || true)
+  if [ -n "$PROD_SWIFT" ]; then
+    PRINT_HITS=""
+    while IFS= read -r file; do
+      LINES=$(git diff --cached -U0 "$file" 2>/dev/null | grep '^+' | grep -n 'print(' | grep -v '// ok' || true)
+      if [ -n "$LINES" ]; then
+        PRINT_HITS="${PRINT_HITS}
+  - ${file}: ${LINES}"
+      fi
+    done <<< "$PROD_SWIFT"
+
+    if [ -n "$PRINT_HITS" ]; then
+      ERRORS="${ERRORS}
+═══════════════════════════════════════════════════════════════
+RULE: No print() statements in production Swift code.
+VIOLATION: print() found in staged changes:${PRINT_HITS}
+FIX: Remove print() statements or replace with os_log / Logger:
+  import os
+  let logger = Logger(subsystem: \"com.fitnessapp\", category: \"debug\")
+  logger.debug(\"message\")
+═══════════════════════════════════════════════════════════════"
+      EXIT_CODE=1
+    fi
+  fi
+fi
+
+# --- Check 3: ADR required for structural changes ---
+
+REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+ADR_LIB="$REPO_ROOT/.cursor/hooks/lib/adr-triggers.sh"
+
+if [ -f "$ADR_LIB" ]; then
+  # shellcheck disable=SC1090
+  source "$ADR_LIB"
+
+  STAGED_DIFF=$(git diff --cached --diff-filter=ACM 2>/dev/null || true)
+  STAGED_FILES=$(git diff --cached --diff-filter=ACM --name-only 2>/dev/null || true)
+
+  detect_adr_triggers "$STAGED_DIFF" "$STAGED_FILES"
+
+  if [ ${#ADR_TRIGGERS[@]} -gt 0 ]; then
+    if echo "$STAGED_FILES" | grep -qE '^docs/adr/[0-9]+.*\.md$'; then
+      ADR_STAGED=1
+    else
+      ADR_STAGED=0
+    fi
+
+    if [ "$ADR_STAGED" -eq 0 ] && ! adr_exception_stamp_fresh; then
+      ERRORS="${ERRORS}
+═══════════════════════════════════════════════════════════════
+RULE: adr-required — structural architecture change requires an ADR (see docs/adr/README.md).
+VIOLATION: Detected trigger(s): ${ADR_TRIGGERS[*]}
+  No ADR file (docs/adr/NNNN-*.md) staged in this commit.
+  No fresh exception stamp (.cursor/hooks/state/adr-exception.stamp.md, < 24h).
+FIX:
+  - Write a new ADR under docs/adr/ following docs/adr/README.md, or
+  - For a trivial change: touch .cursor/hooks/state/adr-exception.stamp.md
+    with a one-line reason (valid 24h).
+═══════════════════════════════════════════════════════════════"
+      EXIT_CODE=1
+    fi
+  fi
+fi
+
+# --- Check 4: UI-state-sync anti-pattern (Int-counter + while !Task.isCancelled polling loop) ---
+
+if [ -n "$STAGED_SWIFT" ]; then
+  STAGED_SWIFT_DIFF=$(git diff --cached --diff-filter=AM -- '*.swift' 2>/dev/null || true)
+  if [ -n "$STAGED_SWIFT_DIFF" ]; then
+    HAS_COUNTER=$(echo "$STAGED_SWIFT_DIFF" | grep -cE '^\+.*\b(changeVersion|mutationVersion|dataGeneration|revision)\b[[:space:]]*:[[:space:]]*Int\b' || true)
+    HAS_COUNTER=${HAS_COUNTER:-0}
+    HAS_LOOP=$(echo "$STAGED_SWIFT_DIFF" | grep -cE '^\+.*while[[:space:]]+!Task\.isCancelled' || true)
+    HAS_LOOP=${HAS_LOOP:-0}
+
+    if [ "$HAS_COUNTER" -gt 0 ] && [ "$HAS_LOOP" -gt 0 ]; then
+      EXCEPTION_STAMP=".cursor/hooks/state/ui-state-sync-exception.stamp.md"
+      EXCEPTION_FRESH=false
+      if [ -f "$EXCEPTION_STAMP" ]; then
+        EXCEPTION_AGE=$(python3 -c "
+import os, time
+try:
+    age = time.time() - os.path.getmtime('$EXCEPTION_STAMP')
+    print('fresh' if age < 86400 else 'stale')
+except: print('stale')
+" 2>/dev/null || echo "stale")
+        if [ "$EXCEPTION_AGE" = "fresh" ]; then
+          EXCEPTION_FRESH=true
+        fi
+      fi
+
+      if [ "$EXCEPTION_FRESH" = false ]; then
+        ERRORS="${ERRORS}
+═══════════════════════════════════════════════════════════════
+RULE: ui-state-sync-enforcement.mdc — kein monotoner Int-Counter + Polling-Loop als UI-Sync.
+VIOLATION: Diff fügt sowohl einen Sync-Counter (changeVersion / mutationVersion /
+  dataGeneration / revision : Int) als auch einen 'while !Task.isCancelled'-Loop hinzu.
+  Das ist semantisches Polling mit Observation-Verkleidung — es maskiert Save-Failures
+  und ersetzt keine Domain-Events.
+FIX:
+  - @Observable Properties mit fachlicher Bedeutung statt generischem Counter
+  - @Query auf @Model in der View (SwiftData)
+  - @Bindable auf @Model-Instanzen
+  - AsyncSequence / NotificationCenter mit Payload für Domain-Events
+  Bei bewusster Ausnahme: ADR schreiben + Stamp .cursor/hooks/state/ui-state-sync-exception.stamp.md
+  mit ADR-Link erstellen (gilt 24h).
+═══════════════════════════════════════════════════════════════"
+        EXIT_CODE=1
+      fi
+    fi
+  fi
+fi
+
+# --- Check 5: architecture-documentation.md freshness ---
+
+ARCH_FILE=".cursor/references/architecture-documentation.md"
+ARCH_STAGED=$(git diff --cached --name-only | grep "$ARCH_FILE" || true)
+
+NEW_FEATURES=$(git diff --cached --name-only --diff-filter=A | grep '^FitnessApp/Features/' || true)
+NEW_USECASES=$(git diff --cached --name-only --diff-filter=A | grep 'UseCases/' || true)
+NEW_SERVICES=$(git diff --cached --name-only | grep -E 'Service\.swift|Container\.swift' || true)
+NEW_SHARED=$(git diff --cached --name-only --diff-filter=A | grep '^FitnessApp/Shared/' || true)
+
+NEEDS_ARCH=false
+ARCH_TRIGGERS=""
+if [ -n "$NEW_FEATURES" ] && [ -z "$ARCH_STAGED" ]; then
+  NEEDS_ARCH=true
+  ARCH_TRIGGERS="${ARCH_TRIGGERS}
+  - New feature files: $(echo "$NEW_FEATURES" | tr '\n' ', ')"
+fi
+if [ -n "$NEW_USECASES" ] && [ -z "$ARCH_STAGED" ]; then
+  NEEDS_ARCH=true
+  ARCH_TRIGGERS="${ARCH_TRIGGERS}
+  - New Use Cases: $(echo "$NEW_USECASES" | tr '\n' ', ')"
+fi
+if [ -n "$NEW_SERVICES" ] && [ -z "$ARCH_STAGED" ]; then
+  NEEDS_ARCH=true
+  ARCH_TRIGGERS="${ARCH_TRIGGERS}
+  - Changed services/containers: $(echo "$NEW_SERVICES" | tr '\n' ', ')"
+fi
+if [ -n "$NEW_SHARED" ] && [ -z "$ARCH_STAGED" ]; then
+  NEEDS_ARCH=true
+  ARCH_TRIGGERS="${ARCH_TRIGGERS}
+  - New shared components: $(echo "$NEW_SHARED" | tr '\n' ', ')"
+fi
+
+if [ "$NEEDS_ARCH" = true ]; then
+  ERRORS="${ERRORS}
+═══════════════════════════════════════════════════════════════
+RULE: architecture-documentation.md must be updated when structural changes are committed.
+VIOLATION: Structural changes detected but .cursor/references/architecture-documentation.md
+  is not staged for commit.
+TRIGGERS:${ARCH_TRIGGERS}
+FIX: Update the relevant section in .cursor/references/architecture-documentation.md
+  (see reviewing-code-changes skill, section 'Architecture Sync') and stage it:
+  git add .cursor/references/architecture-documentation.md
+═══════════════════════════════════════════════════════════════"
+  EXIT_CODE=1
+fi
+
+# --- Output ---
+
+if [ "$EXIT_CODE" -ne 0 ]; then
+  echo ""
+  echo "╔═══════════════════════════════════════════════════════════╗"
+  echo "║  PRE-COMMIT CHECK FAILED                                 ║"
+  echo "╚═══════════════════════════════════════════════════════════╝"
+  echo "$ERRORS"
+  echo ""
+fi
+
+exit $EXIT_CODE

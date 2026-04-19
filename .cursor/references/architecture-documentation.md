@@ -1,5 +1,17 @@
 # FitnessApp Architecture
 
+## Architectural Decisions (ADRs)
+
+Project-wide architectural decisions live in [`docs/adr/`](../../docs/adr/README.md). Each ADR is immutable once accepted; new decisions supersede via a fresh ADR.
+
+| ID | Title | Status |
+|----|-------|--------|
+| [0001](../../docs/adr/0001-model-as-ui-source-of-truth.md) | @Model als UI Single Source of Truth | accepted |
+| [0002](../../docs/adr/0002-persistence-ui-package.md) | FitnessPersistenceUI Package | accepted |
+| [0003](../../docs/adr/0003-coordinator-session-contract.md) | Coordinator Session-State Vertrag | accepted |
+
+When making a structural change that conflicts with an existing ADR, write a new ADR superseding the old one. The stop-hook `adr-required.sh` (T0d) reminds the agent to do so.
+
 ## Feature Map
 
 ```
