@@ -17,18 +17,8 @@ struct ExerciseManagementServiceTests {
     }
 
     private func makeSUT() -> (ExerciseManagementService, WorkoutStorageService, ExerciseStorageService, AnalyticsStorageService) {
-        let defaults = TestHelpers.makeIsolatedDefaults()
-        let es = ExerciseStorageService(container: container)
-        let ws = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: es)
-        let as_ = AnalyticsStorageService(container: container)
-
-        Container.shared.reset()
-        Container.shared.exerciseStorage.register { es }
-        Container.shared.workoutStorage.register { ws }
-        Container.shared.analyticsStorage.register { as_ }
-
-        let sut = ExerciseManagementService()
-        return (sut, ws, es, as_)
+        let stack = TestHelpers.makeStorageStack(container: container)
+        return (stack.management, stack.workoutStorage, stack.exerciseStorage, stack.analyticsStorage)
     }
 
     // MARK: - getExercises

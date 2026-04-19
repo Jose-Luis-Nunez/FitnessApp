@@ -81,6 +81,38 @@ enum TestHelpers {
         )
     }
 
+    /// Wires a real production stack against an in-memory container and
+    /// registers every storage in `Container.shared`. Use this whenever a
+    /// test needs `ExerciseManagementService` (which is `@Injected`-driven)
+    /// to operate on a known persistence stack.
+    ///
+    /// Call sites must hold the returned services for the lifetime of the
+    /// test — Factory's `.singleton`-resolved closures capture them.
+    @MainActor
+    static func makeStorageStack(container: ModelContainer) -> (
+        management: ExerciseManagementService,
+        workoutStorage: WorkoutStorageService,
+        exerciseStorage: ExerciseStorageService,
+        analyticsStorage: AnalyticsStorageService
+    ) {
+        let defaults = makeIsolatedDefaults()
+        let exerciseStorage = ExerciseStorageService(container: container)
+        let workoutStorage = WorkoutStorageService(
+            container: container,
+            defaults: defaults,
+            exerciseStorage: exerciseStorage
+        )
+        let analyticsStorage = AnalyticsStorageService(container: container)
+
+        Container.shared.reset()
+        Container.shared.exerciseStorage.register { exerciseStorage }
+        Container.shared.workoutStorage.register { workoutStorage }
+        Container.shared.analyticsStorage.register { analyticsStorage }
+
+        let management = ExerciseManagementService()
+        return (management, workoutStorage, exerciseStorage, analyticsStorage)
+    }
+
     static func makeAnalyticsEntry(
         exerciseId: UUID,
         date: Date = Date(),
