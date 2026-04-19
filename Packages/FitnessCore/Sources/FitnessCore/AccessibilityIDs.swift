@@ -1,6 +1,13 @@
 import Foundation
 
-/// Accessibility identifiers aligned with `FitnessAppUITests/Selectors/AccessibilityIDs.swift`.
+/// Accessibility identifiers shared between feature views, model-driven
+/// views (`FitnessPersistenceUI`), and `FitnessAppUITests/Selectors/AccessibilityIDs.swift`.
+///
+/// Hoisted into `FitnessCore` as part of T7-0 so the new model-driven
+/// views in `FitnessPersistenceUI` can attach the same identifiers as the
+/// legacy views in `FitnessExercise` without re-introducing a dependency
+/// cycle. UI tests target these strings exactly — keep in sync with the
+/// selector file in the UI-test target.
 public enum HomeIDs {
     public static func categoryTile(for group: String) -> String { "id_category_tile_\(group)" }
 }

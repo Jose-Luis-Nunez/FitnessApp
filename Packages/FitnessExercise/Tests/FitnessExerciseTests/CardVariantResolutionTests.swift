@@ -13,7 +13,7 @@ struct ResolveVariantTests {
 
     @Test func completedExerciseAlwaysReturnsCompleted() {
         let id = UUID()
-        let variant = ExerciseCardContainerView.resolveVariant(
+        let variant = resolveCardVariant(
             isCompleted: true,
             isActiveSetVisible: true,
             activeExerciseId: id,
@@ -24,7 +24,7 @@ struct ResolveVariantTests {
 
     @Test func activeSetVisibleWithMatchingIdReturnsActive() {
         let id = UUID()
-        let variant = ExerciseCardContainerView.resolveVariant(
+        let variant = resolveCardVariant(
             isCompleted: false,
             isActiveSetVisible: true,
             activeExerciseId: id,
@@ -34,7 +34,7 @@ struct ResolveVariantTests {
     }
 
     @Test func activeSetVisibleWithDifferentIdReturnsIdle() {
-        let variant = ExerciseCardContainerView.resolveVariant(
+        let variant = resolveCardVariant(
             isCompleted: false,
             isActiveSetVisible: true,
             activeExerciseId: UUID(),
@@ -45,7 +45,7 @@ struct ResolveVariantTests {
 
     @Test func activeSetNotVisibleReturnsIdleEvenWhenIdsMatch() {
         let id = UUID()
-        let variant = ExerciseCardContainerView.resolveVariant(
+        let variant = resolveCardVariant(
             isCompleted: false,
             isActiveSetVisible: false,
             activeExerciseId: id,
@@ -55,7 +55,7 @@ struct ResolveVariantTests {
     }
 
     @Test func activeSetVisibleWithNilActiveIdReturnsIdle() {
-        let variant = ExerciseCardContainerView.resolveVariant(
+        let variant = resolveCardVariant(
             isCompleted: false,
             isActiveSetVisible: true,
             activeExerciseId: nil,
@@ -66,7 +66,7 @@ struct ResolveVariantTests {
 
     @Test func completedTakesPriorityOverActive() {
         let id = UUID()
-        let variant = ExerciseCardContainerView.resolveVariant(
+        let variant = resolveCardVariant(
             isCompleted: true,
             isActiveSetVisible: true,
             activeExerciseId: id,
@@ -100,13 +100,13 @@ struct MultiTrainingCardResolutionTests {
         #expect(armsCoord.isExerciseInProgress(curl.id))
         #expect(chestCoord.isExerciseInProgress(bench.id))
 
-        let curlVariant = ExerciseCardContainerView.resolveVariant(
+        let curlVariant = resolveCardVariant(
             isCompleted: false,
             isActiveSetVisible: false,
             activeExerciseId: armsCoord.activeSetViewModel.currentExercise?.id,
             exerciseId: curl.id
         )
-        let benchVariant = ExerciseCardContainerView.resolveVariant(
+        let benchVariant = resolveCardVariant(
             isCompleted: false,
             isActiveSetVisible: false,
             activeExerciseId: chestCoord.activeSetViewModel.currentExercise?.id,
@@ -128,13 +128,13 @@ struct MultiTrainingCardResolutionTests {
         armsCoord.startTraining(for: curl)
         chestCoord.startTraining(for: bench)
 
-        let curlVariant = ExerciseCardContainerView.resolveVariant(
+        let curlVariant = resolveCardVariant(
             isCompleted: false,
             isActiveSetVisible: true,
             activeExerciseId: armsCoord.activeSetViewModel.currentExercise?.id,
             exerciseId: curl.id
         )
-        let benchVariant = ExerciseCardContainerView.resolveVariant(
+        let benchVariant = resolveCardVariant(
             isCompleted: false,
             isActiveSetVisible: true,
             activeExerciseId: armsCoord.activeSetViewModel.currentExercise?.id,
@@ -161,7 +161,7 @@ struct MultiTrainingCardResolutionTests {
         #expect(!armsCoord.isExerciseInProgress(curl.id))
         #expect(chestCoord.isExerciseInProgress(bench.id))
 
-        let benchVariant = ExerciseCardContainerView.resolveVariant(
+        let benchVariant = resolveCardVariant(
             isCompleted: false,
             isActiveSetVisible: false,
             activeExerciseId: chestCoord.activeSetViewModel.currentExercise?.id,
@@ -181,13 +181,13 @@ struct MultiTrainingCardResolutionTests {
         armsCoord.startTraining(for: curl)
         armsCoord.startTraining(for: hammer)
 
-        let curlVariant = ExerciseCardContainerView.resolveVariant(
+        let curlVariant = resolveCardVariant(
             isCompleted: false,
             isActiveSetVisible: false,
             activeExerciseId: armsCoord.activeSetViewModel.currentExercise?.id,
             exerciseId: curl.id
         )
-        let hammerVariant = ExerciseCardContainerView.resolveVariant(
+        let hammerVariant = resolveCardVariant(
             isCompleted: false,
             isActiveSetVisible: false,
             activeExerciseId: armsCoord.activeSetViewModel.currentExercise?.id,

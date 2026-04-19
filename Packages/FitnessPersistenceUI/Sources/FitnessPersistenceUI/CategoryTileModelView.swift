@@ -1,7 +1,6 @@
 import SwiftUI
 import SwiftData
 import FitnessCore
-import FitnessExercise
 import FitnessUI
 @_spi(PersistenceUI) import FitnessStorage
 
@@ -100,7 +99,7 @@ public struct CategoryTileModelView: View {
 
             headerBadge(info: info)
         }
-        .padding(.horizontal, CategoryTileViewConstants.CategoryTile.contentPadding)
+        .padding(.horizontal, ExerciseCardLayout.CategoryTile.contentPadding)
     }
 
     @ViewBuilder
@@ -135,8 +134,8 @@ public struct CategoryTileModelView: View {
             Circle()
                 .fill(AppStyle.Color.greenBlack)
                 .frame(
-                    width: CategoryTileViewConstants.CategoryTile.iconSize * 0.9,
-                    height: CategoryTileViewConstants.CategoryTile.iconSize * 0.9
+                    width: ExerciseCardLayout.CategoryTile.iconSize * 0.9,
+                    height: ExerciseCardLayout.CategoryTile.iconSize * 0.9
                 )
                 .blur(radius: 15)
                 .opacity(0.5)
@@ -149,8 +148,8 @@ public struct CategoryTileModelView: View {
                 .foregroundColor(AppStyle.Color.white)
         }
         .frame(
-            width: CategoryTileViewConstants.CategoryTile.iconSize,
-            height: CategoryTileViewConstants.CategoryTile.iconSize
+            width: ExerciseCardLayout.CategoryTile.iconSize,
+            height: ExerciseCardLayout.CategoryTile.iconSize
         )
     }
 
@@ -160,7 +159,7 @@ public struct CategoryTileModelView: View {
             HStack(spacing: 8) {
                 if !info.isCompleted {
                     ProgressBar(progress: info.progress, totalWidth: 90)
-                        .frame(height: CategoryTileViewConstants.ProgressBar.height)
+                        .frame(height: ExerciseCardLayout.ProgressBar.height)
                 }
 
                 Spacer()
@@ -171,7 +170,7 @@ public struct CategoryTileModelView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
-            .padding(.horizontal, CategoryTileViewConstants.CategoryTile.contentPadding)
+            .padding(.horizontal, ExerciseCardLayout.CategoryTile.contentPadding)
         } else {
             HStack(spacing: 8) {
                 Spacer()
@@ -180,7 +179,7 @@ public struct CategoryTileModelView: View {
                     .font(AppStyle.Font.categoryTileProgress)
                     .foregroundColor(.clear)
             }
-            .padding(.horizontal, CategoryTileViewConstants.CategoryTile.contentPadding)
+            .padding(.horizontal, ExerciseCardLayout.CategoryTile.contentPadding)
         }
     }
 }

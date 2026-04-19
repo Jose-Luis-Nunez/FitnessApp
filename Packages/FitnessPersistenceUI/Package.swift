@@ -14,7 +14,6 @@ let package = Package(
         .package(path: "../FitnessUI"),
         .package(path: "../FitnessAnalytics"),
         .package(path: "../FitnessTraining"),
-        .package(path: "../FitnessExercise"),
         .package(path: "../FitnessTestSupport"),
     ],
     targets: [
@@ -26,7 +25,6 @@ let package = Package(
                 "FitnessUI",
                 "FitnessAnalytics",
                 "FitnessTraining",
-                "FitnessExercise",
             ]
         ),
         .testTarget(
@@ -35,7 +33,6 @@ let package = Package(
                 "FitnessPersistenceUI",
                 "FitnessStorage",
                 "FitnessCore",
-                "FitnessExercise",
                 "FitnessTestSupport",
             ]
         ),

@@ -183,8 +183,8 @@ extension InactiveCardView {
         public let onTap: () -> Void
 
         public enum Constants {
-            public static let size: CGFloat = 40
-            public static let iconSize: CGFloat = 32
+            public static let size: CGFloat = ExerciseCardLayout.ResetButton.size
+            public static let iconSize: CGFloat = ExerciseCardLayout.ResetButton.iconSize
         }
 
         public init(onTap: @escaping () -> Void) {

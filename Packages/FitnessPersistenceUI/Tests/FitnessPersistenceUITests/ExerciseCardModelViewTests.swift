@@ -2,14 +2,13 @@ import Foundation
 import SwiftData
 import Testing
 import FitnessCore
-import FitnessExercise
 @_spi(PersistenceUI) import FitnessStorage
 @testable import FitnessPersistenceUI
 
 /// Tests für `ExerciseCardModelView` und seinen Variant-Resolver.
 ///
 /// Zwei Suites:
-/// - `ResolveVariantTests` testet `ExerciseCardContainerView.resolveVariant(...)` als
+/// - `ResolveVariantTests` testet `FitnessCore.resolveCardVariant(...)` als
 ///   pure Funktion (keine Container-Setup nötig). Das ist die Logik die der neue
 ///   Container live aus `model.isCompleted` aufruft.
 /// - `Bug1SanityTests` beweist mit echtem in-memory `ModelContainer`, dass
@@ -19,13 +18,13 @@ import FitnessExercise
 ///   sobald T7 die View einsetzt.
 
 @MainActor
-@Suite("ExerciseCardContainerView.resolveVariant — Logik")
+@Suite("resolveCardVariant — Logik")
 struct ResolveVariantTests {
 
     @Test("isCompleted=true dominiert: liefert .completed unabhängig vom Active-Set")
     func completedDominates() {
         let id = UUID()
-        let v = ExerciseCardContainerView.resolveVariant(
+        let v = resolveCardVariant(
             isCompleted: true,
             isActiveSetVisible: true,
             activeExerciseId: id,
@@ -37,7 +36,7 @@ struct ResolveVariantTests {
     @Test("Active-Set sichtbar UND id matcht: liefert .active")
     func activeWhenMatched() {
         let id = UUID()
-        let v = ExerciseCardContainerView.resolveVariant(
+        let v = resolveCardVariant(
             isCompleted: false,
             isActiveSetVisible: true,
             activeExerciseId: id,
@@ -48,7 +47,7 @@ struct ResolveVariantTests {
 
     @Test("Active-Set sichtbar aber id mismatch: liefert .idle")
     func idleWhenIdMismatch() {
-        let v = ExerciseCardContainerView.resolveVariant(
+        let v = resolveCardVariant(
             isCompleted: false,
             isActiveSetVisible: true,
             activeExerciseId: UUID(),
@@ -60,7 +59,7 @@ struct ResolveVariantTests {
     @Test("Kein Active-Set sichtbar: liefert .idle (keine Active-Variante)")
     func idleWhenNoActiveSet() {
         let id = UUID()
-        let v = ExerciseCardContainerView.resolveVariant(
+        let v = resolveCardVariant(
             isCompleted: false,
             isActiveSetVisible: false,
             activeExerciseId: id,
@@ -111,7 +110,7 @@ struct Bug1SanityTests {
         ctx.insert(model)
         try ctx.save()
 
-        let initial = ExerciseCardContainerView.resolveVariant(
+        let initial = resolveCardVariant(
             isCompleted: model.isCompleted,
             isActiveSetVisible: false,
             activeExerciseId: nil,
@@ -122,7 +121,7 @@ struct Bug1SanityTests {
         model.isCompleted = true
         try ctx.save()
 
-        let after = ExerciseCardContainerView.resolveVariant(
+        let after = resolveCardVariant(
             isCompleted: model.isCompleted,
             isActiveSetVisible: false,
             activeExerciseId: nil,

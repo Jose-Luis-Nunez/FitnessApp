@@ -1,7 +1,6 @@
 import SwiftUI
 import FitnessAnalytics
 import FitnessCore
-import FitnessExercise
 import FitnessUI
 @_spi(PersistenceUI) import FitnessStorage
 

@@ -3,12 +3,6 @@ import FitnessAnalytics
 import FitnessCore
 import FitnessTraining
 
-public enum CardVariant: Equatable, Sendable {
-    case completed
-    case active
-    case idle
-}
-
 public struct ExerciseCardContainerView: View {
     public var viewModel: ExerciseCardViewModel
     public let onEdit: (Exercise, ExerciseEditMode) -> Void
@@ -45,19 +39,8 @@ public struct ExerciseCardContainerView: View {
         self.isInProgress = isInProgress
     }
 
-    public static func resolveVariant(
-        isCompleted: Bool,
-        isActiveSetVisible: Bool,
-        activeExerciseId: UUID?,
-        exerciseId: UUID
-    ) -> CardVariant {
-        if isCompleted { return .completed }
-        if isActiveSetVisible, activeExerciseId == exerciseId { return .active }
-        return .idle
-    }
-
     public var body: some View {
-        let variant = Self.resolveVariant(
+        let variant = resolveCardVariant(
             isCompleted: viewModel.exercise.isCompleted,
             isActiveSetVisible: isActiveSetVisible,
             activeExerciseId: activeSetViewModel.currentExercise?.id,

@@ -2,17 +2,13 @@ import SwiftUI
 import FitnessCore
 import FitnessUI
 
-public enum CategoryTileViewConstants {
-    public enum CategoryTile {
-        public static let contentPadding: CGFloat = AppStyle.Padding.screenHorizontal
-        public static let verticalSpacing: CGFloat = 12
-        public static let iconSize: CGFloat = 80
-    }
-
-    public enum ProgressBar {
-        public static let height: CGFloat = 9
-    }
-}
+/// Backwards-compatibility alias for the layout constants that previously
+/// lived inline here. The canonical home is `FitnessUI.ExerciseCardLayout`
+/// (hoisted in T7-0 so the new model-driven views in `FitnessPersistenceUI`
+/// can reach them without a dependency cycle). T8 deletes both this view
+/// and this alias once `MuscleCategorySelectionView.categoryList` no longer
+/// references the legacy tile.
+public typealias CategoryTileViewConstants = ExerciseCardLayout
 
 fileprivate struct ExerciseInfo {
     let total: Int
@@ -152,39 +148,7 @@ public struct CategoryTileView: View {
     }
 }
 
-public struct ProgressBar: View {
-    public let progress: Double
-    public let totalWidth: CGFloat
-
-    private let fillColor = AppStyle.Color.greenGlow
-    private let trackColor = AppStyle.Color.progressTrack
-
-    public init(progress: Double, totalWidth: CGFloat) {
-        self.progress = progress
-        self.totalWidth = totalWidth
-    }
-
-    public var body: some View {
-        ZStack(alignment: .leading) {
-            trackView
-            progressView
-        }
-        .frame(width: totalWidth, height: CategoryTileViewConstants.ProgressBar.height)
-    }
-
-    private var trackView: some View {
-        Capsule()
-            .fill(trackColor)
-            .frame(width: totalWidth, height: CategoryTileViewConstants.ProgressBar.height)
-    }
-
-    private var progressView: some View {
-        let clampedProgress = min(max(progress, 0.0), 1.0)
-        return Capsule()
-            .fill(fillColor)
-            .frame(
-                width: CGFloat(clampedProgress) * totalWidth,
-                height: CategoryTileViewConstants.ProgressBar.height
-            )
-    }
-}
+// `ProgressBar` was hoisted to `FitnessUI` in T7-0 so the new
+// model-driven `CategoryTileModelView` in `FitnessPersistenceUI` can render
+// it without re-introducing a dependency cycle. The legacy `CategoryTileView`
+// above continues to use it via the `import FitnessUI` at the top of this file.

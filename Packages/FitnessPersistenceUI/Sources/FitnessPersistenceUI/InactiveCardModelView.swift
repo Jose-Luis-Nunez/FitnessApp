@@ -1,7 +1,6 @@
 import SwiftUI
 import FitnessAnalytics
 import FitnessCore
-import FitnessExercise
 import FitnessUI
 @_spi(PersistenceUI) import FitnessStorage
 
@@ -155,7 +154,7 @@ private extension InactiveCardModelView {
             let hasMoreThan3 = cachedSetProgress.count > 3
             let scrollChevronWidth: CGFloat = 8
             let chevronArea: CGFloat = hasMoreThan3 ? scrollChevronWidth + spacing : 0
-            let resetTotal: CGFloat = isResetEnabled ? InactiveCardView.ResetButton.Constants.size + spacing : 0
+            let resetTotal: CGFloat = isResetEnabled ? ExerciseCardLayout.ResetButton.size + spacing : 0
             let scrollAreaWidth = geo.size.width - resetTotal - chevronArea
             let tileWidth = (scrollAreaWidth - spacing * 2) / 3
 
@@ -179,7 +178,7 @@ private extension InactiveCardModelView {
                 }
 
                 if isResetEnabled {
-                    InactiveCardView.ResetButton { onReset?(model.toDomain()) }
+                    ExerciseCardResetButton { onReset?(model.toDomain()) }
                 }
             }
         }

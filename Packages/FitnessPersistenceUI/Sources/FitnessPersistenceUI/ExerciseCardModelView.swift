@@ -1,7 +1,6 @@
 import SwiftUI
 import FitnessAnalytics
 import FitnessCore
-import FitnessExercise
 import FitnessTraining
 @_spi(PersistenceUI) import FitnessStorage
 
@@ -14,8 +13,9 @@ import FitnessTraining
 /// Variant-Switch unten nimmt sofort den `.completed`-Pfad — ohne `syncExercise(...)`,
 /// ohne `cardViewModels: [UUID: ExerciseCardViewModel]`-Cache.
 ///
-/// `ExerciseCardContainerView.resolveVariant(...)` wird wiederverwendet (ist seit
-/// jeher `public` in `FitnessExercise`); kein Code-Duplizieren der Variant-Logik.
+/// `FitnessCore.resolveCardVariant(...)` wird wiederverwendet (in T7-0 aus
+/// `FitnessExercise.ExerciseCardContainerView` nach `FitnessCore` gehoben);
+/// kein Code-Duplizieren der Variant-Logik.
 ///
 /// **SPI-Marker**: Die View ist `@_spi(PersistenceUI) public`, weil sie
 /// `@Bindable model: ExerciseModel` in der API hat — und `ExerciseModel` ist nur
@@ -60,7 +60,7 @@ public struct ExerciseCardModelView: View {
     }
 
     public var body: some View {
-        let variant = ExerciseCardContainerView.resolveVariant(
+        let variant = resolveCardVariant(
             isCompleted: model.isCompleted,
             isActiveSetVisible: isActiveSetVisible,
             activeExerciseId: activeSetViewModel.currentExercise?.id,
