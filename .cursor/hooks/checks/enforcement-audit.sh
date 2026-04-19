@@ -8,7 +8,8 @@ if [ -z "$all_swift" ]; then
   exit 0
 fi
 
-swift_count=$(echo "$all_swift" | grep -c '\.swift$' || echo "0")
+swift_count=$(echo "$all_swift" | grep -c '\.swift$' || true)
+swift_count=${swift_count:-0}
 
 if [ "$swift_count" -ge 5 ]; then
   CURRENT_HASH=$(echo "$all_swift" | sort | shasum -a 256 | cut -d' ' -f1)
