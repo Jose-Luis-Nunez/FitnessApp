@@ -8,10 +8,14 @@
 #   4. test-coverage.sh       — Hint: new ViewModel/Service has corresponding tests?
 #   5. enforcement-audit.sh   — Hint: suggest audit for 5+ Swift file changes?
 #   6. agent-infrastructure.sh — Grind loop: agent-infra stamp fresh for .cursor/ changes?
+#   7. ui-state-sync.sh       — Hint: Int-counter + polling-loop anti-pattern in diff?
+#   8. duplicate-state.sh     — Hint: new @State VM + existing UUID-keyed VM cache?
+#   9. predicate-smell.sh     — Hint: SwiftData predicate anti-patterns (?., !., persistentModelID, @ModelActor)?
+#  10. adr-required.sh        — Hint: structural change without an ADR?
 #
 # Two enforcement patterns:
 #   Grind Loop — agent is sent back up to MAX_GRIND_ITERATIONS times (checks 1, 3, 6)
-#   Hint       — one-time suggestion, no retry (checks 2, 4, 5)
+#   Hint       — one-time suggestion, no retry (checks 2, 4, 5, 7, 8, 9, 10)
 
 set -euo pipefail
 
@@ -54,7 +58,11 @@ for check in \
   "$CHECKS_DIR/test-execution.sh" \
   "$CHECKS_DIR/test-coverage.sh" \
   "$CHECKS_DIR/enforcement-audit.sh" \
-  "$CHECKS_DIR/agent-infrastructure.sh"; do
+  "$CHECKS_DIR/agent-infrastructure.sh" \
+  "$CHECKS_DIR/ui-state-sync.sh" \
+  "$CHECKS_DIR/duplicate-state.sh" \
+  "$CHECKS_DIR/predicate-smell.sh" \
+  "$CHECKS_DIR/adr-required.sh"; do
 
   if [ -f "$check" ]; then
     result=$(bash "$check" 2>/dev/null || true)

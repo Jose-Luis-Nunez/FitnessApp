@@ -32,6 +32,9 @@ Apply severity tags to every finding:
 9. **Anti-Patterns** — `@StateObject`/`@ObservedObject` in new code, GCD, Combine for new async, `DateFormatter` in computed properties
 10. **Cleanup** — Stale TODOs, commented-out code, debug `print()` statements
 11. **Concurrency** — Unprotected shared mutable state, missing `@MainActor`, missing actor isolation
+12. **Test Mock Fidelity** (only for changed files under `Tests/`) — Closure-injected test stubs must mirror the production wiring's side-effects (see `reviewing-test-quality/SKILL.md` E.2). State pre-priming (`mock.X = expectedEndState` directly before `action()`) hides bugs (see E.3).
+13. **Duplicate Domain-State Holders** (when a diff introduces `@State` ViewModels) — Check `reviewing-code-changes/SKILL.md` §13h: a new `@State private var XViewModel` while a UUID-keyed VM cache for the same entity already exists requires either an ADR or refactor to single source.
+14. **SwiftData Predicate Anti-Patterns** (when a diff introduces `#Predicate` or `@Query(filter:`) — Check `reviewing-code-changes/SKILL.md` §14: optional/force chain in predicate (14a/b), `persistentModelID` comparison (14c), dynamic-filter `@Query` without `.id()` on parent (14d), `@ModelActor` mutation with `@Query` consumer (14e). Bug → require fix or ADR.
 
 ## Constraints
 

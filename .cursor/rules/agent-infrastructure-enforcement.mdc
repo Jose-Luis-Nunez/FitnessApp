@@ -2,18 +2,20 @@
 description: >-
   Enforces agent-infrastructure validation when .cursor/ files change.
   Two layers: this rule (advisory) and stop hook (grind loop).
-globs: ".cursor/**/*.md,.cursor/**/*.mdc,.cursor/**/*.sh"
+globs: ".cursor/rules/**/*.mdc,.cursor/skills/**/*.md,.cursor/hooks/**/*.sh,.cursor/agent-roles/**/*.md,.cursor/references/**/*.md,.cursor/commands/**/*.md,AGENTS.md"
 ---
 
 # Agent Infrastructure Enforcement
 
-When you change **1+ files** under `.cursor/` (rules, skills, hooks, references), run the `reviewing-agent-infrastructure` skill before reporting done. Write a stamp to `.cursor/hooks/state/agent-infrastructure.stamp.md`.
+When you change **1+ files** under `.cursor/` that are part of the agent infrastructure (rules, skills, hooks, agent-roles, references, commands), run the `reviewing-agent-infrastructure` skill before reporting done. Write a stamp to `.cursor/hooks/state/agent-infrastructure.stamp.md`.
 
 ## Layer 1: This Rule (L2g — Advisory)
 
 Tells you to validate. Fires when glob-matched `.cursor/` files are edited.
 
-Skip **only** for changes limited to `.cursor/hooks/state/` (runtime artifacts like stamps and hashes).
+Skip for:
+- `.cursor/hooks/state/` — runtime artifacts (stamps, hashes, scratchpads)
+- `.cursor/plans/` — descriptive plan documents, not infrastructure (no enforcement, no references)
 
 ## Layer 2: Stop Hook — Grind Loop (L5 — Enforced)
 

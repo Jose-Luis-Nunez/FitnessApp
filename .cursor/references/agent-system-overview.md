@@ -53,12 +53,13 @@ flowchart TD
 | `code-changes-enforcement.mdc` | Enforces post-change validation for 1+ Swift files. Three layers: advisory rule, stop hook, pre-commit. | `post-task-check.sh`, `code-changes.stamp.md`, `reviewing-code-changes/SKILL.md` |
 | `build-and-test.mdc` | All xcodebuild commands (build, unit/UI/package tests). DEVELOPER_DIR setup. Forbids swift test/swift build. | Referenced by hook, command, 2 skills |
 | `architecture-documentation-sync.mdc` | Enforces architecture-documentation.md sync when structural Swift changes occur. Stop hook Check 2 verifies at task end. | `architecture-documentation.md`, `reviewing-code-changes/SKILL.md` |
+| `ui-state-sync-enforcement.mdc` | Forbids monotonic Int-counter (`changeVersion`, `mutationVersion`, `dataGeneration`, `revision`) + `while !Task.isCancelled` polling-loop pattern as primary UI sync. Two layers: rule (advisory) + pre-commit Check 4 (blocking) + stop hook Check 7 (hint). Override via `.cursor/hooks/state/ui-state-sync-exception.stamp.md` (24h, ADR required). | `ui-state-sync.sh`, `ui-state-sync-exception.stamp.md`, ADR-0001 |
 
 ## L2g — Glob-Triggered Rules
 
 | File | Glob Pattern | What it does |
 |---|---|---|
-| `agent-infrastructure-enforcement.mdc` | `.cursor/**/*.md`, `.cursor/**/*.mdc`, `.cursor/**/*.sh` | Enforces agent-infrastructure validation when .cursor/ files change. Two layers: this rule (advisory) + stop hook Check 6. |
+| `agent-infrastructure-enforcement.mdc` | `.cursor/rules/**/*.mdc`, `.cursor/skills/**/*.md`, `.cursor/hooks/**/*.sh`, `.cursor/agent-roles/**/*.md`, `.cursor/references/**/*.md`, `.cursor/commands/**/*.md`, `AGENTS.md` | Enforces agent-infrastructure validation when infrastructure files under `.cursor/` change. Excludes `.cursor/plans/` (descriptive only) and `.cursor/hooks/state/` (runtime artifacts). Two layers: this rule (advisory) + stop hook Check 6. |
 
 ## L3 — Skills
 
@@ -83,7 +84,7 @@ flowchart TD
 
 | File | What it checks |
 |---|---|
-| `.git/hooks/pre-commit` | 1+ staged Swift files without fresh `code-changes.stamp.md`. Blocks commit with RULE/VIOLATION/FIX message. |
+| `.git/hooks/pre-commit` | Five blocking checks (in execution order): (1) 1+ staged Swift files without fresh `code-changes.stamp.md`; (2) `print()` in production Swift; (3) `adr-required` triggers (see L5 hooks) without ADR or exception stamp; (4) `ui-state-sync-enforcement.mdc` anti-pattern (Int-counter + polling loop) without exception stamp; (5) structural changes without `architecture-documentation.md` update. All blocks use RULE/VIOLATION/FIX format. |
 
 ## L5 — Stop Hook
 
@@ -91,7 +92,7 @@ Three enforcement patterns: **Grind Loop** (agent is sent back up to 3 times), *
 
 | File | Pattern | What it checks |
 |---|---|---|
-| `post-task-check.sh` | Orchestrator | Runs all 6 checks below, collects followup messages. |
+| `post-task-check.sh` | Orchestrator | Runs all 10 checks below, collects followup messages. |
 | `hooks.json` | — | Registers `post-task-check.sh` as stop hook with `loop_limit: 3`. |
 | `checks/code-validation.sh` | Grind Loop | Swift files changed — validation stamp fresh? |
 | `checks/architecture-sync.sh` | Stateless | Structural changes — architecture-documentation.md updated? |
@@ -99,7 +100,12 @@ Three enforcement patterns: **Grind Loop** (agent is sent back up to 3 times), *
 | `checks/test-coverage.sh` | Hint | New ViewModel/Service — corresponding test file exists? |
 | `checks/enforcement-audit.sh` | Hint | 5+ Swift files — suggest enforcement audit? |
 | `checks/agent-infrastructure.sh` | Grind Loop + Verifier | .cursor/ files changed — stamp fresh + content-validated (8 required fields)? |
+| `checks/ui-state-sync.sh` | Hint | Diff combines `changeVersion`-style Int counter + `while !Task.isCancelled` polling loop (ui-state-sync-enforcement.mdc anti-pattern)? |
+| `checks/duplicate-state.sh` | Hint | Diff introduces a new `@State private var XViewModel` while a UUID-keyed VM cache for the same entity already exists (reviewing-code-changes §13h)? |
+| `checks/predicate-smell.sh` | Hint | Diff introduces `#Predicate` with optional/force chain, `persistentModelID` comparison, or `@ModelActor` (reviewing-code-changes §14)? |
+| `checks/adr-required.sh` | Hint | Structural change detected (new @Observable in service, observation outside view, polling loop in service/VM, schema change, new package, Container.swift change) without an ADR present in working tree? |
 | `lib/grind-loop.sh` | Library | Shared grind-loop logic (stamp check, scratchpad, iteration, optional stamp content validation). |
+| `lib/adr-triggers.sh` | Library | Shared ADR trigger detection (used by both stop-hook check and `.git/hooks/pre-commit`). |
 
 ## L5s — SubagentStop Hook
 
@@ -164,3 +170,9 @@ Two independent layers catch failures:
 | `agent-infrastructure.log.md` | `reviewing-agent-infrastructure` | — | Cumulative log of agent learnings |
 | `enforcement-audit.hint-hash.txt` | `enforcement-audit.sh` | `enforcement-audit.sh` | Dedup hint for enforcement audit |
 | `test-coverage.hint-hash.txt` | `test-coverage.sh` | `test-coverage.sh` | Dedup hint for test coverage |
+| `ui-state-sync.hint-hash.txt` | `ui-state-sync.sh` | `ui-state-sync.sh` | Dedup hint for ui-state-sync anti-pattern |
+| `ui-state-sync-exception.stamp.md` | (manual + ADR link) | `ui-state-sync.sh`, `.git/hooks/pre-commit` | Override for ui-state-sync-enforcement.mdc rule (valid 24h, must reference ADR) |
+| `duplicate-state.hint-hash.txt` | `duplicate-state.sh` | `duplicate-state.sh` | Dedup hint for duplicate domain-state holders |
+| `predicate-smell.hint-hash.txt` | `predicate-smell.sh` | `predicate-smell.sh` | Dedup hint for SwiftData predicate anti-patterns |
+| `adr-required.hint-hash.txt` | `adr-required.sh` | `adr-required.sh` | Dedup hint for ADR-required structural changes |
+| `adr-exception.stamp.md` | (manual + reason) | `adr-required.sh`, `.git/hooks/pre-commit` | Override for adr-required hook (valid 24h, must include reason) |

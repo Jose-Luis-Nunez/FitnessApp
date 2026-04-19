@@ -8,8 +8,10 @@
 
 source "$HOOKS_DIR/lib/grind-loop.sh"
 
-changed_cursor=$(git diff --name-only HEAD 2>/dev/null | grep '^\.cursor/' | grep -v '/state/' || true)
-new_cursor=$(git ls-files --others --exclude-standard 2>/dev/null | grep '^\.cursor/' | grep -v '/state/' || true)
+# Exclude runtime state and descriptive plan files (plans are not infrastructure).
+EXCLUDE_RE='/state/|^\.cursor/plans/'
+changed_cursor=$(git diff --name-only HEAD 2>/dev/null | grep '^\.cursor/' | grep -Ev "$EXCLUDE_RE" || true)
+new_cursor=$(git ls-files --others --exclude-standard 2>/dev/null | grep '^\.cursor/' | grep -Ev "$EXCLUDE_RE" || true)
 all_cursor=$(printf '%s\n%s' "$changed_cursor" "$new_cursor" | grep -v '^$' || true)
 
 if [ -z "$all_cursor" ]; then

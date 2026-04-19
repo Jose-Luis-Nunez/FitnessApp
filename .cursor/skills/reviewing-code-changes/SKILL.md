@@ -353,6 +353,66 @@ This is DI-**evolution**, not DI-**reversal**. The Factory container and protoco
 - Protocol naming follows project convention: `*Storing`, `*Managing`, `*Caching`.
 - All protocols live in `FitnessCore` (cross-package boundary types).
 
+#### 13h. Duplicate Domain-State Holders
+
+A view that holds a `@State` ViewModel which mirrors a domain entity (with a stable identity / UUID) — while the **same identity** is also held elsewhere (another VM cache, another view's `@State`) — is a guaranteed sync bug. Two lifecycles for one identity = staleness.
+
+Real example (Bug 1):
+
+```swift
+struct TrainingView: View {
+    @State private var cardViewModel: ExerciseCardViewModel  // holds Exercise with id X
+
+    init(exercise: Exercise, ...) {
+        self._cardViewModel = State(wrappedValue: ExerciseCardViewModel(exercise: exercise) { ... })
+        // exercise is "frozen" here. After finishExercise(), cardViewModel.exercise stays stale.
+    }
+}
+
+// Simultaneously:
+@Observable class MuscleCategorySelectionViewModel {
+    private(set) var cardViewModels: [UUID: ExerciseCardViewModel]  // may also contain id X
+}
+```
+
+A `syncExercise(...)` workaround is a symptom, not a fix.
+
+##### Search Pattern
+
+```bash
+# @State VMs introduced by the diff:
+rg -n '@State\s+private\s+var\s+\w*ViewModel' FitnessApp Packages --glob '*.swift'
+
+# UUID-keyed VM caches that already exist:
+rg -n 'var\s+\w*ViewModels\s*:\s*\[UUID' Packages --glob '*.swift'
+```
+
+If both rg patterns hit in the same PR/diff → review trigger.
+
+##### Accepted Patterns (Fix Options)
+
+1. **Single source via `@Bindable`** on a SwiftData `@Model` — one identity, one lifecycle, observed by SwiftUI automatically:
+   ```swift
+   @Bindable var model: ExerciseModel
+   ```
+2. **Single source via `@Environment`** — the view reads through the existing cache instead of holding its own copy:
+   ```swift
+   @Environment(MuscleCategorySelectionViewModel.self) var selectionVM
+   var card: ExerciseCardViewModel { selectionVM.cardViewModels[id]! }
+   ```
+3. **Pure rendering** — view takes `Exercise` as `let`; parent re-supplies on change:
+   ```swift
+   struct TrainingView: View {
+       let exercise: Exercise   // re-rendered when parent updates
+   }
+   ```
+
+##### Reviewer Acceptance Criterion
+
+When a diff introduces `@State private var XViewModel` AND a VM cache for the same entity type already exists, the reviewer MUST require either:
+- An ADR or commit-body comment that explains why two lifecycles are intentionally OK, OR
+- One of the fix options above.
+
 #### 13g. Root Cause vs. Symptom
 
 Before implementing a fix, determine where it belongs:
@@ -375,6 +435,115 @@ When fixing a bug involving stale UI or missing updates:
 - Observation of state transitions (e.g. `isTrainingActive`) should not be used as a proxy for domain events (e.g. "exercise was completed"). Prefer explicit domain event signals (e.g. `lastCompletedExercise`).
 - If a fix requires observing **more than 2 properties** to detect a single logical event, it is likely a symptom fix — introduce a dedicated event property instead.
 - After a bug fix, ask: "If a new similar event is added tomorrow, does the fix still work, or do I need to add another observed property?" If the latter, the fix is fragile.
+
+### 14. SwiftData Predicate Anti-Patterns (after `#Predicate` or `Query(filter:` in diff)
+
+For every diff that introduces `#Predicate` or a `@Query(filter:)`, check the patterns below. Each is a known runtime-bug class on the iOS platform.
+
+#### 14a. Optional-Chain in Predicate
+
+```swift
+// BAD — broken before iOS 17.5, fragile after
+@Query(filter: #Predicate<ExerciseModel> { $0.workout?.id == workoutId })
+```
+
+Multi-hop chains (`?.a?.b`) crash at runtime with `unsupportedPredicate`.
+
+**Fix** — denormalise the foreign key onto the child model:
+
+```swift
+@Model class ExerciseModel {
+    @Attribute(.indexed) var workoutId: UUID   // denormalised
+    var workout: WorkoutModel?
+}
+
+@Query(filter: #Predicate<ExerciseModel> { $0.workoutId == workoutId })
+```
+
+#### 14b. Force-Unwrap in Predicate
+
+```swift
+// BAD — crashes on nil
+#Predicate { $0.workout!.id == workoutId }
+```
+
+**Fix** — same as 14a (denormalise).
+
+#### 14c. `persistentModelID` Comparison Without Tests
+
+```swift
+@Query(filter: #Predicate { $0.persistentModelID == capturedID })
+```
+
+Works in practice today but is **not clearly documented** in Apple's SwiftData refs — risky across OS updates.
+
+**Recommendation** — when the `@Model` already has `@Attribute(.unique) var id: UUID` (as `ExerciseModel` does), prefer `id == X`. Validated in this codebase via `ExerciseStorageService`.
+
+#### 14d. `@Query` Without View-Identity Under Dynamic Filter
+
+```swift
+struct CategoryTileView: View {
+    let workoutId: UUID                                   // changes when workout switches
+    @Query private var exercises: [ExerciseModel]
+    init(workoutId: UUID) {
+        self.workoutId = workoutId
+        _exercises = Query(filter: #Predicate { $0.workoutId == workoutId })
+        // Predicate is captured at init — stays stale on parent re-render with same struct identity.
+    }
+}
+
+// Parent — no .id() ⇒ same view identity ⇒ stale query
+ForEach(categories) { CategoryTileView(workoutId: currentWorkoutId) }
+```
+
+**Fix** — force a fresh view identity when the filter input changes:
+
+```swift
+ForEach(categories) {
+    CategoryTileView(workoutId: currentWorkoutId)
+        .id(currentWorkoutId)      // new identity on switch ⇒ fresh @Query
+}
+```
+
+#### 14e. `@ModelActor` Mutation While `@Query` Renders on `MainActor`
+
+```swift
+@ModelActor actor BackgroundUpdater {
+    func updateAll() async {
+        // mutates ExerciseModel instances
+        try? modelContext.save()
+    }
+}
+```
+
+A `@Query` on the MainActor view does **not reliably** see updates from a background `ModelContext` (Stack Overflow, Jan 2026; Apple Forums Apr 2025).
+
+**Fix**:
+- Default: keep everything on `@MainActor`, single `ModelContext` (see ADR-001).
+- If background mutation is required: emit an explicit refresh signal back to the MainActor context after `save()`.
+
+#### Search Patterns for Reviewer
+
+```bash
+# 14a + 14b (optional / force chain in #Predicate):
+rg -n '#Predicate' --glob '*.swift' -A2 | rg '\?\.|\!\.'
+
+# 14c (persistentModelID in predicate):
+rg -n 'persistentModelID\s*==' --glob '*.swift'
+
+# 14d (dynamic-filter @Query — manual verification needed in parent ForEach):
+rg -n '@Query' --glob '*.swift' -A5 | rg 'filter:.*captured|let.*=.*self\.'
+
+# 14e (any @ModelActor mutator):
+rg -n '@ModelActor' --glob '*.swift'
+```
+
+#### Acceptance Criterion
+
+A diff that introduces `#Predicate` MUST:
+- contain no `?.` or `!.` chains, OR comment explicitly why the chain is safe and tested
+- if filter input is dynamic: parent must enforce view identity via `.id()`
+- on `@ModelActor` mutation: an ADR must justify the MainActor bypass and describe the refresh signal back to UI
 
 ## Output: Orchestrated Subagent Review
 
