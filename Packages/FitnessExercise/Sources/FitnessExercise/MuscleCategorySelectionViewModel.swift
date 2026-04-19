@@ -27,19 +27,11 @@ public final class MuscleCategorySelectionViewModel {
     public init(
         coordinatorCache: TrainingCoordinatorCaching? = nil,
         exerciseManagement: ExerciseManaging? = nil,
-        workoutStorage: WorkoutStoring? = nil,
-        exerciseStorage: ExerciseStoring? = nil
+        workoutStorage: WorkoutStoring? = nil
     ) {
         self.coordinatorCache = coordinatorCache ?? Container.shared.trainingCoordinatorCache()
         self.exerciseManagementService = exerciseManagement ?? Container.shared.exerciseManagement()
         self.workoutStorageService = workoutStorage ?? Container.shared.workoutStorage()
-        // The `exerciseStorage` parameter is kept in the public init signature for
-        // backwards-compat with existing call sites (Tests use it for DI). Its
-        // previous consumer (`startStorageObservation` polling) was removed in
-        // T8d — SwiftData @Query in the views is now the live read path. The
-        // form/picker write path still routes through `exerciseManagementService`
-        // -> Storage.
-        _ = exerciseStorage
         updateCategories(for: workoutStorageService.currentWorkout)
         refreshExercises()
         startWorkoutObservation()

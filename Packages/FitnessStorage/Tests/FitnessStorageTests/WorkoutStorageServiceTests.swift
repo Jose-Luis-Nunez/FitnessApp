@@ -10,7 +10,6 @@ import Factory
 @MainActor
 private final class SpyExerciseStorage: ExerciseStoring {
     var exercisesByKey: [String: [Exercise]] = [:]
-    private(set) var changeVersion: Int = 0
     private(set) var saveForWorkoutCalls: [(exercises: [Exercise], workoutId: UUID, category: MuscleCategoryGroup)] = []
     private(set) var loadForWorkoutCalls: [(workoutId: UUID, category: MuscleCategoryGroup)] = []
 
@@ -22,7 +21,6 @@ private final class SpyExerciseStorage: ExerciseStoring {
     func saveForWorkout(_ exercises: [Exercise], workoutId: UUID, category: MuscleCategoryGroup) {
         saveForWorkoutCalls.append((exercises, workoutId, category))
         exercisesByKey[key(workoutId, category)] = exercises
-        changeVersion += 1
     }
 
     func seed(_ exercises: [Exercise], workoutId: UUID, category: MuscleCategoryGroup) {
