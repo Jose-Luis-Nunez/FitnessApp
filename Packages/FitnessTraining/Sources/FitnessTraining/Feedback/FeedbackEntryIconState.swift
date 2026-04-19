@@ -23,6 +23,27 @@ public enum FeedbackEntryIconState: Equatable {
     /// resurrects a draft in memory — closing the sheet without Save must not
     /// visually demote the Done.
     case done
+
+    /// Image-asset name shipped in `FitnessApp/Assets.xcassets/`. All three
+    /// assets share an identical 1024×1024 canvas with the orange plus-cross
+    /// centred at (0.500, 0.499); `.draft` and `.done` overlay an additional
+    /// green status badge on top — the render path is therefore uniform.
+    public var assetName: String {
+        switch self {
+        case .entry: return "feedback_entry"
+        case .draft: return "feedback_entry_draft"
+        case .done:  return "feedback_entry_done"
+        }
+    }
+
+    /// Voice-Over label for the entry-point button.
+    public var accessibilityLabel: String {
+        switch self {
+        case .entry: return "Add feedback"
+        case .draft: return "Feedback draft in progress"
+        case .done:  return "Feedback saved"
+        }
+    }
 }
 
 /// Pure resolver: turns the (draft, storage, sessionId) tuple for a given

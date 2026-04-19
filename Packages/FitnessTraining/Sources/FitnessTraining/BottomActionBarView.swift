@@ -294,37 +294,48 @@ public struct FloatingActionButtonsView: View {
         action: @escaping () -> Void,
         style: MenuItemStyle
     ) -> some View {
-        Button(action: action) {
-            ZStack {
-                TrainingGlassEffectCompat.circleGlass()
-                    .overlay(
-                        Circle().stroke(AppStyle.Color.white.opacity(0.10), lineWidth: 1)
-                    )
-
-                Image(icon)
-                    .renderingMode(.template)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 30, height: 30)
-                    .foregroundColor(AppStyle.Color.white)
-            }
-        }
-        .frame(width: 44, height: 44)
-        .contentShape(Circle())
-        .buttonStyle(.plain)
-        .accessibilityIdentifier(accessibilityID(for: style, text: ""))
+        glassCircleIconButton(
+            assetName: icon,
+            renderingMode: .template,
+            tint: AppStyle.Color.white,
+            accessibilityIdentifier: accessibilityID(for: style, text: ""),
+            action: action
+        )
     }
 
     /// Feedback entry-point icon — renders one of three bitmap assets that the
-    /// designer ships explicitly per state:
-    ///   - `.entry` → `feedback_entry`
-    ///   - `.draft` → `feedback_entry_draft`
-    ///   - `.done`  → `feedback_entry_done`
-    /// The assets are rendered in their **original** mode (no template tint)
-    /// so the per-state colour baked into each PNG is preserved.
+    /// designer ships explicitly per state (`feedback_entry`,
+    /// `feedback_entry_draft`, `feedback_entry_done`). All three assets share
+    /// the same 1024×1024 canvas with the orange plus-cross centred at
+    /// (0.500, 0.499) and (for `.draft` / `.done`) the green badge composited
+    /// on top at the same canvas position — so a single uniform render path
+    /// is enough; no per-state geometry is needed.
     @ViewBuilder
     private func feedbackIconButton(
         state: FeedbackEntryIconState,
+        action: @escaping () -> Void
+    ) -> some View {
+        glassCircleIconButton(
+            assetName: state.assetName,
+            renderingMode: .original,
+            tint: nil,
+            accessibilityIdentifier: accessibilityID(for: .feedback, text: ""),
+            action: action
+        )
+        .accessibilityLabel(state.accessibilityLabel)
+    }
+
+    /// Shared chrome for every round glass-circle icon button in the bottom
+    /// bar (Quick-Done, Feedback): a `circleGlass()` with the standard
+    /// 10%-white hairline stroke, a centred bitmap icon, and a 44×44 tap
+    /// target. The icon image is sized smaller than the glass circle —
+    /// otherwise the frame-less `circleGlass()` would expand to match the
+    /// largest sibling in the `ZStack`.
+    private func glassCircleIconButton(
+        assetName: String,
+        renderingMode: Image.TemplateRenderingMode,
+        tint: Color?,
+        accessibilityIdentifier: String,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
@@ -334,35 +345,32 @@ public struct FloatingActionButtonsView: View {
                         Circle().stroke(AppStyle.Color.white.opacity(0.10), lineWidth: 1)
                     )
 
-                Image(assetName(for: state))
-                    .renderingMode(.original)
+                Image(assetName)
+                    .renderingMode(renderingMode)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 44, height: 44)
+                    .frame(width: Self.iconSize, height: Self.iconSize)
+                    .foregroundColor(tint)
             }
         }
-        .frame(width: 48, height: 48)
+        .frame(width: Self.glassCircleSize, height: Self.glassCircleSize)
         .contentShape(Circle())
         .buttonStyle(.plain)
-        .accessibilityIdentifier(accessibilityID(for: .feedback, text: ""))
-        .accessibilityLabel(accessibilityLabel(for: state))
+        .accessibilityIdentifier(accessibilityIdentifier)
     }
 
-    private func assetName(for state: FeedbackEntryIconState) -> String {
-        switch state {
-        case .entry: return "feedback_entry"
-        case .draft: return "feedback_entry_draft"
-        case .done:  return "feedback_entry_done"
-        }
-    }
+    // MARK: - Glass-circle icon button geometry
 
-    private func accessibilityLabel(for state: FeedbackEntryIconState) -> String {
-        switch state {
-        case .entry: return "Add feedback"
-        case .draft: return "Feedback draft in progress"
-        case .done:  return "Feedback saved"
-        }
-    }
+    /// Outer tap-target / glass-circle diameter. Matches the bottom-bar
+    /// capsule's minimum height (`capsuleHeight = max(48, ...)`) so the
+    /// circular Quick-Done / Feedback buttons line up flush with the capsule
+    /// they sit next to in the same `HStack`. Also exceeds Apple HIG's 44pt
+    /// minimum tap target.
+    private static let glassCircleSize: CGFloat = 48
+    /// Image render size inside the glass circle. ~67% of the circle diameter
+    /// (Apple HIG glyph-in-circle proportion) so the icon visually breathes
+    /// and the frame-less `circleGlass()` isn't stretched by the image.
+    private static let iconSize: CGFloat = 32
 
     private func accessibilityID(for style: MenuItemStyle, text: String) -> String {
         switch style {
