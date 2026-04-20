@@ -78,11 +78,11 @@ public struct ActiveSetEditPickerView: View {
 
                 VStack(spacing: 0) {
                     HStack {
-                        Text("Wiederholung")
+                        Text("Reps")
                             .font(AppStyle.Font.sheetSectionLabel)
                             .foregroundColor(textColor)
                             .frame(maxWidth: .infinity)
-                        Text("Gewicht")
+                        Text("Weight")
                             .font(AppStyle.Font.sheetSectionLabel)
                             .foregroundColor(textColor)
                             .frame(maxWidth: .infinity)

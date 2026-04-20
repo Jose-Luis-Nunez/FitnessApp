@@ -152,7 +152,7 @@ public struct FloatingActionButtonsView: View {
             if viewModel.showQuickDoneBeendenButton {
                 HStack(spacing: 6) {
                     glassCapsuleButton(
-                        text: "Beenden",
+                        text: "Finish",
                         action: onFinish,
                         style: .finish
                     )
@@ -202,7 +202,7 @@ public struct FloatingActionButtonsView: View {
 
                             if viewModel.showFinishButton {
                                 menuTextItem(
-                                    text: "Beenden",
+                                    text: "Finish",
                                     action: onFinish,
                                     style: .finish
                                 )

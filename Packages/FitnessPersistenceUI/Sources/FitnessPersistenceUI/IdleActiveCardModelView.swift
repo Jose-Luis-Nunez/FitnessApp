@@ -288,9 +288,7 @@ private extension IdleActiveCardModelView {
                         .resizable()
                         .scaledToFit()
                         .foregroundColor(AppStyle.Color.yellow)
-                        .frame(width: AppStyle.Layout.checkmarkSize * 2, height: AppStyle.Layout.checkmarkSize * 2)
-                        .frame(width: AppStyle.Layout.checkmarkSize, height: AppStyle.Layout.checkmarkSize)
-                        .clipped()
+                        .frame(width: AppStyle.Layout.playButtonSize, height: AppStyle.Layout.playButtonSize)
                 } else {
                     ZStack {
                         Circle()

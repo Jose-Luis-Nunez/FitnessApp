@@ -46,9 +46,9 @@ private struct TrainingPickerContent: View {
             ActiveSetEditPickerView(
                 title: {
                     switch vm.editMode {
-                    case .less: "Verschlechtert"
-                    case .more: "Verbessert"
-                    case .edit: "Bearbeiten"
+                    case .less: "Less"
+                    case .more: "More"
+                    case .edit: "Edit"
                     }
                 }(),
                 selectedReps: $vm.repsInput,

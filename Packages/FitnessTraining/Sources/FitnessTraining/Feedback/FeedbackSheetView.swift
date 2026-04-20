@@ -20,7 +20,10 @@ import FitnessUI
 /// - `.fullScreenCover` would not render the grabber the user expects.
 ///
 /// Layout:
-/// - Black background (set on the sheet via `.presentationBackground`).
+/// - App background (`AppStyle.Color.backgroundColor`, `#0A090E`) set on the
+///   sheet via `.presentationBackground`. Matches `MuscleCategoryView` and
+///   `AnalyticsView` so the sheet reads as a continuation of the app shell
+///   rather than a foreign black surface.
 /// - Title "Exercise Feedback" centered at the top of the content area
 ///   (no NavigationStack, no toolbar — keep it lean and focussed).
 /// - `ScrollView` with progressive-disclosure sections:
@@ -139,7 +142,7 @@ public struct FeedbackSheetView: View {
         .coordinateSpace(name: Self.contentCoordinateSpace)
         .scrollIndicators(.hidden)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppStyle.Color.black)
+        .background(AppStyle.Color.backgroundColor)
         .onPreferenceChange(InitialContentHeightKey.self) { initialBlockMaxY in
             // initialBlockMaxY is the bottom edge of the SymptomChipsView measured
             // from the top of the ScrollView content (i.e. the natural height of
@@ -160,7 +163,7 @@ public struct FeedbackSheetView: View {
                 )
                 .padding(.horizontal, AppStyle.Padding.horizontal)
                 .padding(.top, 24)
-                .background(AppStyle.Color.black)
+                .background(AppStyle.Color.backgroundColor)
                 .transition(.opacity)
             }
         }

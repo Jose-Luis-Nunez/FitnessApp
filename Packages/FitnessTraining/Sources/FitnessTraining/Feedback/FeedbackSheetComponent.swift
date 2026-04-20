@@ -80,7 +80,7 @@ public struct FeedbackSheetComponent: View {
                     )
                     .presentationDetents([.height(smallDetentHeight), .large], selection: $selectedDetent)
                     .presentationDragIndicator(.visible)
-                    .presentationBackground(AppStyle.Color.black)
+                    .presentationBackground(AppStyle.Color.backgroundColor)
                     .onChange(of: vm.symptoms.isEmpty) { _, isEmpty in
                         withAnimation(.easeInOut(duration: 0.25)) {
                             selectedDetent = isEmpty ? .height(smallDetentHeight) : .large
