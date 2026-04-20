@@ -33,19 +33,21 @@ public final class WorkoutStorageService: WorkoutStoring {
         self.userDefaults = defaults
 
         // Two-phase startup. Phase 1 repairs any inherited inconsistency from
-        // the pre-fix bug where the service was eagerly resolved before the
-        // JSON → SwiftData import landed (Lisa's iPhone 17 case). Phase 2 is
-        // the genuine cold-start path where we seed an initial workout for
-        // brand-new installs.
+        // the pre-fix legacy-import startup race, where the service was eagerly
+        // resolved before the JSON → SwiftData import landed and seeded an
+        // empty auto-default that later sat on top of the imported workouts.
+        // Phase 2 is the genuine cold-start path where we seed an initial
+        // workout for brand-new installs.
         healInheritedAutoDefaultIfNeeded()
         reload()
         seedFirstWorkoutIfStoreIsEmpty()
     }
 
-    /// Repairs the specific corruption shape Lisa's phone exhibited: a
-    /// service-created auto-default workout (`name == defaultAutoWorkoutName`,
-    /// `isDefault == true`, **no exercises**, **no analytics**) sitting next to
-    /// the user's real, populated workouts that were imported afterwards. We
+    /// Repairs the corruption shape produced by the pre-fix legacy-import
+    /// startup race: a service-created auto-default workout (`name ==
+    /// defaultAutoWorkoutName`, `isDefault == true`, **no exercises**, **no
+    /// analytics**) sitting next to the user's real, populated workouts that
+    /// were imported afterwards. We
     /// can recognise this only by structure — name + emptiness + the presence
     /// of other workouts. Heuristic, but bounded: a deliberate, populated
     /// "Workout 1" is never deleted, and a brand-new install (only the auto

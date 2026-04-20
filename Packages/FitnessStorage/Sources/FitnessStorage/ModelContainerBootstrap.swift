@@ -46,9 +46,9 @@ private let bootstrapLogger = Logger(subsystem: "FitnessStorage", category: "Boo
 /// `WorkoutStorageService` that initialises eagerly (e.g. as a SwiftUI `@State`
 /// default) would observe an empty store, create a default "Workout 1", and
 /// only **then** see the import land — leaving the user's real workouts orphaned
-/// behind a freshly-created auto-default. This is the exact scenario that hit
-/// Lisa's iPhone 17 (Apr 2026); see `WorkoutStorageService.healInitialState`
-/// for the second line of defence that repairs already-broken installs.
+/// behind a freshly-created auto-default. The `WorkoutStorageService`
+/// `healInheritedAutoDefaultIfNeeded` pass is the second line of defence that
+/// repairs installs that already booted in this broken order.
 public enum ModelContainerBootstrap {
     public static func makeProductionContainer() -> ModelContainer {
         let container = makeContainer()

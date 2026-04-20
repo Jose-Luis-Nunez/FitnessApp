@@ -33,8 +33,8 @@ struct FitnessAppApp: App {
         // The `WorkoutStorageService` initialiser MUST run after this — pulling
         // it onto a `@State` default expression would resolve it as a
         // stored-property default (i.e. before `init()`), which is exactly the
-        // race that caused Lisa's iPhone 17 to fall back to an empty
-        // auto-"Workout 1".
+        // legacy-import startup race that caused pre-fix installs to fall back
+        // to an empty auto-"Workout 1".
         let container = Container.shared.modelContainer()
         self.modelContainer = container
 
