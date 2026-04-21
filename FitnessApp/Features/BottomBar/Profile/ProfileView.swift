@@ -4,6 +4,8 @@ import FitnessProfile
 
 struct ProfileView: View {
     @State private var viewModel = ProfileViewModel()
+    @State private var isBodyExpanded = false
+    @State private var isBMIExpanded = false
     @FocusState private var focusedField: ProfileField?
 
     enum ProfileField: Hashable {
@@ -24,6 +26,7 @@ struct ProfileView: View {
                         nicknameSection
                         bodyDataSection
                         bmiSection
+                        TramDeparturesCardView(viewModel: viewModel.tramVM)
                         Spacer(minLength: AppStyle.Layout.profileBottomSpacer)
                     }
                     .padding(.horizontal, AppStyle.Padding.horizontal)
@@ -219,33 +222,50 @@ struct ProfileView: View {
     private var bodyDataSection: some View {
         ProfileCard {
             VStack(spacing: AppStyle.Padding.card) {
-                HStack {
-                    Text("Körperdaten")
-                        .font(AppStyle.Font.sectionHeadline)
-                        .foregroundColor(AppStyle.Color.white)
-                        .fixedSize()
+                Button {
+                    isBodyExpanded.toggle()
+                } label: {
+                    HStack {
+                        Text("Körperdaten")
+                            .font(AppStyle.Font.sectionHeadline)
+                            .foregroundColor(AppStyle.Color.white)
+                            .fixedSize()
 
-                    Spacer()
+                        Spacer()
 
-                    if !viewModel.isEditingBody {
-                        Button {
-                            viewModel.startEditingBody()
-                        } label: {
-                            Image(systemName: "pencil.circle.fill")
-                                .font(AppStyle.Font.profileEditIcon)
-                                .foregroundColor(AppStyle.Color.green)
+                        if isBodyExpanded && !viewModel.isEditingBody {
+                            Button {
+                                viewModel.startEditingBody()
+                            } label: {
+                                Image(systemName: "pencil.circle.fill")
+                                    .font(AppStyle.Font.profileEditIcon)
+                                    .foregroundColor(AppStyle.Color.green)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("id_profile_body_edit")
                         }
-                        .contentShape(Rectangle())
-                        .accessibilityIdentifier("id_profile_body_edit")
+
+                        Image(systemName: "chevron.down")
+                            .font(AppStyle.Font.profileSmallIcon)
+                            .foregroundColor(AppStyle.Color.greenLight)
+                            .rotationEffect(.degrees(isBodyExpanded ? 180 : 0))
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("id_profile_body_header")
+
+                if isBodyExpanded {
+                    if viewModel.isEditingBody {
+                        bodyEditForm
+                    } else {
+                        bodyDisplayGrid
                     }
                 }
-
-                if viewModel.isEditingBody {
-                    bodyEditForm
-                } else {
-                    bodyDisplayGrid
-                }
             }
+        }
+        .onChange(of: viewModel.isEditingBody) { _, isEditing in
+            if isEditing { isBodyExpanded = true }
         }
     }
 
@@ -352,66 +372,81 @@ struct ProfileView: View {
         if viewModel.hasBodyData || viewModel.bmiResult != nil {
             ProfileCard {
                 VStack(spacing: AppStyle.CornerRadius.defaultButton) {
-                    HStack {
-                        Text("BMI")
-                            .font(AppStyle.Font.sectionHeadline)
-                            .foregroundColor(AppStyle.Color.white)
-                            .fixedSize()
-
-                        Spacer()
-
-                        if viewModel.isLoadingBMI {
-                            ProgressView()
-                                .tint(AppStyle.Color.green)
-                        }
-                    }
-
-                    if let bmi = viewModel.bmiResult {
-                        HStack(alignment: .firstTextBaseline, spacing: AppStyle.DeviceLayout.cardSpacing) {
-                            Text(viewModel.formattedBMI)
-                                .font(AppStyle.Font.profileCardValue)
-                                .foregroundColor(bmiColor(for: bmi.category))
-                                .accessibilityIdentifier("id_profile_bmi_value")
-
-                            Text(bmi.category.displayName)
-                                .font(AppStyle.Font.profileBMICategory)
-                                .foregroundColor(bmiColor(for: bmi.category))
-                                .fixedSize()
-                                .accessibilityIdentifier("id_profile_bmi_category")
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                        bmiBar(value: bmi.value)
-                    } else if !viewModel.hasBodyData {
-                        Text("Gib Gewicht und Größe ein, um deinen BMI zu berechnen.")
-                            .font(AppStyle.Font.profileCardTitle)
-                            .foregroundColor(AppStyle.Color.gray)
-                    }
-
-                    if let error = viewModel.bmiError {
-                        HStack(spacing: 4) {
-                            Image(systemName: "wifi.slash")
-                                .font(AppStyle.Font.profileSmallIcon)
-                            Text("Offline-Berechnung: \(error)")
-                                .font(AppStyle.Font.detailCaption)
-                        }
-                        .foregroundColor(AppStyle.Color.yellow)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-
                     Button {
-                        viewModel.fetchBMI()
+                        isBMIExpanded.toggle()
                     } label: {
-                        HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
-                            Image(systemName: "arrow.clockwise")
-                                .font(AppStyle.Font.profileSmallIcon)
-                            Text("Aktualisieren")
-                                .font(AppStyle.Font.pickerAction)
+                        HStack(alignment: .firstTextBaseline, spacing: AppStyle.DeviceLayout.cardSpacing) {
+                            Text("BMI")
+                                .font(AppStyle.Font.sectionHeadline)
+                                .foregroundColor(AppStyle.Color.white)
                                 .fixedSize()
+
+                            if let bmi = viewModel.bmiResult {
+                                Text(viewModel.formattedBMI)
+                                    .font(AppStyle.Font.profileCardTitle)
+                                    .foregroundColor(bmiColor(for: bmi.category))
+                                    .fixedSize()
+                            }
+
+                            Spacer()
+
+                            if viewModel.isLoadingBMI {
+                                ProgressView()
+                                    .tint(AppStyle.Color.green)
+                            }
+
+                            Image(systemName: "chevron.down")
+                                .font(AppStyle.Font.profileSmallIcon)
+                                .foregroundColor(AppStyle.Color.greenLight)
+                                .rotationEffect(.degrees(isBMIExpanded ? 180 : 0))
                         }
-                        .foregroundColor(AppStyle.Color.green)
+                        .contentShape(Rectangle())
                     }
-                    .accessibilityIdentifier("id_profile_bmi_refresh")
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("id_profile_bmi_header")
+
+                    if isBMIExpanded {
+                        if let bmi = viewModel.bmiResult {
+                            HStack(alignment: .firstTextBaseline, spacing: AppStyle.DeviceLayout.cardSpacing) {
+                                Text(viewModel.formattedBMI)
+                                    .font(AppStyle.Font.profileCardValue)
+                                    .foregroundColor(bmiColor(for: bmi.category))
+                                    .accessibilityIdentifier("id_profile_bmi_value")
+
+                                Text(bmi.category.displayName)
+                                    .font(AppStyle.Font.profileBMICategory)
+                                    .foregroundColor(bmiColor(for: bmi.category))
+                                    .fixedSize()
+                                    .accessibilityIdentifier("id_profile_bmi_category")
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                            bmiBar(value: bmi.value)
+                        } else if !viewModel.hasBodyData {
+                            Text("Gib Gewicht und Größe ein, um deinen BMI zu berechnen.")
+                                .font(AppStyle.Font.profileCardTitle)
+                                .foregroundColor(AppStyle.Color.gray)
+                        }
+
+                        if let error = viewModel.bmiError {
+                            HStack(spacing: 4) {
+                                Image(systemName: "wifi.slash")
+                                    .font(AppStyle.Font.profileSmallIcon)
+                                Text("Offline-Berechnung: \(error)")
+                                    .font(AppStyle.Font.detailCaption)
+                            }
+                            .foregroundColor(AppStyle.Color.yellow)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
+                        HStack {
+                            Spacer()
+                            RefreshActionButton(isLoading: viewModel.isLoadingBMI) {
+                                viewModel.fetchBMI()
+                            }
+                            .accessibilityIdentifier("id_profile_bmi_refresh")
+                        }
+                    }
                 }
             }
         }

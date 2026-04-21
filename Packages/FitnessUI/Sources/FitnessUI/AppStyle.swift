@@ -36,6 +36,10 @@ public enum AppStyle {
         public static let profileBMIBarHeight: CGFloat = 8
         public static let profileBMIThumbSize: CGFloat = 14
         public static let profileBottomSpacer: CGFloat = 100
+        /// Reserved minimum height for the Tram departures area when expanded so
+        /// swapping origin/destination doesn't collapse the card and yank the
+        /// surrounding ScrollView. Sized for 3 departure rows + breathing room.
+        public static let tramDeparturesAreaMinHeight: CGFloat = 180
         public static let numberPadKeySize: CGFloat = 60
         public static let numberPadSpacing: CGFloat = 12
         public static let scrollWheelItemHeight: CGFloat = 60
