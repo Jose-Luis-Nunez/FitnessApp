@@ -236,6 +236,26 @@ struct TramDeparturesViewModelTests {
         #expect(service.callCount == countAfterStop, "No further refreshes after collapse")
     }
 
+    /// Pins the contract that auto-refresh continues across multiple poll
+    /// cycles as long as the card stays expanded — i.e. the only legitimate
+    /// stoppers are `toggleExpanded` (collapse) and the scene-phase handler.
+    /// Removing the previous `.onDisappear { stopAutoRefresh() }` from the
+    /// card view (Apr 2026) made tab-switches stop killing the polling loop;
+    /// this test guards that the polling lifecycle now matches the documented
+    /// "while expanded and app active" contract.
+    @Test func toggleExpanded_pollingContinuesAcrossMultipleCycles() async {
+        let service = MockService()
+        service.results = [Self.makeDeparture(id: "a")]
+        let vm = Self.makeVM(service: service, refreshInterval: 0.02)
+        vm.toggleExpanded()
+        // Wait long enough for at least 3 refresh cycles to fire.
+        try? await Task.sleep(nanoseconds: 120_000_000)
+        let countAfterCycles = service.callCount
+        #expect(vm.isExpanded == true, "Expanded must stay true without explicit collapse")
+        #expect(countAfterCycles >= 3, "Polling loop must keep firing across cycles, got \(countAfterCycles)")
+        vm.stopAutoRefresh()
+    }
+
     // MARK: - onBecameActive
 
     @Test func onBecameActive_withoutLastUpdated_triggersRefresh() async {

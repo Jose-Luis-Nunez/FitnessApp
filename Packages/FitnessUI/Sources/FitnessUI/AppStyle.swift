@@ -30,12 +30,21 @@ public enum AppStyle {
         public static let doneButtonWidth: CGFloat = 80
         public static let doneButtonHeight: CGFloat = 28
         public static let profileCardMinHeight: CGFloat = 100
+        /// Unified minimum height for profile cards when collapsed so Nickname,
+        /// Body Details, BMI and Tram header rows render at the same size.
+        /// Sized for a two-line header (sectionHeadline + profileCardTitle)
+        /// plus `Padding.card` on both sides.
+        public static let profileCardCollapsedMinHeight: CGFloat = 72
         public static let profileAvatarSize: CGFloat = 80
         public static let profileInputPadding: CGFloat = 12
         public static let profileButtonPadding: CGFloat = 10
         public static let profileBMIBarHeight: CGFloat = 8
         public static let profileBMIThumbSize: CGFloat = 14
         public static let profileBottomSpacer: CGFloat = 100
+        /// Height of the wheel-picker row used by the Body Details edit form.
+        /// Matches the 150pt row used in `ExerciseWheelPickerRow` so the wheels
+        /// feel consistent across the app.
+        public static let profileWheelHeight: CGFloat = 150
         /// Reserved minimum height for the Tram departures area when expanded so
         /// swapping origin/destination doesn't collapse the card and yank the
         /// surrounding ScrollView. Sized for 3 departure rows + breathing room.

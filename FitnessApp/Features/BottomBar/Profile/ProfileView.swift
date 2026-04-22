@@ -10,9 +10,6 @@ struct ProfileView: View {
 
     enum ProfileField: Hashable {
         case nickname
-        case weight
-        case height
-        case age
     }
 
     var body: some View {
@@ -32,6 +29,7 @@ struct ProfileView: View {
                     .padding(.horizontal, AppStyle.Padding.horizontal)
                     .padding(.top, AppStyle.Padding.titleTop)
                 }
+                .scrollDismissesKeyboard(.interactively)
                 .onChange(of: focusedField) { field in
                     guard let field else { return }
                     withAnimation {
@@ -40,50 +38,13 @@ struct ProfileView: View {
                 }
             }
         }
-        .onTapGesture {
-            focusedField = nil
-        }
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button(keyboardButtonLabel) {
-                    handleKeyboardAction()
-                }
-                .foregroundColor(AppStyle.Color.green)
-            }
-        }
         .onAppear {
             viewModel.loadInitialBMI()
         }
-        .alert("Fehler", isPresented: $viewModel.showNicknameAlert) {
+        .alert("Error", isPresented: $viewModel.showNicknameAlert) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("Nickname darf nicht leer sein.")
-        }
-    }
-
-    private var keyboardButtonLabel: String {
-        switch focusedField {
-        case .weight: return "Weiter"
-        case .height: return "Weiter"
-        case .nickname, .age: return "Fertig"
-        case nil: return "Fertig"
-        }
-    }
-
-    private func handleKeyboardAction() {
-        switch focusedField {
-        case .nickname:
-            viewModel.saveNickname()
-        case .weight:
-            focusedField = .height
-        case .height:
-            focusedField = .age
-        case .age:
-            focusedField = nil
-            viewModel.saveBodyData()
-        case nil:
-            break
+            Text("Nickname cannot be empty.")
         }
     }
 
@@ -110,13 +71,8 @@ struct ProfileView: View {
                     .font(AppStyle.Font.profileGreeting)
                     .foregroundColor(AppStyle.Color.white)
                     .accessibilityIdentifier("id_profile_greeting")
-
-                Text("Willkommen zurück!")
-                    .font(AppStyle.Font.profileSubtitle)
-                    .foregroundColor(AppStyle.Color.greenLight)
-                    .accessibilityIdentifier("id_profile_subtitle")
             } else {
-                Text("Profil")
+                Text("Profile")
                     .font(AppStyle.Font.profileGreeting)
                     .foregroundColor(AppStyle.Color.white)
             }
@@ -136,7 +92,7 @@ struct ProfileView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .fixedSize()
 
-                    TextField("Dein Nickname", text: $viewModel.inputNickname)
+                    TextField("Your nickname", text: $viewModel.inputNickname)
                         .foregroundColor(AppStyle.Color.white)
                         .font(AppStyle.Font.tileValue)
                         .padding(AppStyle.Layout.profileInputPadding)
@@ -154,7 +110,7 @@ struct ProfileView: View {
                                 focusedField = nil
                                 viewModel.cancelNicknameEdit()
                             } label: {
-                                Text("Abbrechen")
+                                Text("Cancel")
                                     .font(AppStyle.Font.pickerAction)
                                     .foregroundColor(AppStyle.Color.white)
                                     .frame(maxWidth: .infinity)
@@ -167,7 +123,7 @@ struct ProfileView: View {
                             focusedField = nil
                             viewModel.saveNickname()
                         } label: {
-                            Text("Speichern")
+                            Text("Save")
                                 .font(AppStyle.Font.pickerAction)
                                 .foregroundColor(AppStyle.Color.white)
                                 .frame(maxWidth: .infinity)
@@ -225,8 +181,8 @@ struct ProfileView: View {
                 Button {
                     isBodyExpanded.toggle()
                 } label: {
-                    HStack {
-                        Text("Körperdaten")
+                    HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
+                        Text("Body Details")
                             .font(AppStyle.Font.sectionHeadline)
                             .foregroundColor(AppStyle.Color.white)
                             .fixedSize()
@@ -271,48 +227,13 @@ struct ProfileView: View {
 
     private var bodyEditForm: some View {
         VStack(spacing: AppStyle.CornerRadius.defaultButton) {
-            ProfileInputRow(
-                label: "Gewicht (kg)",
-                text: $viewModel.inputWeight,
-                placeholder: "z.B. 75,5",
-                keyboardType: .decimalPad,
-                accessibilityID: "id_profile_weight_input",
-                field: .weight,
-                focusedField: $focusedField,
-                onSubmit: { focusedField = .height }
-            )
-
-            ProfileInputRow(
-                label: "Größe (cm)",
-                text: $viewModel.inputHeight,
-                placeholder: "z.B. 178",
-                keyboardType: .numberPad,
-                accessibilityID: "id_profile_height_input",
-                field: .height,
-                focusedField: $focusedField,
-                onSubmit: { focusedField = .age }
-            )
-
-            ProfileInputRow(
-                label: "Alter",
-                text: $viewModel.inputAge,
-                placeholder: "z.B. 28",
-                keyboardType: .numberPad,
-                accessibilityID: "id_profile_age_input",
-                field: .age,
-                focusedField: $focusedField,
-                onSubmit: {
-                    focusedField = nil
-                    viewModel.saveBodyData()
-                }
-            )
+            BodyMetricsWheelRow(viewModel: viewModel)
 
             HStack(spacing: AppStyle.CornerRadius.defaultButton) {
                 Button {
-                    focusedField = nil
                     viewModel.cancelBodyEdit()
                 } label: {
-                    Text("Abbrechen")
+                    Text("Cancel")
                         .font(AppStyle.Font.pickerAction)
                         .foregroundColor(AppStyle.Color.white)
                         .frame(maxWidth: .infinity)
@@ -321,10 +242,9 @@ struct ProfileView: View {
                 .accessibilityIdentifier("id_profile_body_cancel")
 
                 Button {
-                    focusedField = nil
                     viewModel.saveBodyData()
                 } label: {
-                    Text("Speichern")
+                    Text("Save")
                         .font(AppStyle.Font.pickerAction)
                         .foregroundColor(AppStyle.Color.white)
                         .frame(maxWidth: .infinity)
@@ -335,32 +255,32 @@ struct ProfileView: View {
                 .accessibilityIdentifier("id_profile_body_save")
             }
         }
-        .onAppear {
-            focusedField = .weight
-        }
     }
 
     private var bodyDisplayGrid: some View {
         HStack(spacing: AppStyle.CornerRadius.defaultButton) {
             MetricTile(
-                label: "Gewicht",
+                label: "Weight",
                 value: viewModel.weightKg > 0 ? WeightFormatter.format(viewModel.weightKg) : "–",
                 unit: "kg",
-                accessibilityID: "id_profile_weight_tile"
+                accessibilityID: "id_profile_weight_tile",
+                action: { viewModel.startEditingBody() }
             )
 
             MetricTile(
-                label: "Größe",
+                label: "Height",
                 value: viewModel.heightCm > 0 ? String(format: "%.0f", viewModel.heightCm) : "–",
                 unit: "cm",
-                accessibilityID: "id_profile_height_tile"
+                accessibilityID: "id_profile_height_tile",
+                action: { viewModel.startEditingBody() }
             )
 
             MetricTile(
-                label: "Alter",
+                label: "Age",
                 value: viewModel.age > 0 ? "\(viewModel.age)" : "–",
-                unit: "Jahre",
-                accessibilityID: "id_profile_age_tile"
+                unit: "Years",
+                accessibilityID: "id_profile_age_tile",
+                action: { viewModel.startEditingBody() }
             )
         }
     }
@@ -375,17 +295,17 @@ struct ProfileView: View {
                     Button {
                         isBMIExpanded.toggle()
                     } label: {
-                        HStack(alignment: .firstTextBaseline, spacing: AppStyle.DeviceLayout.cardSpacing) {
-                            Text("BMI")
-                                .font(AppStyle.Font.sectionHeadline)
-                                .foregroundColor(AppStyle.Color.white)
-                                .fixedSize()
-
-                            if let bmi = viewModel.bmiResult {
-                                Text(viewModel.formattedBMI)
-                                    .font(AppStyle.Font.profileCardTitle)
-                                    .foregroundColor(bmiColor(for: bmi.category))
+                        HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("BMI")
+                                    .font(AppStyle.Font.sectionHeadline)
+                                    .foregroundColor(AppStyle.Color.white)
                                     .fixedSize()
+
+                                Text("Your body mass index")
+                                    .font(AppStyle.Font.profileCardTitle)
+                                    .foregroundColor(AppStyle.Color.greenLight)
+                                    .lineLimit(1)
                             }
 
                             Spacer()
@@ -423,7 +343,7 @@ struct ProfileView: View {
 
                             bmiBar(value: bmi.value)
                         } else if !viewModel.hasBodyData {
-                            Text("Gib Gewicht und Größe ein, um deinen BMI zu berechnen.")
+                            Text("Enter your weight and height to calculate your BMI.")
                                 .font(AppStyle.Font.profileCardTitle)
                                 .foregroundColor(AppStyle.Color.gray)
                         }
@@ -432,7 +352,7 @@ struct ProfileView: View {
                             HStack(spacing: 4) {
                                 Image(systemName: "wifi.slash")
                                     .font(AppStyle.Font.profileSmallIcon)
-                                Text("Offline-Berechnung: \(error)")
+                                Text(error)
                                     .font(AppStyle.Font.detailCaption)
                             }
                             .foregroundColor(AppStyle.Color.yellow)
@@ -507,7 +427,11 @@ private struct ProfileCard<Content: View>: View {
             content()
         }
         .padding(AppStyle.Padding.card)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(
+            maxWidth: .infinity,
+            minHeight: AppStyle.Layout.profileCardCollapsedMinHeight,
+            alignment: .leading
+        )
         .background(AppStyle.Color.profileCardBackground)
         .cornerRadius(AppStyle.CornerRadius.card)
     }
@@ -520,61 +444,115 @@ private struct MetricTile: View {
     let value: String
     let unit: String
     let accessibilityID: String
+    var action: (() -> Void)? = nil
 
     var body: some View {
-        VStack(spacing: 4) {
-            Text(label)
-                .font(AppStyle.Font.profileCardTitle)
-                .foregroundColor(AppStyle.Color.greenLight)
-                .fixedSize()
+        Button {
+            action?()
+        } label: {
+            VStack(spacing: 4) {
+                Text(label)
+                    .font(AppStyle.Font.profileCardTitle)
+                    .foregroundColor(AppStyle.Color.greenLight)
+                    .fixedSize()
 
-            Text(value)
-                .font(AppStyle.Font.profileCardValue)
-                .foregroundColor(AppStyle.Color.white)
+                Text(value)
+                    .font(AppStyle.Font.profileCardValue)
+                    .foregroundColor(AppStyle.Color.white)
 
-            Text(unit)
-                .font(AppStyle.Font.profileCardUnit)
-                .foregroundColor(AppStyle.Color.gray)
-                .fixedSize()
+                Text(unit)
+                    .font(AppStyle.Font.profileCardUnit)
+                    .foregroundColor(AppStyle.Color.gray)
+                    .fixedSize()
+            }
+            .frame(maxWidth: .infinity, minHeight: AppStyle.Layout.profileCardMinHeight)
+            .background(AppStyle.Color.sheetInputBackground)
+            .cornerRadius(AppStyle.CornerRadius.tile)
+            .contentShape(Rectangle())
         }
-        .frame(maxWidth: .infinity, minHeight: AppStyle.Layout.profileCardMinHeight)
-        .background(AppStyle.Color.sheetInputBackground)
-        .cornerRadius(AppStyle.CornerRadius.tile)
+        .buttonStyle(.plain)
+        .disabled(action == nil)
         .accessibilityIdentifier(accessibilityID)
     }
 }
 
-// MARK: - Input Row
+// MARK: - Body Metrics Wheel Row
 
-private struct ProfileInputRow: View {
-    let label: String
-    @Binding var text: String
-    let placeholder: String
-    let keyboardType: UIKeyboardType
-    let accessibilityID: String
-    let field: ProfileView.ProfileField
-    var focusedField: FocusState<ProfileView.ProfileField?>.Binding
-    var onSubmit: (() -> Void)?
+/// Three side-by-side wheel pickers (Weight / Height / Age) driven directly by
+/// `ProfileViewModel` via typed bindings. The weight column supports a Decimal
+/// toggle that switches between integer-only (30, 31, …) and half-step
+/// (30, 30.5, …) options — same UX as `ExerciseWeightPickerView` but without
+/// String parsing.
+private struct BodyMetricsWheelRow: View {
+    @Bindable var viewModel: ProfileViewModel
+    @State private var showWeightDecimal: Bool = false
+
+    private static let heightOptions: [Int] = Array(100...230)
+    private static let ageOptions: [Int] = Array(10...100)
+
+    /// Resolved via two cached arrays in `WeightOptionsGenerator` so toggling
+    /// the Decimal switch never re-allocates or re-filters the 341-element
+    /// option list on each render.
+    private var filteredWeightOptions: [Double] {
+        showWeightDecimal
+            ? WeightOptionsGenerator.bodyWeightOptionsKg
+            : WeightOptionsGenerator.bodyWeightOptionsKgIntegerOnly
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label)
-                .font(AppStyle.Font.profileInputLabel)
-                .foregroundColor(AppStyle.Color.greenLight)
-                .fixedSize()
+        VStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
+            HStack {
+                Spacer()
+                HStack(spacing: 6) {
+                    Text("Decimal")
+                        .font(AppStyle.Font.defaultFont)
+                        .foregroundColor(AppStyle.Color.white.opacity(0.85))
+                    Toggle("", isOn: $showWeightDecimal)
+                        .labelsHidden()
+                        .toggleStyle(
+                            CapsuleToggleStyle(
+                                onColor: AppStyle.Color.greenGlow,
+                                offColor: AppStyle.Color.gray
+                                    .opacity(AppStyle.Opacity.fadedOverlay)
+                            )
+                        )
+                }
+            }
 
-            TextField(placeholder, text: $text)
-                .foregroundColor(AppStyle.Color.white)
-                .font(AppStyle.Font.tileValue)
-                .keyboardType(keyboardType)
-                .padding(AppStyle.Layout.profileInputPadding)
-                .background(AppStyle.Color.sheetInputBackground)
-                .cornerRadius(AppStyle.CornerRadius.tile)
-                .focused(focusedField, equals: field)
-                .submitLabel(field == .age ? .done : .next)
-                .onSubmit { onSubmit?() }
-                .accessibilityIdentifier(accessibilityID)
-                .id(field)
+            HStack(alignment: .top, spacing: 0) {
+                FitnessWheelPickerColumn(
+                    title: "Weight (kg)",
+                    selection: $viewModel.draftWeightKg,
+                    values: filteredWeightOptions,
+                    accessibilityID: "id_profile_weight_wheel"
+                ) { value in
+                    Text(WeightFormatter.format(value))
+                }
+
+                FitnessWheelPickerColumn(
+                    title: "Height (cm)",
+                    selection: $viewModel.draftHeightCm,
+                    values: Self.heightOptions,
+                    accessibilityID: "id_profile_height_wheel"
+                ) { value in
+                    Text("\(value)")
+                }
+
+                FitnessWheelPickerColumn(
+                    title: "Age",
+                    selection: $viewModel.draftAge,
+                    values: Self.ageOptions,
+                    accessibilityID: "id_profile_age_wheel"
+                ) { value in
+                    Text("\(value)")
+                }
+            }
+            .frame(height: AppStyle.Layout.profileWheelHeight)
+        }
+        .onAppear {
+            if viewModel.draftWeightKg != floor(viewModel.draftWeightKg) {
+                showWeightDecimal = true
+            }
         }
     }
 }

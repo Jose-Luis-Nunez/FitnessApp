@@ -139,28 +139,71 @@ struct ProfileViewModelTests {
 
     // MARK: - Body Data Editing
 
-    @Test func startEditingBody_populatesInputFields() {
+    @Test func startEditingBody_populatesDrafts() {
         let vm = ProfileViewModel()
         vm.weightKg = 75.5
         vm.heightCm = 178
         vm.age = 28
         vm.startEditingBody()
-        #expect(vm.inputWeight == "75,5")
-        #expect(vm.inputHeight == "178")
-        #expect(vm.inputAge == "28")
+        #expect(vm.draftWeightKg == 75.5)
+        #expect(vm.draftHeightCm == 178)
+        #expect(vm.draftAge == 28)
         #expect(vm.isEditingBody == true)
         vm.weightKg = 0; vm.heightCm = 0; vm.age = 0
     }
 
-    @Test func startEditingBody_zeroValues_showsEmptyStrings() {
+    @Test func startEditingBody_zeroValues_seedsSensibleDefaults() {
         let vm = ProfileViewModel()
         vm.weightKg = 0
         vm.heightCm = 0
         vm.age = 0
         vm.startEditingBody()
-        #expect(vm.inputWeight.isEmpty)
-        #expect(vm.inputHeight.isEmpty)
-        #expect(vm.inputAge.isEmpty)
+        // Wheel pickers need a preselected value; the VM seeds neutral
+        // defaults so the wheel lands on a sensible row instead of 0.
+        #expect(vm.draftWeightKg == ProfileViewModel.defaultDraftWeightKg)
+        #expect(vm.draftHeightCm == ProfileViewModel.defaultDraftHeightCm)
+        #expect(vm.draftAge == ProfileViewModel.defaultDraftAge)
+    }
+
+    @Test func startEditingBody_roundsHeightToNearestInt() {
+        let vm = ProfileViewModel()
+        vm.weightKg = 70
+        vm.heightCm = 177.6
+        vm.age = 40
+        vm.startEditingBody()
+        #expect(vm.draftHeightCm == 178)
+        vm.weightKg = 0; vm.heightCm = 0; vm.age = 0
+    }
+
+    @Test func saveBodyData_afterWheelSelection_persistsCorrectValues() {
+        let vm = ProfileViewModel()
+        vm.weightKg = 0
+        vm.heightCm = 0
+        vm.age = 0
+        vm.startEditingBody()
+
+        vm.draftWeightKg = 82.5
+        vm.draftHeightCm = 184
+        vm.draftAge = 33
+
+        vm.saveBodyData()
+
+        #expect(vm.weightKg == 82.5)
+        #expect(vm.heightCm == 184)
+        #expect(vm.age == 33)
+        #expect(vm.isEditingBody == false)
+        vm.weightKg = 0; vm.heightCm = 0; vm.age = 0
+    }
+
+    @Test func saveBodyData_integerWeight_persistsExactDouble() {
+        let vm = ProfileViewModel()
+        vm.startEditingBody()
+        vm.draftWeightKg = 75
+        vm.draftHeightCm = 175
+        vm.draftAge = 30
+        vm.saveBodyData()
+        #expect(vm.weightKg == 75.0)
+        vm.weightKg = 0; vm.heightCm = 0; vm.age = 0
     }
 
     @Test func cancelBodyEdit_closesEditMode() {

@@ -60,7 +60,15 @@ public struct BMIResult {
     }
 }
 
-public final class BMIService {
+/// Protocol boundary for BMI resolution so `ProfileViewModel` can be unit-tested
+/// without touching the network. `BMIService` is the production implementation;
+/// tests inject a stub conforming to this protocol.
+public protocol BMIServicing: Sendable {
+    func fetchBMI(weightKg: Double, heightM: Double) async throws -> BMIResult
+    func calculateBMILocally(weightKg: Double, heightM: Double) -> BMIResult?
+}
+
+public final class BMIService: BMIServicing, Sendable {
     private let baseURL = "https://bmicalculatorapi.vercel.app/api/bmi"
     private let session: URLSession
 

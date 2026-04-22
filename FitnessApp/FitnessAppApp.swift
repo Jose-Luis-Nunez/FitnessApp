@@ -132,15 +132,34 @@ struct FitnessAppApp: App {
                         router.pop()
                     } : nil
                 )
-                .zIndex((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu) ? 0 : 1)
-                .opacity((overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu) ? 0 : 1)
-                .allowsHitTesting(!(overlayState.isEditingSheetVisible || overlayState.showCategoryMiniMenu || overlayState.showSelectionMiniMenu || overlayState.showWorkoutsMiniMenu || overlayState.showWorkoutSettingsMenu || overlayState.showTrainingMiniMenu))
+                .zIndex(Self.shouldHideBottomBar(overlayState) ? 0 : 1)
+                .opacity(Self.shouldHideBottomBar(overlayState) ? 0 : 1)
+                .allowsHitTesting(!Self.shouldHideBottomBar(overlayState))
             }
             .environment(\.safeAreaInsets, geo.safeAreaInsets)
             .environment(overlayState)
             .environment(router)
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+                overlayState.isKeyboardVisible = true
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+                overlayState.isKeyboardVisible = false
+            }
             }
             .modelContainer(modelContainer)
         }
+    }
+
+    /// Hide the glass bottom bar when any blocking overlay is up, or when
+    /// the system keyboard is visible — otherwise the bar sits right above
+    /// the keyboard and visually competes with the input field.
+    private static func shouldHideBottomBar(_ state: UIOverlayState) -> Bool {
+        state.isEditingSheetVisible
+            || state.showCategoryMiniMenu
+            || state.showSelectionMiniMenu
+            || state.showWorkoutsMiniMenu
+            || state.showWorkoutSettingsMenu
+            || state.showTrainingMiniMenu
+            || state.isKeyboardVisible
     }
 }

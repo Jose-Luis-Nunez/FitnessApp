@@ -26,9 +26,19 @@ public final class ProfileViewModel {
     public var age: Int = 0
 
     public var inputNickname: String = ""
-    public var inputWeight: String = ""
-    public var inputHeight: String = ""
-    public var inputAge: String = ""
+
+    /// Typed drafts used by the body-data wheel pickers. Kept locale-agnostic
+    /// (no String formatting in the binding path) so the UI can reuse a
+    /// generic typed wheel picker and the ViewModel can persist without
+    /// re-parsing.
+    public var draftWeightKg: Double = 75
+    public var draftHeightCm: Int = 175
+    public var draftAge: Int = 30
+
+    /// Neutral defaults seeded when the user has no body data yet.
+    public static let defaultDraftWeightKg: Double = 75
+    public static let defaultDraftHeightCm: Int = 175
+    public static let defaultDraftAge: Int = 30
 
     public var isEditingNickname = false
     public var isEditingBody = false
@@ -38,9 +48,11 @@ public final class ProfileViewModel {
     public var isLoadingBMI = false
     public var bmiError: String?
 
-    private let bmiService = BMIService()
+    private let bmiService: BMIServicing
+    private var bmiTask: Task<Void, Never>?
 
-    public init() {
+    public init(bmiService: BMIServicing? = nil) {
+        self.bmiService = bmiService ?? BMIService()
         nickname = store.nickname
         weightKg = store.weightKg
         heightCm = store.heightCm
@@ -91,25 +103,22 @@ public final class ProfileViewModel {
     }
 
     public func startEditingBody() {
-        inputWeight = weightKg > 0 ? WeightFormatter.format(weightKg) : ""
-        inputHeight = heightCm > 0 ? String(format: "%.0f", heightCm) : ""
-        inputAge = age > 0 ? "\(age)" : ""
+        draftWeightKg = weightKg > 0 ? weightKg : Self.defaultDraftWeightKg
+        draftHeightCm = heightCm > 0 ? Int(heightCm.rounded()) : Self.defaultDraftHeightCm
+        draftAge = age > 0 ? age : Self.defaultDraftAge
         isEditingBody = true
     }
 
     public func saveBodyData() {
-        if let w = WeightFormatter.parse(inputWeight) {
-            weightKg = w
-            store.weightKg = w
-        }
-        if let h = WeightFormatter.parse(inputHeight) {
-            heightCm = h
-            store.heightCm = h
-        }
-        if let a = Int(inputAge) {
-            age = a
-            store.age = a
-        }
+        weightKg = draftWeightKg
+        store.weightKg = draftWeightKg
+
+        heightCm = Double(draftHeightCm)
+        store.heightCm = Double(draftHeightCm)
+
+        age = draftAge
+        store.age = draftAge
+
         isEditingBody = false
         fetchBMI()
     }
@@ -121,21 +130,32 @@ public final class ProfileViewModel {
     public func fetchBMI() {
         guard weightKg > 0, heightCm > 0 else { return }
 
+        bmiTask?.cancel()
+
         isLoadingBMI = true
         bmiError = nil
 
-        Task {
+        let weight = weightKg
+        let height = heightM
+
+        bmiTask = Task { [weak self] in
+            guard let self else { return }
             do {
-                let result = try await bmiService.fetchBMI(weightKg: weightKg, heightM: heightM)
-                bmiResult = result
-                bmiError = nil
+                let result = try await self.bmiService.fetchBMI(weightKg: weight, heightM: height)
+                if Task.isCancelled { return }
+                self.bmiResult = result
+                self.bmiError = nil
             } catch {
-                if let local = bmiService.calculateBMILocally(weightKg: weightKg, heightM: heightM) {
-                    bmiResult = local
+                if Task.isCancelled { return }
+                if let local = self.bmiService.calculateBMILocally(weightKg: weight, heightM: height) {
+                    self.bmiResult = local
+                    self.bmiError = "Offline – using local calculation."
+                } else {
+                    self.bmiError = "Could not calculate BMI."
                 }
-                bmiError = "API nicht erreichbar – lokale Berechnung verwendet."
             }
-            isLoadingBMI = false
+            if Task.isCancelled { return }
+            self.isLoadingBMI = false
         }
     }
 

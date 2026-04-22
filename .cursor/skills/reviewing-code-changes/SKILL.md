@@ -99,9 +99,20 @@ Compare new/changed code against existing shared components and utilities:
 | Bottom sheet inner styling only | `ExercisePickerSheetModifier` |
 | Cancel/Save button row | `ExercisePickerActionButtons` |
 | Wheel pickers for sets/reps/weight | `ExerciseWheelPickerRow` |
+| **Single wheel column** (Title + `Picker(…).pickerStyle(.wheel)` + `.clipped()`) for a typed value | `FitnessWheelPickerColumn<Value: Hashable, Label: View>` |
+| **Decimal-Toggle** next to a weight wheel (label + `CapsuleToggleStyle` filtering half-steps) | *extract to `WeightDecimalToggle` in FitnessUI — 5+ inline copies exist as of Apr 2026* |
+| **Inline `for i in …` building a `[String]`/`[Double]` of weight options** (integer + 0.5 steps) | `WeightOptionsGenerator.exerciseWeightOptions` / `.trainingWeightOptions` — or add a typed variant there |
 | Styled text input in a sheet | `ExercisePickerInputField` |
 | Manual weight string formatting | `WeightFormatter.displayWeight(_:)` |
 | Manual date logic in analytics | `AnalyticsDateHelper` |
+
+**Beyond-the-table duplication check.** The table above is not exhaustive. Before concluding §2, also run a structural-duplication pass:
+
+1. Grep the changed files for any `for i in … { options.append(…) }` / `values.append(…)` loop that builds weight/reps/sets options inline. If present → consolidate into `WeightOptionsGenerator`.
+2. Grep for any `Toggle("", isOn: …)` paired with a `CapsuleToggleStyle` **+** a `Text("Decimal")` (or similar single-word label). Three+ matches project-wide → extract.
+3. Grep for any `VStack { Text(title)…; Picker(…) { ForEach(…) { Text(…).tag(…) } }.pickerStyle(.wheel).clipped() }`. Three+ matches → must use `FitnessWheelPickerColumn`.
+
+These structural patterns are the ones the agent tends to miss because no named component matches a keyword in the diff.
 
 ### 3. AppStyle Consistency
 
@@ -636,6 +647,23 @@ findings: 3
 ```
 
 When triggered by a user review request, the stamp is optional.
+
+### Mandatory Stamp Section: Residual Duplications
+
+**Every** `code-changes.stamp.md` must include a `## Residual Duplications` section even when `§2 Reuse — PASS`. Reporting "PASS" without acknowledging duplications the agent *knowingly left in place* (e.g. out-of-scope call sites of a newly extracted component, shared pattern not yet consolidated) is a failure mode observed in prior audits (ref: enforcement-audit Apr 2026, body-metrics wheel refactor).
+
+Required format:
+
+```markdown
+## Residual Duplications
+
+- `WeightDecimalToggle` pattern duplicated in 5 call sites (ExercisePickerView:189, ExerciseWeightPickerView:76, ActiveSetEditPickerView:71, AddAnalyticsEntryView:269, ProfileView:530) — left in place; follow-up task to extract to FitnessUI.
+- Inline weight-options generation in ProfileView.BodyMetricsWheelRow — `WeightOptionsGenerator` covers the String variant, typed `[Double]` variant not yet added.
+```
+
+If the agent genuinely found no leftover duplications, state `None.` explicitly — empty/missing section = stamp is incomplete.
+
+**Why this matters.** A `Reuse — PASS` line without residuals tempts the next reviewer to assume the area is clean. Explicit residuals turn known-but-unfixed debt into a first-class artifact that future work can grep.
 
 ## Architecture Sync
 

@@ -25,10 +25,13 @@ public struct TramDeparturesCardView: View {
             }
         }
         .padding(AppStyle.Padding.card)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(
+            maxWidth: .infinity,
+            minHeight: AppStyle.Layout.profileCardCollapsedMinHeight,
+            alignment: .leading
+        )
         .background(AppStyle.Color.profileCardBackground)
         .cornerRadius(AppStyle.CornerRadius.card)
-        .onDisappear { viewModel.stopAutoRefresh() }
         .onChange(of: scenePhase) { _, newPhase in
             guard viewModel.isExpanded else { return }
             switch newPhase {
