@@ -156,6 +156,8 @@ Two independent layers catch failures:
 | `architecture-documentation.md` | Feature Map, packages, navigation, services, domain models, AppStyle tokens. |
 | `ui-test-conventions.md` | DSL functions, selector patterns, timeout defaults, test templates. |
 | `agent-system-overview.md` | This file — layer map and trigger chains. |
+| `user-flows.md` | Top-down screen map, BottomBar tabs, canonical user flows, modals/sheets — used during feature planning and code review for navigation context. |
+| `capabilities.md` | Bullet inventory of what the user can do today — used to avoid duplicating existing functionality when planning new features. |
 
 ## State Files
 
