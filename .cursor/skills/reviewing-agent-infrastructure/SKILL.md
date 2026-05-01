@@ -19,6 +19,7 @@ Validate that agent-system files (.cursor/) are consistent after changes. A Veri
 - After `reviewing-agent-effectiveness` identifies gaps (NOT FIRED findings)
 - User says "reflect", "learn from this", "improve agent system"
 - After the user manually corrects agent output
+- Handoff target from `debugging-ui-tests/SKILL.md` (via `reviewing-agent-effectiveness`) when a UI-test failure exposes infrastructure gaps that need closing
 
 ## Validation Checklist
 

@@ -47,6 +47,8 @@ For each interactive element:
 3. **DSL function** — does `ElementActions.swift` have a function for this interaction type? If not, add it.
 4. **Fixture** — does `Fixtures/TestFixtures.swift` have a preset for this screen's data? If not, add one.
 
+If a newly added selector is not found on the first test run, follow [debugging-ui-tests/SKILL.md](../debugging-ui-tests/SKILL.md) (or directly the decision tree in [ui-test-conventions.md § Diagnosing a Failing Selector](../../references/ui-test-conventions.md#diagnosing-a-failing-selector)) before changing the AID, the production view, or the timeout.
+
 ### Step 3 — Write the Test
 
 Use the test template from [ui-test-conventions.md](../../references/ui-test-conventions.md). Key rules:
@@ -75,5 +77,6 @@ When you edit files under `FitnessAppUITests/`, check if the change affects `ref
 | `BaseTest` API changed | **Test Template** and rules |
 | New file/folder under `FitnessAppUITests/` | **Project Structure** tree |
 | Deleted file under `FitnessAppUITests/` | **Project Structure** tree — remove entry |
+| Selector-diagnosis tooling/steps changed | **Diagnosing a Failing Selector** section |
 
 Also update the **Review Checklist** in `ui-test-conventions.md` if the change affects validation rules.

@@ -97,8 +97,8 @@ struct FitnessAppApp: App {
                                 case .muscleCategory(let group):
                                     MuscleCategoryView(group: group)
                                         .navigationBarBackButtonHidden(true)
-                                case .training(let exercise, let category):
-                                    TrainingView(exercise: exercise, category: category)
+                                case .training(let exerciseId, let category):
+                                    TrainingView(exerciseId: exerciseId, category: category)
                                         .navigationBarBackButtonHidden(true)
                                 }
                             }

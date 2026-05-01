@@ -368,7 +368,7 @@ This is DI-**evolution**, not DI-**reversal**. The Factory container and protoco
 
 A view that holds a `@State` ViewModel which mirrors a domain entity (with a stable identity / UUID) — while the **same identity** is also held elsewhere (another VM cache, another view's `@State`) — is a guaranteed sync bug. Two lifecycles for one identity = staleness.
 
-Real example (Bug 1):
+Real example (Bug 1, historical — both `ExerciseCardViewModel` and the `cardViewModels` cache were deleted in T8d. The shape of the bug, however, is the lesson):
 
 ```swift
 struct TrainingView: View {
@@ -408,10 +408,10 @@ If both rg patterns hit in the same PR/diff → review trigger.
    ```swift
    @Bindable var model: ExerciseModel
    ```
-2. **Single source via `@Environment`** — the view reads through the existing cache instead of holding its own copy:
+2. **Single source via `@Environment`** — the view reads through the existing cache instead of holding its own copy (illustrative; in this codebase the actual pattern is option 1 because `ExerciseCardViewModel` and its UUID-keyed cache are gone):
    ```swift
-   @Environment(MuscleCategorySelectionViewModel.self) var selectionVM
-   var card: ExerciseCardViewModel { selectionVM.cardViewModels[id]! }
+   @Environment(SomeSelectionViewModel.self) var selectionVM
+   var card: SomeCardViewModel { selectionVM.cardViewModels[id]! }
    ```
 3. **Pure rendering** — view takes `Exercise` as `let`; parent re-supplies on change:
    ```swift

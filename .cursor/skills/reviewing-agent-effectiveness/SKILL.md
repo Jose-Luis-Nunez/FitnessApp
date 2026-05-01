@@ -27,6 +27,7 @@ After any non-trivial implementation task, especially:
 - Refactoring across multiple files
 - Bug fixes touching coordinators or shared state
 - When the user asks "was hat gegriffen?" / "what rules fired?" / "enforcement audit"
+- Handoff target from `debugging-ui-tests/SKILL.md` when a UI-test failure exposes a gap in rules/skills/hooks that should have caught the issue earlier
 
 ## Audit Process
 

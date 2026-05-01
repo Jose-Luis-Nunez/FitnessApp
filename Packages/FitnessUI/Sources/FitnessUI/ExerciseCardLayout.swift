@@ -3,11 +3,11 @@ import SwiftUI
 /// Shared layout constants for exercise-card and category-tile rendering.
 ///
 /// Hoisted into `FitnessUI` as part of T7-0 to break the
-/// `FitnessPersistenceUI → FitnessExercise` dependency cycle that blocks
-/// T7a/T7b. The legacy `CategoryTileViewConstants` in `FitnessExercise`
-/// and the `InactiveCardView.ResetButton.Constants` enum continue to exist
-/// for now (used by their respective views) and will be deleted alongside
-/// those views in T8.
+/// `FitnessPersistenceUI → FitnessExercise` dependency cycle. Post-T8d the
+/// canonical card stack lives in `FitnessPersistenceUI`
+/// (`InactiveCardModelView` / `ActiveCardModelView` / `IdleActiveCardModelView`);
+/// `ExerciseCardLayout` is the single source of truth for the layout
+/// constants those views consume.
 public enum ExerciseCardLayout {
 
     /// Constants for `CategoryTile`-style cards (the muscle-category grid).

@@ -5,10 +5,11 @@ import FitnessUI
 /// Connects the `TrainingCoordinator`'s feedback presentation flag to the
 /// `FeedbackSheetView` via a native `.sheet(...)` with **two** progressive
 /// detents — the **same presentation pattern as `AnalyticsView`** (see
-/// `InactiveCardView` / `ActiveCardView` / `IdleActiveCardView`). The
-/// component itself is a zero-size `Color.clear` mount point inside the
-/// training flow's view tree — its only job is to own the presentation
-/// modifier and to lazily instantiate `FeedbackViewModel` per presentation.
+/// `InactiveCardModelView` / `ActiveCardModelView` / `IdleActiveCardModelView`
+/// in `FitnessPersistenceUI`). The component itself is a zero-size
+/// `Color.clear` mount point inside the training flow's view tree — its only
+/// job is to own the presentation modifier and to lazily instantiate
+/// `FeedbackViewModel` per presentation.
 ///
 /// Why `.sheet` (and not `.fullScreenCover` or `OverlaySheetContainer`):
 /// - Native sheet renders the iOS-system **grabber** automatically, matching

@@ -4,12 +4,11 @@ import FitnessCore
 import FitnessUI
 @_spi(PersistenceUI) import FitnessStorage
 
-/// Live-bound spiegel von `InactiveCardView`. Layout 1:1 übernommen, Datenquelle
-/// auf `@Bindable ExerciseModel`.
-///
-/// Behält das `analyticsViewModel.changeCount`-Polling-Pattern der alten Card —
-/// das wird in T8 zugunsten direktem `@Observable`-Tracking aufgelöst (siehe
-/// ADR-0001, "Aufgeschoben für T8").
+/// Completed (inactive) card variant rendered against a live
+/// `@Bindable ExerciseModel`. Datenquelle ist die SwiftData-`@Model`-Instanz —
+/// alle Edits propagieren automatisch ohne Snapshot-Sync (ADR-0001). Behält
+/// noch das `analyticsViewModel.changeCount`-Polling-Pattern; das wird in
+/// einem späteren Schritt zugunsten direkten `@Observable`-Trackings aufgelöst.
 ///
 /// SPI-Marker: siehe `ExerciseCardModelView`.
 @_spi(PersistenceUI)

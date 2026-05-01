@@ -152,7 +152,7 @@ public struct MuscleCategoryView: View {
             analyticsViewModel: analyticsViewModel,
             activeSetViewModel: trainingCoordinator.activeSetViewModel,
             onStart: { selectedExercise in
-                router.navigate(to: .training(selectedExercise, group))
+                router.navigate(to: .training(exerciseId: selectedExercise.id, category: group))
             },
             onReset: { selectedExercise in
                 viewModel.resetExercise(selectedExercise)
@@ -301,9 +301,12 @@ private extension MuscleCategoryView {
                                         // are UI affordances, not routing decisions, so snapshot-latency is
                                         // tolerable. The routing target itself MUST be live: routing into a
                                         // freshly-completed Exercise would defeat the T7b live-fix.
-                                        let nextDomain = categoryModels.first(where: { !$0.isCompleted })?.toDomain()
-                                        if let exercise = trainingCoordinator.currentExercise ?? nextDomain {
-                                            router.navigate(to: .training(exercise, group))
+                                        //
+                                        // Post-T8d: navigation carries only the id; `TrainingView` resolves
+                                        // it via `@Query` so the destination always renders the live model.
+                                        let nextId = categoryModels.first(where: { !$0.isCompleted })?.id
+                                        if let exerciseId = trainingCoordinator.currentExercise?.id ?? nextId {
+                                            router.navigate(to: .training(exerciseId: exerciseId, category: group))
                                         }
                                         overlayState.showCategoryMiniMenu = false
                                     })

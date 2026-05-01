@@ -70,7 +70,8 @@ flowchart TD
 | `reviewing-test-quality/SKILL.md` | Unit/integration test quality review. | `architecture-documentation.md`, `test-execution.stamp.md` |
 | `reviewing-agent-effectiveness/SKILL.md` | Diagnose which enforcement mechanisms fired (FIRED/NOT FIRED/N/A report). Hands off gaps to `reviewing-agent-infrastructure` skill. | All rules, skills, hooks |
 | `writing-ui-tests/SKILL.md` | Create new XCUITests. | `ui-test-conventions.md` |
-| `updating-ui-tests/SKILL.md` | Fix/modernize existing XCUITests. | `ui-test-conventions.md` |
+| `updating-ui-tests/SKILL.md` | Refactor/modernize existing XCUITests (passing tests with outdated patterns). | `ui-test-conventions.md`, `debugging-ui-tests/SKILL.md` |
+| `debugging-ui-tests/SKILL.md` | Diagnose failing XCUITests: selector-not-found, scheme/build-config, fixture seeding, timing. 5-step decision tree. | `ui-test-conventions.md § Diagnosing a Failing Selector`, `build-and-test.mdc`, `reviewing-agent-effectiveness/SKILL.md`, `reviewing-agent-infrastructure/SKILL.md` |
 | `reviewing-agent-infrastructure/SKILL.md` | Validate and fix agent infrastructure after .cursor/ changes. Reference integrity, agent-system-overview sync, learning persistence. Spawns verifier subagent. | `reviewing-agent-effectiveness/SKILL.md`, `reviewing-code-changes/SKILL.md`, `agent-roles/verifier.md` |
 | `deep-research/SKILL.md` | Citation-backed deep research workflow. | None |
 

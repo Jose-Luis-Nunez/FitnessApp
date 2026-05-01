@@ -4,14 +4,12 @@ import FitnessCore
 import FitnessUI
 @_spi(PersistenceUI) import FitnessStorage
 
-/// Live-bound spiegel von `ActiveCardView`. Layout 1:1 übernommen, Datenquelle
-/// auf `@Bindable ExerciseModel` umgestellt — Lese-Pfade gehen direkt auf `model.X`.
+/// Active card variant rendered against a live `@Bindable ExerciseModel` —
+/// Lese-Pfade gehen direkt auf `model.X` ohne Snapshot-Sync (ADR-0001).
 ///
-/// Edit-Callback bleibt `(Exercise, ExerciseEditMode) -> Void` (T5 ist Pilot, T8
-/// stellt evtl. später auf `(ExerciseModel, ...)` um sobald alle Aufrufer
-/// migriert sind). Der `model.toDomain()`-Call an der Boundary ist bewusst — er
-/// wird nur ausgeführt wenn der User tatsächlich auf "edit" tippt, nicht im
-/// render-Pfad.
+/// Edit-Callback bleibt `(Exercise, ExerciseEditMode) -> Void`; der
+/// `model.toDomain()`-Call an der Boundary ist bewusst — er wird nur
+/// ausgeführt wenn der User tatsächlich auf "edit" tippt, nicht im render-Pfad.
 ///
 /// SPI-Marker: siehe `ExerciseCardModelView`.
 @_spi(PersistenceUI)

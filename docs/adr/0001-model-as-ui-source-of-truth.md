@@ -21,17 +21,20 @@ Beide hinterließen zwei aktive Bugs:
 2. `MuscleCategorySelectionView` aktualisiert die "X von Y"-Kategorie-Tiles
    erst beim Aufruf der Workout-View — nicht direkt nach Exercise-Finish.
 
-Die strukturelle Wurzel ist **vier parallele Kopien derselben `Exercise`-Entität**:
+Die strukturelle Wurzel war **vier parallele Kopien derselben `Exercise`-Entität**:
 
 - `ExerciseStorageService` hält `[ExerciseModel]` (SwiftData)
 - `ExerciseManagementService` reicht Domain-Operationen durch
-- `MuscleCategorySelectionViewModel.cardViewModels[UUID]` hält pro ID einen
+- `MuscleCategorySelectionViewModel.cardViewModels[UUID]` hielt pro ID einen
   `ExerciseCardViewModel` mit eigener `Exercise`-Kopie
-- `TrainingView.@State private var cardViewModel` hält noch eine Kopie
+- `TrainingView.@State private var cardViewModel` hielt noch eine Kopie
 
-Jede dieser Quellen muss bei einer Mutation manuell synchronisiert werden.
-`syncExercise(...)`, `refreshExercises()` und `changeVersion &+= 1` sind alles
-Symptom-Workarounds für dieselbe strukturelle Mehrfach-Quelle.
+Jede dieser Quellen musste bei einer Mutation manuell synchronisiert werden.
+`syncExercise(...)`, `refreshExercises()` und `changeVersion &+= 1` waren alles
+Symptom-Workarounds für dieselbe strukturelle Mehrfach-Quelle. Die letzten
+zwei Snapshot-Kopien wurden mit T8d (Pilot-Migration in `MuscleCategoryView`
++ `MuscleCategorySelectionView`) und T8d/Training (Migration des
+`TrainingView`-Pfades) entfernt.
 
 ## Optionen
 
@@ -74,14 +77,16 @@ UI-Komponenten konsumieren `@Model`-Instanzen direkt:
   außerhalb des `@Model`-Lebenszyklus.
   **Neue UI darf nur `@Model`-Referenzen halten.** Kein `@State` mit
   `Exercise`-struct.
-  **Bewusste Ausnahme**: `FitnessApp/Features/Training/TrainingView.swift` hält
-  weiterhin `@State private var cardViewModel: ExerciseCardViewModel` mit einer
-  `Exercise`-Struct-Kopie. Begründung: Der Bug-1-Trigger (UI-Flip nach
-  `coordinator.finishExercise()`) existiert in dieser View strukturell nicht
-  (sie navigiert weg, bevor die Mutation den Render-Pass erreicht). Migration
-  per T8b deferred — Re-Aufnahme bei User-Bug-Report im Training-Detail oder
-  als Aufräum-Sprint. Andere neue Views, die den gleichen "deferred"-Status
-  beanspruchen wollen, müssen das hier per Patch-ADR ergänzen.
+  Die zuvor bewusste Ausnahme in `TrainingView.swift` (Snapshot-`ExerciseCardViewModel`)
+  ist mit dem T8d-Cleanup (Migration: Legacy Card Stack → Model Card Stack)
+  entfernt: `TrainingView` resolved seinen `exerciseId: UUID` jetzt via
+  `@Query<ExerciseModel>` und rendert `ExerciseCardModelView` direkt.
+  Coordinator-APIs, die noch `Exercise` (DTO) erwarten
+  (`TrainingCoordinator.startTraining(for:)`,
+  `TrainingActionBarComponent`), werden mit `model.toDomain()` an den jeweiligen
+  Call-Sites gebrückt. Damit gibt es keine UI-View mehr, die einen
+  `Exercise`-Snapshot hält — die Bug-Klasse "stale UI nach Mutation" ist
+  app-weit by-construction ausgeschlossen.
 
 ### Non-Goals
 

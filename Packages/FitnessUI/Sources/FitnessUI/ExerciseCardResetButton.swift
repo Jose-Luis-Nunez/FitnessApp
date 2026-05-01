@@ -2,10 +2,9 @@ import SwiftUI
 
 /// Circular reset button shown on completed exercise cards.
 ///
-/// Hoisted from `FitnessExercise.InactiveCardView.ResetButton` into
-/// `FitnessUI` as part of T7-0 so the new `InactiveCardModelView` in
+/// Hoisted into `FitnessUI` as part of T7-0 so `InactiveCardModelView` in
 /// `FitnessPersistenceUI` can reuse it without re-introducing a dependency
-/// cycle. Both layout constants (size, iconSize) live alongside as
+/// cycle. Layout constants (size, iconSize) live alongside as
 /// `ExerciseCardLayout.ResetButton` (canonical source).
 public struct ExerciseCardResetButton: View {
     public let onTap: () -> Void

@@ -19,7 +19,9 @@ FitnessAppUITests/
 └── Tests/*Tests.swift               # Test files
 ```
 
-The app target contains `Core/Testing/UITestRouter.swift` (compiled only under `UITESTING` flag) which reads the launch config and routes the `AppRouter` to the target screen.
+The app target contains `Shared/Navigation/UITestLaunchStrategy.swift` (compiled only under the `UITESTING` flag, which is set on the `UITesting` build configuration). It implements `AppLaunchStrategy`, reads `UITEST_CONFIG` from `launchEnvironment`, seeds a `WorkoutModel` + `ExerciseModel` pair into the SwiftData container (post-T8d, `TrainingView` resolves the navigated id via `@Query`, so the fixture must exist on disk before navigation), and returns the initial `[NavigationDestination]` stack to the app's `NavigationStack`.
+
+> Build-config note: UI tests must be run via the `FitnessApp UITests` scheme (not `FitnessApp`). Only that scheme builds with the `UITesting` configuration that defines `UITESTING`. See `.cursor/rules/build-and-test.mdc` § "UI Tests".
 
 ## Accessibility ID Pattern
 
@@ -43,13 +45,15 @@ The test target maintains its own copy of the ID strings in `Config/TestAccessib
 
 ### Current Test ID Enums
 
-| Test Enum | Source View | IDs |
-|-----------|-------------|-----|
-| `TrainingIDs` | `FloatingActionButtonsView.AID`, `SimpleActiveSetView.AID` | `doneButton`, `finishButton`, `startButton`, `allDoneButton`, `quickDoneButton`, `controlButton(_:)`, `repsField(set:)`, `quickDoneSetButton(index:)` |
-| `HomeIDs` | `MuscleCategorySelectionView.AID` | `categoryTile(for:)` |
-| `MuscleCategoryIDs` | `IdleActiveCardView.AID` | `startExercise` |
-| `ExerciseIDs` | `InactiveCardView.AID` | `nameLabel` |
-| `ExerciseCardIDs` | `ExerciseCardContainerView` | `completedCard(_:)`, `activeCard(_:)`, `idleCard(_:)`, `completedCardPrefix`, `activeCardPrefix`, `idleCardPrefix` |
+The single source of truth for the constants below is `Packages/FitnessCore/Sources/FitnessCore/AccessibilityIDs.swift` (hoisted into `FitnessCore` at T7-0 so the model-driven views in `FitnessPersistenceUI` can reference them without a dependency cycle). The "Applied in" column lists the views that attach the identifier via `.accessibilityIdentifier(...)`. The test target keeps a parallel copy in `FitnessAppUITests/Selectors/AccessibilityIDs.swift` (string-equal — drift = test failure, by design).
+
+| Test Enum | Defined in | Applied in | IDs |
+|-----------|-----------|------------|-----|
+| `TrainingIDs` | `FitnessAppUITests/Selectors/AccessibilityIDs.swift` | `BottomActionBarView`, `SimpleActiveSetView` | `doneButton`, `finishButton`, `startButton`, `allDoneButton`, `quickDoneButton`, `controlButton(_:)`, `repsField(set:)`, `quickDoneSetButton(index:)` |
+| `HomeIDs` | `FitnessCore.AccessibilityIDs` | `MuscleCategorySelectionView` (category tiles via `CategoryTileModelView`) | `categoryTile(for:)` |
+| `MuscleCategoryIDs` | `FitnessCore.AccessibilityIDs` | `IdleActiveCardModelView` (post-T8d; previously `IdleActiveCardView`) | `startExercise` |
+| `ExerciseIDs` | `FitnessCore.AccessibilityIDs` | `InactiveCardModelView` (post-T8d; previously `InactiveCardView`) | `nameLabel` |
+| `ExerciseCardIDs` | `FitnessCore.AccessibilityIDs` | `ExerciseCardModelView` (post-T8d; previously `ExerciseCardContainerView`) | `completedCard(_:)`, `activeCard(_:)`, `idleCard(_:)`, `completedCardPrefix`, `activeCardPrefix`, `idleCardPrefix` |
 
 ## Test Fixtures
 
@@ -175,6 +179,24 @@ Never resort to predicates or labels when an identifier can be added to the prod
 ### Stale IDs -- Keep in Sync
 
 When a production View's `AID` constant is renamed or deleted, update `Config/TestAccessibilityIDs.swift` to match. Stale constants that reference non-existent IDs cause test failures.
+
+## Diagnosing a Failing Selector
+
+A selector failure does not automatically mean "the selector is wrong" — it means the runner could not find the expected selector at the moment of the assertion. **Why** is the diagnostic question. Swapping the selector or bumping the timeout before diagnosing the actual cause is the most common failure mode and often hides the real bug (missing render, wrong screen, AID on the wrong UI layer).
+
+Work the steps in order. **Do not skip ahead.**
+
+1. **Understand the use-case flow and the selector sequence first.** What screen does the test expect? Which selectors does it interact with, in which order? Without this anchor, every later step is guesswork.
+2. **Are the expected selectors actually present at the failure point?** Inspect the UI hierarchy at the moment of failure — generically via Xcode's xcresult viewer ("App element" attachment), or with the concrete fallback `xcrun xcresulttool export attachments --path <Test-*.xcresult> --output-path /tmp/uitest-attach` (the largest `*.txt` is the AX-tree). Also valid pre-run: `print(app.debugDescription)` from a temporary breakpoint in the test runner.
+3. **If a selector is present:** does its identifier match exactly what the test queries for? If drift → update either `FitnessAppUITests/Selectors/AccessibilityIDs.swift` or the production `enum AID` (depending on which side was renamed unintentionally — see `Stale IDs — Keep in Sync` above).
+4. **If no selector is present:** add one — and verify it ends up on the **correct UI layer**. Common layer mistakes: AID on a `VStack` wrapper while the tappable child is the actual `Button`; `accessibilityElement(children: .ignore)` on a parent that shadows the child's identifier; AID on a hidden/conditional branch that the test path never enters.
+5. **Only if a correct selector is present and on the right layer:** consider timing. Try `tapOn(selector, timeout: TestDefaults.longTimeout)`. If that turns the test green, the data path is async (e.g. `@Query` materialises late); document the cause and consider whether to push the wait into production code (explicit "ready" state) instead of leaving a 10-second blanket timeout.
+
+### Common Pitfalls
+
+- Do not jump to "the selector is wrong" without first understanding the use-case flow and selector sequence.
+- Do not raise the timeout first. Timing is step 5, not step 1 — a longer timeout often hides a layer or render-timing bug.
+- Flaky ≠ selector bug. Flakes are usually render-timing or layer mistakes (AID on wrong wrapper, conditional branch never entered).
 
 ## Naming Patterns
 

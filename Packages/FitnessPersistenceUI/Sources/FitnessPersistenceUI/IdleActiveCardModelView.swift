@@ -14,12 +14,12 @@ private extension VerticalAlignment {
     static let metricLabel = VerticalAlignment(MetricLabelAlignment.self)
 }
 
-/// Live-bound spiegel von `IdleActiveCardView`. Layout 1:1 übernommen, Datenquelle
-/// auf `@Bindable ExerciseModel`.
+/// Idle/Active card variant rendered against a live `@Bindable ExerciseModel`.
 ///
-/// Behält das `analyticsViewModel.changeCount`-Polling-Pattern der alten Card —
-/// das wird in T8 zugunsten direktem `@Observable`-Tracking aufgelöst (siehe
-/// ADR-0001, "Aufgeschoben für T8").
+/// Datenquelle ist die SwiftData-`@Model`-Instanz — alle Edits propagieren
+/// automatisch ohne Snapshot-Sync (ADR-0001). Behält noch das
+/// `analyticsViewModel.changeCount`-Polling-Pattern; das wird in einem späteren
+/// Schritt zugunsten direkten `@Observable`-Trackings aufgelöst.
 ///
 /// SPI-Marker: siehe `ExerciseCardModelView`.
 @_spi(PersistenceUI)

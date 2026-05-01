@@ -530,7 +530,7 @@ public struct MuscleCategorySelectionView: View {
                 impactFeedback.impactOccurred()
 #endif
 
-                router.navigate(to: .training(exerciseToStart, category))
+                router.navigate(to: .training(exerciseId: exerciseToStart.id, category: category))
             },
             onReset: { exerciseToReset in
                 viewModel.resetExercise(exerciseToReset, category: category)

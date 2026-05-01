@@ -4,11 +4,9 @@ import Foundation
 ///
 /// Lives in `FitnessCore` (no SwiftUI dependency) because it is a domain
 /// concept — derived from the persisted `isCompleted` flag and the live
-/// session state — not a UI pixel. Both the legacy `ExerciseCardContainerView`
-/// (in `FitnessExercise`) and the new `ExerciseCardModelView` (in
-/// `FitnessPersistenceUI`) consume it. Hoisted here as part of T7-0 to
-/// break the `FitnessPersistenceUI → FitnessExercise` dependency cycle that
-/// blocks T7a/T7b.
+/// session state — not a UI pixel. Consumed by `ExerciseCardModelView`
+/// (in `FitnessPersistenceUI`). Hoisted here as part of T7-0 to break the
+/// `FitnessPersistenceUI → FitnessExercise` dependency cycle.
 public enum CardVariant: Equatable, Sendable {
     case completed
     case active
