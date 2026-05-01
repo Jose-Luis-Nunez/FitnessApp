@@ -18,15 +18,50 @@ public enum AppStyle {
         public static let activeCardContentHeight: CGFloat = 80
         public static let activeCardMaxWidth: CGFloat = 400
         public static let categoryIconSize: CGFloat = 50
+        public static let idleCategoryIconSize: CGFloat = 64
         public static let checkmarkSize: CGFloat = 36
         public static let playButtonSize: CGFloat = 36
         public static let playIconSize: CGFloat = 16
+        public static let idlePlayButtonSize: CGFloat = 36
+        public static let idlePlayIconSize: CGFloat = 14
+        /// Optical centering offset for `play.fill` SF Symbol.
+        /// The triangle's mass is left-leaning (apex on right), so a small
+        /// positive x-offset visually centers it inside its circular container.
+        public static let idlePlayIconOpticalOffset: CGFloat = 1.5
+        /// Stroke width of the outer border around the idle exercise card.
+        public static let idleCardBorderWidth: CGFloat = 1
+        /// Stroke width of the metallic ring around the idle play button.
+        /// Hairline (0.75) so the ring reads as a fine accent, not a heavy
+        /// border. On @2x/@3x this resolves to a clean 1.5px / 2.25px line
+        /// without aliasing.
+        public static let idlePlayRingWidth: CGFloat = 0.75
+        /// Blur radius of the soft mint outer glow rendered around the idle
+        /// play button. Tuned together with `idlePlayButtonGlowSize` for a
+        /// subtle hint that doesn't spill into the surrounding card surface.
+        public static let idlePlayButtonGlowRadius: CGFloat = 10
+        /// Diameter of the soft mint halo painted behind the idle play
+        /// button. Only marginally larger than `idlePlayButtonSize` — the
+        /// blur radius does the heavy lifting for the halo softness, so a
+        /// near-equal disc keeps the component's reported bounds tight
+        /// against the visible button (no excess padding around the glyph).
+        public static let idlePlayButtonGlowSize: CGFloat = 38
+
         public static let completedBarWidth: CGFloat = 8
         public static let setRowBadgeSize: CGFloat = 26
         public static let analyticsImageSize: CGFloat = 60
-        public static let seatIconSize: CGFloat = 22
+        public static let seatIconSize: CGFloat = 30
         public static let analyticsEntryIconSize: CGFloat = 24
-        public static let separatorHeight: CGFloat = 28
+        /// Diameter of the lightbulb icon in the idle card's Tip column.
+        /// Matches `analyticsEntryIconSize` so the Tip and Progress columns
+        /// read as a visually symmetric pair.
+        public static let tipIconSize: CGFloat = 27
+        public static let tipBoxSize: CGFloat = 32
+        public static let tipBoxCornerRadius: CGFloat = 8
+        public static let separatorHeight: CGFloat = 32
+        /// Stroke width of vertical column separators in metric rows.
+        /// Hairline (0.5) so the separators read as fine guides rather than
+        /// heavy dividers between values.
+        public static let separatorWidth: CGFloat = 0.5
         public static let doneButtonWidth: CGFloat = 80
         public static let doneButtonHeight: CGFloat = 28
         public static let profileCardMinHeight: CGFloat = 100
@@ -144,10 +179,23 @@ public enum AppStyle {
 
     public enum Color {
         public static let backgroundColor = SwiftUI.Color(hex: "#0A090E")
+        //Screen Background: #0A090E
+        //Card Background:   #121417
 
         public static let primaryButton = green
-
+        //public static let exerciseCardBackground = SwiftUI.Color(hex: "#1B1D1F")
         public static let exerciseCardBackground = SwiftUI.Color(hex: "#232227")
+        /// Base surface color for the Idle exercise card. Dedicated to the
+        /// idle card so other cards/tiles app-wide stay on
+        /// `exerciseCardBackground`.
+        public static let idleCardBackground = SwiftUI.Color(hex: "#151618")
+        public static let idleCardSoft = SwiftUI.Color(hex: "#151618")
+        public static let idleCardDark = SwiftUI.Color(hex: "#121314")
+        public static let idleCardBorder = SwiftUI.Color(hex: "#2F3033")
+        public static let idleCardBorderLight = SwiftUI.Color.white.opacity(0.14)
+        public static let idleCardBorderDark = SwiftUI.Color.white.opacity(0.10)
+        public static let idleCardInnerGlow = SwiftUI.Color.white.opacity(0.0)
+
         public static let chipsBackground = grayDark
 
         public static let white = SwiftUI.Color.white
@@ -162,7 +210,35 @@ public enum AppStyle {
 
         public static let green = SwiftUI.Color(hex: "#088177")
         public static let greenLight = SwiftUI.Color(hex: "#7EBBAF")
+        public static let greenMint = SwiftUI.Color(hex: "#80C2B4")
+        public static let greenFrost = SwiftUI.Color(hex: "#AACDC6")
         public static let greenGlow = SwiftUI.Color(hex: "#3CC8A6")
+
+        // MARK: Idle Card — Text Hierarchy
+        /// Title text on the idle card (e.g. exercise name "Loop"). Slightly
+        /// off-white so it reads soft against `idleCardBackground` instead of
+        /// a hard pure-white edge.
+        public static let idleTitle = SwiftUI.Color(hex: "#F2F2F2")
+        /// Secondary metric labels on the idle card (e.g. "Weight", "Seat",
+        /// "Progress", weight unit suffix "kg", expand/collapse chevron).
+        /// Cool neutral grey so the eye anchors on the mint values, not the
+        /// labels.
+        public static let idleMetricLabel = SwiftUI.Color(hex: "#A7AAA9")
+        /// Primary metric values + accent glyphs on the idle card (e.g. "20",
+        /// seat arrows, progress icon, tip icon + label, play triangle). One
+        /// shared mint token so all accent-tier elements stay perfectly in
+        /// sync.
+        public static let idleMetricValue = SwiftUI.Color(hex: "#B7DCC5")
+
+        // MARK: Idle Card — Play Button Material
+        /// Base stroke color of the metallic ring around the play button.
+        /// Medium gray so the ring reads as brushed metal, not as a colored
+        /// border.
+        public static let idlePlayRingBase = SwiftUI.Color(hex: "#6B6F6E")
+        /// Soft mint glow rendered around the outside of the play-button ring.
+        /// Same family as `idleMetricValue` but heavily desaturated via low
+        /// alpha so the halo reads as a hint, not as neon.
+        public static let idlePlayRingGlow = SwiftUI.Color(hex: "#B7DCC5").opacity(0.18)
 
         public static let sheetBackground = SwiftUI.Color(hex: "#222025")
         public static let sheetInputBackground = SwiftUI.Color(hex: "#141518")
@@ -208,14 +284,16 @@ public enum AppStyle {
         public static let grabberHandle: Double = 0.35
         public static let disabledElement: Double = 0.3
         public static let fadedOverlay: Double = 0.4
+        public static let idleIconGlow: Double = 0.3
+        public static let idlePlayButtonGlow: Double = 0.15
         public static let numberPadInactive: Double = 0.5
         public static let numberPadFade: Double = 0.2
     }
 
     public enum Shadow {
-        public static let cardColor = SwiftUI.Color.black.opacity(0.2)
-        public static let cardRadius: CGFloat = 5
-        public static let cardY: CGFloat = 2
+        public static let cardColor = SwiftUI.Color.black.opacity(0.42)
+        public static let cardRadius: CGFloat = 8
+        public static let cardY: CGFloat = 4
     }
 
     public enum DeviceLayout {
@@ -319,4 +397,5 @@ public enum AppStyle {
     public enum Blur {
         public static let iconGlow: CGFloat = 12
     }
+
 }

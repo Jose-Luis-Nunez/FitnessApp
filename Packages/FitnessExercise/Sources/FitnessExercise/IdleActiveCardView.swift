@@ -48,8 +48,11 @@ public struct IdleActiveCardView: View {
         let date: Date
     }
 
-    private var formattedWeight: String {
-        WeightFormatter.displayWeight(viewModel.exercise.weight)
+    /// Numeric portion of the displayed weight, without the unit suffix.
+    /// The unit (`kg`) is rendered as a separate `Text` so it can carry the
+    /// muted label color while the number reads in the value-tier mint.
+    private var weightNumber: String {
+        WeightFormatter.format(viewModel.exercise.weight)
     }
 
     private static let lastTrainingFormatter: DateFormatter = {
@@ -72,27 +75,48 @@ public struct IdleActiveCardView: View {
     }
 
     public var body: some View {
-        CardBackground(backgroundColor: AppStyle.Color.exerciseCardBackground, useGlassEffect: true, addPadding: false) {
-            VStack(spacing: 0) {
-                headerRow
-                    .padding(.horizontal, AppStyle.Padding.card)
+        VStack(spacing: 0) {
+            headerRow
+                .padding(.horizontal, AppStyle.Padding.card)
 
-                if isExpanded, !weightPhases.isEmpty {
-                    expandedContent
-                        .padding(.horizontal, 8)
-                }
+            if isExpanded, !weightPhases.isEmpty {
+                expandedContent
+                    .padding(.horizontal, 8)
             }
-            .padding(.vertical, 8)
-            .background {
-                if isExpanded {
-                    Color.white.opacity(AppStyle.Opacity.subtleBackground)
-                }
+        }
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity)
+        .background {
+            if isExpanded {
+                AppStyle.Color.idleCardBackground.opacity(0.6)
             }
-            .contentShape(Rectangle())
-            .onTapGesture { isExpanded.toggle() }
-            .sheet(item: $analyticsSheetDate) { sheetDate in
-                AnalyticsView(exercise: viewModel.exercise, viewModel: analyticsViewModel, initialDate: sheetDate.date)
-            }
+        }
+        .background(idleCardSurface)
+        .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
+                .fill(
+                    RadialGradient(
+                        colors: [AppStyle.Color.idleCardInnerGlow, .clear],
+                        center: .topLeading,
+                        startRadius: 0,
+                        endRadius: 200
+                    )
+                )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [AppStyle.Color.idleCardBorderLight, AppStyle.Color.idleCardBorderDark],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: AppStyle.Layout.idleCardBorderWidth
+                )
+        )
+        .sheet(item: $analyticsSheetDate) { sheetDate in
+            AnalyticsView(exercise: viewModel.exercise, viewModel: analyticsViewModel, initialDate: sheetDate.date)
         }
         .padding(.horizontal, AppStyle.Padding.card)
         .shadow(color: AppStyle.Shadow.cardColor, radius: AppStyle.Shadow.cardRadius, x: 0, y: AppStyle.Shadow.cardY)
@@ -107,11 +131,30 @@ public struct IdleActiveCardView: View {
 
 private extension IdleActiveCardView {
 
+    var idleCardSurface: some View {
+        LinearGradient(
+            gradient: Gradient(colors: [
+                AppStyle.Color.idleCardSoft,
+                AppStyle.Color.idleCardBackground,
+                AppStyle.Color.idleCardDark,
+            ]),
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
     var headerRow: some View {
         HStack(spacing: 10) {
             categoryIconView
             titleSection
             Spacer(minLength: 4)
+            rightPanel
+        }
+    }
+
+    @ViewBuilder
+    var rightPanel: some View {
+        if onStart != nil, !viewModel.exercise.isCompleted {
             playButton
         }
     }
@@ -119,19 +162,17 @@ private extension IdleActiveCardView {
     var categoryIconView: some View {
         Image(viewModel.exercise.category.defaultIconName)
             .resizable()
+            .interpolation(.high)
             .scaledToFill()
-            .frame(width: AppStyle.Layout.categoryIconSize, height: AppStyle.Layout.categoryIconSize, alignment: viewModel.exercise.category.iconAlignment)
+            .frame(width: AppStyle.Layout.idleCategoryIconSize, height: AppStyle.Layout.idleCategoryIconSize, alignment: viewModel.exercise.category.iconAlignment)
             .clipped()
-            .foregroundColor(AppStyle.Color.white)
-            .contentShape(Rectangle())
-            .onTapGesture { isExpanded.toggle() }
     }
 
     var titleSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(viewModel.exercise.name)
                 .font(AppStyle.Font.cardHeadline)
-                .foregroundColor(.white)
+                .foregroundColor(AppStyle.Color.idleTitle)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
                 .onTapGesture {
@@ -148,7 +189,7 @@ private extension IdleActiveCardView {
     }
 
     private var metricLabelColor: Color {
-        .white.opacity(0.5)
+        AppStyle.Color.idleMetricLabel
     }
 
     var metricRow: some View {
@@ -163,6 +204,9 @@ private extension IdleActiveCardView {
             verticalSeparator
             progressColumn
 
+            verticalSeparator
+            tipColumn
+
             Spacer(minLength: 0)
         }
     }
@@ -170,12 +214,13 @@ private extension IdleActiveCardView {
     var verticalSeparator: some View {
         Rectangle()
             .fill(Color.white.opacity(0.3))
-            .frame(width: 1, height: AppStyle.Layout.separatorHeight)
+            .frame(width: AppStyle.Layout.separatorWidth, height: AppStyle.Layout.separatorHeight)
             .padding(.horizontal, AppStyle.Padding.card)
+            .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.top] + 4 }
     }
 
     var weightColumn: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 7) {
             Text(viewModel.exercise.hasWeight ? "Weight" : "Reps")
                 .font(metricLabelFont)
                 .foregroundColor(metricLabelColor)
@@ -183,14 +228,19 @@ private extension IdleActiveCardView {
                 .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.center] }
 
             if viewModel.exercise.hasWeight {
-                Text(formattedWeight)
-                    .font(AppStyle.Font.detailBadge)
-                    .foregroundColor(AppStyle.Color.greenGlow)
-                    .fixedSize()
+                HStack(alignment: .firstTextBaseline, spacing: 3) {
+                    Text(weightNumber)
+                        .font(AppStyle.Font.detailBadge)
+                        .foregroundColor(AppStyle.Color.idleMetricValue)
+                    Text("kg")
+                        .font(AppStyle.Font.detailBadge)
+                        .foregroundColor(AppStyle.Color.idleMetricLabel)
+                }
+                .fixedSize()
             } else {
                 Text("\(viewModel.exercise.sets) x \(viewModel.exercise.reps)")
                     .font(AppStyle.Font.detailBadge)
-                    .foregroundColor(AppStyle.Color.greenGlow)
+                    .foregroundColor(AppStyle.Color.idleMetricValue)
                     .fixedSize()
             }
         }
@@ -201,7 +251,7 @@ private extension IdleActiveCardView {
     }
 
     var seatColumn: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 7) {
             Text("Seat")
                 .font(metricLabelFont)
                 .foregroundColor(metricLabelColor)
@@ -211,22 +261,17 @@ private extension IdleActiveCardView {
             if let seat = viewModel.exercise.seatSetting, !seat.isEmpty {
                 Text(seat)
                     .font(AppStyle.Font.detailBadge)
-                    .foregroundColor(AppStyle.Color.greenGlow)
+                    .foregroundColor(AppStyle.Color.idleMetricValue)
                     .lineLimit(1)
                     .fixedSize()
             } else {
-                HStack(spacing: 2) {
-                    Text("+")
-                        .font(AppStyle.Font.detailBadge)
-                        .foregroundColor(AppStyle.Color.greenGlow)
-
-                    Image("chairSettings")
-                        .renderingMode(.template)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: AppStyle.Layout.seatIconSize, height: AppStyle.Layout.seatIconSize)
-                        .foregroundColor(AppStyle.Color.greenGlow)
-                }
+                Image("seat_arrow_small")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: AppStyle.Layout.seatIconSize, height: AppStyle.Layout.seatIconSize / 2)
+                    .foregroundColor(AppStyle.Color.idleMetricValue)
+                    .padding(.top, 2)
             }
         }
         .contentShape(Rectangle())
@@ -236,36 +281,47 @@ private extension IdleActiveCardView {
     }
 
     var progressColumn: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("Progress")
+        VStack(alignment: .leading, spacing: 1) {
+            Text("Data")
                 .font(metricLabelFont)
                 .foregroundColor(metricLabelColor)
                 .fixedSize()
                 .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.center] }
 
-            HStack(spacing: 16) {
-                Button(action: {
-                    analyticsSheetDate = AnalyticsSheetDate(date: Date())
-                }) {
-                    Image("analyticsEntry")
+            Button(action: {
+                analyticsSheetDate = AnalyticsSheetDate(date: Date())
+            }) {
+                Image("analyticsEntry")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: AppStyle.Layout.analyticsEntryIconSize, height: AppStyle.Layout.analyticsEntryIconSize)
+                    .foregroundColor(AppStyle.Color.idleMetricValue)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    var tipColumn: some View {
+        Button(action: { isExpanded.toggle() }) {
+            RoundedRectangle(cornerRadius: AppStyle.Layout.tipBoxCornerRadius, style: .continuous)
+                .fill(AppStyle.Color.idleCardBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppStyle.Layout.tipBoxCornerRadius, style: .continuous)
+                        .strokeBorder(AppStyle.Color.idlePlayRingBase, lineWidth: AppStyle.Layout.idlePlayRingWidth)
+                )
+                .overlay(
+                    Image("tip_coaching")
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: AppStyle.Layout.analyticsEntryIconSize, height: AppStyle.Layout.analyticsEntryIconSize)
-                        .foregroundColor(AppStyle.Color.greenGlow)
-                }
-                .buttonStyle(.plain)
-
-                if !weightPhases.isEmpty {
-                    Image(systemName: "chevron.down")
-                        .font(AppStyle.Font.tileLabel)
-                        .foregroundColor(.white.opacity(0.7))
-                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
-                        .contentShape(Rectangle())
-                        .onTapGesture { isExpanded.toggle() }
-                }
-            }
+                        .frame(width: AppStyle.Layout.tipIconSize, height: AppStyle.Layout.tipIconSize)
+                        .foregroundColor(AppStyle.Color.idleMetricValue)
+                )
+                .frame(width: AppStyle.Layout.tipBoxSize, height: AppStyle.Layout.tipBoxSize)
         }
+        .buttonStyle(.plain)
+        .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.top] + 4 }
     }
 
     @ViewBuilder
@@ -278,19 +334,9 @@ private extension IdleActiveCardView {
                         .resizable()
                         .scaledToFit()
                         .foregroundColor(AppStyle.Color.yellow)
-                        .frame(width: AppStyle.Layout.playButtonSize, height: AppStyle.Layout.playButtonSize)
+                        .frame(width: AppStyle.Layout.idlePlayButtonSize, height: AppStyle.Layout.idlePlayButtonSize)
                 } else {
-                    ZStack {
-                        Circle()
-                            .fill(AppStyle.Color.greenGlow)
-                            .frame(width: AppStyle.Layout.playButtonSize, height: AppStyle.Layout.playButtonSize)
-
-                        Image(systemName: "play.fill")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: AppStyle.Layout.playIconSize, height: AppStyle.Layout.playIconSize)
-                            .foregroundColor(AppStyle.Color.exerciseCardBackground)
-                    }
+                    IdlePlayButton()
                 }
             }
             .accessibilityIdentifier(MuscleCategoryIDs.startExercise)

@@ -3,7 +3,7 @@ import FitnessUI
 
 public struct CardBackground<Content: View>: View {
     public enum Style {
-        case glass
+        case glass(Color)
         case gradient(Color)
     }
 
@@ -28,7 +28,7 @@ public struct CardBackground<Content: View>: View {
         @ViewBuilder content: () -> Content
     ) {
         if useGlassEffect {
-            self.style = .glass
+            self.style = .glass(backgroundColor)
         } else {
             self.style = .gradient(backgroundColor)
         }
@@ -48,13 +48,16 @@ public struct CardBackground<Content: View>: View {
     @ViewBuilder
     private var backgroundView: some View {
         switch style {
-        case .glass:
-            if #available(iOS 26.0, macOS 26.0, *) {
-                Color.clear
-                    .glassEffect(in: .rect(cornerRadius: AppStyle.CornerRadius.card))
-            } else {
-                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
-                    .fill(.ultraThinMaterial)
+        case .glass(let backgroundColor):
+            ZStack {
+                backgroundColor
+                if #available(iOS 26.0, macOS 26.0, *) {
+                    Color.clear
+                        .glassEffect(in: .rect(cornerRadius: AppStyle.CornerRadius.card))
+                } else {
+                    RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                }
             }
         case .gradient(let backgroundColor):
             ZStack {
@@ -83,6 +86,21 @@ public struct CardBackground<Content: View>: View {
             RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
                 .stroke(AppStyle.Color.exerciseCardBackground.opacity(0.03), lineWidth: 1.5)
                 .blur(radius: 0.6)
+        }
+    }
+}
+
+public extension View {
+    /// Applies the same glass overlay used by `CardBackground.glass` to any shape.
+    @ViewBuilder
+    func cardGlass<S: Shape>(in shape: S) -> some View {
+        self.overlay {
+            if #available(iOS 26.0, macOS 26.0, *) {
+                Color.clear
+                    .glassEffect(in: shape)
+            } else {
+                shape.fill(.ultraThinMaterial)
+            }
         }
     }
 }
