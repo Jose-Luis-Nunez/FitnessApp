@@ -30,14 +30,15 @@ struct TrainingView: View {
     @Environment(UIOverlayState.self) private var overlayState
 
     @Query private var models: [ExerciseModel]
-    @State private var hasFinishedTraining = false
-    @State private var isManuallyNavigatingBack = false
-    /// Guard against double-start: the coordinator's `startTraining(for:)` is
-    /// invoked from both `.onAppear` (hot path: model already materialised) and
-    /// `.onChange(of: models.first?.id)` (cold path: `@Query` resolves after
-    /// the first body render — common when the launch sequence seeds the
-    /// fixture and immediately navigates).
-    @State private var didStartTraining = false
+    @State private var phase: Phase = .waitingForQuery
+
+    private enum Phase {
+        case waitingForQuery
+        case active
+        case finishing
+        case cancelling
+        case navigatedBack
+    }
 
     init(exerciseId: UUID, category: MuscleCategoryGroup) {
         self.exerciseId = exerciseId
@@ -90,24 +91,20 @@ struct TrainingView: View {
             startTrainingIfReady()
         }
         .onChange(of: trainingCoordinator.isTrainingActive) { _, isActive in
-            // FIXME(T8d-state-machine): 4-flag negation guard is a known
-            // implicit state-machine smell. Tracked for a separate refactor
-            // into `enum Phase`; do not extend with more flags.
-            if !isActive && didStartTraining && !hasFinishedTraining && !isManuallyNavigatingBack && !overlayState.isCancellingTraining {
-                hasFinishedTraining = true
+            if !isActive && phase == .active {
+                phase = .finishing
                 overlayState.showTrainingMiniMenu = false
 
                 Task { @MainActor in
                     try? await Task.sleep(for: TimingConstants.popDelayAfterFinish)
                     router.pop()
                 }
-            } else if !isActive && overlayState.isCancellingTraining {
-                hasFinishedTraining = true
+            } else if !isActive && phase == .cancelling {
                 overlayState.showTrainingMiniMenu = false
             }
         }
         .onDisappear {
-            isManuallyNavigatingBack = true
+            phase = .navigatedBack
             overlayState.showTrainingMiniMenu = false
         }
     }
@@ -212,17 +209,15 @@ struct TrainingView: View {
         static let cancelOverlayHoldDuration: Duration = .milliseconds(200)
     }
 
-    /// Starts the coordinator session exactly once. Both `.onAppear` and the
-    /// `@Query` arrival callback fan into here; the `didStartTraining` guard
-    /// makes the function idempotent.
     private func startTrainingIfReady() {
-        guard !didStartTraining, let model = models.first else { return }
-        didStartTraining = true
+        guard phase == .waitingForQuery, let model = models.first else { return }
+        phase = .active
         trainingCoordinator.startTraining(for: model.toDomain())
     }
 
     private func cancelTraining() {
         let targetCategory = trainingCoordinator.activeSetViewModel.originalCategory ?? category
+        phase = .cancelling
         overlayState.isCancellingTraining = true
         overlayState.showTrainingMiniMenu = false
 

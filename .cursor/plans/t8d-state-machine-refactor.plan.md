@@ -3,26 +3,26 @@ name: T8d State Machine Refactor
 overview: "Refactort die 4-Flag-Negations-Logik in TrainingView zu einer expliziten `enum Phase` State-Machine. Die aktuellen Flags (`hasFinishedTraining`, `isManuallyNavigatingBack`, `didStartTraining` plus `overlayState.isCancellingTraining`) werden durch `@State private var phase: Phase` ersetzt. Eliminiert den FIXME(T8d-state-machine)-Comment."
 todos:
   - id: enum
-    content: "enum Phase + @State einführen, drei alte Flags löschen"
-    status: pending
+    content: enum Phase + @State einführen, drei alte Flags löschen
+    status: completed
   - id: start
-    content: "startTrainingIfReady() auf phase == .waitingForQuery umstellen"
-    status: pending
+    content: startTrainingIfReady() auf phase == .waitingForQuery umstellen
+    status: completed
   - id: onchange
-    content: "onChange(isTrainingActive) auf phase == .active vereinfachen"
-    status: pending
+    content: onChange(isTrainingActive) auf phase == .active vereinfachen
+    status: completed
   - id: cancel
-    content: "cancelTraining() auf phase = .cancelling umstellen"
-    status: pending
+    content: cancelTraining() auf phase = .cancelling umstellen
+    status: completed
   - id: disappear
-    content: "onDisappear auf phase = .navigatedBack umstellen"
-    status: pending
+    content: onDisappear auf phase = .navigatedBack umstellen
+    status: completed
   - id: fixme
-    content: "FIXME(T8d-state-machine) Comment löschen"
-    status: pending
+    content: FIXME(T8d-state-machine) Comment löschen
+    status: completed
   - id: validate
-    content: "Build + UI-Test + Code-Review Skill"
-    status: pending
+    content: Build + UI-Test + Code-Review Skill
+    status: completed
 isProject: true
 ---
 
