@@ -18,7 +18,7 @@ public struct SetTrackingState {
     public init() {}
 
     public var allSetsCompleted: Bool {
-        setProgress.allSatisfy { $0.status != .notStarted && $0.status != .inProgress }
+        !setProgress.isEmpty && setProgress.allSatisfy { $0.status != .notStarted && $0.status != .inProgress }
     }
 
     public mutating func reset() {
@@ -230,7 +230,9 @@ public final class ActiveSetViewModel {
     }
 
     public func startNextSet() {
-        guard let exercise = tracking.currentExercise, tracking.currentSet < exercise.sets else { return }
+        guard let exercise = tracking.currentExercise,
+              tracking.currentSet < exercise.sets,
+              !tracking.isLastSetCompleted else { return }
         tracking.activeSetIndex = tracking.currentSet
         tracking.isSetInProgress = true
         editing.didJustEditSet = false
@@ -261,6 +263,7 @@ public final class ActiveSetViewModel {
 
     public func updateCurrentReps(_ newReps: Int, _ newWeight: Double) {
         guard let exercise = tracking.currentExercise else { return }
+        guard tracking.currentSet < exercise.sets || editing.pendingEditIndex != nil else { return }
 
         let indexToUpdate = editing.pendingEditIndex ?? tracking.currentSet
         let status: SetStatus = newReps < exercise.reps ? .completedLess : .completedMore
@@ -276,7 +279,7 @@ public final class ActiveSetViewModel {
             && editing.pendingEditIndex != tracking.activeSetIndex
         let shouldAdvance = !isEditingOlderSet
 
-        if shouldAdvance {
+        if shouldAdvance && tracking.currentSet < exercise.sets {
             tracking.currentSet += 1
             if tracking.currentSet >= exercise.sets {
                 tracking.isLastSetCompleted = true
@@ -303,8 +306,8 @@ public final class ActiveSetViewModel {
 
     public func resetProgress() {
         tracking.reset()
-        quickDone.allCompleted = false
-        editing.didJustEditSet = false
+        editing.reset()
+        quickDone.reset()
     }
 
     // MARK: - Timer
@@ -342,7 +345,7 @@ public final class ActiveSetViewModel {
         }
         quickDone.isActive = false
         quickDone.allCompleted = true
-        tracking.isSetInProgress = true
+        tracking.isSetInProgress = false
         tracking.isLastSetCompleted = true
         editing.didEditCompleteSet = false
         editing.didJustEditSet = false
@@ -364,6 +367,7 @@ public final class ActiveSetViewModel {
 
         if tracking.allSetsCompleted {
             tracking.isLastSetCompleted = true
+            tracking.isSetInProgress = false
             quickDone.allCompleted = true
             timerService.stopTimer()
             timerService.timerSeconds = 0
@@ -386,6 +390,7 @@ public final class ActiveSetViewModel {
         tracking.isLastSetCompleted = quickDone.allCompleted
 
         if quickDone.allCompleted {
+            tracking.isSetInProgress = false
             timerService.stopTimer()
             timerService.timerSeconds = 0
         }
@@ -406,9 +411,8 @@ public final class ActiveSetViewModel {
 
     public func cancelActiveSet() {
         tracking.reset()
+        editing.reset()
         quickDone.reset()
-        editing.didEditCompleteSet = false
-        editing.didJustEditSet = false
 
         timerService.stopTimer()
         timerService.timerSeconds = 0
