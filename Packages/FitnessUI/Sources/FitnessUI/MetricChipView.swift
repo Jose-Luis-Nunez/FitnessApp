@@ -1,5 +1,4 @@
 import SwiftUI
-import FitnessUI
 
 public struct MetricChipView<Content: View>: View {
     public var width: CGFloat?

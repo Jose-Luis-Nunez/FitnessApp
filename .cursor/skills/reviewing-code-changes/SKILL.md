@@ -242,7 +242,7 @@ When `@Published` properties are restructured (moved, renamed, wrapped in struct
 
 - **Combine subscribers:** Grep for `$propertyName`. If the property became computed (bridging to a nested `@Published` struct), the `$` prefix won't compile. Subscribers must observe the underlying struct.
 - **Cached ViewModel sync (DEPRECATED pattern, kept for historical context):** In the legacy snapshot+polling architecture, cached VMs needed a dedicated sync method (e.g. `syncExercise(_:)`) to suppress re-entrant `onUpdate` callbacks. **Better: don't cache.** With SwiftData `@Model` as SoT (ADR-0001) and `@Query` / `@Bindable` driving the view (`FitnessPersistenceUI` ModelViews), there is no cached VM and no sync workaround is needed. If a review surfaces a new `syncExercise`-style method, treat it as a §13 snapshot-state smell: the cache is the bug.
-- **Equatable traps:** If a model has id-only `Equatable`, guards like `exercise != oldValue` miss content changes. Verify sync guards use `isContentEqual(to:)`.
+- **Equatable traps:** If a model has id-only `Equatable`, guards like `exercise != oldValue` miss content changes. Verify sync guards compare meaningful fields, or rely on SwiftData `@Model` observation instead of DTO equality.
 - **objectWillChange suppression:** `didSet` guards on `@Published` must not silently swallow content-level changes due to id-only equality.
 - **Conditional View rendering chain** — trace and verify each link:
   1. **Mutation**: The property is actually set (e.g. `isCompleted = true`)

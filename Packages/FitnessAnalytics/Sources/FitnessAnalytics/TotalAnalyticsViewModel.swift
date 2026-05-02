@@ -118,42 +118,6 @@ public final class TotalAnalyticsViewModel {
         AnalyticsDateHelper.daysInCurrentMonth(from: loadAllAnalytics().map(\.date))
     }
 
-    public func totalExercisesCompleted() -> Int {
-        return getAllExercisesWithAnalytics().count
-    }
-
-    public func totalWeightIncreases() -> Int {
-        let exercises = getAllExercisesWithAnalytics()
-        let calendar = Calendar.current
-        var totalIncreases = 0
-
-        for exercise in exercises {
-            let entries = storageService.loadAnalytics(for: exercise.id)
-
-            let maxWeightPerDay: [(date: Date, weight: Double)] = Dictionary(
-                grouping: entries,
-                by: { calendar.startOfDay(for: $0.date) }
-            )
-            .compactMap { (date, dayEntries) in
-                let maxWeight = dayEntries.flatMap { $0.setProgress.map(\.weight) }.max() ?? 0.0
-                return maxWeight > 0 ? (date, maxWeight) : nil
-            }
-            .sorted(by: { $0.date < $1.date })
-
-            var lastWeight: Double? = nil
-            for (_, weight) in maxWeightPerDay {
-                if let previous = lastWeight {
-                    if weight > previous {
-                        totalIncreases += 1
-                    }
-                }
-                lastWeight = weight
-            }
-        }
-
-        return totalIncreases
-    }
-
     public func allDatesWithData() -> Set<Date> {
         AnalyticsDateHelper.uniqueDays(from: loadAllAnalytics().map(\.date))
     }
@@ -171,62 +135,6 @@ public final class TotalAnalyticsViewModel {
             .map { calendar.startOfDay(for: $0.date) }
 
         return Set(currentYearDates).count
-    }
-
-    public func averageExercisesPerSession() -> Int {
-        let allEntries = loadAllAnalytics()
-        let calendar = Calendar.current
-
-        let dailyExerciseCounts = Dictionary(grouping: allEntries, by: { calendar.startOfDay(for: $0.date) })
-            .compactMap { (_, entries) -> Int in
-                let uniqueExercises = Set(entries.map { $0.exerciseId })
-                return uniqueExercises.count
-            }
-
-        guard !dailyExerciseCounts.isEmpty else { return 0 }
-
-        let totalExercises = dailyExerciseCounts.reduce(0, +)
-        return totalExercises / dailyExerciseCounts.count
-    }
-
-    // MARK: - Recent Activity
-
-    public func getRecentWorkouts(limit: Int = 5) -> [(date: Date, exerciseCount: Int)] {
-        let allEntries = loadAllAnalytics()
-        let calendar = Calendar.current
-
-        let dailyWorkouts = Dictionary(grouping: allEntries, by: { calendar.startOfDay(for: $0.date) })
-            .compactMap { (date, entries) -> (date: Date, exerciseCount: Int) in
-                let uniqueExercises = Set(entries.map { $0.exerciseId })
-                return (date: date, exerciseCount: uniqueExercises.count)
-            }
-            .sorted { $0.date > $1.date }
-
-        return Array(dailyWorkouts.prefix(limit))
-    }
-
-    // MARK: - Progress Tracking
-
-    public func getExerciseProgressSummary() -> [ExerciseProgressSummary] {
-        let exercises = getAllExercisesWithAnalytics()
-        return exercises.compactMap { exercise in
-            let entries = storageService.loadAnalytics(for: exercise.id)
-            guard let latestEntry = entries.max(by: { $0.date < $1.date }),
-                  let currentWeight = latestEntry.setProgress.first?.weight else {
-                return nil
-            }
-
-            let firstEntry = entries.min(by: { $0.date < $1.date })
-            let startingWeight = firstEntry?.setProgress.first?.weight ?? currentWeight
-
-            return ExerciseProgressSummary(
-                exercise: exercise,
-                currentWeight: currentWeight,
-                startingWeight: startingWeight,
-                totalSessions: entries.count,
-                lastWorkoutDate: latestEntry.date
-            )
-        }.sorted { $0.exercise.name < $1.exercise.name }
     }
 
     // MARK: - Category Analysis
@@ -279,27 +187,6 @@ public final class TotalAnalyticsViewModel {
         }
 
         return (category: .arms, improvements: 0)
-    }
-
-    public func getCategoryWithMostWeightGains() -> (category: MuscleCategoryGroup, totalGains: Double) {
-        let categoryData = getCategoryProgressData()
-
-        let categoryWeightGains = categoryData.map { categoryData in
-            let totalWeightGains = categoryData.exercises.reduce(0.0) { total, exercise in
-                total + exercise.totalWeightGains
-            }
-            return (category: categoryData.category, totalGains: totalWeightGains)
-        }
-
-        let categoryWithMostWeightGains = categoryWeightGains.max { category1, category2 in
-            category1.totalGains < category2.totalGains
-        }
-
-        if let mostWeightGains = categoryWithMostWeightGains, mostWeightGains.totalGains > 0 {
-            return mostWeightGains
-        }
-
-        return (category: .arms, totalGains: 0.0)
     }
 
     public func getCategoryProgressData() -> [CategoryProgressData] {
@@ -559,111 +446,6 @@ public final class TotalAnalyticsViewModel {
 
         return (increments, totalGains)
     }
-
-    // MARK: - Improvement Frequency Chart Data
-
-    public func getFrequencyMilestones() -> [(date: Date, frequency: Double)] {
-        let allData = getCategoryProgressData()
-        let allExercises = allData.flatMap { $0.exercises }
-
-        guard !allExercises.isEmpty else { return [] }
-
-        var allMilestones: [(date: Date, frequency: Double)] = []
-
-        for exerciseData in allExercises {
-            let entries = storageService.loadAnalytics(for: exerciseData.exercise.id)
-            guard entries.count > 1 else { continue }
-
-            let sortedEntries = entries.sorted { $0.date < $1.date }
-            var sessionsCount = 0
-            var improvementsCount = 0
-            var previousWeight: Double = 0
-
-            for entry in sortedEntries {
-                sessionsCount += 1
-
-                if let weight = entry.setProgress.first?.weight {
-                    if previousWeight > 0 && weight > previousWeight {
-                        improvementsCount += 1
-                        let currentFrequency = Double(sessionsCount) / Double(improvementsCount)
-
-                        allMilestones.append((
-                            date: entry.date,
-                            frequency: currentFrequency
-                        ))
-                    }
-                    previousWeight = weight
-                }
-            }
-        }
-
-        return allMilestones.sorted { $0.date < $1.date }
-    }
-
-    public func getExerciseFrequencyHistory(for exerciseId: UUID) -> [(weight: Double, frequency: Double)] {
-        let entries = storageService.loadAnalytics(for: exerciseId)
-        guard entries.count >= 2 else { return [] }
-
-        let sortedEntries = entries.sorted { $0.date < $1.date }
-        var weightFrequencyData: [(weight: Double, frequency: Double)] = []
-        var sessionsCount = 0
-        var improvementsCount = 0
-        var previousWeight: Double = 0
-
-        for entry in sortedEntries {
-            sessionsCount += 1
-
-            if let weight = entry.setProgress.first?.weight {
-                if previousWeight > 0 && weight > previousWeight {
-                    improvementsCount += 1
-
-                    let currentFrequency = Double(sessionsCount) / Double(improvementsCount)
-                    weightFrequencyData.append((
-                        weight: weight,
-                        frequency: currentFrequency
-                    ))
-                }
-                previousWeight = weight
-            }
-        }
-
-        if weightFrequencyData.count < 2 && entries.count >= 3 {
-            return createSyntheticWeightFrequencyData(from: sortedEntries)
-        }
-
-        return weightFrequencyData
-    }
-
-    private func createSyntheticWeightFrequencyData(from entries: [AnalyticsEntry]) -> [(weight: Double, frequency: Double)] {
-        let sortedEntries = entries.sorted { $0.date < $1.date }
-        guard !sortedEntries.isEmpty else { return [] }
-
-        let weights = sortedEntries.compactMap { $0.setProgress.first?.weight }
-        guard !weights.isEmpty else { return [] }
-
-        let startWeight = weights.first ?? 0
-        let endWeight = weights.last ?? startWeight
-        let weightRange = endWeight - startWeight
-
-        var syntheticData: [(weight: Double, frequency: Double)] = []
-        let estimatedSteps = max(2, Int(weightRange / 5))
-
-        for step in 0..<estimatedSteps {
-            let weightProgress = Double(step) / Double(estimatedSteps - 1)
-            let currentWeight = startWeight + (weightRange * weightProgress)
-
-            let baseFrequency = 1.5
-            let progressionFactor = 0.5 * weightProgress
-            let frequency = baseFrequency + progressionFactor
-
-            syntheticData.append((
-                weight: currentWeight,
-                frequency: frequency
-            ))
-        }
-
-        return syntheticData
-    }
 }
 
 // MARK: - Category Helper Models
@@ -727,38 +509,5 @@ public struct ExerciseProgressData: Identifiable {
     public var improvementFrequency: Double {
         guard weightIncrements > 0 else { return 0 }
         return Double(sessionsCount) / Double(weightIncrements)
-    }
-}
-
-// MARK: - Helper Models
-
-public struct ExerciseProgressSummary {
-    public let exercise: Exercise
-    public let currentWeight: Double
-    public let startingWeight: Double
-    public let totalSessions: Int
-    public let lastWorkoutDate: Date
-
-    public init(
-        exercise: Exercise,
-        currentWeight: Double,
-        startingWeight: Double,
-        totalSessions: Int,
-        lastWorkoutDate: Date
-    ) {
-        self.exercise = exercise
-        self.currentWeight = currentWeight
-        self.startingWeight = startingWeight
-        self.totalSessions = totalSessions
-        self.lastWorkoutDate = lastWorkoutDate
-    }
-
-    public var weightProgress: Double {
-        return currentWeight - startingWeight
-    }
-
-    public var progressPercentage: Double {
-        guard startingWeight > 0 else { return 0 }
-        return ((currentWeight - startingWeight) / startingWeight) * 100
     }
 }

@@ -1,6 +1,5 @@
 import SwiftUI
 import FitnessCore
-import FitnessStorage
 import FitnessUI
 import FitnessExercise
 

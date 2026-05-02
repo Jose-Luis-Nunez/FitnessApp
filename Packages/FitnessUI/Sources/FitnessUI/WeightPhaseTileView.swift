@@ -1,6 +1,5 @@
 import SwiftUI
 import FitnessCore
-import FitnessUI
 
 public struct WeightPhaseTileView: View {
     public let phase: WeightPhase

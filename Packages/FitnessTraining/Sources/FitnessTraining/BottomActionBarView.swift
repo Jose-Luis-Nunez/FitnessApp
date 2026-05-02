@@ -10,7 +10,6 @@ public struct BottomActionBarView: View {
     public let onStart: () -> Void
     public let onCompleteSet: () -> Void
     public let onQuickDone: () -> Void
-    public let onCompleteAllQuickDone: () -> Void
     public let onCategoryReset: () -> Void
     public let onEditLess: () -> Void
     public let onEditMore: () -> Void
@@ -28,7 +27,6 @@ public struct BottomActionBarView: View {
         onStart: @escaping () -> Void,
         onCompleteSet: @escaping () -> Void,
         onQuickDone: @escaping () -> Void,
-        onCompleteAllQuickDone: @escaping () -> Void,
         onCategoryReset: @escaping () -> Void,
         onEditLess: @escaping () -> Void,
         onEditMore: @escaping () -> Void,
@@ -42,7 +40,6 @@ public struct BottomActionBarView: View {
         self.onStart = onStart
         self.onCompleteSet = onCompleteSet
         self.onQuickDone = onQuickDone
-        self.onCompleteAllQuickDone = onCompleteAllQuickDone
         self.onCategoryReset = onCategoryReset
         self.onEditLess = onEditLess
         self.onEditMore = onEditMore
@@ -61,7 +58,6 @@ public struct BottomActionBarView: View {
                     onStart: onStart,
                     onCompleteSet: onCompleteSet,
                     onQuickDone: onQuickDone,
-                    onCompleteAllQuickDone: onCompleteAllQuickDone,
                     onCategoryReset: onCategoryReset,
                     onEditLess: onEditLess,
                     onEditMore: onEditMore,
@@ -85,7 +81,6 @@ public struct FloatingActionButtonsView: View {
     public let onStart: () -> Void
     public let onCompleteSet: () -> Void
     public let onQuickDone: () -> Void
-    public let onCompleteAllQuickDone: () -> Void
     public let onCategoryReset: () -> Void
     public let onEditLess: () -> Void
     public let onEditMore: () -> Void
@@ -118,7 +113,6 @@ public struct FloatingActionButtonsView: View {
         onStart: @escaping () -> Void,
         onCompleteSet: @escaping () -> Void,
         onQuickDone: @escaping () -> Void,
-        onCompleteAllQuickDone: @escaping () -> Void,
         onCategoryReset: @escaping () -> Void,
         onEditLess: @escaping () -> Void,
         onEditMore: @escaping () -> Void,
@@ -134,7 +128,6 @@ public struct FloatingActionButtonsView: View {
         self.onStart = onStart
         self.onCompleteSet = onCompleteSet
         self.onQuickDone = onQuickDone
-        self.onCompleteAllQuickDone = onCompleteAllQuickDone
         self.onCategoryReset = onCategoryReset
         self.onEditLess = onEditLess
         self.onEditMore = onEditMore
@@ -149,78 +142,59 @@ public struct FloatingActionButtonsView: View {
 
     public var body: some View {
         ZStack(alignment: .bottom) {
-            if viewModel.showQuickDoneBeendenButton {
-                HStack(spacing: 6) {
-                    glassCapsuleButton(
-                        text: "Finish",
-                        action: onFinish,
-                        style: .finish
-                    )
-                    .frame(maxWidth: .infinity)
+            HStack(spacing: 6) {
+                ZStack {
+                    TrainingGlassEffectCompat.roundedRectangleContinuous(cornerRadius: capsuleHeight / 2)
 
-                    feedbackIconButton(state: feedbackIconState, action: onOpenFeedback)
-                }
-            } else if viewModel.showQuickDoneDoneButton {
-                glassCapsuleButton(
-                    text: "All Done",
-                    action: onCompleteAllQuickDone,
-                    style: .allDone
-                )
-            } else {
-                HStack(spacing: 6) {
-                    ZStack {
-                        TrainingGlassEffectCompat.roundedRectangleContinuous(cornerRadius: capsuleHeight / 2)
+                    HStack(spacing: 18) {
+                        if viewModel.showStartButton && (viewModel.currentSet != 0 || viewModel.didJustEditSet) {
+                            menuTextItem(
+                                text: viewModel.startButtonTitle,
+                                action: onStart,
+                                style: .start
+                            )
+                        }
 
-                        HStack(spacing: 18) {
-                            if viewModel.showStartButton && (viewModel.currentSet != 0 || viewModel.didJustEditSet) {
-                                menuTextItem(
-                                    text: viewModel.startButtonTitle,
-                                    action: onStart,
-                                    style: .start
-                                )
-                            }
+                        if viewModel.showSetControls {
+                            menuTextItem(
+                                text: "Less",
+                                action: onEditLess,
+                                style: .control
+                            )
 
-                            if viewModel.showSetControls {
-                                menuTextItem(
-                                    text: "Less",
-                                    action: onEditLess,
-                                    style: .control
-                                )
+                            menuTextItem(
+                                text: "Done",
+                                action: onCompleteSet,
+                                style: .done
+                            )
 
-                                menuTextItem(
-                                    text: "Done",
-                                    action: onCompleteSet,
-                                    style: .done
-                                )
+                            menuTextItem(
+                                text: "More",
+                                action: onEditMore,
+                                style: .control
+                            )
+                        }
 
-                                menuTextItem(
-                                    text: "More",
-                                    action: onEditMore,
-                                    style: .control
-                                )
-                            }
-
-                            if viewModel.showFinishButton {
-                                menuTextItem(
-                                    text: "Finish",
-                                    action: onFinish,
-                                    style: .finish
-                                )
-                            }
+                        if viewModel.showFinishButton {
+                            menuTextItem(
+                                text: "Finish",
+                                action: onFinish,
+                                style: .finish
+                            )
                         }
                     }
-                    .frame(maxWidth: .infinity, maxHeight: capsuleHeight)
-                    .clipShape(RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous))
+                }
+                .frame(maxWidth: .infinity, maxHeight: capsuleHeight)
+                .clipShape(RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous))
 
-                    if viewModel.showSetControls && viewModel.currentSet == 0 {
-                        menuIconItem(
-                            icon: "quickDoneIcon",
-                            action: onQuickDone,
-                            style: .quickDone
-                        )
-                    } else if viewModel.showFeedbackButton {
-                        feedbackIconButton(state: feedbackIconState, action: onOpenFeedback)
-                    }
+                if viewModel.showSetControls && viewModel.currentSet == 0 {
+                    menuIconItem(
+                        icon: "quickDoneIcon",
+                        action: onQuickDone,
+                        style: .quickDone
+                    )
+                } else if viewModel.showFeedbackButton {
+                    feedbackIconButton(state: feedbackIconState, action: onOpenFeedback)
                 }
             }
         }

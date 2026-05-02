@@ -1,6 +1,5 @@
 import Foundation
 import SwiftUI
-import FitnessUI
 
 /// Isolates UserDefaults persistence from `@Observable` state so that
 /// reads/writes don't trigger observation on every keystroke.

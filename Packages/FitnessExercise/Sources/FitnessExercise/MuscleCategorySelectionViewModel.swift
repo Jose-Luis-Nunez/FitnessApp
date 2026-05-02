@@ -93,10 +93,6 @@ public final class MuscleCategorySelectionViewModel {
         exerciseCounts[group]
     }
 
-    public func hasInactiveExercises() -> Bool {
-        exerciseManagementService.hasInactiveExercises(for: MuscleCategoryGroup.allCases)
-    }
-
     public func hasActiveSetForCategory(_ group: MuscleCategoryGroup) -> Bool {
         coordinatorCache.coordinator(for: group).hasActiveSessions
     }
@@ -126,11 +122,6 @@ public final class MuscleCategorySelectionViewModel {
         refreshExercises()
     }
 
-    public func completeExercise(_ exercise: Exercise, category: MuscleCategoryGroup, setProgress: [SetProgress]) {
-        exerciseManagementService.completeExercise(exercise, category: category, setProgress: setProgress)
-        refreshExercises()
-    }
-
     public func resetExercise(_ exercise: Exercise, category: MuscleCategoryGroup) {
         exerciseManagementService.resetExercise(exercise, category: category)
         refreshExercises()
@@ -144,14 +135,6 @@ public final class MuscleCategorySelectionViewModel {
             }
         }
         return nil
-    }
-
-    public func allExercises() -> [Exercise] {
-        var allExercises: [Exercise] = []
-        for category in MuscleCategoryGroup.allCases {
-            allExercises.append(contentsOf: getExercises(for: category))
-        }
-        return allExercises
     }
 
     public func selectWorkout(_ workout: Workout) {

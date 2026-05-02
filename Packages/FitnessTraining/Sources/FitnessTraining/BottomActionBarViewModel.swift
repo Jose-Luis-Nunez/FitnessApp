@@ -13,8 +13,6 @@ public struct BottomActionBarViewModel {
     public let didEditCompleteSet: Bool
     public let didJustEditSet: Bool
 
-    public let showResetAllExercisesButton: Bool
-
     public init(
         isSetInProgress: Bool,
         currentSet: Int,
@@ -25,8 +23,7 @@ public struct BottomActionBarViewModel {
         quickDoneModeActive: Bool,
         quickDoneAllCompleted: Bool,
         didEditCompleteSet: Bool,
-        didJustEditSet: Bool,
-        showResetAllExercisesButton: Bool
+        didJustEditSet: Bool
     ) {
         self.isSetInProgress = isSetInProgress
         self.currentSet = currentSet
@@ -38,12 +35,11 @@ public struct BottomActionBarViewModel {
         self.quickDoneAllCompleted = quickDoneAllCompleted
         self.didEditCompleteSet = didEditCompleteSet
         self.didJustEditSet = didJustEditSet
-        self.showResetAllExercisesButton = showResetAllExercisesButton
     }
 
     public var shouldShow: Bool {
         let hasActiveTraining = isSetInProgress || currentExercise != nil
-        let hasTrainingActivity = showStartButton || showSetControls || showFinishButton || showQuickDoneBeendenButton || showQuickDoneDoneButton
+        let hasTrainingActivity = showStartButton || showSetControls || showFinishButton
 
         return hasActiveTraining && hasTrainingActivity
     }
@@ -56,18 +52,6 @@ public struct BottomActionBarViewModel {
         isSetInProgress && hasActiveExercise && !isLastSetCompleted && !quickDoneModeActive
     }
 
-    public var showQuickDoneBeendenButton: Bool {
-        quickDoneModeActive && currentExercise != nil && quickDoneAllCompleted
-    }
-
-    public var showQuickDoneDoneButton: Bool {
-        quickDoneModeActive && currentExercise != nil && !quickDoneAllCompleted
-    }
-
-    public var showCategoryResetButton: Bool {
-        exercises.allSatisfy { $0.isCompleted } && !isSetInProgress && !exercises.isEmpty
-    }
-
     public var showFinishButton: Bool {
         (isLastSetCompleted || didEditCompleteSet) && currentExercise != nil
     }
@@ -78,12 +62,7 @@ public struct BottomActionBarViewModel {
     /// set 0. (Property name retains the historical `Beenden` spelling; the
     /// user-facing label was localised to "Finish".)
     public var showFeedbackButton: Bool {
-        showFinishButton || showQuickDoneBeendenButton
-    }
-
-    public var showAddExerciseButton: Bool {
-        let isStartSetState = showStartButton && (currentSet != 0 || didJustEditSet)
-        return !isSetInProgress && !isStartSetState
+        showFinishButton
     }
 
     public var startButtonTitle: String {

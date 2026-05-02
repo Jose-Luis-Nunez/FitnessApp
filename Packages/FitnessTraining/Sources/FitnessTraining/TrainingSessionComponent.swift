@@ -165,7 +165,6 @@ public struct TrainingActionBarComponent: View {
                 originalCallbacks.onCompleteSet()
             },
             onQuickDone: originalCallbacks.onQuickDone,
-            onCompleteAllQuickDone: originalCallbacks.onCompleteAllQuickDone,
             onCategoryReset: originalCallbacks.onCategoryReset,
             onEditLess: {
                 guard coordinator.activeSetViewModel.isSetInProgress ||
@@ -198,7 +197,6 @@ public struct TrainingActionBarComponent: View {
                 onStart: trainingCallbacks.onStart,
                 onCompleteSet: trainingCallbacks.onCompleteSet,
                 onQuickDone: trainingCallbacks.onQuickDone,
-                onCompleteAllQuickDone: trainingCallbacks.onCompleteAllQuickDone,
                 onCategoryReset: trainingCallbacks.onCategoryReset,
                 onEditLess: trainingCallbacks.onEditLess,
                 onEditMore: trainingCallbacks.onEditMore,

@@ -91,8 +91,6 @@ public final class ActiveSetViewModel {
     private let timerService: TimerService
     private var timerObservationTask: Task<Void, Never>?
 
-    public var onCoordinatorUpdateNeeded: (() -> Void)?
-
     // MARK: - Bridged accessors (keep callers working)
 
     public var currentExercise: Exercise? {
@@ -417,8 +415,6 @@ public final class ActiveSetViewModel {
         editing.pendingEditIndex = index
         editing.editMode = mode
         editing.isEditing = true
-
-        onCoordinatorUpdateNeeded?()
     }
 
     public func cancelActiveSet() {

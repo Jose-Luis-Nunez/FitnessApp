@@ -45,18 +45,6 @@ public final class AnalyticsViewModel {
         storageService.load(for: exerciseId)
     }
     
-    public func loadAnalytics(for exerciseId: UUID, on date: Date) -> [AnalyticsEntry] {
-        let calendar = Calendar.current
-        return loadAnalytics(for: exerciseId).filter { entry in
-            calendar.isDate(entry.date, inSameDayAs: date)
-        }
-    }
-    
-    public func allDatesWithData(for exerciseId: UUID) -> Set<Date> {
-        let entries = loadAnalytics(for: exerciseId)
-        return AnalyticsDateHelper.uniqueDays(from: entries.map(\.date))
-    }
-    
     public func loadAnalyticsDates(for exerciseId: UUID) -> [Date] {
         storageService.load(for: exerciseId).map { $0.date }
     }

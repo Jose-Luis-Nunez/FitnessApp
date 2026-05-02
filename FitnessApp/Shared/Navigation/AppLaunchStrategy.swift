@@ -1,6 +1,5 @@
 import Foundation
 import FitnessCore
-import FitnessStorage
 import FitnessExercise
 
 @MainActor

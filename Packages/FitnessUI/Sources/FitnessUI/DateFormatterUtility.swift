@@ -22,13 +22,6 @@ extension DateFormatter {
         return formatter
     }()
 
-    public static let germanCompact: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd.MM.yy"
-        formatter.locale = Locale(identifier: "de_DE")
-        return formatter
-    }()
-
     public static let germanMonthYear: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "de_DE")

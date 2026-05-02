@@ -2,8 +2,6 @@ import Foundation
 import Observation
 import FitnessAnalytics
 import FitnessCore
-import FitnessStorage
-import Factory
 
 public struct WeekDay: Identifiable {
     public let id: Int

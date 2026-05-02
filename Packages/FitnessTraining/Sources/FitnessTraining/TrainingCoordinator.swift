@@ -11,7 +11,6 @@ public struct TrainingCallbacks {
     public let onStart: () -> Void
     public let onCompleteSet: () -> Void
     public let onQuickDone: () -> Void
-    public let onCompleteAllQuickDone: () -> Void
     public let onCategoryReset: () -> Void
     public let onEditLess: () -> Void
     public let onEditMore: () -> Void
@@ -24,7 +23,6 @@ public struct TrainingCallbacks {
         onStart: @escaping () -> Void,
         onCompleteSet: @escaping () -> Void,
         onQuickDone: @escaping () -> Void,
-        onCompleteAllQuickDone: @escaping () -> Void,
         onCategoryReset: @escaping () -> Void,
         onEditLess: @escaping () -> Void,
         onEditMore: @escaping () -> Void,
@@ -36,7 +34,6 @@ public struct TrainingCallbacks {
         self.onStart = onStart
         self.onCompleteSet = onCompleteSet
         self.onQuickDone = onQuickDone
-        self.onCompleteAllQuickDone = onCompleteAllQuickDone
         self.onCategoryReset = onCategoryReset
         self.onEditLess = onEditLess
         self.onEditMore = onEditMore
@@ -178,12 +175,10 @@ public final class TrainingCoordinator {
 
         if let existingVM = activeSessions[exercise.id] {
             setFocusedExerciseId(exercise.id)
-            existingVM.onCoordinatorUpdateNeeded = { }
             return
         }
 
         let vm = sessionFactory()
-        vm.onCoordinatorUpdateNeeded = { }
 
         // Result intentionally unused: multi-session architecture gives each
         // exercise its own VM, so .switchedFrom / finishPreviousTraining is never
@@ -326,8 +321,7 @@ public final class TrainingCoordinator {
             quickDoneModeActive: activeSetViewModel.quickDoneModeActive,
             quickDoneAllCompleted: activeSetViewModel.quickDoneAllCompleted,
             didEditCompleteSet: activeSetViewModel.didEditCompleteSet,
-            didJustEditSet: activeSetViewModel.didJustEditSet,
-            showResetAllExercisesButton: false
+            didJustEditSet: activeSetViewModel.didJustEditSet
         )
     }
 
@@ -348,8 +342,6 @@ public final class TrainingCoordinator {
             },
             onQuickDone: { [weak self] in
                 self?.handleQuickDone()
-            },
-            onCompleteAllQuickDone: {
             },
             onCategoryReset: { [weak self] in
                 self?.resetExercise()

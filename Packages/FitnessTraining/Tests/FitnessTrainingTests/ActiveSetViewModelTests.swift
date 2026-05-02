@@ -191,6 +191,49 @@ struct ActiveSetViewModelTests {
         #expect(sut.didEditCompleteSet == true)
     }
 
+    @Test func updateCurrentRepsAtNonActiveEditIndexDoesNotAdvanceCurrentSet() {
+        let sut = makeSUT()
+        let exercise = makeExercise(sets: 3, reps: 10, weight: 60)
+        sut.startSet(for: exercise, category: .arms)
+
+        sut.completeCurrentSet()
+        sut.startNextSet()
+        sut.completeCurrentSet()
+        sut.startNextSet()
+        // activeSetIndex == 2, currentSet == 2
+
+        // Edit set 0 (an older set, not the active one)
+        sut.pendingEditIndex = 0
+        sut.updateCurrentReps(8, 55)
+
+        // currentSet must NOT advance because we edited an older set
+        #expect(sut.currentSet == 2)
+        #expect(sut.setProgress[0].status == .completedLess)
+        #expect(sut.setProgress[0].currentReps == 8)
+        #expect(sut.didJustEditSet == true)
+        #expect(sut.pendingEditIndex == nil)
+    }
+
+    @Test func updateCurrentRepsAtActiveEditIndexAdvancesCurrentSet() {
+        let sut = makeSUT()
+        let exercise = makeExercise(sets: 3, reps: 10, weight: 60)
+        sut.startSet(for: exercise, category: .arms)
+
+        sut.completeCurrentSet()
+        sut.startNextSet()
+        // activeSetIndex == 1, currentSet == 1
+
+        // Edit the active set (index 1)
+        sut.pendingEditIndex = 1
+        sut.updateCurrentReps(12, 65)
+
+        // currentSet MUST advance because we edited the active set
+        #expect(sut.currentSet == 2)
+        #expect(sut.setProgress[1].status == .completedMore)
+        #expect(sut.didJustEditSet == true)
+        #expect(sut.pendingEditIndex == nil)
+    }
+
     // MARK: - finishExercise
 
     @Test func finishExerciseResetsAllState() {
@@ -301,6 +344,23 @@ struct ActiveSetViewModelTests {
 
         #expect(sut.setProgress.allSatisfy { $0.status == .completedDone })
         #expect(sut.quickDoneAllCompleted == true)
+    }
+
+    // MARK: - Timer Integration
+
+    @Test(.timeLimit(.minutes(1)))
+    func timerSecondsReflectsTimerServiceTicks() async throws {
+        let sut = makeSUT()
+        let exercise = makeExercise(sets: 3)
+        sut.startSet(for: exercise, category: .arms)
+
+        // startSet calls resetAndStartTimer, and the VM's polling loop
+        // propagates timerService.timerSeconds -> sut.timerSeconds.
+        // Wait for at least 1 second of real elapsed time so the
+        // TimerService's internal tick loop publishes a non-zero value.
+        try await waitUntil(timeout: .seconds(3)) { sut.timerSeconds >= 1 }
+
+        #expect(sut.timerSeconds >= 1)
     }
 
     // MARK: - Editing

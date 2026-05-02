@@ -75,20 +75,6 @@ public struct Exercise: Identifiable, Codable, Equatable, Hashable {
 }
 
 extension Exercise {
-    public func isContentEqual(to other: Exercise) -> Bool {
-        id == other.id
-        && name == other.name
-        && weight == other.weight
-        && reps == other.reps
-        && sets == other.sets
-        && seatSetting == other.seatSetting
-        && noSeats == other.noSeats
-        && isCompleted == other.isCompleted
-        && iconName == other.iconName
-        && category == other.category
-        && goal == other.goal
-    }
-
     public var hasWeight: Bool { weight > 0 }
 
     public var displayIconName: String {

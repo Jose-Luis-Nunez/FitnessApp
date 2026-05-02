@@ -17,8 +17,7 @@ struct BottomActionBarViewModelTests {
         quickDoneModeActive: Bool = false,
         quickDoneAllCompleted: Bool = false,
         didEditCompleteSet: Bool = false,
-        didJustEditSet: Bool = false,
-        showResetAllExercisesButton: Bool = false
+        didJustEditSet: Bool = false
     ) -> BottomActionBarViewModel {
         BottomActionBarViewModel(
             isSetInProgress: isSetInProgress,
@@ -30,8 +29,7 @@ struct BottomActionBarViewModelTests {
             quickDoneModeActive: quickDoneModeActive,
             quickDoneAllCompleted: quickDoneAllCompleted,
             didEditCompleteSet: didEditCompleteSet,
-            didJustEditSet: didJustEditSet,
-            showResetAllExercisesButton: showResetAllExercisesButton
+            didJustEditSet: didJustEditSet
         )
     }
 
@@ -47,17 +45,6 @@ struct BottomActionBarViewModelTests {
             isLastSetCompleted: true
         )
         #expect(vm.showFinishButton == true)
-        #expect(vm.showFeedbackButton == true)
-    }
-
-    @Test func feedbackButtonVisibleWhenQuickDoneBeendenIsVisible() {
-        let exercise = makeExercise(sets: 3)
-        let vm = makeViewModel(
-            currentExercise: exercise,
-            quickDoneModeActive: true,
-            quickDoneAllCompleted: true
-        )
-        #expect(vm.showQuickDoneBeendenButton == true)
         #expect(vm.showFeedbackButton == true)
     }
 

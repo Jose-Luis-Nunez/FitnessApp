@@ -531,3 +531,41 @@ struct CurrentWorkoutIdTests {
         #expect(vm.currentWorkoutId == w2.id)
     }
 }
+
+// MARK: - Workout Switch Refreshes Exercises (Phase 0d safety-net)
+
+@Suite("workout switch refreshes exercises")
+@MainActor
+struct WorkoutSwitchRefreshTests {
+
+    @Test func refreshExercisesPicksUpNewWorkoutData() {
+        let mock = MockExerciseManagement()
+        let armExercise = makeExercise(name: "Curl")
+        mock.exercisesByCategory[.arms] = [armExercise]
+
+        let w1 = Workout(name: "Push", selectedCategories: [.arms, .chest])
+        let ws = MockWorkoutStorage()
+        ws.setCurrentWorkout(w1)
+
+        let vm = MuscleCategorySelectionViewModel(
+            coordinatorCache: MockCoordinatorCache(),
+            exerciseManagement: mock,
+            workoutStorage: ws
+        )
+
+        #expect(vm.getExerciseCount(for: .arms)?.total == 1)
+        #expect(vm.getExerciseCount(for: .chest)?.total == 0)
+
+        let w2 = Workout(name: "Pull", selectedCategories: [.back])
+        ws.setCurrentWorkout(w2)
+
+        let chestExercise = makeExercise(name: "Bench")
+        mock.exercisesByCategory[.chest] = [chestExercise]
+        mock.exercisesByCategory[.arms] = []
+
+        vm.refreshExercises()
+
+        #expect(vm.getExerciseCount(for: .arms)?.total == 0)
+        #expect(vm.getExerciseCount(for: .chest)?.total == 1)
+    }
+}

@@ -1,5 +1,4 @@
 import SwiftUI
-import FitnessUI
 
 public struct CardBackground<Content: View>: View {
     public enum Style {
@@ -90,17 +89,3 @@ public struct CardBackground<Content: View>: View {
     }
 }
 
-public extension View {
-    /// Applies the same glass overlay used by `CardBackground.glass` to any shape.
-    @ViewBuilder
-    func cardGlass<S: Shape>(in shape: S) -> some View {
-        self.overlay {
-            if #available(iOS 26.0, macOS 26.0, *) {
-                Color.clear
-                    .glassEffect(in: shape)
-            } else {
-                shape.fill(.ultraThinMaterial)
-            }
-        }
-    }
-}

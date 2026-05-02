@@ -34,19 +34,6 @@ public final class KeyboardObserver {
 }
 #endif
 
-// MARK: - Keyboard Visible Environment Key
-
-private struct KeyboardVisibleKey: EnvironmentKey {
-    static let defaultValue: Bool = false
-}
-
-public extension EnvironmentValues {
-    var keyboardIsVisible: Bool {
-        get { self[KeyboardVisibleKey.self] }
-        set { self[KeyboardVisibleKey.self] = newValue }
-    }
-}
-
 // MARK: - Shared Sheet Modifier
 
 public struct ExercisePickerSheetModifier: ViewModifier {
@@ -65,9 +52,6 @@ public struct ExercisePickerSheetModifier: ViewModifier {
     public func body(content: Content) -> some View {
         content
             .padding(.bottom, 28)
-            #if canImport(UIKit)
-            .environment(\.keyboardIsVisible, keyboard.isVisible)
-            #endif
             .background(
                 UnevenRoundedRectangle(
                     topLeadingRadius: AppStyle.CornerRadius.sheet,

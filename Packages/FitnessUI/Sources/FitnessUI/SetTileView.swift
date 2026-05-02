@@ -1,6 +1,5 @@
 import SwiftUI
 import FitnessCore
-import FitnessUI
 
 public struct SetTileView: View {
     public let setNumber: Int
