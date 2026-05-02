@@ -684,25 +684,7 @@ struct ResetExerciseCoordinatorTests {
 
 // MARK: - Factory integration (via TrainingCoordinatorCache)
 
-@MainActor
-private final class StubExerciseManagement: ExerciseManaging {
-    var updatedExercises: [Exercise] = []
-    var resetExercises: [Exercise] = []
-
-    func updateExercise(_ updatedExercise: Exercise, category: MuscleCategoryGroup) {
-        updatedExercises.append(updatedExercise)
-    }
-    func getExercises(for category: MuscleCategoryGroup) -> [Exercise] { [] }
-    func addExercise(_ exercise: Exercise, category: MuscleCategoryGroup, atTop: Bool) {}
-    func completeExercise(_ exercise: Exercise, category: MuscleCategoryGroup, setProgress: [SetProgress]) {}
-    func resetExercise(_ exercise: Exercise, category: MuscleCategoryGroup) {
-        resetExercises.append(exercise)
-    }
-    func resetAllExercises(for categories: [MuscleCategoryGroup]) {}
-    func getExerciseCount(for category: MuscleCategoryGroup) -> (total: Int, active: Int) { (0, 0) }
-    func getAllExerciseCounts(for categories: [MuscleCategoryGroup]) -> [MuscleCategoryGroup: (total: Int, active: Int)] { [:] }
-    func hasInactiveExercises(for categories: [MuscleCategoryGroup]) -> Bool { false }
-}
+// StubExerciseManagement replaced by MockExerciseManagement from FitnessTestSupport
 
 @Suite("Factory integration")
 @MainActor
@@ -713,8 +695,8 @@ struct FactoryIntegrationTests {
     }
 
     @Test func coordinatorFromCacheStartsAndFinishesTraining() {
-        let stub = StubExerciseManagement()
-        Container.shared.exerciseManagement.register { stub }
+        let mock = MockExerciseManagement()
+        Container.shared.exerciseManagement.register { mock }
 
         let cache = TrainingCoordinatorCache()
         let coordinator = cache.coordinator(for: .arms)
@@ -730,13 +712,13 @@ struct FactoryIntegrationTests {
 
         #expect(coordinator.currentExercise == nil)
         #expect(coordinator.isTrainingActive == false)
-        #expect(stub.updatedExercises.count == 1)
-        #expect(stub.updatedExercises.first?.isCompleted == true)
+        #expect(mock.updatedExercises.count == 1)
+        #expect(mock.updatedExercises.first?.isCompleted == true)
     }
 
     @Test func coordinatorFromCacheResetsExercise() {
-        let stub = StubExerciseManagement()
-        Container.shared.exerciseManagement.register { stub }
+        let mock = MockExerciseManagement()
+        Container.shared.exerciseManagement.register { mock }
 
         let cache = TrainingCoordinatorCache()
         let coordinator = cache.coordinator(for: .chest)
@@ -746,7 +728,7 @@ struct FactoryIntegrationTests {
         coordinator.resetExercise()
 
         #expect(coordinator.activeSessions.isEmpty)
-        #expect(stub.resetExercises.count == 1)
+        #expect(mock.resetExercises.count == 1)
     }
 }
 

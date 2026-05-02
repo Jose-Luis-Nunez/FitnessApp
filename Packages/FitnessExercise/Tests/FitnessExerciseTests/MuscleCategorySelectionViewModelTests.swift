@@ -37,65 +37,7 @@ private final class MockCoordinatorCache: TrainingCoordinatorCaching {
 
 // MARK: - Mock Exercise Management
 
-@MainActor
-private final class MockExerciseManagement: ExerciseManaging {
-    var exercisesByCategory: [MuscleCategoryGroup: [Exercise]] = [:]
-
-    func updateExercise(_ updatedExercise: Exercise, category: MuscleCategoryGroup) {
-        guard var exercises = exercisesByCategory[category],
-              let index = exercises.firstIndex(where: { $0.id == updatedExercise.id }) else { return }
-        exercises[index] = updatedExercise
-        exercisesByCategory[category] = exercises
-    }
-
-    func getExercises(for category: MuscleCategoryGroup) -> [Exercise] {
-        exercisesByCategory[category] ?? []
-    }
-
-    func addExercise(_ exercise: Exercise, category: MuscleCategoryGroup, atTop: Bool) {
-        var exercises = exercisesByCategory[category] ?? []
-        if atTop { exercises.insert(exercise, at: 0) } else { exercises.append(exercise) }
-        exercisesByCategory[category] = exercises
-    }
-
-    func completeExercise(_ exercise: Exercise, category: MuscleCategoryGroup, setProgress: [SetProgress]) {
-        var updated = exercise
-        updated.isCompleted = true
-        updateExercise(updated, category: category)
-    }
-
-    func resetExercise(_ exercise: Exercise, category: MuscleCategoryGroup) {
-        var updated = exercise
-        updated.isCompleted = false
-        updateExercise(updated, category: category)
-    }
-
-    func resetAllExercises(for categories: [MuscleCategoryGroup]) {
-        for category in categories {
-            let exercises = exercisesByCategory[category] ?? []
-            exercisesByCategory[category] = exercises.map {
-                var e = $0; e.isCompleted = false; return e
-            }
-        }
-    }
-
-    func getExerciseCount(for category: MuscleCategoryGroup) -> (total: Int, active: Int) {
-        let exercises = exercisesByCategory[category] ?? []
-        return (total: exercises.count, active: exercises.filter { !$0.isCompleted }.count)
-    }
-
-    func getAllExerciseCounts(for categories: [MuscleCategoryGroup]) -> [MuscleCategoryGroup: (total: Int, active: Int)] {
-        var result: [MuscleCategoryGroup: (total: Int, active: Int)] = [:]
-        for cat in categories { result[cat] = getExerciseCount(for: cat) }
-        return result
-    }
-
-    func hasInactiveExercises(for categories: [MuscleCategoryGroup]) -> Bool {
-        categories.contains { cat in
-            (exercisesByCategory[cat] ?? []).contains { $0.isCompleted }
-        }
-    }
-}
+// MockExerciseManagement is shared from FitnessTestSupport
 
 // MARK: - Categories (workout-agnostic)
 

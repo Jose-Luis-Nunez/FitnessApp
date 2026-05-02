@@ -3,6 +3,7 @@ import Foundation
 @testable import FitnessTraining
 import FitnessCore
 import FitnessStorage
+import FitnessTestSupport
 import Factory
 
 @Suite("FeedbackViewModel")
@@ -411,28 +412,4 @@ struct FeedbackViewModelTests {
     }
 }
 
-@MainActor
-private final class InMemoryFeedbackStorage: FeedbackStoring {
-    private var entries: [ExerciseFeedback] = []
-
-    /// Mirrors the production upsert semantics of `FeedbackStorageService`:
-    /// upsert by `sessionId` so two sessions of the same exercise produce two
-    /// rows, while re-saving within one session updates in place.
-    func save(_ feedback: ExerciseFeedback) {
-        if let idx = entries.firstIndex(where: { $0.sessionId == feedback.sessionId }) {
-            entries[idx] = feedback
-        } else {
-            entries.append(feedback)
-        }
-    }
-
-    func load(for exerciseId: UUID) -> [ExerciseFeedback] {
-        entries
-            .filter { $0.exerciseId == exerciseId }
-            .sorted { $0.date < $1.date }
-    }
-
-    func latest(for exerciseId: UUID) -> ExerciseFeedback? {
-        load(for: exerciseId).last
-    }
-}
+// InMemoryFeedbackStorage is now shared from FitnessTestSupport
