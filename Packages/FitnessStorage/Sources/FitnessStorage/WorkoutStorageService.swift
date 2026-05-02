@@ -102,7 +102,9 @@ public final class WorkoutStorageService: WorkoutStoring {
         let currentId = userDefaults.string(forKey: currentWorkoutKey).flatMap(UUID.init(uuidString:))
         let defaultId = userDefaults.string(forKey: defaultWorkoutKey).flatMap(UUID.init(uuidString:))
 
-        let preferredFallback = realWorkouts.first { $0.isDefault } ?? realWorkouts.sorted { $0.createdDate < $1.createdDate }.first!
+        guard let preferredFallback = realWorkouts.first(where: { $0.isDefault }) ?? realWorkouts.sorted(by: { $0.createdDate < $1.createdDate }).first else {
+            return
+        }
 
         for suspect in suspects {
             context.delete(suspect)

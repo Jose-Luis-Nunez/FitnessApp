@@ -26,7 +26,7 @@ public struct MiniActionMenuView: View {
         self.title = title
         self.items = items
         #if canImport(UIKit)
-        self.width = width ?? min(UIScreen.main.bounds.width * 0.55, 320)
+        self.width = width ?? min(UIScreen.main.bounds.width * 0.55, AppStyle.Layout.miniMenuMaxWidth)
         #else
         self.width = width ?? 280
         #endif
@@ -47,11 +47,11 @@ public struct MiniActionMenuView: View {
 
     public var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: AppStyle.CornerRadius.overlay, style: .continuous)
                 .fill(.ultraThinMaterial)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(Color.gray.opacity(0.4))
+                    RoundedRectangle(cornerRadius: AppStyle.CornerRadius.overlay, style: .continuous)
+                        .fill(Color.gray.opacity(AppStyle.Opacity.fadedOverlay))
                 )
 
             VStack(spacing: 0) {
@@ -63,12 +63,12 @@ public struct MiniActionMenuView: View {
         }
         .frame(width: width)
         .frame(height: effectiveMinHeight, alignment: .bottom)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.overlay, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
+            RoundedRectangle(cornerRadius: AppStyle.CornerRadius.overlay, style: .continuous)
+                .strokeBorder(Color.white.opacity(AppStyle.Opacity.subtleStroke), lineWidth: 1)
         )
-        .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 10)
+        .shadow(color: .black.opacity(AppStyle.Opacity.overlayBackdrop), radius: AppStyle.Shadow.overlayRadius, x: 0, y: AppStyle.Shadow.overlayY)
     }
 
     @ViewBuilder

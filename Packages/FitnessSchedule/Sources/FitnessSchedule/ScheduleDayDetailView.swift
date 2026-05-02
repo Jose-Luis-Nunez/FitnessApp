@@ -65,13 +65,13 @@ public struct ScheduleDayDetailView: View {
         }
     }
 
+    @ViewBuilder
     private var completionBadge: some View {
-        let detail = workoutDetail!
-        let completed = detail.categories.flatMap(\.exercises).filter(\.isCompleted).count
-        let total = detail.categories.flatMap(\.exercises).count
+        let completed = (workoutDetail?.categories ?? []).flatMap(\.exercises).filter(\.isCompleted).count
+        let total = (workoutDetail?.categories ?? []).flatMap(\.exercises).count
         let pct = total > 0 ? Int(round(Double(completed) / Double(total) * 100)) : 0
 
-        return Text("\(pct)%")
+        Text("\(pct)%")
             .font(AppStyle.Font.detailBadge)
             .foregroundColor(pct == 100 ? AppStyle.Color.greenGlow : AppStyle.Color.white)
             .padding(.horizontal, 10)

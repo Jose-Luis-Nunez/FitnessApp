@@ -33,7 +33,7 @@ public struct WorkoutFormSheet<Content: View>: View {
     private var dragIndicator: some View {
         RoundedRectangle(cornerRadius: 2.5)
             .fill(AppStyle.Color.gray.opacity(0.4))
-            .frame(width: 36, height: 5)
+            .frame(width: AppStyle.Layout.grabberWidth, height: AppStyle.Layout.grabberHeight)
             .padding(.top, 8)
             .padding(.bottom, 8)
     }

@@ -91,6 +91,16 @@ public enum AppStyle {
         public static let scrollWheelSnapTolerance: CGFloat = 18
         /// Bottom padding for short sheet content to match wheel picker height.
         public static let sheetContentBottomPad: CGFloat = 23
+        public static let workoutPickerWidth: CGFloat = 320
+        public static let workoutPickerHeight: CGFloat = 220
+        public static let workoutPickerWheelHeight: CGFloat = 150
+        public static let overlayConfirmButtonSize: CGFloat = 32
+        public static let grabberWidth: CGFloat = 36
+        public static let grabberHeight: CGFloat = 5
+        public static let capsuleToggleWidth: CGFloat = 44
+        public static let capsuleToggleHeight: CGFloat = 26
+        public static let capsuleToggleThumb: CGFloat = 22
+        public static let miniMenuMaxWidth: CGFloat = 320
     }
 
     public enum CornerRadius {
@@ -103,6 +113,8 @@ public enum AppStyle {
         public static let timerCard: CGFloat = 12
         public static let numberPadKey: CGFloat = 12
         public static let pill: CGFloat = 20
+        public static let overlay: CGFloat = 20
+        public static let capsuleToggle: CGFloat = 12
     }
 
     public enum Font {
@@ -294,6 +306,8 @@ public enum AppStyle {
         public static let cardColor = SwiftUI.Color.black.opacity(0.42)
         public static let cardRadius: CGFloat = 8
         public static let cardY: CGFloat = 4
+        public static let overlayRadius: CGFloat = 20
+        public static let overlayY: CGFloat = 10
     }
 
     public enum DeviceLayout {

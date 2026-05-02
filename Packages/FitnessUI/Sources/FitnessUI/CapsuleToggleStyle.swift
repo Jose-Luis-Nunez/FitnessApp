@@ -10,16 +10,17 @@ public struct CapsuleToggleStyle: ToggleStyle {
     }
 
     public func makeBody(configuration: Configuration) -> some View {
+        let thumbOffset = (AppStyle.Layout.capsuleToggleWidth - AppStyle.Layout.capsuleToggleThumb) / 2 - 2
         Button(action: { configuration.isOn.toggle() }) {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: AppStyle.CornerRadius.capsuleToggle, style: .continuous)
                 .fill(configuration.isOn ? onColor : offColor)
-                .frame(width: 44, height: 26)
+                .frame(width: AppStyle.Layout.capsuleToggleWidth, height: AppStyle.Layout.capsuleToggleHeight)
                 .overlay(
                     Circle()
                         .fill(Color.white)
-                        .frame(width: 22, height: 22)
+                        .frame(width: AppStyle.Layout.capsuleToggleThumb, height: AppStyle.Layout.capsuleToggleThumb)
                         .shadow(color: .black.opacity(0.15), radius: 1, x: 0, y: 1)
-                        .offset(x: configuration.isOn ? 9 : -9)
+                        .offset(x: configuration.isOn ? thumbOffset : -thumbOffset)
                         .animation(.easeInOut(duration: 0.15), value: configuration.isOn)
                 )
         }

@@ -38,12 +38,10 @@ struct FitnessAppApp: App {
         let container = Container.shared.modelContainer()
         self.modelContainer = container
 
-        // Factory returns the protocol type `WorkoutStoring`; in practice
-        // `\.workoutStorage` always resolves to `WorkoutStorageService`, and
-        // SwiftUI views consume it as a concrete `@Observable` reference type
-        // (Bindings, `@Bindable`). Force-cast is intentional: a misregistration
-        // here is a programmer error, not a runtime condition to recover from.
-        _workoutStorageService = State(wrappedValue: Container.shared.workoutStorage() as! WorkoutStorageService)
+        guard let concreteStorage = Container.shared.workoutStorage() as? WorkoutStorageService else {
+            preconditionFailure("Container.workoutStorage must resolve to WorkoutStorageService")
+        }
+        _workoutStorageService = State(wrappedValue: concreteStorage)
 
         #if UITESTING
         if ProcessInfo.processInfo.arguments.contains("--uitesting"),

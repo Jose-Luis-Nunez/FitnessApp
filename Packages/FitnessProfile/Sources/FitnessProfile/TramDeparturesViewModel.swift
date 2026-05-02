@@ -32,8 +32,8 @@ public final class TramDeparturesViewModel {
 
     // MARK: - Observable State
 
-    public var isExpanded: Bool = false
-    public var departures: [TramDeparture] = []
+    public private(set) var isExpanded: Bool = false
+    public private(set) var departures: [TramDeparture] = []
     public var isLoading: Bool = false
     public var errorMessage: String?
     public var lastUpdated: Date?

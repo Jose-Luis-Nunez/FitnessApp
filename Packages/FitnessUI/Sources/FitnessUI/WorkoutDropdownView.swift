@@ -1,16 +1,16 @@
 import SwiftUI
-import FitnessStorage
-import Factory
 
 public struct WorkoutDropdownView: View {
-    @Injected(\.workoutStorage) private var workoutStorage
     @Environment(UIOverlayState.self) private var overlayState
 
-    public var titleFont: Font
+    private let workoutName: String
+    private let titleFont: Font
 
     public init(
+        workoutName: String,
         titleFont: Font = AppStyle.Font.navigationHeadline
     ) {
+        self.workoutName = workoutName
         self.titleFont = titleFont
     }
 
@@ -21,7 +21,7 @@ public struct WorkoutDropdownView: View {
             }
         }) {
             HStack(spacing: 8) {
-                Text(workoutStorage.currentWorkout?.name ?? "Dein Workout")
+                Text(workoutName)
                     .font(titleFont)
                     .foregroundColor(AppStyle.Color.white)
                     .lineLimit(1)

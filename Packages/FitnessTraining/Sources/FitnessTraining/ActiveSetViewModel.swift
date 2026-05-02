@@ -72,9 +72,9 @@ public struct QuickDoneState {
 @Observable
 @MainActor
 public final class ActiveSetViewModel {
-    public var tracking = SetTrackingState()
-    public var editing = SetEditingState()
-    public var quickDone = QuickDoneState()
+    public private(set) var tracking = SetTrackingState()
+    public private(set) var editing = SetEditingState()
+    public private(set) var quickDone = QuickDoneState()
     public var pendingSetIndex: Int? = nil
     /// Elapsed timer seconds, delegated to `TimerService`. SwiftUI observes
     /// this through `@Observable` property forwarding — no polling needed.

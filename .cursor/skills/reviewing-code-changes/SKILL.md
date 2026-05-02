@@ -673,11 +673,11 @@ When you edit Swift files, check if the change affects any of the items below. I
 
 | What changed | Section to update in `architecture-documentation.md` |
 |---|---|
-| `Shared/Design/AppStyle.swift` — new/renamed/removed token | **AppStyle Tokens** — add/rename/remove the token entry |
-| New file in `Shared/View/`, `Shared/Design/`, `Shared/Components/` | **Shared Components** table — add row with component, file, purpose |
+| `Packages/FitnessUI/Sources/FitnessUI/AppStyle.swift` — new/renamed/removed token | **AppStyle Tokens** — add/rename/remove the token entry |
+| New file in `Packages/FitnessUI/Sources/FitnessUI/` | **Shared Components** table — add row with component, file, purpose |
 | Deleted shared component | **Shared Components** table — remove row |
 | New/changed/deleted service | **Services** section — update API surface |
-| New/changed/deleted model in `Core/Model/` | **Domain Models** section — update fields |
+| New/changed/deleted model in `Packages/FitnessCore/Sources/FitnessCore/` | **Domain Models** section — update fields |
 | New/changed `NavigationDestination` case | **Navigation** section — update enum listing |
 | New feature folder under `Features/` | **Feature Map** tree — add entry |
 | Deleted feature folder | **Feature Map** tree — remove entry |

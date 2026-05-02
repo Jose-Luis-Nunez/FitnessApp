@@ -8,7 +8,7 @@ import Factory
 @Observable
 @MainActor
 public final class MuscleCategoryViewModel {
-    public var exercises: [Exercise]
+    public private(set) var exercises: [Exercise]
     public var showResetConfirmation: Bool = false
 
     public let group: MuscleCategoryGroup

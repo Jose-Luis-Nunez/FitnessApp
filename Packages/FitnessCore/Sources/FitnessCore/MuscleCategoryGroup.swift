@@ -16,6 +16,9 @@ public enum MuscleCategoryGroup: String, CaseIterable, Identifiable, Codable, Se
     }
 
     public var defaultIconName: String {
-        availableIcons.first!
+        guard let icon = availableIcons.first else {
+            preconditionFailure("\(self) has no availableIcons")
+        }
+        return icon
     }
 }

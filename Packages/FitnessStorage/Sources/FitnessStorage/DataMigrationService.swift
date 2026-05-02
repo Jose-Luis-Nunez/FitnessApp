@@ -19,7 +19,9 @@ public enum DataMigrationService {
     ) {
         guard !defaults.bool(forKey: migrationKey) else { return }
 
-        let docsDir = documentsDir ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        guard let docsDir = documentsDir ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            return
+        }
 
         let hasLegacyWorkouts = defaults.data(forKey: workoutsKey) != nil
         let hasLegacyFiles = legacyFilesExist(in: docsDir)

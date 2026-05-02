@@ -49,15 +49,15 @@ public struct TrainingCallbacks {
 @Observable
 @MainActor
 public final class TrainingCoordinator {
-    public var activeSessions: [Exercise.ID: ActiveSetViewModel] = [:]
-    public var activeExercises: [Exercise.ID: Exercise] = [:]
+    public private(set) var activeSessions: [Exercise.ID: ActiveSetViewModel] = [:]
+    public private(set) var activeExercises: [Exercise.ID: Exercise] = [:]
     public var focusedExerciseId: Exercise.ID?
-    public var lastCompletedExercise: Exercise?
+    public private(set) var lastCompletedExercise: Exercise?
 
     /// Controls the presentation of the post-exercise feedback sheet. Flipped
     /// by `openFeedback()` / `closeFeedback()` and observed by views via
     /// `@Bindable`.
-    public var isFeedbackSheetPresented: Bool = false
+    public private(set) var isFeedbackSheetPresented: Bool = false
 
     /// In-memory store for the currently focused exercise's feedback draft.
     /// Lives on the coordinator so any view that already has the coordinator
@@ -82,7 +82,8 @@ public final class TrainingCoordinator {
     }
 
     public var isTrainingActive: Bool {
-        focusedExerciseId != nil && activeSessions[focusedExerciseId!] != nil
+        guard let id = focusedExerciseId else { return false }
+        return activeSessions[id] != nil
     }
 
     public var hasActiveSessions: Bool {

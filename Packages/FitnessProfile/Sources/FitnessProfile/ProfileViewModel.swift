@@ -16,8 +16,8 @@ public final class ProfileStore {
 @Observable
 @MainActor
 public final class ProfileViewModel {
-    public let store = ProfileStore()
-    public let tramVM = TramDeparturesViewModel()
+    public let store: ProfileStore = ProfileStore()
+    public let tramVM: TramDeparturesViewModel = TramDeparturesViewModel()
 
     public var nickname: String = ""
     public var weightKg: Double = 0

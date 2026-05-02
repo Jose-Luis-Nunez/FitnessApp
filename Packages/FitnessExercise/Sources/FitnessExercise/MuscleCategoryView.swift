@@ -284,7 +284,7 @@ private extension MuscleCategoryView {
                                 var items: [MiniActionMenuItem] = []
 
                                 if viewModel.showNewExercise {
-                                    items.append(MiniActionMenuItem(icon: "plus", title: "New Exercise", isDestructive: false) {
+                                    items.append(MiniActionMenuItem(icon: "plus", title: L10n.newExercise, isDestructive: false) {
                                         withAnimation {
                                             formViewModel.loadExercise(nil, category: group)
                                             formViewModel.toggleForm()
@@ -330,7 +330,7 @@ private extension MuscleCategoryView {
                                 }
 
                                 if items.isEmpty {
-                                    items.append(MiniActionMenuItem(icon: "plus", title: "New Exercise", isDestructive: false) {
+                                    items.append(MiniActionMenuItem(icon: "plus", title: L10n.newExercise, isDestructive: false) {
                                         withAnimation {
                                             formViewModel.loadExercise(nil, category: group)
                                             formViewModel.toggleForm()

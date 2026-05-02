@@ -322,7 +322,7 @@ public final class TotalAnalyticsViewModel {
 
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        let lastTrainingDay = recentTrainingDays.last!
+        guard let lastTrainingDay = recentTrainingDays.last else { return nil }
         let daysSinceLastTraining = calendar.dateComponents([.day], from: lastTrainingDay, to: today).day ?? 0
 
         let extendedGaps = gaps + [daysSinceLastTraining]

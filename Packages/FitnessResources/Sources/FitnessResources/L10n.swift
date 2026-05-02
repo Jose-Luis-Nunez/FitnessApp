@@ -1,6 +1,7 @@
 public enum L10n {
 
     public static let cardCreationTitle = "Add Exercise"
+    public static let newExercise = "New Exercise"
     public static let cardEditTitle = "Edit Exercise"
     public static let cardEditNameTitle = "Edit Title"
     public static let cardEditWeightTitle = "Edit Weight"
@@ -32,4 +33,6 @@ public enum L10n {
     public static let sheetPlaceholderSets = "Neue Anzahl"
     public static let sheetPlaceholderReps = "Neue Anzahl"
     public static let sheetPlaceholderSeat = "Neue Einstellung"
+
+    public static let workoutFallbackName = "Dein Workout"
 }

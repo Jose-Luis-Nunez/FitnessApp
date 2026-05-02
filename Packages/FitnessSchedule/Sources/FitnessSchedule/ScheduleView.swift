@@ -1,5 +1,6 @@
 import SwiftUI
 import FitnessCore
+import FitnessResources
 import FitnessStorage
 import FitnessUI
 import Factory
@@ -57,7 +58,11 @@ public struct ScheduleView: View {
                         }
                     }
                     .overlay {
-                        WorkoutPickerView()
+                        WorkoutPickerView(
+                            workouts: workoutStorage.workouts,
+                            currentWorkout: workoutStorage.currentWorkout,
+                            onSelect: { workoutStorage.setCurrentWorkout($0) }
+                        )
                     }
                     .zIndex(4)
             }
@@ -73,7 +78,7 @@ public struct ScheduleView: View {
     // MARK: - Header
 
     private var headerView: some View {
-        WorkoutDropdownView(titleFont: AppStyle.Font.analyticsExerciseTitle)
+        WorkoutDropdownView(workoutName: workoutStorage.currentWorkout?.name ?? L10n.workoutFallbackName, titleFont: AppStyle.Font.analyticsExerciseTitle)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, AppStyle.Padding.horizontal)
             .padding(.top, AppStyle.Padding.titleTop)

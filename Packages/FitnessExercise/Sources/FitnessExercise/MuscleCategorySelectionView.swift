@@ -5,6 +5,7 @@ import UIKit
 #endif
 import FitnessAnalytics
 import FitnessCore
+import FitnessResources
 import FitnessTraining
 import FitnessUI
 @_spi(PersistenceUI) import FitnessPersistenceUI
@@ -47,6 +48,7 @@ public struct MuscleCategorySelectionView: View {
     @State private var lastScrollOffset: CGFloat = 0
 
     private var coordinatorCache: TrainingCoordinatorCaching
+    private var workoutStorage: WorkoutStoring
 
     /// T8a: Live-bound list of all `ExerciseModel`s for the current workout
     /// (across **all** categories). Replaces the legacy
@@ -57,6 +59,7 @@ public struct MuscleCategorySelectionView: View {
 
     public init() {
         self.coordinatorCache = Container.shared.trainingCoordinatorCache()
+        self.workoutStorage = Container.shared.workoutStorage()
 
         // Build the @Query predicate against the denormalised `workoutId` (T3 schema).
         // No category filter: list-mode renders every category in one flat list.
@@ -107,7 +110,7 @@ public struct MuscleCategorySelectionView: View {
             .zIndex(2)
 
             VStack(spacing: 0) {
-                WorkoutDropdownView()
+                WorkoutDropdownView(workoutName: workoutStorage.currentWorkout?.name ?? L10n.workoutFallbackName)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, AppStyle.Padding.horizontal)
                     .padding(.top, AppStyle.Padding.titleTop)
@@ -198,7 +201,11 @@ public struct MuscleCategorySelectionView: View {
                         }
                     }
                     .overlay {
-                        WorkoutPickerView(onSelect: { viewModel.selectWorkout($0) })
+                        WorkoutPickerView(
+                            workouts: workoutStorage.workouts,
+                            currentWorkout: workoutStorage.currentWorkout,
+                            onSelect: { viewModel.selectWorkout($0) }
+                        )
                     }
                     .zIndex(4)
             }
@@ -216,7 +223,7 @@ public struct MuscleCategorySelectionView: View {
                     HStack {
                         Spacer()
                         MiniActionMenuView(
-                            title: currentViewMode == .list && showCategorySelection ? "New Exercise" : nil,
+                            title: currentViewMode == .list && showCategorySelection ? L10n.newExercise : nil,
                             items: currentViewMode == .list ? (showCategorySelection ? categoryMenuItems : newExerciseMenuItems) : resetMenuItems,
                             width: selectionMenuWidth,
                             minHeight: currentViewMode == .list && showCategorySelection ? 280 : 140
@@ -260,7 +267,7 @@ public struct MuscleCategorySelectionView: View {
         [
             MiniActionMenuItem(
                 icon: "plus",
-                title: "New Exercise",
+                title: L10n.newExercise,
                 isDestructive: false
             ) {
                 var transaction = Transaction()
@@ -355,7 +362,7 @@ public struct MuscleCategorySelectionView: View {
             if let vm = pickerViewModel {
                 ExercisePickerView(
                     formViewModel: exerciseFormViewModel,
-                    title: editingExercise != nil ? "Edit Exercise" : "New Exercise",
+                    title: editingExercise != nil ? L10n.cardEditTitle : L10n.newExercise,
                     isPresented: $isShowingExercisePicker,
                     onSave: onSave,
                     onCancel: onCancel,

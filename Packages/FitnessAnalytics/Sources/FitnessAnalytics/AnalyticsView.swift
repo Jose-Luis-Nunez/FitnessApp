@@ -558,7 +558,7 @@ public struct AnalyticsView: View {
         VStack(spacing: 8) {
             HStack(alignment: .top, spacing: 8) {
                 Button(action: {
-                    tempGoal = exercise.goal != nil ? formatGoalForInput(exercise.goal!) : ""
+                    tempGoal = exercise.goal.map(formatGoalForInput) ?? ""
                     showGoalSheet = true
                 }) {
                     VStack(spacing: 4) {

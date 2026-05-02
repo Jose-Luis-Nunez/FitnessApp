@@ -29,13 +29,14 @@ public final class ScheduleViewModel {
     public var trainingDaySet: Set<Date> = []
     public var datesWithData: Set<Date> = []
 
-    private let totalAnalyticsVM = TotalAnalyticsViewModel()
+    private let totalAnalyticsVM: TotalAnalyticsViewModel
 
     @ObservationIgnored private var cachedStreakData: StreakData?
     @ObservationIgnored private var cachedTrainingDays: [Date]?
     @ObservationIgnored private var cachedWeekSummaries: [Date: WeekSummaryData] = [:]
 
-    nonisolated public init() {
+    public init(totalAnalyticsVM: TotalAnalyticsViewModel = TotalAnalyticsViewModel()) {
+        self.totalAnalyticsVM = totalAnalyticsVM
     }
 
     public func reloadData() {

@@ -13,6 +13,7 @@ let package = Package(
         .package(path: "../FitnessStorage"),
         .package(path: "../FitnessAnalytics"),
         .package(path: "../FitnessUI"),
+        .package(path: "../FitnessResources"),
         .package(path: "../FitnessTestSupport"),
         .package(url: "https://github.com/hmlongco/Factory.git", from: "2.5.0"),
         .package(url: "https://github.com/swiftlang/swift-testing.git", from: "6.0.0"),
@@ -20,7 +21,7 @@ let package = Package(
     targets: [
         .target(
             name: "FitnessSchedule",
-            dependencies: ["FitnessCore", "FitnessStorage", "FitnessAnalytics", "FitnessUI", .product(name: "Factory", package: "Factory")]
+            dependencies: ["FitnessCore", "FitnessStorage", "FitnessAnalytics", "FitnessUI", "FitnessResources", .product(name: "Factory", package: "Factory")]
         ),
         .testTarget(
             name: "FitnessScheduleTests",

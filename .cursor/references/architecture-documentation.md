@@ -153,8 +153,8 @@ Located in `Shared/`.
 | Component | File | Purpose |
 |-----------|------|---------|
 | `WorkoutFormSheet` | `View/WorkoutFormSheet.swift` | Full-screen form sheet with title, save, dismiss |
-| `WorkoutDropdownView` | `Packages/FitnessUI/Sources/FitnessUI/WorkoutDropdownView.swift` | Workout name dropdown button (reads from WorkoutStorageService) |
-| `WorkoutPickerView` | `Packages/FitnessUI/Sources/FitnessUI/WorkoutPickerView.swift` | Wheel picker for workout selection with optional `onSelect` (defaults to `setCurrentWorkout` on injected storage) |
+| `WorkoutDropdownView` | `Packages/FitnessUI/Sources/FitnessUI/WorkoutDropdownView.swift` | Workout name dropdown button. Takes `workoutName: String` and optional `titleFont` — no DI, callers pass data from their own storage reference. |
+| `WorkoutPickerView` | `Packages/FitnessUI/Sources/FitnessUI/WorkoutPickerView.swift` | Wheel picker for workout selection. Takes `workouts: [Workout]`, `currentWorkout: Workout?`, `onSelect: (Workout) -> Void` — no DI, callers pass data from their own storage reference. |
 | `MiniActionMenuView` | `View/MiniActionMenuView.swift` | Small context menu with icon + title rows |
 | `CapsuleToggleStyle` | `View/CapsuleToggleStyle.swift` | Reusable toggle style with on/off colors |
 | `TrainingSessionComponent` | `View/TrainingSessionComponent.swift` (SPM copy: `Packages/FitnessTraining/.../TrainingSessionComponent.swift`) | Training session UI driven by TrainingCoordinator |
@@ -233,7 +233,7 @@ Navigation is managed by `AppRouter` (injected as `@EnvironmentObject`). Use `ro
 
 ## AppStyle Tokens
 
-All tokens in `Shared/Design/AppStyle.swift`. When no token exists for a value, add one before using.
+All tokens in `Packages/FitnessUI/Sources/FitnessUI/AppStyle.swift`. When no token exists for a value, add one before using.
 
 ### Padding
 
@@ -241,11 +241,11 @@ All tokens in `Shared/Design/AppStyle.swift`. When no token exists for a value, 
 
 ### Layout
 
-`cardHorizontalPadding` (16), `chipHeight` (32), `activeCardContentHeight` (80), `activeCardMaxWidth` (400), `categoryIconSize` (50), `idleCategoryIconSize` (64), `checkmarkSize` (36), `playButtonSize` (36), `playIconSize` (16), `idlePlayButtonSize` (28), `idlePlayIconSize` (12), `idlePlayIconOpticalOffset` (1.5 — optical centering for `play.fill` SF Symbol), `idlePlayRingWidth` (0.75 — hairline metallic ring stroke width on the idle play button), `idlePlayButtonGlowRadius` (16 — blur radius for the mint halo behind the idle play button), `idlePlayButtonGlowSize` (30 — diameter of the mint halo, only marginally larger than `idlePlayButtonSize` so the component's reported bounds stay tight against the visible button; the blur radius creates the halo softness, not the disc size), `idleCardBorderWidth` (1 — stroke width of the outer border around the idle card), `completedBarWidth` (8), `setRowBadgeSize` (26), `analyticsImageSize` (60), `seatIconSize` (22), `analyticsEntryIconSize` (24), `tipIconSize` (16 — tip coaching icon inside the tip box), `tipBoxSize` (32 — side length of the rounded-rect tip button in the idle card), `tipBoxCornerRadius` (8 — corner radius of the tip box), `separatorHeight` (28), `separatorWidth` (0.5 — hairline width of vertical column separators in metric rows), `doneButtonWidth` (80), `doneButtonHeight` (28), `profileCardMinHeight` (100), `profileCardCollapsedMinHeight` (72), `profileWheelHeight` (150), `profileAvatarSize` (80), `numberPadKeySize` (60), `numberPadSpacing` (12), `scrollWheelItemHeight` (60), `scrollWheelVisibleItems` (5), `scrollWheelSnapTolerance` (18), `sheetContentBottomPad` (23)
+`cardHorizontalPadding` (16), `chipHeight` (32), `activeCardContentHeight` (80), `activeCardMaxWidth` (400), `categoryIconSize` (50), `idleCategoryIconSize` (64), `checkmarkSize` (36), `playButtonSize` (36), `playIconSize` (16), `idlePlayButtonSize` (28), `idlePlayIconSize` (12), `idlePlayIconOpticalOffset` (1.5 — optical centering for `play.fill` SF Symbol), `idlePlayRingWidth` (0.75 — hairline metallic ring stroke width on the idle play button), `idlePlayButtonGlowRadius` (16 — blur radius for the mint halo behind the idle play button), `idlePlayButtonGlowSize` (30 — diameter of the mint halo, only marginally larger than `idlePlayButtonSize` so the component's reported bounds stay tight against the visible button; the blur radius creates the halo softness, not the disc size), `idleCardBorderWidth` (1 — stroke width of the outer border around the idle card), `completedBarWidth` (8), `setRowBadgeSize` (26), `analyticsImageSize` (60), `seatIconSize` (22), `analyticsEntryIconSize` (24), `tipIconSize` (16 — tip coaching icon inside the tip box), `tipBoxSize` (32 — side length of the rounded-rect tip button in the idle card), `tipBoxCornerRadius` (8 — corner radius of the tip box), `separatorHeight` (28), `separatorWidth` (0.5 — hairline width of vertical column separators in metric rows), `doneButtonWidth` (80), `doneButtonHeight` (28), `profileCardMinHeight` (100), `profileCardCollapsedMinHeight` (72), `profileWheelHeight` (150), `profileAvatarSize` (80), `numberPadKeySize` (60), `numberPadSpacing` (12), `scrollWheelItemHeight` (60), `scrollWheelVisibleItems` (5), `scrollWheelSnapTolerance` (18), `sheetContentBottomPad` (23), `workoutPickerWidth` (320), `workoutPickerHeight` (220), `workoutPickerWheelHeight` (150), `overlayConfirmButtonSize` (32), `grabberWidth` (36), `grabberHeight` (5), `capsuleToggleWidth` (44), `capsuleToggleHeight` (26), `capsuleToggleThumb` (22), `miniMenuMaxWidth` (320)
 
 ### CornerRadius
 
-`card` (16), `bottomBarButton` (12), `editPickerViewButton` (12), `defaultButton` (12), `sheet` (22), `tile` (10), `timerCard` (12), `numberPadKey` (12), `pill` (20)
+`card` (16), `bottomBarButton` (12), `editPickerViewButton` (12), `defaultButton` (12), `sheet` (22), `tile` (10), `timerCard` (12), `numberPadKey` (12), `pill` (20), `overlay` (20), `capsuleToggle` (12)
 
 ### Font
 
@@ -320,7 +320,7 @@ All tokens in `Shared/Design/AppStyle.swift`. When no token exists for a value, 
 
 ### Shadow
 
-`cardColor` (black 0.2), `cardRadius` (5), `cardY` (2)
+`cardColor` (black 0.2), `cardRadius` (5), `cardY` (2), `overlayRadius` (20), `overlayY` (10)
 
 ### DeviceLayout
 
