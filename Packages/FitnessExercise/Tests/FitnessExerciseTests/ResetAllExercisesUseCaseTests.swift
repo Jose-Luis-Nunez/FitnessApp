@@ -11,40 +11,43 @@ import FitnessStorage
 @MainActor
 struct ResetAllExercisesUseCaseTests {
 
-    private func makeSUT() -> (ResetAllExercisesUseCase, MockExerciseStorage, MockWorkoutStorage, SessionTrainingCache) {
+    private func makeSUT() -> (ResetAllExercisesUseCase, MockExerciseStorage, MockWorkoutStorage, TrainingCoordinatorCache) {
         let mockExercise = MockExerciseStorage()
         let mockWorkout = MockWorkoutStorage()
         let mockAnalytics = MockAnalyticsStorage()
-        let cache = SessionTrainingCache()
+        let coordCache = TrainingCoordinatorCache()
 
         Container.shared.reset()
         Container.shared.exerciseStorage.register { mockExercise }
         Container.shared.workoutStorage.register { mockWorkout }
         Container.shared.analyticsStorage.register { mockAnalytics }
-        Container.shared.sessionTrainingCache.register { cache }
+        Container.shared.trainingCoordinatorCache.register { coordCache }
         Container.shared.exerciseManagement.register {
             ExerciseManagementService()
         }
 
         let sut = ResetAllExercisesUseCase()
-        return (sut, mockExercise, mockWorkout, cache)
+        return (sut, mockExercise, mockWorkout, coordCache)
     }
 
     @Test func executeCancelsAllActiveSets() {
-        let (sut, _, mockWorkout, cache) = makeSUT()
+        let (sut, _, mockWorkout, coordCache) = makeSUT()
         let workout = Workout(name: "Test")
         mockWorkout.currentWorkout = workout
         mockWorkout.workouts = [workout]
 
-        let vm = ActiveSetViewModel()
         let exercise = FitnessTestSupport.makeExercise(name: "Curl", category: .arms)
-        vm.startSet(for: exercise, category: .arms)
-        cache.activeSetVMs[.arms] = vm
+        let coordinator = coordCache.coordinator(for: .arms)
+        coordinator.startTraining(for: exercise)
+
+        let activeVM = coordinator.activeSetViewModel
+        #expect(activeVM.currentExercise != nil)
 
         sut.execute(for: [.arms])
 
-        #expect(vm.currentExercise == nil)
-        #expect(vm.setProgress.isEmpty)
+        #expect(coordinator.activeSessions.isEmpty)
+        #expect(activeVM.currentExercise == nil)
+        #expect(activeVM.setProgress.isEmpty)
     }
 
     @Test func executeResetsCompletedExercisesAcrossCategories() {
@@ -74,26 +77,8 @@ struct ResetAllExercisesUseCaseTests {
         #expect(mockExercise.exercisesByCategory.isEmpty)
     }
 
-    /// Safety-net: proves that cancelling active training sessions via
-    /// coordinators works. After the planned rewiring from
-    /// `SessionTrainingCache` to `TrainingCoordinatorCache`, this test
-    /// must still pass (with adjusted wiring in `makeSUT`).
-    @Test func coordinatorSessionIsCancelledByResetAll() async throws {
-        let mockExercise = MockExerciseStorage()
-        let mockWorkout = MockWorkoutStorage()
-        let mockAnalytics = MockAnalyticsStorage()
-        let coordCache = TrainingCoordinatorCache()
-        let sessionCache = SessionTrainingCache()
-
-        Container.shared.reset()
-        Container.shared.exerciseStorage.register { mockExercise }
-        Container.shared.workoutStorage.register { mockWorkout }
-        Container.shared.analyticsStorage.register { mockAnalytics }
-        Container.shared.sessionTrainingCache.register { sessionCache }
-        Container.shared.exerciseManagement.register {
-            ExerciseManagementService()
-        }
-
+    @Test func coordinatorSessionIsCancelledByResetAll() {
+        let (sut, _, mockWorkout, coordCache) = makeSUT()
         let workout = Workout(name: "Test")
         mockWorkout.currentWorkout = workout
         mockWorkout.workouts = [workout]
@@ -102,18 +87,14 @@ struct ResetAllExercisesUseCaseTests {
         let coordinator = coordCache.coordinator(for: .arms)
         coordinator.startTraining(for: exercise)
 
-        try await waitUntil(timeout: .seconds(2)) { coordinator.isTrainingActive }
         #expect(coordinator.hasActiveSessions == true)
 
-        // Mirror what production does: the coordinator's active VM should
-        // also be registered in the session cache so the use case finds it.
         let activeVM = coordinator.activeSetViewModel
-        sessionCache.activeSetVMs[.arms] = activeVM
 
-        let sut = ResetAllExercisesUseCase()
         sut.execute(for: [.arms])
 
         #expect(activeVM.currentExercise == nil)
         #expect(activeVM.setProgress.isEmpty)
+        #expect(coordinator.activeSessions.isEmpty)
     }
 }

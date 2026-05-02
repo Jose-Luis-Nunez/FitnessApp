@@ -38,7 +38,7 @@
   - **Live-Timer** (Sekunden tickend)
   - Inline-Edit der aktuellen Reps oder des Gewichts vor dem Set-Abschluss
 - Training abbrechen (mit Bestätigung) — alle bisherigen Sätze der Session werden verworfen
-- Training ist **resilient gegen Pop**: User kann mitten im Set rauspoppen und zurücknavigieren, der Stand bleibt (`SessionTrainingCache`)
+- Training ist **resilient gegen Pop**: User kann mitten im Set rauspoppen und zurücknavigieren, der Stand bleibt (`TrainingCoordinatorCache`)
 - Bei abgeschlossener Übung springt der State der Card auf "completed" — sichtbar live ohne Refresh dank `@Model`-Binding
 
 ## Live Activity (Lock-Screen / Dynamic Island)

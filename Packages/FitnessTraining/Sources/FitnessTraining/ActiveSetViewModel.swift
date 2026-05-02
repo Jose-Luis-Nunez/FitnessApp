@@ -76,7 +76,9 @@ public final class ActiveSetViewModel {
     public var editing = SetEditingState()
     public var quickDone = QuickDoneState()
     public var pendingSetIndex: Int? = nil
-    public var timerSeconds: Int = 0
+    /// Elapsed timer seconds, delegated to `TimerService`. SwiftUI observes
+    /// this through `@Observable` property forwarding — no polling needed.
+    public var timerSeconds: Int { timerService.timerSeconds }
 
     /// Identifies this in-flight training session for downstream consumers.
     /// Refreshed on every fresh `startSet(for:category:)` call so that
@@ -89,7 +91,6 @@ public final class ActiveSetViewModel {
     public private(set) var sessionId: UUID = UUID()
 
     private let timerService: TimerService
-    private var timerObservationTask: Task<Void, Never>?
 
     // MARK: - Bridged accessors (keep callers working)
 
@@ -195,18 +196,6 @@ public final class ActiveSetViewModel {
 
     public init() {
         self.timerService = TimerService()
-        startTimerObservation()
-    }
-
-    private func startTimerObservation() {
-        timerObservationTask?.cancel()
-        timerObservationTask = Task { [weak self] in
-            while !Task.isCancelled {
-                guard let self else { return }
-                self.timerSeconds = self.timerService.timerSeconds
-                try? await Task.sleep(for: .milliseconds(500))
-            }
-        }
     }
 
     // MARK: - Set Lifecycle
@@ -259,7 +248,7 @@ public final class ActiveSetViewModel {
 
         if tracking.currentSet >= exercise.sets {
             tracking.isLastSetCompleted = true
-            timerSeconds = 0
+            timerService.timerSeconds = 0
         }
 
         tracking.isSetInProgress = false
@@ -279,32 +268,26 @@ public final class ActiveSetViewModel {
             tracking.setProgress[indexToUpdate] = progress
         }
 
-        if editing.pendingEditIndex == nil {
+        let isEditingOlderSet = editing.pendingEditIndex != nil
+            && editing.pendingEditIndex != tracking.activeSetIndex
+        let shouldAdvance = !isEditingOlderSet
+
+        if shouldAdvance {
             tracking.currentSet += 1
             if tracking.currentSet >= exercise.sets {
                 tracking.isLastSetCompleted = true
             }
-            tracking.isSetInProgress = false
-            editing.didJustEditSet = false
-        } else {
-            if editing.pendingEditIndex == tracking.activeSetIndex {
-                tracking.currentSet += 1
-                if tracking.currentSet >= exercise.sets {
-                    tracking.isLastSetCompleted = true
-                }
-            }
-            tracking.isSetInProgress = false
-            editing.didJustEditSet = true
         }
 
+        tracking.isSetInProgress = false
+        editing.didJustEditSet = isEditingOlderSet || editing.pendingEditIndex != nil
         editing.pendingEditIndex = nil
 
         if tracking.allSetsCompleted {
-            tracking.isSetInProgress = false
             tracking.isLastSetCompleted = true
             editing.didEditCompleteSet = true
             timerService.stopTimer()
-            timerSeconds = 0
+            timerService.timerSeconds = 0
         }
     }
 
@@ -362,7 +345,7 @@ public final class ActiveSetViewModel {
 
         timerService.resetAndStartTimer()
         timerService.stopTimer()
-        timerSeconds = 0
+        timerService.timerSeconds = 0
     }
 
     public func processQuickDone(at index: Int) {
@@ -379,7 +362,7 @@ public final class ActiveSetViewModel {
             tracking.isLastSetCompleted = true
             quickDone.allCompleted = true
             timerService.stopTimer()
-            timerSeconds = 0
+            timerService.timerSeconds = 0
         }
     }
 
@@ -400,7 +383,7 @@ public final class ActiveSetViewModel {
 
         if quickDone.allCompleted {
             timerService.stopTimer()
-            timerSeconds = 0
+            timerService.timerSeconds = 0
         }
     }
 
@@ -424,6 +407,6 @@ public final class ActiveSetViewModel {
         editing.didJustEditSet = false
 
         timerService.stopTimer()
-        timerSeconds = 0
+        timerService.timerSeconds = 0
     }
 }

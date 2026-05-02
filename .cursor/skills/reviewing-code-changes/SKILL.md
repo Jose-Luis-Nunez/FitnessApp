@@ -78,7 +78,7 @@ Search changed files and their immediate dependents for:
 - **Stale NavigationDestination cases** — enum cases no longer referenced
 - **Cross-feature orphans** — when deleting a feature, also check:
   - Coordinators that orchestrate it (e.g. `TrainingCoordinator` for Training)
-  - Caches that store its state (e.g. `SessionTrainingCache`)
+  - Caches that store its state (e.g. `TrainingCoordinatorCache`)
   - Shared Components built exclusively for it (e.g. `TrainingSessionComponent`)
   - Callbacks/delegates referencing it (e.g. `TrainingCallbacks`)
   - `UIOverlayState` flags tied to the deleted feature
