@@ -198,6 +198,10 @@ public final class ActiveSetViewModel {
         self.timerService = TimerService()
     }
 
+    public init(timerService: TimerService) {
+        self.timerService = timerService
+    }
+
     // MARK: - Set Lifecycle
 
     public func startSet(for exercise: Exercise, category: MuscleCategoryGroup) {

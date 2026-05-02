@@ -2,28 +2,7 @@ import Testing
 import Foundation
 import FitnessTestSupport
 @testable import FitnessTraining
-
-/// Deterministic clock for unit tests — `now()` is controlled explicitly.
-/// `@unchecked Sendable` because `TimerClock` is nonisolated and may be read
-/// from the timer task while the test advances time on the main actor.
-private final class FakeClock: TimerClock, @unchecked Sendable {
-    private let lock = NSLock()
-    private var _currentTime: Date
-
-    init(start: Date = Date(timeIntervalSince1970: 1_700_000_000)) {
-        self._currentTime = start
-    }
-
-    func now() -> Date {
-        lock.lock(); defer { lock.unlock() }
-        return _currentTime
-    }
-
-    func advance(by seconds: TimeInterval) {
-        lock.lock(); defer { lock.unlock() }
-        _currentTime = _currentTime.addingTimeInterval(seconds)
-    }
-}
+@testable import FitnessTrainingTestSupport
 
 @Suite("TimerService")
 @MainActor

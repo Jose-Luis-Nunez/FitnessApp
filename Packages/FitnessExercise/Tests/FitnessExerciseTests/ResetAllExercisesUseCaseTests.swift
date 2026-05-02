@@ -97,4 +97,45 @@ struct ResetAllExercisesUseCaseTests {
         #expect(activeVM.setProgress.isEmpty)
         #expect(coordinator.activeSessions.isEmpty)
     }
+
+    @Test func executeCancelsActiveSessionsAcrossMultipleCategories() {
+        let (sut, _, mockWorkout, coordCache) = makeSUT()
+        let workout = Workout(name: "Test")
+        mockWorkout.currentWorkout = workout
+        mockWorkout.workouts = [workout]
+
+        let armExercise = FitnessTestSupport.makeExercise(name: "Curl", category: .arms)
+        let chestExercise = FitnessTestSupport.makeExercise(name: "Bench", category: .chest)
+
+        let armsCoord = coordCache.coordinator(for: .arms)
+        let chestCoord = coordCache.coordinator(for: .chest)
+        armsCoord.startTraining(for: armExercise)
+        chestCoord.startTraining(for: chestExercise)
+
+        #expect(armsCoord.hasActiveSessions == true)
+        #expect(chestCoord.hasActiveSessions == true)
+
+        sut.execute(for: [.arms, .chest])
+
+        #expect(armsCoord.activeSessions.isEmpty)
+        #expect(chestCoord.activeSessions.isEmpty)
+    }
+
+    @Test func timerIsZeroOnCancelledVMAfterResetAll() {
+        let (sut, _, mockWorkout, coordCache) = makeSUT()
+        let workout = Workout(name: "Test")
+        mockWorkout.currentWorkout = workout
+        mockWorkout.workouts = [workout]
+
+        let exercise = FitnessTestSupport.makeExercise(name: "Curl", category: .arms)
+        let coordinator = coordCache.coordinator(for: .arms)
+        coordinator.startTraining(for: exercise)
+
+        let activeVM = coordinator.activeSetViewModel
+        #expect(activeVM.currentExercise != nil)
+
+        sut.execute(for: [.arms])
+
+        #expect(activeVM.timerSeconds == 0)
+    }
 }
