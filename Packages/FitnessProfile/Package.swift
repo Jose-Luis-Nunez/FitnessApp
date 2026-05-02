@@ -10,7 +10,6 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../FitnessUI"),
-        .package(url: "https://github.com/swiftlang/swift-testing.git", from: "6.0.0"),
     ],
     targets: [
         .target(
@@ -21,7 +20,6 @@ let package = Package(
             name: "FitnessProfileTests",
             dependencies: [
                 "FitnessProfile",
-                .product(name: "Testing", package: "swift-testing"),
             ]
         ),
     ]

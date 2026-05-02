@@ -10,14 +10,12 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../FitnessCore"),
-        .package(url: "https://github.com/swiftlang/swift-testing.git", from: "6.0.0"),
     ],
     targets: [
         .target(
             name: "FitnessTestSupport",
             dependencies: [
                 "FitnessCore",
-                .product(name: "Testing", package: "swift-testing"),
             ]
         ),
     ]

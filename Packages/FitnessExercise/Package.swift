@@ -16,7 +16,6 @@ let package = Package(
         .package(path: "../FitnessUI"),
         .package(path: "../FitnessResources"),
         .package(path: "../FitnessPersistenceUI"),
-        .package(url: "https://github.com/swiftlang/swift-testing.git", from: "6.0.0"),
         .package(url: "https://github.com/hmlongco/Factory.git", from: "2.5.0"),
         .package(path: "../FitnessTestSupport"),
     ],
@@ -34,7 +33,6 @@ let package = Package(
                 "FitnessTraining",
                 "FitnessAnalytics",
                 "FitnessTestSupport",
-                .product(name: "Testing", package: "swift-testing"),
                 .product(name: "Factory", package: "Factory"),
             ]
         ),
