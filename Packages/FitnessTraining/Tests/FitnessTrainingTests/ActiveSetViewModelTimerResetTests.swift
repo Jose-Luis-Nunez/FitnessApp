@@ -29,13 +29,11 @@ enum TimerResetAction: CaseIterable, CustomStringConvertible, Sendable {
 @MainActor
 struct ActiveSetViewModelTimerResetTests {
 
-    private func makeSUT(
-        tickInterval: Duration = .milliseconds(5)
-    ) -> (ActiveSetViewModel, FakeClock) {
+    private func makeSUT() -> (ActiveSetViewModel, FakeClock, TimerService) {
         let clock = FakeClock()
-        let timerService = TimerService(clock: clock, tickInterval: tickInterval)
+        let timerService = TimerService(clock: clock, tickInterval: .milliseconds(5))
         let vm = ActiveSetViewModel(timerService: timerService)
-        return (vm, clock)
+        return (vm, clock, timerService)
     }
 
     private func makeExercise(sets: Int = 2) -> Exercise {
@@ -45,22 +43,20 @@ struct ActiveSetViewModelTimerResetTests {
     // MARK: - Parametrized Timer Reset
 
     @Test("Timer resets to zero", arguments: TimerResetAction.allCases)
-    func timerResetsToZero(action: TimerResetAction) async throws {
-        let (sut, clock) = makeSUT()
+    func timerResetsToZero(action: TimerResetAction) {
+        let (sut, clock, timerService) = makeSUT()
         let exercise = makeExercise(sets: 2)
 
         sut.startSet(for: exercise, category: .arms)
-
         clock.advance(by: 5)
-        try await waitUntil(timeout: .milliseconds(500)) { sut.timerSeconds >= 1 }
-        #expect(sut.timerSeconds > 0, "Precondition: timer must be running before the action")
+        #expect(timerService.isRunning, "Precondition: timer must be running before the action")
+        #expect(timerService.elapsedSeconds() == 5)
 
         switch action {
         case .completeLastSet:
             sut.completeCurrentSet()
             sut.startNextSet()
             clock.advance(by: 3)
-            try await waitUntil(timeout: .milliseconds(500)) { sut.timerSeconds >= 1 }
             sut.completeCurrentSet()
 
         case .cancelActiveSet:
@@ -75,12 +71,11 @@ struct ActiveSetViewModelTimerResetTests {
         case .updateRepsCompletingAllSets:
             sut.completeCurrentSet()
             sut.startNextSet()
-            clock.advance(by: 2)
-            try await waitUntil(timeout: .milliseconds(500)) { sut.timerSeconds >= 1 }
             sut.updateCurrentReps(8, 15)
         }
 
         #expect(sut.timerSeconds == 0, "Timer must be zero after \(action)")
+        #expect(!timerService.isRunning, "Timer must be stopped after \(action)")
     }
 
     // MARK: - @Observable Forwarding
@@ -99,42 +94,43 @@ struct ActiveSetViewModelTimerResetTests {
     // MARK: - Timer still running after non-terminal actions
 
     @Test("Timer stops but preserves value after non-last completeCurrentSet, then restarts on startNextSet")
-    func timerStopsAndRestartsAcrossSets() async throws {
-        let (sut, clock) = makeSUT()
+    func timerStopsAndRestartsAcrossSets() {
+        let (sut, clock, timerService) = makeSUT()
         let exercise = makeExercise(sets: 3)
 
         sut.startSet(for: exercise, category: .arms)
         clock.advance(by: 5)
-        try await waitUntil(timeout: .milliseconds(500)) { sut.timerSeconds >= 1 }
-        let frozenValue = sut.timerSeconds
+        #expect(timerService.isRunning)
+        #expect(timerService.elapsedSeconds() == 5)
 
         sut.completeCurrentSet()
 
-        #expect(sut.timerSeconds == frozenValue,
-                "Non-last completeCurrentSet stops the timer but does not zero it")
+        #expect(!timerService.isRunning,
+                "Non-last completeCurrentSet stops the timer")
 
         sut.startNextSet()
 
+        #expect(timerService.isRunning, "Timer must restart after startNextSet")
+        #expect(timerService.elapsedSeconds() == 0, "Timer must have been reset before restarting")
+
         clock.advance(by: 3)
-        try await waitUntil(timeout: .milliseconds(500)) { sut.timerSeconds >= 1 }
-        #expect(sut.timerSeconds >= 1, "Timer must restart after startNextSet")
-        #expect(sut.timerSeconds < frozenValue, "Timer must have been reset before restarting")
+        #expect(timerService.elapsedSeconds() == 3, "Timer must accumulate after restart")
     }
 
     @Test("Timer restarts on startSet")
-    func timerRestartsOnStartSet() async throws {
-        let (sut, clock) = makeSUT()
+    func timerRestartsOnStartSet() {
+        let (sut, clock, timerService) = makeSUT()
         let exercise = makeExercise(sets: 2)
 
         sut.startSet(for: exercise, category: .arms)
         clock.advance(by: 5)
-        try await waitUntil(timeout: .milliseconds(500)) { sut.timerSeconds >= 1 }
-        let firstReading = sut.timerSeconds
+        #expect(timerService.elapsedSeconds() == 5)
 
         sut.startSet(for: exercise, category: .arms)
-        clock.advance(by: 1)
-        try await waitUntil(timeout: .milliseconds(500)) { sut.timerSeconds >= 1 }
+        #expect(timerService.elapsedSeconds() == 0, "Timer must reset on new startSet")
+        #expect(timerService.isRunning, "Timer must be running after startSet")
 
-        #expect(sut.timerSeconds < firstReading, "Timer must reset on new startSet")
+        clock.advance(by: 1)
+        #expect(timerService.elapsedSeconds() == 1)
     }
 }

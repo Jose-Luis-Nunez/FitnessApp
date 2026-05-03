@@ -10,6 +10,7 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../FitnessUI"),
+        .package(path: "../FitnessTestSupport"),
     ],
     targets: [
         .target(
@@ -20,6 +21,7 @@ let package = Package(
             name: "FitnessProfileTests",
             dependencies: [
                 "FitnessProfile",
+                "FitnessTestSupport",
             ]
         ),
     ]

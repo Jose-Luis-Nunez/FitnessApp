@@ -21,11 +21,6 @@ public final class TramDeparturesViewModel {
     public static let defaultOrigin = Endpoint(stopId: "900162504", label: "Blockdammweg")
     public static let defaultDestination = Endpoint(stopId: "900160535", label: "Marktstr.")
 
-    /// Tram 21 runs roughly every 10 min, so 60 s is the sweet spot between
-    /// "feels live" and respecting the community-run BVG endpoint. See plan
-    /// "Profile Polish & Tram Cache" for the full reasoning.
-    public static let autoRefreshInterval: TimeInterval = 60
-
     /// When the app comes back to foreground, only re-fetch if the last successful
     /// load is older than this. Avoids hammering the API on quick app-switches.
     public static let foregroundStaleThreshold: TimeInterval = 60
@@ -50,10 +45,8 @@ public final class TramDeparturesViewModel {
     private let line: String
     private let origin: Endpoint
     private let destination: Endpoint
-    private let refreshInterval: TimeInterval
     private let maxResults: Int
-
-    private var refreshTask: Task<Void, Never>?
+    private var activeRefreshTask: Task<Void, Never>?
 
     // MARK: - Init
 
@@ -63,7 +56,6 @@ public final class TramDeparturesViewModel {
         line: String = TramDeparturesViewModel.defaultLine,
         origin: Endpoint = TramDeparturesViewModel.defaultOrigin,
         destination: Endpoint = TramDeparturesViewModel.defaultDestination,
-        refreshInterval: TimeInterval = TramDeparturesViewModel.autoRefreshInterval,
         maxResults: Int = 3
     ) {
         self.service = service
@@ -71,7 +63,6 @@ public final class TramDeparturesViewModel {
         self.line = line
         self.origin = origin
         self.destination = destination
-        self.refreshInterval = refreshInterval
         self.maxResults = maxResults
         loadCachedSnapshot()
     }
@@ -89,20 +80,15 @@ public final class TramDeparturesViewModel {
     public func toggleExpanded() {
         isExpanded.toggle()
         if isExpanded {
-            startAutoRefresh()
-        } else {
-            stopAutoRefresh()
+            scheduleRefresh()
         }
     }
 
     public func swap() {
         isReversed.toggle()
-        // Don't clear `departures` here — the card height would collapse and the
-        // surrounding ScrollView would jump. Show whatever cache we have for the
-        // new direction (if any) until the live refresh resolves.
         loadCachedSnapshot()
         errorMessage = nil
-        Task { await refresh() }
+        scheduleRefresh()
     }
 
     public func refresh() async {
@@ -114,52 +100,38 @@ public final class TramDeparturesViewModel {
                 line: line,
                 maxResults: maxResults
             )
+            guard !Task.isCancelled else { return }
             departures = result
             errorMessage = nil
             lastUpdated = Date()
             isStale = false
             cache.save(fromStopId: fromStopId, toStopId: toStopId, line: line, departures: result)
+        } catch is CancellationError {
+            return
         } catch {
             handleRefreshFailure(error)
         }
         isLoading = false
     }
 
-    /// Called when the host scene transitions back to `.active`. If the data is
-    /// older than `foregroundStaleThreshold`, kick off an immediate refresh.
-    /// Always (re)starts the periodic timer.
+    /// Called when the host scene transitions back to `.active`. Refreshes
+    /// only when the card is expanded and data is stale.
     public func onBecameActive() {
-        let needsImmediateFetch: Bool
+        guard isExpanded else { return }
+        let isStaleData: Bool
         if let lastUpdated {
-            needsImmediateFetch = Date().timeIntervalSince(lastUpdated) > Self.foregroundStaleThreshold
+            isStaleData = Date().timeIntervalSince(lastUpdated) > Self.foregroundStaleThreshold
         } else {
-            needsImmediateFetch = true
+            isStaleData = true
         }
-        if needsImmediateFetch {
-            Task { await refresh() }
-        }
-        startAutoRefresh()
-    }
-
-    public func startAutoRefresh() {
-        stopAutoRefresh()
-        let interval = refreshInterval
-        refreshTask = Task { [weak self] in
-            guard let self else { return }
-            await self.refresh()
-            while !Task.isCancelled {
-                let nanos = UInt64(interval * 1_000_000_000)
-                try? await Task.sleep(nanoseconds: nanos)
-                if Task.isCancelled { return }
-                if await !self.isExpanded { return }
-                await self.refresh()
-            }
+        if isStaleData {
+            scheduleRefresh()
         }
     }
 
-    public func stopAutoRefresh() {
-        refreshTask?.cancel()
-        refreshTask = nil
+    private func scheduleRefresh() {
+        activeRefreshTask?.cancel()
+        activeRefreshTask = Task { await refresh() }
     }
 
     // MARK: - Cache helpers

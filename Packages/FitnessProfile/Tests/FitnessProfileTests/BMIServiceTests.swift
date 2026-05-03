@@ -1,8 +1,9 @@
 import Testing
 import Foundation
+import FitnessTestSupport
 @testable import FitnessProfile
 
-@Suite("BMIService Tests")
+@Suite("BMIService Tests", .tags(.fast))
 struct BMIServiceTests {
 
     let service = BMIService()

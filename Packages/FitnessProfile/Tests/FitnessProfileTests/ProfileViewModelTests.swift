@@ -1,8 +1,9 @@
 import Testing
 import Foundation
+import FitnessTestSupport
 @testable import FitnessProfile
 
-@Suite("ProfileViewModel Tests")
+@Suite("ProfileViewModel Tests", .tags(.fast))
 @MainActor
 struct ProfileViewModelTests {
 

@@ -1,8 +1,9 @@
 import Testing
 import Foundation
+import FitnessTestSupport
 @testable import FitnessProfile
 
-@Suite("TramDeparturesViewModel Tests")
+@Suite("TramDeparturesViewModel Tests", .tags(.fast))
 @MainActor
 struct TramDeparturesViewModelTests {
 
@@ -74,13 +75,11 @@ struct TramDeparturesViewModelTests {
 
     private static func makeVM(
         service: MockService = MockService(),
-        cache: MockCache = MockCache(),
-        refreshInterval: TimeInterval = 0.01
+        cache: MockCache = MockCache()
     ) -> TramDeparturesViewModel {
         TramDeparturesViewModel(
             service: service,
             cache: cache,
-            refreshInterval: refreshInterval,
             maxResults: 3
         )
     }
@@ -212,99 +211,63 @@ struct TramDeparturesViewModelTests {
 
     // MARK: - Expand / Collapse
 
-    @Test func toggleExpanded_startsAutoRefresh() async {
+    @Test func toggleExpanded_triggersOneRefresh() async {
         let service = MockService()
         service.results = [Self.makeDeparture(id: "a")]
         let vm = Self.makeVM(service: service)
         vm.toggleExpanded()
         #expect(vm.isExpanded == true)
         try? await Task.sleep(nanoseconds: 100_000_000)
-        #expect(service.callCount >= 1)
-        vm.stopAutoRefresh()
+        #expect(service.callCount == 1, "Expanding triggers exactly one refresh")
     }
 
-    @Test func toggleExpanded_secondCall_stopsAutoRefresh() async {
+    @Test func toggleExpanded_secondCall_collapsesWithoutRefresh() async {
         let service = MockService()
         service.results = [Self.makeDeparture(id: "a")]
-        let vm = Self.makeVM(service: service, refreshInterval: 10.0)
+        let vm = Self.makeVM(service: service)
         vm.toggleExpanded()
         try? await Task.sleep(nanoseconds: 50_000_000)
+        let countAfterExpand = service.callCount
         vm.toggleExpanded()
         #expect(vm.isExpanded == false)
-        let countAfterStop = service.callCount
         try? await Task.sleep(nanoseconds: 100_000_000)
-        #expect(service.callCount == countAfterStop, "No further refreshes after collapse")
-    }
-
-    /// Pins the contract that auto-refresh continues across multiple poll
-    /// cycles as long as the card stays expanded — i.e. the only legitimate
-    /// stoppers are `toggleExpanded` (collapse) and the scene-phase handler.
-    /// Removing the previous `.onDisappear { stopAutoRefresh() }` from the
-    /// card view (Apr 2026) made tab-switches stop killing the polling loop;
-    /// this test guards that the polling lifecycle now matches the documented
-    /// "while expanded and app active" contract.
-    @Test func toggleExpanded_pollingContinuesAcrossMultipleCycles() async {
-        let service = MockService()
-        service.results = [Self.makeDeparture(id: "a")]
-        let vm = Self.makeVM(service: service, refreshInterval: 0.02)
-        vm.toggleExpanded()
-        // Wait long enough for at least 3 refresh cycles to fire.
-        try? await Task.sleep(nanoseconds: 120_000_000)
-        let countAfterCycles = service.callCount
-        #expect(vm.isExpanded == true, "Expanded must stay true without explicit collapse")
-        #expect(countAfterCycles >= 3, "Polling loop must keep firing across cycles, got \(countAfterCycles)")
-        vm.stopAutoRefresh()
+        #expect(service.callCount == countAfterExpand, "Collapsing does not trigger a refresh")
     }
 
     // MARK: - onBecameActive
 
-    @Test func onBecameActive_withoutLastUpdated_triggersRefresh() async {
+    @Test func onBecameActive_whenCollapsed_doesNotRefresh() async {
         let service = MockService()
         service.results = [Self.makeDeparture(id: "a")]
-        let vm = Self.makeVM(service: service, refreshInterval: 10.0)
+        let vm = Self.makeVM(service: service)
         vm.onBecameActive()
         try? await Task.sleep(nanoseconds: 100_000_000)
-        // Two fetches expected: one from onBecameActive's immediate refresh, one from startAutoRefresh's initial refresh.
-        // We just verify *at least* one has run.
-        #expect(service.callCount >= 1)
-        vm.stopAutoRefresh()
+        #expect(service.callCount == 0, "No refresh when card is collapsed")
     }
 
-    @Test func onBecameActive_withFreshData_doesNotTriggerImmediateRefresh() async {
+    @Test func onBecameActive_expandedWithStaleData_triggersRefresh() async {
         let service = MockService()
         service.results = [Self.makeDeparture(id: "a")]
-        let vm = Self.makeVM(service: service, refreshInterval: 10.0)
-        await vm.refresh()
-        let countAfterInitial = service.callCount
-        // Data is fresh (just fetched) → onBecameActive should not trigger immediate fetch,
-        // but startAutoRefresh's initial refresh in the loop will still run once.
+        let vm = Self.makeVM(service: service)
+        vm.toggleExpanded()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        let countAfterExpand = service.callCount
+        vm.lastUpdated = Date(timeIntervalSinceNow: -3600)
         vm.onBecameActive()
         try? await Task.sleep(nanoseconds: 100_000_000)
-        // One extra call from startAutoRefresh's first iteration; no second call
-        // from the staleness branch since lastUpdated is fresh.
-        #expect(service.callCount == countAfterInitial + 1)
-        vm.stopAutoRefresh()
+        #expect(service.callCount > countAfterExpand, "Stale data triggers a refresh on foreground")
     }
 
-    @Test func onBecameActive_withStaleData_triggersImmediateRefresh() async {
+    @Test func onBecameActive_expandedWithFreshData_doesNotRefresh() async {
         let service = MockService()
         service.results = [Self.makeDeparture(id: "a")]
-        let cache = MockCache()
-        // Preload cache with a very old timestamp so the loaded snapshot is stale.
-        cache.preload(
-            fromStopId: "900162504",
-            toStopId: "900160535",
-            line: "21",
-            departures: [Self.makeDeparture(id: "old")],
-            savedAt: Date(timeIntervalSinceNow: -3600)
-        )
-        let vm = Self.makeVM(service: service, cache: cache, refreshInterval: 10.0)
-        let countBefore = service.callCount
+        let vm = Self.makeVM(service: service)
+        vm.toggleExpanded()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        let countAfterExpand = service.callCount
         vm.onBecameActive()
-        try? await Task.sleep(nanoseconds: 150_000_000)
-        // Both branches fire: immediate stale-refresh + startAutoRefresh's initial refresh = 2 calls.
-        #expect(service.callCount >= countBefore + 1)
-        vm.stopAutoRefresh()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        #expect(service.callCount == countAfterExpand, "Fresh data skips refresh on foreground")
     }
 
     // MARK: - Formatting

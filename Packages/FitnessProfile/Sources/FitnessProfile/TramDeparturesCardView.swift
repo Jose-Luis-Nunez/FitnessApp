@@ -33,14 +33,8 @@ public struct TramDeparturesCardView: View {
         .background(AppStyle.Color.profileCardBackground)
         .cornerRadius(AppStyle.CornerRadius.card)
         .onChange(of: scenePhase) { _, newPhase in
-            guard viewModel.isExpanded else { return }
-            switch newPhase {
-            case .active:
+            if newPhase == .active {
                 viewModel.onBecameActive()
-            case .inactive, .background:
-                viewModel.stopAutoRefresh()
-            @unknown default:
-                break
             }
         }
     }

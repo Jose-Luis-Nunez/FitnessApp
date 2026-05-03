@@ -5,6 +5,34 @@ import FitnessStorage
 import FitnessTraining
 import Factory
 
+private final class CheckedContinuationBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var continuation: CheckedContinuation<Bool, Never>?
+    private var cancelledBeforeStore = false
+
+    func store(_ c: CheckedContinuation<Bool, Never>) {
+        lock.lock()
+        if cancelledBeforeStore {
+            lock.unlock()
+            c.resume(returning: true)
+        } else {
+            continuation = c
+            lock.unlock()
+        }
+    }
+
+    func resume(returning value: Bool) {
+        lock.lock()
+        let c = continuation
+        continuation = nil
+        if c == nil && value == true {
+            cancelledBeforeStore = true
+        }
+        lock.unlock()
+        c?.resume(returning: value)
+    }
+}
+
 @Observable
 @MainActor
 public final class MuscleCategorySelectionViewModel {
@@ -63,14 +91,21 @@ public final class MuscleCategorySelectionViewModel {
         let ws = workoutStorageService
         workoutObservationTask = Task { [weak self] in
             while !Task.isCancelled {
-                await withCheckedContinuation { continuation in
-                    withObservationTracking {
-                        _ = ws.currentWorkout
-                    } onChange: {
-                        continuation.resume()
+                let box = CheckedContinuationBox()
+                let wasCancelled = await withTaskCancellationHandler {
+                    await withCheckedContinuation { continuation in
+                        box.store(continuation)
+                        withObservationTracking {
+                            _ = ws.currentWorkout
+                        } onChange: {
+                            box.resume(returning: false)
+                        }
                     }
+                } onCancel: {
+                    box.resume(returning: true)
                 }
-                guard let self, !Task.isCancelled else { return }
+                if wasCancelled || Task.isCancelled { return }
+                guard let self else { return }
                 self.refreshExercises()
             }
         }

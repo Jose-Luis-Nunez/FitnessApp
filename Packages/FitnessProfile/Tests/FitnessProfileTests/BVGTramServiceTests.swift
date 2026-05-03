@@ -1,8 +1,9 @@
 import Testing
 import Foundation
+import FitnessTestSupport
 @testable import FitnessProfile
 
-@Suite("BVGTramService Tests")
+@Suite("BVGTramService Tests", .tags(.fast))
 struct BVGTramServiceTests {
 
     private static let sampleJSON = """

@@ -1,8 +1,9 @@
 import Testing
 import Foundation
+import FitnessTestSupport
 @testable import FitnessProfile
 
-@Suite("TramDeparturesCache Tests")
+@Suite("TramDeparturesCache Tests", .tags(.fast))
 struct TramDeparturesCacheTests {
 
     // MARK: - Helpers

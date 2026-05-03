@@ -5,6 +5,7 @@ import UIKit
 #endif
 @testable import FitnessExercise
 import FitnessCore
+import FitnessTestSupport
 import FitnessUI
 
 // MARK: - Test Host
@@ -25,7 +26,7 @@ private func assertViewHosts<V: View>(
 
 // MARK: - MuscleCategorySelectionView
 
-@Suite("MuscleCategorySelectionView Environment contract")
+@Suite("MuscleCategorySelectionView Environment contract", .tags(.fast))
 @MainActor
 struct MuscleCategorySelectionViewContractTests {
 
@@ -49,7 +50,7 @@ struct MuscleCategorySelectionViewContractTests {
 
 // MARK: - MuscleCategoryView
 
-@Suite("MuscleCategoryView Environment contract")
+@Suite("MuscleCategoryView Environment contract", .tags(.fast))
 @MainActor
 struct MuscleCategoryViewContractTests {
 

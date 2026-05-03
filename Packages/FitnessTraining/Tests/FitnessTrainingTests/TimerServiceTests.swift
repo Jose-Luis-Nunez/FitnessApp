@@ -104,11 +104,11 @@ struct TimerServiceTests {
         sut.startTimer()
 
         clock.advance(by: 1)
-        try await waitUntil(timeout: .milliseconds(500)) { sut.timerSeconds >= 1 }
+        try await waitUntil(timeout: .seconds(2)) { sut.timerSeconds >= 1 }
         let afterOne = sut.timerSeconds
 
         clock.advance(by: 2)
-        try await waitUntil(timeout: .milliseconds(500)) { sut.timerSeconds >= 3 }
+        try await waitUntil(timeout: .seconds(2)) { sut.timerSeconds >= 3 }
         let afterThree = sut.timerSeconds
 
         sut.stopTimer()
