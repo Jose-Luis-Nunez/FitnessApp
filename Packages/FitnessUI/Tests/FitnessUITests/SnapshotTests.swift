@@ -143,3 +143,128 @@ struct WorkoutDropdownSnapshotTests {
         assertSnapshot(of: view, named: "long-name", size: CGSize(width: 300, height: 60))
     }
 }
+
+// MARK: - SetTileView Snapshots
+
+@Suite("SetTileView — Snapshots")
+@MainActor
+struct SetTileViewSnapshotTests {
+
+    @Test func withWeight() {
+        let view = SetTileView(setNumber: 1, weight: 62.5, reps: 10, hasWeight: true)
+        assertSnapshot(of: view, named: "with-weight", size: CGSize(width: 100, height: 90))
+    }
+
+    @Test func withoutWeight() {
+        let view = SetTileView(setNumber: 3, weight: 0, reps: 15, hasWeight: false)
+        assertSnapshot(of: view, named: "bodyweight", size: CGSize(width: 100, height: 90))
+    }
+}
+
+// MARK: - ProgressBar Snapshots
+
+@Suite("ProgressBar — Snapshots")
+@MainActor
+struct ProgressBarSnapshotTests {
+
+    @Test func empty() {
+        let view = ProgressBar(progress: 0.0, totalWidth: 200)
+        assertSnapshot(of: view, named: "empty", size: CGSize(width: 220, height: 30))
+    }
+
+    @Test func partial() {
+        let view = ProgressBar(progress: 0.6, totalWidth: 200)
+        assertSnapshot(of: view, named: "partial", size: CGSize(width: 220, height: 30))
+    }
+
+    @Test func full() {
+        let view = ProgressBar(progress: 1.0, totalWidth: 200)
+        assertSnapshot(of: view, named: "full", size: CGSize(width: 220, height: 30))
+    }
+}
+
+// MARK: - MetricChipView Snapshots
+
+@Suite("MetricChipView — Snapshots")
+@MainActor
+struct MetricChipViewSnapshotTests {
+
+    @Test func defaultSize() {
+        let view = MetricChipView {
+            VStack(spacing: 2) {
+                Text("62.5")
+                    .font(AppStyle.Font.cardValueBold)
+                    .foregroundColor(AppStyle.Color.greenGlow)
+                Text("kg")
+                    .font(AppStyle.Font.cardSmallLabel)
+                    .foregroundColor(.white.opacity(0.7))
+            }
+        }
+        assertSnapshot(of: view, named: "default", size: CGSize(width: 120, height: 90))
+    }
+
+    @Test func customWidth() {
+        let view = MetricChipView(width: 160) {
+            Text("3 × 10")
+                .font(AppStyle.Font.cardValueBold)
+                .foregroundColor(AppStyle.Color.white)
+        }
+        assertSnapshot(of: view, named: "wide", size: CGSize(width: 200, height: 90))
+    }
+}
+
+// MARK: - CapsuleToggleStyle Snapshots
+
+@Suite("CapsuleToggleStyle — Snapshots")
+@MainActor
+struct CapsuleToggleStyleSnapshotTests {
+
+    @Test func toggleOn() {
+        let view = Toggle("Decimal", isOn: .constant(true))
+            .toggleStyle(CapsuleToggleStyle(
+                onColor: AppStyle.Color.green,
+                offColor: AppStyle.Color.gray.opacity(0.4)
+            ))
+            .labelsHidden()
+        assertSnapshot(of: view, named: "on", size: CGSize(width: 80, height: 50))
+    }
+
+    @Test func toggleOff() {
+        let view = Toggle("Decimal", isOn: .constant(false))
+            .toggleStyle(CapsuleToggleStyle(
+                onColor: AppStyle.Color.green,
+                offColor: AppStyle.Color.gray.opacity(0.4)
+            ))
+            .labelsHidden()
+        assertSnapshot(of: view, named: "off", size: CGSize(width: 80, height: 50))
+    }
+}
+
+// MARK: - IdlePlayButton Snapshots
+
+@Suite("IdlePlayButton — Snapshots")
+@MainActor
+struct IdlePlayButtonSnapshotTests {
+
+    @Test func idle() {
+        let view = IdlePlayButton()
+        assertSnapshot(of: view, named: "idle", size: CGSize(width: 100, height: 100))
+    }
+}
+
+// MARK: - RefreshActionButton Snapshots
+
+@Suite("RefreshActionButton — Snapshots")
+@MainActor
+struct RefreshActionButtonSnapshotTests {
+
+    @Test func readyState() {
+        let view = RefreshActionButton(title: "Refresh", isLoading: false, action: {})
+        assertSnapshot(of: view, named: "ready", size: CGSize(width: 200, height: 60))
+    }
+
+    @Test func loadingState() {
+        let view = RefreshActionButton(title: "Refresh", isLoading: true, action: {})
+        assertSnapshot(of: view, named: "loading", size: CGSize(width: 200, height: 60))
+    }
+}
