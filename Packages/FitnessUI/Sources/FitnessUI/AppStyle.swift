@@ -38,7 +38,7 @@ public enum AppStyle {
         /// Blur radius of the soft mint outer glow rendered around the idle
         /// play button. Tuned together with `idlePlayButtonGlowSize` for a
         /// subtle hint that doesn't spill into the surrounding card surface.
-        public static let idlePlayButtonGlowRadius: CGFloat = 10
+        public static let idlePlayButtonGlowRadius: CGFloat = 6
         /// Diameter of the soft mint halo painted behind the idle play
         /// button. Only marginally larger than `idlePlayButtonSize` — the
         /// blur radius does the heavy lifting for the halo softness, so a
@@ -250,7 +250,7 @@ public enum AppStyle {
         /// Soft mint glow rendered around the outside of the play-button ring.
         /// Same family as `idleMetricValue` but heavily desaturated via low
         /// alpha so the halo reads as a hint, not as neon.
-        public static let idlePlayRingGlow = SwiftUI.Color(hex: "#B7DCC5").opacity(0.18)
+        public static let idlePlayRingGlow = SwiftUI.Color(hex: "#B7DCC5").opacity(0.10)
 
         public static let sheetBackground = SwiftUI.Color(hex: "#222025")
         public static let sheetInputBackground = SwiftUI.Color(hex: "#141518")
