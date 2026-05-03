@@ -4,7 +4,6 @@ import Foundation
 import FitnessCore
 import FitnessTraining
 import FitnessTestSupport
-import Factory
 
 // MARK: - resolveVariant Unit Tests
 
@@ -82,12 +81,8 @@ struct ResolveVariantTests {
 @MainActor
 struct MultiTrainingCardResolutionTests {
 
-    init() {
-        Container.shared.reset()
-    }
-
     @Test func selectionViewShowsAllInProgressAsIdle() {
-        let cache = TrainingCoordinatorCache()
+        let cache = TrainingCoordinatorCache(exerciseManagement: MockExerciseManagement())
         let armsCoord = cache.coordinator(for: .arms)
         let chestCoord = cache.coordinator(for: .chest)
 
@@ -118,7 +113,7 @@ struct MultiTrainingCardResolutionTests {
     }
 
     @Test func trainingViewShowsFocusedExerciseAsActive() {
-        let cache = TrainingCoordinatorCache()
+        let cache = TrainingCoordinatorCache(exerciseManagement: MockExerciseManagement())
         let armsCoord = cache.coordinator(for: .arms)
         let chestCoord = cache.coordinator(for: .chest)
 
@@ -146,7 +141,7 @@ struct MultiTrainingCardResolutionTests {
     }
 
     @Test func cancelledTrainingDoesNotAffectOtherCategory() {
-        let cache = TrainingCoordinatorCache()
+        let cache = TrainingCoordinatorCache(exerciseManagement: MockExerciseManagement())
         let armsCoord = cache.coordinator(for: .arms)
         let chestCoord = cache.coordinator(for: .chest)
 
@@ -172,7 +167,7 @@ struct MultiTrainingCardResolutionTests {
     }
 
     @Test func multipleExercisesInSameCategoryAllResolveIdle() {
-        let cache = TrainingCoordinatorCache()
+        let cache = TrainingCoordinatorCache(exerciseManagement: MockExerciseManagement())
         let armsCoord = cache.coordinator(for: .arms)
 
         let curl = makeExercise(name: "Curl", category: .arms)

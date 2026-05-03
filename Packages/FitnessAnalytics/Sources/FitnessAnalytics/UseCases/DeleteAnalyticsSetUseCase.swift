@@ -5,11 +5,19 @@ import FitnessStorage
 
 @MainActor
 public struct DeleteAnalyticsSetUseCase {
-    @Injected(\.analyticsStorage) private var storageService
-    @Injected(\.exerciseStorage) private var exerciseStorageService
-    @Injected(\.workoutStorage) private var workoutStorageService
+    private let storageService: AnalyticsStoring
+    private let exerciseStorageService: ExerciseStoring
+    private let workoutStorageService: WorkoutStoring
 
-    public init() {}
+    public init(
+        analyticsStorage: AnalyticsStoring? = nil,
+        exerciseStorage: ExerciseStoring? = nil,
+        workoutStorage: WorkoutStoring? = nil
+    ) {
+        self.storageService = analyticsStorage ?? Container.shared.analyticsStorage()
+        self.exerciseStorageService = exerciseStorage ?? Container.shared.exerciseStorage()
+        self.workoutStorageService = workoutStorage ?? Container.shared.workoutStorage()
+    }
 
     /// Removes a set from an analytics entry. Removes the entry entirely if no sets remain.
     /// Updates the exercise completion status when all entries for the exercise are deleted.

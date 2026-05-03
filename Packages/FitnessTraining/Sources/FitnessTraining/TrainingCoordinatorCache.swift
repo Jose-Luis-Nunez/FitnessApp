@@ -19,9 +19,11 @@ public protocol TrainingCoordinatorCaching: AnyObject {
 public final class TrainingCoordinatorCache: TrainingCoordinatorCaching {
     private var coordinators: [MuscleCategoryGroup: TrainingCoordinator] = [:]
 
-    @ObservationIgnored @Injected(\.exerciseManagement) private var exerciseManagementService
+    @ObservationIgnored private var exerciseManagementService: ExerciseManaging
 
-    public init() {}
+    public init(exerciseManagement: ExerciseManaging? = nil) {
+        self.exerciseManagementService = exerciseManagement ?? Container.shared.exerciseManagement()
+    }
 
     public func coordinator(for group: MuscleCategoryGroup) -> TrainingCoordinator {
         if let existing = coordinators[group] {

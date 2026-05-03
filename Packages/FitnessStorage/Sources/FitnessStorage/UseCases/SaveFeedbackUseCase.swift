@@ -4,9 +4,11 @@ import Factory
 
 @MainActor
 public struct SaveFeedbackUseCase {
-    @Injected(\.feedbackStorage) private var feedbackStorage
+    private let feedbackStorage: FeedbackStoring
 
-    public init() {}
+    public init(feedbackStorage: FeedbackStoring? = nil) {
+        self.feedbackStorage = feedbackStorage ?? Container.shared.feedbackStorage()
+    }
 
     /// Persists the feedback if it contains any user-entered information.
     /// Returns `true` when the feedback was saved, `false` when it was empty

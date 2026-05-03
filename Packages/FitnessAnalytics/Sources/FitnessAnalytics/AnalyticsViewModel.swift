@@ -13,15 +13,27 @@ public final class AnalyticsViewModel {
     public private(set) var entries: [AnalyticsEntry] = []
     public private(set) var changeCount: Int = 0
 
-    private let storageService: AnalyticsStoring
-    @ObservationIgnored @Injected(\.exerciseStorage) private var exerciseStorageService
-    @ObservationIgnored @Injected(\.workoutStorage) private var workoutStorageService
-    @ObservationIgnored @Injected(\.saveAnalyticsUseCase) private var saveAnalyticsUseCase
-    @ObservationIgnored @Injected(\.deleteAnalyticsSetUseCase) private var deleteAnalyticsSetUseCase
-    @ObservationIgnored @Injected(\.saveOrReplaceAnalyticsUseCase) private var saveOrReplaceAnalyticsUseCase
-    
-    nonisolated public init(storageService: AnalyticsStoring? = nil) {
+    @ObservationIgnored private let storageService: AnalyticsStoring
+    @ObservationIgnored private let exerciseStorageService: ExerciseStoring
+    @ObservationIgnored private let workoutStorageService: WorkoutStoring
+    @ObservationIgnored private let saveAnalyticsUseCase: SaveAnalyticsUseCase
+    @ObservationIgnored private let deleteAnalyticsSetUseCase: DeleteAnalyticsSetUseCase
+    @ObservationIgnored private let saveOrReplaceAnalyticsUseCase: SaveOrReplaceAnalyticsUseCase
+
+    nonisolated public init(
+        storageService: AnalyticsStoring? = nil,
+        exerciseStorage: ExerciseStoring? = nil,
+        workoutStorage: WorkoutStoring? = nil,
+        saveAnalyticsUseCase: SaveAnalyticsUseCase? = nil,
+        deleteAnalyticsSetUseCase: DeleteAnalyticsSetUseCase? = nil,
+        saveOrReplaceAnalyticsUseCase: SaveOrReplaceAnalyticsUseCase? = nil
+    ) {
         self.storageService = storageService ?? Container.shared.analyticsStorage()
+        self.exerciseStorageService = exerciseStorage ?? Container.shared.exerciseStorage()
+        self.workoutStorageService = workoutStorage ?? Container.shared.workoutStorage()
+        self.saveAnalyticsUseCase = saveAnalyticsUseCase ?? Container.shared.saveAnalyticsUseCase()
+        self.deleteAnalyticsSetUseCase = deleteAnalyticsSetUseCase ?? Container.shared.deleteAnalyticsSetUseCase()
+        self.saveOrReplaceAnalyticsUseCase = saveOrReplaceAnalyticsUseCase ?? Container.shared.saveOrReplaceAnalyticsUseCase()
     }
 
     public func reloadEntries(for exerciseId: UUID) {

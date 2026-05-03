@@ -4,10 +4,16 @@ import Factory
 
 @MainActor
 public struct DeleteWorkoutUseCase {
-    @Injected(\.workoutStorage) private var workoutStorageService
-    @Injected(\.exerciseStorage) private var exerciseStorageService
+    private let workoutStorageService: WorkoutStoring
+    private let exerciseStorageService: ExerciseStoring
 
-    public init() {}
+    public init(
+        workoutStorage: WorkoutStoring? = nil,
+        exerciseStorage: ExerciseStoring? = nil
+    ) {
+        self.workoutStorageService = workoutStorage ?? Container.shared.workoutStorage()
+        self.exerciseStorageService = exerciseStorage ?? Container.shared.exerciseStorage()
+    }
 
     /// Deletes the workout, handles current-workout fallback, and cleans up exercise files.
     public func execute(_ workout: Workout) {

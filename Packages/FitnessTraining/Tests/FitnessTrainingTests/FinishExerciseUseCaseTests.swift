@@ -4,7 +4,6 @@ import Foundation
 import FitnessCore
 import FitnessAnalytics
 import FitnessTestSupport
-import Factory
 
 @Suite("FinishExerciseUseCase", .tags(.fast))
 @MainActor
@@ -13,7 +12,6 @@ struct FinishExerciseUseCaseTests {
     private let sut = FinishExerciseUseCase()
 
     @Test func returnsCompletedExerciseWhenAllSetsDone() {
-        Container.shared.reset()
         let vm = ActiveSetViewModel()
         let exercise = makeExercise(sets: 2)
         vm.startSet(for: exercise, category: .arms)
@@ -39,7 +37,6 @@ struct FinishExerciseUseCaseTests {
     }
 
     @Test func returnsNilWhenNotAllSetsDone() {
-        Container.shared.reset()
         let vm = ActiveSetViewModel()
         let exercise = makeExercise(sets: 3)
         vm.startSet(for: exercise, category: .arms)
@@ -58,7 +55,6 @@ struct FinishExerciseUseCaseTests {
     }
 
     @Test func returnsNilWhenNoExercise() {
-        Container.shared.reset()
         let vm = ActiveSetViewModel()
         let analyticsVM = AnalyticsViewModel(storageService: StubAnalyticsStorage())
 
@@ -73,7 +69,6 @@ struct FinishExerciseUseCaseTests {
     }
 
     @Test func resetsQuickDoneMode() {
-        Container.shared.reset()
         let vm = ActiveSetViewModel()
         let exercise = makeExercise(sets: 1)
         vm.startSet(for: exercise, category: .arms)

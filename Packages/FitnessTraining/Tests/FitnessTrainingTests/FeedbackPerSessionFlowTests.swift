@@ -5,7 +5,6 @@ import FitnessCore
 import FitnessAnalytics
 import FitnessStorage
 import FitnessTestSupport
-import Factory
 
 /// End-to-end flow tests for the **per-session feedback model**.
 ///
@@ -24,12 +23,7 @@ import Factory
 @MainActor
 struct FeedbackPerSessionFlowTests {
 
-    init() {
-        Container.shared.reset()
-        Container.shared.feedbackStorage.register {
-            MainActor.assumeIsolated { InMemoryFeedbackStorage() }
-        }
-    }
+    private let storage = InMemoryFeedbackStorage()
 
     private func makeCoordinator() -> TrainingCoordinator {
         TrainingCoordinator(
@@ -49,7 +43,9 @@ struct FeedbackPerSessionFlowTests {
             sessionId: coordinator.currentSessionId(for: exerciseId) ?? UUID(),
             exerciseCategory: .back,
             draftStore: coordinator.draftStore,
-            currentFocusedExerciseId: { coordinator.focusedExerciseId }
+            currentFocusedExerciseId: { coordinator.focusedExerciseId },
+            saveFeedbackUseCase: SaveFeedbackUseCase(feedbackStorage: storage),
+            feedbackStorage: storage
         )
     }
 
@@ -63,10 +59,8 @@ struct FeedbackPerSessionFlowTests {
         firstOpen.toggleSymptom(.dizziness)
         firstOpen.autosaveDraft()
 
-        // "Hide" -> close sheet; draft retained, nothing in storage yet.
         coordinator.closeFeedback()
 
-        let storage = Container.shared.feedbackStorage()
         #expect(storage.load(for: exercise.id).isEmpty)
         #expect(coordinator.draftStore.current?.energyLevel == 3)
 
@@ -87,12 +81,10 @@ struct FeedbackPerSessionFlowTests {
         sheet.toggleSymptom(.pain)
         _ = sheet.save()
 
-        let storage = Container.shared.feedbackStorage()
         let rows = storage.load(for: exercise.id)
         #expect(rows.count == 1)
         #expect(rows.first?.sessionId == sessionId)
         #expect(rows.first?.energyLevel == 4)
-        // Save clears the draft -> icon resolves via the committed row.
         #expect(coordinator.draftStore.current == nil)
     }
 
@@ -110,7 +102,6 @@ struct FeedbackPerSessionFlowTests {
         secondOpen.energyLevel = 5
         _ = secondOpen.save()
 
-        let storage = Container.shared.feedbackStorage()
         let rows = storage.load(for: exercise.id)
         #expect(rows.count == 1)
         #expect(rows.first?.energyLevel == 5)
@@ -126,18 +117,14 @@ struct FeedbackPerSessionFlowTests {
         firstOpen.energyLevel = 3
         _ = firstOpen.save()
 
-        // Beenden -> draft cleared, session ends.
         coordinator.finishExercise(for: exercise.id)
         #expect(coordinator.draftStore.current == nil)
 
-        // Start exercise again -> new session id.
         coordinator.startTraining(for: exercise)
         let secondSessionId = coordinator.currentSessionId(for: exercise.id)
         #expect(secondSessionId != nil)
         #expect(secondSessionId != firstSessionId)
 
-        // Fresh sheet for the new session must be blank, not pre-filled with
-        // the earlier session's saved values.
         let secondOpen = vm(coordinator: coordinator, exerciseId: exercise.id)
         #expect(secondOpen.energyLevel == nil)
         #expect(secondOpen.symptoms.isEmpty)
@@ -145,17 +132,12 @@ struct FeedbackPerSessionFlowTests {
         secondOpen.energyLevel = 5
         _ = secondOpen.save()
 
-        // Storage now holds two distinct rows for the same exercise.
-        let storage = Container.shared.feedbackStorage()
         let rows = storage.load(for: exercise.id)
         #expect(rows.count == 2)
         #expect(Set(rows.map(\.energyLevel)) == [3, 5])
     }
 
     @Test func finishingExerciseDoesNotAutoCommitDraft() {
-        // Critical invariant: a draft is **not** auto-persisted when the user
-        // hits Beenden — only an explicit Save inside the sheet writes to
-        // storage. Drafts are session-scoped and are discarded on finish.
         let coordinator = makeCoordinator()
         let exercise = makeExercise()
         coordinator.startTraining(for: exercise)
@@ -167,7 +149,6 @@ struct FeedbackPerSessionFlowTests {
 
         coordinator.finishExercise(for: exercise.id)
 
-        let storage = Container.shared.feedbackStorage()
         #expect(storage.load(for: exercise.id).isEmpty)
         #expect(coordinator.draftStore.current == nil)
     }

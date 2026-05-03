@@ -41,24 +41,25 @@ public final class FeedbackViewModel {
     /// could resurrect a draft for the previous exercise.
     private let currentFocusedExerciseId: () -> UUID?
 
-    @ObservationIgnored @Injected(\.saveFeedbackUseCase)
-    private var saveFeedbackUseCase: SaveFeedbackUseCase
-
-    @ObservationIgnored @Injected(\.feedbackStorage)
-    private var feedbackStorage: FeedbackStoring
+    @ObservationIgnored private var saveFeedbackUseCase: SaveFeedbackUseCase
+    @ObservationIgnored private var feedbackStorage: FeedbackStoring
 
     public init(
         exerciseId: UUID,
         sessionId: UUID = UUID(),
         exerciseCategory: MuscleCategoryGroup? = nil,
         draftStore: ExerciseFeedbackDraftStore? = nil,
-        currentFocusedExerciseId: @escaping () -> UUID? = { nil }
+        currentFocusedExerciseId: @escaping () -> UUID? = { nil },
+        saveFeedbackUseCase: SaveFeedbackUseCase? = nil,
+        feedbackStorage: FeedbackStoring? = nil
     ) {
         self.exerciseId = exerciseId
         self.sessionId = sessionId
         self.painCategory = exerciseCategory.map { BodyCategory.from(muscleGroup: $0) } ?? .back
         self.draftStore = draftStore
         self.currentFocusedExerciseId = currentFocusedExerciseId
+        self.saveFeedbackUseCase = saveFeedbackUseCase ?? Container.shared.saveFeedbackUseCase()
+        self.feedbackStorage = feedbackStorage ?? Container.shared.feedbackStorage()
         prepopulate()
     }
 

@@ -117,16 +117,11 @@ public final class TrainingCoordinator {
     private var _onAddExercise: @MainActor () -> Void
     private var _onResetAllExercises: @MainActor () -> Void
 
-    @ObservationIgnored @Injected(\.startTrainingUseCase)
-    private var startTrainingUseCase: StartTrainingUseCase
-    @ObservationIgnored @Injected(\.completeSetUseCase)
-    private var completeSetUseCase: CompleteSetUseCase
-    @ObservationIgnored @Injected(\.finishExerciseUseCase)
-    private var finishExerciseUseCase: FinishExerciseUseCase
-    @ObservationIgnored @Injected(\.cancelTrainingUseCase)
-    private var cancelTrainingUseCase: CancelTrainingUseCase
-    @ObservationIgnored @Injected(\.resetExerciseUseCase)
-    private var resetExerciseUseCase: ResetExerciseUseCase
+    @ObservationIgnored private var startTrainingUseCase: StartTrainingUseCase
+    @ObservationIgnored private var completeSetUseCase: CompleteSetUseCase
+    @ObservationIgnored private var finishExerciseUseCase: FinishExerciseUseCase
+    @ObservationIgnored private var cancelTrainingUseCase: CancelTrainingUseCase
+    @ObservationIgnored private var resetExerciseUseCase: ResetExerciseUseCase
 
     private let sessionFactory: @MainActor () -> ActiveSetViewModel
 
@@ -137,7 +132,12 @@ public final class TrainingCoordinator {
         onAddExercise: @escaping @MainActor () -> Void = {},
         onResetAllExercises: @escaping @MainActor () -> Void = {},
         analyticsViewModel: AnalyticsViewModel = AnalyticsViewModel(),
-        sessionFactory: @escaping @MainActor () -> ActiveSetViewModel = { ActiveSetViewModel() }
+        sessionFactory: @escaping @MainActor () -> ActiveSetViewModel = { ActiveSetViewModel() },
+        startTrainingUseCase: StartTrainingUseCase? = nil,
+        completeSetUseCase: CompleteSetUseCase? = nil,
+        finishExerciseUseCase: FinishExerciseUseCase? = nil,
+        cancelTrainingUseCase: CancelTrainingUseCase? = nil,
+        resetExerciseUseCase: ResetExerciseUseCase? = nil
     ) {
         self.analyticsViewModel = analyticsViewModel
         self.findCategory = findCategory
@@ -146,6 +146,11 @@ public final class TrainingCoordinator {
         self._onAddExercise = onAddExercise
         self._onResetAllExercises = onResetAllExercises
         self.sessionFactory = sessionFactory
+        self.startTrainingUseCase = startTrainingUseCase ?? Container.shared.startTrainingUseCase()
+        self.completeSetUseCase = completeSetUseCase ?? Container.shared.completeSetUseCase()
+        self.finishExerciseUseCase = finishExerciseUseCase ?? Container.shared.finishExerciseUseCase()
+        self.cancelTrainingUseCase = cancelTrainingUseCase ?? Container.shared.cancelTrainingUseCase()
+        self.resetExerciseUseCase = resetExerciseUseCase ?? Container.shared.resetExerciseUseCase()
     }
 
     /// Replaces the add-exercise callback. Only the currently visible view

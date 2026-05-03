@@ -74,16 +74,23 @@ public struct IdentifiableDate: Identifiable {
 @Observable
 @MainActor
 public final class TotalAnalyticsViewModel {
-    @ObservationIgnored @Injected(\.totalAnalyticsStorage) private var storageService
-    @ObservationIgnored @Injected(\.workoutStorage) private var workoutStorage
-    @ObservationIgnored @Injected(\.exerciseStorage) private var exerciseStorage
+    @ObservationIgnored private let storageService: TotalAnalyticsStoring
+    @ObservationIgnored private let workoutStorage: WorkoutStoring
+    @ObservationIgnored private let exerciseStorage: ExerciseStoring
 
     // MARK: - Cached Data
 
     @ObservationIgnored private var cachedAllEntries: [AnalyticsEntry]?
     @ObservationIgnored private var cachedCategoryProgress: [CategoryProgressData]?
 
-    nonisolated public init() {
+    nonisolated public init(
+        totalAnalyticsStorage: TotalAnalyticsStoring? = nil,
+        workoutStorage: WorkoutStoring? = nil,
+        exerciseStorage: ExerciseStoring? = nil
+    ) {
+        self.storageService = totalAnalyticsStorage ?? Container.shared.totalAnalyticsStorage()
+        self.workoutStorage = workoutStorage ?? Container.shared.workoutStorage()
+        self.exerciseStorage = exerciseStorage ?? Container.shared.exerciseStorage()
     }
 
     /// Clears all cached data, forcing the next access to re-fetch from storage.

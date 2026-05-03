@@ -5,9 +5,11 @@ import FitnessStorage
 
 @MainActor
 public struct SaveAnalyticsUseCase {
-    @Injected(\.analyticsStorage) private var storageService
+    private let storageService: AnalyticsStoring
 
-    public init() {}
+    public init(analyticsStorage: AnalyticsStoring? = nil) {
+        self.storageService = analyticsStorage ?? Container.shared.analyticsStorage()
+    }
 
     /// Creates a new analytics entry and appends it to the exercise's history.
     public func execute(exerciseId: UUID, setProgress: [SetProgress], date: Date = Date()) {

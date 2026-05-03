@@ -33,15 +33,18 @@ public final class MuscleCategorySelectionViewModel {
     nonisolated(unsafe) private var workoutObservationTask: Task<Void, Never>?
 
     @ObservationIgnored private let coordinatorCache: TrainingCoordinatorCaching
+    @ObservationIgnored private let resetAllExercisesUseCase: ResetAllExercisesUseCase
 
     public init(
         coordinatorCache: TrainingCoordinatorCaching? = nil,
         exerciseManagement: ExerciseManaging? = nil,
-        workoutStorage: WorkoutStoring? = nil
+        workoutStorage: WorkoutStoring? = nil,
+        resetAllExercisesUseCase: ResetAllExercisesUseCase? = nil
     ) {
         self.coordinatorCache = coordinatorCache ?? Container.shared.trainingCoordinatorCache()
         self.exerciseManagementService = exerciseManagement ?? Container.shared.exerciseManagement()
         self.workoutStorageService = workoutStorage ?? Container.shared.workoutStorage()
+        self.resetAllExercisesUseCase = resetAllExercisesUseCase ?? Container.shared.resetAllExercisesUseCase()
         refreshExercises()
         startWorkoutObservation()
     }
@@ -72,8 +75,6 @@ public final class MuscleCategorySelectionViewModel {
             }
         }
     }
-
-    @ObservationIgnored @Injected(\.resetAllExercisesUseCase) private var resetAllExercisesUseCase
 
     public func resetAllExercises() {
         guard workoutStorageService.currentWorkout != nil else { return }

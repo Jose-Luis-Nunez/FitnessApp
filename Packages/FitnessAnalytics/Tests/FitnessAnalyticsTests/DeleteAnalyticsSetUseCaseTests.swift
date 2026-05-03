@@ -3,8 +3,6 @@ import Foundation
 import FitnessCore
 @testable import FitnessAnalytics
 import FitnessTestSupport
-import Factory
-
 @Suite("DeleteAnalyticsSetUseCase", .tags(.fast))
 @MainActor
 struct DeleteAnalyticsSetUseCaseTests {
@@ -13,13 +11,11 @@ struct DeleteAnalyticsSetUseCaseTests {
         let mockAnalytics = MockAnalyticsStorage()
         let mockExercise = MockExerciseStorage()
         let mockWorkout = MockWorkoutStorage()
-
-        Container.shared.reset()
-        Container.shared.analyticsStorage.register { mockAnalytics }
-        Container.shared.exerciseStorage.register { mockExercise }
-        Container.shared.workoutStorage.register { mockWorkout }
-
-        let sut = DeleteAnalyticsSetUseCase()
+        let sut = DeleteAnalyticsSetUseCase(
+            analyticsStorage: mockAnalytics,
+            exerciseStorage: mockExercise,
+            workoutStorage: mockWorkout
+        )
         return (sut, mockAnalytics, mockExercise, mockWorkout)
     }
 

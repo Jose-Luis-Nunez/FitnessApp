@@ -4,7 +4,6 @@ import Foundation
 @testable import FitnessAnalytics
 import FitnessCore
 import FitnessTestSupport
-import Factory
 
 // MARK: - Helpers
 
@@ -28,13 +27,12 @@ private func makeEntry(
     )
 }
 
-/// Sets up Factory overrides so that `TotalAnalyticsViewModel` (created inside `ScheduleViewModel`)
-/// resolves mocked storage. Returns the mocks for further assertion/setup.
+/// Creates mocks and returns a fully-wired `TotalAnalyticsViewModel` using constructor-DI.
 @MainActor
 private func setupMocks(
     exercises: [Exercise] = [],
     entries: [UUID: [AnalyticsEntry]] = [:]
-) -> (MockWorkoutStorage, MockExerciseStorage, MockAnalyticsStorage) {
+) -> (TotalAnalyticsViewModel, MockWorkoutStorage, MockExerciseStorage, MockAnalyticsStorage) {
     let analyticsStorage = MockAnalyticsStorage()
     let exerciseStorage = MockExerciseStorage()
     let workoutStorage = MockWorkoutStorage()
@@ -59,23 +57,20 @@ private func setupMocks(
         workoutStorage: workoutStorage
     )
 
-    Container.shared.totalAnalyticsStorage.register { totalStorage }
-    Container.shared.workoutStorage.register { workoutStorage }
-    Container.shared.exerciseStorage.register { exerciseStorage }
+    let vm = TotalAnalyticsViewModel(
+        totalAnalyticsStorage: totalStorage,
+        workoutStorage: workoutStorage,
+        exerciseStorage: exerciseStorage
+    )
 
-    return (workoutStorage, exerciseStorage, analyticsStorage)
-}
-
-@MainActor
-private func resetContainer() {
-    Container.shared.reset()
+    return (vm, workoutStorage, exerciseStorage, analyticsStorage)
 }
 
 /// Creates 3 exercises and entries on each given day offset, so every day qualifies as a training day (>=3 exercises).
 @MainActor
 private func setupTrainingDays(
     offsets: [Int]
-) -> (exercises: [Exercise], workoutStorage: MockWorkoutStorage) {
+) -> (exercises: [Exercise], vm: TotalAnalyticsViewModel, workoutStorage: MockWorkoutStorage) {
     let ex1 = makeExercise(name: "Ex1", category: .arms)
     let ex2 = makeExercise(name: "Ex2", category: .chest)
     let ex3 = makeExercise(name: "Ex3", category: .back)
@@ -91,7 +86,7 @@ private func setupTrainingDays(
         entries3.append(makeEntry(exerciseId: ex3.id, date: d, sets: [(30, 10)]))
     }
 
-    let (workoutStorage, _, _) = setupMocks(
+    let (vm, workoutStorage, _, _) = setupMocks(
         exercises: [ex1, ex2, ex3],
         entries: [
             ex1.id: entries1,
@@ -100,7 +95,7 @@ private func setupTrainingDays(
         ]
     )
 
-    return ([ex1, ex2, ex3], workoutStorage)
+    return ([ex1, ex2, ex3], vm, workoutStorage)
 }
 
 // MARK: - reloadData
@@ -110,9 +105,8 @@ private func setupTrainingDays(
 struct ReloadDataTests {
 
     @Test func populatesTrainingDaySetAndDatesWithData() {
-        defer { resetContainer() }
-        _ = setupTrainingDays(offsets: [-2, 0])
-        let vm = ScheduleViewModel()
+        let (_, analyticsVM, _) = setupTrainingDays(offsets: [-2, 0])
+        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
         vm.reloadData()
 
         #expect(!vm.trainingDaySet.isEmpty)
@@ -120,9 +114,8 @@ struct ReloadDataTests {
     }
 
     @Test func emptyWhenNoData() {
-        defer { resetContainer() }
-        _ = setupMocks()
-        let vm = ScheduleViewModel()
+        let (analyticsVM, _, _, _) = setupMocks()
+        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
         vm.reloadData()
 
         #expect(vm.trainingDaySet.isEmpty)
@@ -137,9 +130,8 @@ struct ReloadDataTests {
 struct StreakDataTests {
 
     @Test func returnsZeroStreakWhenNoData() {
-        defer { resetContainer() }
-        _ = setupMocks()
-        let vm = ScheduleViewModel()
+        let (analyticsVM, _, _, _) = setupMocks()
+        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
         let streak = vm.streakData()
 
         #expect(streak.current == 0)
@@ -147,9 +139,8 @@ struct StreakDataTests {
     }
 
     @Test func detectsConsecutiveDayStreak() {
-        defer { resetContainer() }
-        _ = setupTrainingDays(offsets: [-2, -1, 0])
-        let vm = ScheduleViewModel()
+        let (_, analyticsVM, _) = setupTrainingDays(offsets: [-2, -1, 0])
+        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
         let streak = vm.streakData()
 
         #expect(streak.current == 3)
@@ -157,9 +148,8 @@ struct StreakDataTests {
     }
 
     @Test func breaksStreakOnGap() {
-        defer { resetContainer() }
-        _ = setupTrainingDays(offsets: [-5, -4, -1, 0])
-        let vm = ScheduleViewModel()
+        let (_, analyticsVM, _) = setupTrainingDays(offsets: [-5, -4, -1, 0])
+        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
         let streak = vm.streakData()
 
         #expect(streak.current == 2)
@@ -174,18 +164,16 @@ struct StreakDataTests {
 struct WeekSummaryTests {
 
     @Test func returnsSevenDays() {
-        defer { resetContainer() }
-        _ = setupMocks()
-        let vm = ScheduleViewModel()
+        let (analyticsVM, _, _, _) = setupMocks()
+        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
         let summary = vm.weekSummary(for: Date())
 
         #expect(summary.days.count == 7)
     }
 
     @Test func usesGermanWeekdayLabels() {
-        defer { resetContainer() }
-        _ = setupMocks()
-        let vm = ScheduleViewModel()
+        let (analyticsVM, _, _, _) = setupMocks()
+        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
         let summary = vm.weekSummary(for: Date())
         let labels = summary.days.map(\.label)
 
@@ -193,9 +181,8 @@ struct WeekSummaryTests {
     }
 
     @Test func countsTrainingDaysInWeek() {
-        defer { resetContainer() }
-        _ = setupTrainingDays(offsets: [0])
-        let vm = ScheduleViewModel()
+        let (_, analyticsVM, _) = setupTrainingDays(offsets: [0])
+        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
         let summary = vm.weekSummary(for: date(0))
 
         #expect(summary.trainingDayCount >= 0)
@@ -210,24 +197,22 @@ struct WeekSummaryTests {
 struct DayDetailTests {
 
     @Test func returnsNilWhenNoWorkout() {
-        defer { resetContainer() }
-        let (workoutStorage, _, _) = setupMocks()
+        let (analyticsVM, workoutStorage, _, _) = setupMocks()
         workoutStorage.currentWorkout = nil
 
-        let vm = ScheduleViewModel()
+        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
         #expect(vm.dayDetail(for: date(0)) == nil)
     }
 
     @Test func returnsDetailForDayWithData() {
-        defer { resetContainer() }
         let ex = makeExercise(name: "Curl", category: .arms)
         let today = date(0)
-        _ = setupMocks(
+        let (analyticsVM, _, _, _) = setupMocks(
             exercises: [ex],
             entries: [ex.id: [makeEntry(exerciseId: ex.id, date: today, sets: [(20, 10)])]]
         )
 
-        let vm = ScheduleViewModel()
+        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
         let detail = vm.dayDetail(for: today)
 
         #expect(detail != nil)
@@ -242,20 +227,18 @@ struct DayDetailTests {
 struct ExerciseCountForDayTests {
 
     @Test func returnsZeroForDayWithoutData() {
-        defer { resetContainer() }
-        _ = setupMocks()
-        let vm = ScheduleViewModel()
+        let (analyticsVM, _, _, _) = setupMocks()
+        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
 
         #expect(vm.exerciseCountForDay(date(0)) == 0)
     }
 
     @Test func countsDistinctExercises() {
-        defer { resetContainer() }
         let ex1 = makeExercise(name: "Curl", category: .arms)
         let ex2 = makeExercise(name: "Bench", category: .chest)
         let today = date(0)
 
-        _ = setupMocks(
+        let (analyticsVM, _, _, _) = setupMocks(
             exercises: [ex1, ex2],
             entries: [
                 ex1.id: [makeEntry(exerciseId: ex1.id, date: today, sets: [(20, 10)])],
@@ -263,7 +246,7 @@ struct ExerciseCountForDayTests {
             ]
         )
 
-        let vm = ScheduleViewModel()
+        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
         #expect(vm.exerciseCountForDay(today) == 2)
     }
 }

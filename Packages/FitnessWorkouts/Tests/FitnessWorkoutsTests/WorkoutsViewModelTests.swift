@@ -1,6 +1,5 @@
 import Testing
 import Foundation
-import Factory
 import FitnessCore
 import FitnessStorage
 import FitnessTestSupport
@@ -12,8 +11,6 @@ struct WorkoutsViewModelTests {
 
     // MARK: - Setup
 
-    /// Produces a VM wired with mocks via constructor injection — no global `Container.shared`
-    /// coupling, so tests stay independent and the suite does not need `.serialized`.
     @MainActor
     private func makeSUT(
         seedWorkouts: [Workout] = []
@@ -24,17 +21,16 @@ struct WorkoutsViewModelTests {
         workoutStorage.workouts = seedWorkouts
         workoutStorage.currentWorkout = seedWorkouts.first
 
-        // UseCases (`DeleteWorkoutUseCase`, `DuplicateWorkoutUseCase`) still resolve their
-        // storage via `@Injected` internally, so we wire the mocks through the container
-        // only to satisfy those UseCases. The VM's own dependencies are passed explicitly
-        // via the constructor, which is what this test suite exercises.
-        Container.shared.reset()
-        Container.shared.workoutStorage.register { workoutStorage }
-        Container.shared.exerciseStorage.register { exerciseStorage }
-
         let sut = WorkoutsViewModel(
             workoutStorage: workoutStorage,
-            exerciseStorage: exerciseStorage
+            exerciseStorage: exerciseStorage,
+            deleteWorkoutUseCase: DeleteWorkoutUseCase(
+                workoutStorage: workoutStorage,
+                exerciseStorage: exerciseStorage
+            ),
+            duplicateWorkoutUseCase: DuplicateWorkoutUseCase(
+                workoutStorage: workoutStorage
+            )
         )
         return (sut, workoutStorage, exerciseStorage)
     }

@@ -3,7 +3,6 @@ import Foundation
 @testable import FitnessAnalytics
 import FitnessCore
 import FitnessTestSupport
-import Factory
 
 // MARK: - Helpers
 
@@ -31,7 +30,7 @@ private func makeEntry(
 private func setupMocks(
     exercises: [Exercise] = [],
     entries: [UUID: [AnalyticsEntry]] = [:]
-) -> (MockTotalAnalyticsStorage, MockWorkoutStorage, MockExerciseStorage, MockAnalyticsStorage) {
+) -> (TotalAnalyticsViewModel, MockWorkoutStorage, MockExerciseStorage, MockAnalyticsStorage) {
     let analyticsStorage = MockAnalyticsStorage()
     let exerciseStorage = MockExerciseStorage()
     let workoutStorage = MockWorkoutStorage()
@@ -56,16 +55,13 @@ private func setupMocks(
         workoutStorage: workoutStorage
     )
 
-    Container.shared.totalAnalyticsStorage.register { totalStorage }
-    Container.shared.workoutStorage.register { workoutStorage }
-    Container.shared.exerciseStorage.register { exerciseStorage }
+    let vm = TotalAnalyticsViewModel(
+        totalAnalyticsStorage: totalStorage,
+        workoutStorage: workoutStorage,
+        exerciseStorage: exerciseStorage
+    )
 
-    return (totalStorage, workoutStorage, exerciseStorage, analyticsStorage)
-}
-
-@MainActor
-private func resetContainer() {
-    Container.shared.reset()
+    return (vm, workoutStorage, exerciseStorage, analyticsStorage)
 }
 
 // MARK: - getCategoryProgressData
@@ -75,9 +71,7 @@ private func resetContainer() {
 struct GetCategoryProgressDataTests {
 
     @Test func returnsEmptyCategoriesWhenNoExercises() {
-        defer { resetContainer() }
-        _ = setupMocks()
-        let vm = TotalAnalyticsViewModel()
+        let (vm, _, _, _) = setupMocks()
         let result = vm.getCategoryProgressData()
 
         #expect(result.count == 5)
@@ -85,18 +79,15 @@ struct GetCategoryProgressDataTests {
     }
 
     @Test func returnsProgressForExerciseWithEntries() {
-        defer { resetContainer() }
         let exerciseId = UUID()
         let exercise = makeExercise(id: exerciseId, name: "Curl", weight: 20, category: .arms)
-        _ = setupMocks(
+        let (vm, _, _, _) = setupMocks(
             exercises: [exercise],
             entries: [exerciseId: [
                 makeEntry(exerciseId: exerciseId, date: date(-2), sets: [(20, 10)]),
                 makeEntry(exerciseId: exerciseId, date: date(0), sets: [(25, 10)]),
             ]]
         )
-
-        let vm = TotalAnalyticsViewModel()
         let result = vm.getCategoryProgressData()
         let armsData = result.first { $0.category == .arms }!
 
@@ -107,21 +98,17 @@ struct GetCategoryProgressDataTests {
     }
 
     @Test func excludesExercisesWithoutEntries() {
-        defer { resetContainer() }
         let exercise = makeExercise(name: "Curl", category: .arms)
-        _ = setupMocks(exercises: [exercise])
-
-        let vm = TotalAnalyticsViewModel()
+        let (vm, _, _, _) = setupMocks(exercises: [exercise])
         let armsData = vm.getCategoryProgressData().first { $0.category == .arms }!
 
         #expect(armsData.exercises.isEmpty)
     }
 
     @Test func tracksWeightIncrements() {
-        defer { resetContainer() }
         let id = UUID()
         let exercise = makeExercise(id: id, category: .chest)
-        _ = setupMocks(
+        let (vm, _, _, _) = setupMocks(
             exercises: [exercise],
             entries: [id: [
                 makeEntry(exerciseId: id, date: date(-3), sets: [(40, 10)]),
@@ -130,8 +117,6 @@ struct GetCategoryProgressDataTests {
                 makeEntry(exerciseId: id, date: date(0), sets: [(50, 10)]),
             ]]
         )
-
-        let vm = TotalAnalyticsViewModel()
         let chestData = vm.getCategoryProgressData().first { $0.category == .chest }!
 
         #expect(chestData.exercises[0].weightIncrements == 2)
@@ -146,21 +131,18 @@ struct GetCategoryProgressDataTests {
 struct GetMostTrainedCategoryTests {
 
     @Test func returnsDefaultWhenNoData() {
-        defer { resetContainer() }
-        _ = setupMocks()
-        let vm = TotalAnalyticsViewModel()
+        let (vm, _, _, _) = setupMocks()
         let result = vm.getMostTrainedCategory()
 
         #expect(result.count == 0)
     }
 
     @Test func returnsCategoryWithMostExercises() {
-        defer { resetContainer() }
         let armEx1 = makeExercise(name: "Curl", category: .arms)
         let armEx2 = makeExercise(name: "Hammer Curl", category: .arms)
         let chestEx = makeExercise(name: "Bench", category: .chest)
 
-        _ = setupMocks(
+        let (vm, _, _, _) = setupMocks(
             exercises: [armEx1, armEx2, chestEx],
             entries: [
                 armEx1.id: [makeEntry(exerciseId: armEx1.id, date: date(0), sets: [(20, 10)])],
@@ -168,8 +150,6 @@ struct GetMostTrainedCategoryTests {
                 chestEx.id: [makeEntry(exerciseId: chestEx.id, date: date(0), sets: [(60, 10)])],
             ]
         )
-
-        let vm = TotalAnalyticsViewModel()
         let result = vm.getMostTrainedCategory()
 
         #expect(result.category == .arms)
@@ -184,12 +164,11 @@ struct GetMostTrainedCategoryTests {
 struct GetLeastTrainedCategoryTests {
 
     @Test func returnsCategoryWithFewestExercises() {
-        defer { resetContainer() }
         let armEx1 = makeExercise(name: "Curl", category: .arms)
         let armEx2 = makeExercise(name: "Hammer Curl", category: .arms)
         let chestEx = makeExercise(name: "Bench", category: .chest)
 
-        _ = setupMocks(
+        let (vm, _, _, _) = setupMocks(
             exercises: [armEx1, armEx2, chestEx],
             entries: [
                 armEx1.id: [makeEntry(exerciseId: armEx1.id, date: date(0), sets: [(20, 10)])],
@@ -197,8 +176,6 @@ struct GetLeastTrainedCategoryTests {
                 chestEx.id: [makeEntry(exerciseId: chestEx.id, date: date(0), sets: [(60, 10)])],
             ]
         )
-
-        let vm = TotalAnalyticsViewModel()
         let result = vm.getLeastTrainedCategory()
 
         #expect(result.category == .chest)
@@ -213,39 +190,33 @@ struct GetLeastTrainedCategoryTests {
 struct GetTrainingDaysTests {
 
     @Test func returnsEmptyWhenNoData() {
-        defer { resetContainer() }
-        _ = setupMocks()
-        let vm = TotalAnalyticsViewModel()
+        let (vm, _, _, _) = setupMocks()
 
         #expect(vm.getTrainingDays().isEmpty)
     }
 
     @Test func requiresAtLeast3ExercisesPerDay() {
-        defer { resetContainer() }
         let ex1 = makeExercise(name: "Ex1", category: .arms)
         let ex2 = makeExercise(name: "Ex2", category: .chest)
         let today = date(0)
 
-        _ = setupMocks(
+        let (vm, _, _, _) = setupMocks(
             exercises: [ex1, ex2],
             entries: [
                 ex1.id: [makeEntry(exerciseId: ex1.id, date: today, sets: [(20, 10)])],
                 ex2.id: [makeEntry(exerciseId: ex2.id, date: today, sets: [(40, 10)])],
             ]
         )
-
-        let vm = TotalAnalyticsViewModel()
         #expect(vm.getTrainingDays().isEmpty)
     }
 
     @Test func countsTrainingDayWith3OrMoreExercises() {
-        defer { resetContainer() }
         let ex1 = makeExercise(name: "Ex1", category: .arms)
         let ex2 = makeExercise(name: "Ex2", category: .chest)
         let ex3 = makeExercise(name: "Ex3", category: .back)
         let today = date(0)
 
-        _ = setupMocks(
+        let (vm, _, _, _) = setupMocks(
             exercises: [ex1, ex2, ex3],
             entries: [
                 ex1.id: [makeEntry(exerciseId: ex1.id, date: today, sets: [(20, 10)])],
@@ -253,22 +224,19 @@ struct GetTrainingDaysTests {
                 ex3.id: [makeEntry(exerciseId: ex3.id, date: today, sets: [(30, 10)])],
             ]
         )
-
-        let vm = TotalAnalyticsViewModel()
         let days = vm.getTrainingDays()
 
         #expect(days.count == 1)
     }
 
     @Test func returnsSortedDates() {
-        defer { resetContainer() }
         let ex1 = makeExercise(name: "Ex1", category: .arms)
         let ex2 = makeExercise(name: "Ex2", category: .chest)
         let ex3 = makeExercise(name: "Ex3", category: .back)
         let day1 = date(-3)
         let day2 = date(-1)
 
-        _ = setupMocks(
+        let (vm, _, _, _) = setupMocks(
             exercises: [ex1, ex2, ex3],
             entries: [
                 ex1.id: [
@@ -285,8 +253,6 @@ struct GetTrainingDaysTests {
                 ],
             ]
         )
-
-        let vm = TotalAnalyticsViewModel()
         let days = vm.getTrainingDays()
 
         #expect(days.count == 2)
@@ -301,21 +267,18 @@ struct GetTrainingDaysTests {
 struct AllDatesWithDataTests {
 
     @Test func returnsEmptyWhenNoEntries() {
-        defer { resetContainer() }
-        _ = setupMocks()
-        let vm = TotalAnalyticsViewModel()
+        let (vm, _, _, _) = setupMocks()
 
         #expect(vm.allDatesWithData().isEmpty)
     }
 
     @Test func returnsUniqueDaysAcrossExercises() {
-        defer { resetContainer() }
         let ex1 = makeExercise(name: "Curl", category: .arms)
         let ex2 = makeExercise(name: "Bench", category: .chest)
         let day1 = date(-1)
         let day2 = date(0)
 
-        _ = setupMocks(
+        let (vm, _, _, _) = setupMocks(
             exercises: [ex1, ex2],
             entries: [
                 ex1.id: [
@@ -327,8 +290,6 @@ struct AllDatesWithDataTests {
                 ],
             ]
         )
-
-        let vm = TotalAnalyticsViewModel()
         let dates = vm.allDatesWithData()
 
         #expect(dates.count == 2)
@@ -342,15 +303,12 @@ struct AllDatesWithDataTests {
 struct GetTrainingRhythmTests {
 
     @Test func returnsNotEnoughDataForFewDays() {
-        defer { resetContainer() }
-        _ = setupMocks()
-        let vm = TotalAnalyticsViewModel()
+        let (vm, _, _, _) = setupMocks()
 
         #expect(vm.getTrainingRhythm() == "Not enough data")
     }
 
     @Test func returnsWeeklyForDailyTraining() {
-        defer { resetContainer() }
         let ex1 = makeExercise(name: "Ex1", category: .arms)
         let ex2 = makeExercise(name: "Ex2", category: .chest)
         let ex3 = makeExercise(name: "Ex3", category: .back)
@@ -366,7 +324,7 @@ struct GetTrainingRhythmTests {
             entries3.append(makeEntry(exerciseId: ex3.id, date: d, sets: [(30, 10)]))
         }
 
-        _ = setupMocks(
+        let (vm, _, _, _) = setupMocks(
             exercises: [ex1, ex2, ex3],
             entries: [
                 ex1.id: entries1,
@@ -374,8 +332,6 @@ struct GetTrainingRhythmTests {
                 ex3.id: entries3,
             ]
         )
-
-        let vm = TotalAnalyticsViewModel()
         #expect(vm.getTrainingRhythm() == "Weekly")
     }
 }
@@ -387,26 +343,21 @@ struct GetTrainingRhythmTests {
 struct TotalWorkoutDaysInCurrentMonthTests {
 
     @Test func returnsZeroWhenNoData() {
-        defer { resetContainer() }
-        _ = setupMocks()
-        let vm = TotalAnalyticsViewModel()
+        let (vm, _, _, _) = setupMocks()
 
         #expect(vm.totalWorkoutDaysInCurrentMonth() == 0)
     }
 
     @Test func countsDistinctDaysInCurrentMonth() {
-        defer { resetContainer() }
         let ex = makeExercise(category: .arms)
         let today = date(0)
 
-        _ = setupMocks(
+        let (vm, _, _, _) = setupMocks(
             exercises: [ex],
             entries: [ex.id: [
                 makeEntry(exerciseId: ex.id, date: today, sets: [(20, 10)]),
             ]]
         )
-
-        let vm = TotalAnalyticsViewModel()
         #expect(vm.totalWorkoutDaysInCurrentMonth() >= 1)
     }
 }
@@ -418,11 +369,10 @@ struct TotalWorkoutDaysInCurrentMonthTests {
 struct GetCategoryWithMostImprovementsTests {
 
     @Test func returnsCategoryWithHighestWeightIncrements() {
-        defer { resetContainer() }
         let armEx = makeExercise(name: "Curl", category: .arms)
         let chestEx = makeExercise(name: "Bench", category: .chest)
 
-        _ = setupMocks(
+        let (vm, _, _, _) = setupMocks(
             exercises: [armEx, chestEx],
             entries: [
                 armEx.id: [
@@ -436,8 +386,6 @@ struct GetCategoryWithMostImprovementsTests {
                 ],
             ]
         )
-
-        let vm = TotalAnalyticsViewModel()
         let result = vm.getCategoryWithMostImprovements()
 
         #expect(result.category == .arms)
@@ -452,9 +400,7 @@ struct GetCategoryWithMostImprovementsTests {
 struct GetLastTrainingDayCompletionRateTests {
 
     @Test func returnsZeroWhenNoTrainingDays() {
-        defer { resetContainer() }
-        _ = setupMocks()
-        let vm = TotalAnalyticsViewModel()
+        let (vm, _, _, _) = setupMocks()
         let result = vm.getLastTrainingDayCompletionRate()
 
         #expect(result.percentage == 0)

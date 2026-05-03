@@ -4,37 +4,24 @@ import FitnessCore
 @testable import FitnessExercise
 import FitnessTraining
 import FitnessTestSupport
-import Factory
-import FitnessStorage
 
 @Suite("ResetAllExercisesUseCase", .tags(.fast))
 @MainActor
 struct ResetAllExercisesUseCaseTests {
 
-    private func makeSUT() -> (ResetAllExercisesUseCase, MockExerciseStorage, MockWorkoutStorage, TrainingCoordinatorCache) {
-        let mockExercise = MockExerciseStorage()
-        let mockWorkout = MockWorkoutStorage()
-        let mockAnalytics = MockAnalyticsStorage()
-        let coordCache = TrainingCoordinatorCache()
+    private func makeSUT() -> (ResetAllExercisesUseCase, MockExerciseManagement, TrainingCoordinatorCache) {
+        let mockExerciseManagement = MockExerciseManagement()
+        let coordCache = TrainingCoordinatorCache(exerciseManagement: mockExerciseManagement)
 
-        Container.shared.reset()
-        Container.shared.exerciseStorage.register { mockExercise }
-        Container.shared.workoutStorage.register { mockWorkout }
-        Container.shared.analyticsStorage.register { mockAnalytics }
-        Container.shared.trainingCoordinatorCache.register { coordCache }
-        Container.shared.exerciseManagement.register {
-            ExerciseManagementService()
-        }
-
-        let sut = ResetAllExercisesUseCase()
-        return (sut, mockExercise, mockWorkout, coordCache)
+        let sut = ResetAllExercisesUseCase(
+            coordinatorCache: coordCache,
+            exerciseManagement: mockExerciseManagement
+        )
+        return (sut, mockExerciseManagement, coordCache)
     }
 
     @Test func executeCancelsAllActiveSets() {
-        let (sut, _, mockWorkout, coordCache) = makeSUT()
-        let workout = Workout(name: "Test")
-        mockWorkout.currentWorkout = workout
-        mockWorkout.workouts = [workout]
+        let (sut, _, coordCache) = makeSUT()
 
         let exercise = FitnessTestSupport.makeExercise(name: "Curl", category: .arms)
         let coordinator = coordCache.coordinator(for: .arms)
@@ -51,37 +38,31 @@ struct ResetAllExercisesUseCaseTests {
     }
 
     @Test func executeResetsCompletedExercisesAcrossCategories() {
-        let (sut, mockExercise, mockWorkout, _) = makeSUT()
-        let workout = Workout(name: "Test")
-        mockWorkout.currentWorkout = workout
-        mockWorkout.workouts = [workout]
+        let (sut, mockExerciseManagement, _) = makeSUT()
 
         let armExercise = FitnessTestSupport.makeExercise(name: "Curl", isCompleted: true, category: .arms)
         let chestExercise = FitnessTestSupport.makeExercise(name: "Bench", isCompleted: true, category: .chest)
-        mockExercise.exercisesByCategory[.arms] = [armExercise]
-        mockExercise.exercisesByCategory[.chest] = [chestExercise]
+        mockExerciseManagement.exercisesByCategory[.arms] = [armExercise]
+        mockExerciseManagement.exercisesByCategory[.chest] = [chestExercise]
 
         sut.execute(for: [.arms, .chest])
 
-        let arms = mockExercise.exercisesByCategory[.arms] ?? []
-        let chest = mockExercise.exercisesByCategory[.chest] ?? []
+        let arms = mockExerciseManagement.exercisesByCategory[.arms] ?? []
+        let chest = mockExerciseManagement.exercisesByCategory[.chest] ?? []
         #expect(arms.allSatisfy { !$0.isCompleted })
         #expect(chest.allSatisfy { !$0.isCompleted })
     }
 
     @Test func executeDoesNothingForEmptyCategories() {
-        let (sut, mockExercise, _, _) = makeSUT()
+        let (sut, mockExerciseManagement, _) = makeSUT()
 
         sut.execute(for: [])
 
-        #expect(mockExercise.exercisesByCategory.isEmpty)
+        #expect(mockExerciseManagement.exercisesByCategory.isEmpty)
     }
 
     @Test func coordinatorSessionIsCancelledByResetAll() {
-        let (sut, _, mockWorkout, coordCache) = makeSUT()
-        let workout = Workout(name: "Test")
-        mockWorkout.currentWorkout = workout
-        mockWorkout.workouts = [workout]
+        let (sut, _, coordCache) = makeSUT()
 
         let exercise = FitnessTestSupport.makeExercise(name: "Curl", category: .arms)
         let coordinator = coordCache.coordinator(for: .arms)
@@ -99,10 +80,7 @@ struct ResetAllExercisesUseCaseTests {
     }
 
     @Test func executeCancelsActiveSessionsAcrossMultipleCategories() {
-        let (sut, _, mockWorkout, coordCache) = makeSUT()
-        let workout = Workout(name: "Test")
-        mockWorkout.currentWorkout = workout
-        mockWorkout.workouts = [workout]
+        let (sut, _, coordCache) = makeSUT()
 
         let armExercise = FitnessTestSupport.makeExercise(name: "Curl", category: .arms)
         let chestExercise = FitnessTestSupport.makeExercise(name: "Bench", category: .chest)
@@ -122,10 +100,7 @@ struct ResetAllExercisesUseCaseTests {
     }
 
     @Test func timerIsZeroOnCancelledVMAfterResetAll() {
-        let (sut, _, mockWorkout, coordCache) = makeSUT()
-        let workout = Workout(name: "Test")
-        mockWorkout.currentWorkout = workout
-        mockWorkout.workouts = [workout]
+        let (sut, _, coordCache) = makeSUT()
 
         let exercise = FitnessTestSupport.makeExercise(name: "Curl", category: .arms)
         let coordinator = coordCache.coordinator(for: .arms)

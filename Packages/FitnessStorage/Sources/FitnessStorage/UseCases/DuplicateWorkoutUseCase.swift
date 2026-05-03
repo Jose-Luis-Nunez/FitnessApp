@@ -4,9 +4,11 @@ import Factory
 
 @MainActor
 public struct DuplicateWorkoutUseCase {
-    @Injected(\.workoutStorage) private var workoutStorageService
+    private let workoutStorageService: WorkoutStoring
 
-    public init() {}
+    public init(workoutStorage: WorkoutStoring? = nil) {
+        self.workoutStorageService = workoutStorage ?? Container.shared.workoutStorage()
+    }
 
     /// Creates a copy of the workout including all exercises per category.
     public func execute(_ workout: Workout) -> Workout {

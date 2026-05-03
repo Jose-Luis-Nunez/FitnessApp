@@ -4,15 +4,13 @@ import Foundation
 import FitnessCore
 import FitnessAnalytics
 import FitnessTestSupport
-import Factory
 
 @Suite("TrainingCoordinator draft lifecycle", .tags(.fast))
 @MainActor
 struct TrainingCoordinatorDraftLifecycleTests {
 
     private func makeSUT() -> TrainingCoordinator {
-        Container.shared.reset()
-        return TrainingCoordinator(
+        TrainingCoordinator(
             findCategory: { _ in .chest },
             onExerciseUpdate: { _, _ in },
             onExerciseReset: { _, _ in },

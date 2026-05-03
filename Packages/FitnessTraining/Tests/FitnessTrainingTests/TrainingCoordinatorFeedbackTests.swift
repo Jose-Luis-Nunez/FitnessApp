@@ -4,15 +4,13 @@ import Foundation
 import FitnessCore
 import FitnessAnalytics
 import FitnessTestSupport
-import Factory
 
 @Suite("TrainingCoordinator feedback sheet", .tags(.fast))
 @MainActor
 struct TrainingCoordinatorFeedbackTests {
 
     private func makeSUT() -> TrainingCoordinator {
-        Container.shared.reset()
-        return TrainingCoordinator(
+        TrainingCoordinator(
             findCategory: { _ in .chest },
             onExerciseUpdate: { _, _ in },
             onExerciseReset: { _, _ in },

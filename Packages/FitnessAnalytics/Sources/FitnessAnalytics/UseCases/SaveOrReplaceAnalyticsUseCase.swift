@@ -5,9 +5,11 @@ import FitnessStorage
 
 @MainActor
 public struct SaveOrReplaceAnalyticsUseCase {
-    @Injected(\.analyticsStorage) private var storageService
+    private let storageService: AnalyticsStoring
 
-    public init() {}
+    public init(analyticsStorage: AnalyticsStoring? = nil) {
+        self.storageService = analyticsStorage ?? Container.shared.analyticsStorage()
+    }
 
     /// Finds an existing entry for the same date and replaces it, or appends a new one.
     public func execute(exerciseId: UUID, setProgress: [SetProgress], date: Date) {

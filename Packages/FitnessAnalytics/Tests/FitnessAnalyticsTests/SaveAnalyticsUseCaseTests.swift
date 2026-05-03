@@ -3,18 +3,13 @@ import Foundation
 import FitnessCore
 @testable import FitnessAnalytics
 import FitnessTestSupport
-import Factory
-
 @Suite("SaveAnalyticsUseCase", .tags(.fast))
 @MainActor
 struct SaveAnalyticsUseCaseTests {
 
     private func makeSUT() -> (SaveAnalyticsUseCase, MockAnalyticsStorage) {
         let mockStorage = MockAnalyticsStorage()
-        Container.shared.reset()
-        Container.shared.analyticsStorage.register { mockStorage }
-
-        let sut = SaveAnalyticsUseCase()
+        let sut = SaveAnalyticsUseCase(analyticsStorage: mockStorage)
         return (sut, mockStorage)
     }
 

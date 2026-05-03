@@ -6,10 +6,16 @@ import Factory
 
 @MainActor
 public struct ResetAllExercisesUseCase {
-    @Injected(\.trainingCoordinatorCache) private var coordinatorCache
-    @Injected(\.exerciseManagement) private var exerciseManagementService
+    private let coordinatorCache: TrainingCoordinatorCaching
+    private let exerciseManagementService: ExerciseManaging
 
-    public init() {}
+    public init(
+        coordinatorCache: TrainingCoordinatorCaching? = nil,
+        exerciseManagement: ExerciseManaging? = nil
+    ) {
+        self.coordinatorCache = coordinatorCache ?? Container.shared.trainingCoordinatorCache()
+        self.exerciseManagementService = exerciseManagement ?? Container.shared.exerciseManagement()
+    }
 
     /// Cancels all active training sessions across every category, then resets
     /// the persisted exercise state. Uses the coordinator's own

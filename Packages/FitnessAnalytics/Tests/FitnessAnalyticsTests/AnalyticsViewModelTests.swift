@@ -3,7 +3,6 @@ import Foundation
 @testable import FitnessAnalytics
 import FitnessCore
 import FitnessTestSupport
-import Factory
 
 // MARK: - Helpers
 
@@ -596,9 +595,10 @@ struct EntriesReactiveUpdateTests {
         let entry = makeEntry(exerciseId: id, date: date(0), sets: [(60, 10), (65, 8)])
         storage.save([entry], for: id)
 
-        Container.shared.analyticsStorage.register { storage }
-
-        let vm = AnalyticsViewModel(storageService: storage)
+        let vm = AnalyticsViewModel(
+            storageService: storage,
+            deleteAnalyticsSetUseCase: DeleteAnalyticsSetUseCase(analyticsStorage: storage)
+        )
         vm.reloadEntries(for: id)
 
         #expect(vm.entries.count == 1)
@@ -617,9 +617,10 @@ struct EntriesReactiveUpdateTests {
         let entry = makeEntry(exerciseId: id, date: date(0), sets: [(60, 10)])
         storage.save([entry], for: id)
 
-        Container.shared.analyticsStorage.register { storage }
-
-        let vm = AnalyticsViewModel(storageService: storage)
+        let vm = AnalyticsViewModel(
+            storageService: storage,
+            deleteAnalyticsSetUseCase: DeleteAnalyticsSetUseCase(analyticsStorage: storage)
+        )
         vm.reloadEntries(for: id)
 
         #expect(vm.entries.count == 1)
@@ -635,9 +636,10 @@ struct EntriesReactiveUpdateTests {
         let entry = makeEntry(exerciseId: id, date: date(0), sets: [(60, 10), (65, 8)])
         storage.save([entry], for: id)
 
-        Container.shared.analyticsStorage.register { storage }
-
-        let vm = AnalyticsViewModel(storageService: storage)
+        let vm = AnalyticsViewModel(
+            storageService: storage,
+            deleteAnalyticsSetUseCase: DeleteAnalyticsSetUseCase(analyticsStorage: storage)
+        )
         let initial = vm.changeCount
 
         vm.reloadEntries(for: id)
@@ -653,9 +655,10 @@ struct EntriesReactiveUpdateTests {
         let entry = makeEntry(exerciseId: id, date: date(0), sets: [(60, 10), (65, 8)])
         storage.save([entry], for: id)
 
-        Container.shared.analyticsStorage.register { storage }
-
-        let vm = AnalyticsViewModel(storageService: storage)
+        let vm = AnalyticsViewModel(
+            storageService: storage,
+            deleteAnalyticsSetUseCase: DeleteAnalyticsSetUseCase(analyticsStorage: storage)
+        )
         vm.reloadEntries(for: id)
 
         var observationFired = false

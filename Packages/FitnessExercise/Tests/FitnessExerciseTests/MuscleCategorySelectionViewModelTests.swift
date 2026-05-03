@@ -4,7 +4,6 @@ import Foundation
 import FitnessCore
 import FitnessTraining
 import FitnessTestSupport
-import Factory
 
 // MARK: - Mock Coordinator Cache
 
@@ -188,42 +187,46 @@ struct ExerciseCountsTests {
 struct ResetAllExercisesTests {
 
     @Test func resetAllExercises_whenNoCurrentWorkout_doesNotMutateExercises() {
-        Container.shared.reset()
-
         let mock = MockExerciseManagement()
         let completed = makeExercise(isCompleted: true)
         mock.exercisesByCategory[.arms] = [completed]
-        Container.shared.exerciseManagement.register { mock }
 
+        let cache = MockCoordinatorCache()
         let ws = MockWorkoutStorage()
-        // currentWorkout intentionally left nil — guard in production code must short-circuit.
 
+        let resetUseCase = ResetAllExercisesUseCase(
+            coordinatorCache: cache,
+            exerciseManagement: mock
+        )
         let vm = MuscleCategorySelectionViewModel(
-            coordinatorCache: MockCoordinatorCache(),
+            coordinatorCache: cache,
             exerciseManagement: mock,
-            workoutStorage: ws
+            workoutStorage: ws,
+            resetAllExercisesUseCase: resetUseCase
         )
 
         vm.resetAllExercises()
 
-        // Invariant: without a currentWorkout the VM must not touch exercises.
         #expect(mock.exercisesByCategory[.arms]?.first?.isCompleted == true)
     }
 
     @Test func resetsExercisesAndUpdatesCounts() {
-        Container.shared.reset()
-
         let mock = MockExerciseManagement()
         mock.exercisesByCategory[.arms] = [makeExercise(isCompleted: true)]
-        Container.shared.exerciseManagement.register { mock }
 
+        let cache = MockCoordinatorCache()
         let ws = MockWorkoutStorage()
         ws.setCurrentWorkout(Workout(name: "Test", selectedCategories: [.arms]))
 
+        let resetUseCase = ResetAllExercisesUseCase(
+            coordinatorCache: cache,
+            exerciseManagement: mock
+        )
         let vm = MuscleCategorySelectionViewModel(
-            coordinatorCache: MockCoordinatorCache(),
+            coordinatorCache: cache,
             exerciseManagement: mock,
-            workoutStorage: ws
+            workoutStorage: ws,
+            resetAllExercisesUseCase: resetUseCase
         )
         #expect(vm.getExerciseCount(for: .arms)?.active == 0)
 

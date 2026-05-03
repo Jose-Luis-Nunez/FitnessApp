@@ -5,7 +5,6 @@ import FitnessCore
 import FitnessAnalytics
 import FitnessStorage
 import FitnessTestSupport
-import Factory
 
 // MARK: - Helpers
 
@@ -14,14 +13,12 @@ private func makeCoordinator(
     onExerciseUpdate: @escaping (Exercise, MuscleCategoryGroup) -> Void = { _, _ in },
     onExerciseReset: @escaping (Exercise, MuscleCategoryGroup) -> Void = { _, _ in }
 ) -> TrainingCoordinator {
-    Container.shared.reset()
-    let coordinator = TrainingCoordinator(
+    TrainingCoordinator(
         findCategory: { _ in .arms },
         onExerciseUpdate: onExerciseUpdate,
         onExerciseReset: onExerciseReset,
         analyticsViewModel: AnalyticsViewModel(storageService: StubAnalyticsStorage())
     )
-    return coordinator
 }
 
 // MARK: - finishExercise
@@ -690,15 +687,9 @@ struct ResetExerciseCoordinatorTests {
 @MainActor
 struct FactoryIntegrationTests {
 
-    init() {
-        Container.shared.reset()
-    }
-
     @Test func coordinatorFromCacheStartsAndFinishesTraining() {
         let mock = MockExerciseManagement()
-        Container.shared.exerciseManagement.register { mock }
-
-        let cache = TrainingCoordinatorCache()
+        let cache = TrainingCoordinatorCache(exerciseManagement: mock)
         let coordinator = cache.coordinator(for: .arms)
 
         let exercise = makeExercise(sets: 2)
@@ -718,9 +709,7 @@ struct FactoryIntegrationTests {
 
     @Test func coordinatorFromCacheResetsExercise() {
         let mock = MockExerciseManagement()
-        Container.shared.exerciseManagement.register { mock }
-
-        let cache = TrainingCoordinatorCache()
+        let cache = TrainingCoordinatorCache(exerciseManagement: mock)
         let coordinator = cache.coordinator(for: .chest)
 
         let exercise = makeExercise(sets: 3, category: .chest)
@@ -739,7 +728,6 @@ struct FactoryIntegrationTests {
 struct StartTrainingEdgeCaseTests {
 
     @Test func findCategoryReturningNilIsNoOp() {
-        Container.shared.reset()
         let coordinator = TrainingCoordinator(
             findCategory: { _ in nil },
             onExerciseUpdate: { _, _ in },
