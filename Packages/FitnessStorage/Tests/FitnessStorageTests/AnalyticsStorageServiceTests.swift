@@ -4,8 +4,6 @@ import SwiftData
 import FitnessCore
 import FitnessTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
-import Factory
-
 @Suite("AnalyticsStorageService", .tags(.integration))
 @MainActor
 struct AnalyticsStorageServiceTests {

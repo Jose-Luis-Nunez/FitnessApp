@@ -4,8 +4,6 @@ import SwiftData
 import FitnessCore
 import FitnessTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
-import Factory
-
 // MARK: - Why this file exists
 //
 // These tests cover the two production bugs reported in 2026-04 that motivated

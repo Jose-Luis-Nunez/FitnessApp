@@ -4,8 +4,6 @@ import SwiftData
 import FitnessCore
 import FitnessTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
-import Factory
-
 @Suite("Exercise & Analytics Storage Roundtrips", .tags(.integration))
 @MainActor
 struct ExerciseAndAnalyticsStorageTests {

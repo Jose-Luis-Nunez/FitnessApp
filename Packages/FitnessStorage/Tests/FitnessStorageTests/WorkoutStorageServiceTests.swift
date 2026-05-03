@@ -5,8 +5,6 @@ import FitnessCore
 import FitnessTestSupport
 import Mockable
 @_spi(PersistenceUI) @testable import FitnessStorage
-import Factory
-
 @Suite("WorkoutStorageService CRUD", .tags(.integration))
 @MainActor
 struct WorkoutStorageServiceTests {

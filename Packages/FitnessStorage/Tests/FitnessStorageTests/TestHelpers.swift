@@ -22,19 +22,6 @@ enum TestHelpers {
         )
     }
 
-    static func registerInMemoryContainer() {
-        Container.shared.reset()
-        let container = makeInMemoryContainer()
-        Container.shared.modelContainer.register { container }
-
-        let defaults = UserDefaults.standard
-        defaults.removeObject(forKey: "current_workout_id")
-        defaults.removeObject(forKey: "default_workout_id")
-        defaults.removeObject(forKey: "stored_workouts")
-        defaults.removeObject(forKey: "swiftdata_migration_complete")
-        defaults.removeObject(forKey: "userId")
-    }
-
     static func makeIsolatedDefaults() -> UserDefaults {
         let suiteName = "\(testSuiteName).\(UUID().uuidString)"
         return UserDefaults(suiteName: suiteName)!
