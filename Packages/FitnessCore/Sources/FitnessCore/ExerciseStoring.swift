@@ -1,5 +1,7 @@
 import Foundation
+import Mockable
 
+@Mockable
 @MainActor
 public protocol ExerciseStoring {
     func loadForWorkout(workoutId: UUID, category: MuscleCategoryGroup) -> [Exercise]

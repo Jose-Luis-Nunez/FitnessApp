@@ -10,12 +10,14 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../FitnessCore"),
+        .package(url: "https://github.com/Kolos65/Mockable.git", from: "0.6.2"),
     ],
     targets: [
         .target(
             name: "FitnessTestSupport",
             dependencies: [
                 "FitnessCore",
+                .product(name: "Mockable", package: "Mockable"),
             ]
         ),
     ]

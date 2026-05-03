@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 import FitnessCore
+import Mockable
 @_spi(PersistenceUI) @testable import FitnessStorage
 import Factory
 
@@ -70,6 +71,12 @@ enum TestHelpers {
         )
     }
 
+    static func makeNoOpExerciseStoring() -> MockExerciseStoring {
+        let mock = MockExerciseStoring(policy: .relaxedVoid)
+        given(mock).loadForWorkout(workoutId: .any, category: .any).willReturn([])
+        return mock
+    }
+
     static func makeWorkoutStorageService(
         container: ModelContainer,
         defaults: UserDefaults? = nil,
@@ -78,7 +85,7 @@ enum TestHelpers {
         WorkoutStorageService(
             container: container,
             defaults: defaults ?? makeIsolatedDefaults(),
-            exerciseStorage: exerciseStorage ?? NoOpExerciseStorage()
+            exerciseStorage: exerciseStorage ?? makeNoOpExerciseStoring()
         )
     }
 
@@ -125,10 +132,4 @@ enum TestHelpers {
     ) -> AnalyticsEntry {
         AnalyticsEntry(exerciseId: exerciseId, date: date, setProgress: setProgress)
     }
-}
-
-@MainActor
-final class NoOpExerciseStorage: ExerciseStoring {
-    func loadForWorkout(workoutId: UUID, category: MuscleCategoryGroup) -> [Exercise] { [] }
-    func saveForWorkout(_ exercises: [Exercise], workoutId: UUID, category: MuscleCategoryGroup) {}
 }

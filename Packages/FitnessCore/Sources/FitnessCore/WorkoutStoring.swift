@@ -1,5 +1,7 @@
 import Foundation
+import Mockable
 
+@Mockable
 @MainActor
 public protocol WorkoutStoring: AnyObject {
     var workouts: [Workout] { get set }

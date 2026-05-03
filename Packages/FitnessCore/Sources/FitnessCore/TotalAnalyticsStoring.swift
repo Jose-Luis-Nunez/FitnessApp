@@ -1,5 +1,7 @@
 import Foundation
+import Mockable
 
+@Mockable
 @MainActor
 public protocol TotalAnalyticsStoring {
     func loadAllAnalytics() -> [AnalyticsEntry]

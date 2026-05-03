@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 5.10
 
 import PackageDescription
 
@@ -12,6 +12,7 @@ let package = Package(
         .package(path: "../FitnessCore"),
         .package(path: "../FitnessTestSupport"),
         .package(url: "https://github.com/hmlongco/Factory.git", from: "2.5.0"),
+        .package(url: "https://github.com/Kolos65/Mockable.git", from: "0.6.2"),
     ],
     targets: [
         .target(
@@ -20,7 +21,11 @@ let package = Package(
         ),
         .testTarget(
             name: "FitnessStorageTests",
-            dependencies: ["FitnessStorage", "FitnessTestSupport"]
+            dependencies: [
+                "FitnessStorage",
+                "FitnessTestSupport",
+                .product(name: "Mockable", package: "Mockable"),
+            ]
         ),
     ]
 )
