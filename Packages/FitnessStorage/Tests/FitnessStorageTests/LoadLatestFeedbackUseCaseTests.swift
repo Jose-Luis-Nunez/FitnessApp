@@ -4,24 +4,25 @@ import SwiftData
 import FitnessCore
 import FitnessTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
-import Factory
 
 @Suite("LoadLatestFeedbackUseCase", .tags(.integration))
 @MainActor
 struct LoadLatestFeedbackUseCaseTests {
 
+    private let storage: FeedbackStorageService
+
     init() {
-        TestHelpers.registerInMemoryContainer()
+        let container = TestHelpers.makeInMemoryContainer()
+        storage = FeedbackStorageService(container: container)
     }
 
     @Test func executeReturnsNilWhenNoFeedbackExists() {
-        let useCase = LoadLatestFeedbackUseCase()
+        let useCase = LoadLatestFeedbackUseCase(feedbackStorage: storage)
         #expect(useCase.execute(for: UUID()) == nil)
     }
 
     @Test func executeReturnsLatestFeedbackForExercise() {
         let exerciseId = UUID()
-        let storage = Container.shared.feedbackStorage()
 
         let earlier = ExerciseFeedback(
             exerciseId: exerciseId,
@@ -39,7 +40,7 @@ struct LoadLatestFeedbackUseCaseTests {
         storage.save(earlier)
         storage.save(later)
 
-        let useCase = LoadLatestFeedbackUseCase()
+        let useCase = LoadLatestFeedbackUseCase(feedbackStorage: storage)
         let resolved = useCase.execute(for: exerciseId)
 
         #expect(resolved?.energyLevel == 4)
@@ -50,11 +51,10 @@ struct LoadLatestFeedbackUseCaseTests {
     @Test func executeIgnoresFeedbackForOtherExercises() {
         let target = UUID()
         let other = UUID()
-        let storage = Container.shared.feedbackStorage()
 
         storage.save(ExerciseFeedback(exerciseId: other, energyLevel: 5))
 
-        let useCase = LoadLatestFeedbackUseCase()
+        let useCase = LoadLatestFeedbackUseCase(feedbackStorage: storage)
         #expect(useCase.execute(for: target) == nil)
     }
 }

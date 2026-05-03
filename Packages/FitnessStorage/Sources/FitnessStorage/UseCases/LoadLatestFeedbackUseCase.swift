@@ -7,9 +7,11 @@ import Factory
 /// re-opened so the user sees their previous entries instead of a blank form.
 @MainActor
 public struct LoadLatestFeedbackUseCase {
-    @Injected(\.feedbackStorage) private var feedbackStorage
+    private let feedbackStorage: FeedbackStoring
 
-    public init() {}
+    public init(feedbackStorage: FeedbackStoring? = nil) {
+        self.feedbackStorage = feedbackStorage ?? Container.shared.feedbackStorage()
+    }
 
     public func execute(for exerciseId: UUID) -> ExerciseFeedback? {
         feedbackStorage.latest(for: exerciseId)

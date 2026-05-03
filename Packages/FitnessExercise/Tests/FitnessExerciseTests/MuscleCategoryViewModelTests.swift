@@ -7,7 +7,6 @@ import FitnessStorage
 import FitnessTraining
 import FitnessAnalytics
 import FitnessTestSupport
-import Factory
 
 // MARK: - Mock Storage
 

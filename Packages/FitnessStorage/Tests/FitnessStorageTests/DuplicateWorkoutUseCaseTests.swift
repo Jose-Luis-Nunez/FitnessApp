@@ -4,9 +4,8 @@ import SwiftData
 import FitnessCore
 import FitnessTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
-import Factory
 
-@Suite("DuplicateWorkoutUseCase", .serialized, .tags(.integration))
+@Suite("DuplicateWorkoutUseCase", .tags(.integration))
 @MainActor
 struct DuplicateWorkoutUseCaseTests {
 
@@ -21,10 +20,7 @@ struct DuplicateWorkoutUseCaseTests {
         let es = ExerciseStorageService(container: container)
         let ws = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: es)
 
-        Container.shared.reset()
-        Container.shared.workoutStorage.register { ws }
-
-        let sut = DuplicateWorkoutUseCase()
+        let sut = DuplicateWorkoutUseCase(workoutStorage: ws)
         return (sut, ws)
     }
 

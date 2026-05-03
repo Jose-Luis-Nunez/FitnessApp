@@ -4,9 +4,8 @@ import SwiftData
 import FitnessCore
 import FitnessTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
-import Factory
 
-@Suite("DeleteWorkoutUseCase", .serialized, .tags(.integration))
+@Suite("DeleteWorkoutUseCase", .tags(.integration))
 @MainActor
 struct DeleteWorkoutUseCaseTests {
 
@@ -21,11 +20,7 @@ struct DeleteWorkoutUseCaseTests {
         let es = ExerciseStorageService(container: container)
         let ws = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: es)
 
-        Container.shared.reset()
-        Container.shared.workoutStorage.register { ws }
-        Container.shared.exerciseStorage.register { es }
-
-        let sut = DeleteWorkoutUseCase()
+        let sut = DeleteWorkoutUseCase(workoutStorage: ws, exerciseStorage: es)
         return (sut, ws, es)
     }
 

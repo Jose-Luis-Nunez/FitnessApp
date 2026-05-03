@@ -1,8 +1,7 @@
-import SwiftUI
+import Foundation
 import Observation
 import FitnessCore
 import FitnessAnalytics
-import FitnessUI
 
 // MARK: - Training Callbacks Protocol
 
