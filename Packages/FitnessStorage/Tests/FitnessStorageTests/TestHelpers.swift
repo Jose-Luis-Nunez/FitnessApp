@@ -3,7 +3,6 @@ import SwiftData
 import FitnessCore
 import Mockable
 @_spi(PersistenceUI) @testable import FitnessStorage
-import Factory
 
 @MainActor
 enum TestHelpers {
@@ -76,13 +75,6 @@ enum TestHelpers {
         )
     }
 
-    /// Wires a real production stack against an in-memory container and
-    /// registers every storage in `Container.shared`. Use this whenever a
-    /// test needs `ExerciseManagementService` (which is `@Injected`-driven)
-    /// to operate on a known persistence stack.
-    ///
-    /// Call sites must hold the returned services for the lifetime of the
-    /// test — Factory's `.singleton`-resolved closures capture them.
     @MainActor
     static func makeStorageStack(container: ModelContainer) -> (
         management: ExerciseManagementService,
@@ -99,12 +91,11 @@ enum TestHelpers {
         )
         let analyticsStorage = AnalyticsStorageService(container: container)
 
-        Container.shared.reset()
-        Container.shared.exerciseStorage.register { exerciseStorage }
-        Container.shared.workoutStorage.register { workoutStorage }
-        Container.shared.analyticsStorage.register { analyticsStorage }
-
-        let management = ExerciseManagementService()
+        let management = ExerciseManagementService(
+            exerciseStorage: exerciseStorage,
+            analyticsStorage: analyticsStorage,
+            workoutStorage: workoutStorage
+        )
         return (management, workoutStorage, exerciseStorage, analyticsStorage)
     }
 

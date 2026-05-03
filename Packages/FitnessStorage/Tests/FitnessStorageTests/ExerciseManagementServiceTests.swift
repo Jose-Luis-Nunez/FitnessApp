@@ -4,9 +4,8 @@ import SwiftData
 import FitnessCore
 import FitnessTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
-import Factory
 
-@Suite("ExerciseManagementService", .serialized, .tags(.integration))
+@Suite("ExerciseManagementService", .tags(.integration))
 @MainActor
 struct ExerciseManagementServiceTests {
 
@@ -241,15 +240,15 @@ struct ExerciseManagementServiceTests {
     // MARK: - No Current Workout
 
     @Test func addExerciseDoesNothingWithoutCurrentWorkout() {
-        Container.shared.reset()
-        let ws = MockWorkoutStorage() // empty → currentWorkout == nil
+        let ws = MockWorkoutStorage()
         let es = MockExerciseStorage()
         let as_ = StubAnalyticsStorage()
-        Container.shared.workoutStorage.register { ws }
-        Container.shared.exerciseStorage.register { es }
-        Container.shared.analyticsStorage.register { as_ }
 
-        let sut = ExerciseManagementService()
+        let sut = ExerciseManagementService(
+            exerciseStorage: es,
+            analyticsStorage: as_,
+            workoutStorage: ws
+        )
         let exercise = TestHelpers.makeExercise(name: "Curl", category: .arms)
         sut.addExercise(exercise, category: .arms, atTop: false)
 

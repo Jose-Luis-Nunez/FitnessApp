@@ -47,7 +47,7 @@ import FitnessTestSupport
 // reintroduced the old snapshot-based mutation pattern at the persistence
 // layer — that would be a regression of ADR-0001 and must block the merge.
 
-@Suite("Coordinator persists exercise completion across finishExercise (Bug 1 + Bug 2)", .serialized, .tags(.integration))
+@Suite("Coordinator persists exercise completion across finishExercise (Bug 1 + Bug 2)", .tags(.integration))
 @MainActor
 struct CoordinatorPersistsCompletionAfterFinishTests {
 

@@ -4,9 +4,8 @@ import SwiftData
 import FitnessCore
 import FitnessTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
-import Factory
 
-@Suite("TotalAnalyticsStorageService", .serialized, .tags(.integration))
+@Suite("TotalAnalyticsStorageService", .tags(.integration))
 @MainActor
 struct TotalAnalyticsStorageServiceTests {
 
@@ -22,12 +21,11 @@ struct TotalAnalyticsStorageServiceTests {
         let ws = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: es)
         let as_ = AnalyticsStorageService(container: container)
 
-        Container.shared.reset()
-        Container.shared.exerciseStorage.register { es }
-        Container.shared.workoutStorage.register { ws }
-        Container.shared.analyticsStorage.register { as_ }
-
-        let sut = TotalAnalyticsStorageService()
+        let sut = TotalAnalyticsStorageService(
+            analyticsStorage: as_,
+            exerciseStorage: es,
+            workoutStorage: ws
+        )
         return (sut, ws, es, as_)
     }
 
@@ -66,15 +64,15 @@ struct TotalAnalyticsStorageServiceTests {
     }
 
     @Test func loadAllAnalyticsReturnsEmptyWhenNoCurrentWorkout() {
-        Container.shared.reset()
-        let ws = MockWorkoutStorage() // empty → currentWorkout == nil
+        let ws = MockWorkoutStorage()
         let es = MockExerciseStorage()
         let as_ = StubAnalyticsStorage()
-        Container.shared.workoutStorage.register { ws }
-        Container.shared.exerciseStorage.register { es }
-        Container.shared.analyticsStorage.register { as_ }
 
-        let sut = TotalAnalyticsStorageService()
+        let sut = TotalAnalyticsStorageService(
+            analyticsStorage: as_,
+            exerciseStorage: es,
+            workoutStorage: ws
+        )
         #expect(sut.loadAllAnalytics().isEmpty)
     }
 

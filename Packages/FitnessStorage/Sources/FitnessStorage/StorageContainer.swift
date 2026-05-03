@@ -24,10 +24,10 @@ public extension Container {
         self { MainActor.assumeIsolated { AnalyticsStorageService() } }.singleton
     }
     var exerciseManagement: Factory<ExerciseManaging> {
-        self { ExerciseManagementService() }.singleton
+        self { MainActor.assumeIsolated { ExerciseManagementService() } }.singleton
     }
     var totalAnalyticsStorage: Factory<TotalAnalyticsStoring> {
-        self { TotalAnalyticsStorageService() }.singleton
+        self { MainActor.assumeIsolated { TotalAnalyticsStorageService() } }.singleton
     }
     var feedbackStorage: Factory<FeedbackStoring> {
         self { MainActor.assumeIsolated { FeedbackStorageService() } }.singleton

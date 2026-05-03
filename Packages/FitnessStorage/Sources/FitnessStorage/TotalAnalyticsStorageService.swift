@@ -4,11 +4,18 @@ import Factory
 
 @MainActor
 public final class TotalAnalyticsStorageService: TotalAnalyticsStoring {
-    @Injected(\.analyticsStorage) private var analyticsStorage
-    @Injected(\.exerciseStorage) private var exerciseStorage
-    @Injected(\.workoutStorage) private var workoutStorage
+    private let analyticsStorage: AnalyticsStoring
+    private let exerciseStorage: ExerciseStoring
+    private let workoutStorage: WorkoutStoring
 
-    nonisolated public init() {
+    public init(
+        analyticsStorage: AnalyticsStoring? = nil,
+        exerciseStorage: ExerciseStoring? = nil,
+        workoutStorage: WorkoutStoring? = nil
+    ) {
+        self.analyticsStorage = analyticsStorage ?? Container.shared.analyticsStorage()
+        self.exerciseStorage = exerciseStorage ?? Container.shared.exerciseStorage()
+        self.workoutStorage = workoutStorage ?? Container.shared.workoutStorage()
     }
 
     public func loadAnalytics(for exerciseId: UUID) -> [AnalyticsEntry] {
