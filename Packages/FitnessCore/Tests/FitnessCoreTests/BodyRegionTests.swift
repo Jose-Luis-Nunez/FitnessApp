@@ -1,88 +1,88 @@
-import XCTest
+import Testing
 @testable import FitnessCore
 
-final class BodyRegionTests: XCTestCase {
+@Suite("BodyRegion")
+struct BodyRegionTests {
 
-    func testEveryRegionMapsToCategory() {
+    @Test func everyRegionMapsToCategory() {
         for region in BodyRegion.allCases {
             _ = region.category
         }
     }
 
-    func testCategoryFilterCoversAllRegions() {
+    @Test func categoryFilterCoversAllRegions() {
         let grouped = BodyCategory.allCases.flatMap { BodyRegion.regions(in: $0) }
-        XCTAssertEqual(Set(grouped), Set(BodyRegion.allCases))
+        #expect(Set(grouped) == Set(BodyRegion.allCases))
     }
 
-    func testBackCategoryIncludesNeckAndShoulders() {
+    @Test func backCategoryIncludesNeckAndShoulders() {
         let regions = BodyRegion.regions(in: .back)
-        XCTAssertTrue(regions.contains(.neckLeft))
-        XCTAssertTrue(regions.contains(.neckRight))
-        XCTAssertTrue(regions.contains(.shoulderLeft))
-        XCTAssertTrue(regions.contains(.shoulderRight))
-        XCTAssertTrue(regions.contains(.upperBack))
-        XCTAssertTrue(regions.contains(.middleBack))
-        XCTAssertTrue(regions.contains(.lowerBack))
+        #expect(regions.contains(.neckLeft))
+        #expect(regions.contains(.neckRight))
+        #expect(regions.contains(.shoulderLeft))
+        #expect(regions.contains(.shoulderRight))
+        #expect(regions.contains(.upperBack))
+        #expect(regions.contains(.middleBack))
+        #expect(regions.contains(.lowerBack))
     }
 
-    func testLegsCategoryIncludesInnerOuterAndBothKnees() {
+    @Test func legsCategoryIncludesInnerOuterAndBothKnees() {
         let regions = BodyRegion.regions(in: .legs)
-        XCTAssertTrue(regions.contains(.thighInner))
-        XCTAssertTrue(regions.contains(.thighOuter))
-        XCTAssertTrue(regions.contains(.kneeLeft))
-        XCTAssertTrue(regions.contains(.kneeRight))
+        #expect(regions.contains(.thighInner))
+        #expect(regions.contains(.thighOuter))
+        #expect(regions.contains(.kneeLeft))
+        #expect(regions.contains(.kneeRight))
     }
 
-    func testArmCategoryIncludesBicepsAndTricepsSides() {
+    @Test func armCategoryIncludesBicepsAndTricepsSides() {
         let regions = BodyRegion.regions(in: .arm)
-        XCTAssertTrue(regions.contains(.bicepsLeft))
-        XCTAssertTrue(regions.contains(.bicepsRight))
-        XCTAssertTrue(regions.contains(.tricepsLeft))
-        XCTAssertTrue(regions.contains(.tricepsRight))
-        XCTAssertTrue(regions.contains(.forearmLeft))
-        XCTAssertTrue(regions.contains(.forearmRight))
-        XCTAssertTrue(regions.contains(.handLeft))
-        XCTAssertTrue(regions.contains(.handRight))
-        XCTAssertTrue(regions.contains(.wristLeft))
-        XCTAssertTrue(regions.contains(.wristRight))
+        #expect(regions.contains(.bicepsLeft))
+        #expect(regions.contains(.bicepsRight))
+        #expect(regions.contains(.tricepsLeft))
+        #expect(regions.contains(.tricepsRight))
+        #expect(regions.contains(.forearmLeft))
+        #expect(regions.contains(.forearmRight))
+        #expect(regions.contains(.handLeft))
+        #expect(regions.contains(.handRight))
+        #expect(regions.contains(.wristLeft))
+        #expect(regions.contains(.wristRight))
     }
 
-    func testChestCategoryIncludesLeftAndRight() {
+    @Test func chestCategoryIncludesLeftAndRight() {
         let regions = BodyRegion.regions(in: .chest)
-        XCTAssertTrue(regions.contains(.chestLeft))
-        XCTAssertTrue(regions.contains(.chestRight))
+        #expect(regions.contains(.chestLeft))
+        #expect(regions.contains(.chestRight))
     }
 
-    func testMuscleGroupToBodyCategoryMapping() {
-        XCTAssertEqual(BodyCategory.from(muscleGroup: .arms), .arm)
-        XCTAssertEqual(BodyCategory.from(muscleGroup: .chest), .chest)
-        XCTAssertEqual(BodyCategory.from(muscleGroup: .back), .back)
-        XCTAssertEqual(BodyCategory.from(muscleGroup: .legs), .legs)
-        XCTAssertEqual(BodyCategory.from(muscleGroup: .abs), .abs)
+    @Test func muscleGroupToBodyCategoryMapping() {
+        #expect(BodyCategory.from(muscleGroup: .arms) == .arm)
+        #expect(BodyCategory.from(muscleGroup: .chest) == .chest)
+        #expect(BodyCategory.from(muscleGroup: .back) == .back)
+        #expect(BodyCategory.from(muscleGroup: .legs) == .legs)
+        #expect(BodyCategory.from(muscleGroup: .abs) == .abs)
     }
 
-    func testIconAssetNameFollowsUserConvention() {
-        XCTAssertEqual(BodyRegion.bicepsLeft.iconAssetName, "biceps_left")
-        XCTAssertEqual(BodyRegion.bicepsRight.iconAssetName, "biceps_right")
-        XCTAssertEqual(BodyRegion.tricepsLeft.iconAssetName, "triceps_left")
-        XCTAssertEqual(BodyRegion.tricepsRight.iconAssetName, "triceps_right")
-        XCTAssertEqual(BodyRegion.obliquesLeft.iconAssetName, "obliques_left")
-        XCTAssertEqual(BodyRegion.shoulderLeft.iconAssetName, "shoulder_left")
-        XCTAssertEqual(BodyRegion.abs.iconAssetName, "Abs")
-        XCTAssertEqual(BodyRegion.forearmLeft.iconAssetName, "forearm_left")
-        XCTAssertEqual(BodyRegion.forearmRight.iconAssetName, "forearm_right")
-        XCTAssertEqual(BodyRegion.forearmLeft.displayName, "Forearm left")
-        XCTAssertEqual(BodyRegion.forearmRight.displayName, "Forearm right")
-        XCTAssertEqual(BodyRegion.middleBack.iconAssetName, "middle_back")
-        XCTAssertEqual(BodyRegion.middleBack.displayName, "Middle back")
-        XCTAssertEqual(BodyRegion.wristLeft.iconAssetName, "wrist_left")
-        XCTAssertEqual(BodyRegion.wristRight.iconAssetName, "wrist_right")
-        XCTAssertEqual(BodyRegion.wristLeft.displayName, "Wrist left")
-        XCTAssertEqual(BodyRegion.wristRight.displayName, "Wrist right")
-        XCTAssertEqual(BodyRegion.handLeft.iconAssetName, "hand_left")
-        XCTAssertEqual(BodyRegion.handRight.iconAssetName, "hand_right")
-        XCTAssertEqual(BodyRegion.handLeft.displayName, "Hand left")
-        XCTAssertEqual(BodyRegion.handRight.displayName, "Hand right")
+    @Test func iconAssetNameFollowsConvention() {
+        #expect(BodyRegion.bicepsLeft.iconAssetName == "biceps_left")
+        #expect(BodyRegion.bicepsRight.iconAssetName == "biceps_right")
+        #expect(BodyRegion.tricepsLeft.iconAssetName == "triceps_left")
+        #expect(BodyRegion.tricepsRight.iconAssetName == "triceps_right")
+        #expect(BodyRegion.obliquesLeft.iconAssetName == "obliques_left")
+        #expect(BodyRegion.shoulderLeft.iconAssetName == "shoulder_left")
+        #expect(BodyRegion.abs.iconAssetName == "Abs")
+        #expect(BodyRegion.forearmLeft.iconAssetName == "forearm_left")
+        #expect(BodyRegion.forearmRight.iconAssetName == "forearm_right")
+        #expect(BodyRegion.forearmLeft.displayName == "Forearm left")
+        #expect(BodyRegion.forearmRight.displayName == "Forearm right")
+        #expect(BodyRegion.middleBack.iconAssetName == "middle_back")
+        #expect(BodyRegion.middleBack.displayName == "Middle back")
+        #expect(BodyRegion.wristLeft.iconAssetName == "wrist_left")
+        #expect(BodyRegion.wristRight.iconAssetName == "wrist_right")
+        #expect(BodyRegion.wristLeft.displayName == "Wrist left")
+        #expect(BodyRegion.wristRight.displayName == "Wrist right")
+        #expect(BodyRegion.handLeft.iconAssetName == "hand_left")
+        #expect(BodyRegion.handRight.iconAssetName == "hand_right")
+        #expect(BodyRegion.handLeft.displayName == "Hand left")
+        #expect(BodyRegion.handRight.displayName == "Hand right")
     }
-
 }

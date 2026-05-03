@@ -5,6 +5,7 @@ import FitnessTestSupport
 @testable import FitnessTraining
 
 @Suite("BottomActionBarViewModel")
+@MainActor
 struct BottomActionBarViewModelTests {
 
     private func makeViewModel(

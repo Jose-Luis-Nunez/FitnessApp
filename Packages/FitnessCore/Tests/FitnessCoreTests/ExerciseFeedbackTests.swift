@@ -1,61 +1,63 @@
-import XCTest
+import Testing
+import Foundation
 @testable import FitnessCore
 
-final class ExerciseFeedbackTests: XCTestCase {
+@Suite("ExerciseFeedback")
+struct ExerciseFeedbackTests {
 
-    func testEmptyFeedbackHasNoContent() {
+    @Test func emptyFeedbackHasNoContent() {
         let feedback = ExerciseFeedback(exerciseId: UUID())
-        XCTAssertFalse(feedback.hasAnyContent)
+        #expect(!feedback.hasAnyContent)
     }
 
-    func testEnergyLevelAloneCountsAsContent() {
+    @Test func energyLevelAloneCountsAsContent() {
         let feedback = ExerciseFeedback(exerciseId: UUID(), energyLevel: 3)
-        XCTAssertTrue(feedback.hasAnyContent)
+        #expect(feedback.hasAnyContent)
     }
 
-    func testSymptomAloneCountsAsContent() {
+    @Test func symptomAloneCountsAsContent() {
         let feedback = ExerciseFeedback(
             exerciseId: UUID(),
             symptoms: [.pain]
         )
-        XCTAssertTrue(feedback.hasAnyContent)
+        #expect(feedback.hasAnyContent)
     }
 
-    func testNoteOnlyCountsAsContent() {
+    @Test func noteOnlyCountsAsContent() {
         let feedback = ExerciseFeedback(exerciseId: UUID(), note: "Rechte Schulter instabil")
-        XCTAssertTrue(feedback.hasAnyContent)
+        #expect(feedback.hasAnyContent)
     }
 
-    func testEmptyNoteDoesNotCount() {
+    @Test func emptyNoteDoesNotCount() {
         let feedback = ExerciseFeedback(exerciseId: UUID(), note: "")
-        XCTAssertFalse(feedback.hasAnyContent)
+        #expect(!feedback.hasAnyContent)
     }
 
-    func testPainRegionsAloneCountAsContent() {
+    @Test func painRegionsAloneCountAsContent() {
         let feedback = ExerciseFeedback(
             exerciseId: UUID(),
             painRegions: [.lowerBack]
         )
-        XCTAssertTrue(feedback.hasAnyContent)
+        #expect(feedback.hasAnyContent)
     }
 
-    func testMultiplePainRegionsArePersistedAsSet() {
+    @Test func multiplePainRegionsArePersistedAsSet() {
         let feedback = ExerciseFeedback(
             exerciseId: UUID(),
             painCategory: .back,
             painRegions: [.lowerBack, .upperBack, .shoulderLeft]
         )
-        XCTAssertEqual(feedback.painRegions.count, 3)
-        XCTAssertTrue(feedback.painRegions.contains(.lowerBack))
-        XCTAssertTrue(feedback.painRegions.contains(.upperBack))
-        XCTAssertTrue(feedback.painRegions.contains(.shoulderLeft))
+        #expect(feedback.painRegions.count == 3)
+        #expect(feedback.painRegions.contains(.lowerBack))
+        #expect(feedback.painRegions.contains(.upperBack))
+        #expect(feedback.painRegions.contains(.shoulderLeft))
     }
 
-    func testEmptyPainRegionsDoNotCountAsContent() {
+    @Test func emptyPainRegionsDoNotCountAsContent() {
         let feedback = ExerciseFeedback(
             exerciseId: UUID(),
             painRegions: []
         )
-        XCTAssertFalse(feedback.hasAnyContent)
+        #expect(!feedback.hasAnyContent)
     }
 }

@@ -2,45 +2,46 @@ import Testing
 @testable import FitnessExercise
 
 @Suite("AppRouter")
+@MainActor
 struct AppRouterTests {
 
     // MARK: - Scene mapping
 
-    @Test @MainActor
+    @Test
     func initialScene_isWorkouts() {
         let router = AppRouter()
         #expect(router.currentScene == .workouts)
     }
 
-    @Test @MainActor
+    @Test
     func navigateToHome_setsHomeScene() {
         let router = AppRouter()
         router.navigate(to: .home)
         #expect(router.currentScene == .home)
     }
 
-    @Test @MainActor
+    @Test
     func switchToAnalytics_setsAnalyticsScene() {
         let router = AppRouter()
         router.switchToAnalytics()
         #expect(router.currentScene == .analytics)
     }
 
-    @Test @MainActor
+    @Test
     func switchToSchedule_setsScheduleScene() {
         let router = AppRouter()
         router.switchToSchedule()
         #expect(router.currentScene == .schedule)
     }
 
-    @Test @MainActor
+    @Test
     func switchToProfile_setsProfileScene() {
         let router = AppRouter()
         router.switchToProfile()
         #expect(router.currentScene == .profile)
     }
 
-    @Test @MainActor
+    @Test
     func navigateToMuscleCategory_setsCategoryScene() {
         let router = AppRouter()
         router.navigate(to: .muscleCategory(.arms))
@@ -49,7 +50,7 @@ struct AppRouterTests {
 
     // MARK: - Navigation stack
 
-    @Test @MainActor
+    @Test
     func popToRoot_clearsStackAndResetsToWorkouts() {
         let router = AppRouter()
         router.switchToAnalytics()
@@ -60,7 +61,7 @@ struct AppRouterTests {
         #expect(router.isEmpty)
     }
 
-    @Test @MainActor
+    @Test
     func pop_removesLastDestination() {
         let router = AppRouter()
         router.navigate(to: .home)
@@ -71,7 +72,7 @@ struct AppRouterTests {
         #expect(router.currentScene == .home)
     }
 
-    @Test @MainActor
+    @Test
     func switchToAnalytics_replacesEntireStack() {
         let router = AppRouter()
         router.navigate(to: .home)
@@ -82,13 +83,13 @@ struct AppRouterTests {
         #expect(router.path.count == 1)
     }
 
-    @Test @MainActor
+    @Test
     func isEmpty_trueAtRoot() {
         let router = AppRouter()
         #expect(router.isEmpty)
     }
 
-    @Test @MainActor
+    @Test
     func isEmpty_falseAfterNavigate() {
         let router = AppRouter()
         router.navigate(to: .home)
@@ -97,7 +98,7 @@ struct AppRouterTests {
 
     // MARK: - Analytics is distinct from home
 
-    @Test @MainActor
+    @Test
     func analyticsScene_isDistinctFromHomeScene() {
         let router = AppRouter()
         router.switchToAnalytics()
