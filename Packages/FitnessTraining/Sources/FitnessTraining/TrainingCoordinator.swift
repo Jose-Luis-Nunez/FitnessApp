@@ -3,7 +3,6 @@ import Observation
 import FitnessCore
 import FitnessAnalytics
 import FitnessUI
-import Factory
 
 // MARK: - Training Callbacks Protocol
 
@@ -117,16 +116,11 @@ public final class TrainingCoordinator {
     private var _onAddExercise: @MainActor () -> Void
     private var _onResetAllExercises: @MainActor () -> Void
 
-    @ObservationIgnored @Injected(\.startTrainingUseCase)
-    private var startTrainingUseCase: StartTrainingUseCase
-    @ObservationIgnored @Injected(\.completeSetUseCase)
-    private var completeSetUseCase: CompleteSetUseCase
-    @ObservationIgnored @Injected(\.finishExerciseUseCase)
-    private var finishExerciseUseCase: FinishExerciseUseCase
-    @ObservationIgnored @Injected(\.cancelTrainingUseCase)
-    private var cancelTrainingUseCase: CancelTrainingUseCase
-    @ObservationIgnored @Injected(\.resetExerciseUseCase)
-    private var resetExerciseUseCase: ResetExerciseUseCase
+    private let startTrainingUseCase = StartTrainingUseCase()
+    private let completeSetUseCase = CompleteSetUseCase()
+    private let finishExerciseUseCase = FinishExerciseUseCase()
+    private let cancelTrainingUseCase = CancelTrainingUseCase()
+    private let resetExerciseUseCase = ResetExerciseUseCase()
 
     private let sessionFactory: @MainActor () -> ActiveSetViewModel
 
