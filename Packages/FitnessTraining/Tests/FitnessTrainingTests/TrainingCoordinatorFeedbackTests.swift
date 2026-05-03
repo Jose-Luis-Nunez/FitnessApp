@@ -6,7 +6,7 @@ import FitnessAnalytics
 import FitnessTestSupport
 import Factory
 
-@Suite("TrainingCoordinator feedback sheet")
+@Suite("TrainingCoordinator feedback sheet", .tags(.fast))
 @MainActor
 struct TrainingCoordinatorFeedbackTests {
 

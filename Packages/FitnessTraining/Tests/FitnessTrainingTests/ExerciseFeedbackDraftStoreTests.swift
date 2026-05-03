@@ -2,8 +2,9 @@ import Testing
 import Foundation
 @testable import FitnessTraining
 import FitnessCore
+import FitnessTestSupport
 
-@Suite("ExerciseFeedbackDraftStore")
+@Suite("ExerciseFeedbackDraftStore", .tags(.fast))
 @MainActor
 struct ExerciseFeedbackDraftStoreTests {
 

@@ -4,7 +4,7 @@ import FitnessCore
 import FitnessTestSupport
 @testable import FitnessTraining
 
-@Suite("BottomActionBarViewModel")
+@Suite("BottomActionBarViewModel", .tags(.fast))
 @MainActor
 struct BottomActionBarViewModelTests {
 
@@ -116,7 +116,7 @@ struct BottomActionBarViewModelTests {
 
 // MARK: - End-to-End: ActiveSetViewModel → BottomActionBarViewModel
 
-@Suite("QuickDone → BottomActionBar E2E")
+@Suite("QuickDone → BottomActionBar E2E", .tags(.fast))
 @MainActor
 struct QuickDoneBottomActionBarE2ETests {
 

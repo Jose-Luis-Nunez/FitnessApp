@@ -4,7 +4,7 @@ import Foundation
 import FitnessCore
 import FitnessTestSupport
 
-@Suite("CancelTrainingUseCase")
+@Suite("CancelTrainingUseCase", .tags(.fast))
 @MainActor
 struct CancelTrainingUseCaseTests {
 

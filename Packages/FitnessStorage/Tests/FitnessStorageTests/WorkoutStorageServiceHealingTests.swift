@@ -2,6 +2,7 @@ import Testing
 import Foundation
 import SwiftData
 import FitnessCore
+import FitnessTestSupport
 import Mockable
 @_spi(PersistenceUI) @testable import FitnessStorage
 
@@ -23,7 +24,7 @@ import Mockable
 ///     workouts to fall back on),
 ///   - the user-created "Workout 1" case (must NOT delete it — `isDefault`
 ///     and/or createdDate ordering disqualify it).
-@Suite("WorkoutStorageService heals inherited auto-defaults")
+@Suite("WorkoutStorageService heals inherited auto-defaults", .tags(.integration))
 @MainActor
 struct WorkoutStorageServiceHealingTests {
 

@@ -11,6 +11,7 @@ let package = Package(
     dependencies: [
         .package(path: "../FitnessCore"),
         .package(path: "../FitnessResources"),
+        .package(path: "../FitnessTestSupport"),
         .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.19.2"),
     ],
     targets: [
@@ -22,6 +23,7 @@ let package = Package(
             name: "FitnessUITests",
             dependencies: [
                 "FitnessUI",
+                "FitnessTestSupport",
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
             ]
         ),

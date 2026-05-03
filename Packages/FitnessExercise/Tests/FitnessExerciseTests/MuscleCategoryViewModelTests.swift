@@ -64,7 +64,7 @@ private func makeVM(
 
 // MARK: - updateExercise
 
-@Suite("updateExercise")
+@Suite("updateExercise", .tags(.fast))
 @MainActor
 struct UpdateExerciseTests {
 
@@ -104,7 +104,7 @@ struct UpdateExerciseTests {
 
 // MARK: - resetProgress
 
-@Suite("resetProgress")
+@Suite("resetProgress", .tags(.fast))
 @MainActor
 struct ResetProgressTests {
 
@@ -121,7 +121,7 @@ struct ResetProgressTests {
 
 // MARK: - refreshExercises (external change detection)
 
-@Suite("refreshExercises")
+@Suite("refreshExercises", .tags(.fast))
 @MainActor
 struct RefreshExercisesTests {
 
@@ -188,7 +188,7 @@ private func makeCoordinator(storage: MockExerciseStorage? = nil) -> TrainingCoo
     )
 }
 
-@Suite("observer stability — exercises must survive coordinator state changes")
+@Suite("observer stability — exercises must survive coordinator state changes", .tags(.fast))
 @MainActor
 struct ObserverStabilityTests {
 
@@ -303,7 +303,7 @@ struct ObserverStabilityTests {
 /// new state from storage. The live UI does **not** do this — it observes
 /// SwiftData via `@Query` directly. These tests guard the legacy Form/Picker
 /// write path's snapshot consistency.
-@Suite("snapshot-refresh after coordinator finish (manual refresh path)")
+@Suite("snapshot-refresh after coordinator finish (manual refresh path)", .tags(.fast))
 @MainActor
 struct SnapshotRefreshAfterFinishTests {
 
@@ -378,7 +378,7 @@ struct SnapshotRefreshAfterFinishTests {
 // MARK: - Current Workout ID Exposure (T7b)
 
 @MainActor
-@Suite("MuscleCategoryViewModel.currentWorkoutId")
+@Suite("MuscleCategoryViewModel.currentWorkoutId", .tags(.fast))
 struct MuscleCategoryViewModelCurrentWorkoutIdTests {
 
     private func makeVMOnly(workoutStorage: MockWorkoutStorage) -> MuscleCategoryViewModel {

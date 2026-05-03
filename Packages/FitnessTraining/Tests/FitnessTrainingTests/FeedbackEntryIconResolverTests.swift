@@ -2,8 +2,9 @@ import Testing
 import Foundation
 @testable import FitnessTraining
 import FitnessCore
+import FitnessTestSupport
 
-@Suite("FeedbackEntryIconResolver")
+@Suite("FeedbackEntryIconResolver", .tags(.fast))
 @MainActor
 struct FeedbackEntryIconResolverTests {
 

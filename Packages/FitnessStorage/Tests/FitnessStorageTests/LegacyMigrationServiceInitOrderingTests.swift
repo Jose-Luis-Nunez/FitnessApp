@@ -2,6 +2,7 @@ import Testing
 import Foundation
 import SwiftData
 import FitnessCore
+import FitnessTestSupport
 import Mockable
 @_spi(PersistenceUI) @testable import FitnessStorage
 
@@ -28,7 +29,7 @@ import Mockable
 /// `ModelContainerBootstrap.makeProductionContainer()` before the container is
 /// returned. The cure path remains as a defence for installs whose first
 /// post-fix launch inherited a broken state from a prior pre-fix launch.
-@Suite("Legacy migration / service init ordering contract", .serialized)
+@Suite("Legacy migration / service init ordering contract", .serialized, .tags(.integration))
 @MainActor
 struct LegacyMigrationServiceInitOrderingTests {
 

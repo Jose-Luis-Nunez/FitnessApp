@@ -27,7 +27,7 @@ private func date(_ offset: Int) -> Date {
 
 // MARK: - getDailyRepsProgression
 
-@Suite("getDailyRepsProgression")
+@Suite("getDailyRepsProgression", .tags(.fast))
 @MainActor
 struct GetDailyRepsProgressionTests {
 
@@ -100,7 +100,7 @@ struct GetDailyRepsProgressionTests {
 
 // MARK: - totalRepsIncreases
 
-@Suite("totalRepsIncreases")
+@Suite("totalRepsIncreases", .tags(.fast))
 @MainActor
 struct TotalRepsIncreasesTests {
 
@@ -164,7 +164,7 @@ struct TotalRepsIncreasesTests {
 
 // MARK: - trainingSessionsUntilRepsIncrease
 
-@Suite("trainingSessionsUntilRepsIncrease")
+@Suite("trainingSessionsUntilRepsIncrease", .tags(.fast))
 @MainActor
 struct TrainingSessionsUntilRepsIncreaseTests {
 
@@ -217,7 +217,7 @@ struct TrainingSessionsUntilRepsIncreaseTests {
 
 // MARK: - repsPhases
 
-@Suite("repsPhases")
+@Suite("repsPhases", .tags(.fast))
 @MainActor
 struct RepsPhasesTests {
 
@@ -300,7 +300,7 @@ struct RepsPhasesTests {
 
 // MARK: - getDailyWeightProgression
 
-@Suite("getDailyWeightProgression")
+@Suite("getDailyWeightProgression", .tags(.fast))
 @MainActor
 struct GetDailyWeightProgressionTests {
 
@@ -388,7 +388,7 @@ struct GetDailyWeightProgressionTests {
 
 // MARK: - totalWeightIncreases
 
-@Suite("totalWeightIncreases")
+@Suite("totalWeightIncreases", .tags(.fast))
 @MainActor
 struct TotalWeightIncreasesTests {
 
@@ -452,7 +452,7 @@ struct TotalWeightIncreasesTests {
 
 // MARK: - trainingSessionsUntilWeightIncrease
 
-@Suite("trainingSessionsUntilWeightIncrease")
+@Suite("trainingSessionsUntilWeightIncrease", .tags(.fast))
 @MainActor
 struct TrainingSessionsUntilWeightIncreaseTests {
 
@@ -504,7 +504,7 @@ struct TrainingSessionsUntilWeightIncreaseTests {
 
 // MARK: - weightPhases
 
-@Suite("weightPhases")
+@Suite("weightPhases", .tags(.fast))
 @MainActor
 struct WeightPhasesTests {
 
@@ -586,7 +586,7 @@ struct WeightPhasesTests {
 
 // MARK: - entries reactive updates
 
-@Suite("entries reactive updates")
+@Suite("entries reactive updates", .tags(.fast))
 @MainActor
 struct EntriesReactiveUpdateTests {
 

@@ -25,7 +25,7 @@ enum TimerResetAction: CaseIterable, CustomStringConvertible, Sendable {
     }
 }
 
-@Suite("ActiveSetViewModel — Timer Resets")
+@Suite("ActiveSetViewModel — Timer Resets", .tags(.fast))
 @MainActor
 struct ActiveSetViewModelTimerResetTests {
 

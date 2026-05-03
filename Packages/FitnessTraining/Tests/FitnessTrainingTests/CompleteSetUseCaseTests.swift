@@ -4,7 +4,7 @@ import Foundation
 import FitnessCore
 import FitnessTestSupport
 
-@Suite("CompleteSetUseCase")
+@Suite("CompleteSetUseCase", .tags(.fast))
 @MainActor
 struct CompleteSetUseCaseTests {
 

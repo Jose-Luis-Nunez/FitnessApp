@@ -6,7 +6,7 @@ import FitnessAnalytics
 import FitnessTestSupport
 import Factory
 
-@Suite("FinishExerciseUseCase")
+@Suite("FinishExerciseUseCase", .tags(.fast))
 @MainActor
 struct FinishExerciseUseCaseTests {
 

@@ -6,7 +6,7 @@ import FitnessAnalytics
 import FitnessTestSupport
 import Factory
 
-@Suite("TrainingCoordinator draft lifecycle")
+@Suite("TrainingCoordinator draft lifecycle", .tags(.fast))
 @MainActor
 struct TrainingCoordinatorDraftLifecycleTests {
 

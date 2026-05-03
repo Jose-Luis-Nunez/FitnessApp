@@ -1,6 +1,7 @@
 import Testing
 import SwiftUI
 import SnapshotTesting
+import FitnessTestSupport
 @testable import FitnessUI
 
 // MARK: - Helpers
@@ -36,7 +37,7 @@ private func assertSnapshot<V: View>(
 
 // MARK: - CardBackground Snapshots
 
-@Suite("CardBackground — Snapshots")
+@Suite("CardBackground — Snapshots", .tags(.snapshot))
 @MainActor
 struct CardBackgroundSnapshotTests {
 
@@ -70,7 +71,7 @@ struct CardBackgroundSnapshotTests {
 
 // MARK: - MiniActionMenuView Snapshots
 
-@Suite("MiniActionMenuView — Snapshots")
+@Suite("MiniActionMenuView — Snapshots", .tags(.snapshot))
 @MainActor
 struct MiniActionMenuSnapshotTests {
 
@@ -113,7 +114,7 @@ struct MiniActionMenuSnapshotTests {
 
 // MARK: - WorkoutDropdownView Snapshots
 
-@Suite("WorkoutDropdownView — Snapshots")
+@Suite("WorkoutDropdownView — Snapshots", .tags(.snapshot))
 @MainActor
 struct WorkoutDropdownSnapshotTests {
 
@@ -146,7 +147,7 @@ struct WorkoutDropdownSnapshotTests {
 
 // MARK: - SetTileView Snapshots
 
-@Suite("SetTileView — Snapshots")
+@Suite("SetTileView — Snapshots", .tags(.snapshot))
 @MainActor
 struct SetTileViewSnapshotTests {
 
@@ -163,7 +164,7 @@ struct SetTileViewSnapshotTests {
 
 // MARK: - ProgressBar Snapshots
 
-@Suite("ProgressBar — Snapshots")
+@Suite("ProgressBar — Snapshots", .tags(.snapshot))
 @MainActor
 struct ProgressBarSnapshotTests {
 
@@ -185,7 +186,7 @@ struct ProgressBarSnapshotTests {
 
 // MARK: - MetricChipView Snapshots
 
-@Suite("MetricChipView — Snapshots")
+@Suite("MetricChipView — Snapshots", .tags(.snapshot))
 @MainActor
 struct MetricChipViewSnapshotTests {
 
@@ -215,7 +216,7 @@ struct MetricChipViewSnapshotTests {
 
 // MARK: - CapsuleToggleStyle Snapshots
 
-@Suite("CapsuleToggleStyle — Snapshots")
+@Suite("CapsuleToggleStyle — Snapshots", .tags(.snapshot))
 @MainActor
 struct CapsuleToggleStyleSnapshotTests {
 
@@ -242,7 +243,7 @@ struct CapsuleToggleStyleSnapshotTests {
 
 // MARK: - IdlePlayButton Snapshots
 
-@Suite("IdlePlayButton — Snapshots")
+@Suite("IdlePlayButton — Snapshots", .tags(.snapshot))
 @MainActor
 struct IdlePlayButtonSnapshotTests {
 
@@ -254,7 +255,7 @@ struct IdlePlayButtonSnapshotTests {
 
 // MARK: - RefreshActionButton Snapshots
 
-@Suite("RefreshActionButton — Snapshots")
+@Suite("RefreshActionButton — Snapshots", .tags(.snapshot))
 @MainActor
 struct RefreshActionButtonSnapshotTests {
 

@@ -8,7 +8,7 @@ import Factory
 
 // MARK: - resolveVariant Unit Tests
 
-@Suite("resolveVariant")
+@Suite("resolveVariant", .tags(.fast))
 struct ResolveVariantTests {
 
     @Test func completedExerciseAlwaysReturnsCompleted() {
@@ -78,7 +78,7 @@ struct ResolveVariantTests {
 
 // MARK: - Multi-Training Integration Tests
 
-@Suite("Multi-training card resolution")
+@Suite("Multi-training card resolution", .tags(.fast))
 @MainActor
 struct MultiTrainingCardResolutionTests {
 

@@ -5,7 +5,7 @@ import FitnessCore
 import FitnessTestSupport
 import Factory
 
-@Suite("SaveAnalyticsUseCase")
+@Suite("SaveAnalyticsUseCase", .tags(.fast))
 @MainActor
 struct SaveAnalyticsUseCaseTests {
 

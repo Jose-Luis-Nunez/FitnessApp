@@ -3,9 +3,10 @@ import Foundation
 @testable import FitnessTraining
 import FitnessCore
 import FitnessStorage
+import FitnessTestSupport
 import Factory
 
-@Suite("TrainingCoordinatorCache")
+@Suite("TrainingCoordinatorCache", .tags(.fast))
 @MainActor
 struct TrainingCoordinatorCacheTests {
 

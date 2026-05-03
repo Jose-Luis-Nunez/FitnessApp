@@ -2,6 +2,7 @@ import Foundation
 import SwiftData
 import Testing
 import FitnessCore
+import FitnessTestSupport
 @_spi(PersistenceUI) import FitnessStorage
 @testable import FitnessPersistenceUI
 
@@ -13,7 +14,7 @@ import FitnessCore
 /// einsetzt.
 
 @MainActor
-@Suite("CategoryTileModelView — Bug-2 Predicate gegen ExerciseModel.workoutId")
+@Suite("CategoryTileModelView — Bug-2 Predicate gegen ExerciseModel.workoutId", .tags(.integration))
 struct CategoryTileModelViewTests {
 
     private func makeContainer() throws -> ModelContainer {

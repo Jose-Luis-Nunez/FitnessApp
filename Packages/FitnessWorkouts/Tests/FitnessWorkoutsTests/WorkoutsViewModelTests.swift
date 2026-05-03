@@ -6,7 +6,7 @@ import FitnessStorage
 import FitnessTestSupport
 @testable import FitnessWorkouts
 
-@Suite("WorkoutsViewModel")
+@Suite("WorkoutsViewModel", .tags(.fast))
 @MainActor
 struct WorkoutsViewModelTests {
 

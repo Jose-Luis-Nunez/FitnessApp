@@ -4,7 +4,7 @@ import FitnessTestSupport
 @testable import FitnessTraining
 @testable import FitnessTrainingTestSupport
 
-@Suite("TimerService")
+@Suite("TimerService", .tags(.fast))
 @MainActor
 struct TimerServiceTests {
 

@@ -2,10 +2,11 @@ import Testing
 import Foundation
 import SwiftData
 import FitnessCore
+import FitnessTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
 import Factory
 
-@Suite("DataMigrationService")
+@Suite("DataMigrationService", .tags(.integration))
 @MainActor
 struct DataMigrationServiceTests {
 

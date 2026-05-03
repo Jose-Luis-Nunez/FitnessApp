@@ -2,6 +2,7 @@ import Foundation
 import SwiftData
 import Testing
 import FitnessCore
+import FitnessTestSupport
 @_spi(PersistenceUI) import FitnessStorage
 @testable import FitnessPersistenceUI
 
@@ -18,7 +19,7 @@ import FitnessCore
 ///   sobald T7 die View einsetzt.
 
 @MainActor
-@Suite("resolveCardVariant — Logik")
+@Suite("resolveCardVariant — Logik", .tags(.integration))
 struct ResolveVariantTests {
 
     @Test("isCompleted=true dominiert: liefert .completed unabhängig vom Active-Set")
@@ -70,7 +71,7 @@ struct ResolveVariantTests {
 }
 
 @MainActor
-@Suite("ExerciseCardModelView — Bug-1 Sanity (live model.isCompleted)")
+@Suite("ExerciseCardModelView — Bug-1 Sanity (live model.isCompleted)", .tags(.integration))
 struct Bug1SanityTests {
 
     /// Beweist den Daten-Pfad: Eine Mutation auf `ExerciseModel.isCompleted` ändert

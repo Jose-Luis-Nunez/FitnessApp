@@ -2,10 +2,11 @@ import Testing
 import Foundation
 import SwiftData
 import FitnessCore
+import FitnessTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
 import Factory
 
-@Suite("DuplicateWorkoutUseCase", .serialized)
+@Suite("DuplicateWorkoutUseCase", .serialized, .tags(.integration))
 @MainActor
 struct DuplicateWorkoutUseCaseTests {
 

@@ -2,6 +2,7 @@ import Foundation
 import SwiftData
 import Testing
 import FitnessCore
+import FitnessTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
 
 /// Tests for the SchemaV1 → SchemaV2 migration introduced in T3 (ADR-0005).
@@ -12,7 +13,7 @@ import FitnessCore
 /// regression guard for the migration path users will run on first launch
 /// after the V2 release.
 @MainActor
-@Suite("V1 → V2 migration backfills workoutId from workout.id", .serialized)
+@Suite("V1 → V2 migration backfills workoutId from workout.id", .serialized, .tags(.integration))
 struct MigrationV1toV2Tests {
 
     /// Per-test scratch directory so each test gets its own SQLite store; the

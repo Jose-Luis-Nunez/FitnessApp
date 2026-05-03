@@ -226,7 +226,7 @@ struct SeededRNG: RandomNumberGenerator {
 
 // MARK: - Property Tests
 
-@Suite("Training State Machine — Property-Based")
+@Suite("Training State Machine — Property-Based", .tags(.fast))
 @MainActor
 struct TrainingStateMachinePropertyTests {
 

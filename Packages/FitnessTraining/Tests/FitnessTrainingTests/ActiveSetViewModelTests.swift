@@ -4,7 +4,7 @@ import FitnessCore
 @testable import FitnessTraining
 import FitnessTestSupport
 
-@Suite("ActiveSetViewModel")
+@Suite("ActiveSetViewModel", .tags(.fast))
 @MainActor
 struct ActiveSetViewModelTests {
 

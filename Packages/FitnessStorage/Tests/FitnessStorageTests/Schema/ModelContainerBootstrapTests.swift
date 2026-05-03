@@ -2,6 +2,7 @@ import Foundation
 import SwiftData
 import Testing
 import FitnessCore
+import FitnessTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
 
 /// Tests for `ModelContainerBootstrap`, the production fallback chain that
@@ -24,7 +25,7 @@ import FitnessCore
 /// algorithm is exercised end-to-end, against a real on-disk SQLite store,
 /// with the same `AppMigrationPlan`.
 @MainActor
-@Suite("ModelContainerBootstrap recovers pre-versioned stores", .serialized)
+@Suite("ModelContainerBootstrap recovers pre-versioned stores", .serialized, .tags(.integration))
 struct ModelContainerBootstrapTests {
 
     private func makeStoreURL() -> URL {

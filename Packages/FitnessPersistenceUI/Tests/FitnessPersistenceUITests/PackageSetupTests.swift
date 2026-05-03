@@ -2,6 +2,7 @@ import Foundation
 import SwiftData
 import Testing
 import FitnessCore
+import FitnessTestSupport
 @_spi(PersistenceUI) import FitnessStorage
 @testable import FitnessPersistenceUI
 
@@ -19,7 +20,7 @@ import FitnessCore
 /// These are intentionally minimal — pilot views and their tests land in
 /// T5 / T6 / T7. This file only protects the package skeleton.
 @MainActor
-@Suite("FitnessPersistenceUI package setup")
+@Suite("FitnessPersistenceUI package setup", .tags(.integration))
 struct PackageSetupTests {
 
     @Test("Module ships a version marker (skeleton sanity)")

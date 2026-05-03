@@ -6,7 +6,7 @@ import FitnessTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
 import Factory
 
-@Suite("TotalAnalyticsStorageService", .serialized)
+@Suite("TotalAnalyticsStorageService", .serialized, .tags(.integration))
 @MainActor
 struct TotalAnalyticsStorageServiceTests {
 

@@ -105,7 +105,7 @@ private func setupTrainingDays(
 
 // MARK: - reloadData
 
-@Suite("reloadData")
+@Suite("reloadData", .tags(.fast))
 @MainActor
 struct ReloadDataTests {
 
@@ -132,7 +132,7 @@ struct ReloadDataTests {
 
 // MARK: - streakData
 
-@Suite("streakData")
+@Suite("streakData", .tags(.fast))
 @MainActor
 struct StreakDataTests {
 
@@ -169,7 +169,7 @@ struct StreakDataTests {
 
 // MARK: - weekSummary
 
-@Suite("weekSummary")
+@Suite("weekSummary", .tags(.fast))
 @MainActor
 struct WeekSummaryTests {
 
@@ -205,7 +205,7 @@ struct WeekSummaryTests {
 
 // MARK: - dayDetail
 
-@Suite("dayDetail")
+@Suite("dayDetail", .tags(.fast))
 @MainActor
 struct DayDetailTests {
 
@@ -237,7 +237,7 @@ struct DayDetailTests {
 
 // MARK: - exerciseCountForDay
 
-@Suite("exerciseCountForDay")
+@Suite("exerciseCountForDay", .tags(.fast))
 @MainActor
 struct ExerciseCountForDayTests {
 

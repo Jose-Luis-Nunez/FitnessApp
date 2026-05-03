@@ -5,7 +5,7 @@ import FitnessCore
 import FitnessTestSupport
 import Factory
 
-@Suite("DeleteAnalyticsSetUseCase")
+@Suite("DeleteAnalyticsSetUseCase", .tags(.fast))
 @MainActor
 struct DeleteAnalyticsSetUseCaseTests {
 

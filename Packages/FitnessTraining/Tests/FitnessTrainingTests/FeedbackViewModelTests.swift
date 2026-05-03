@@ -6,7 +6,7 @@ import FitnessStorage
 import FitnessTestSupport
 import Factory
 
-@Suite("FeedbackViewModel")
+@Suite("FeedbackViewModel", .tags(.fast))
 @MainActor
 struct FeedbackViewModelTests {
 

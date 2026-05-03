@@ -1,9 +1,10 @@
 import Testing
 import Foundation
 import FitnessCore
+import FitnessTestSupport
 @testable import FitnessExercise
 
-@Suite("ExerciseFormViewModel")
+@Suite("ExerciseFormViewModel", .tags(.fast))
 @MainActor
 struct ExerciseFormViewModelTests {
 

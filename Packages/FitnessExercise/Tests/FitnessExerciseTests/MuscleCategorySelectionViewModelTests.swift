@@ -47,7 +47,7 @@ private final class MockCoordinatorCache: TrainingCoordinatorCaching {
 /// "single Abs tile" bug (where `categories` was sourced from
 /// `workout.selectedCategories` and the per-category "New Exercise" menu
 /// could write into categories the overview was hiding).
-@Suite("categories are always all cases")
+@Suite("categories are always all cases", .tags(.fast))
 @MainActor
 struct CategoriesTests {
 
@@ -94,7 +94,7 @@ struct CategoriesTests {
 
 // MARK: - Exercise Counts (with mocked ExerciseManaging)
 
-@Suite("exercise counts")
+@Suite("exercise counts", .tags(.fast))
 @MainActor
 struct ExerciseCountsTests {
 
@@ -183,7 +183,7 @@ struct ExerciseCountsTests {
 
 // MARK: - Reset All Exercises
 
-@Suite("resetAllExercises")
+@Suite("resetAllExercises", .tags(.fast))
 @MainActor
 struct ResetAllExercisesTests {
 
@@ -235,7 +235,7 @@ struct ResetAllExercisesTests {
 
 // MARK: - Find Category For Exercise
 
-@Suite("findCategoryForExercise")
+@Suite("findCategoryForExercise", .tags(.fast))
 @MainActor
 struct FindCategoryTests {
 
@@ -272,7 +272,7 @@ struct FindCategoryTests {
 
 // MARK: - Exercise Mutations (Phase 1a)
 
-@Suite("exercise mutations")
+@Suite("exercise mutations", .tags(.fast))
 @MainActor
 struct ExerciseMutationTests {
 
@@ -361,7 +361,7 @@ struct ExerciseMutationTests {
 
 // MARK: - Exercise Stability Across Sessions (Phase 1c)
 
-@Suite("exercise stability across sessions")
+@Suite("exercise stability across sessions", .tags(.fast))
 @MainActor
 struct ExerciseStabilityTests {
 
@@ -426,7 +426,7 @@ struct ExerciseStabilityTests {
 // MARK: - Current Workout ID Exposure (T7a)
 
 @MainActor
-@Suite("MuscleCategorySelectionViewModel.currentWorkoutId")
+@Suite("MuscleCategorySelectionViewModel.currentWorkoutId", .tags(.fast))
 struct CurrentWorkoutIdTests {
 
     @Test func returnsNilWhenNoWorkoutSelected() {
@@ -476,7 +476,7 @@ struct CurrentWorkoutIdTests {
 
 // MARK: - Workout Switch Refreshes Exercises (Phase 0d safety-net)
 
-@Suite("workout switch refreshes exercises")
+@Suite("workout switch refreshes exercises", .tags(.fast))
 @MainActor
 struct WorkoutSwitchRefreshTests {
 

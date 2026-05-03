@@ -70,7 +70,7 @@ private func resetContainer() {
 
 // MARK: - getCategoryProgressData
 
-@Suite("getCategoryProgressData")
+@Suite("getCategoryProgressData", .tags(.fast))
 @MainActor
 struct GetCategoryProgressDataTests {
 
@@ -141,7 +141,7 @@ struct GetCategoryProgressDataTests {
 
 // MARK: - getMostTrainedCategory
 
-@Suite("getMostTrainedCategory")
+@Suite("getMostTrainedCategory", .tags(.fast))
 @MainActor
 struct GetMostTrainedCategoryTests {
 
@@ -179,7 +179,7 @@ struct GetMostTrainedCategoryTests {
 
 // MARK: - getLeastTrainedCategory
 
-@Suite("getLeastTrainedCategory")
+@Suite("getLeastTrainedCategory", .tags(.fast))
 @MainActor
 struct GetLeastTrainedCategoryTests {
 
@@ -208,7 +208,7 @@ struct GetLeastTrainedCategoryTests {
 
 // MARK: - getTrainingDays
 
-@Suite("getTrainingDays")
+@Suite("getTrainingDays", .tags(.fast))
 @MainActor
 struct GetTrainingDaysTests {
 
@@ -296,7 +296,7 @@ struct GetTrainingDaysTests {
 
 // MARK: - allDatesWithData
 
-@Suite("allDatesWithData")
+@Suite("allDatesWithData", .tags(.fast))
 @MainActor
 struct AllDatesWithDataTests {
 
@@ -337,7 +337,7 @@ struct AllDatesWithDataTests {
 
 // MARK: - getTrainingRhythm
 
-@Suite("getTrainingRhythm")
+@Suite("getTrainingRhythm", .tags(.fast))
 @MainActor
 struct GetTrainingRhythmTests {
 
@@ -382,7 +382,7 @@ struct GetTrainingRhythmTests {
 
 // MARK: - totalWorkoutDaysInCurrentMonth
 
-@Suite("totalWorkoutDaysInCurrentMonth")
+@Suite("totalWorkoutDaysInCurrentMonth", .tags(.fast))
 @MainActor
 struct TotalWorkoutDaysInCurrentMonthTests {
 
@@ -413,7 +413,7 @@ struct TotalWorkoutDaysInCurrentMonthTests {
 
 // MARK: - getCategoryWithMostImprovements
 
-@Suite("getCategoryWithMostImprovements")
+@Suite("getCategoryWithMostImprovements", .tags(.fast))
 @MainActor
 struct GetCategoryWithMostImprovementsTests {
 
@@ -447,7 +447,7 @@ struct GetCategoryWithMostImprovementsTests {
 
 // MARK: - getLastTrainingDayCompletionRate
 
-@Suite("getLastTrainingDayCompletionRate")
+@Suite("getLastTrainingDayCompletionRate", .tags(.fast))
 @MainActor
 struct GetLastTrainingDayCompletionRateTests {
 

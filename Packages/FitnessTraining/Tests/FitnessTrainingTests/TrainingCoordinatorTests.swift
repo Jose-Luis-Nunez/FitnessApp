@@ -26,7 +26,7 @@ private func makeCoordinator(
 
 // MARK: - finishExercise
 
-@Suite("finishExercise")
+@Suite("finishExercise", .tags(.fast))
 @MainActor
 struct FinishExerciseTests {
 
@@ -150,7 +150,7 @@ struct FinishExerciseTests {
 
 // MARK: - currentExercise and focus
 
-@Suite("focus management")
+@Suite("focus management", .tags(.fast))
 @MainActor
 struct FocusManagementTests {
 
@@ -184,7 +184,7 @@ struct FocusManagementTests {
 
 // MARK: - cancelTraining
 
-@Suite("cancelTraining")
+@Suite("cancelTraining", .tags(.fast))
 @MainActor
 struct CancelTrainingTests {
 
@@ -219,7 +219,7 @@ struct CancelTrainingTests {
 
 // MARK: - Multi-session parallel training
 
-@Suite("multi-session parallel training")
+@Suite("multi-session parallel training", .tags(.fast))
 @MainActor
 struct MultiSessionTests {
 
@@ -339,7 +339,7 @@ struct MultiSessionTests {
 
 // MARK: - handleQuickDone
 
-@Suite("handleQuickDone")
+@Suite("handleQuickDone", .tags(.fast))
 @MainActor
 struct HandleQuickDoneTests {
 
@@ -385,7 +385,7 @@ struct HandleQuickDoneTests {
 
 // MARK: - editLess / editMore
 
-@Suite("editLess and editMore")
+@Suite("editLess and editMore", .tags(.fast))
 @MainActor
 struct EditLessMoreTests {
 
@@ -464,7 +464,7 @@ struct EditLessMoreTests {
 
 // MARK: - setCurrentExercise
 
-@Suite("setCurrentExercise")
+@Suite("setCurrentExercise", .tags(.fast))
 @MainActor
 struct SetCurrentExerciseTests {
 
@@ -516,7 +516,7 @@ struct SetCurrentExerciseTests {
 
 // MARK: - createTrainingCallbacks
 
-@Suite("createTrainingCallbacks")
+@Suite("createTrainingCallbacks", .tags(.fast))
 @MainActor
 struct CreateTrainingCallbacksTests {
 
@@ -631,7 +631,7 @@ struct CreateTrainingCallbacksTests {
 
 // MARK: - resetExercise
 
-@Suite("resetExercise")
+@Suite("resetExercise", .tags(.fast))
 @MainActor
 struct ResetExerciseCoordinatorTests {
 
@@ -686,7 +686,7 @@ struct ResetExerciseCoordinatorTests {
 
 // StubExerciseManagement replaced by MockExerciseManagement from FitnessTestSupport
 
-@Suite("Factory integration")
+@Suite("Factory integration", .tags(.fast))
 @MainActor
 struct FactoryIntegrationTests {
 
@@ -734,7 +734,7 @@ struct FactoryIntegrationTests {
 
 // MARK: - startTraining edge cases
 
-@Suite("startTraining edge cases")
+@Suite("startTraining edge cases", .tags(.fast))
 @MainActor
 struct StartTrainingEdgeCaseTests {
 

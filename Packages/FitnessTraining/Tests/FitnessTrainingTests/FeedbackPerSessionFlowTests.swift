@@ -20,7 +20,7 @@ import Factory
 /// Wires the real `TrainingCoordinator`, `ActiveSetViewModel`,
 /// `ExerciseFeedbackDraftStore` and an `InMemoryFeedbackStorage` so the
 /// session-id linkage is exercised through every layer.
-@Suite("Feedback per session integration")
+@Suite("Feedback per session integration", .tags(.fast))
 @MainActor
 struct FeedbackPerSessionFlowTests {
 

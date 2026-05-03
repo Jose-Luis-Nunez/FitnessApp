@@ -1,7 +1,8 @@
 import Testing
+import FitnessTestSupport
 @testable import FitnessExercise
 
-@Suite("AppRouter")
+@Suite("AppRouter", .tags(.fast))
 @MainActor
 struct AppRouterTests {
 
