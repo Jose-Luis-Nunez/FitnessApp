@@ -1,10 +1,13 @@
 import SwiftUI
 
+public enum CardSurfaceStyle {
+    case glass(Color)
+    case gradient(Color)
+    case idle
+}
+
 public struct CardBackground<Content: View>: View {
-    public enum Style {
-        case glass(Color)
-        case gradient(Color)
-    }
+    public typealias Style = CardSurfaceStyle
 
     public let content: Content
     public let style: Style
@@ -73,6 +76,16 @@ public struct CardBackground<Content: View>: View {
                     endPoint: .topTrailing
                 )
             }
+        case .idle:
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    AppStyle.Color.idleCardSoft,
+                    AppStyle.Color.idleCardBackground,
+                    AppStyle.Color.idleCardDark,
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
         }
     }
 
@@ -85,6 +98,28 @@ public struct CardBackground<Content: View>: View {
             RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
                 .stroke(AppStyle.Color.exerciseCardBackground.opacity(0.03), lineWidth: 1.5)
                 .blur(radius: 0.6)
+        case .idle:
+            ZStack {
+                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
+                    .fill(
+                        RadialGradient(
+                            colors: [AppStyle.Color.idleCardInnerGlow, .clear],
+                            center: .topLeading,
+                            startRadius: 0,
+                            endRadius: 200
+                        )
+                    )
+
+                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [AppStyle.Color.idleCardBorderLight, AppStyle.Color.idleCardBorderDark],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: AppStyle.Layout.idleCardBorderWidth
+                    )
+            }
         }
     }
 }

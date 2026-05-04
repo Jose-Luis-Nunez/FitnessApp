@@ -48,27 +48,24 @@ public struct InactiveCardModelView: View {
     }
 
     public var body: some View {
-        CardBackground(useGlassEffect: true, addPadding: false) {
-            VStack(spacing: 0) {
-                headerRow
-
-                if isExpanded {
+        CardShell(theme: .completed, edgeIndicator: .completed, leading: {
+            categoryIconView
+        }, trailing: {
+            checkmarkIcon
+        }, titleContent: {
+            titleSection
+        }, expandedContent: {
+            if isExpanded {
+                VStack(spacing: 0) {
                     Spacer().frame(height: 10)
                     setTilesRow.frame(height: 60)
                     Spacer().frame(height: 4)
                 }
+                .padding(.horizontal, AppStyle.Padding.card)
             }
-            .padding(.horizontal, AppStyle.Padding.card)
-            .padding(.vertical, 8)
-            .background(alignment: .leading) {
-                AppStyle.Color.greenGlow
-                    .frame(width: AppStyle.Layout.completedBarWidth)
-            }
-            .contentShape(Rectangle())
-            .onTapGesture { isExpanded.toggle() }
-        }
-        .padding(.horizontal, AppStyle.Padding.card)
-        .shadow(color: AppStyle.Shadow.cardColor, radius: AppStyle.Shadow.cardRadius, x: 0, y: AppStyle.Shadow.cardY)
+        })
+        .contentShape(Rectangle())
+        .onTapGesture { isExpanded.toggle() }
         .sheet(isPresented: $isShowingAnalytics) {
             AnalyticsView(exercise: model.toDomain(), viewModel: analyticsViewModel)
         }
@@ -82,14 +79,6 @@ public struct InactiveCardModelView: View {
 // MARK: - Header
 
 private extension InactiveCardModelView {
-
-    var headerRow: some View {
-        HStack(spacing: 10) {
-            categoryIconView
-            titleSection
-            checkmarkIcon
-        }
-    }
 
     var categoryIconView: some View {
         Image(model.displayIconName)

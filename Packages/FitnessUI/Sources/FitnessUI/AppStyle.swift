@@ -10,10 +10,12 @@ public enum AppStyle {
         public static let activeCardIconOverflow: CGFloat = 20
         public static let titleBottomBeforeActiveCard: CGFloat = titleBottom - activeCardIconOverflow
         public static let sectionSpacing: CGFloat = 18
+        public static let cardVertical: CGFloat = 8
     }
 
     public enum Layout {
         public static let cardHorizontalPadding: CGFloat = 16
+        public static let cardHeaderSpacing: CGFloat = 10
         public static let chipHeight: CGFloat = 32
         public static let activeCardContentHeight: CGFloat = 80
         public static let activeCardMaxWidth: CGFloat = 400
@@ -298,6 +300,9 @@ public enum AppStyle {
         public static let fadedOverlay: Double = 0.4
         public static let idleIconGlow: Double = 0.3
         public static let idlePlayButtonGlow: Double = 0.15
+        public static let idleExpandedOverlay: Double = 0.6
+        public static let separatorLine: Double = 0.3
+        public static let secondaryLabel: Double = 0.6
         public static let numberPadInactive: Double = 0.5
         public static let numberPadFade: Double = 0.2
     }

@@ -1,0 +1,37 @@
+import SwiftUI
+
+/// Bundles a card's visual surface style with the content colors that work on
+/// that surface. Static presets guarantee that title/subtitle colors are always
+/// readable against the chosen background.
+public struct CardTheme {
+    public let surface: CardSurfaceStyle
+    public let titleColor: Color
+    public let subtitleColor: Color
+    public let titleFont: Font
+
+    public init(
+        surface: CardSurfaceStyle,
+        titleColor: Color,
+        subtitleColor: Color,
+        titleFont: Font = AppStyle.Font.cardHeadline
+    ) {
+        self.surface = surface
+        self.titleColor = titleColor
+        self.subtitleColor = subtitleColor
+        self.titleFont = titleFont
+    }
+}
+
+extension CardTheme {
+    public static let idle = CardTheme(
+        surface: .idle,
+        titleColor: AppStyle.Color.idleTitle,
+        subtitleColor: AppStyle.Color.idleMetricLabel
+    )
+
+    public static let completed = CardTheme(
+        surface: .glass(AppStyle.Color.exerciseCardBackground),
+        titleColor: Color.white,
+        subtitleColor: Color.white.opacity(0.7)
+    )
+}

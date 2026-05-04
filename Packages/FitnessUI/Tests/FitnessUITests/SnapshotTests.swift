@@ -67,6 +67,102 @@ struct CardBackgroundSnapshotTests {
         }
         assertSnapshot(of: view, named: "no-padding", size: CGSize(width: 350, height: 80))
     }
+
+    @Test func idleStyle() {
+        let view = CardBackground(style: .idle) {
+            Text("Idle Card")
+                .foregroundColor(AppStyle.Color.idleTitle)
+                .font(AppStyle.Font.cardHeadline)
+        }
+        assertSnapshot(of: view, named: "idle", size: CGSize(width: 350, height: 100))
+    }
+}
+
+// MARK: - CardShell Snapshots
+
+@Suite("CardShell — Snapshots", .tags(.snapshot))
+@MainActor
+struct CardShellSnapshotTests {
+
+    @Test func idleTheme() {
+        let theme = CardTheme.idle
+        let view = CardShell(theme: theme, leading: {
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.gray)
+                .frame(width: 64, height: 64)
+        }, trailing: {
+            Circle()
+                .fill(AppStyle.Color.idleMetricValue)
+                .frame(width: 28, height: 28)
+        }, titleContent: {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Exercise Name")
+                    .font(theme.titleFont)
+                    .foregroundColor(theme.titleColor)
+                Text("20 kg")
+                    .font(AppStyle.Font.detailBadge)
+                    .foregroundColor(theme.subtitleColor)
+            }
+        })
+        assertSnapshot(of: view, named: "idle", size: CGSize(width: 393, height: 120))
+    }
+
+    @Test func completedThemeWithEdgeIndicator() {
+        let theme = CardTheme.completed
+        let view = CardShell(theme: theme, edgeIndicator: .completed, leading: {
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.gray)
+                .frame(width: 50, height: 50)
+        }, trailing: {
+            Circle()
+                .fill(AppStyle.Color.greenGlow)
+                .frame(width: 36, height: 36)
+        }, titleContent: {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Bench Press")
+                    .font(theme.titleFont)
+                    .foregroundColor(theme.titleColor)
+                Text("Completed workout")
+                    .font(AppStyle.Font.cardSmallBold)
+                    .foregroundColor(theme.subtitleColor)
+            }
+        })
+        assertSnapshot(of: view, named: "completed", size: CGSize(width: 393, height: 120))
+    }
+
+    @Test func noTrailing() {
+        let theme = CardTheme.idle
+        let view = CardShell(theme: theme, leading: {
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.gray)
+                .frame(width: 64, height: 64)
+        }, titleContent: {
+            Text("No Trailing")
+                .font(theme.titleFont)
+                .foregroundColor(theme.titleColor)
+        })
+        assertSnapshot(of: view, named: "no-trailing", size: CGSize(width: 393, height: 100))
+    }
+
+    @Test func withExpandedContent() {
+        let theme = CardTheme.idle
+        let view = CardShell(theme: theme, leading: {
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.gray)
+                .frame(width: 64, height: 64)
+        }, titleContent: {
+            Text("With Expanded")
+                .font(theme.titleFont)
+                .foregroundColor(theme.titleColor)
+        }, expandedContent: {
+            Text("Expanded section")
+                .font(AppStyle.Font.detailBadge)
+                .foregroundColor(theme.subtitleColor)
+                .padding(.horizontal, 8)
+                .padding(.top, 8)
+        })
+        assertSnapshot(of: view, named: "expanded", size: CGSize(width: 393, height: 140))
+    }
 }
 
 // MARK: - MiniActionMenuView Snapshots

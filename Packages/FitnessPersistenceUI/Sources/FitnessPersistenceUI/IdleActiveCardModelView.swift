@@ -4,16 +4,6 @@ import FitnessCore
 import FitnessUI
 @_spi(PersistenceUI) import FitnessStorage
 
-private extension VerticalAlignment {
-    struct MetricLabelAlignment: AlignmentID {
-        static func defaultValue(in context: ViewDimensions) -> CGFloat {
-            context[.top]
-        }
-    }
-
-    static let metricLabel = VerticalAlignment(MetricLabelAlignment.self)
-}
-
 /// Idle/Active card variant rendered against a live `@Bindable ExerciseModel`.
 ///
 /// Datenquelle ist die SwiftData-`@Model`-Instanz — alle Edits propagieren
@@ -84,52 +74,28 @@ public struct IdleActiveCardModelView: View {
         }
     }
 
-    public var body: some View {
-        VStack(spacing: 0) {
-            headerRow
-                .padding(.horizontal, AppStyle.Padding.card)
+    private let theme: CardTheme = .idle
 
+    public var body: some View {
+        CardShell(theme: theme, leading: {
+            categoryIconView
+        }, trailing: {
+            rightPanel
+        }, titleContent: {
+            titleSection
+        }, expandedContent: {
             if isExpanded, !weightPhases.isEmpty {
                 expandedContent
                     .padding(.horizontal, 8)
             }
-        }
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity)
-        .background {
+        }, contentBackground: {
             if isExpanded {
-                AppStyle.Color.idleCardBackground.opacity(0.6)
+                AppStyle.Color.idleCardBackground.opacity(AppStyle.Opacity.idleExpandedOverlay)
             }
-        }
-        .background(idleCardSurface)
-        .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
-                .fill(
-                    RadialGradient(
-                        colors: [AppStyle.Color.idleCardInnerGlow, .clear],
-                        center: .topLeading,
-                        startRadius: 0,
-                        endRadius: 200
-                    )
-                )
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
-                .strokeBorder(
-                    LinearGradient(
-                        colors: [AppStyle.Color.idleCardBorderLight, AppStyle.Color.idleCardBorderDark],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: AppStyle.Layout.idleCardBorderWidth
-                )
-        )
+        })
         .sheet(item: $analyticsSheetDate) { sheetDate in
             AnalyticsView(exercise: model.toDomain(), viewModel: analyticsViewModel, initialDate: sheetDate.date)
         }
-        .padding(.horizontal, AppStyle.Padding.card)
-        .shadow(color: AppStyle.Shadow.cardColor, radius: AppStyle.Shadow.cardRadius, x: 0, y: AppStyle.Shadow.cardY)
         .onAppear { refreshPhaseData() }
         .onChange(of: analyticsViewModel.changeCount) { _, _ in
             refreshPhaseData()
@@ -140,27 +106,6 @@ public struct IdleActiveCardModelView: View {
 // MARK: - Header
 
 private extension IdleActiveCardModelView {
-
-    var idleCardSurface: some View {
-        LinearGradient(
-            gradient: Gradient(colors: [
-                AppStyle.Color.idleCardSoft,
-                AppStyle.Color.idleCardBackground,
-                AppStyle.Color.idleCardDark,
-            ]),
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
-
-    var headerRow: some View {
-        HStack(spacing: 10) {
-            categoryIconView
-            titleSection
-            Spacer(minLength: 4)
-            rightPanel
-        }
-    }
 
     @ViewBuilder
     var rightPanel: some View {
@@ -194,14 +139,6 @@ private extension IdleActiveCardModelView {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var metricLabelFont: Font {
-        AppStyle.Font.metricLabel
-    }
-
-    private var metricLabelColor: Color {
-        AppStyle.Color.idleMetricLabel
-    }
-
     var metricRow: some View {
         HStack(alignment: .metricLabel, spacing: 0) {
             weightColumn
@@ -223,20 +160,17 @@ private extension IdleActiveCardModelView {
 
     var verticalSeparator: some View {
         Rectangle()
-            .fill(Color.white.opacity(0.3))
+            .fill(Color.white.opacity(AppStyle.Opacity.separatorLine))
             .frame(width: AppStyle.Layout.separatorWidth, height: AppStyle.Layout.separatorHeight)
             .padding(.horizontal, AppStyle.Padding.card)
             .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.top] + 4 }
     }
 
     var weightColumn: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            Text(model.hasWeight ? "Weight" : "Reps")
-                .font(metricLabelFont)
-                .foregroundColor(metricLabelColor)
-                .fixedSize()
-                .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.center] }
-
+        MetricColumnView(
+            label: model.hasWeight ? "Weight" : "Reps",
+            onTap: isEditable ? { onEdit(model.toDomain(), .weight) } : nil
+        ) {
             if model.hasWeight {
                 HStack(alignment: .firstTextBaseline, spacing: 3) {
                     Text(weightNumber)
@@ -254,20 +188,13 @@ private extension IdleActiveCardModelView {
                     .fixedSize()
             }
         }
-        .contentShape(Rectangle())
-        .onTapGesture {
-            if isEditable { onEdit(model.toDomain(), .weight) }
-        }
     }
 
     var seatColumn: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            Text("Seat")
-                .font(metricLabelFont)
-                .foregroundColor(metricLabelColor)
-                .fixedSize()
-                .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.center] }
-
+        MetricColumnView(
+            label: "Seat",
+            onTap: isEditable ? { onEdit(model.toDomain(), .seat) } : nil
+        ) {
             if let seat = model.seatSetting, !seat.isEmpty {
                 Text(seat)
                     .font(AppStyle.Font.detailBadge)
@@ -284,17 +211,13 @@ private extension IdleActiveCardModelView {
                     .padding(.top, 2)
             }
         }
-        .contentShape(Rectangle())
-        .onTapGesture {
-            if isEditable { onEdit(model.toDomain(), .seat) }
-        }
     }
 
     var progressColumn: some View {
         VStack(alignment: .leading, spacing: 1) {
             Text("Data")
-                .font(metricLabelFont)
-                .foregroundColor(metricLabelColor)
+                .font(AppStyle.Font.metricLabel)
+                .foregroundColor(AppStyle.Color.idleMetricLabel)
                 .fixedSize()
                 .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.center] }
 
@@ -364,7 +287,7 @@ private extension IdleActiveCardModelView {
             if let dateString = lastTrainingDateFormatted {
                 Text("Last training: \(dateString)")
                     .font(AppStyle.Font.dayChipNumber)
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(.white.opacity(AppStyle.Opacity.secondaryLabel))
                     .padding(.top, 6)
             }
 

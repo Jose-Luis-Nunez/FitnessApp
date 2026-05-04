@@ -15,6 +15,7 @@ let package = Package(
         .package(path: "../FitnessAnalytics"),
         .package(path: "../FitnessTraining"),
         .package(path: "../FitnessTestSupport"),
+        .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.19.2"),
     ],
     targets: [
         .target(
@@ -33,7 +34,11 @@ let package = Package(
                 "FitnessPersistenceUI",
                 "FitnessStorage",
                 "FitnessCore",
+                "FitnessAnalytics",
+                "FitnessTraining",
+                "FitnessUI",
                 "FitnessTestSupport",
+                .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
             ]
         ),
     ]
