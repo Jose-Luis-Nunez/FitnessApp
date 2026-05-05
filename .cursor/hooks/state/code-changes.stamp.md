@@ -1,39 +1,33 @@
-date: 2026-05-03T23:12:00
+date: 2026-05-04T09:07:10+0200
 result: PASS
-files_inspected: 12
+files_inspected: 3
+skill: reviewing-code-changes (checklist P1–P7)
 
-## Changed Files
-- Packages/FitnessUI/Sources/FitnessUI/CardBackground.swift (promoted Style to top-level CardSurfaceStyle enum with backward-compat typealias)
-- Packages/FitnessUI/Sources/FitnessUI/CardTheme.swift (new: bundles surface style + text colors + font; presets .idle, .completed)
-- Packages/FitnessUI/Sources/FitnessUI/CardShell.swift (new: structural card wrapper with leading/titleContent/trailing/expandedContent/contentBackground slots + EdgeIndicator)
-- Packages/FitnessUI/Sources/FitnessUI/AppStyle.swift (added cardVertical padding token, cardHeaderSpacing layout token)
-- Packages/FitnessUI/Sources/FitnessUI/MetricAlignment.swift (unchanged)
-- Packages/FitnessUI/Sources/FitnessUI/MetricColumnView.swift (unchanged)
-- Packages/FitnessPersistenceUI/Sources/FitnessPersistenceUI/IdleActiveCardModelView.swift (migrated to CardShell; removed headerRow, body uses CardShell slots)
-- Packages/FitnessPersistenceUI/Sources/FitnessPersistenceUI/InactiveCardModelView.swift (migrated to CardShell with EdgeIndicator.completed; removed headerRow)
-- Packages/FitnessPersistenceUI/Tests/FitnessPersistenceUITests/IdleCardSnapshotTests.swift (added InactiveCardSnapshotTests)
-- Packages/FitnessUI/Tests/FitnessUITests/SnapshotTests.swift (added CardShellSnapshotTests: 4 tests)
-- .cursor/references/architecture-documentation.md (updated: CardTheme, CardShell, EdgeIndicator in Shared Components; new tokens; updated test inventory)
+## Scope (grind-loop)
+- Packages/FitnessUI/Sources/FitnessUI/CardTheme.swift
+- Packages/FitnessPersistenceUI/Sources/FitnessPersistenceUI/InactiveCardModelView.swift
+- Packages/FitnessPersistenceUI/Tests/FitnessPersistenceUITests/IdleCardSnapshotTests.swift
 
 ## Validation Summary
 - Dead Code: PASS
-- Reuse Opportunities: PASS (CardShell reused by Idle + Inactive cards)
-- AppStyle Consistency: PASS (new tokens used by CardShell)
-- Layout Robustness: PASS (snapshot-verified pixel-identical)
+- Reuse Opportunities: PASS (reuses CardTheme + CardShell; new preset `inactiveOnIdle`)
+- AppStyle Consistency: PASS (title/subtitle via theme tokens; scroll chevron uses subtitle + Opacity.separatorLine)
+- Utility Usage: N/A
+- Layout Robustness: PASS
 - MVVM Violations: N/A
+- Navigation: N/A
 - Architecture Principles: PASS
 - Anti-Patterns: PASS
-- Referential Integrity: PASS
+- Referential Integrity: PASS (`CardTheme.completed` unchanged for glass cards)
 - Cleanup Sweep: PASS
-- architecture-documentation.md: Updated
+- State Propagation: N/A
+- Architecture Quality 13a–13g: N/A (UI + theme preset)
 
-## Snapshot Verification
-- IdleCardSnapshotTests/collapsed: PASS (pixel-identical)
-- IdleCardSnapshotTests/collapsedWithSeat: PASS (pixel-identical)
-- InactiveCardSnapshotTests/inactiveCollapsed: PASS (pixel-identical)
-- CardShellSnapshotTests (4 tests): PASS (new baselines)
-- CardBackgroundSnapshotTests (4 tests): PASS (unchanged)
+## P4 architecture-documentation.md
+- Prior turn documented `inactiveOnIdle` in Shared Components; no extra section change required for this stamp.
 
-## Residual Duplications
-- `progressColumn` in `IdleActiveCardModelView` manually builds a VStack + label pattern similar to `MetricColumnView` but intentionally differs (spacing: 1 vs 7, Button vs tap gesture). Left inline per extraction guidelines.
-- `ActiveCardModelView` continues to use `CardBackground` directly due to its ZStack layout with protruding icon — not a candidate for CardShell.
+## P6 Tests
+- See `test-execution.stamp.md` (FitnessPersistenceUI full suite + FitnessUI card snapshots).
+
+## Notes
+- `assertSnapshot` helper: optional `RECORD_SNAPSHOTS=1` merge (env rarely forwarded from xcodebuild; baseline recorded via explicit `record:` when needed).

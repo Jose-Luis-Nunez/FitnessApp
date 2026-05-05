@@ -30,11 +30,13 @@ private func assertSnapshot<V: View>(
     controller.view.frame = CGRect(origin: .zero, size: size)
     controller.view.backgroundColor = .black
 
+    let shouldRecord = record || ProcessInfo.processInfo.environment["RECORD_SNAPSHOTS"] == "1"
+
     SnapshotTesting.assertSnapshot(
         of: controller,
         as: .image(precision: 0.99, perceptualPrecision: 0.98, size: size),
         named: name,
-        record: record,
+        record: shouldRecord,
         file: file,
         testName: "\(function)",
         line: UInt(sourceLocation.line)

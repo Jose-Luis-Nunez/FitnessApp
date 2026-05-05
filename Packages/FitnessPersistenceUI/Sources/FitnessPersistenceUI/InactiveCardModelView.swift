@@ -47,8 +47,10 @@ public struct InactiveCardModelView: View {
         cachedSetProgress = latestEntry?.setProgress ?? []
     }
 
+    private let theme = CardTheme.inactiveOnIdle
+
     public var body: some View {
-        CardShell(theme: .completed, edgeIndicator: .completed, leading: {
+        CardShell(theme: theme, edgeIndicator: EdgeIndicator(color: AppStyle.Color.idleMetricValue, width: AppStyle.Layout.completedBarWidth), leading: {
             categoryIconView
         }, trailing: {
             checkmarkIcon
@@ -93,8 +95,8 @@ private extension InactiveCardModelView {
     var titleSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(model.name)
-                .font(AppStyle.Font.cardHeadline)
-                .foregroundColor(.white)
+                .font(theme.titleFont)
+                .foregroundColor(theme.titleColor)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier(ExerciseIDs.nameLabel)
@@ -105,11 +107,11 @@ private extension InactiveCardModelView {
             HStack(spacing: 4) {
                 Text("Completed workout")
                     .font(AppStyle.Font.cardSmallBold)
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(theme.subtitleColor)
 
                 Image(systemName: "chevron.down")
                     .font(AppStyle.Font.cardSmallLabel)
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(theme.subtitleColor)
                     .rotationEffect(.degrees(isExpanded ? 180 : 0))
             }
             .contentShape(Rectangle())
@@ -121,7 +123,7 @@ private extension InactiveCardModelView {
     var checkmarkIcon: some View {
         ZStack {
             Circle()
-                .fill(AppStyle.Color.greenGlow)
+                .fill(AppStyle.Color.idleMetricValue)
                 .frame(width: AppStyle.Layout.checkmarkSize, height: AppStyle.Layout.checkmarkSize)
 
             Image(systemName: "checkmark")
@@ -161,7 +163,7 @@ private extension InactiveCardModelView {
                 if hasMoreThan3 {
                     Image(systemName: "chevron.compact.right")
                         .font(AppStyle.Font.regularChip)
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(theme.subtitleColor.opacity(AppStyle.Opacity.separatorLine))
                         .frame(width: scrollChevronWidth)
                 }
 
