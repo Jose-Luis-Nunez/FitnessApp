@@ -1,0 +1,36 @@
+---
+description: >-
+  Enforces post-change validation for any Swift file change.
+  Three layers: this rule (advisory), stop hook (grind loop), pre-commit (blocking).
+alwaysApply: true
+---
+
+# Code Changes Enforcement
+
+Validation is enforced by **three layers** — not by this rule alone.
+
+## Layer 1: This Rule (L2 — Advisory)
+
+When you change **1+ Swift files**, run the `reviewing-code-changes` skill before reporting done. Write a stamp to `.claude/hooks/state/code-changes.stamp.md`.
+
+Skip **only** for pure AppStyle token swaps (`AppStyle.X` -> `AppStyle.Y` with no logic change).
+
+## Layer 2: Stop Hook — Grind Loop (L5 — Enforced)
+
+The `Stop` hook (`.claude/hooks/post-task-check.sh`) checks `git diff` for Swift changes and looks for a validation artifact. If missing, it exits 2 with a stderr blocker message and Claude is sent back. The grind-loop cap is 3 iterations; Claude Code's `stop_hook_active` flag prevents infinite re-firing.
+
+The hook checks for: `.claude/hooks/state/code-changes.stamp.md` (< 10 min old) OR validation markers in your output.
+
+## Layer 3: Pre-Commit Hook (L4 — Blocking)
+
+`.git/hooks/pre-commit` blocks commits when Swift files are staged without a recent validation report. Error messages use RULE/VIOLATION/FIX format — read them and self-correct.
+
+## How to Validate
+
+Read and follow the `reviewing-code-changes` skill (`.claude/skills/reviewing-code-changes/SKILL.md`). Write a stamp to `.claude/hooks/state/code-changes.stamp.md`.
+
+## Triggered Rule Notice
+
+When this rule applies (Swift files changed), mention it early in your first response:
+"This touches N Swift files — post-change validation will be required."
+This makes the obligation visible and prevents end-of-task surprises.

@@ -1,0 +1,31 @@
+---
+description: >-
+  Enforces agent-infrastructure validation when .claude/ files change.
+  Two layers: this rule (advisory) and stop hook (grind loop).
+globs: ".claude/rules/**/*.mdc,.claude/skills/**/*.md,.claude/hooks/**/*.sh,.claude/agents/**/*.md,.claude/references/**/*.md,.claude/commands/**/*.md,AGENTS.md"
+---
+
+# Agent Infrastructure Enforcement
+
+When you change **1+ files** under `.claude/` that are part of the agent infrastructure (rules, skills, hooks, agents, references, commands), run the `reviewing-agent-infrastructure` skill before reporting done. Write a stamp to `.claude/hooks/state/agent-infrastructure.stamp.md`.
+
+## Layer 1: This Rule (L2g — Advisory)
+
+Tells you to validate. Fires when glob-matched `.claude/` files are edited.
+
+Skip for:
+- `.claude/hooks/state/` — runtime artifacts (stamps, hashes, scratchpads)
+- `.claude/plans/` — descriptive plan documents, not infrastructure (no enforcement, no references)
+
+## Layer 2: Stop Hook — Grind Loop (L5 — Enforced)
+
+`post-task-check.sh` Check 6 verifies `agent-infrastructure.stamp.md` exists and is fresh (< 10 min). If missing, it exits 2 with a stderr blocker message so Claude is sent back. The grind-loop cap is 3 iterations; Claude Code's `stop_hook_active` flag prevents infinite re-firing.
+
+## How to Validate
+
+Follow the `reviewing-agent-infrastructure` skill checklist manually. Write a stamp to `.claude/hooks/state/agent-infrastructure.stamp.md`.
+
+## Triggered Rule Notice
+
+When this rule applies, mention it early:
+"This touches .claude/ infrastructure — agent-infrastructure validation will be required."

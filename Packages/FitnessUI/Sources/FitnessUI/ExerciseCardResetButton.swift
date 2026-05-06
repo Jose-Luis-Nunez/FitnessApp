@@ -15,21 +15,16 @@ public struct ExerciseCardResetButton: View {
 
     public var body: some View {
         Button(action: onTap) {
-            Image("repeat")
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .frame(
-                    width: ExerciseCardLayout.ResetButton.iconSize,
-                    height: ExerciseCardLayout.ResetButton.iconSize
-                )
-                .foregroundColor(AppStyle.Color.greenGlow)
-                .frame(
-                    width: ExerciseCardLayout.ResetButton.size,
-                    height: ExerciseCardLayout.ResetButton.size
-                )
-                .background(AppStyle.Color.exerciseCardBackground)
-                .clipShape(Circle())
+            CardActionCircleButtonVisual(
+                iconSize: ExerciseCardLayout.ResetButton.iconSize,
+                discSize: ExerciseCardLayout.ResetButton.size,
+                glowSize: ExerciseCardLayout.ResetButton.size
+            ) {
+                Image("repeat")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+            }
         }
         .buttonStyle(.plain)
     }

@@ -18,56 +18,15 @@ public struct IdlePlayButton: View {
     public init() {}
 
     public var body: some View {
-        ZStack {
-            outerGlow
-            ringedDisc
-            playGlyph
+        CardActionCircleButtonVisual(
+            iconSize: AppStyle.Layout.idlePlayIconSize,
+            discSize: AppStyle.Layout.idlePlayButtonSize,
+            glowSize: AppStyle.Layout.idlePlayButtonGlowSize,
+            iconOffsetX: AppStyle.Layout.idlePlayIconOpticalOffset
+        ) {
+            Image(systemName: "play.fill")
+                .resizable()
+                .scaledToFit()
         }
-        // Frame matches the *outer glow* diameter so the layout container
-        // reserves space for the entire halo. Without this the inner
-        // `idlePlayButtonSize` would be reported as the component's bounds
-        // and the glow would visually bleed into adjacent siblings (e.g.
-        // overlap the Tip-Chip stacked above it).
-        .frame(width: AppStyle.Layout.idlePlayButtonGlowSize,
-               height: AppStyle.Layout.idlePlayButtonGlowSize)
-    }
-
-    // MARK: - Layers
-
-    /// Soft mint halo painted behind the disc. The blur radius — not the
-    /// disc size — creates the halo softness, so the disc itself stays
-    /// nearly the same diameter as the button it sits behind.
-    private var outerGlow: some View {
-        Circle()
-            .fill(AppStyle.Color.idlePlayRingGlow)
-            .frame(width: AppStyle.Layout.idlePlayButtonGlowSize,
-                   height: AppStyle.Layout.idlePlayButtonGlowSize)
-            .blur(radius: AppStyle.Layout.idlePlayButtonGlowRadius)
-    }
-
-    /// Flat card-tinted disc with a hairline ring stroke. Filling with
-    /// `idleCardBackground` (instead of a darker glass-dome gradient) makes
-    /// the button look like a hole cut into the card surface — the only
-    /// thing setting it apart is the ring + glyph + halo.
-    private var ringedDisc: some View {
-        Circle()
-            .fill(AppStyle.Color.idleCardBackground)
-            .overlay(
-                Circle()
-                    .strokeBorder(AppStyle.Color.idlePlayRingBase,
-                                  lineWidth: AppStyle.Layout.idlePlayRingWidth)
-            )
-            .frame(width: AppStyle.Layout.idlePlayButtonSize,
-                   height: AppStyle.Layout.idlePlayButtonSize)
-    }
-
-    private var playGlyph: some View {
-        Image(systemName: "play.fill")
-            .resizable()
-            .scaledToFit()
-            .frame(width: AppStyle.Layout.idlePlayIconSize,
-                   height: AppStyle.Layout.idlePlayIconSize)
-            .foregroundColor(AppStyle.Color.idleMetricValue)
-            .offset(x: AppStyle.Layout.idlePlayIconOpticalOffset)
     }
 }

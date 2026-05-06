@@ -30,4 +30,4 @@ Package.resolved
 *.xcuserdatad/
 
 # Hook state (local only)
-.cursor/hooks/state/
+.claude/hooks/state/

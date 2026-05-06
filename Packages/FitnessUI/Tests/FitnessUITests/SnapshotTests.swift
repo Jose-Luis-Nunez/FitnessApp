@@ -349,6 +349,18 @@ struct IdlePlayButtonSnapshotTests {
     }
 }
 
+// MARK: - ExerciseCardResetButton Snapshots
+
+@Suite("ExerciseCardResetButton — Snapshots", .tags(.snapshot))
+@MainActor
+struct ExerciseCardResetButtonSnapshotTests {
+
+    @Test func idleStyledReset() {
+        let view = ExerciseCardResetButton(onTap: {})
+        assertSnapshot(of: view, named: "idle-styled-reset", size: CGSize(width: 100, height: 100))
+    }
+}
+
 // MARK: - RefreshActionButton Snapshots
 
 @Suite("RefreshActionButton — Snapshots", .tags(.snapshot))

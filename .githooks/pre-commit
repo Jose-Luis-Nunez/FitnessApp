@@ -30,7 +30,7 @@ fi
 # the stamp.
 
 if [ "$STAGED_SWIFT_COUNT" -ge 1 ]; then
-  REPORT=".cursor/hooks/state/code-changes.stamp.md"
+  REPORT=".claude/hooks/state/code-changes.stamp.md"
   REPORT_FRESH=false
 
   if [ -f "$REPORT" ]; then
@@ -52,13 +52,13 @@ except: print('stale')
 ═══════════════════════════════════════════════════════════════
 RULE: Post-change validation is required when committing 1+ Swift files.
 VIOLATION: ${STAGED_SWIFT_COUNT} Swift files staged for commit but no recent validation report found.
-  Expected: .cursor/hooks/state/code-changes.stamp.md (less than 30 min old)
+  Expected: .claude/hooks/state/code-changes.stamp.md (less than 30 min old)
   Found: $([ -f "$REPORT" ] && echo "stale report" || echo "no report")
 FILES:
 ${FILE_LIST}
 FIX: Run the post-change-validation skill checklist and write a stamp to
-  .cursor/hooks/state/code-changes.stamp.md before committing.
-  Alternatively, run: touch .cursor/hooks/state/code-changes.stamp.md
+  .claude/hooks/state/code-changes.stamp.md before committing.
+  Alternatively, run: touch .claude/hooks/state/code-changes.stamp.md
   if validation was done verbally.
 ═══════════════════════════════════════════════════════════════"
     EXIT_CODE=1
@@ -97,7 +97,7 @@ fi
 # --- Check 3: ADR required for structural changes ---
 
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-ADR_LIB="$REPO_ROOT/.cursor/hooks/lib/adr-triggers.sh"
+ADR_LIB="$REPO_ROOT/.claude/hooks/lib/adr-triggers.sh"
 
 if [ -f "$ADR_LIB" ]; then
   # shellcheck disable=SC1090
@@ -121,10 +121,10 @@ if [ -f "$ADR_LIB" ]; then
 RULE: adr-required — structural architecture change requires an ADR (see docs/adr/README.md).
 VIOLATION: Detected trigger(s): ${ADR_TRIGGERS[*]}
   No ADR file (docs/adr/NNNN-*.md) staged in this commit.
-  No fresh exception stamp (.cursor/hooks/state/adr-exception.stamp.md, < 24h).
+  No fresh exception stamp (.claude/hooks/state/adr-exception.stamp.md, < 24h).
 FIX:
   - Write a new ADR under docs/adr/ following docs/adr/README.md, or
-  - For a trivial change: touch .cursor/hooks/state/adr-exception.stamp.md
+  - For a trivial change: touch .claude/hooks/state/adr-exception.stamp.md
     with a one-line reason (valid 24h).
 ═══════════════════════════════════════════════════════════════"
       EXIT_CODE=1
@@ -143,7 +143,7 @@ if [ -n "$STAGED_SWIFT" ]; then
     HAS_LOOP=${HAS_LOOP:-0}
 
     if [ "$HAS_COUNTER" -gt 0 ] && [ "$HAS_LOOP" -gt 0 ]; then
-      EXCEPTION_STAMP=".cursor/hooks/state/ui-state-sync-exception.stamp.md"
+      EXCEPTION_STAMP=".claude/hooks/state/ui-state-sync-exception.stamp.md"
       EXCEPTION_FRESH=false
       if [ -f "$EXCEPTION_STAMP" ]; then
         EXCEPTION_AGE=$(python3 -c "
@@ -171,7 +171,7 @@ FIX:
   - @Query auf @Model in der View (SwiftData)
   - @Bindable auf @Model-Instanzen
   - AsyncSequence / NotificationCenter mit Payload für Domain-Events
-  Bei bewusster Ausnahme: ADR schreiben + Stamp .cursor/hooks/state/ui-state-sync-exception.stamp.md
+  Bei bewusster Ausnahme: ADR schreiben + Stamp .claude/hooks/state/ui-state-sync-exception.stamp.md
   mit ADR-Link erstellen (gilt 24h).
 ═══════════════════════════════════════════════════════════════"
         EXIT_CODE=1
@@ -182,7 +182,7 @@ fi
 
 # --- Check 5: architecture-documentation.md freshness ---
 
-ARCH_FILE=".cursor/references/architecture-documentation.md"
+ARCH_FILE=".claude/references/architecture-documentation.md"
 ARCH_STAGED=$(git diff --cached --name-only | grep "$ARCH_FILE" || true)
 
 NEW_FEATURES=$(git diff --cached --name-only --diff-filter=A | grep '^FitnessApp/Features/' || true)
@@ -217,12 +217,12 @@ if [ "$NEEDS_ARCH" = true ]; then
   ERRORS="${ERRORS}
 ═══════════════════════════════════════════════════════════════
 RULE: architecture-documentation.md must be updated when structural changes are committed.
-VIOLATION: Structural changes detected but .cursor/references/architecture-documentation.md
+VIOLATION: Structural changes detected but .claude/references/architecture-documentation.md
   is not staged for commit.
 TRIGGERS:${ARCH_TRIGGERS}
-FIX: Update the relevant section in .cursor/references/architecture-documentation.md
+FIX: Update the relevant section in .claude/references/architecture-documentation.md
   (see reviewing-code-changes skill, section 'Architecture Sync') and stage it:
-  git add .cursor/references/architecture-documentation.md
+  git add .claude/references/architecture-documentation.md
 ═══════════════════════════════════════════════════════════════"
   EXIT_CODE=1
 fi
