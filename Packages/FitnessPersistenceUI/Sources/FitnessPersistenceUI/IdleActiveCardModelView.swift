@@ -160,7 +160,7 @@ private extension IdleActiveCardModelView {
 
     var verticalSeparator: some View {
         Rectangle()
-            .fill(Color.white.opacity(AppStyle.Opacity.separatorLine))
+            .fill(AppStyle.Color.idleDivider)
             .frame(width: AppStyle.Layout.separatorWidth, height: AppStyle.Layout.separatorHeight)
             .padding(.horizontal, AppStyle.Padding.card)
             .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.top] + 4 }
@@ -178,7 +178,7 @@ private extension IdleActiveCardModelView {
                         .foregroundColor(AppStyle.Color.idleMetricValue)
                     Text("kg")
                         .font(AppStyle.Font.detailBadge)
-                        .foregroundColor(AppStyle.Color.idleMetricLabel)
+                        .foregroundColor(AppStyle.Color.idleMetricValue)
                 }
                 .fixedSize()
             } else {

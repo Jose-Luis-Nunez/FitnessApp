@@ -234,21 +234,27 @@ public enum AppStyle {
         /// a hard pure-white edge.
         public static let idleTitle = SwiftUI.Color(hex: "#F2F2F2")
         /// Secondary metric labels on the idle card (e.g. "Weight", "Seat",
-        /// "Progress", weight unit suffix "kg", expand/collapse chevron).
-        /// Cool neutral grey so the eye anchors on the mint values, not the
-        /// labels.
-        public static let idleMetricLabel = SwiftUI.Color(hex: "#A7AAA9")
+        /// "Data", expand/collapse chevron). Neutral grey so the eye
+        /// anchors on the mint values, not the labels.
+        public static let idleMetricLabel = SwiftUI.Color(hex: "#9A9A9A")
         /// Primary metric values + accent glyphs on the idle card (e.g. "20",
-        /// seat arrows, progress icon, tip icon + label, play triangle). One
-        /// shared mint token so all accent-tier elements stay perfectly in
-        /// sync.
-        public static let idleMetricValue = SwiftUI.Color(hex: "#B7DCC5")
+        /// "kg" weight unit suffix, seat arrows, progress icon, tip icon +
+        /// label, play triangle). One shared mint token so all accent-tier
+        /// elements stay perfectly in sync.
+        public static let idleMetricValue = SwiftUI.Color(hex: "#8CC7A8")
+        /// Vertical divider line between metric columns ("Weight" | "Seat" |
+        /// "Data" | tip box) on the idle card. Dark neutral grey — sits
+        /// quietly between the columns without competing with values or
+        /// labels.
+        public static let idleDivider = SwiftUI.Color(hex: "#3A3D3F")
 
         // MARK: Idle Card — Play Button Material
-        /// Base stroke color of the metallic ring around the play button.
-        /// Medium gray so the ring reads as brushed metal, not as a colored
-        /// border.
-        public static let idlePlayRingBase = SwiftUI.Color(hex: "#6B6F6E")
+        /// Stroke color of the hairline border around the idle play button
+        /// **and** the lightbulb tip box. Desaturated mid-mint so the
+        /// rings read as quiet accents in the same family as
+        /// `idleMetricValue`, just darker — never as bright as the glyph
+        /// itself, never neutral grey.
+        public static let idlePlayRingBase = SwiftUI.Color(hex: "#6F9E87")
         /// Soft mint glow rendered around the outside of the play-button ring.
         /// Same family as `idleMetricValue` but heavily desaturated via low
         /// alpha so the halo reads as a hint, not as neon.
