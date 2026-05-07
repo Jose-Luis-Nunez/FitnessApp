@@ -240,8 +240,21 @@ public enum AppStyle {
         /// Primary metric values + accent glyphs on the idle card (e.g. "20",
         /// "kg" weight unit suffix, seat arrows, progress icon, tip icon +
         /// label, play triangle). One shared mint token so all accent-tier
-        /// elements stay perfectly in sync.
+        /// **glyph/text/stroke** elements stay perfectly in sync.
+        ///
+        /// For large **solid filled shapes** (e.g. inactive-card checkmark
+        /// disc, completion edge-indicator bar) use `idleAccentFill`
+        /// instead — same hue, slightly darker, to compensate for the
+        /// area-effect that makes solid blocks of the same hex read as
+        /// more saturated than thin glyphs.
         public static let idleMetricValue = SwiftUI.Color(hex: "#8CC7A8")
+        /// Solid-fill variant of `idleMetricValue`, perceptually matched.
+        /// Use for shapes that fill an area larger than a glyph or stroke
+        /// (e.g. inactive-card checkmark disc, completion edge-indicator
+        /// bar). Same mint family as `idleMetricValue`, ~7% darker per
+        /// channel so the solid block doesn't visually outshine the
+        /// glyph-tier accent elements.
+        public static let idleAccentFill = SwiftUI.Color(hex: "#7DB89A")
         /// Vertical divider line between metric columns ("Weight" | "Seat" |
         /// "Data" | tip box) on the idle card. Dark neutral grey — sits
         /// quietly between the columns without competing with values or

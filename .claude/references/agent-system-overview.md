@@ -80,6 +80,7 @@ flowchart TD
 | File | What it does |
 |---|---|
 | `validate.md` | `/validate` — run post-change validation, tests, write stamps. |
+| `buildApp.md` | `/buildApp [iphone\|sim]` — wrap `scripts/buildApp.sh`: build, install, launch on **one** target (connected iPhone or booted simulator); errors if both available and no arg given. |
 
 ## L4 — Pre-Commit Hook
 

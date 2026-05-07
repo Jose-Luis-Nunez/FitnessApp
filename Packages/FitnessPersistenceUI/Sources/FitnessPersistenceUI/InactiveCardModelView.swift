@@ -50,7 +50,7 @@ public struct InactiveCardModelView: View {
     private let theme = CardTheme.inactiveOnIdle
 
     public var body: some View {
-        CardShell(theme: theme, edgeIndicator: EdgeIndicator(color: AppStyle.Color.idleMetricValue, width: AppStyle.Layout.completedBarWidth), leading: {
+        CardShell(theme: theme, edgeIndicator: EdgeIndicator(color: AppStyle.Color.idleAccentFill, width: AppStyle.Layout.completedBarWidth), leading: {
             categoryIconView
         }, trailing: {
             checkmarkIcon
@@ -123,7 +123,7 @@ private extension InactiveCardModelView {
     var checkmarkIcon: some View {
         ZStack {
             Circle()
-                .fill(AppStyle.Color.idleMetricValue)
+                .fill(AppStyle.Color.idleAccentFill)
                 .frame(width: AppStyle.Layout.checkmarkSize, height: AppStyle.Layout.checkmarkSize)
 
             Image(systemName: "checkmark")
