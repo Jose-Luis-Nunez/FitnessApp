@@ -1,12 +1,12 @@
 import SwiftUI
 import FitnessUI
 
-public struct TramDeparturesCardView: View {
+public struct SBahnDeparturesCardView: View {
 
-    @Bindable private var viewModel: TramDeparturesViewModel
+    @Bindable private var viewModel: SBahnDeparturesViewModel
     @Environment(\.scenePhase) private var scenePhase
 
-    public init(viewModel: TramDeparturesViewModel) {
+    public init(viewModel: SBahnDeparturesViewModel) {
         self.viewModel = viewModel
     }
 
@@ -46,12 +46,12 @@ public struct TramDeparturesCardView: View {
             viewModel.toggleExpanded()
         } label: {
             HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
-                Image(systemName: "tram.fill")
+                Image(systemName: "tram.tunnel.fill")
                     .font(AppStyle.Font.profileEditIcon)
                     .foregroundColor(AppStyle.Color.green)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Tram \(viewModel.lineName)")
+                    Text("S-Bahn")
                         .font(AppStyle.Font.sectionHeadline)
                         .foregroundColor(AppStyle.Color.white)
                         .fixedSize()
@@ -72,7 +72,7 @@ public struct TramDeparturesCardView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityIdentifier("id_profile_tram_header")
+        .accessibilityIdentifier("id_profile_sbahn_header")
     }
 
     // MARK: - Swap Row
@@ -91,7 +91,7 @@ public struct TramDeparturesCardView: View {
                     .background(AppStyle.Color.sheetInputBackground)
                     .cornerRadius(AppStyle.CornerRadius.defaultButton)
             }
-            .accessibilityIdentifier("id_profile_tram_swap")
+            .accessibilityIdentifier("id_profile_sbahn_swap")
 
             endpointPill(text: viewModel.toLabel, caption: "Destination")
         }
@@ -143,7 +143,7 @@ public struct TramDeparturesCardView: View {
     }
 
     private var emptyRow: some View {
-        Text("Keine Abfahrten in den nächsten 60 Minuten.")
+        Text("Keine S-Bahnen in den nächsten 60 Minuten.")
             .font(AppStyle.Font.detailCaption)
             .foregroundColor(AppStyle.Color.gray)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -157,36 +157,69 @@ public struct TramDeparturesCardView: View {
         }
     }
 
-    private func departureRow(_ dep: TramDeparture, index: Int) -> some View {
-        HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
-            Text(dep.line)
-                .font(AppStyle.Font.cardSmallBold)
-                .foregroundColor(AppStyle.Color.white)
-                .frame(minWidth: AppStyle.Layout.setRowBadgeSize, minHeight: AppStyle.Layout.setRowBadgeSize)
-                .background(AppStyle.Color.green)
-                .cornerRadius(AppStyle.CornerRadius.pill)
+    private func departureRow(_ dep: SBahnDeparture, index: Int) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Button {
+                viewModel.toggleDetailExpansion(rowID: dep.id)
+            } label: {
+                HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
+                    Text(dep.line)
+                        .font(AppStyle.Font.cardSmallBold)
+                        .foregroundColor(AppStyle.Color.white)
+                        .frame(minWidth: AppStyle.Layout.setRowBadgeSize, minHeight: AppStyle.Layout.setRowBadgeSize)
+                        .background(AppStyle.Color.green)
+                        .cornerRadius(AppStyle.CornerRadius.pill)
 
-            Text(viewModel.formattedTime(for: dep.plannedWhen))
-                .font(AppStyle.Font.tileValue)
-                .foregroundColor(AppStyle.Color.white)
-                .fixedSize()
+                    Text(viewModel.formattedTime(for: dep.plannedWhen))
+                        .font(AppStyle.Font.tileValue)
+                        .foregroundColor(AppStyle.Color.white)
+                        .fixedSize()
 
-            delayBadge(for: dep.delayMinutes)
+                    delayBadge(for: dep.delayMinutes)
 
-            Spacer(minLength: 0)
+                    Spacer(minLength: 0)
 
-            Text(dep.direction)
-                .font(AppStyle.Font.detailCaption)
-                .foregroundColor(AppStyle.Color.greenLight)
-                .lineLimit(1)
-                .truncationMode(.tail)
+                    Text(dep.direction)
+                        .font(AppStyle.Font.detailCaption)
+                        .foregroundColor(AppStyle.Color.greenLight)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+
+                    if dep.bridge != nil {
+                        Image(systemName: "arrow.triangle.branch")
+                            .font(AppStyle.Font.profileSmallIcon)
+                            .foregroundColor(AppStyle.Color.yellow)
+                    }
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("id_profile_sbahn_row_\(index)")
+
+            if let bridge = dep.bridge {
+                bridgeCaption(bridge)
+            }
+
+            if viewModel.expandedDetailRowID == dep.id {
+                detailPanel(for: dep)
+            }
         }
         .padding(.horizontal, AppStyle.Padding.card)
         .padding(.vertical, AppStyle.Layout.profileButtonPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(AppStyle.Color.sheetInputBackground)
         .cornerRadius(AppStyle.CornerRadius.tile)
-        .accessibilityIdentifier("id_profile_tram_row_\(index)")
+    }
+
+    private func bridgeCaption(_ bridge: BridgeHint) -> some View {
+        let timeStr = viewModel.formattedTime(for: bridge.bridgeDeparture)
+        return HStack(spacing: 4) {
+            Text("⤷ Umsteigen am \(bridge.transferStation) in \(bridge.bridgeLine) · \(timeStr)")
+                .font(AppStyle.Font.detailCaption)
+                .foregroundColor(AppStyle.Color.gray)
+                .lineLimit(2)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
@@ -206,6 +239,65 @@ public struct TramDeparturesCardView: View {
         }
     }
 
+    // MARK: - Detail Panel (row-tap)
+
+    @ViewBuilder
+    private func detailPanel(for dep: SBahnDeparture) -> some View {
+        Divider()
+            .background(AppStyle.Color.gray.opacity(AppStyle.Opacity.subtleStroke))
+
+        VStack(alignment: .leading, spacing: 6) {
+            detailRow(label: "Abfahrt geplant", value: viewModel.formattedTime(for: dep.plannedWhen))
+            detailRow(label: "Abfahrt aktuell", value: viewModel.formattedTime(for: dep.when))
+            detailRow(label: "Verspätung", value: detailDelayString(dep.delayMinutes))
+            detailRow(label: "Endstation", value: dep.direction)
+
+            if let bridge = dep.bridge {
+                Divider()
+                    .background(AppStyle.Color.gray.opacity(AppStyle.Opacity.subtleStroke))
+                    .padding(.top, 4)
+
+                Text("Umstieg")
+                    .font(AppStyle.Font.profileCardTitle)
+                    .foregroundColor(AppStyle.Color.greenLight)
+
+                detailRow(label: "Aussteigen am", value: bridge.transferStation)
+                detailRow(
+                    label: "Anschluss",
+                    value: "\(bridge.bridgeLine) → \(bridge.bridgeDirection)"
+                )
+                detailRow(
+                    label: "Anschluss-Abfahrt",
+                    value: viewModel.formattedTime(for: bridge.bridgeDeparture)
+                )
+            } else {
+                detailRow(label: "Verbindung", value: "Direkt nach Ostkreuz")
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func detailRow(label: String, value: String) -> some View {
+        HStack(alignment: .top, spacing: AppStyle.DeviceLayout.cardSpacing) {
+            Text(label)
+                .font(AppStyle.Font.detailCaption)
+                .foregroundColor(AppStyle.Color.gray)
+                .frame(width: 130, alignment: .leading)
+            Text(value)
+                .font(AppStyle.Font.detailCaption)
+                .foregroundColor(AppStyle.Color.white)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private func detailDelayString(_ delay: Int) -> String {
+        if delay > 0 { return "+\(delay) min" }
+        if delay < 0 { return "\(delay) min" }
+        return "pünktlich"
+    }
+
+    // MARK: - Error / Footer
+
     private func errorRow(_ message: String) -> some View {
         HStack(spacing: 4) {
             Image(systemName: "wifi.slash")
@@ -218,8 +310,6 @@ public struct TramDeparturesCardView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - Footer
-
     private var footer: some View {
         HStack {
             footerStatusText
@@ -229,7 +319,7 @@ public struct TramDeparturesCardView: View {
             RefreshActionButton(isLoading: viewModel.isLoading) {
                 Task { await viewModel.refresh() }
             }
-            .accessibilityIdentifier("id_profile_tram_refresh")
+            .accessibilityIdentifier("id_profile_sbahn_refresh")
         }
     }
 

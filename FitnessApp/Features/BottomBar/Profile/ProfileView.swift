@@ -24,6 +24,7 @@ struct ProfileView: View {
                         bodyDataSection
                         bmiSection
                         TramDeparturesCardView(viewModel: viewModel.tramVM)
+                        SBahnDeparturesCardView(viewModel: viewModel.sbahnVM)
                         Spacer(minLength: AppStyle.Layout.profileBottomSpacer)
                     }
                     .padding(.horizontal, AppStyle.Padding.horizontal)

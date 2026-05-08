@@ -18,6 +18,7 @@ public final class ProfileStore {
 public final class ProfileViewModel {
     public let store: ProfileStore = ProfileStore()
     public let tramVM: TramDeparturesViewModel = TramDeparturesViewModel()
+    public let sbahnVM: SBahnDeparturesViewModel = SBahnDeparturesViewModel()
 
     public var nickname: String = ""
     public var weightKg: Double = 0
