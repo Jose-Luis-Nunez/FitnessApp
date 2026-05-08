@@ -197,7 +197,9 @@ public struct SBahnDeparturesCardView: View {
             .accessibilityIdentifier("id_profile_sbahn_row_\(index)")
 
             if let bridge = dep.bridge {
-                bridgeCaption(bridge)
+                bridgeCaption(bridge: bridge, arrival: dep.arrivalAtDestination)
+            } else if let arrival = dep.arrivalAtDestination {
+                arrivalCaption(arrival: arrival)
             }
 
             if viewModel.expandedDetailRowID == dep.id {
@@ -211,15 +213,32 @@ public struct SBahnDeparturesCardView: View {
         .cornerRadius(AppStyle.CornerRadius.tile)
     }
 
-    private func bridgeCaption(_ bridge: BridgeHint) -> some View {
-        let timeStr = viewModel.formattedTime(for: bridge.bridgeDeparture)
-        return HStack(spacing: 4) {
-            Text("⤷ Umsteigen am \(bridge.transferStation) in \(bridge.bridgeLine) · \(timeStr)")
-                .font(AppStyle.Font.detailCaption)
-                .foregroundColor(AppStyle.Color.gray)
-                .lineLimit(2)
+    /// Caption rendered for east-direct trips (no transfer needed).
+    /// Shows the estimated arrival at the configured destination so the
+    /// user can answer "wann bin ich da?" at a glance.
+    private func arrivalCaption(arrival: Date) -> some View {
+        let arrivalStr = viewModel.formattedTime(for: arrival)
+        return Text("→ \(viewModel.toLabel) · \(arrivalStr)")
+            .font(AppStyle.Font.detailCaption)
+            .foregroundColor(AppStyle.Color.gray)
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Caption rendered for east-short trips with a useful bridge.
+    /// Shows the transfer hint and the estimated arrival at destination
+    /// after the bridge train.
+    private func bridgeCaption(bridge: BridgeHint, arrival: Date?) -> some View {
+        let bridgeTimeStr = viewModel.formattedTime(for: bridge.bridgeDeparture)
+        var caption = "⤷ Umsteigen am \(bridge.transferStation) in \(bridge.bridgeLine) · \(bridgeTimeStr)"
+        if let arrival {
+            caption += " → \(viewModel.toLabel) · \(viewModel.formattedTime(for: arrival))"
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        return Text(caption)
+            .font(AppStyle.Font.detailCaption)
+            .foregroundColor(AppStyle.Color.gray)
+            .lineLimit(2)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
@@ -271,7 +290,14 @@ public struct SBahnDeparturesCardView: View {
                     value: viewModel.formattedTime(for: bridge.bridgeDeparture)
                 )
             } else {
-                detailRow(label: "Verbindung", value: "Direkt nach Ostkreuz")
+                detailRow(label: "Verbindung", value: "Direkt nach \(viewModel.toLabel)")
+            }
+
+            if let arrival = dep.arrivalAtDestination {
+                detailRow(
+                    label: "Ankunft \(viewModel.toLabel)",
+                    value: viewModel.formattedTime(for: arrival)
+                )
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

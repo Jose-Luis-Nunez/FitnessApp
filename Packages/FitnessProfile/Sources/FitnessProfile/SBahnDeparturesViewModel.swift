@@ -46,7 +46,7 @@ public final class SBahnDeparturesViewModel {
     private let origin: Endpoint
     private let destination: Endpoint
     private let maxResults: Int
-    private var activeRefreshTask: Task<Void, Never>?
+    private let scheduler = RefreshScheduler()
 
     // MARK: - Init
 
@@ -94,6 +94,10 @@ public final class SBahnDeparturesViewModel {
 
     public func refresh() async {
         isLoading = true
+        // `defer` guarantees the loading flag is cleared on every exit path —
+        // including `Task.isCancelled` early returns — so the spinner can't
+        // get orphaned when the scheduler cancels an in-flight task.
+        defer { isLoading = false }
         do {
             let result = try await service.fetchSBahnRoute(
                 fromStopId: fromStopId,
@@ -105,33 +109,34 @@ public final class SBahnDeparturesViewModel {
             errorMessage = nil
             lastUpdated = Date()
             isStale = false
+            scheduler.reportSuccess()
             cache.save(fromStopId: fromStopId, toStopId: toStopId, departures: result)
         } catch is CancellationError {
             return
         } catch {
             handleRefreshFailure(error)
+            scheduler.reportFailure()
         }
-        isLoading = false
     }
 
     /// Called when host scene transitions back to `.active`. Refresh only if
-    /// expanded and last data is stale.
+    /// expanded AND no recent failure. Backoff logic lives in
+    /// `RefreshScheduler`.
     public func onBecameActive() {
         guard isExpanded else { return }
-        let isStaleData: Bool
-        if let lastUpdated {
-            isStaleData = Date().timeIntervalSince(lastUpdated) > Self.foregroundStaleThreshold
-        } else {
-            isStaleData = true
+        if scheduler.shouldSkipAutoRefresh(staleThreshold: Self.foregroundStaleThreshold) {
+            return
         }
+        let isStaleData = lastUpdated.map { Date().timeIntervalSince($0) > Self.foregroundStaleThreshold } ?? true
         if isStaleData {
             scheduleRefresh()
         }
     }
 
     private func scheduleRefresh() {
-        activeRefreshTask?.cancel()
-        activeRefreshTask = Task { await refresh() }
+        scheduler.schedule { [weak self] in
+            await self?.refresh()
+        }
     }
 
     // MARK: - Cache helpers

@@ -39,9 +39,9 @@ struct ProfileView: View {
                 }
             }
         }
-        .onAppear {
-            viewModel.loadInitialBMI()
-        }
+        // BMI loading is lazy — triggered on first expand below, not on
+        // appear. This avoids the "loading spinner while collapsed" UX bug
+        // and saves a network call when the user never opens the BMI card.
         .alert("Error", isPresented: $viewModel.showNicknameAlert) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -295,6 +295,9 @@ struct ProfileView: View {
                 VStack(spacing: AppStyle.CornerRadius.defaultButton) {
                     Button {
                         isBMIExpanded.toggle()
+                        if isBMIExpanded {
+                            viewModel.loadBMIIfNeeded()
+                        }
                     } label: {
                         HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
                             VStack(alignment: .leading, spacing: 2) {
@@ -311,10 +314,10 @@ struct ProfileView: View {
 
                             Spacer()
 
-                            if viewModel.isLoadingBMI {
-                                ProgressView()
-                                    .tint(AppStyle.Color.green)
-                            }
+                            // No loading indicator in the header — would
+                            // otherwise be visible even when the card is
+                            // collapsed. Loading lives in the expanded
+                            // body, consistent with Tram/SBahn cards.
 
                             Image(systemName: "chevron.down")
                                 .font(AppStyle.Font.profileSmallIcon)

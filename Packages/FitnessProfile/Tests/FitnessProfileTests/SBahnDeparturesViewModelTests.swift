@@ -237,4 +237,110 @@ struct SBahnDeparturesViewModelTests {
         try? await Task.sleep(nanoseconds: 50_000_000)
         #expect(service.callCount == 0)
     }
+
+    // MARK: - Cancellation-leak fix (defer { isLoading = false })
+
+    @Test func refresh_whenSucceeding_clearsIsLoading() async {
+        let service = MockService()
+        service.results = [Self.makeDeparture(id: "ok")]
+        let vm = Self.makeVM(service: service)
+        await vm.refresh()
+        #expect(vm.isLoading == false)
+    }
+
+    @Test func refresh_whenFailing_clearsIsLoading() async {
+        let service = MockService()
+        service.error = .network
+        let vm = Self.makeVM(service: service)
+        await vm.refresh()
+        #expect(vm.isLoading == false)
+    }
+
+    @Test func refresh_whenCancelled_clearsIsLoading() async {
+        // Verifies the cancellation-leak bug fix: when a refresh task is
+        // cancelled mid-flight (e.g. by a second scheduleRefresh()), the
+        // `defer { isLoading = false }` still fires.
+        //
+        // Deterministic version: use BlockableMockService that suspends on
+        // a CheckedContinuation. This way the test controls EXACTLY when
+        // the network call would complete, and can cancel right before.
+        let service = BlockableMockService()
+        let vm = SBahnDeparturesViewModel(
+            service: service,
+            cache: MockCache(),
+            maxResults: 3
+        )
+        let task = Task { await vm.refresh() }
+        // Wait until the service has actually entered the suspended state.
+        await service.awaitSuspension()
+        #expect(vm.isLoading == true)
+
+        task.cancel()
+        // Resume so the task can observe cancellation and unwind.
+        service.resumeWithCancellation()
+        await task.value
+
+        #expect(vm.isLoading == false)
+    }
+
+    // MARK: - Failure backoff (lastFailureAt)
+
+    @Test func onBecameActive_recentFailure_doesNotRefetch() async {
+        let service = MockService()
+        service.error = .network
+        let vm = Self.makeVM(service: service)
+        vm.toggleExpanded()                // schedules first refresh, fails
+        try? await Task.sleep(nanoseconds: 80_000_000)
+        let countAfterFirst = service.callCount
+
+        vm.onBecameActive()                // should be suppressed by backoff
+        try? await Task.sleep(nanoseconds: 80_000_000)
+        #expect(service.callCount == countAfterFirst)
+    }
+
+    /// MockService that suspends on a continuation, allowing tests to
+    /// deterministically cancel the in-flight task before resuming.
+    /// Replaces the timing-based `Task.sleep` mock so the test cannot
+    /// flake on slow CI.
+    private final class BlockableMockService: BVGSBahnServicing, @unchecked Sendable {
+        private let lock = NSLock()
+        private var continuation: CheckedContinuation<[SBahnDeparture], Error>?
+        private var suspensionCallback: (() -> Void)?
+
+        func awaitSuspension() async {
+            await withCheckedContinuation { (cb: CheckedContinuation<Void, Never>) in
+                lock.lock()
+                if continuation != nil {
+                    lock.unlock()
+                    cb.resume()
+                } else {
+                    suspensionCallback = { cb.resume() }
+                    lock.unlock()
+                }
+            }
+        }
+
+        func resumeWithCancellation() {
+            lock.lock()
+            let c = continuation
+            continuation = nil
+            lock.unlock()
+            c?.resume(throwing: CancellationError())
+        }
+
+        func fetchSBahnRoute(
+            fromStopId: String,
+            toStopId: String,
+            maxResults: Int
+        ) async throws -> [SBahnDeparture] {
+            try await withCheckedThrowingContinuation { c in
+                lock.lock()
+                continuation = c
+                let cb = suspensionCallback
+                suspensionCallback = nil
+                lock.unlock()
+                cb?()
+            }
+        }
+    }
 }

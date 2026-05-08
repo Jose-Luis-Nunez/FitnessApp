@@ -80,7 +80,8 @@ public enum SBahnBridgeResolver {
             bridgeLine: best.candidate.line,
             bridgeDeparture: best.candidate.when,
             bridgeDirection: best.candidate.direction,
-            bridgeOriginStation: nil
+            bridgeOriginStation: nil,
+            bridgeTripId: best.candidate.tripId
         )
     }
 }

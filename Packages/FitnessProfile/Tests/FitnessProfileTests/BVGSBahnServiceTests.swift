@@ -14,9 +14,11 @@ struct BVGSBahnServiceTests {
 
     private final class MockClient: BVGTransitClienting, @unchecked Sendable {
         var pools: [String: [TransitDeparture]] = [:]
+        var stopovers: [String: [TransitStopover]] = [:]
         var error: BVGSBahnError?
         private(set) var fetchedStopIds: [String] = []
         private(set) var fetchedDirections: [String?] = []
+        private(set) var fetchedTripIds: [String] = []
 
         func fetchSuburbanDepartures(
             stopId: String,
@@ -26,6 +28,11 @@ struct BVGSBahnServiceTests {
             fetchedDirections.append(directionStopId)
             if let error { throw error }
             return pools[stopId] ?? []
+        }
+
+        func fetchTripStopovers(tripId: String) async throws -> [TransitStopover] {
+            fetchedTripIds.append(tripId)
+            return stopovers[tripId] ?? []
         }
     }
 
@@ -175,6 +182,59 @@ struct BVGSBahnServiceTests {
         )
 
         #expect(result.map(\.id) == ["first", "second"])
+    }
+
+    // MARK: - Reverse direction (Ostkreuz → Alex) with bridge logic
+
+    @Test func reverseDirection_shortTurnAtOstbahnhof_withEigenständigBridge_isShown() async throws {
+        let reverseConfig = SBahnRouteConfiguration.standardBerlinReverse
+        let client = MockClient()
+        // Origin = Ostkreuz (reverse). Two trips: one short-turn at Ostbf,
+        // one direct to Spandau.
+        client.pools[reverseConfig.originStopId] = [
+            Self.dep("23:02", line: "S5", direction: "S Ostbahnhof (Berlin)", tripId: "ostkz-S5-shortturn"),
+            Self.dep("23:05", line: "S3", direction: "S Spandau Bhf (Berlin)", tripId: "ostkz-S3-direct"),
+        ]
+        // Eigenständig bridge at Ostbahnhof going further west.
+        client.pools[reverseConfig.transferStopIds[.ostbahnhof]!] = [
+            Self.dep("23:08", line: "S7", direction: "S Charlottenburg Bhf (Berlin)", tripId: "ostbf-S7-eigenständig"),
+        ]
+        client.pools[reverseConfig.transferStopIds[.warschauer]!] = []
+
+        let service = BVGSBahnService(client: client, configuration: reverseConfig)
+        let result = try await service.fetchSBahnRoute(
+            fromStopId: reverseConfig.originStopId,
+            toStopId: reverseConfig.destinationStopId,
+            maxResults: 10
+        )
+
+        // Direct trip shown without bridge.
+        let direct = try #require(result.first { $0.id == "ostkz-S3-direct" })
+        #expect(direct.bridge == nil)
+
+        // Short-turn shown with bridge hint.
+        let shortTurn = try #require(result.first { $0.id == "ostkz-S5-shortturn" })
+        #expect(shortTurn.bridge?.bridgeLine == "S7")
+        #expect(shortTurn.bridge?.transferStation == "S Ostbahnhof")
+    }
+
+    @Test func reverseDirection_eastboundTrip_isFilteredAsWrongDirection() async throws {
+        let reverseConfig = SBahnRouteConfiguration.standardBerlinReverse
+        let client = MockClient()
+        // From Ostkreuz, an eastbound S3 → Erkner is going AWAY from Alex.
+        client.pools[reverseConfig.originStopId] = [
+            Self.dep("23:02", line: "S3", direction: "S Erkner Bhf", tripId: "ostkz-S3-east-wrong"),
+            Self.dep("23:05", line: "S5", direction: "S Westkreuz (Berlin)", tripId: "ostkz-S5-west"),
+        ]
+        let service = BVGSBahnService(client: client, configuration: reverseConfig)
+        let result = try await service.fetchSBahnRoute(
+            fromStopId: reverseConfig.originStopId,
+            toStopId: reverseConfig.destinationStopId,
+            maxResults: 10
+        )
+
+        #expect(result.contains { $0.id == "ostkz-S3-east-wrong" } == false)
+        #expect(result.contains { $0.id == "ostkz-S5-west" })
     }
 
     // MARK: - HTTP error propagates

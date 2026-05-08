@@ -140,6 +140,11 @@ public final class ProfileViewModel {
 
         bmiTask = Task { [weak self] in
             guard let self else { return }
+            // `defer` guarantees the loading flag clears on every exit
+            // path — including the Task.isCancelled checks — so the
+            // spinner can't get orphaned when a fresh fetchBMI() cancels
+            // a still-in-flight previous call.
+            defer { self.isLoadingBMI = false }
             do {
                 let result = try await self.bmiService.fetchBMI(weightKg: weight, heightM: height)
                 if Task.isCancelled { return }
@@ -154,14 +159,23 @@ public final class ProfileViewModel {
                     self.bmiError = "Could not calculate BMI."
                 }
             }
-            if Task.isCancelled { return }
-            self.isLoadingBMI = false
         }
     }
 
-    public func loadInitialBMI() {
-        if hasBodyData, bmiResult == nil {
-            fetchBMI()
+    /// Lazy BMI load: instant local calculation, then optional API refresh.
+    /// Called when the BMI card transitions to expanded state, NOT on app
+    /// appear — avoids the "loading-spinner-while-collapsed" UX bug.
+    ///
+    /// Local-First strategy: synchronously populate `bmiResult` with the
+    /// locally-computed value so the user sees a number immediately. Then
+    /// fire `fetchBMI()` in the background to optionally replace with the
+    /// API's category classification (which can differ from the local
+    /// formula's edge-case rounding).
+    public func loadBMIIfNeeded() {
+        guard hasBodyData, bmiResult == nil else { return }
+        if let local = bmiService.calculateBMILocally(weightKg: weightKg, heightM: heightM) {
+            bmiResult = local
         }
+        fetchBMI()
     }
 }

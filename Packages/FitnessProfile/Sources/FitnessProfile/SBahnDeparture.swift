@@ -15,6 +15,13 @@ public struct SBahnDeparture: Equatable, Identifiable, Sendable, Codable {
     /// trips that have a verified eigenständig (Origin ≠ Alex) bridge candidate
     /// at the transfer station.
     public let bridge: BridgeHint?
+    /// Estimated arrival at the user's destination.
+    /// - east-direct: planned departure + configured travel time.
+    /// - east-short with bridge: bridge departure + (configured travel-to-
+    ///   destination minus origin → transfer-stop travel).
+    /// `nil` for trips on routes without a configured travelToDestination
+    /// (e.g. arbitrary fallback routes via the API direction filter).
+    public let arrivalAtDestination: Date?
 
     public init(
         id: String,
@@ -22,7 +29,8 @@ public struct SBahnDeparture: Equatable, Identifiable, Sendable, Codable {
         direction: String,
         plannedWhen: Date,
         when: Date,
-        bridge: BridgeHint? = nil
+        bridge: BridgeHint? = nil,
+        arrivalAtDestination: Date? = nil
     ) {
         self.id = id
         self.line = line
@@ -30,6 +38,7 @@ public struct SBahnDeparture: Equatable, Identifiable, Sendable, Codable {
         self.plannedWhen = plannedWhen
         self.when = when
         self.bridge = bridge
+        self.arrivalAtDestination = arrivalAtDestination
     }
 
     /// Delay in whole minutes (rounded). Negative = ahead of schedule.
@@ -54,19 +63,24 @@ public struct BridgeHint: Equatable, Sendable, Codable {
     public let bridgeDeparture: Date
     public let bridgeDirection: String
     public let bridgeOriginStation: String?
+    /// tripId of the bridge train. Used by the service to fetch the
+    /// bridge's stopovers and derive the user's arrival at destination.
+    public let bridgeTripId: String?
 
     public init(
         transferStation: String,
         bridgeLine: String,
         bridgeDeparture: Date,
         bridgeDirection: String,
-        bridgeOriginStation: String? = nil
+        bridgeOriginStation: String? = nil,
+        bridgeTripId: String? = nil
     ) {
         self.transferStation = transferStation
         self.bridgeLine = bridgeLine
         self.bridgeDeparture = bridgeDeparture
         self.bridgeDirection = bridgeDirection
         self.bridgeOriginStation = bridgeOriginStation
+        self.bridgeTripId = bridgeTripId
     }
 }
 

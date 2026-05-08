@@ -21,6 +21,35 @@ public struct TransitDeparture: Equatable, Sendable {
     }
 }
 
+/// One stop on a trip's full route as returned by the
+/// `/trips/{tripId}?stopovers=true` endpoint. The `arrival` and `departure`
+/// reflect the live (delayed) timestamps; planned variants give the
+/// scheduled times. At terminal stops the unused side is `nil`.
+public struct TransitStopover: Equatable, Sendable {
+    public let stopId: String
+    public let stopName: String
+    public let arrival: Date?
+    public let departure: Date?
+    public let plannedArrival: Date?
+    public let plannedDeparture: Date?
+
+    public init(
+        stopId: String,
+        stopName: String,
+        arrival: Date?,
+        departure: Date?,
+        plannedArrival: Date?,
+        plannedDeparture: Date?
+    ) {
+        self.stopId = stopId
+        self.stopName = stopName
+        self.arrival = arrival
+        self.departure = departure
+        self.plannedArrival = plannedArrival
+        self.plannedDeparture = plannedDeparture
+    }
+}
+
 // MARK: - Protocol
 
 public protocol BVGTransitClienting: Sendable {
@@ -39,6 +68,13 @@ public protocol BVGTransitClienting: Sendable {
         stopId: String,
         directionStopId: String?
     ) async throws -> [TransitDeparture]
+
+    /// Fetches the full stop-by-stop route of a single trip. Used to
+    /// derive the live arrival time at the user's destination — far more
+    /// accurate than estimating "departure + travel time" because the API
+    /// already accounts for intermediate stop dwell times and any
+    /// per-segment delays.
+    func fetchTripStopovers(tripId: String) async throws -> [TransitStopover]
 }
 
 public extension BVGTransitClienting {
@@ -124,6 +160,51 @@ public final class BVGTransitClient: BVGTransitClienting, @unchecked Sendable {
             when: when
         )
     }
+
+    public func fetchTripStopovers(tripId: String) async throws -> [TransitStopover] {
+        guard let escapedId = tripId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) else {
+            throw BVGSBahnError.invalidURL
+        }
+        var components = URLComponents(string: "\(baseURL)/trips/\(escapedId)")
+        components?.queryItems = [
+            URLQueryItem(name: "stopovers", value: "true"),
+            URLQueryItem(name: "remarks", value: "false"),
+        ]
+        guard let url = components?.url else { throw BVGSBahnError.invalidURL }
+
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await session.data(from: url)
+        } catch {
+            throw BVGSBahnError.network
+        }
+        guard let http = response as? HTTPURLResponse else { throw BVGSBahnError.network }
+        switch http.statusCode {
+        case 200...299: break
+        case 429: throw BVGSBahnError.rateLimited
+        default: throw BVGSBahnError.serverError
+        }
+
+        do {
+            let envelope = try decoder.decode(TripEnvelope.self, from: data)
+            return envelope.trip.stopovers?.compactMap(Self.mapStopover) ?? []
+        } catch {
+            throw BVGSBahnError.decoding
+        }
+    }
+
+    private static func mapStopover(_ dto: StopoverDTO) -> TransitStopover? {
+        guard let stopId = dto.stop?.id, let stopName = dto.stop?.name else { return nil }
+        return TransitStopover(
+            stopId: stopId,
+            stopName: stopName,
+            arrival: dto.arrival,
+            departure: dto.departure,
+            plannedArrival: dto.plannedArrival,
+            plannedDeparture: dto.plannedDeparture
+        )
+    }
 }
 
 // MARK: - DTOs (internal to client)
@@ -143,4 +224,25 @@ private struct DepartureDTO: Decodable {
 private struct LineDTO: Decodable {
     let name: String?
     let product: String?
+}
+
+private struct TripEnvelope: Decodable {
+    let trip: TripDTO
+}
+
+private struct TripDTO: Decodable {
+    let stopovers: [StopoverDTO]?
+}
+
+private struct StopoverDTO: Decodable {
+    let stop: StopDTO?
+    let arrival: Date?
+    let departure: Date?
+    let plannedArrival: Date?
+    let plannedDeparture: Date?
+}
+
+private struct StopDTO: Decodable {
+    let id: String?
+    let name: String?
 }

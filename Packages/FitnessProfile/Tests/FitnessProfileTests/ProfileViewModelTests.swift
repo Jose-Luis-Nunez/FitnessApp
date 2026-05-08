@@ -232,26 +232,45 @@ struct ProfileViewModelTests {
         #expect(vm.isLoadingBMI == false)
     }
 
-    // MARK: - Load Initial BMI
+    // MARK: - Lazy BMI Load
 
-    @Test func loadInitialBMI_noBodyData_doesNotFetch() {
+    @Test func loadBMIIfNeeded_noBodyData_doesNotFetch() {
         let vm = ProfileViewModel()
         vm.weightKg = 0
         vm.heightCm = 0
         vm.age = 0
         vm.bmiResult = nil
-        vm.loadInitialBMI()
+        vm.loadBMIIfNeeded()
         #expect(vm.isLoadingBMI == false)
+        #expect(vm.bmiResult == nil)
     }
 
-    @Test func loadInitialBMI_existingResult_doesNotRefetch() {
+    @Test func loadBMIIfNeeded_existingResult_doesNotRefetch() {
         let vm = ProfileViewModel()
         vm.weightKg = 75
         vm.heightCm = 180
         vm.age = 28
         vm.bmiResult = BMIResult(value: 23.1, category: .normal)
-        vm.loadInitialBMI()
+        vm.loadBMIIfNeeded()
         #expect(vm.isLoadingBMI == false)
+        vm.weightKg = 0; vm.heightCm = 0; vm.age = 0; vm.bmiResult = nil
+    }
+
+    @Test func loadBMIIfNeeded_populatesLocalResultImmediately() {
+        // Local-First: bmiResult should be populated synchronously before
+        // the network call returns, so the user sees a value immediately
+        // on first card expand.
+        let vm = ProfileViewModel()
+        vm.weightKg = 75
+        vm.heightCm = 180
+        vm.age = 28
+        vm.bmiResult = nil
+        vm.loadBMIIfNeeded()
+        // calculateBMILocally runs synchronously inside loadBMIIfNeeded,
+        // so by the time this line executes the result is set even though
+        // the API task is still in flight.
+        #expect(vm.bmiResult != nil)
+        // Cleanup: cancel the in-flight task to prevent test pollution.
         vm.weightKg = 0; vm.heightCm = 0; vm.age = 0; vm.bmiResult = nil
     }
 }

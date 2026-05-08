@@ -300,4 +300,105 @@ struct TramDeparturesViewModelTests {
         let dep = Self.makeDeparture(delaySeconds: 0)
         #expect(dep.delayMinutes == 0)
     }
+
+    // MARK: - Cancellation-leak fix (defer { isLoading = false })
+    // Mirror tests of SBahnDeparturesViewModelTests so the same bug class
+    // is regression-guarded on both VMs.
+
+    @Test func refresh_whenSucceeding_clearsIsLoading() async {
+        let service = MockService()
+        service.results = [Self.makeDeparture()]
+        let vm = Self.makeVM(service: service)
+        await vm.refresh()
+        #expect(vm.isLoading == false)
+    }
+
+    @Test func refresh_whenFailing_clearsIsLoading() async {
+        let service = MockService()
+        service.error = .network
+        let vm = Self.makeVM(service: service)
+        await vm.refresh()
+        #expect(vm.isLoading == false)
+    }
+
+    @Test func refresh_whenCancelled_clearsIsLoading() async {
+        let service = BlockableMockService()
+        let vm = TramDeparturesViewModel(
+            service: service,
+            cache: MockCache(),
+            line: TramDeparturesViewModel.defaultLine,
+            origin: TramDeparturesViewModel.defaultOrigin,
+            destination: TramDeparturesViewModel.defaultDestination,
+            maxResults: 3
+        )
+        let task = Task { await vm.refresh() }
+        await service.awaitSuspension()
+        #expect(vm.isLoading == true)
+
+        task.cancel()
+        service.resumeWithCancellation()
+        await task.value
+
+        #expect(vm.isLoading == false)
+    }
+
+    // MARK: - Failure backoff (RefreshScheduler-backed)
+
+    @Test func onBecameActive_recentFailure_doesNotRefetch() async {
+        let service = MockService()
+        service.error = .network
+        let vm = Self.makeVM(service: service)
+        vm.toggleExpanded()
+        try? await Task.sleep(nanoseconds: 80_000_000)
+        let countAfterFirst = service.callCount
+
+        vm.onBecameActive()
+        try? await Task.sleep(nanoseconds: 80_000_000)
+        #expect(service.callCount == countAfterFirst)
+    }
+
+    /// MockService variant that suspends on a continuation, allowing the
+    /// test to deterministically cancel the in-flight task.
+    private final class BlockableMockService: BVGTramServicing, @unchecked Sendable {
+        private let lock = NSLock()
+        private var continuation: CheckedContinuation<[TramDeparture], Error>?
+        private var suspensionCallback: (() -> Void)?
+
+        func awaitSuspension() async {
+            await withCheckedContinuation { (cb: CheckedContinuation<Void, Never>) in
+                lock.lock()
+                if continuation != nil {
+                    lock.unlock()
+                    cb.resume()
+                } else {
+                    suspensionCallback = { cb.resume() }
+                    lock.unlock()
+                }
+            }
+        }
+
+        func resumeWithCancellation() {
+            lock.lock()
+            let c = continuation
+            continuation = nil
+            lock.unlock()
+            c?.resume(throwing: CancellationError())
+        }
+
+        func fetchDepartures(
+            fromStopId: String,
+            directionStopId: String,
+            line: String,
+            maxResults: Int
+        ) async throws -> [TramDeparture] {
+            try await withCheckedThrowingContinuation { c in
+                lock.lock()
+                continuation = c
+                let cb = suspensionCallback
+                suspensionCallback = nil
+                lock.unlock()
+                cb?()
+            }
+        }
+    }
 }

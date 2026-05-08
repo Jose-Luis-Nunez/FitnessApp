@@ -64,7 +64,7 @@ public enum SBahnClassifier {
         direction: String,
         configuration config: SBahnRouteConfiguration
     ) -> SBahnClassification {
-        if config.westboundKeywords.contains(where: direction.contains) {
+        if config.wrongDirectionKeywords.contains(where: direction.contains) {
             return .west
         }
         if direction.contains("Ostbahnhof") {
@@ -73,26 +73,28 @@ public enum SBahnClassifier {
         if direction.contains("Warschauer") {
             return .eastShortWarschauer
         }
-        if line == "S9", config.eastBypassS9Keywords.contains(where: direction.contains) {
+        if let bypassKeywords = config.bypassLineKeywords[line],
+           bypassKeywords.contains(where: direction.contains) {
             return .eastShortWarschauer
         }
-        if config.eastViaDestinationKeywords.contains(where: direction.contains) {
+        if config.passesDestinationKeywords.contains(where: direction.contains) {
             return .eastDirect
         }
         return .unknown
     }
 
-    /// Classifies a candidate departure at a transfer stop. Only east-direct
-    /// trips that continue to the destination qualify as bridges; trips
-    /// that terminate at the transfer stop or earlier are filtered.
+    /// Classifies a candidate departure at a transfer stop. Only trips
+    /// that continue past the transfer stop to the destination qualify as
+    /// bridges; trips that terminate at the transfer stop or go the wrong
+    /// direction are filtered.
     public static func isEastDirectAtTransfer(
         line: String,
         direction: String,
         configuration config: SBahnRouteConfiguration
     ) -> Bool {
-        if config.westboundKeywords.contains(where: direction.contains) { return false }
+        if config.wrongDirectionKeywords.contains(where: direction.contains) { return false }
         if direction.contains("Ostbahnhof") { return false }
         if direction.contains("Warschauer") { return false }
-        return config.eastViaDestinationKeywords.contains(where: direction.contains)
+        return config.passesDestinationKeywords.contains(where: direction.contains)
     }
 }
