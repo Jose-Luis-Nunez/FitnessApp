@@ -26,7 +26,8 @@ extension CardTheme {
     public static let idle = CardTheme(
         surface: .idle,
         titleColor: AppStyle.Color.idleTitle,
-        subtitleColor: AppStyle.Color.idleMetricLabel
+        subtitleColor: AppStyle.Color.idleMetricLabel,
+        titleFont: AppStyle.Font.idleCardTitle
     )
 
     public static let completed = CardTheme(
@@ -41,6 +42,7 @@ extension CardTheme {
     public static let inactiveOnIdle = CardTheme(
         surface: .idle,
         titleColor: AppStyle.Color.idleTitle,
-        subtitleColor: AppStyle.Color.idleMetricLabel
+        subtitleColor: AppStyle.Color.idleMetricLabel,
+        titleFont: AppStyle.Font.idleCardTitle
     )
 }

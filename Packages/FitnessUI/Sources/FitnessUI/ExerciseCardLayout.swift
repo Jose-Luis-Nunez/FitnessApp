@@ -13,7 +13,7 @@ public enum ExerciseCardLayout {
     /// Constants for `CategoryTile`-style cards (the muscle-category grid).
     public enum CategoryTile {
         public static let contentPadding: CGFloat = AppStyle.Padding.screenHorizontal
-        public static let verticalSpacing: CGFloat = 12
+        public static let verticalSpacing: CGFloat = 6
         public static let iconSize: CGFloat = 80
     }
 

@@ -126,7 +126,7 @@ private extension IdleActiveCardModelView {
     var titleSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(model.name)
-                .font(AppStyle.Font.cardHeadline)
+                .font(AppStyle.Font.idleCardTitle)
                 .foregroundColor(AppStyle.Color.idleTitle)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)

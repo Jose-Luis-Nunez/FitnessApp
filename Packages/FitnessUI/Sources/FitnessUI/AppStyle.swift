@@ -56,7 +56,7 @@ public enum AppStyle {
         /// Diameter of the lightbulb icon in the idle card's Tip column.
         /// Matches `analyticsEntryIconSize` so the Tip and Progress columns
         /// read as a visually symmetric pair.
-        public static let tipIconSize: CGFloat = 27
+        public static let tipIconSize: CGFloat = 30
         public static let tipBoxSize: CGFloat = 32
         public static let tipBoxCornerRadius: CGFloat = 8
         public static let separatorHeight: CGFloat = 32
@@ -122,6 +122,10 @@ public enum AppStyle {
     public enum Font {
         public static let navigationHeadline = SwiftUI.Font.system(size: 28, weight: .bold)
         public static let cardHeadline = SwiftUI.Font.system(size: 18, weight: .bold)
+        /// Idle/Inactive exercise-card title (e.g. "Loop"). Smaller +
+        /// less bold than `cardHeadline` so it reads as a refined label
+        /// rather than a heavy header — matches the design-mockup look.
+        public static let idleCardTitle = SwiftUI.Font.system(size: 16, weight: .semibold)
         public static let regularChip = SwiftUI.Font.system(size: 16, weight: .semibold)
         public static let largeChip = SwiftUI.Font.system(size: 24, weight: .semibold)
         public static let defaultFont = SwiftUI.Font.system(size: 12, weight: .semibold)
@@ -202,9 +206,9 @@ public enum AppStyle {
         /// Base surface color for the Idle exercise card. Dedicated to the
         /// idle card so other cards/tiles app-wide stay on
         /// `exerciseCardBackground`.
-        public static let idleCardBackground = SwiftUI.Color(hex: "#151618")
-        public static let idleCardSoft = SwiftUI.Color(hex: "#151618")
-        public static let idleCardDark = SwiftUI.Color(hex: "#121314")
+        public static let idleCardBackground = SwiftUI.Color(hex: "#0E0F13")
+        public static let idleCardSoft = SwiftUI.Color(hex: "#101116")
+        public static let idleCardDark = SwiftUI.Color(hex: "#0C0D11")
         public static let idleCardBorder = SwiftUI.Color(hex: "#2F3033")
         public static let idleCardBorderLight = SwiftUI.Color.white.opacity(0.14)
         public static let idleCardBorderDark = SwiftUI.Color.white.opacity(0.10)
@@ -263,11 +267,10 @@ public enum AppStyle {
 
         // MARK: Idle Card — Play Button Material
         /// Stroke color of the hairline border around the idle play button
-        /// **and** the lightbulb tip box. Desaturated mid-mint so the
-        /// rings read as quiet accents in the same family as
-        /// `idleMetricValue`, just darker — never as bright as the glyph
-        /// itself, never neutral grey.
-        public static let idlePlayRingBase = SwiftUI.Color(hex: "#6F9E87")
+        /// **and** the lightbulb tip box. Aligned with `idleMetricValue`
+        /// so all teal accents (glyphs + outlines) read as one unified
+        /// tone — matches the design-mockup's flat-accent look.
+        public static let idlePlayRingBase = SwiftUI.Color(hex: "#8CC7A8")
         /// Soft mint glow rendered around the outside of the play-button ring.
         /// Same family as `idleMetricValue` but heavily desaturated via low
         /// alpha so the halo reads as a hint, not as neon.

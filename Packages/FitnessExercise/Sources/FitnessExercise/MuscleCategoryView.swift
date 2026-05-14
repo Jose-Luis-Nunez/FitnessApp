@@ -86,7 +86,7 @@ public struct MuscleCategoryView: View {
                     .padding(.bottom, AppStyle.Padding.titleBottom)
 
                 ScrollView {
-                    LazyVStack(spacing: 4) {
+                    LazyVStack(spacing: 6) {
                         exerciseListSection
                     }
                     .padding(.bottom, bottomListPadding)
@@ -162,7 +162,6 @@ public struct MuscleCategoryView: View {
             isInProgress: isInProgress
         )
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 6)
         .listRowSeparator(.hidden)
     }
 
