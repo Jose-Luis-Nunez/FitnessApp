@@ -2,6 +2,7 @@ import SwiftUI
 import FitnessCore
 import FitnessUI
 import FitnessExercise
+import Factory
 
 private enum Constants {
     static let horizontalPadding: CGFloat = AppStyle.Padding.screenHorizontal
@@ -31,6 +32,7 @@ private enum Constants {
 
 public struct WorkoutsScreen: View {
     @State private var viewModel = WorkoutsViewModel()
+    @State private var importCoordinator = Container.shared.workoutImportCoordinator()
     @Environment(AppRouter.self) private var router
     @Environment(UIOverlayState.self) private var overlayState
 
@@ -55,6 +57,10 @@ public struct WorkoutsScreen: View {
                                 MiniActionMenuItem(icon: "plus", title: "New workout", isDestructive: false) {
                                     overlayState.showWorkoutsMiniMenu = false
                                     viewModel.showCreateWorkout()
+                                },
+                                MiniActionMenuItem(icon: "square.and.arrow.down", title: "Import workout", isDestructive: false) {
+                                    overlayState.showWorkoutsMiniMenu = false
+                                    viewModel.showImportWorkout()
                                 }
                             ]
                         )
@@ -87,6 +93,21 @@ public struct WorkoutsScreen: View {
                     viewModel.renameWorkout()
                 }
                         )
+        }
+        .workoutImportFlow(viewModel: viewModel, coordinator: importCoordinator)
+        .sheet(item: $viewModel.workoutToShare) { item in
+            // Prefer the file URL so iOS treats the export as a real file
+            // attachment (Mail/AirDrop/Save-to-Files/Notes). Falls back to the
+            // raw JSON string if file-write failed during `requestShare`.
+            ShareSheet(items: [item.fileURL ?? item.json as Any])
+        }
+        .alert("Export fehlgeschlagen", isPresented: Binding(
+            get: { viewModel.exportErrorMessage != nil },
+            set: { if !$0 { viewModel.exportErrorMessage = nil } }
+        )) {
+            Button("OK", role: .cancel) { viewModel.exportErrorMessage = nil }
+        } message: {
+            Text(viewModel.exportErrorMessage ?? "")
         }
         .overlay(
             settingsMiniMenu
@@ -174,6 +195,11 @@ public struct WorkoutsScreen: View {
                                         if let workout = viewModel.selectedWorkoutForAction {
                                             viewModel.duplicateWorkout(workout)
                                             viewModel.hideFABOptions()
+                                        }
+                                    })
+                                    list.append(MiniActionMenuItem(icon: nil, title: "Export workout", isDestructive: false) {
+                                        if let workout = viewModel.selectedWorkoutForAction {
+                                            viewModel.requestShare(for: workout)
                                         }
                                     })
                                     list.append(MiniActionMenuItem(icon: nil, title: "Rename", isDestructive: false) {

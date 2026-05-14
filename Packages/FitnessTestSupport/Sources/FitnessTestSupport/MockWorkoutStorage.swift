@@ -21,6 +21,29 @@ public final class MockWorkoutStorage: WorkoutStoring {
         return copy
     }
 
+    public func importWorkout(_ workout: Workout, exercises: [Exercise], analytics: [AnalyticsEntry]) -> Workout {
+        let existingNames = Set(workouts.map(\.name))
+        let resolvedName: String = {
+            if !existingNames.contains(workout.name) { return workout.name }
+            let firstAttempt = "\(workout.name) (imported)"
+            if !existingNames.contains(firstAttempt) { return firstAttempt }
+            for i in 2...999 {
+                let candidate = "\(workout.name) (imported \(i))"
+                if !existingNames.contains(candidate) { return candidate }
+            }
+            return "\(workout.name) (imported \(UUID().uuidString.prefix(8)))"
+        }()
+        let imported = Workout(
+            id: workout.id,
+            name: resolvedName,
+            createdDate: Date(),
+            lastModified: Date(),
+            selectedCategories: workout.selectedCategories
+        )
+        workouts.append(imported)
+        return imported
+    }
+
     public func deleteWorkout(_ workout: Workout) {
         workouts.removeAll { $0.id == workout.id }
         if currentWorkout?.id == workout.id { currentWorkout = workouts.first }

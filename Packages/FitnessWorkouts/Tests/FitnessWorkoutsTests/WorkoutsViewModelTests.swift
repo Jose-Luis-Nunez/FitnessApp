@@ -21,6 +21,19 @@ struct WorkoutsViewModelTests {
         workoutStorage.workouts = seedWorkouts
         workoutStorage.currentWorkout = seedWorkouts.first
 
+        // Build an ExportWorkoutUseCase backed by the same mock exercise
+        // storage + an in-memory TotalAnalyticsStorage so requestShare
+        // never touches the real Factory container during tests.
+        let totalAnalytics = MockTotalAnalyticsStorage(
+            analyticsStorage: MockAnalyticsStorage(),
+            exerciseStorage: exerciseStorage,
+            workoutStorage: workoutStorage
+        )
+        let exportUseCase = ExportWorkoutUseCase(
+            exerciseStorage: exerciseStorage,
+            totalAnalyticsStorage: totalAnalytics
+        )
+
         let sut = WorkoutsViewModel(
             workoutStorage: workoutStorage,
             exerciseStorage: exerciseStorage,
@@ -30,7 +43,8 @@ struct WorkoutsViewModelTests {
             ),
             duplicateWorkoutUseCase: DuplicateWorkoutUseCase(
                 workoutStorage: workoutStorage
-            )
+            ),
+            exportWorkoutUseCase: exportUseCase
         )
         return (sut, workoutStorage, exerciseStorage)
     }
@@ -400,5 +414,49 @@ struct WorkoutsViewModelTests {
         let (sut, _, _) = makeSUT(seedWorkouts: [w])
 
         #expect(sut.getExerciseCount(for: w) == 0)
+    }
+
+    // MARK: - Export-as-File (Share)
+
+    @Test func requestShare_writesFitnessWorkoutFileToTmpWithSanitizedFilename() throws {
+        let workout = Workout(name: "Push/Pull Day?")
+        let (sut, _, _) = makeSUT(seedWorkouts: [workout])
+
+        sut.requestShare(for: workout)
+
+        let item = try #require(sut.workoutToShare)
+        let url = try #require(item.fileURL)
+        // Custom extension exclusively owned by FitnessApp (no clash with
+        // public.json owners on iOS 17+).
+        #expect(url.pathExtension == "fitnessworkout")
+        // Special chars get replaced with `_`; the name itself must NOT contain `/` or `?`
+        #expect(!url.lastPathComponent.contains("/"))
+        #expect(!url.lastPathComponent.contains("?"))
+        #expect(FileManager.default.fileExists(atPath: url.path))
+        // Cleanup
+        try? FileManager.default.removeItem(at: url)
+    }
+
+    @Test func requestShare_fileContentMatchesJSON() throws {
+        let workout = Workout(name: "Roundtrip")
+        let (sut, _, _) = makeSUT(seedWorkouts: [workout])
+
+        sut.requestShare(for: workout)
+
+        let item = try #require(sut.workoutToShare)
+        let url = try #require(item.fileURL)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let onDisk = try String(contentsOf: url, encoding: .utf8)
+        #expect(onDisk == item.json, "File on disk must match the in-memory JSON string.")
+    }
+
+    @Test func sanitizeFilename_replacesUnsafeChars() {
+        #expect(WorkoutsViewModel.sanitizeFilename("Push/Pull") == "Push_Pull")
+        #expect(WorkoutsViewModel.sanitizeFilename("A:B?C*D") == "A_B_C_D")
+        #expect(WorkoutsViewModel.sanitizeFilename("Normal Workout") == "Normal Workout")
+        #expect(WorkoutsViewModel.sanitizeFilename("   ") == "workout", "Whitespace-only collapses to fallback.")
+        #expect(WorkoutsViewModel.sanitizeFilename("???") == "workout", "All-unsafe collapses through the underscore-only guard to fallback.")
+        #expect(WorkoutsViewModel.sanitizeFilename("Push//Pull") == "Push_Pull", "Consecutive unsafe chars collapse to a single underscore.")
+        #expect(WorkoutsViewModel.sanitizeFilename("") == "workout", "Empty input uses the literal fallback.")
     }
 }

@@ -18,7 +18,7 @@ struct DeleteWorkoutUseCaseTests {
     private func makeSUT() -> (DeleteWorkoutUseCase, WorkoutStorageService, ExerciseStorageService) {
         let defaults = TestHelpers.makeIsolatedDefaults()
         let es = ExerciseStorageService(container: container)
-        let ws = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: es)
+        let ws = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: es, analyticsStorage: TestHelpers.makeNoOpAnalyticsStoring())
 
         let sut = DeleteWorkoutUseCase(workoutStorage: ws, exerciseStorage: es)
         return (sut, ws, es)

@@ -20,7 +20,7 @@ struct WorkoutStorageServiceTests {
     }
 
     private func makeSUT() -> WorkoutStorageService {
-        WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: exerciseStorage)
+        WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: exerciseStorage, analyticsStorage: TestHelpers.makeNoOpAnalyticsStoring())
     }
 
     // MARK: - Init / Auto-Create
@@ -139,7 +139,7 @@ struct WorkoutStorageServiceTests {
         given(spy).loadForWorkout(workoutId: .any, category: .value(.chest)).willReturn([chestExercise])
         given(spy).loadForWorkout(workoutId: .any, category: .any).willReturn([])
 
-        let sut = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: spy)
+        let sut = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: spy, analyticsStorage: TestHelpers.makeNoOpAnalyticsStoring())
         let original = sut.createWorkout(
             name: "Full Body",
             selectedCategories: [.arms, .chest]
@@ -165,7 +165,7 @@ struct WorkoutStorageServiceTests {
         given(spy).loadForWorkout(workoutId: .any, category: .value(.arms)).willReturn([armExercise])
         given(spy).loadForWorkout(workoutId: .any, category: .any).willReturn([])
 
-        let sut = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: spy)
+        let sut = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: spy, analyticsStorage: TestHelpers.makeNoOpAnalyticsStoring())
         let original = sut.createWorkout(
             name: "Arms Only",
             selectedCategories: [.arms, .legs]

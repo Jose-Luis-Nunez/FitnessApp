@@ -18,7 +18,7 @@ struct DuplicateWorkoutUseCaseTests {
     private func makeSUT() -> (DuplicateWorkoutUseCase, WorkoutStorageService) {
         let defaults = TestHelpers.makeIsolatedDefaults()
         let es = ExerciseStorageService(container: container)
-        let ws = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: es)
+        let ws = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: es, analyticsStorage: TestHelpers.makeNoOpAnalyticsStoring())
 
         let sut = DuplicateWorkoutUseCase(workoutStorage: ws)
         return (sut, ws)

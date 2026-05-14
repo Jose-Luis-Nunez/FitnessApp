@@ -83,7 +83,7 @@ struct LegacyMigrationServiceInitOrderingTests {
 
         let container = TestHelpers.makeInMemoryContainer()
         DataMigrationService.migrateIfNeeded(context: container.mainContext, defaults: defaults, documentsDir: docsDir)
-        let sut = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: TestHelpers.makeNoOpExerciseStoring())
+        let sut = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: TestHelpers.makeNoOpExerciseStoring(), analyticsStorage: TestHelpers.makeNoOpAnalyticsStoring())
 
         #expect(sut.workouts.count == 1, "Only the imported legacy workout must exist; no auto-default should be seeded.")
         #expect(sut.workouts.first?.id == legacyWorkoutId, "The imported workout must be the surviving one.")
@@ -101,14 +101,14 @@ struct LegacyMigrationServiceInitOrderingTests {
 
         let container = TestHelpers.makeInMemoryContainer()
 
-        let firstService = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: TestHelpers.makeNoOpExerciseStoring())
+        let firstService = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: TestHelpers.makeNoOpExerciseStoring(), analyticsStorage: TestHelpers.makeNoOpAnalyticsStoring())
         let autoSeedId = try #require(firstService.workouts.first?.id)
         #expect(firstService.workouts.first?.name == "Workout 1")
         #expect(defaults.string(forKey: "current_workout_id") == autoSeedId.uuidString)
 
         DataMigrationService.migrateIfNeeded(context: container.mainContext, defaults: defaults, documentsDir: docsDir)
 
-        let secondService = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: TestHelpers.makeNoOpExerciseStoring())
+        let secondService = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: TestHelpers.makeNoOpExerciseStoring(), analyticsStorage: TestHelpers.makeNoOpAnalyticsStoring())
 
         #expect(secondService.workouts.count == 1, "Heal pass must remove the empty auto-default that was seeded before the import.")
         #expect(secondService.workouts.first?.id == legacyWorkoutId)

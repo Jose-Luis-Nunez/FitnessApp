@@ -4,13 +4,22 @@ public struct WorkoutFormSheet<Content: View>: View {
     let title: String
     let isSaveDisabled: Bool
     let onSave: () -> Void
+    /// Whether tapping the Save button auto-dismisses the sheet. Default `true`
+    /// preserves the original behavior for create / rename flows. Set to
+    /// `false` for flows that may fail (e.g. import) and need to keep the
+    /// sheet open while the caller surfaces an error — the caller then drives
+    /// dismissal manually by setting `isPresented` to `false` on success.
+    /// V2 cleanup: replace with an async `() async -> Bool` onSave returning
+    /// the dismiss decision.
+    let dismissOnSave: Bool
     @Binding var isPresented: Bool
     @ViewBuilder let content: () -> Content
 
-    public init(title: String, isSaveDisabled: Bool, onSave: @escaping () -> Void, isPresented: Binding<Bool>, @ViewBuilder content: @escaping () -> Content) {
+    public init(title: String, isSaveDisabled: Bool, onSave: @escaping () -> Void, isPresented: Binding<Bool>, dismissOnSave: Bool = true, @ViewBuilder content: @escaping () -> Content) {
         self.title = title
         self.isSaveDisabled = isSaveDisabled
         self.onSave = onSave
+        self.dismissOnSave = dismissOnSave
         self._isPresented = isPresented
         self.content = content
     }
@@ -81,7 +90,9 @@ public struct WorkoutFormSheet<Content: View>: View {
         VStack(spacing: 16) {
             Button(action: {
                 onSave()
-                isPresented = false
+                if dismissOnSave {
+                    isPresented = false
+                }
             }) {
                 Text("Save")
                     .font(AppStyle.Font.defaultFont)

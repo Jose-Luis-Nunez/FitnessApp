@@ -14,7 +14,10 @@ public extension Container {
 
     var workoutStorage: Factory<WorkoutStoring> {
         self { MainActor.assumeIsolated {
-            WorkoutStorageService(exerciseStorage: Container.shared.exerciseStorage())
+            WorkoutStorageService(
+                exerciseStorage: Container.shared.exerciseStorage(),
+                analyticsStorage: Container.shared.analyticsStorage()
+            )
         } }.singleton
     }
     var exerciseStorage: Factory<ExerciseStoring> {
@@ -38,6 +41,12 @@ public extension Container {
     }
     var duplicateWorkoutUseCase: Factory<DuplicateWorkoutUseCase> {
         self { MainActor.assumeIsolated { DuplicateWorkoutUseCase() } }
+    }
+    var importWorkoutUseCase: Factory<ImportWorkoutUseCase> {
+        self { MainActor.assumeIsolated { ImportWorkoutUseCase() } }
+    }
+    var exportWorkoutUseCase: Factory<ExportWorkoutUseCase> {
+        self { MainActor.assumeIsolated { ExportWorkoutUseCase() } }
     }
     var saveFeedbackUseCase: Factory<SaveFeedbackUseCase> {
         self { MainActor.assumeIsolated { SaveFeedbackUseCase() } }

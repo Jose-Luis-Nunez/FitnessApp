@@ -18,8 +18,8 @@ struct TotalAnalyticsStorageServiceTests {
     private func makeSUT() -> (TotalAnalyticsStorageService, WorkoutStorageService, ExerciseStorageService, AnalyticsStorageService) {
         let defaults = TestHelpers.makeIsolatedDefaults()
         let es = ExerciseStorageService(container: container)
-        let ws = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: es)
         let as_ = AnalyticsStorageService(container: container)
+        let ws = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: es, analyticsStorage: as_)
 
         let sut = TotalAnalyticsStorageService(
             analyticsStorage: as_,

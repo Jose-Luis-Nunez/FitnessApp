@@ -63,15 +63,23 @@ enum TestHelpers {
         return mock
     }
 
+    static func makeNoOpAnalyticsStoring() -> MockAnalyticsStoring {
+        let mock = MockAnalyticsStoring(policy: .relaxedVoid)
+        given(mock).load(for: .any).willReturn([])
+        return mock
+    }
+
     static func makeWorkoutStorageService(
         container: ModelContainer,
         defaults: UserDefaults? = nil,
-        exerciseStorage: ExerciseStoring? = nil
+        exerciseStorage: ExerciseStoring? = nil,
+        analyticsStorage: AnalyticsStoring? = nil
     ) -> WorkoutStorageService {
         WorkoutStorageService(
             container: container,
             defaults: defaults ?? makeIsolatedDefaults(),
-            exerciseStorage: exerciseStorage ?? makeNoOpExerciseStoring()
+            exerciseStorage: exerciseStorage ?? makeNoOpExerciseStoring(),
+            analyticsStorage: analyticsStorage ?? makeNoOpAnalyticsStoring()
         )
     }
 
@@ -84,12 +92,13 @@ enum TestHelpers {
     ) {
         let defaults = makeIsolatedDefaults()
         let exerciseStorage = ExerciseStorageService(container: container)
+        let analyticsStorage = AnalyticsStorageService(container: container)
         let workoutStorage = WorkoutStorageService(
             container: container,
             defaults: defaults,
-            exerciseStorage: exerciseStorage
+            exerciseStorage: exerciseStorage,
+            analyticsStorage: analyticsStorage
         )
-        let analyticsStorage = AnalyticsStorageService(container: container)
 
         let management = ExerciseManagementService(
             exerciseStorage: exerciseStorage,

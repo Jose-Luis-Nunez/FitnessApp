@@ -76,7 +76,7 @@ struct WorkoutStorageServiceHealingTests {
         defaults.set(autoId.uuidString, forKey: "current_workout_id")
         defaults.set(autoId.uuidString, forKey: "default_workout_id")
 
-        let sut = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: TestHelpers.makeNoOpExerciseStoring())
+        let sut = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: TestHelpers.makeNoOpExerciseStoring(), analyticsStorage: TestHelpers.makeNoOpAnalyticsStoring())
 
         #expect(sut.workouts.count == 1, "Auto-default must be removed, leaving only the real workout.")
         #expect(sut.workouts.first?.id == realId)
@@ -90,7 +90,7 @@ struct WorkoutStorageServiceHealingTests {
     @Test("Fresh install: auto-default seed survives because there is no real workout to fall back on")
     func freshInstallLeavesSeedAlone() {
         let (container, defaults) = makeSUTContainer()
-        let sut = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: TestHelpers.makeNoOpExerciseStoring())
+        let sut = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: TestHelpers.makeNoOpExerciseStoring(), analyticsStorage: TestHelpers.makeNoOpAnalyticsStoring())
 
         #expect(sut.workouts.count == 1)
         #expect(sut.workouts.first?.name == "Workout 1")
@@ -119,7 +119,7 @@ struct WorkoutStorageServiceHealingTests {
         ctx.insert(userMadeWorkout1)
         try! ctx.save()
 
-        let sut = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: TestHelpers.makeNoOpExerciseStoring())
+        let sut = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: TestHelpers.makeNoOpExerciseStoring(), analyticsStorage: TestHelpers.makeNoOpAnalyticsStoring())
 
         #expect(sut.workouts.count == 2, "User-created 'Workout 1' must survive: it is not isDefault.")
         #expect(sut.workouts.contains { $0.name == "Workout 1" })
@@ -153,7 +153,7 @@ struct WorkoutStorageServiceHealingTests {
         ctx.insert(exercise)
         try! ctx.save()
 
-        let sut = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: TestHelpers.makeNoOpExerciseStoring())
+        let sut = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: TestHelpers.makeNoOpExerciseStoring(), analyticsStorage: TestHelpers.makeNoOpAnalyticsStoring())
 
         #expect(sut.workouts.count == 2, "Workout 1 was auto-seeded but the user added exercises — must NOT be deleted.")
     }
@@ -180,7 +180,7 @@ struct WorkoutStorageServiceHealingTests {
         ctx.insert(newerWorkout)
         try! ctx.save()
 
-        let sut = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: TestHelpers.makeNoOpExerciseStoring())
+        let sut = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: TestHelpers.makeNoOpExerciseStoring(), analyticsStorage: TestHelpers.makeNoOpAnalyticsStoring())
 
         #expect(sut.workouts.count == 2, "Old empty 'Workout 1' is older than the rest — likely a deliberate user-created shell, must survive.")
     }

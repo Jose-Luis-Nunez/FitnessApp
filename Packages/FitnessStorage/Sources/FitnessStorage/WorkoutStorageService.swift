@@ -24,9 +24,12 @@ public final class WorkoutStorageService: WorkoutStoring {
     private let defaultWorkoutKey = "default_workout_id"
     @ObservationIgnored
     private let exerciseStorage: ExerciseStoring
+    @ObservationIgnored
+    private let analyticsStorage: AnalyticsStoring
 
-    public init(container: ModelContainer? = nil, defaults: UserDefaults = .standard, exerciseStorage: ExerciseStoring) {
+    public init(container: ModelContainer? = nil, defaults: UserDefaults = .standard, exerciseStorage: ExerciseStoring, analyticsStorage: AnalyticsStoring) {
         self.exerciseStorage = exerciseStorage
+        self.analyticsStorage = analyticsStorage
         let resolved = container ?? Container.shared.modelContainer()
         self.context = ModelContext(resolved)
         self.context.autosaveEnabled = true
@@ -168,6 +171,65 @@ public final class WorkoutStorageService: WorkoutStoring {
         saveContext()
         reload()
         return duplicated
+    }
+
+    /// Persists an imported workout with its exercises and analytics history.
+    /// The caller (`ImportWorkoutUseCase`) is responsible for assigning fresh
+    /// UUIDs upstream — this method just resolves name collisions against the
+    /// existing workouts list and writes everything bucketed by category /
+    /// exerciseId via the injected storage services. `workout.isDefault`
+    /// always becomes `false` (per-device flag, not portable).
+    public func importWorkout(_ workout: Workout, exercises: [Exercise], analytics: [AnalyticsEntry]) -> Workout {
+        let resolvedName = resolveNameCollision(for: workout.name, existing: workouts.map(\.name))
+        let importedWorkout = Workout(
+            id: workout.id,
+            name: resolvedName,
+            createdDate: Date(),
+            lastModified: Date(),
+            selectedCategories: workout.selectedCategories
+        )
+
+        let model = WorkoutModel.from(importedWorkout, isDefault: false)
+        context.insert(model)
+        // Must flush BEFORE delegating to the exercise/analytics services —
+        // they run on independent ModelContexts that can't see this context's
+        // pending insert until it lands in the store. Without this save the
+        // ExerciseStorageService's `fetchWorkoutModel(id:)` call returns nil
+        // and exercises get persisted with `workoutId = nil`, which makes
+        // them invisible to subsequent `loadForWorkout(workoutId:category:)`
+        // queries.
+        saveContext()
+
+        let exercisesByCategory = Dictionary(grouping: exercises, by: \.category)
+        for (category, categoryExercises) in exercisesByCategory {
+            exerciseStorage.saveForWorkout(categoryExercises, workoutId: importedWorkout.id, category: category)
+        }
+
+        let analyticsByExercise = Dictionary(grouping: analytics, by: \.exerciseId)
+        for (exerciseId, entries) in analyticsByExercise {
+            analyticsStorage.save(entries, for: exerciseId)
+        }
+
+        reload()
+        return importedWorkout
+    }
+
+    /// Returns a name that does not collide with any entry in `existing`. If the
+    /// base name is unused, returns it unchanged. Otherwise appends
+    /// " (imported)", " (imported 2)", … until a free slot is found. Caps the
+    /// numeric suffix at 999 — a wildly unlikely real-world ceiling — before
+    /// falling back to a UUID-suffixed name. The existing workout with the same
+    /// name is never modified.
+    private func resolveNameCollision(for base: String, existing: [String]) -> String {
+        let existingSet = Set(existing)
+        if !existingSet.contains(base) { return base }
+        let firstAttempt = "\(base) (imported)"
+        if !existingSet.contains(firstAttempt) { return firstAttempt }
+        for i in 2...999 {
+            let candidate = "\(base) (imported \(i))"
+            if !existingSet.contains(candidate) { return candidate }
+        }
+        return "\(base) (imported \(UUID().uuidString.prefix(8)))"
     }
 
     public func deleteWorkout(_ workout: Workout) {
