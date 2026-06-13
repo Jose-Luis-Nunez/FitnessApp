@@ -256,9 +256,12 @@ public struct FloatingActionButtonsView: View {
                             .frame(width: selectionWidth, height: selectionHeight)
                     }
                 }
+                // PlainButtonStyle only hit-tests the label's own region, so the
+                // shape must wrap the full-width frame *here* — on the outer Button
+                // it leaves the padding dead to taps.
+                .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())
-        .contentShape(Rectangle())
         .accessibilityIdentifier(accessibilityID(for: style, text: text))
     }
 
