@@ -235,7 +235,7 @@ struct WorkoutDropdownSnapshotTests {
     @Test func longWorkoutName() {
         let overlay = UIOverlayState()
 
-        let view = WorkoutDropdownView(workoutName: "Mein sehr langer Workout Name der abgeschnitten wird")
+        let view = WorkoutDropdownView(workoutName: "My very long workout name that gets truncated")
             .environment(overlay)
         assertSnapshot(of: view, named: "long-name", size: CGSize(width: 300, height: 60))
     }

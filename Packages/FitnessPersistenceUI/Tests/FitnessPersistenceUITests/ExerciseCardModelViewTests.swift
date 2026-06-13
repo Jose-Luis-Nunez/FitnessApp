@@ -6,23 +6,23 @@ import FitnessTestSupport
 @_spi(PersistenceUI) import FitnessStorage
 @testable import FitnessPersistenceUI
 
-/// Tests für `ExerciseCardModelView` und seinen Variant-Resolver.
+/// Tests for `ExerciseCardModelView` and its variant resolver.
 ///
-/// Zwei Suites:
-/// - `ResolveVariantTests` testet `FitnessCore.resolveCardVariant(...)` als
-///   pure Funktion (keine Container-Setup nötig). Das ist die Logik die der neue
-///   Container live aus `model.isCompleted` aufruft.
-/// - `Bug1SanityTests` beweist mit echtem in-memory `ModelContainer`, dass
-///   `ExerciseModel.isCompleted = true` mutation den Variant-Switch tatsächlich
-///   umlenkt. Das ist die *Daten*-Seite des Bug-1-Fix; der UI-Render-Beweis kommt
-///   aus dem invariant-Test in `FitnessStorageTests/CoordinatorPersistsCompletionAfterFinishTests`
-///   sobald T7 die View einsetzt.
+/// Two suites:
+/// - `ResolveVariantTests` tests `FitnessCore.resolveCardVariant(...)` as a
+///   pure function (no container setup needed). This is the logic the new
+///   container calls live from `model.isCompleted`.
+/// - `Bug1SanityTests` proves with a real in-memory `ModelContainer` that an
+///   `ExerciseModel.isCompleted = true` mutation actually reroutes the variant
+///   switch. This is the *data* side of the Bug-1 fix; the UI render proof comes
+///   from the invariant test in `FitnessStorageTests/CoordinatorPersistsCompletionAfterFinishTests`
+///   once T7 puts the view into use.
 
 @MainActor
-@Suite("resolveCardVariant — Logik", .tags(.integration))
+@Suite("resolveCardVariant — Logic", .tags(.integration))
 struct ResolveVariantTests {
 
-    @Test("isCompleted=true dominiert: liefert .completed unabhängig vom Active-Set")
+    @Test("isCompleted=true dominates: returns .completed regardless of the active set")
     func completedDominates() {
         let id = UUID()
         let v = resolveCardVariant(
@@ -34,7 +34,7 @@ struct ResolveVariantTests {
         #expect(v == .completed)
     }
 
-    @Test("Active-Set sichtbar UND id matcht: liefert .active")
+    @Test("Active set visible AND id matches: returns .active")
     func activeWhenMatched() {
         let id = UUID()
         let v = resolveCardVariant(
@@ -46,7 +46,7 @@ struct ResolveVariantTests {
         #expect(v == .active)
     }
 
-    @Test("Active-Set sichtbar aber id mismatch: liefert .idle")
+    @Test("Active set visible but id mismatch: returns .idle")
     func idleWhenIdMismatch() {
         let v = resolveCardVariant(
             isCompleted: false,
@@ -57,7 +57,7 @@ struct ResolveVariantTests {
         #expect(v == .idle)
     }
 
-    @Test("Kein Active-Set sichtbar: liefert .idle (keine Active-Variante)")
+    @Test("No active set visible: returns .idle (no active variant)")
     func idleWhenNoActiveSet() {
         let id = UUID()
         let v = resolveCardVariant(
@@ -74,11 +74,11 @@ struct ResolveVariantTests {
 @Suite("ExerciseCardModelView — Bug-1 Sanity (live model.isCompleted)", .tags(.integration))
 struct Bug1SanityTests {
 
-    /// Beweist den Daten-Pfad: Eine Mutation auf `ExerciseModel.isCompleted` ändert
-    /// den abgeleiteten `CardVariant` sofort. Vor T5 lief der Container über
-    /// `viewModel.exercise.isCompleted` (ein Snapshot der manuell via
-    /// `syncExercise(...)` aktualisiert werden musste — Bug-1-Quelle).
-    @Test("model.isCompleted=true → resolveVariant flippt von .idle auf .completed")
+    /// Proves the data path: a mutation on `ExerciseModel.isCompleted` immediately
+    /// changes the derived `CardVariant`. Before T5 the container ran on
+    /// `viewModel.exercise.isCompleted` (a snapshot that had to be updated manually via
+    /// `syncExercise(...)` — the Bug-1 source).
+    @Test("model.isCompleted=true → resolveVariant flips from .idle to .completed")
     func variantFlipsOnMutation() throws {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(

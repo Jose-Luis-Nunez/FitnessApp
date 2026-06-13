@@ -40,7 +40,7 @@ DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer \
 PATH="/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer/usr/bin:$PATH" \
 xcodebuild test \
   -scheme <PackageName> \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max,OS=26.0' \
   -skipMacroValidation 2>&1 | tail -30
 ```
 

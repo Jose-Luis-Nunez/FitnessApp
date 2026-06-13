@@ -27,9 +27,9 @@ struct SBahnBridgeResolverTests {
         return TransitDeparture(tripId: tripId, line: line, direction: direction, plannedWhen: when, when: when)
     }
 
-    // MARK: - eigenständig found at Ostbahnhof
+    // MARK: - standalone found at Ostbahnhof
 
-    @Test("Eigenständig bridge at Ostbahnhof is returned")
+    @Test("Standalone bridge at Ostbahnhof is returned")
     func eigenständigBridge_atOstbahnhof_isReturned() {
         // S9 leaves Alex 23:02; user arrives Ostbahnhof 23:06.
         // Bridge window: [23:06, 23:11].
@@ -49,7 +49,7 @@ struct SBahnBridgeResolverTests {
         #expect(result?.transferStation == "S Ostbahnhof")
     }
 
-    // MARK: - Pass-Through trip is rejected (eigenständig violation)
+    // MARK: - Pass-Through trip is rejected (standalone violation)
 
     @Test("Pass-Through bridge (tripId in alex pool) is rejected")
     func passThroughBridge_isRejected() {
@@ -121,7 +121,7 @@ struct SBahnBridgeResolverTests {
             shortDeparture: s9,
             transferOptions: [.ostbahnhof, .warschauer],
             pools: [.ostbahnhof: [ostbf], .warschauer: [warsch]],
-            alexTripIds: [],  // shared-trip is eigenständig — not from Alex
+            alexTripIds: [],  // shared-trip is standalone — not from Alex
             configuration: config
         )
 

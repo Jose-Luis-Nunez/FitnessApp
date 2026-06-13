@@ -160,9 +160,9 @@ public final class TramDeparturesViewModel {
             return
         }
         if let tramError = error as? BVGTramError {
-            errorMessage = tramError.errorDescription ?? "Fehler beim Laden."
+            errorMessage = tramError.errorDescription ?? "Failed to load."
         } else {
-            errorMessage = "Fehler beim Laden."
+            errorMessage = "Failed to load."
         }
     }
 

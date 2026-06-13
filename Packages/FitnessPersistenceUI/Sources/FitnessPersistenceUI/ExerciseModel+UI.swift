@@ -3,36 +3,36 @@ import FitnessCore
 import FitnessUI
 @_spi(PersistenceUI) import FitnessStorage
 
-/// Convenience-Reads die heute auf `Exercise` (struct) als computed properties leben.
-/// In `FitnessPersistenceUI` brauchen die `*ModelView`-Cards die gleiche Surface,
-/// aber direkt auf dem `@Model` — ohne über `model.toDomain()` einen Snapshot pro
-/// body-recompute anzulegen (das wäre genau das Anti-Pattern aus ADR-0001).
+/// Convenience reads that today live on `Exercise` (struct) as computed properties.
+/// In `FitnessPersistenceUI` the `*ModelView` cards need the same surface,
+/// but directly on the `@Model` — without creating a snapshot per body recompute
+/// via `model.toDomain()` (that would be exactly the anti-pattern from ADR-0001).
 ///
-/// Diese Extensions sind absichtlich **dünn**: Sie spiegeln genau die computed
-/// properties die heute in `Exercise.swift` und `MuscleCategoryGroup+UI.swift`
-/// definiert sind. Falls die Source-of-Truth-Properties dort wachsen, wachsen
-/// sie hier mit. T8 löscht die struct-seitigen Equivalents wenn die letzte
-/// `Exercise`-konsumierende View weg ist.
+/// These extensions are intentionally **thin**: they mirror exactly the computed
+/// properties that are defined today in `Exercise.swift` and
+/// `MuscleCategoryGroup+UI.swift`. If the source-of-truth properties there grow,
+/// they grow here too. T8 deletes the struct-side equivalents once the last
+/// `Exercise`-consuming view is gone.
 @_spi(PersistenceUI)
 extension ExerciseModel {
 
-    /// Spiegelt `Exercise.hasWeight`.
+    /// Mirrors `Exercise.hasWeight`.
     public var hasWeight: Bool { weight > 0 }
 
-    /// Spiegelt `Exercise.displayIconName`: nimmt den eigenen `iconName` wenn er
-    /// in der Category-Icon-Liste ist, sonst den Category-Default.
+    /// Mirrors `Exercise.displayIconName`: takes the own `iconName` if it is
+    /// in the category icon list, otherwise the category default.
     public var displayIconName: String {
         categoryGroup.availableIcons.contains(iconName)
             ? iconName
             : categoryGroup.defaultIconName
     }
 
-    /// Map zur `MuscleCategoryGroup`-Enum für Icon-Alignment / Default-Icon-Lookup.
+    /// Maps to the `MuscleCategoryGroup` enum for icon alignment / default-icon lookup.
     public var categoryGroup: MuscleCategoryGroup {
         MuscleCategoryGroup(rawValue: category) ?? .arms
     }
 
-    /// Spiegelt `Exercise.iconAlignment` aus `MuscleCategoryGroup+UI.swift`.
+    /// Mirrors `Exercise.iconAlignment` from `MuscleCategoryGroup+UI.swift`.
     public var iconAlignment: Alignment {
         categoryGroup.iconAlignment
     }

@@ -6,7 +6,7 @@ public protocol BVGSBahnServicing: Sendable {
     /// Fetches the next S-Bahn departures from `fromStopId` heading toward
     /// `toStopId` (Ostkreuz). Each departure is either `east-direct`
     /// (passes through Ostkreuz on its own) or carries a `BridgeHint`
-    /// pointing at an eigenständig connecting train at Ostbahnhof or
+    /// pointing at a standalone connecting train at Ostbahnhof or
     /// Warschauer. Trips with no useful bridge are filtered out so the
     /// user never sees a "useless" short-turn.
     func fetchSBahnRoute(

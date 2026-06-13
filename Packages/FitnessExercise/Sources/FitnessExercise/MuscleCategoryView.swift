@@ -122,13 +122,13 @@ public struct MuscleCategoryView: View {
             viewModel.refreshExercises()
         }
         .overlay(miniMenuOverlay)
-        .alert("Übungen zurücksetzen?", isPresented: $viewModel.showResetConfirmation) {
-            Button("Zurücksetzen", role: .destructive) {
+        .alert("Reset exercises?", isPresented: $viewModel.showResetConfirmation) {
+            Button("Reset", role: .destructive) {
                 viewModel.resetProgress()
             }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("Möchtest du wirklich alle Übungen in dieser Kategorie zurücksetzen?")
+            Text("Do you really want to reset all exercises in this category?")
         }
     }
 

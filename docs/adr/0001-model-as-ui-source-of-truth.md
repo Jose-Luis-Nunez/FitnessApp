@@ -1,161 +1,162 @@
-# 0001 — SwiftData @Model als Single Source of Truth in der UI
+# 0001 — SwiftData @Model as the Single Source of Truth in the UI
 
 * Status: accepted
 * Date: 2026-04-19
 * Deciders: jose.nunez
 
-## Kontext
+## Context
 
-Die App hatte zwei Refactor-Wellen für Cross-Layer-State-Sync, die das
-Sync-Problem nicht gelöst haben:
+The app went through two refactor waves for cross-layer state sync that did not
+solve the sync problem:
 
-- **Refactor 1**: pro-Coordinator `withObservationTracking`-Loops +
-  `restartCoordinatorObservations` — fragil, viele explizite Subscriptions
-- **Refactor 2** (Commit `d1e5e746`): konsolidierter `changeVersion: Int`
-  Counter mit Polling-Loops in jedem ViewModel — deckt Save-Failures zu,
-  ersetzt keine Domain-Events
+- **Refactor 1**: per-coordinator `withObservationTracking` loops +
+  `restartCoordinatorObservations` — fragile, many explicit subscriptions
+- **Refactor 2** (commit `d1e5e746`): a consolidated `changeVersion: Int`
+  counter with polling loops in every ViewModel — masks save failures,
+  does not replace domain events
 
-Beide hinterließen zwei aktive Bugs:
-1. `TrainingView` zeigt eine "idle"-Card ohne Play-Button nach Exercise-Finish
-   (visuell stale, refresht erst beim Re-Mount).
-2. `MuscleCategorySelectionView` aktualisiert die "X von Y"-Kategorie-Tiles
-   erst beim Aufruf der Workout-View — nicht direkt nach Exercise-Finish.
+Both left two active bugs behind:
+1. `TrainingView` shows an "idle" card without a play button after an exercise
+   finish (visually stale, only refreshes on re-mount).
+2. `MuscleCategorySelectionView` updates the "X of Y" category tiles only when
+   the workout view is opened — not immediately after an exercise finish.
 
-Die strukturelle Wurzel war **vier parallele Kopien derselben `Exercise`-Entität**:
+The structural root cause was **four parallel copies of the same `Exercise` entity**:
 
-- `ExerciseStorageService` hält `[ExerciseModel]` (SwiftData)
-- `ExerciseManagementService` reicht Domain-Operationen durch
-- `MuscleCategorySelectionViewModel.cardViewModels[UUID]` hielt pro ID einen
-  `ExerciseCardViewModel` mit eigener `Exercise`-Kopie
-- `TrainingView.@State private var cardViewModel` hielt noch eine Kopie
+- `ExerciseStorageService` holds `[ExerciseModel]` (SwiftData)
+- `ExerciseManagementService` passes domain operations through
+- `MuscleCategorySelectionViewModel.cardViewModels[UUID]` held one
+  `ExerciseCardViewModel` per ID with its own `Exercise` copy
+- `TrainingView.@State private var cardViewModel` held yet another copy
 
-Jede dieser Quellen musste bei einer Mutation manuell synchronisiert werden.
-`syncExercise(...)`, `refreshExercises()` und `changeVersion &+= 1` waren alles
-Symptom-Workarounds für dieselbe strukturelle Mehrfach-Quelle. Die letzten
-zwei Snapshot-Kopien wurden mit T8d (Pilot-Migration in `MuscleCategoryView`
-+ `MuscleCategorySelectionView`) und T8d/Training (Migration des
-`TrainingView`-Pfades) entfernt.
+Each of these sources had to be synchronized manually on a mutation.
+`syncExercise(...)`, `refreshExercises()`, and `changeVersion &+= 1` were all
+symptom workarounds for the same structural multi-source. The last two snapshot
+copies were removed with T8d (pilot migration in `MuscleCategoryView`
++ `MuscleCategorySelectionView`) and T8d/Training (migration of the
+`TrainingView` path).
 
-## Optionen
+## Options
 
-- **A**: Status quo — `Int`-Counter weiterentwickeln, mehr `syncExercise`-Aufrufe
-- **B**: Unidirectional data flow / Redux-Pattern (TCA o.ä.) — eigener Store, Reducer, Effects
-- **C**: SwiftData `@Model` direkt als UI-SoT, `@Bindable`/`@Query` in Views
-- **D**: CoreData mit `NSFetchedResultsController`-Wrapper
+- **A**: Status quo — keep evolving the `Int` counter, add more `syncExercise` calls
+- **B**: Unidirectional data flow / Redux pattern (TCA or similar) — its own store, reducers, effects
+- **C**: SwiftData `@Model` directly as the UI SoT, `@Bindable`/`@Query` in views
+- **D**: CoreData with an `NSFetchedResultsController` wrapper
 
-### Bewertung
+### Evaluation
 
-**A** ist empirisch widerlegt. Zwei Refactor-Wellen haben das Sync-Problem nicht gelöst — die Bug-Klasse ist strukturell, nicht implementierungs-bedingt.
+**A** is empirically disproven. Two refactor waves did not solve the sync problem — the bug class is structural, not implementation-related.
 
-**B (TCA)** ist eine **valide** Architektur und löst die Bug-Klassen by-construction (unidirectional flow, gescopete Stores, deterministische Reducer-Tests). Sie wurde abgelehnt aus einem Grund: **Plattform-Richtung**. Apple's gesamte 2025/26-SwiftUI-Strategie (`@Observable`, `@Model`, `@Query`, `@Bindable`, `Observation` Framework) zielt darauf ab, **denselben Effekt** wie ein Unidirectional-Store **ohne externe Abhängigkeit** zu liefern. Pointfree (TCA-Schöpfer) selbst migriert TCA's interne Architektur auf `@Observable`. Wer heute neu startet wettet entweder auf TCA (gegen die Plattform-Richtung, mit zusätzlichem Persistence-Boilerplate weil SwiftData nicht in TCA's State-Modell aufgeht) **oder** auf `@Model`+`@Query` (mit der Plattform, zero Persistence-Boilerplate).
+**B (TCA)** is a **valid** architecture and solves the bug classes by construction (unidirectional flow, scoped stores, deterministic reducer tests). It was rejected for one reason: **platform direction**. Apple's entire 2025/26 SwiftUI strategy (`@Observable`, `@Model`, `@Query`, `@Bindable`, the `Observation` framework) aims to deliver the **same effect** as a unidirectional store **without an external dependency**. Pointfree (TCA's creators) themselves are migrating TCA's internal architecture onto `@Observable`. Anyone starting fresh today bets either on TCA (against the platform direction, with additional persistence boilerplate because SwiftData does not fit into TCA's state model) **or** on `@Model`+`@Query` (with the platform, zero persistence boilerplate).
 
-**D (CoreData + FRC)** wäre ein Rückschritt — `NSFetchedResultsController` ist ein UIKit-Pattern mit imperativen Updates und passt nicht zu SwiftUI's deklarativem Modell.
+**D (CoreData + FRC)** would be a step backward — `NSFetchedResultsController` is a UIKit pattern with imperative updates and does not fit SwiftUI's declarative model.
 
-**C** ist die First-Party-Plattform-Antwort auf exakt das Problem das wir lösen wollen. Sie eliminiert die Bug-Klassen by-construction (eine `id` → eine Quelle), entfernt mehr Code als sie hinzufügt (T8 Cleanup), und positioniert die Codebase auf dem Pfad den Apple weiterentwickelt.
+**C** is the first-party platform answer to exactly the problem we want to solve. It eliminates the bug classes by construction (one `id` → one source), removes more code than it adds (T8 cleanup), and positions the codebase on the path Apple keeps developing.
 
-## Entscheidung
+## Decision
 
-**Option C**: SwiftData `@Model` ist die Single Source of Truth in der UI.
+**Option C**: SwiftData `@Model` is the single source of truth in the UI.
 
-UI-Komponenten konsumieren `@Model`-Instanzen direkt:
+UI components consume `@Model` instances directly:
 
-- **Detail-Views** halten eine konkrete `@Model`-Referenz via `@Bindable var model: ExerciseModel`
-- **List-/Kollektions-Views** binden via `@Query(filter: ...) var items: [ExerciseModel]`
-- **Mutationen** passieren auf der `@Model`-Instanz selbst (`model.isCompleted = true`)
-- **Persistenz** via `try? context.save()` im selben MainActor-Tick — Apple's
-  automatische Observation-Propagation aktualisiert alle aktiven `@Query`s und
-  `@Bindable`-Views direkt.
+- **Detail views** hold a concrete `@Model` reference via `@Bindable var model: ExerciseModel`
+- **List/collection views** bind via `@Query(filter: ...) var items: [ExerciseModel]`
+- **Mutations** happen on the `@Model` instance itself (`model.isCompleted = true`)
+- **Persistence** via `try? context.save()` in the same MainActor tick — Apple's
+  automatic observation propagation updates all active `@Query`s and
+  `@Bindable` views immediately.
 
-### Eingrenzung (Scope)
+### Scope
 
-- Plan bleibt **`@MainActor`-only**. Kein `@ModelActor`/Background-Mutation in
-  diesem Refactor — Mitigation des bekannten Background-Context-Update-Lecks
-  (siehe Stack Overflow Jan 2026, Apple Forums Apr 2025).
-- Genau **ein** `ModelContext` für den UI-Pfad (`mainContext` des `ModelContainer`).
-- `struct Exercise` (in `FitnessCore`) bleibt für nicht-UI-Konzerne:
-  Analytics-Snapshots, Cross-Package-DTOs, pure Logic-Tests, Persistierungs-Helpers
-  außerhalb des `@Model`-Lebenszyklus.
-  **Neue UI darf nur `@Model`-Referenzen halten.** Kein `@State` mit
-  `Exercise`-struct.
-  Die zuvor bewusste Ausnahme in `TrainingView.swift` (Snapshot-`ExerciseCardViewModel`)
-  ist mit dem T8d-Cleanup (Migration: Legacy Card Stack → Model Card Stack)
-  entfernt: `TrainingView` resolved seinen `exerciseId: UUID` jetzt via
-  `@Query<ExerciseModel>` und rendert `ExerciseCardModelView` direkt.
-  Coordinator-APIs, die noch `Exercise` (DTO) erwarten
+- The plan stays **`@MainActor`-only**. No `@ModelActor`/background mutation in
+  this refactor — mitigation of the known background-context update leak
+  (see Stack Overflow Jan 2026, Apple Forums Apr 2025).
+- Exactly **one** `ModelContext` for the UI path (the `ModelContainer`'s `mainContext`).
+- `struct Exercise` (in `FitnessCore`) stays for non-UI concerns:
+  analytics snapshots, cross-package DTOs, pure logic tests, persistence helpers
+  outside the `@Model` lifecycle.
+  **New UI may only hold `@Model` references.** No `@State` with an
+  `Exercise` struct.
+  The previously deliberate exception in `TrainingView.swift` (snapshot
+  `ExerciseCardViewModel`) was removed with the T8d cleanup (migration: legacy
+  card stack → model card stack): `TrainingView` now resolves its
+  `exerciseId: UUID` via `@Query<ExerciseModel>` and renders
+  `ExerciseCardModelView` directly.
+  Coordinator APIs that still expect `Exercise` (DTO)
   (`TrainingCoordinator.startTraining(for:)`,
-  `TrainingActionBarComponent`), werden mit `model.toDomain()` an den jeweiligen
-  Call-Sites gebrückt. Damit gibt es keine UI-View mehr, die einen
-  `Exercise`-Snapshot hält — die Bug-Klasse "stale UI nach Mutation" ist
-  app-weit by-construction ausgeschlossen.
+  `TrainingActionBarComponent`) are bridged with `model.toDomain()` at the
+  respective call sites. As a result there is no longer any UI view that holds an
+  `Exercise` snapshot — the "stale UI after mutation" bug class is excluded
+  app-wide by construction.
 
 ### Non-Goals
 
-- Kein CloudKit-Sync in dieser Phase (vorbereiten via ADR-0002, aber nicht aktivieren).
-- Keine Reduktion bestehender Domain-Tests die mit `struct Exercise` arbeiten.
-- Keine sofortige Migration aller Views — Pilot-Migration via T5/T6/T7,
-  Legacy-Cleanup in T8.
+- No CloudKit sync in this phase (prepare for it via ADR-0002, but do not enable it).
+- No reduction of existing domain tests that work with `struct Exercise`.
+- No immediate migration of all views — pilot migration via T5/T6/T7,
+  legacy cleanup in T8.
 
-## Konsequenzen
+## Consequences
 
-### Positiv
+### Positive
 
-- Bug-Klassen "stale Snapshot" und "VM-Cache desynchronisiert" können
-  by-construction nicht existieren — es gibt nur eine Quelle pro `id`.
-- Massiv weniger Code: `changeVersion`, `refreshExercises`, `syncExercise`,
-  Polling-Loops und VM-Caches mit UUID-Key entfallen vollständig (T8).
-- SwiftUI-native, idiomatisch — neue Team-Mitglieder finden bekannte Patterns.
-- Tests können in-memory `ModelContainer` nutzen und reproduzieren genau das
-  Produktionsverhalten (siehe T2 RED-Tests).
+- The "stale snapshot" and "VM cache desynchronized" bug classes cannot exist
+  by construction — there is only one source per `id`.
+- Massively less code: `changeVersion`, `refreshExercises`, `syncExercise`,
+  polling loops, and VM caches keyed by UUID are removed entirely (T8).
+- SwiftUI-native, idiomatic — new team members find familiar patterns.
+- Tests can use an in-memory `ModelContainer` and reproduce exactly the
+  production behavior (see the T2 RED tests).
 
-### Negativ
+### Negative
 
-- Drei neue Bug-Klassen treten an die Stelle der alten zwei:
-  - **Predicate-Bug** (`?.` / `!.` chains, `persistentModelID`) — Mitigation:
-    T0e Skill §14 + T3 Schema-Migration (`workoutId: UUID`)
-  - **Multi-Context-Lücke** — Mitigation: Single `ModelContext` (siehe Eingrenzung)
-  - **View-Identity-Race** bei dynamischen `@Query`-Filtern — Mitigation: `.id()`
-    auf Parent-Views (siehe T0e Skill §14d)
-- `@Model`-Lifecycle und SwiftData-Quirks (Predicate-Format, `@Attribute(.unique)`,
-  `.modelContainer` setup) werden zur Pflicht-Kompetenz im Team.
+- Three new bug classes take the place of the old two:
+  - **Predicate bug** (`?.` / `!.` chains, `persistentModelID`) — mitigation:
+    T0e skill §14 + T3 schema migration (`workoutId: UUID`)
+  - **Multi-context gap** — mitigation: single `ModelContext` (see Scope)
+  - **View identity race** with dynamic `@Query` filters — mitigation: `.id()`
+    on parent views (see T0e skill §14d)
+- `@Model` lifecycle and SwiftData quirks (predicate format, `@Attribute(.unique)`,
+  `.modelContainer` setup) become a mandatory competency on the team.
 
 ### Neutral
 
-- `struct Exercise` (DTO) und `@Model class ExerciseModel` (Persistenz +
-  UI-Quelle) koexistieren während und nach dem Refactor. Die DTO-Grenze ist
-  bewusst und dokumentiert.
-- CloudKit später möglich. Braucht aber explizite Konfliktstrategie und
-  CRDT-Überlegungen — separater ADR wenn so weit.
+- `struct Exercise` (DTO) and `@Model class ExerciseModel` (persistence +
+  UI source) coexist during and after the refactor. The DTO boundary is
+  deliberate and documented.
+- CloudKit possible later. But it needs an explicit conflict strategy and
+  CRDT considerations — a separate ADR when we get there.
 
-## Wann diese Entscheidung neu bewertet werden muss
+## When this decision must be re-evaluated
 
-Diese ADR ist nicht in Stein. Reopen wenn **eines** der folgenden Trigger eintritt:
+This ADR is not set in stone. Reopen it if **any** of the following triggers occurs:
 
-- **Komplexe asynchrone Flows**: Real-Time Multi-Device Editing, langlaufende
-  HealthKit-Reauth-State-Machines, Apple-Watch-Live-Sync mit Konflikt-Resolution.
-  TCA's deterministische `TestStore`-Tests sind hier objektiv besser als
-  `@Model`+`ModelContext`-Tests.
-- **Cross-Cutting Effects-Orchestration**: Wenn fünf+ Features gleichzeitig
-  asynchrone Effekte (Telemetrie, Logging, Analytics, Sync, Cache-Invalidation)
-  koordinieren müssen, wird ein expliziter Effects-Layer (TCA) klarer als
-  verstreute `Task { ... }`-Aufrufe.
-- **Apple deprecated/stagniert SwiftData**: Sehr unwahrscheinlich (Apple
-  investiert seit iOS 17 jährlich), aber wenn — Migration zu TCA oder
-  GRDB+Sharing-Toolkit als Alternative.
-- **Predicate-Komplexität explodiert**: Wenn unsere `@Query`-Filter regelmäßig
-  Joins über 3+ Modelle brauchen und SwiftData-Predicates es nicht ausdrücken
-  können, ist eine Repository-Schicht mit Domain-Queries (à la Clean Architecture)
-  die bessere Antwort — TCA ist dafür ein Vehikel, aber nicht zwingend.
+- **Complex asynchronous flows**: real-time multi-device editing, long-running
+  HealthKit re-auth state machines, Apple Watch live sync with conflict
+  resolution. TCA's deterministic `TestStore` tests are objectively better here
+  than `@Model`+`ModelContext` tests.
+- **Cross-cutting effects orchestration**: when five+ features need to
+  coordinate asynchronous effects simultaneously (telemetry, logging, analytics,
+  sync, cache invalidation), an explicit effects layer (TCA) becomes clearer
+  than scattered `Task { ... }` calls.
+- **Apple deprecates/stagnates SwiftData**: very unlikely (Apple has invested
+  yearly since iOS 17), but if so — migrate to TCA or
+  GRDB+Sharing toolkit as an alternative.
+- **Predicate complexity explodes**: if our `@Query` filters regularly need
+  joins across 3+ models and SwiftData predicates cannot express them, a
+  repository layer with domain queries (à la Clean Architecture) is the better
+  answer — TCA is one vehicle for that, but not a necessity.
 
-Trigger eingetreten → ADR-0004 schreiben (Migration zu TCA), nicht still
-einführen. Ein paralleler Stack ist tödlich.
+Trigger occurred → write ADR-0004 (migration to TCA), do not introduce it
+silently. A parallel stack is fatal.
 
-## Verweise
+## References
 
-- ADR-0002 (FitnessPersistenceUI als Schicht für SwiftData-UI-Code)
-- ADR-0003 (Coordinator-Session-Vertrag — wer hält was während Training)
-- Plan-Files: [`.cursor/plans/observable-models-sot/`](../../.cursor/plans/observable-models-sot/)
-  (T0–T8 inkrementelle Tasks, README.md als Index)
-- T0a `ui-state-sync-enforcement.mdc` (verbietet alte Counter-Pattern fortan)
-- T0e Skill §14 (Predicate-Anti-Patterns als Reviewer-Pflicht)
+- ADR-0002 (FitnessPersistenceUI as the layer for SwiftData UI code)
+- ADR-0003 (Coordinator session contract — who holds what during training)
+- Plan files: [`.cursor/plans/observable-models-sot/`](../../.cursor/plans/observable-models-sot/)
+  (T0–T8 incremental tasks, README.md as the index)
+- T0a `ui-state-sync-enforcement.mdc` (forbids the old counter pattern from now on)
+- T0e skill §14 (predicate anti-patterns as a reviewer obligation)
 - Apple `@Query`: <https://developer.apple.com/documentation/swiftdata/query>
 - Apple `@Model`: <https://developer.apple.com/documentation/swiftdata/model()>

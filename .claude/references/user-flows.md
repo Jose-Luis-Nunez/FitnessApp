@@ -1,136 +1,136 @@
 # User Flows & Screen Map
 
-> Wie der User sich durch die App bewegt — kein Code, nur Navigation und Affordances.
+> How the user moves through the app — no code, just navigation and affordances.
 
 ## App-Entry
 
-Beim ersten App-Start landet der User auf dem **Workouts-Screen** ("Meine Workouts"). Es gibt **keinen Splash, keinen Onboarding-Wizard, kein Login**. Wenn ein "Default-Workout" markiert ist, wird der Stack direkt auf `Workouts → Home` vorinitialisiert (siehe `ProductionLaunchStrategy`), sodass der User sofort den Home-Screen seines Lieblings-Workouts sieht.
+On first app launch the user lands on the **Workouts screen** ("My Workouts"). There is **no splash, no onboarding wizard, no login**. If a "default workout" is flagged, the stack is pre-initialized directly to `Workouts → Home` (see `ProductionLaunchStrategy`), so the user immediately sees the home screen of their favorite workout.
 
-## BottomBar (4 Tabs, fixe Reihenfolge)
+## BottomBar (4 tabs, fixed order)
 
-Die persistente Glass-Capsule am unteren Rand zeigt 4 Tabs (links nach rechts):
+The persistent glass capsule at the bottom edge shows 4 tabs (left to right):
 
-1. **Workout** (Icon: `homeIcon`) — `popToRoot()` zurück zum Workouts-Screen
-2. **Analytics** (Icon: `analyticsEntry`) — Total-Analytics über alle Exercises
-3. **Schedule** (Icon: `menuCalenderIcon`) — Trainingskalender + Streaks
-4. **Profile** (Icon: `profileMenuIcon`) — Nickname, BMI, Tram-Karte
+1. **Workout** (icon: `homeIcon`) — `popToRoot()` back to the Workouts screen
+2. **Analytics** (icon: `analyticsEntry`) — total analytics across all Exercises
+3. **Schedule** (icon: `menuCalenderIcon`) — training calendar + streaks
+4. **Profile** (icon: `profileMenuIcon`) — nickname, BMI, tram card
 
-Daneben gibt es zwei runde Glass-Buttons:
+Next to them are two round glass buttons:
 
-- **Links: Back-Chevron** — `pop()` (wird ausgeblendet wenn Stack leer)
-- **Rechts: Ellipsis (…)** — öffnet ein **kontextabhängiges Mini-Menü** je nach aktuellem Screen (siehe unten)
+- **Left: back chevron** — `pop()` (hidden when the stack is empty)
+- **Right: ellipsis (…)** — opens a **context-dependent mini menu** depending on the current screen (see below)
 
-Die Tab-Auswahl wird nicht aus einem expliziten "selectedTab"-State abgeleitet, sondern aus `AppRouter.currentScene`:
+The tab selection is not derived from an explicit "selectedTab" state, but from `AppRouter.currentScene`:
 
-| Scene                                    | Aktiver Tab |
+| Scene                                    | Active tab  |
 | ---------------------------------------- | ----------- |
 | `workouts`, `home`, `category`, `training` | Workout     |
 | `analytics`                              | Analytics   |
 | `schedule`                               | Schedule    |
 | `profile`                                | Profile     |
 
-Das heißt: Solange der User in der Workout/Training-Achse ist, bleibt der Workout-Tab hervorgehoben. Tab-Wechsel auf Analytics/Schedule/Profile ersetzen den Stack komplett (`switchTo(...)` baut den `NavigationPath` neu auf).
+That means: as long as the user is on the Workout/Training axis, the Workout tab stays highlighted. Switching to the Analytics/Schedule/Profile tabs replaces the stack completely (`switchTo(...)` rebuilds the `NavigationPath`).
 
-## Navigation Hierarchie (Workout-Achse)
+## Navigation hierarchy (Workout axis)
 
 ```
 WorkoutsScreen (root)
-    │   tap auf Tile (Workout-Auswahl)
+    │   tap on Tile (workout selection)
     ▼
 MuscleCategorySelectionView ("Home")
-    │   View-Modes: overview (5er-Kachel-Grid) | list (alle Exercises flat)
+    │   View-Modes: overview (5-tile grid) | list (all Exercises flat)
     │
-    │   tap auf Kategorie-Tile (overview)        tap auf Exercise-Card "Start"
+    │   tap on category tile (overview)         tap on Exercise-Card "Start"
     ▼                                           ▼
 MuscleCategoryView                          TrainingView
     │                                           │   live ActiveSet, Timer, FAB-Bar
-    │   tap auf Exercise "Start"                │   nach letztem Satz → Feedback-Sheet
+    │   tap on Exercise "Start"                 │   after last Set → Feedback-Sheet
     ▼                                           ▼
-TrainingView                                (Beenden → pop zurück)
+TrainingView                                (Finish → pop back)
 ```
 
-Tab-Achsen außerhalb (jeder ersetzt den Stack):
+Tab axes outside this (each replaces the stack):
 
 ```
-TotalAnalyticsView  →  (ggf. AnalyticsView pro Exercise via Card-Tap)
-ScheduleView        →  ScheduleDayDetailView (inline, kein Push)
-ProfileView         →  (Card-Aufklapp inline, kein Push)
+TotalAnalyticsView  →  (optionally AnalyticsView per Exercise via Card-Tap)
+ScheduleView        →  ScheduleDayDetailView (inline, no push)
+ProfileView         →  (card expand inline, no push)
 ```
 
-## Drei kanonische User-Flows
+## Three canonical user flows
 
-### Flow A: "Ich starte ein Training" (Tap-optimaler Pfad: 4 Taps)
+### Flow A: "I start a training" (tap-optimal path: 4 taps)
 
-1. App-Start → `WorkoutsScreen` (oder direkt `Home`, falls Default-Workout gesetzt)
-2. **Tap auf Workout-Tile** → `MuscleCategorySelectionView` (Home, Overview-Mode)
-3. **Tap auf Muskelgruppen-Tile** (z. B. "Brust") → `MuscleCategoryView`
-4. **Tap auf Exercise-Card** (Idle-Variante) → öffnet die Card im "Active"-Mode mit Start-Button
-5. **Tap auf "Start"** → `TrainingView`, ein Satz läuft, Timer tickt
-6. **Tap auf Done/More/Less pro Satz** → Coordinator schreibt `SetProgress`, springt zum nächsten Satz
-7. Nach letztem Satz → automatisch `FeedbackSheet` (zwei Detents) → "Save" oder "Hide"
-8. **Tap auf "Beenden"** in der TrainingActionBar → `pop()` zurück zur `MuscleCategoryView`, Card ist jetzt im `completed`-State
+1. App launch → `WorkoutsScreen` (or directly `Home`, if a default workout is set)
+2. **Tap on workout tile** → `MuscleCategorySelectionView` (Home, overview mode)
+3. **Tap on muscle group tile** (e.g. "Chest") → `MuscleCategoryView`
+4. **Tap on Exercise-Card** (idle variant) → opens the card in "Active" mode with a Start button
+5. **Tap on "Start"** → `TrainingView`, a Set is running, the timer ticks
+6. **Tap on Done/More/Less per Set** → the Coordinator writes `SetProgress`, jumps to the next Set
+7. After the last Set → automatically `FeedbackSheet` (two detents) → "Save" or "Hide"
+8. **Tap on "Finish"** in the TrainingActionBar → `pop()` back to the `MuscleCategoryView`, the card is now in the `completed` state
 
-Bei gesetztem Default-Workout reduziert sich das auf **3 Taps bis zum laufenden ersten Satz** (Workouts-Screen wird übersprungen).
+With a default workout set, this reduces to **3 taps until the first Set is running** (the Workouts screen is skipped).
 
-### Flow B: "Ich lege eine neue Übung an" (Quick-Path via Mini-Menu)
+### Flow B: "I create a new Exercise" (quick path via mini menu)
 
-1. Auf `MuscleCategorySelectionView` (List-Mode aktiv) → Ellipsis im BottomBar tippen
-2. Mini-Menü erscheint mit "New Exercise" → tap
-3. Kategorie-Auswahl (5 Tiles) → tap z. B. "Beine"
-4. **`ExercisePickerView`** öffnet sich als Bottom-Sheet (`.full` editMode):
-   - Name (Free-Text)
-   - Gewicht (Picker)
-   - Reps (Picker, 1...50)
-   - Sätze (Picker, 1...10)
-   - Sitzeinstellung (`ExerciseSeatPickerView`)
+1. On `MuscleCategorySelectionView` (list mode active) → tap the ellipsis in the BottomBar
+2. The mini menu appears with "New Exercise" → tap
+3. Category selection (5 tiles) → tap e.g. "Legs"
+4. **`ExercisePickerView`** opens as a bottom sheet (`.full` editMode):
+   - Name (free text)
+   - Weight (picker)
+   - Reps (picker, 1...50)
+   - Sets (picker, 1...10)
+   - Seat setting (`ExerciseSeatPickerView`)
    - Icon (`IconPickerView`)
-5. **Save** → Übung erscheint in der Kategorie-Liste
+5. **Save** → the Exercise appears in the category list
 
-Alternativer Pfad via `MuscleCategoryView`: Mini-Menu → "Add Exercise" → gleiches Picker-Sheet, ohne Kategorie-Auswahl-Schritt.
+Alternative path via `MuscleCategoryView`: mini menu → "Add Exercise" → same picker sheet, without the category selection step.
 
-### Flow C: "Ich schaue mir an, wie ich Fortschritte mache" (Analytics)
+### Flow C: "I look at how I'm making progress" (Analytics)
 
-Es gibt zwei Eintrittspunkte:
+There are two entry points:
 
-- **Per-Übung**: Auf einer Exercise-Card → kleines Chart-Icon → öffnet `AnalyticsView` mit Hill-Chart + Weight-Milestones + Result-Liste für diese eine Übung
-- **Aggregiert**: BottomBar → Analytics-Tab → `TotalAnalyticsView` mit Overall-Stats (Anzahl Sessions, abgeschlossene Übungen pro Kategorie) + Calendar-Picker für Drill-Down auf einen Tag
+- **Per-Exercise**: on an Exercise-Card → small chart icon → opens `AnalyticsView` with Hill-Chart + Weight-Milestones + result list for this one Exercise
+- **Aggregated**: BottomBar → Analytics tab → `TotalAnalyticsView` with overall stats (number of sessions, completed Exercises per category) + calendar picker for drill-down on a single day
 
-## Modals, Sheets & Overlays — Übersicht
+## Modals, Sheets & Overlays — Overview
 
-Die App nutzt **vier Präsentations-Patterns**, jeweils für unterschiedliche Use-Cases:
+The app uses **four presentation patterns**, each for a different use case:
 
-| Pattern                    | Wofür                                         | Beispiele                                                             |
+| Pattern                    | What for                                      | Examples                                                              |
 | -------------------------- | --------------------------------------------- | --------------------------------------------------------------------- |
-| **Mini-Menu** (Glass-Pop)  | kontextuelle Aktionen, ausgelöst von Ellipsis | Workouts (New/Rename/Delete/Default), Home (Reset / New Exercise), MuscleCategory (Add Exercise), Training (Cancel) |
-| **OverlaySheet (custom)**  | Picker-Sheets mit Action-Bar (Save/Cancel)    | `ExercisePickerView`, `ExerciseNamePickerView`, `ExerciseWeightPickerView`, `ExerciseSeatPickerView`, `IconPickerView`, `WorkoutPickerView` |
-| **Native `.sheet`**         | Formulare mit Detents + Grabber               | `AnalyticsView`, `FeedbackSheetView` (Post-Exercise)                  |
-| **`.fullScreenCover`**      | echte Modal-Edit-Screens                      | `CreateWorkoutView`, `RenameWorkoutView`, `AddAnalyticsEntryView`     |
+| **Mini-Menu** (Glass-Pop)  | contextual actions, triggered by the ellipsis | Workouts (New/Rename/Delete/Default), Home (Reset / New Exercise), MuscleCategory (Add Exercise), Training (Cancel) |
+| **OverlaySheet (custom)**  | picker sheets with an action bar (Save/Cancel) | `ExercisePickerView`, `ExerciseNamePickerView`, `ExerciseWeightPickerView`, `ExerciseSeatPickerView`, `IconPickerView`, `WorkoutPickerView` |
+| **Native `.sheet`**         | forms with detents + grabber                  | `AnalyticsView`, `FeedbackSheetView` (post-Exercise)                  |
+| **`.fullScreenCover`**      | true modal edit screens                       | `CreateWorkoutView`, `RenameWorkoutView`, `AddAnalyticsEntryView`     |
 
-### Mini-Menüs nach Scene (was der Ellipsis-Button öffnet)
+### Mini menus by scene (what the ellipsis button opens)
 
-| Scene      | Mini-Menü Items                                                          |
+| Scene      | Mini-Menu items                                                          |
 | ---------- | ------------------------------------------------------------------------ |
 | `workouts` | New workout                                                              |
-| `home`     | Overview-Mode: "Reset all" — List-Mode: "New Exercise" → Kategorie-Auswahl |
-| `category` | Add Exercise (öffnet Picker für die aktuelle Kategorie)                  |
-| `training` | Cancel Training (mit Bestätigung)                                        |
-| `profile`, `schedule`, `analytics` | _kein Mini-Menü_                                       |
+| `home`     | Overview mode: "Reset all" — List mode: "New Exercise" → category selection |
+| `category` | Add Exercise (opens the picker for the current category)                |
+| `training` | Cancel Training (with confirmation)                                      |
+| `profile`, `schedule`, `analytics` | _no mini menu_                                        |
 
-Außerdem hat **jedes Workout-Tile** ein eigenes Settings-Mini-Menü (Tap auf Zahnrad oder Long-Press): Duplicate / Rename / Set as Default / Delete (mit Confirm-Step).
+In addition, **every workout tile** has its own settings mini menu (tap on the gear or long-press): Duplicate / Rename / Set as Default / Delete (with a confirm step).
 
-## Live Activity (außerhalb der App)
+## Live Activity (outside the app)
 
-Während ein Training aktiv ist, wird eine **iOS Live Activity** auf dem Lock-Screen / der Dynamic Island angezeigt mit drei Buttons (Done / More / Less) — der User kann den Satz dort durchklicken, ohne die App zu öffnen. Implementiert via `TrainingActivityWidget` + `AppIntent`s (`DoneIntent`, `MoreIntent`, `LessIntent`).
+While a training is active, an **iOS Live Activity** is shown on the lock screen / Dynamic Island with three buttons (Done / More / Less) — the user can click through the Set there without opening the app. Implemented via `TrainingActivityWidget` + `AppIntent`s (`DoneIntent`, `MoreIntent`, `LessIntent`).
 
-## Was es bewusst **nicht** gibt
+## What deliberately **does not** exist
 
-- **Kein Splash-/Loading-Screen** — direkter Einstieg
-- **Kein Onboarding-Wizard** — Default-Workout-Setup ist optional, App funktioniert sofort
-- **Kein klassisches Hamburger-Menü oder Drawer** — alles über BottomBar + Mini-Menüs
-- **Keine Push-Benachrichtigungen** (nur die Live Activity während eines aktiven Trainings)
-- **Kein Search/Filter quer durch die App** — nur Workout-Picker und View-Mode-Filter (Overview/List)
+- **No splash/loading screen** — direct entry
+- **No onboarding wizard** — default-workout setup is optional, the app works immediately
+- **No classic hamburger menu or drawer** — everything via the BottomBar + mini menus
+- **No push notifications** (only the Live Activity during an active training)
+- **No search/filter across the app** — only the workout picker and the view-mode filter (Overview/List)
 
-## Quellen
+## Sources
 
 - App-Entry: `FitnessApp/FitnessAppApp.swift`
 - BottomBar: `FitnessApp/Features/BottomBar/BottomMenuBarView.swift`

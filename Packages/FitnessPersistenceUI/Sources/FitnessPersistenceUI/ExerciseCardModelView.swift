@@ -4,23 +4,23 @@ import FitnessCore
 import FitnessTraining
 @_spi(PersistenceUI) import FitnessStorage
 
-/// Container für ADR-0001: liest `model.isCompleted` direkt vom `@Model` und
-/// reicht in den passenden Variant-View — ohne Snapshot-ViewModel.
+/// Container for ADR-0001: reads `model.isCompleted` directly from the `@Model`
+/// and forwards into the matching variant view — without a snapshot ViewModel.
 ///
-/// Jeder Variant-Recompute basiert auf der live `@Bindable`-Quelle. Wenn der
-/// Coordinator nach einem `finish` `model.isCompleted` in der Storage setzt,
-/// propagiert SwiftData das in jeden gebundenen View, und der Variant-Switch
-/// unten nimmt sofort den `.completed`-Pfad — ohne manuellen Sync-Schritt.
+/// Every variant recompute is based on the live `@Bindable` source. When the
+/// coordinator sets `model.isCompleted` in storage after a `finish`, SwiftData
+/// propagates that into every bound view, and the variant switch below
+/// immediately takes the `.completed` path — without a manual sync step.
 ///
-/// `FitnessCore.resolveCardVariant(...)` wird wiederverwendet (in T7-0 nach
-/// `FitnessCore` gehoben); kein Code-Duplizieren der Variant-Logik.
+/// `FitnessCore.resolveCardVariant(...)` is reused (hoisted into `FitnessCore`
+/// in T7-0); no code duplication of the variant logic.
 ///
-/// **SPI-Marker**: Die View ist `@_spi(PersistenceUI) public`, weil sie
-/// `@Bindable model: ExerciseModel` in der API hat — und `ExerciseModel` ist
-/// nur SPI-sichtbar. Aufrufer müssen
-/// `@_spi(PersistenceUI) import FitnessPersistenceUI` deklarieren, das ist die
-/// gleiche Compiler-enforced Awareness die wir schon für `FitnessStorage`
-/// haben (siehe ADR-0002).
+/// **SPI marker**: The view is `@_spi(PersistenceUI) public`, because it has
+/// `@Bindable model: ExerciseModel` in its API — and `ExerciseModel` is only
+/// SPI-visible. Callers must declare
+/// `@_spi(PersistenceUI) import FitnessPersistenceUI`; that is the same
+/// compiler-enforced awareness we already have for `FitnessStorage`
+/// (see ADR-0002).
 @_spi(PersistenceUI)
 public struct ExerciseCardModelView: View {
     @Bindable public var model: ExerciseModel

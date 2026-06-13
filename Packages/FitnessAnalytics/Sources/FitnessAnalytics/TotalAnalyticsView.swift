@@ -94,7 +94,7 @@ public struct TotalAnalyticsView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Gesamtübersicht")
+                    Text("Total Overview")
                         .font(AppStyle.Font.analyticsExerciseTitle)
                         .foregroundColor(AppStyle.Color.white)
                         .fixedSize()

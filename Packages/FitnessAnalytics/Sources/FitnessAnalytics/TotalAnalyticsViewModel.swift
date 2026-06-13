@@ -357,7 +357,7 @@ public final class TotalAnalyticsViewModel {
         let gapsText = gaps.map { "\($0)" }.joined(separator: ", ")
         let roundedAverage = String(format: "%.1f", averageGap)
 
-        return "Historische Abstände: \(gapsText) Days\nDurchschnitt: \(roundedAverage) Days\nSeit letztem Training: \(daysSinceLastTraining) Days (nicht in Berechnung)\nErgebnis: \(rhythmLabel)"
+        return "Historical gaps: \(gapsText) Days\nAverage: \(roundedAverage) Days\nSince last training: \(daysSinceLastTraining) Days (not in calculation)\nResult: \(rhythmLabel)"
     }
 
     public func getTrainingDays() -> [Date] {

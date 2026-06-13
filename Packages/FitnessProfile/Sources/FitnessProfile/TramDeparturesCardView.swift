@@ -143,7 +143,7 @@ public struct TramDeparturesCardView: View {
     }
 
     private var emptyRow: some View {
-        Text("Keine Abfahrten in den nächsten 60 Minuten.")
+        Text("No departures in the next 60 minutes.")
             .font(AppStyle.Font.detailCaption)
             .foregroundColor(AppStyle.Color.gray)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -200,7 +200,7 @@ public struct TramDeparturesCardView: View {
                 .font(AppStyle.Font.cardSmallBold)
                 .foregroundColor(AppStyle.Color.green)
         } else {
-            Text("pünktlich")
+            Text("on time")
                 .font(AppStyle.Font.cardSmallBold)
                 .foregroundColor(AppStyle.Color.green)
         }

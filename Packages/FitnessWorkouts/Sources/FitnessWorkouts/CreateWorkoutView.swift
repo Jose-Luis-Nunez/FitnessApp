@@ -12,7 +12,7 @@ struct CreateWorkoutView: View {
 
     var body: some View {
         WorkoutFormSheet(
-            title: "Neues Workout",
+            title: "New Workout",
             isSaveDisabled: workoutName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
             onSave: onSave,
             isPresented: $isPresented
@@ -41,11 +41,11 @@ struct CreateWorkoutView: View {
 
                 VStack(alignment: .leading, spacing: 16) {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Muskelgruppen")
+                        Text("Muscle Groups")
                             .font(.headline)
                             .foregroundColor(textColor)
 
-                        Text("Wähle die Kategorien für dein Workout")
+                        Text("Choose the categories for your workout")
                             .font(.caption)
                             .foregroundColor(textColor.opacity(0.7))
                     }

@@ -159,9 +159,9 @@ public final class SBahnDeparturesViewModel {
             return
         }
         if let sbahnError = error as? BVGSBahnError {
-            errorMessage = sbahnError.errorDescription ?? "Fehler beim Laden."
+            errorMessage = sbahnError.errorDescription ?? "Failed to load."
         } else {
-            errorMessage = "Fehler beim Laden."
+            errorMessage = "Failed to load."
         }
     }
 

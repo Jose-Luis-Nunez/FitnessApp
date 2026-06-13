@@ -93,11 +93,11 @@ struct BMIServiceTests {
     // MARK: - BMICategory DisplayName
 
     @Test func bmiCategory_displayNames() {
-        #expect(BMICategory.underweight.displayName == "Untergewicht")
-        #expect(BMICategory.normal.displayName == "Normalgewicht")
-        #expect(BMICategory.overweight.displayName == "Übergewicht")
-        #expect(BMICategory.obese.displayName == "Adipositas")
-        #expect(BMICategory.unknown.displayName == "Unbekannt")
+        #expect(BMICategory.underweight.displayName == "Underweight")
+        #expect(BMICategory.normal.displayName == "Normal weight")
+        #expect(BMICategory.overweight.displayName == "Overweight")
+        #expect(BMICategory.obese.displayName == "Obese")
+        #expect(BMICategory.unknown.displayName == "Unknown")
     }
 
     // MARK: - Fetch BMI (input validation)

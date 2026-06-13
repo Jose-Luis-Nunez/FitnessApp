@@ -1,12 +1,12 @@
 import Foundation
 import SwiftData
 
-/// V2: ExerciseModel bekommt das denormalisierte FK-Feld `workoutId: UUID`
-/// (`@Attribute(.indexed)`) um Optional-Chain-Predicates (§14a) zu vermeiden.
+/// V2: ExerciseModel gains the denormalized FK field `workoutId: UUID`
+/// (`@Attribute(.indexed)`) to avoid optional-chain predicates (§14a).
 ///
-/// Per ADR-0005 § Snapshot-Pflicht (Hybrid-Regel): V2 ist die jüngste
-/// Schema-Version und referenziert daher ausschließlich die Live-Klassen
-/// in `Models/`. Keine Snapshots, weil V2 = aktueller Live-Stand.
+/// Per ADR-0005 § Snapshot requirement (hybrid rule): V2 is the most recent
+/// schema version and therefore references exclusively the live classes
+/// in `Models/`. No snapshots, because V2 = current live state.
 enum SchemaV2: VersionedSchema {
     static var versionIdentifier = Schema.Version(2, 0, 0)
 

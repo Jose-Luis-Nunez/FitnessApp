@@ -1,109 +1,109 @@
-# 0006 — Versionierte Git-Hooks via `core.hooksPath`
+# 0006 — Versioned Git hooks via `core.hooksPath`
 
 * Status: accepted
 * Date: 2026-04-19
-* Deciders: Jose Nunez (für ein 5-Personen-Team)
+* Deciders: Jose Nunez (for a 5-person team)
 
 ## Context
 
-Die Pre-Commit-Pipeline (`.git/hooks/pre-commit`) erzwingt fünf Architektur-
-Invarianten:
+The pre-commit pipeline (`.git/hooks/pre-commit`) enforces five architecture
+invariants:
 
-1. Validation-Stamp für Swift-Änderungen (Layer 4 von
+1. Validation stamp for Swift changes (layer 4 of
    `code-changes-enforcement.mdc`)
-2. `print()` in Production-Code blockiert
-3. ADR-Pflicht bei strukturellen Änderungen (`adr-required.sh` aus T0d)
-4. UI-State-Sync-Anti-Pattern (`ui-state-sync-enforcement.mdc` aus T0a)
-5. Architecture-Documentation-Sync (`architecture-documentation-sync.mdc`)
+2. `print()` in production code is blocked
+3. ADR obligation on structural changes (`adr-required.sh` from T0d)
+4. UI state sync anti-pattern (`ui-state-sync-enforcement.mdc` from T0a)
+5. Architecture documentation sync (`architecture-documentation-sync.mdc`)
 
-Bislang lebte der Hook ausschließlich in `.git/hooks/pre-commit` — also
-**nicht versioniert**. Das hatte für eine 1-Person-Entwicklung keinen
-Effekt; mit fünf Contributors entsteht jedoch sofort ein Loch:
+So far the hook lived exclusively in `.git/hooks/pre-commit` — that is,
+**not versioned**. For a 1-person development this had no
+effect; with five contributors, however, a hole appears immediately:
 
-- Vier von fünf Maschinen haben den Hook nicht.
-- Architektur-Regressionen (z. B. Wiederbeleben von `changeVersion`-Polling)
-  passieren still und werden erst im Code-Review entdeckt — wenn überhaupt.
-- ADR-0001/0002/0003/0005/0006 verlieren ihre Hauptdurchsetzung; die
-  `mdc`-Rules sind nur L2-advisory, der echte L4-Block kommt aus dem Hook.
-- Die ganze Investition aus T0a–T0e wird für 4/5 des Teams nutzlos.
+- Four of five machines do not have the hook.
+- Architecture regressions (e.g. reviving `changeVersion` polling)
+  happen silently and are only discovered in code review — if at all.
+- ADR-0001/0002/0003/0005/0006 lose their main enforcement; the
+  `mdc` rules are only L2-advisory, the real L4 block comes from the hook.
+- The entire investment from T0a–T0e becomes useless for 4/5 of the team.
 
-Git unterstützt seit 2.9 die Konfigurations-Option `core.hooksPath`, mit der
-ein Repository auf einen versionierten Hook-Ordner umgeleitet werden kann.
-Apple liefert mit Xcode 16 (verwendet von `~/Downloads/Xcode.app`) Git ≥ 2.45,
-also kompatibel.
+Since 2.9 Git has supported the configuration option `core.hooksPath`, with which
+a repository can be redirected to a versioned hook folder.
+Apple ships Git ≥ 2.45 with Xcode 16 (used by `~/Downloads/Xcode.app`),
+so it is compatible.
 
 ## Options
 
-- **A — Status quo behalten**
-  Hooks lokal in `.git/hooks/`. Jeder im Team installiert sie selbst.
-  Verlässlichkeit: 0 — niemand wird das tun.
+- **A — Keep the status quo**
+  Hooks locally in `.git/hooks/`. Everyone on the team installs them themselves.
+  Reliability: 0 — no one will do that.
 
-- **B — Husky / Lefthook / pre-commit-Framework**
-  Externe Tools (Node bzw. Go bzw. Python). Vorteile: ausgereifte
-  Konfigurations-Sprache, parallele Ausführung. Nachteile: zusätzliche
-  Toolchain-Abhängigkeit (Node) für ein Swift-Repo, das aktuell **null**
-  Node-Abhängigkeiten hat. `pre-commit` (Python-Tool) wäre näher am
-  bestehenden Setup, ändert aber den Diagnose-Output und müsste die
-  RULE/VIOLATION/FIX-Formatierung der existierenden Checks neu nachbauen.
+- **B — Husky / Lefthook / pre-commit framework**
+  External tools (Node, Go, or Python respectively). Advantages: mature
+  configuration language, parallel execution. Disadvantages: an additional
+  toolchain dependency (Node) for a Swift repo that currently has **zero**
+  Node dependencies. `pre-commit` (the Python tool) would be closer to the
+  existing setup, but it changes the diagnostic output and would have to rebuild
+  the RULE/VIOLATION/FIX formatting of the existing checks.
 
-- **C — `core.hooksPath` auf versioniertes `.githooks/`-Verzeichnis** ✅
-  Apple-/Git-First-Party-Mechanismus. Keine externe Toolchain.
-  Setup: einmal `scripts/install-hooks.sh` ausführen pro Clone (idempotent).
-  Hook-Inhalte sind identisch zur heutigen `.git/hooks/pre-commit` — keine
-  Verhaltensänderung, nur Versionierung der Datei.
+- **C — `core.hooksPath` to a versioned `.githooks/` directory** ✅
+  An Apple/Git first-party mechanism. No external toolchain.
+  Setup: run `scripts/install-hooks.sh` once per clone (idempotent).
+  The hook contents are identical to today's `.git/hooks/pre-commit` — no
+  behavior change, just versioning of the file.
 
-- **D — `core.hooksPath` plus Auto-Install via `post-checkout`/`post-merge`**
-  Wie C, aber zusätzlich versucht der Hook sich selbst zu aktivieren.
-  Risiko: laufzeitkritische Magie. Wenn das Auto-Install scheitert, weiß
-  niemand warum die Validierungen plötzlich greifen oder nicht greifen.
-  Verworfen wegen Diagnose-Klarheit.
+- **D — `core.hooksPath` plus auto-install via `post-checkout`/`post-merge`**
+  Like C, but additionally the hook tries to activate itself.
+  Risk: runtime-critical magic. If the auto-install fails, no one
+  knows why the validations suddenly do or do not apply.
+  Rejected for the sake of diagnostic clarity.
 
 ## Decision
 
-**Option C**: Repository-versioniertes `.githooks/`-Verzeichnis und manuelles
-einmaliges Setup pro Clone via `scripts/install-hooks.sh`.
+**Option C**: a repository-versioned `.githooks/` directory and a manual
+one-time setup per clone via `scripts/install-hooks.sh`.
 
-Begründung:
+Rationale:
 
-- **Zero zusätzliche Toolchain**: das Repo bleibt ein reines Xcode-Projekt,
-  keine `package.json`, kein `pre-commit-config.yaml`.
-- **Erkennbar**: jeder Contributor sieht beim ersten `git status` nach Clone
-  `.githooks/` und das `scripts/install-hooks.sh`. Onboarding-Doku
-  (`docs/adr/ONBOARDING.md`) erwähnt es als ersten Schritt.
-- **Keine Verhaltensänderung**: die Hook-Inhalte sind identisch zu heute —
-  Tests/Validierungen wie zuvor, nur jetzt für alle.
-- **Reversible**: `git config --unset core.hooksPath` deaktiviert sofort.
-  Falls jemand mal lokal einen Hook ausschalten will, ist `--no-verify`
-  der dokumentierte Weg (siehe `code-changes-enforcement.mdc`).
+- **Zero additional toolchain**: the repo stays a pure Xcode project,
+  no `package.json`, no `pre-commit-config.yaml`.
+- **Discoverable**: every contributor sees `.githooks/` and the
+  `scripts/install-hooks.sh` on the first `git status` after a clone. The
+  onboarding doc (`docs/adr/ONBOARDING.md`) mentions it as the first step.
+- **No behavior change**: the hook contents are identical to today —
+  tests/validations as before, just now for everyone.
+- **Reversible**: `git config --unset core.hooksPath` deactivates immediately.
+  If anyone ever wants to disable a hook locally, `--no-verify`
+  is the documented way (see `code-changes-enforcement.mdc`).
 
 ## Consequences
 
 **Positive**
 
-- Pre-Commit-Architektur-Schutz wirkt auf allen 5 Maschinen.
-- Hook-Änderungen kommen als normale PRs ins Review — keine
-  „Schatten-Konfiguration" mehr.
-- ADR-0001/0002/0003/0005 sind end-to-end durchsetzbar (L4-Layer
-  funktioniert team-weit).
+- Pre-commit architecture protection applies on all 5 machines.
+- Hook changes come into review as normal PRs — no more
+  "shadow configuration".
+- ADR-0001/0002/0003/0005 are enforceable end to end (the L4 layer
+  works team-wide).
 
 **Negative**
 
-- Ein zusätzlicher Setup-Schritt nach Clone (`./scripts/install-hooks.sh`).
-  Mitigation: dokumentiert in `docs/adr/ONBOARDING.md` und im Repo-`README.md`
-  (siehe Folge-Task).
+- One additional setup step after a clone (`./scripts/install-hooks.sh`).
+  Mitigation: documented in `docs/adr/ONBOARDING.md` and in the repo `README.md`
+  (see follow-up task).
 
 **Neutral**
 
-- Wer den Setup-Schritt vergisst, bekommt eine Code-Review-Belehrung statt
-  einer Hook-Blockade. Das ist akzeptabel — kein neues Risiko, nur das
-  bekannte „Hook fehlt" eines Status-quo-Setups.
+- Whoever forgets the setup step gets a code-review lecture instead of
+  a hook block. That is acceptable — no new risk, just the
+  familiar "hook missing" of a status-quo setup.
 
 ## References
 
-- ADR-0001 — `@Model` als UI SoT (durchgesetzt via Hook-Check 4)
-- ADR-0005 — Schema-Migration-Strategie (durchgesetzt via Hook-Check 3)
-- `.cursor/rules/code-changes-enforcement.mdc` — beschreibt die L1–L5-Layer
-- `scripts/install-hooks.sh` — Setup-Skript
-- `.githooks/pre-commit` — versioniertes Hook-Skript
+- ADR-0001 — `@Model` as UI SoT (enforced via hook check 4)
+- ADR-0005 — schema migration strategy (enforced via hook check 3)
+- `.cursor/rules/code-changes-enforcement.mdc` — describes the L1–L5 layers
+- `scripts/install-hooks.sh` — setup script
+- `.githooks/pre-commit` — the versioned hook script
 
 Co-authored-by: Cursor <cursor@cursor.com>

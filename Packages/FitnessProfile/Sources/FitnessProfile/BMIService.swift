@@ -16,11 +16,11 @@ public enum BMICategory: String {
 
     public var displayName: String {
         switch self {
-        case .underweight: return "Untergewicht"
-        case .normal: return "Normalgewicht"
-        case .overweight: return "Übergewicht"
-        case .obese: return "Adipositas"
-        case .unknown: return "Unbekannt"
+        case .underweight: return "Underweight"
+        case .normal: return "Normal weight"
+        case .overweight: return "Overweight"
+        case .obese: return "Obese"
+        case .unknown: return "Unknown"
         }
     }
 
@@ -115,9 +115,9 @@ public enum BMIError: LocalizedError, Equatable {
 
     public var errorDescription: String? {
         switch self {
-        case .invalidInput: return "Ungültige Eingabe für Gewicht oder Größe."
-        case .invalidURL: return "Ungültige URL."
-        case .serverError: return "Server nicht erreichbar."
+        case .invalidInput: return "Invalid input for weight or height."
+        case .invalidURL: return "Invalid URL."
+        case .serverError: return "Server unreachable."
         }
     }
 }

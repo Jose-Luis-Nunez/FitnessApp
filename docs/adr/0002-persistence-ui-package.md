@@ -1,186 +1,185 @@
-# 0002 — FitnessPersistenceUI Package als einzige SwiftData-UI-Stelle
+# 0002 — FitnessPersistenceUI Package as the single SwiftData UI location
 
 * Status: accepted
 * Date: 2026-04-19
 * Deciders: jose.nunez
 
-## Kontext
+## Context
 
-ADR-0001 etabliert SwiftData `@Model` als Single Source of Truth in der UI.
-Konsequenz: irgendwo muss `import SwiftData` zusammen mit `@Query`/`@Bindable`-Code
-leben. Die Frage ist: in welchem Modul.
+ADR-0001 establishes SwiftData `@Model` as the single source of truth in the UI.
+Consequence: somewhere `import SwiftData` together with `@Query`/`@Bindable` code
+has to live. The question is: in which module.
 
-Heutige Realität:
+Today's reality:
 
-- `ExerciseModel`, `WorkoutModel` etc. sind `internal final class` in
-  `FitnessStorage` — bewusst nicht-public um die Schema-Oberfläche zu schützen.
-- Naive Variante "@Query in `FitnessExercise`" kompiliert nicht: cross-package
-  `internal`-Zugriff auf `ExerciseModel` ist nicht erlaubt.
-- Variante "alle Models `public` machen" öffnet die `FitnessStorage`-API
-  permanent. Jede Schema-Änderung wird zum Breaking-Change für alle Konsumenten,
-  inklusive Test-Targets.
-- Variante "alle SwiftData-Views ins App-Target verschieben" verlagert UI-Code
-  zurück in den Monolith und unterläuft die SPM-Modularisierung.
+- `ExerciseModel`, `WorkoutModel`, etc. are `internal final class` in
+  `FitnessStorage` — deliberately non-public to protect the schema surface.
+- The naive variant "@Query in `FitnessExercise`" does not compile: cross-package
+  `internal` access to `ExerciseModel` is not allowed.
+- The variant "make all models `public`" opens the `FitnessStorage` API
+  permanently. Every schema change becomes a breaking change for all consumers,
+  including test targets.
+- The variant "move all SwiftData views into the app target" moves UI code
+  back into the monolith and undermines the SPM modularization.
 
-## Optionen
+## Options
 
-Vier echte Optionen — jede mit unterschiedlicher Schutz-Stärke gegen "jedes
-Feature-Package greift roh ans Model":
+Four real options — each with a different protection strength against "every
+feature package reaches raw into the model":
 
-- **A**: `ExerciseModel` (und Co.) `public` machen, kein zusätzlicher Schutz
-  (Vertrauen + Code-Review).
-- **B**: `public` machen + SwiftLint Custom Rule die `import FitnessStorage`
-  von Feature-Packages blockiert.
-- **C**: Neues SPM-Package `FitnessPersistenceUI` mit `@_spi(PersistenceUI)`
-  als compiler-erzwungener Zugriffsmarker auf die `@Model`-Klassen.
-- **D**: `internal` Models behalten, neues Package + `public Repository`-Schicht
-  in `FitnessStorage` die `@Bindable`-fähige Wrapper liefert (Adapter-Pattern).
+- **A**: Make `ExerciseModel` (and co.) `public`, no additional protection
+  (trust + code review).
+- **B**: Make them `public` + a SwiftLint custom rule that blocks `import FitnessStorage`
+  from feature packages.
+- **C**: A new SPM package `FitnessPersistenceUI` with `@_spi(PersistenceUI)`
+  as a compiler-enforced access marker on the `@Model` classes.
+- **D**: Keep the `internal` models, a new package + a `public Repository` layer
+  in `FitnessStorage` that delivers `@Bindable`-capable wrappers (adapter pattern).
 
-### Bewertung
+### Evaluation
 
-**A** scheidet aus. Vergangenheit zeigt: ohne mechanischen Schutz greifen
-Features doch direkt zu, Sync-Anti-Patterns kommen zurück. Genau das wollen wir
-nicht reproduzieren.
+**A** is out. The past shows: without mechanical protection, features
+reach directly in anyway, sync anti-patterns come back. That is exactly what we
+do not want to reproduce.
 
-**B** (Lint-Rule) ist mittel-stark: `// swiftlint:disable next` und der Schutz
-ist umgangen. Lint läuft nur in CI und im Editor — kein Compiler-Hardlock. Bei
-einem 1-Person-Team noch akzeptabel, in größeren Settings ist die Versuchung
-"einmalig disablen, kommt schon klar" zu groß.
+**B** (lint rule) is medium-strong: `// swiftlint:disable next` and the protection
+is bypassed. Lint runs only in CI and in the editor — no compiler hard lock. For
+a 1-person team still acceptable, in larger settings the temptation
+"disable just this once, it'll be fine" is too great.
 
-**D** (Repository + Wrapper) klingt am saubersten — `internal` ist die stärkste
-mögliche Schutz-Garantie. **Verworfen weil es die Plattform aushebelt**:
-SwiftData's `@Query` und `@Bindable` brauchen den konkreten `@Model`-Typ.
-Wrapper bauen eine Indirection-Schicht die genau die Boilerplate wieder
-einführt, deren Vermeidung der ganze Sinn von SwiftData ist (`@Query<Model>`
-direkt im View, automatische Property-granulare Invalidation, Two-Way-Binding).
-Wir würden die Plattform-Vorteile verlieren um eine Schreibweise-Politik zu
-befolgen.
+**D** (repository + wrapper) sounds the cleanest — `internal` is the strongest
+possible protection guarantee. **Rejected because it defeats the platform**:
+SwiftData's `@Query` and `@Bindable` need the concrete `@Model` type.
+Wrappers build an indirection layer that reintroduces exactly the boilerplate
+whose avoidance is the whole point of SwiftData (`@Query<Model>`
+directly in the view, automatic property-granular invalidation, two-way binding).
+We would lose the platform advantages just to follow a syntax policy.
 
-**C** ist die beste Lösung. `@_spi(SPIName)` ist:
+**C** is the best solution. `@_spi(SPIName)` is:
 
-1. **Compiler-erzwungen** — ohne `@_spi(PersistenceUI) import FitnessStorage`
-   ist die API für andere Module unsichtbar. Stärkere Garantie als Lint.
-2. **Apple-First-Party-Pattern** — Apple selbst nutzt `@_spi` produktiv in
+1. **Compiler-enforced** — without `@_spi(PersistenceUI) import FitnessStorage`
+   the API is invisible to other modules. A stronger guarantee than lint.
+2. **An Apple first-party pattern** — Apple itself uses `@_spi` in production in
    `swift-package-manager`, `swift-syntax`, `swift-collections`,
-   `swift-foundation`. WWDC-Sessions empfehlen es explizit für
-   "module-internal but cross-module" APIs. Stabil seit Swift 5.3.
-3. **PR-Review-sichtbar** — jeder Verstoß muss explizit
-   `@_spi(PersistenceUI) import FitnessStorage` schreiben. Das ist im Diff
-   unübersehbar, und unser Reviewer-Subagent kann das Pattern automatisch
-   prüfen (zukünftiges Skill-Item).
-4. **Plattform-konform** — `@Query`, `@Bindable`, automatische SwiftData-
-   Invalidation funktionieren unverändert weiter. Wir verlieren keine SwiftData-
-   Funktionalität.
+   `swift-foundation`. WWDC sessions explicitly recommend it for
+   "module-internal but cross-module" APIs. Stable since Swift 5.3.
+3. **PR-review-visible** — every violation must explicitly write
+   `@_spi(PersistenceUI) import FitnessStorage`. That is unmissable in the
+   diff, and our reviewer subagent can check the pattern automatically
+   (a future skill item).
+4. **Platform-conformant** — `@Query`, `@Bindable`, automatic SwiftData
+   invalidation keep working unchanged. We lose no SwiftData
+   functionality.
 
-Das `_` in `@_spi` ist Schreibweise-Politik (markiert "nicht im offiziellen
-Sprach-Buch"), kein Stabilitäts-Risiko. Wenn `@_spi` jemals deprecated wird,
-ist die Migration trivial: `s/@_spi(PersistenceUI)//g` an den Importen +
-Visibility der Models von `@_spi(PersistenceUI) public` auf `public` ändern.
-Lock-in ist niedrig, Schutz-Stärke hoch.
+The `_` in `@_spi` is a syntax policy (marks "not in the official
+language book"), not a stability risk. If `@_spi` is ever deprecated,
+the migration is trivial: `s/@_spi(PersistenceUI)//g` on the imports +
+change the visibility of the models from `@_spi(PersistenceUI) public` to `public`.
+Lock-in is low, protection strength high.
 
-## Entscheidung
+## Decision
 
-**Option C**: Neues Package `FitnessPersistenceUI` mit `@_spi(PersistenceUI)`
-als Zugriffsmarker für `@Model`-Klassen aus `FitnessStorage`.
+**Option C**: A new package `FitnessPersistenceUI` with `@_spi(PersistenceUI)`
+as an access marker for the `@Model` classes from `FitnessStorage`.
 
-### Package-Spec
+### Package spec
 
 - **Depends on**:
-  - `FitnessStorage` — für `@Model`-Klassen, kontrolliert via `@_spi(PersistenceUI)`
-    Marker statt blankem `public`. So bleibt der Zugriff explizit dokumentiert.
-  - `FitnessCore` — für Enums (z.B. `MuscleCategoryGroup`), DTOs (`Exercise` als
-    Grenz-Typ wo nötig), Domain-Helpers
+  - `FitnessStorage` — for the `@Model` classes, controlled via the `@_spi(PersistenceUI)`
+    marker instead of plain `public`. This keeps access explicitly documented.
+  - `FitnessCore` — for enums (e.g. `MuscleCategoryGroup`), DTOs (`Exercise` as a
+    boundary type where needed), domain helpers
 - **Imports**: `SwiftData`, `SwiftUI`
-- **Exports** (Stand nach T5–T8d):
-  - `ExerciseCardModelView` — Variant-Resolver-Container auf `@Bindable ExerciseModel`
+- **Exports** (state after T5–T8d):
+  - `ExerciseCardModelView` — a variant-resolver container on `@Bindable ExerciseModel`
   - `ActiveCardModelView`, `IdleActiveCardModelView`, `InactiveCardModelView`
-    — Variant-spezifische Karten-Views (alle `@_spi(PersistenceUI) public`)
-  - `CategoryTileModelView` — `@Query<ExerciseModel>` mit `#Predicate` auf
+    — variant-specific card views (all `@_spi(PersistenceUI) public`)
+  - `CategoryTileModelView` — `@Query<ExerciseModel>` with `#Predicate` on
     `workoutId` + `category`
-  - `ExerciseModel+UI` Convenience-Properties (`hasWeight`, `displayIconName`,
+  - `ExerciseModel+UI` convenience properties (`hasWeight`, `displayIconName`,
     `categoryGroup`, `iconAlignment`)
-  - `enum FitnessPersistenceUI { static let moduleVersion }` als nicht-SPI
-    Public-Surface
-  - **Nicht ausgeliefert**: `TrainingModelView` Wrapper — siehe T8b-Deferral.
+  - `enum FitnessPersistenceUI { static let moduleVersion }` as a non-SPI
+    public surface
+  - **Not shipped**: the `TrainingModelView` wrapper — see the T8b deferral.
 
-### Verbleibende Verantwortungen
+### Remaining responsibilities
 
-- `FitnessExercise` bleibt **primär** DTO-orientiert: `struct Exercise`, View-Logik
-  die ohne SwiftData-Import auskommt. Konkrete Views, die als `@Query`-Host für
-  `FitnessPersistenceUI`-ModelViews dienen (`MuscleCategorySelectionView`,
-  `MuscleCategoryView` seit T7a/T7b/T8a), dürfen `@_spi(PersistenceUI) import
-  FitnessPersistenceUI` **und** `@_spi(PersistenceUI) import FitnessStorage`
-  importieren. Diese Stellen sind bewusste Boundary-Aufweichungen, im
-  Code-Comment + PR-Review begründet, nicht Disziplinverstöße.
-- `FitnessStorage` exponiert seine `@Model`-Klassen via `@_spi(PersistenceUI)
-  public final class`. Konsumenten sind: (a) `FitnessPersistenceUI` als primäre
-  Integration-Schicht, (b) `FitnessStorage`'s eigene Tests (`@_spi(PersistenceUI)
-  @testable import`), (c) **vereinzelt** Feature-Views in `FitnessExercise` die
-  als `@Query`-Host für ModelViews aus (a) dienen. Jede neue Stelle in (c) ist
-  Review-pflichtig.
+- `FitnessExercise` stays **primarily** DTO-oriented: `struct Exercise`, view logic
+  that gets by without a SwiftData import. Concrete views that serve as a `@Query` host for
+  `FitnessPersistenceUI` ModelViews (`MuscleCategorySelectionView`,
+  `MuscleCategoryView` since T7a/T7b/T8a) may import `@_spi(PersistenceUI) import
+  FitnessPersistenceUI` **and** `@_spi(PersistenceUI) import FitnessStorage`.
+  These locations are deliberate boundary softenings, justified in the
+  code comment + PR review, not discipline violations.
+- `FitnessStorage` exposes its `@Model` classes via `@_spi(PersistenceUI)
+  public final class`. Consumers are: (a) `FitnessPersistenceUI` as the primary
+  integration layer, (b) `FitnessStorage`'s own tests (`@_spi(PersistenceUI)
+  @testable import`), (c) **occasionally** feature views in `FitnessExercise` that
+  serve as a `@Query` host for ModelViews from (a). Every new location in (c) is
+  review-mandatory.
 
-## Konsequenzen
+## Consequences
 
-### Positiv
+### Positive
 
-- Klare Architektur-Schicht für SwiftData-UI-Code. Eine einzige Stelle für
-  künftige Themen wie CloudKit-Migration, Conflict-Resolution, eigene
-  Observation-Setups, ModelContainer-Konfiguration.
-- `FitnessStorage`-API bleibt schmal — Schema-Änderungen bleiben intern,
-  brechen nichts in `FitnessExercise` oder anderen DTO-Konsumenten.
-- Tests können in-memory `ModelContainer` nutzen ohne externe Helper-Pakete
-  einzuziehen.
-- CloudKit-Future hat einen bekannten Heimatort für `CKSyncEngine`-Integration
-  und Conflict-Resolution-Logik.
+- A clear architecture layer for SwiftData UI code. A single location for
+  future topics such as CloudKit migration, conflict resolution, custom
+  observation setups, ModelContainer configuration.
+- The `FitnessStorage` API stays narrow — schema changes stay internal,
+  break nothing in `FitnessExercise` or other DTO consumers.
+- Tests can use an in-memory `ModelContainer` without pulling in external
+  helper packages.
+- The CloudKit future has a known home for `CKSyncEngine` integration
+  and conflict-resolution logic.
 
-### Negativ
+### Negative
 
-- Ein zusätzliches SPM-Package erhöht die Build-Matrix marginal.
-- `FitnessExercise` (mit `ExerciseCardView` auf `struct Exercise`) und
-  `FitnessPersistenceUI` (mit `ExerciseCardModelView` auf `@Bindable
-  ExerciseModel`) haben parallele Card/Tile-Views. Im Home/MuscleCategory-
-  Subtree ist die Migration mit T7a/T7b/T8a/T8c/T8d abgeschlossen — dort
-  rendert ausschließlich `FitnessPersistenceUI`. **`TrainingView` (T8b)
-  bleibt bewusst auf der Legacy-`ExerciseCardContainerView`-Schiene**, da
-  ihr Lebenszyklus den Bug-1-Trigger strukturell ausschließt (View navigiert
-  weg, bevor `coordinator.finishExercise()` einen UI-Flip auslösen könnte).
-  Re-Aufnahme bei User-Bug-Report im Training-Detail oder als Aufräum-Sprint.
+- An additional SPM package marginally increases the build matrix.
+- `FitnessExercise` (with `ExerciseCardView` on `struct Exercise`) and
+  `FitnessPersistenceUI` (with `ExerciseCardModelView` on `@Bindable
+  ExerciseModel`) have parallel card/tile views. In the Home/MuscleCategory
+  subtree the migration is complete with T7a/T7b/T8a/T8c/T8d — there
+  only `FitnessPersistenceUI` renders. **`TrainingView` (T8b)
+  stays deliberately on the legacy `ExerciseCardContainerView` track**, since
+  its lifecycle structurally excludes the Bug-1 trigger (the view navigates
+  away before `coordinator.finishExercise()` could trigger a UI flip).
+  Resumed on a user bug report in the training detail or as a cleanup sprint.
 
 ### Neutral
 
-- App-Target depends jetzt auf 7 statt 6 Packages — vernachlässigbar.
-- `@_spi(PersistenceUI)` ist **nicht** sandbox-artig single-consumer. Der Marker
-  zwingt jeden Importeur zu einer expliziten, im Diff sichtbaren Opt-in-Geste
-  — das ist die eigentliche Schutzwirkung. Erlaubte Konsumenten:
-  - `FitnessPersistenceUI` (primäre Integration-Schicht)
-  - `FitnessStorage`'s eigene Tests (`@_spi(PersistenceUI) @testable import`)
-  - Spezifische Views in `FitnessExercise` die als `@Query`-Host für
-    ModelViews aus `FitnessPersistenceUI` dienen (T7a/T7b/T8a:
+- The app target now depends on 7 instead of 6 packages — negligible.
+- `@_spi(PersistenceUI)` is **not** sandbox-like single-consumer. The marker
+  forces every importer into an explicit, diff-visible opt-in gesture
+  — that is the actual protective effect. Allowed consumers:
+  - `FitnessPersistenceUI` (the primary integration layer)
+  - `FitnessStorage`'s own tests (`@_spi(PersistenceUI) @testable import`)
+  - Specific views in `FitnessExercise` that serve as a `@Query` host for
+    ModelViews from `FitnessPersistenceUI` (T7a/T7b/T8a:
     `MuscleCategorySelectionView`, `MuscleCategoryView`)
 
-  Jeder neue Importer in `FitnessExercise` (oder einem anderen Feature-Package)
-  ist eine bewusste Boundary-Aufweichung und im Code-Review begründungspflichtig.
-  PR-Diffs zeigen den Marker explizit; ein Reviewer kann die Ergänzung sofort
-  sehen.
+  Every new importer in `FitnessExercise` (or another feature package)
+  is a deliberate boundary softening and requires justification in code review.
+  PR diffs show the marker explicitly; a reviewer can see the addition
+  immediately.
 
-### Lock-in / Exit-Strategie
+### Lock-in / exit strategy
 
-`@_spi` ist seit Swift 5.3 stabil und wird von Apple selbst genutzt. Sollte
-es jemals deprecated werden:
+`@_spi` has been stable since Swift 5.3 and is used by Apple itself. Should
+it ever be deprecated:
 
-- Migration ist mechanisch: `@_spi(PersistenceUI) public ...` →  `public ...`
-- Schutz wechselt von Compiler auf Lint (Option B oben) — ein Downgrade aber
-  kein Blocker.
-- Aufwand: Stunden, nicht Tage. Risiko: niedrig.
+- The migration is mechanical: `@_spi(PersistenceUI) public ...` →  `public ...`
+- Protection switches from compiler to lint (option B above) — a downgrade but
+  not a blocker.
+- Effort: hours, not days. Risk: low.
 
-## Verweise
+## References
 
-- ADR-0001 (begründet warum `@Model` in der UI)
-- ADR-0003 (Coordinator-Vertrag — Coordinator bleibt in `FitnessTraining`,
-  konsumiert keine `@Model`-Klassen direkt)
-- T4 (Package-Skeleton + Workspace-Integration)
-- T5 (Pilot `ExerciseCardModelView`)
-- T6 (Pilot `CategoryTileModelView`)
-- T7 (inkrementelle Migration: T7-0 Cycle-Break, T7a Tile-Live, T7b Card-Live)
-- T8 (Cleanup: T8a list-mode live, T8c routing live, T8d dead-code-sweep; T8b TrainingView deferred)
-- Swift `@_spi`-Doc: <https://github.com/apple/swift/blob/main/docs/ReferenceGuides/UnderscoredAttributes.md#_spi>
+- ADR-0001 (explains why `@Model` in the UI)
+- ADR-0003 (coordinator contract — the coordinator stays in `FitnessTraining`,
+  consumes no `@Model` classes directly)
+- T4 (package skeleton + workspace integration)
+- T5 (pilot `ExerciseCardModelView`)
+- T6 (pilot `CategoryTileModelView`)
+- T7 (incremental migration: T7-0 cycle break, T7a tile-live, T7b card-live)
+- T8 (cleanup: T8a list-mode live, T8c routing live, T8d dead-code sweep; T8b TrainingView deferred)
+- Swift `@_spi` doc: <https://github.com/apple/swift/blob/main/docs/ReferenceGuides/UnderscoredAttributes.md#_spi>

@@ -16,7 +16,7 @@ For SPM package tests, also add `PATH="/Users/jose.nunez/Downloads/Xcode.app/Con
 ## Build
 
 ```bash
-cd ~/Documents/repo/FitnessApp && DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer xcodebuild build -scheme FitnessApp -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' 2>&1 | tail -30
+cd ~/Documents/repo/FitnessApp && DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer xcodebuild build -scheme FitnessApp -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max,OS=26.0' 2>&1 | tail -30
 ```
 
 ## Unit Tests
@@ -28,7 +28,7 @@ All unit tests live in SPM packages — there is no app-level `FitnessAppTests` 
 UI tests **must** use the dedicated `FitnessApp UITests` scheme. That scheme builds with the `UITesting` configuration which defines the `UITESTING` Swift compilation flag — without it, `UITestLaunchStrategy` (and the entire `--uitesting` argument path in `FitnessAppApp.swift`) is compiled out and the app boots with production data, so tests fail in non-obvious ways (e.g. selectors not found because the seeded fixture screen never appears). The plain `FitnessApp` scheme uses the `Debug` configuration and does **not** define `UITESTING`.
 
 ```bash
-cd ~/Documents/repo/FitnessApp && DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer xcodebuild test -scheme "FitnessApp UITests" -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -only-testing:FitnessAppUITests 2>&1 | tail -30
+cd ~/Documents/repo/FitnessApp && DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer xcodebuild test -scheme "FitnessApp UITests" -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max,OS=26.0' -only-testing:FitnessAppUITests 2>&1 | tail -30
 ```
 
 ## Package Tests (SPM)
@@ -38,7 +38,7 @@ SPM test targets are **not** in the app scheme. Run them via the **package's own
 ### Single package
 
 ```bash
-cd ~/Documents/repo/FitnessApp/Packages/FitnessTraining && DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer PATH="/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer/usr/bin:$PATH" xcodebuild test -scheme FitnessTraining -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -skipMacroValidation 2>&1 | tail -30
+cd ~/Documents/repo/FitnessApp/Packages/FitnessTraining && DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer PATH="/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer/usr/bin:$PATH" xcodebuild test -scheme FitnessTraining -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max,OS=26.0' -skipMacroValidation 2>&1 | tail -30
 ```
 
 ### All packages (sequential — for CI / debugging a single failure)
@@ -47,7 +47,7 @@ cd ~/Documents/repo/FitnessApp/Packages/FitnessTraining && DEVELOPER_DIR=/Users/
 for pkg in FitnessExercise FitnessTraining FitnessAnalytics FitnessStorage FitnessProfile; do
  echo "=== Testing $pkg ===" && \
  cd ~/Documents/repo/FitnessApp/Packages/$pkg && \
- DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer PATH="/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer/usr/bin:$PATH" xcodebuild test -scheme $pkg -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' -skipMacroValidation 2>&1 | tail -10
+ DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer PATH="/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer/usr/bin:$PATH" xcodebuild test -scheme $pkg -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max,OS=26.0' -skipMacroValidation 2>&1 | tail -10
 done
 ```
 
@@ -65,7 +65,7 @@ export DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer
 export PATH="$DEVELOPER_DIR/usr/bin:$PATH"
 
 PACKAGES=(FitnessExercise FitnessTraining FitnessAnalytics FitnessStorage FitnessProfile FitnessWorkouts)
-DEST='platform=iOS Simulator,name=iPhone 17 Pro Max'
+DEST='platform=iOS Simulator,name=iPhone 17 Pro Max,OS=26.0'
 LOG_DIR=$(mktemp -d)
 
 # Boot simulator once (no-op if already booted)
@@ -106,6 +106,7 @@ When a package fails, the per-package log in `$LOG_DIR` has the full output. Use
 
 - **Scheme**: Use `FitnessApp` for app/UI tests, use the package name for SPM package tests.
 - **Simulator**: `iPhone 17 Pro Max`. Boot it first if needed: `DEVELOPER_DIR=... .../usr/bin/simctl boot <UDID>`
+- **OS pin**: Every destination pins `OS=26.0`. This is required for **snapshot-test stability** — a floating runtime renders sub-pixel-different antialiasing and silently drifts the recorded baselines. Pin the Xcode version too (see `.xcode-version`, currently `26.0`). On an intentional Xcode/iOS bump, re-record snapshot baselines in a dedicated commit.
 - To run a **single test**, append the test class and method: `-only-testing:FitnessAppUITests/TrainingUITests/testFullTrainingFlow`
 - To run **all UI tests**, use: `-only-testing:FitnessAppUITests`
 - Set `block_until_ms` to `300000` (5 min) since build + test takes ~90–120 seconds.

@@ -20,7 +20,7 @@ extension TotalAnalyticsView {
             if let rhythmDetail = viewModel.getTrainingRhythmDetail() {
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Letzte 5 Trainingstage")
+                    Text("Last 5 training days")
                         .font(AppStyle.Font.cardHeadline)
                         .foregroundColor(AppStyle.Color.greenGlow)
 
@@ -55,7 +55,7 @@ extension TotalAnalyticsView {
 
                     if rhythmDetail.gaps.count > rhythmDetail.trainingDates.count - 1 {
                         HStack {
-                            Text("Heute (\(DateFormatter.germanMedium.string(from: Date())))")
+                            Text("Today (\(DateFormatter.germanMedium.string(from: Date())))")
                                 .font(AppStyle.Font.detailExercise)
                                 .foregroundColor(AppStyle.Color.greenGlow)
 
@@ -82,7 +82,7 @@ extension TotalAnalyticsView {
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Berechnung")
+                    Text("Calculation")
                         .font(AppStyle.Font.cardHeadline)
                         .foregroundColor(AppStyle.Color.greenGlow)
 
@@ -94,7 +94,7 @@ extension TotalAnalyticsView {
                 }
 
             } else {
-                Text("Nicht genügend Trainingsdaten")
+                Text("Not enough training data")
                     .font(AppStyle.Font.pickerAction)
                     .foregroundColor(AppStyle.Color.greenGlow.opacity(0.6))
                     .frame(maxWidth: .infinity, alignment: .center)

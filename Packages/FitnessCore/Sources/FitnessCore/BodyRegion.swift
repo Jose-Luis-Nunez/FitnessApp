@@ -1,7 +1,7 @@
 import Foundation
 
 public enum BodyRegion: String, CaseIterable, Identifiable, Codable, Sendable {
-    // Rücken
+    // Back
     case neckLeft
     case neckRight
     case shoulderLeft
@@ -10,12 +10,12 @@ public enum BodyRegion: String, CaseIterable, Identifiable, Codable, Sendable {
     case middleBack
     case lowerBack
 
-    // Bauch
+    // Abs
     case abs
     case obliquesLeft
     case obliquesRight
 
-    // Brust
+    // Chest
     case chestLeft
     case chestRight
 
@@ -27,13 +27,13 @@ public enum BodyRegion: String, CaseIterable, Identifiable, Codable, Sendable {
     case forearmLeft
     case forearmRight
 
-    // Hände & Handgelenke (shared zwischen Brust/Arm)
+    // Hands & wrists (shared between chest/arm)
     case handLeft
     case handRight
     case wristLeft
     case wristRight
 
-    // Beine
+    // Legs
     case thighFront
     case thighBack
     case thighInner
@@ -100,9 +100,9 @@ public enum BodyRegion: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
-    /// Asset-Name für das Body-Region-Icon. Wenn kein Asset unter diesem Namen
-    /// im Asset-Catalog existiert, rendert `Image(iconAssetName)` einen leeren
-    /// Platz (der Tile-Rahmen und das Label bleiben weiterhin sichtbar).
+    /// Asset name for the body-region icon. If no asset exists under this name
+    /// in the asset catalog, `Image(iconAssetName)` renders an empty
+    /// space (the tile border and the label remain visible).
     public var iconAssetName: String {
         switch self {
         case .neckLeft:      return "neck_left"

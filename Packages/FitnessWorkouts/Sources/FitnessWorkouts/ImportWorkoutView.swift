@@ -23,7 +23,7 @@ struct ImportWorkoutView: View {
 
     var body: some View {
         WorkoutFormSheet(
-            title: "Workout importieren",
+            title: "Import Workout",
             isSaveDisabled: viewModel.isImportDisabled,
             onSave: { viewModel.importTapped() },
             isPresented: $isPresented,
@@ -44,10 +44,10 @@ struct ImportWorkoutView: View {
 
     private var instructionSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("JSON einfügen")
+            Text("Paste JSON")
                 .font(.headline)
                 .foregroundColor(textColor)
-            Text("Füge das exportierte Workout-JSON unten ein. Es wird als neues Workout erstellt — bestehende Workouts werden nicht überschrieben.")
+            Text("Paste the exported workout JSON below. It will be created as a new workout — existing workouts will not be overwritten.")
                 .font(.caption)
                 .foregroundColor(textColor.opacity(0.7))
                 .fixedSize(horizontal: false, vertical: true)
@@ -59,7 +59,7 @@ struct ImportWorkoutView: View {
         Button(action: { viewModel.pasteFromClipboard() }) {
             HStack(spacing: 8) {
                 Image(systemName: "doc.on.clipboard")
-                Text("Aus Zwischenablage einfügen")
+                Text("Paste from clipboard")
                     .font(AppStyle.Font.defaultFont)
             }
             .foregroundColor(AppStyle.Color.green)

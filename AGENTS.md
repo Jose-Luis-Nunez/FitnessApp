@@ -1,33 +1,33 @@
-# FitnessApp — Hinweise für Agenten
+# FitnessApp — Notes for Agents
 
-Kurzer Einstieg; Details stehen in den versionierten `.claude/`-Dateien.
+A quick introduction; details live in the versioned `.claude/` files.
 
-## Konventionen und Architektur
+## Conventions and Architecture
 
-- **Projektregeln (verbindlich):** `.claude/rules/` — u. a. Swift-Architektur, AppStyle, Docs-Sync, Build & Test, UI-State-Sync.
-- **Struktur-Inventar (Feature Map, Services, Models, Navigation, Shared Components):** `.claude/references/architecture-documentation.md` — bei strukturellen Swift-/Design-Änderungen **mitpflegen** (Trigger siehe Rule `architecture-documentation-sync.mdc` und `reviewing-code-changes` Skill, Sektion "Architecture Sync").
-- **Workflows:** `.claude/skills/` (`SKILL.md` pro Skill).
+- **Project rules (binding):** `.claude/rules/` — among others, Swift architecture, AppStyle, Docs-Sync, Build & Test, UI-State-Sync.
+- **Structure inventory (Feature Map, Services, Models, Navigation, Shared Components):** `.claude/references/architecture-documentation.md` — **keep up to date** on structural Swift/design changes (for triggers see the `architecture-documentation-sync.mdc` rule and the `reviewing-code-changes` skill, section "Architecture Sync").
+- **Workflows:** `.claude/skills/` (one `SKILL.md` per skill).
 - **Subagents:** `.claude/agents/` (reviewer, tester, verifier — via `Task(subagent_type: "<role>", …)`).
-- **Slash-Commands:** `.claude/commands/` (z. B. `/validate`).
-- **Hooks:** `.claude/settings.json` registriert `Stop` und `SubagentStop` Hooks; Skripte unter `.claude/hooks/`.
+- **Slash commands:** `.claude/commands/` (e.g. `/validate`).
+- **Hooks:** `.claude/settings.json` registers the `Stop` and `SubagentStop` hooks; scripts under `.claude/hooks/`.
 
-`architecture-documentation.md` ist **kein** Ersatz für die Rules: Es dokumentiert die **Ist-Struktur**; Vorgaben stehen in den `.mdc`-Rules.
+`architecture-documentation.md` is **not** a replacement for the rules: it documents the **current structure**; the requirements live in the `.mdc` rules.
 
-## Build und Tests (Xcode)
+## Build and Tests (Xcode)
 
-- Projekt öffnen: `FitnessApp.xcodeproj`
-- Scheme: **FitnessApp** (geteilt unter `FitnessApp.xcodeproj/xcshareddata/xcschemes/`)
+- Open the project: `FitnessApp.xcodeproj`
+- Scheme: **FitnessApp** (shared under `FitnessApp.xcodeproj/xcshareddata/xcschemes/`)
 
-Beispiel über die Kommandozeile (Simulator anpassen, falls nötig):
+Example via the command line (adjust the simulator if needed):
 
 ```bash
 xcodebuild -scheme FitnessApp -destination 'platform=iOS Simulator,name=iPhone 16' build
 xcodebuild -scheme FitnessApp -destination 'platform=iOS Simulator,name=iPhone 16' test
 ```
 
-Vollständige Befehle inkl. `DEVELOPER_DIR`-Setup und Package-Tests: siehe `.claude/rules/build-and-test.mdc`.
+Full commands including `DEVELOPER_DIR` setup and package tests: see `.claude/rules/build-and-test.mdc`.
 
-## Was ihr **nicht** tun müsst
+## What you do **not** have to do
 
-- `architecture-documentation.md` **nicht** in `AGENTS.md` umbenennen — anderer Zweck und fest in Rules, Hooks und Skills verankert.
-- Keine zweite, parallele Architektur-Doku anlegen; `architecture-documentation.md` ist die kanonische Referenz.
+- Do **not** rename `architecture-documentation.md` to `AGENTS.md` — it serves a different purpose and is firmly anchored in rules, hooks, and skills.
+- Do not create a second, parallel architecture doc; `architecture-documentation.md` is the canonical reference.

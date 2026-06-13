@@ -143,7 +143,7 @@ public struct SBahnDeparturesCardView: View {
     }
 
     private var emptyRow: some View {
-        Text("Keine S-Bahnen in den nächsten 60 Minuten.")
+        Text("No trains in the next 60 minutes.")
             .font(AppStyle.Font.detailCaption)
             .foregroundColor(AppStyle.Color.gray)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -230,7 +230,7 @@ public struct SBahnDeparturesCardView: View {
     /// after the bridge train.
     private func bridgeCaption(bridge: BridgeHint, arrival: Date?) -> some View {
         let bridgeTimeStr = viewModel.formattedTime(for: bridge.bridgeDeparture)
-        var caption = "⤷ Umsteigen am \(bridge.transferStation) in \(bridge.bridgeLine) · \(bridgeTimeStr)"
+        var caption = "⤷ Transfer at \(bridge.transferStation) via \(bridge.bridgeLine) · \(bridgeTimeStr)"
         if let arrival {
             caption += " → \(viewModel.toLabel) · \(viewModel.formattedTime(for: arrival))"
         }
@@ -252,7 +252,7 @@ public struct SBahnDeparturesCardView: View {
                 .font(AppStyle.Font.cardSmallBold)
                 .foregroundColor(AppStyle.Color.green)
         } else {
-            Text("pünktlich")
+            Text("on time")
                 .font(AppStyle.Font.cardSmallBold)
                 .foregroundColor(AppStyle.Color.green)
         }
@@ -266,31 +266,31 @@ public struct SBahnDeparturesCardView: View {
             .background(AppStyle.Color.gray.opacity(AppStyle.Opacity.subtleStroke))
 
         VStack(alignment: .leading, spacing: 6) {
-            detailRow(label: "Abfahrt geplant", value: viewModel.formattedTime(for: dep.plannedWhen))
-            detailRow(label: "Abfahrt aktuell", value: viewModel.formattedTime(for: dep.when))
-            detailRow(label: "Verspätung", value: detailDelayString(dep.delayMinutes))
-            detailRow(label: "Endstation", value: dep.direction)
+            detailRow(label: "Scheduled departure", value: viewModel.formattedTime(for: dep.plannedWhen))
+            detailRow(label: "Current departure", value: viewModel.formattedTime(for: dep.when))
+            detailRow(label: "Delay", value: detailDelayString(dep.delayMinutes))
+            detailRow(label: "Final stop", value: dep.direction)
 
             if let bridge = dep.bridge {
                 Divider()
                     .background(AppStyle.Color.gray.opacity(AppStyle.Opacity.subtleStroke))
                     .padding(.top, 4)
 
-                Text("Umstieg")
+                Text("Transfer")
                     .font(AppStyle.Font.profileCardTitle)
                     .foregroundColor(AppStyle.Color.greenLight)
 
-                detailRow(label: "Aussteigen am", value: bridge.transferStation)
+                detailRow(label: "Get off at", value: bridge.transferStation)
                 detailRow(
-                    label: "Anschluss",
+                    label: "Connection",
                     value: "\(bridge.bridgeLine) → \(bridge.bridgeDirection)"
                 )
                 detailRow(
-                    label: "Anschluss-Abfahrt",
+                    label: "Connection departure",
                     value: viewModel.formattedTime(for: bridge.bridgeDeparture)
                 )
             } else {
-                detailRow(label: "Verbindung", value: "Direkt nach \(viewModel.toLabel)")
+                detailRow(label: "Connection", value: "Direct to \(viewModel.toLabel)")
             }
 
             if let arrival = dep.arrivalAtDestination {
@@ -319,7 +319,7 @@ public struct SBahnDeparturesCardView: View {
     private func detailDelayString(_ delay: Int) -> String {
         if delay > 0 { return "+\(delay) min" }
         if delay < 0 { return "\(delay) min" }
-        return "pünktlich"
+        return "on time"
     }
 
     // MARK: - Error / Footer

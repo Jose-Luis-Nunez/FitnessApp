@@ -5,12 +5,12 @@ import FitnessUI
 @_spi(PersistenceUI) import FitnessStorage
 
 /// Completed (inactive) card variant rendered against a live
-/// `@Bindable ExerciseModel`. Datenquelle ist die SwiftData-`@Model`-Instanz —
-/// alle Edits propagieren automatisch ohne Snapshot-Sync (ADR-0001). Behält
-/// noch das `analyticsViewModel.changeCount`-Polling-Pattern; das wird in
-/// einem späteren Schritt zugunsten direkten `@Observable`-Trackings aufgelöst.
+/// `@Bindable ExerciseModel`. The data source is the SwiftData `@Model` instance —
+/// all edits propagate automatically without snapshot sync (ADR-0001). Still keeps
+/// the `analyticsViewModel.changeCount` polling pattern; that will be resolved in
+/// a later step in favor of direct `@Observable` tracking.
 ///
-/// SPI-Marker: siehe `ExerciseCardModelView`.
+/// SPI marker: see `ExerciseCardModelView`.
 @_spi(PersistenceUI)
 public struct InactiveCardModelView: View {
     @Bindable public var model: ExerciseModel

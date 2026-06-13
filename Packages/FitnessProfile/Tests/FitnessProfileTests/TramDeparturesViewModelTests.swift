@@ -147,7 +147,7 @@ struct TramDeparturesViewModelTests {
         #expect(vm.departures.count == 1)
         #expect(vm.departures.first?.id == "cached-1")
         #expect(vm.isStale == true)
-        #expect(vm.errorMessage == nil, "Bei Cache-Hit zeigen wir keine Fehlermeldung")
+        #expect(vm.errorMessage == nil, "On a cache hit we show no error message")
         #expect(vm.isLoading == false)
     }
 

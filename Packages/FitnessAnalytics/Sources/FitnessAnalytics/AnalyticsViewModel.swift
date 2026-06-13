@@ -141,10 +141,10 @@ extension AnalyticsViewModel {
         let entries = loadAnalytics(for: exerciseId)
         let calendar = Calendar.current
         
-        // Sortiere alle Einträge chronologisch
+        // Sort all entries chronologically
         let sortedEntries = entries.sorted(by: { $0.date < $1.date })
-        
-        // Gruppiere nach Tagen und finde das maximale Gewicht pro Tag
+
+        // Group by day and find the maximum weight per day
         let dailyMaxWeights: [(date: Date, weight: Double)] = Dictionary(grouping: sortedEntries, by: { calendar.startOfDay(for: $0.date) })
             .compactMap { (date, dayEntries) in
                 let maxWeight = dayEntries.flatMap { $0.setProgress.map { $0.weight } }.max() ?? 0.0
@@ -153,29 +153,29 @@ extension AnalyticsViewModel {
             .sorted(by: { $0.date < $1.date })
         
         guard dailyMaxWeights.count >= 3 else {
-            return 0 // Nicht genug Daten für Analyse
+            return 0 // Not enough data for analysis
         }
         
         var patterns: [Int] = []
         var currentWeight = dailyMaxWeights[0].weight
         var sessionsAtCurrentWeight = 1
         
-        // Analysiere Pattern: Nach wie vielen Sessions wird das Gewicht erhöht?
+        // Analyze pattern: after how many sessions is the weight increased?
         for i in 1..<dailyMaxWeights.count {
             let (_, weight) = dailyMaxWeights[i]
-            
+
             if weight > currentWeight {
-                // Gewicht wurde erhöht
+                // Weight was increased
                 patterns.append(sessionsAtCurrentWeight)
                 currentWeight = weight
                 sessionsAtCurrentWeight = 1
             } else {
-                // Gleiches Gewicht
+                // Same weight
                 sessionsAtCurrentWeight += 1
             }
         }
-        
-        // Finde den häufigsten Pattern (Modus)
+
+        // Find the most frequent pattern (mode)
         guard !patterns.isEmpty else { return 0 }
         
         let patternFrequency = Dictionary(grouping: patterns, by: { $0 })

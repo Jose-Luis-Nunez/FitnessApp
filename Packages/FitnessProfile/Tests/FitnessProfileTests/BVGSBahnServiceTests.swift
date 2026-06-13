@@ -74,7 +74,7 @@ struct BVGSBahnServiceTests {
         #expect(client.fetchedStopIds == [Self.config.originStopId])
     }
 
-    // MARK: - east-bypass S9 with eigenständig bridge → shown with hint
+    // MARK: - east-bypass S9 with standalone bridge → shown with hint
 
     @Test func s9Bypass_withEigenständigBridge_isShownWithHint() async throws {
         let client = MockClient()
@@ -195,7 +195,7 @@ struct BVGSBahnServiceTests {
             Self.dep("23:02", line: "S5", direction: "S Ostbahnhof (Berlin)", tripId: "ostkz-S5-shortturn"),
             Self.dep("23:05", line: "S3", direction: "S Spandau Bhf (Berlin)", tripId: "ostkz-S3-direct"),
         ]
-        // Eigenständig bridge at Ostbahnhof going further west.
+        // Standalone bridge at Ostbahnhof going further west.
         client.pools[reverseConfig.transferStopIds[.ostbahnhof]!] = [
             Self.dep("23:08", line: "S7", direction: "S Charlottenburg Bhf (Berlin)", tripId: "ostbf-S7-eigenständig"),
         ]

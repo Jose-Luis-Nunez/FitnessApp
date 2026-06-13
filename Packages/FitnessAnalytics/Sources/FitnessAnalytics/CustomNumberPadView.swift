@@ -66,7 +66,7 @@ public struct CustomNumberPadView: View {
     }
 
     private var statusText: String {
-        inputValue >= 999.0 ? "Maximum reached" : (isWeight ? "kg" : "Wiederholungen")
+        inputValue >= 999.0 ? "Maximum reached" : (isWeight ? "kg" : "Repetitions")
     }
 
     private var statusTextColor: Color {
@@ -517,7 +517,7 @@ private struct NumberKeypad: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
 
-            Button("Übernehmen") { onConfirm() }
+            Button("Apply") { onConfirm() }
                 .font(AppStyle.Font.sectionHeadline)
                 .foregroundColor(AppStyle.Color.white)
                 .frame(maxWidth: .infinity)

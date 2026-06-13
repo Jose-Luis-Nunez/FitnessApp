@@ -7,8 +7,8 @@ import FitnessUI
 /// background (Liquid Glass on iOS 26+, `ultraThinMaterial` fallback). Tapping
 /// a tile toggles it in `selectedRegions` — any combination of regions in the
 /// category can be active at once (e.g. lower back + obliques). Tapping an
-/// already-selected tile removes it from the selection (ersetzt die frühere
-/// "None"-Option des Wheel-Pickers).
+/// already-selected tile removes it from the selection (replaces the former
+/// "None" option of the wheel picker).
 struct PainRegionGrid: View {
     let category: BodyCategory
     let selectedRegions: Set<BodyRegion>

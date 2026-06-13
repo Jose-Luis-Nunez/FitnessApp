@@ -15,7 +15,7 @@ let package = Package(
         .package(path: "../FitnessAnalytics"),
         .package(path: "../FitnessTraining"),
         .package(path: "../FitnessTestSupport"),
-        .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.19.2"),
+        .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", "1.19.2"..<"1.20.0"),
     ],
     targets: [
         .target(

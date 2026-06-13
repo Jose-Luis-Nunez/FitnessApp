@@ -6,12 +6,11 @@ import FitnessTestSupport
 @_spi(PersistenceUI) import FitnessStorage
 @testable import FitnessPersistenceUI
 
-/// Tests für `CategoryTileModelView`: bewiesen wird die Predicate-Logik gegen
-/// einen echten in-memory `ModelContainer`. `@Query` selbst lässt sich nicht
-/// out-of-View instanziieren, aber genau das gleiche Predicate über
-/// `FetchDescriptor` zu fahren beweist die Daten-Schicht — der UI-Render-Beweis
-/// wird vom invariant-Test in `FitnessStorageTests` getragen sobald T7 die View
-/// einsetzt.
+/// Tests for `CategoryTileModelView`: what is proven is the predicate logic against
+/// a real in-memory `ModelContainer`. `@Query` itself cannot be instantiated
+/// out-of-view, but running exactly the same predicate via `FetchDescriptor`
+/// proves the data layer — the UI render proof is carried by the invariant test in
+/// `FitnessStorageTests` once T7 puts the view into use.
 
 @MainActor
 @Suite("CategoryTileModelView — Bug-2 Predicate gegen ExerciseModel.workoutId", .tags(.integration))
@@ -68,7 +67,7 @@ struct CategoryTileModelViewTests {
         let workout = makeWorkout(id: workoutId)
         ctx.insert(workout)
 
-        // 3 in 'arms', 1 davon completed
+        // 3 in 'arms', 1 of them completed
         for i in 0..<3 {
             _ = insertExercise(
                 in: ctx,
@@ -79,7 +78,7 @@ struct CategoryTileModelViewTests {
                 sortOrder: i
             )
         }
-        // 1 in 'chest' (sollte NICHT mitgezählt werden)
+        // 1 in 'chest' (should NOT be counted)
         _ = insertExercise(
             in: ctx,
             workoutId: workoutId,
@@ -108,7 +107,7 @@ struct CategoryTileModelViewTests {
         #expect(completed == 1)
     }
 
-    @Test("Predicate isoliert nach workoutId: Übungen aus anderem Workout zählen nicht")
+    @Test("Predicate isolates by workoutId: exercises from another workout are not counted")
     func predicateIsolatesByWorkout() throws {
         let container = try makeContainer()
         let ctx = ModelContext(container)
@@ -138,11 +137,11 @@ struct CategoryTileModelViewTests {
         #expect(countB == 1)
     }
 
-    /// Beweist den Bug-2-Daten-Pfad: Eine Mutation auf `ExerciseModel.isCompleted`
-    /// ändert den Active-Count für die Kategorie sofort — auch ohne dass eine
-    /// View `refreshExercises()` ruft. Das ist genau was `@Query` live im Render
-    /// in der UI tut.
-    @Test("Bug-2 Sanity: completed-Mutation senkt active-count im selben Context")
+    /// Proves the Bug-2 data path: a mutation on `ExerciseModel.isCompleted`
+    /// immediately changes the active count for the category — even without a
+    /// view calling `refreshExercises()`. This is exactly what `@Query` does live
+    /// during render in the UI.
+    @Test("Bug-2 sanity: completed mutation lowers the active count in the same context")
     func activeCountDropsAfterMutation() throws {
         let container = try makeContainer()
         let ctx = ModelContext(container)
@@ -175,7 +174,7 @@ struct CategoryTileModelViewTests {
         #expect(try ctx.fetch(activeOnly).count == 0)
     }
 
-    @Test("Leeres Workout: Predicate liefert leere Liste, total/active == 0")
+    @Test("Empty workout: predicate returns an empty list, total/active == 0")
     func emptyWorkoutHasZeroCount() throws {
         let container = try makeContainer()
         let ctx = ModelContext(container)

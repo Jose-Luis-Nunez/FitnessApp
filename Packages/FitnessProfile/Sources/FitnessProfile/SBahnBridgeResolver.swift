@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - Bridge Resolver
 
-/// Pure logic that picks the best eigenständig bridge from a candidate pool.
+/// Pure logic that picks the best standalone bridge from a candidate pool.
 /// Stateless, deterministic, no I/O — just iterates and applies the
 /// configured filters.
 public enum SBahnBridgeResolver {
@@ -31,9 +31,9 @@ public enum SBahnBridgeResolver {
         }
     }
 
-    /// Returns the earliest eigenständig east-direct departure across all
+    /// Returns the earliest standalone east-direct departure across all
     /// candidate transfer stops, or `nil` if none of the pools yields a
-    /// useful bridge. Eigenständig means the trip's `tripId` is NOT present
+    /// useful bridge. Standalone means the trip's `tripId` is NOT present
     /// in the user's Alex-pool: i.e., it's an independent train the user
     /// could not catch by waiting at Alex.
     public static func resolve(_ inputs: Inputs) -> BridgeHint? {
@@ -56,7 +56,7 @@ public enum SBahnBridgeResolver {
                 }
                 .filter { $0.when >= arrival && $0.when <= windowEnd }
                 .filter { dep in
-                    // Strict eigenständig: trip must not be one the user
+                    // Strict standalone: trip must not be one the user
                     // could catch at Alex by waiting.
                     guard let tid = dep.tripId else { return true }
                     return !inputs.alexTripIds.contains(tid)

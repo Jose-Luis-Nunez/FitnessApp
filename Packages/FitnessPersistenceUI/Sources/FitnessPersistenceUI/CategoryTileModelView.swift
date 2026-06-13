@@ -4,25 +4,25 @@ import FitnessCore
 import FitnessUI
 @_spi(PersistenceUI) import FitnessStorage
 
-/// Live-bound spiegel von `CategoryTileView` für Bug 2: die "completed of total"-Anzeige
-/// liest direkt aus einem `@Query<ExerciseModel>` mit Predicate auf `(workoutId, category)`.
-/// Wenn der Coordinator nach `finish` `model.isCompleted = true` setzt, dispatcht SwiftData
-/// das in den Query und die Tile rendert sofort den neuen Count — ohne dass eine parent-View
-/// `viewModel.refreshExercises()` aufrufen muss (Bug-2-Quelle).
+/// Live-bound mirror of `CategoryTileView` for Bug 2: the "completed of total" display
+/// reads directly from a `@Query<ExerciseModel>` with a predicate on `(workoutId, category)`.
+/// When the coordinator sets `model.isCompleted = true` after `finish`, SwiftData dispatches
+/// that into the query and the tile immediately renders the new count — without a parent view
+/// having to call `viewModel.refreshExercises()` (the Bug-2 source).
 ///
-/// Dependency-Boundary (analog T5): die `hasActiveSetForCategory`-Information lebt auf
-/// `ActiveSetViewModel` (Session-State, nicht Persistenz) und wird als Plain-Bool von der
-/// Parent-View reingereicht. Der `onTap`-Callback ist die Navigation-Boundary.
+/// Dependency boundary (analogous to T5): the `hasActiveSetForCategory` information lives on
+/// `ActiveSetViewModel` (session state, not persistence) and is passed in as a plain Bool by the
+/// parent view. The `onTap` callback is the navigation boundary.
 ///
-/// **T7-Voraussetzung**: Parent muss `.id(workoutId)` auf der Tile setzen, damit beim
-/// Workout-Wechsel das `@Query` mit neuem `workoutId` (re)initialisiert wird (siehe
-/// `reviewing-code-changes` SKILL §14d). Der Init-Captured-`workoutId` wird sonst nicht
-/// dynamisch aktualisiert.
+/// **T7 prerequisite**: the parent must set `.id(workoutId)` on the tile so that on a
+/// workout switch the `@Query` is (re)initialized with the new `workoutId` (see
+/// `reviewing-code-changes` SKILL §14d). Otherwise the init-captured `workoutId` is not
+/// updated dynamically.
 ///
-/// **SPI-Marker**: Die View ist `@_spi(PersistenceUI) public`, weil ihre `@Query`-Property
-/// `[ExerciseModel]` returnt — und `ExerciseModel` ist nur SPI-sichtbar. Aufrufer (T7)
-/// brauchen `@_spi(PersistenceUI) import FitnessPersistenceUI` (konsistent zu ADR-0002 und
-/// den 4 Card-Views aus T5).
+/// **SPI marker**: The view is `@_spi(PersistenceUI) public`, because its `@Query` property
+/// returns `[ExerciseModel]` — and `ExerciseModel` is only SPI-visible. Callers (T7)
+/// need `@_spi(PersistenceUI) import FitnessPersistenceUI` (consistent with ADR-0002 and
+/// the 4 card views from T5).
 @_spi(PersistenceUI)
 public struct CategoryTileModelView: View {
     public let group: MuscleCategoryGroup
@@ -43,9 +43,9 @@ public struct CategoryTileModelView: View {
         self.hasActiveSetForCategory = hasActiveSetForCategory
         self.onTap = onTap
 
-        // Anti-Pattern §14a (Optional-Chain auf der Beziehung) durch denormalisiertes
-        // workoutId aus T3 vermieden. Lokale Constants damit der #Predicate die Werte
-        // capturen kann, ohne sich auf 'self' zu beziehen.
+        // Anti-pattern §14a (optional chain on the relationship) avoided via the
+        // denormalized workoutId from T3. Local constants so the #Predicate can capture
+        // the values without referring to 'self'.
         let raw = group.rawValue
         let wid = workoutId
         _exercises = Query(
@@ -184,10 +184,10 @@ public struct CategoryTileModelView: View {
     }
 }
 
-/// Lokal-spiegel der `fileprivate` `ExerciseInfo`-Aggregation aus `CategoryTileView`.
-/// Bewusst dupliziert (nicht aus `FitnessExercise` exposed) weil dort `fileprivate`
-/// und der Aggregations-Output simpel genug ist. T8 löscht die alte zusammen mit
-/// der alten `CategoryTileView`.
+/// Local mirror of the `fileprivate` `ExerciseInfo` aggregation from `CategoryTileView`.
+/// Intentionally duplicated (not exposed from `FitnessExercise`) because it is `fileprivate`
+/// there and the aggregation output is simple enough. T8 deletes the old one together with
+/// the old `CategoryTileView`.
 private struct ExerciseInfo {
     let total: Int
     let active: Int

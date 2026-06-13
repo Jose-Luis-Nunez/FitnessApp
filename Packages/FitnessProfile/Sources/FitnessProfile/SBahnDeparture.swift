@@ -12,7 +12,7 @@ public struct SBahnDeparture: Equatable, Identifiable, Sendable, Codable {
     public let plannedWhen: Date
     public let when: Date
     /// `nil` for east-direct trips (no transfer needed). Non-nil for east-short
-    /// trips that have a verified eigenständig (Origin ≠ Alex) bridge candidate
+    /// trips that have a verified standalone (Origin ≠ Alex) bridge candidate
     /// at the transfer station.
     public let bridge: BridgeHint?
     /// Estimated arrival at the user's destination.
@@ -55,7 +55,7 @@ public struct SBahnDeparture: Equatable, Identifiable, Sendable, Codable {
 /// - `bridgeDeparture`: when the bridge departs from `transferStation`
 /// - `bridgeDirection`: terminus shown by the bridge (e.g. "S Erkner Bhf")
 /// - `bridgeOriginStation`: where the bridge trip itself originated. Verifies
-///   the eigenständig requirement — must NOT be a station that Alex is on the
+///   the standalone requirement — must NOT be a station that Alex is on the
 ///   route from. Surfaced in the row-tap detail view so the user can confirm.
 public struct BridgeHint: Equatable, Sendable, Codable {
     public let transferStation: String
@@ -95,11 +95,11 @@ public enum BVGSBahnError: LocalizedError, Equatable {
 
     public var errorDescription: String? {
         switch self {
-        case .invalidURL: return "Ungültige URL."
-        case .network: return "Netzwerk nicht erreichbar."
-        case .decoding: return "Antwort konnte nicht gelesen werden."
-        case .rateLimited: return "Zu viele Anfragen. Bitte kurz warten."
-        case .serverError: return "BVG-Server nicht erreichbar."
+        case .invalidURL: return "Invalid URL."
+        case .network: return "Network unreachable."
+        case .decoding: return "Could not read the response."
+        case .rateLimited: return "Too many requests. Please wait a moment."
+        case .serverError: return "BVG server unreachable."
         }
     }
 }

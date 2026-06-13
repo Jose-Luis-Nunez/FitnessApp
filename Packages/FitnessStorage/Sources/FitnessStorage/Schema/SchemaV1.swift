@@ -1,20 +1,20 @@
 import Foundation
 import SwiftData
 
-/// Initial schema — die Form in der die App vor T3 zu Usern ausgeliefert wurde.
+/// Initial schema — the form in which the app was shipped to users before T3.
 ///
-/// Per ADR-0005 § Snapshot-Pflicht (Hybrid-Regel) plus Beziehungs-Closure-Regel:
-/// - `ExerciseModel` wird in V2 geändert (bekommt `workoutId`) → eigene Snapshot-Kopie.
-/// - `WorkoutModel` hält eine Inverse-Relationship auf `ExerciseModel`. SwiftData
-///   kann eine Live-`WorkoutModel`-Klasse nicht gleichzeitig auf zwei distincte
-///   `ExerciseModel`-Typen (V1 + Live) registrieren — also muss `WorkoutModel` hier
-///   ebenfalls snapshot't werden, obwohl seine Form selbst unverändert bleibt.
-/// - Andere Models (`SetProgressModel`, `AnalyticsEntryModel`,
-///   `ExerciseFeedbackModel`) sind nicht im Beziehungs-Cluster und bleiben Live-Refs.
+/// Per ADR-0005 § Snapshot requirement (hybrid rule) plus relationship-closure rule:
+/// - `ExerciseModel` is changed in V2 (gains `workoutId`) → its own snapshot copy.
+/// - `WorkoutModel` holds an inverse relationship on `ExerciseModel`. SwiftData
+///   cannot register a live `WorkoutModel` class against two distinct
+///   `ExerciseModel` types (V1 + live) at the same time — so `WorkoutModel` must
+///   also be snapshotted here, even though its own form remains unchanged.
+/// - Other models (`SetProgressModel`, `AnalyticsEntryModel`,
+///   `ExerciseFeedbackModel`) are not in the relationship cluster and stay live refs.
 ///
-/// Die Snapshot-Klassen werden nur in `Schema/`, `MigrationPlan` und
-/// Migrations-Tests referenziert. App-Code nutzt weiter `ExerciseModel`,
-/// `WorkoutModel` ohne Schema-Präfix (= V2-Live-Form).
+/// The snapshot classes are referenced only in `Schema/`, `MigrationPlan` and
+/// migration tests. App code continues to use `ExerciseModel`,
+/// `WorkoutModel` without a schema prefix (= V2 live form).
 enum SchemaV1: VersionedSchema {
     static var versionIdentifier = Schema.Version(1, 0, 0)
 

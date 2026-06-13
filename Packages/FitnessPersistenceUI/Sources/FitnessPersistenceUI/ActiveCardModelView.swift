@@ -5,13 +5,13 @@ import FitnessUI
 @_spi(PersistenceUI) import FitnessStorage
 
 /// Active card variant rendered against a live `@Bindable ExerciseModel` —
-/// Lese-Pfade gehen direkt auf `model.X` ohne Snapshot-Sync (ADR-0001).
+/// read paths go directly through `model.X` without snapshot sync (ADR-0001).
 ///
-/// Edit-Callback bleibt `(Exercise, ExerciseEditMode) -> Void`; der
-/// `model.toDomain()`-Call an der Boundary ist bewusst — er wird nur
-/// ausgeführt wenn der User tatsächlich auf "edit" tippt, nicht im render-Pfad.
+/// The edit callback stays `(Exercise, ExerciseEditMode) -> Void`; the
+/// `model.toDomain()` call at the boundary is intentional — it only runs
+/// when the user actually taps "edit", not on the render path.
 ///
-/// SPI-Marker: siehe `ExerciseCardModelView`.
+/// SPI marker: see `ExerciseCardModelView`.
 @_spi(PersistenceUI)
 public struct ActiveCardModelView: View {
     @Bindable public var model: ExerciseModel

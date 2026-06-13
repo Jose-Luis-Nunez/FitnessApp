@@ -1,111 +1,110 @@
-# 0003 — Training Coordinator Session-State ist non-persistent und blocking
+# 0003 — Training Coordinator session state is non-persistent and blocking
 
 * Status: accepted
 * Date: 2026-04-19
 * Deciders: jose.nunez
 
-## Kontext
+## Context
 
-`TrainingCoordinator.activeSessions[id].currentExercise` ist heute eine
-`Exercise`-struct-Kopie, gehalten während einer aktiven Trainingseinheit.
+`TrainingCoordinator.activeSessions[id].currentExercise` is today an
+`Exercise` struct copy, held during an active training session.
 
-Mit ADR-0001 (`@Model` als UI-SoT) entsteht ein potenzieller Konflikt bei
-parallelen Mutationen:
+With ADR-0001 (`@Model` as UI SoT) a potential conflict arises with
+parallel mutations:
 
-- User startet Training für Exercise X. Coordinator hält einen Snapshot mit z.B.
-  `sets = 3` zum Session-Start.
-- User editiert Exercise X parallel im Edit-Sheet. Mutation auf `@Model`-Instanz:
-  `model.sets = 5`. SwiftData speichert → `@Query` und `@Bindable`-Views sehen
-  sofort `5`. Aber:
-- Was gilt für die laufende Session? Coordinator-Snapshot mit `sets = 3` (User
-  startete vor dem Edit) oder die neue `@Model`-Wahrheit mit `sets = 5`?
+- The user starts training for exercise X. The coordinator holds a snapshot with,
+  e.g., `sets = 3` at session start.
+- The user edits exercise X in parallel in the edit sheet. Mutation on the
+  `@Model` instance: `model.sets = 5`. SwiftData saves → `@Query` and
+  `@Bindable` views immediately see `5`. But:
+- What applies to the running session? The coordinator snapshot with `sets = 3`
+  (the user started before the edit) or the new `@Model` truth with `sets = 5`?
 
-Beide naive Lösungen führen zu Bugs:
+Both naive solutions lead to bugs:
 
-- **Snapshot ignorieren / live `@Model` lesen** → Sätze die der User schon
-  abgeschlossen hat können plötzlich aus dem geplanten Set fallen oder
-  doppelt erscheinen.
-- **Snapshot überschreiben** → User-Edits während Session werden für die
-  Session verworfen, ohne dass die UI das kommuniziert.
+- **Ignore the snapshot / read the live `@Model`** → sets the user has already
+  completed can suddenly fall out of the planned set or appear twice.
+- **Overwrite the snapshot** → user edits during a session are discarded for the
+  session without the UI communicating it.
 
-## Optionen
+## Options
 
-- **A**: Coordinator beobachtet `@Model`-Mutationen und merged sie in laufende
-  Session (komplex, Race-anfällig, schwer zu testen)
-- **B**: UI **blockiert** Edit-Operationen auf Exercise X während aktiver
-  Session (Edit-Button disabled, Sheet wird verweigert mit Hinweis)
-- **C**: Coordinator hält `PersistentIdentifier` statt struct-Kopie, liest
-  jeden Frame live aus `@Model` — Mutations propagieren transparent (SwiftData
-  Observation handelt Updates)
-- **D**: Status quo — keine Garantie, dokumentiertes "don't do that"
+- **A**: The coordinator observes `@Model` mutations and merges them into the
+  running session (complex, race-prone, hard to test)
+- **B**: The UI **blocks** edit operations on exercise X during an active
+  session (edit button disabled, sheet refused with a hint)
+- **C**: The coordinator holds a `PersistentIdentifier` instead of a struct copy,
+  reading live from the `@Model` every frame — mutations propagate transparently
+  (SwiftData observation handles updates)
+- **D**: Status quo — no guarantee, a documented "don't do that"
 
-## Entscheidung
+## Decision
 
-**Option B als Hauptregel + Konvention C-Light für Coordinator-Interna**:
+**Option B as the main rule + convention C-Light for the coordinator internals**:
 
-### 1. UI-Edit-Block während aktiver Session
+### 1. UI edit block during an active session
 
-Solange `coordinator.activeSessions[exerciseId]` existiert:
+As long as `coordinator.activeSessions[exerciseId]` exists:
 
-- Edit-Button auf Exercise X **disabled** in allen Konsumenten-Views
-  (List, Detail, Card)
-- Edit-Sheet öffnet nicht (Tap zeigt kurzes Banner "Übung läuft — Bearbeitung
-  nach Trainingsende möglich")
-- Reset / Delete von Exercise X ebenfalls blockiert während Session
+- The edit button on exercise X is **disabled** in all consumer views
+  (list, detail, card)
+- The edit sheet does not open (a tap shows a brief banner "Exercise in progress —
+  editing possible after training ends")
+- Reset / delete of exercise X is likewise blocked during a session
 
-### 2. Coordinator-State ist non-persistent
+### 2. Coordinator state is non-persistent
 
-`activeSessions`, `ActiveSetViewModel.completedSetCount`, Timer-State sind
-**explizit ephemer**:
+`activeSessions`, `ActiveSetViewModel.completedSetCount`, and timer state are
+**explicitly ephemeral**:
 
-- Bei App-Kill mid-training **geht der Session-Fortschritt verloren** (wie
-  heute schon — kein Regress).
-- Keine SwiftData-Persistenz dieser Felder. Sie sind reine Live-Session-State.
-- Bei App-Foreground nach Backgrounding wird die Session bei kurzer Pause
-  fortgeführt (existing behaviour), bei langer Pause könnte ein zukünftiger
-  Mechanismus Foreground-Sync triggern (out of scope hier).
+- On an app kill mid-training **session progress is lost** (as is already the
+  case today — no regression).
+- No SwiftData persistence of these fields. They are pure live session state.
+- On app foreground after backgrounding the session is resumed after a short
+  pause (existing behaviour); after a long pause a future mechanism could
+  trigger a foreground sync (out of scope here).
 
-### 3. Coordinator hält fachlich-relevante Felder als struct-Kopie
+### 3. The coordinator holds domain-relevant fields as a struct copy
 
-- Der Coordinator behält `currentExercise: Exercise` als struct beim
-  Session-Start (was er heute tut). Set-Plan ist zur Session-Zeit gefroren.
-- Persistierte Set-Resultate werden direkt auf `ExerciseModel` geschrieben
-  (über `FinishExerciseUseCase`: `model.isCompleted = true; context.save()`).
-- Coordinator referenziert die `@Model`-Identität via `id: UUID` (das DTO und
-  das Model teilen denselben `id`), aber liest den Plan nicht live aus dem
-  Model — das ist genau die Snapshot-Garantie des Edit-Blocks.
+- The coordinator keeps `currentExercise: Exercise` as a struct at
+  session start (which it does today). The set plan is frozen at session time.
+- Persisted set results are written directly to `ExerciseModel`
+  (via `FinishExerciseUseCase`: `model.isCompleted = true; context.save()`).
+- The coordinator references the `@Model` identity via `id: UUID` (the DTO and
+  the model share the same `id`), but does not read the plan live from the
+  model — that is exactly the snapshot guarantee of the edit block.
 
-## Konsequenzen
+## Consequences
 
-### Positiv
+### Positive
 
-- Edit-while-Training-Race **ausgeschlossen by construction**.
-- Coordinator bleibt schlank, fachlich klar abgegrenzt von der Persistenz.
-- Persistenz-Pfad eindeutig: alle persistierten Set-Mutationen laufen über
-  `@Model` + `context.save()`. Eine einzige Schreibrichtung.
-- Tests können den Coordinator weiterhin mit struct-`Exercise` setupen, ohne
-  einen `ModelContainer` zu brauchen (Coordinator-Tests bleiben schlank).
+- The edit-while-training race is **excluded by construction**.
+- The coordinator stays lean, clearly separated from persistence in terms of domain.
+- The persistence path is unambiguous: all persisted set mutations go through
+  `@Model` + `context.save()`. A single write direction.
+- Tests can still set up the coordinator with a `struct Exercise`, without
+  needing a `ModelContainer` (coordinator tests stay lean).
 
-### Negativ
+### Negative
 
-- UI muss Edit-Block-State bereitstellen — neuer State-Computed in den
-  Konsumenten-Views (Edit-Button-`isEnabled`-Logik).
-  Mehrarbeit konzentriert in T7 (`TrainingModelView`-Pilot).
-- App-Kill mid-training verliert Session-Progress. **Akzeptiert** und
-  in Onboarding/UX dokumentieren (zukünftige Ticket-Karte für persistente
-  Session falls User-Feedback es fordert).
+- The UI must provide edit-block state — a new computed state in the
+  consumer views (edit-button `isEnabled` logic).
+  This extra work is concentrated in T7 (`TrainingModelView` pilot).
+- App kill mid-training loses session progress. **Accepted** and
+  documented in onboarding/UX (a future ticket card for a persistent
+  session if user feedback demands it).
 
 ### Neutral
 
-- `Exercise`-struct in `FitnessCore` bleibt — sie ist die Coordinator-Plan-DTO.
-- `ExerciseModel` wird die UI-Quelle (ADR-0001), aber der Coordinator hält
-  sie nicht direkt. Klare Schichtentrennung: Coordinator → struct,
+- `struct Exercise` in `FitnessCore` stays — it is the coordinator's plan DTO.
+- `ExerciseModel` becomes the UI source (ADR-0001), but the coordinator does not
+  hold it directly. A clear layer separation: coordinator → struct,
   UI → @Model.
 
-## Verweise
+## References
 
-- ADR-0001 (`@Model` als UI-SoT — begründet warum Coordinator-Snapshot
-  potenzielles Konfliktrisiko hatte)
-- ADR-0002 (`FitnessPersistenceUI` — wo die Edit-Block-Views leben würden)
-- T7 (TrainingModelView implementiert Edit-Block in der Pilot-View)
-- T8 (Legacy-Cleanup berücksichtigt Coordinator-Vertrag)
+- ADR-0001 (`@Model` as UI SoT — explains why the coordinator snapshot
+  carried a potential conflict risk)
+- ADR-0002 (`FitnessPersistenceUI` — where the edit-block views would live)
+- T7 (TrainingModelView implements the edit block in the pilot view)
+- T8 (legacy cleanup accounts for the coordinator contract)

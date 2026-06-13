@@ -24,8 +24,8 @@ enum AppMigrationPlan: SchemaMigrationPlan {
     /// relationship that was carried over from V1.
     ///
     /// `workoutId` is Optional because non-optional new properties cannot pass
-    /// SwiftData's lightweight validation step — see ADR-0005 § "Optionalitäts-
-    /// Regel für neue Properties".
+    /// SwiftData's lightweight validation step — see ADR-0005 § "Optionality
+    /// rule for new properties".
     ///
     /// Failure handling: rows whose `workout` relationship is `nil` (orphans from
     /// older corruption) stay with `workoutId == nil`; we log them and continue

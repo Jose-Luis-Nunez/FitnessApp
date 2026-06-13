@@ -57,20 +57,20 @@ Cross-links to other ADRs, plans, code, external resources.
 
 | ID | Title | Status |
 |----|-------|--------|
-| 0001 | @Model als UI Single Source of Truth | accepted |
+| 0001 | @Model as UI Single Source of Truth | accepted |
 | 0002 | FitnessPersistenceUI Package | accepted |
-| 0003 | Coordinator Session-State Vertrag | accepted |
+| 0003 | Coordinator session-state contract | accepted |
 | 0004 | _(reserved — CloudKit / TCA migration trigger)_ | reserved |
-| 0005 | SwiftData Schema-Migration-Strategie (VersionedSchema + MigrationPlan) | accepted |
-| 0006 | Versionierte Git-Hooks via `core.hooksPath` | accepted |
-| 0007 | SessionTrainingCache entfernen, ResetAllExercisesUseCase auf TrainingCoordinatorCache umstellen | accepted |
+| 0005 | SwiftData Schema Migration Strategy (VersionedSchema + MigrationPlan) | accepted |
+| 0006 | Versioned Git hooks via `core.hooksPath` | accepted |
+| 0007 | Remove SessionTrainingCache, switch ResetAllExercisesUseCase to TrainingCoordinatorCache | accepted |
 | 0008 | Friends Comparison: isolated JSON-blob storage + dedicated module | accepted |
 
-> **ADR-0004 Hinweis:** Die Nummer 0004 ist bewusst nicht vergeben. Zwei bestehende ADRs verweisen auf "ADR-0004" als zukünftigen Anker für zwei mögliche Trigger:
-> - **TCA-Migration** (referenziert in ADR-0001 §"Trigger eingetreten → ADR-0004 schreiben"): Wenn die Observability-Probleme von SwiftUI/SwiftData unhaltbar werden, würde ADR-0004 die Migration zu The Composable Architecture dokumentieren.
-> - **CloudKit-Sync** (referenziert in ADR-0005 §Consequences): Wenn die App über das lokale Single-User-Modell hinausgeht, würde ADR-0004 die CloudKit-Integrationsstrategie festhalten.
+> **ADR-0004 note:** The number 0004 is intentionally unassigned. Two existing ADRs reference "ADR-0004" as a future anchor for two possible triggers:
+> - **TCA migration** (referenced in ADR-0001 §"Trigger occurred → write ADR-0004"): if the observability problems of SwiftUI/SwiftData become untenable, ADR-0004 would document the migration to The Composable Architecture.
+> - **CloudKit sync** (referenced in ADR-0005 §Consequences): if the app grows beyond the local single-user model, ADR-0004 would capture the CloudKit integration strategy.
 >
-> Die Nummer wird offen gehalten bis einer dieser Trigger einsetzt — kein "skipped", sondern aktiv reserviert.
+> The number is kept open until one of these triggers kicks in — not "skipped", but actively reserved.
 
 ## Enforcement
 
