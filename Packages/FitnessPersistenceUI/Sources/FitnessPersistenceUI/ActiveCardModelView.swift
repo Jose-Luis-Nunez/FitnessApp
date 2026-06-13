@@ -189,6 +189,7 @@ public struct ActiveCardModelView: View {
 
                 Image(iconColorScheme.iconName(for: model.displayIconName))
                     .resizable()
+                    .interpolation(.high)
                     .scaledToFill()
                     .frame(width: AppStyle.DeviceLayout.exerciseIconSize, height: AppStyle.DeviceLayout.exerciseIconSize, alignment: model.iconAlignment)
                     .clipped()

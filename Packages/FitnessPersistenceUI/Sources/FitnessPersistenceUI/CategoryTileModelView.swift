@@ -143,6 +143,7 @@ public struct CategoryTileModelView: View {
 
             Image(iconColorScheme.iconName(for: group.defaultIconName))
                 .resizable()
+                .interpolation(.high)
                 .scaledToFill()
                 .frame(width: 100, height: 100, alignment: group.iconAlignment)
                 .clipped()

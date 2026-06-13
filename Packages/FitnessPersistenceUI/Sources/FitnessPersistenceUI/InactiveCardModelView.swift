@@ -86,6 +86,7 @@ private extension InactiveCardModelView {
     var categoryIconView: some View {
         Image(iconColorScheme.iconName(for: model.displayIconName))
             .resizable()
+            .interpolation(.high)
             .scaledToFill()
             .frame(width: AppStyle.Layout.categoryIconSize, height: AppStyle.Layout.categoryIconSize, alignment: model.iconAlignment)
             .clipped()
