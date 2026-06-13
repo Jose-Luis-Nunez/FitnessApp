@@ -78,6 +78,13 @@ public enum AppStyle {
         public static let profileBMIBarHeight: CGFloat = 8
         public static let profileBMIThumbSize: CGFloat = 14
         public static let profileBottomSpacer: CGFloat = 100
+        /// Friend-tile avatar diameter (Friends comparison section).
+        public static let friendAvatarSize: CGFloat = 44
+        /// Own-user-row avatar diameter in the Friends section (smaller than a
+        /// friend tile to read as a header rather than a peer tile).
+        public static let friendUserAvatarSize: CGFloat = 36
+        /// Max width of a friend-tile name label before truncation.
+        public static let friendTileNameMaxWidth: CGFloat = 60
         /// Height of the wheel-picker row used by the Body Details edit form.
         /// Matches the 150pt row used in `ExerciseWheelPickerRow` so the wheels
         /// feel consistent across the app.
@@ -291,6 +298,9 @@ public enum AppStyle {
         public static let bmiObese = SwiftUI.Color(hex: "#E85A5A")
 
         public static let painAccent = SwiftUI.Color(hex: "#FF6B3D")
+
+        /// Inline error text (form validation, load-failure messages).
+        public static let error = SwiftUI.Color(hex: "#E85A5A")
 
         // MARK: Symptom-icon palette
         //

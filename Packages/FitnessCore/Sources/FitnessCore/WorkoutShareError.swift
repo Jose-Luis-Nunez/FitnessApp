@@ -22,15 +22,15 @@ public enum WorkoutShareError: LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .invalidJSON:
-            return "Das ist kein gültiges Workout-JSON."
+            return "That's not valid workout JSON."
         case .unsupportedVersion:
-            return "Dieses Workout wurde mit einer neueren App-Version exportiert."
+            return "This workout was exported with a newer app version."
         case .schemaMismatch:
-            return "Workout-Daten sind unvollständig oder beschädigt."
+            return "Workout data is incomplete or corrupted."
         case .persistenceFailed:
-            return "Speichern fehlgeschlagen. Bitte erneut versuchen."
+            return "Saving failed. Please try again."
         case .exportFailed:
-            return "Export fehlgeschlagen. Bitte erneut versuchen."
+            return "Export failed. Please try again."
         }
     }
 }

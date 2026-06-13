@@ -179,6 +179,51 @@ struct DataMigrationServiceTests {
         #expect(migratedEntry.setProgressEntries.count == 2)
     }
 
+    @Test func migratesLegacyAnalyticsWithoutSetProgressIds() {
+        // Regression: analytics files written before `SetProgress`/`AnalyticsEntry`
+        // gained a required `id` omit those keys. Decoding with the live type
+        // throws `keyNotFound("id")`; the old `try?` path swallowed it and
+        // dropped the entire history. The migration must now backfill ids and
+        // import the entries.
+        let defaults = TestHelpers.makeIsolatedDefaults()
+        let tempDir = TestHelpers.makeTempDirectory()
+        defer { TestHelpers.cleanupTempDirectory(tempDir) }
+
+        let workout = Workout(name: "Legacy")
+        defaults.set(try! JSONEncoder().encode([workout]), forKey: workoutsKey)
+        defaults.set("legacyuser", forKey: "userId")
+
+        let exerciseId = UUID()
+        let exercise = Exercise(id: exerciseId, name: "Curl", weight: 20, reps: 10, sets: 3, iconName: "x", category: .arms)
+        let exerciseFile = tempDir.appendingPathComponent("workout_\(workout.id.uuidString)_arms_legacyuser.json")
+        try! JSONEncoder().encode([exercise]).write(to: exerciseFile)
+
+        // Raw legacy JSON: no per-set `id`, no entry-level `id`.
+        let legacyJSON = """
+        [
+          {
+            "exerciseId": "\(exerciseId.uuidString)",
+            "date": "2025-06-20T16:12:57Z",
+            "setProgress": [
+              { "status": "completedDone", "currentReps": 10, "weight": 20 },
+              { "status": "completedMore", "currentReps": 12, "weight": 22.5 }
+            ]
+          }
+        ]
+        """
+        let analyticsFile = tempDir.appendingPathComponent("analytics_\(exerciseId)_legacyuser.json")
+        try! Data(legacyJSON.utf8).write(to: analyticsFile)
+
+        let context = makeContext()
+        DataMigrationService.migrateIfNeeded(context: context, defaults: defaults, documentsDir: tempDir)
+
+        let analyticsModels = (try? context.fetch(FetchDescriptor<AnalyticsEntryModel>())) ?? []
+        #expect(analyticsModels.count == 1, "legacy analytics without set ids must still import")
+        let migrated = analyticsModels.first
+        #expect(migrated?.exerciseId == exerciseId)
+        #expect(migrated?.setProgressEntries.count == 2, "both sets imported with backfilled ids")
+    }
+
     // MARK: - Edge Cases
 
     @Test func corruptWorkoutDataDoesNotCrash() {

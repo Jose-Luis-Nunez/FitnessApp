@@ -20,6 +20,7 @@
 		BB000001AA00000000000009 /* Factory in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA00000000000009 /* Factory */; };
 		BB000001AA0000000000000B /* FitnessWorkouts in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA0000000000000B /* FitnessWorkouts */; };
 		BB000001AA0000000000000C /* FitnessPersistenceUI in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA0000000000000C /* FitnessPersistenceUI */; };
+		BB000001AA0000000000000D /* FitnessFriends in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA0000000000000D /* FitnessFriends */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -106,6 +107,7 @@
 				BB000001AA00000000000008 /* FitnessSchedule in Frameworks */,
 				BB000001AA0000000000000B /* FitnessWorkouts in Frameworks */,
 				BB000001AA00000000000009 /* Factory in Frameworks */,
+				BB000001AA0000000000000D /* FitnessFriends in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -179,6 +181,7 @@
 				BB000002AA00000000000009 /* Factory */,
 				BB000002AA0000000000000A /* FitnessProfile */,
 				BB000002AA0000000000000B /* FitnessWorkouts */,
+				BB000002AA0000000000000D /* FitnessFriends */,
 			);
 			productName = FitnessApp;
 			productReference = 00181AF22DABCCE300884E28 /* FitnessApp.app */;
@@ -275,6 +278,7 @@
 				BB000003AA0000000000000A /* XCLocalSwiftPackageReference "Packages/FitnessProfile" */,
 				BB000003AA0000000000000B /* XCLocalSwiftPackageReference "Packages/FitnessWorkouts" */,
 				BB000003AA00000000000009 /* XCRemoteSwiftPackageReference "Factory" */,
+				BB000003AA0000000000000D /* XCLocalSwiftPackageReference "Packages/FitnessFriends" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 00181AF32DABCCE300884E28 /* Products */;
@@ -858,6 +862,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/FitnessPersistenceUI;
 		};
+		BB000003AA0000000000000D /* XCLocalSwiftPackageReference "Packages/FitnessFriends" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/FitnessFriends;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -920,6 +928,11 @@
 		BB000002AA0000000000000C /* FitnessPersistenceUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = FitnessPersistenceUI;
+		};
+		BB000002AA0000000000000D /* FitnessFriends */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BB000003AA0000000000000D /* XCLocalSwiftPackageReference "Packages/FitnessFriends" */;
+			productName = FitnessFriends;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

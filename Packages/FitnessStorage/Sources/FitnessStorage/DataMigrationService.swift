@@ -140,14 +140,58 @@ public enum DataMigrationService {
             "analytics_\(exerciseId)_\(userId).json"
         )
 
-        guard FileManager.default.fileExists(atPath: file.path),
-              let data = try? Data(contentsOf: file) else {
+        guard FileManager.default.fileExists(atPath: file.path) else { return [] }
+        let data: Data
+        do {
+            data = try Data(contentsOf: file)
+        } catch {
+            logger.error("Failed to read legacy analytics file for \(exerciseId, privacy: .public): \(error)")
             return []
         }
 
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
-        return (try? decoder.decode([AnalyticsEntry].self, from: data)) ?? []
+        do {
+            // Decode through the tolerant legacy shape, not the live
+            // `AnalyticsEntry`: older files predate the per-set `SetProgress.id`
+            // (and entry-level `id`) becoming required, so decoding with the
+            // live type throws `keyNotFound("id")`. We backfill missing ids
+            // instead of letting the whole file fail — and we log decode errors
+            // rather than swallowing them with `try?`, which previously dropped
+            // entire training histories silently on migration.
+            let legacy = try decoder.decode([LegacyAnalyticsEntry].self, from: data)
+            return legacy.map { entry in
+                AnalyticsEntry(
+                    id: entry.id ?? UUID(),
+                    exerciseId: entry.exerciseId,
+                    date: entry.date,
+                    setProgress: entry.setProgress.map {
+                        SetProgress(id: $0.id ?? UUID(), status: $0.status, currentReps: $0.currentReps, weight: $0.weight)
+                    }
+                )
+            }
+        } catch {
+            logger.error("Failed to decode legacy analytics for \(exerciseId, privacy: .public): \(error)")
+            return []
+        }
+    }
+
+    /// Tolerant mirror of `AnalyticsEntry`/`SetProgress` as they were persisted
+    /// before those types became `Identifiable` with a required `id`. Optional
+    /// `id` lets pre-`id` files decode; `loadLegacyAnalytics` backfills a fresh
+    /// id for any entry/set that lacks one.
+    private struct LegacyAnalyticsEntry: Decodable {
+        var id: UUID?
+        var exerciseId: UUID
+        var date: Date
+        var setProgress: [LegacySetProgress]
+    }
+
+    private struct LegacySetProgress: Decodable {
+        var id: UUID?
+        var status: SetStatus
+        var currentReps: Int
+        var weight: Double
     }
 
     private static func legacyFilesExist(in documentsDir: URL) -> Bool {

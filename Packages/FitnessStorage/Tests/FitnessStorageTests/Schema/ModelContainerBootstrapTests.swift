@@ -16,14 +16,16 @@ import FitnessTestSupport
 /// `(legacy → V1)` stage. The bootstrap recovers by adopting the on-disk store
 /// as `SchemaV1` first (which physically matches the pre-T3 shape and stamps
 /// it with `(1,0,0)`), then re-opens with the plan so the existing
-/// `migrateV1toV2_addWorkoutId` runs and user data survives.
+/// `migrateV1toV2_addWorkoutId` (and now `migrateV2toV3_addFriendModel`) run and
+/// user data survives.
 ///
-/// We can't call the real `ModelContainerBootstrap.makeProductionContainer()`
-/// in tests because it pins the store to `Application Support/default.store`,
-/// which would clobber the dev simulator's app data. Instead we mirror its
-/// internal three-step strategy against per-test scratch URLs so the same
-/// algorithm is exercised end-to-end, against a real on-disk SQLite store,
-/// with the same `AppMigrationPlan`.
+/// Unlike before, these tests call the **real** `ModelContainerBootstrap`
+/// entry points (`makeContainer(storeURL:)`,
+/// `restoreQuarantinedStoreIfPossible(liveStoreURL:)`) against per-test scratch
+/// URLs, so there is no reimplemented copy of the strategy to drift out of sync
+/// with production. We never call `makeProductionContainer()` directly because
+/// it pins the store to `Application Support/default.store`, which would clobber
+/// the dev simulator's app data.
 @MainActor
 @Suite("ModelContainerBootstrap recovers pre-versioned stores", .serialized, .tags(.integration))
 struct ModelContainerBootstrapTests {
@@ -32,7 +34,7 @@ struct ModelContainerBootstrapTests {
         let dir = FileManager.default.temporaryDirectory
             .appending(path: "BootstrapRecovery-\(UUID().uuidString)")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir.appending(path: "store.sqlite")
+        return dir.appending(path: "default.store")
     }
 
     private func cleanup(_ url: URL) {
@@ -67,39 +69,18 @@ struct ModelContainerBootstrapTests {
         try ctx.save()
     }
 
-    /// The strategy under test, expressed against an injectable URL so the
-    /// production code (which pins to Application Support) and the test code
-    /// stay in lockstep without test pollution leaking into the dev sim.
-    private func bootstrapRecover(at url: URL) throws -> ModelContainer {
-        let v2Schema = Schema(versionedSchema: SchemaV2.self)
-        let configuration = ModelConfiguration(url: url)
-
-        if let direct = try? ModelContainer(
-            for: v2Schema, migrationPlan: AppMigrationPlan.self, configurations: configuration
-        ) {
-            return direct
-        }
-
-        let v1Schema = Schema(versionedSchema: SchemaV1.self)
-        _ = try ModelContainer(for: v1Schema, configurations: configuration)
-
-        return try ModelContainer(
-            for: v2Schema, migrationPlan: AppMigrationPlan.self, configurations: configuration
-        )
-    }
-
-    @Test("Fresh install: V2 container opens directly, no recovery needed")
+    @Test("Fresh install: container opens directly, no recovery needed")
     func freshInstallTakesPrimaryPath() throws {
         let url = makeStoreURL()
         defer { cleanup(url) }
 
-        let container = try bootstrapRecover(at: url)
+        let container = ModelContainerBootstrap.makeContainer(storeURL: url)
         let ctx = ModelContext(container)
         let count = try ctx.fetchCount(FetchDescriptor<ExerciseModel>())
         #expect(count == 0)
     }
 
-    @Test("Pre-T3 store: V1 adoption unblocks the V2 plan and preserves data")
+    @Test("Pre-T3 store: V1 adoption unblocks the plan and preserves data through V1→V2→V3")
     func preT3StoreRecoversAndMigrates() throws {
         let url = makeStoreURL()
         defer { cleanup(url) }
@@ -108,30 +89,146 @@ struct ModelContainerBootstrapTests {
         let exerciseId = UUID()
         try writeLegacyPreVersionedStore(at: url, workoutId: workoutId, exerciseId: exerciseId)
 
-        let container = try bootstrapRecover(at: url)
+        let container = ModelContainerBootstrap.makeContainer(storeURL: url)
         let ctx = ModelContext(container)
         let fetched = try #require(try ctx.fetch(FetchDescriptor<ExerciseModel>(
             predicate: #Predicate<ExerciseModel> { $0.id == exerciseId }
         )).first)
 
         #expect(fetched.workoutId == workoutId, "Migration must backfill workoutId from carried-over relationship")
-        #expect(fetched.workout?.id == workoutId, "Relationship must survive the legacy → V1 → V2 pipeline")
+        #expect(fetched.workout?.id == workoutId, "Relationship must survive the legacy → V1 → V2 → V3 pipeline")
+        // FriendModel table must exist and be queryable after the chained migration.
+        #expect(try ctx.fetchCount(FetchDescriptor<FriendModel>()) == 0)
     }
 
-    @Test("Recovered V2 store re-opens directly on subsequent launches")
+    @Test("Recovered store re-opens directly on subsequent launches")
     func recoveredStoreOpensDirectlyNextTime() throws {
         let url = makeStoreURL()
         defer { cleanup(url) }
 
         try writeLegacyPreVersionedStore(at: url, workoutId: UUID(), exerciseId: UUID())
-        _ = try bootstrapRecover(at: url)
+        _ = ModelContainerBootstrap.makeContainer(storeURL: url)
 
-        let v2Schema = Schema(versionedSchema: SchemaV2.self)
         let secondOpen = try ModelContainer(
-            for: v2Schema, migrationPlan: AppMigrationPlan.self,
+            for: Schema(versionedSchema: SchemaV3.self),
+            migrationPlan: AppMigrationPlan.self,
             configurations: ModelConfiguration(url: url)
         )
         let ctx = ModelContext(secondOpen)
         #expect(try ctx.fetchCount(FetchDescriptor<ExerciseModel>()) == 1)
+    }
+}
+
+/// Tests for the boot-time quarantine restore (strategy step 0). A previous
+/// launch may have moved an unopenable store into a sibling
+/// `FitnessApp-store.bak-<ts>/`; on a later launch where the open succeeds we
+/// promote the richest recoverable backup back into the live path — but only
+/// when it carries strictly more data than the current live store.
+@MainActor
+@Suite("ModelContainerBootstrap restores quarantined backups", .serialized, .tags(.integration))
+struct ModelContainerBootstrapRestoreTests {
+
+    private func makeDir() -> URL {
+        let dir = FileManager.default.temporaryDirectory
+            .appending(path: "BootstrapRestore-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }
+
+    private func cleanup(_ dir: URL) {
+        try? FileManager.default.removeItem(at: dir)
+    }
+
+    /// Populates a store at `url` (opening with the live schema + plan) with
+    /// `workouts` workouts, each holding `exercisesEach` exercises. The
+    /// resulting `storeDataScore` is `workouts + workouts * exercisesEach`.
+    private func writeStore(at url: URL, workouts: Int, exercisesEach: Int) throws {
+        try FileManager.default.createDirectory(
+            at: url.deletingLastPathComponent(), withIntermediateDirectories: true
+        )
+        let container = try ModelContainer(
+            for: Schema(versionedSchema: SchemaV3.self),
+            migrationPlan: AppMigrationPlan.self,
+            configurations: ModelConfiguration(url: url)
+        )
+        let ctx = ModelContext(container)
+        for w in 0..<workouts {
+            let wm = WorkoutModel(
+                id: UUID(), name: "W\(w)", selectedCategories: ["legs"],
+                createdDate: .now, lastModified: .now
+            )
+            ctx.insert(wm)
+            for e in 0..<exercisesEach {
+                ctx.insert(ExerciseModel.from(
+                    Exercise(name: "E\(w)-\(e)", weight: 1, reps: 1, sets: 1, iconName: "x", category: .legs),
+                    sortOrder: e,
+                    workout: wm
+                ))
+            }
+        }
+        try ctx.save()
+    }
+
+    private func score(at url: URL) throws -> Int {
+        let container = try ModelContainer(
+            for: Schema(versionedSchema: SchemaV3.self),
+            migrationPlan: AppMigrationPlan.self,
+            configurations: ModelConfiguration(url: url)
+        )
+        let ctx = ModelContext(container)
+        return try ctx.fetchCount(FetchDescriptor<WorkoutModel>())
+            + ctx.fetchCount(FetchDescriptor<ExerciseModel>())
+    }
+
+    @Test("Richer backup is restored over a freshly-seeded (sparse) live store")
+    func restoresRicherBackup() throws {
+        let dir = makeDir()
+        defer { cleanup(dir) }
+
+        let liveURL = dir.appending(path: "default.store")
+        try writeStore(at: liveURL, workouts: 1, exercisesEach: 0) // seed-like, score 1
+
+        let backupDir = dir.appending(path: "\(ModelContainerBootstrap.quarantineDirPrefix)100")
+        try writeStore(at: backupDir.appending(path: "default.store"), workouts: 2, exercisesEach: 3) // score 8
+
+        ModelContainerBootstrap.restoreQuarantinedStoreIfPossible(liveStoreURL: liveURL)
+
+        #expect(try score(at: liveURL) == 8, "live store must now carry the backup's data")
+        #expect(!FileManager.default.fileExists(atPath: backupDir.path), "consumed backup dir is removed")
+    }
+
+    @Test("Live store with more data is NOT clobbered by a sparser backup")
+    func keepsRicherLiveStore() throws {
+        let dir = makeDir()
+        defer { cleanup(dir) }
+
+        let liveURL = dir.appending(path: "default.store")
+        try writeStore(at: liveURL, workouts: 3, exercisesEach: 2) // score 9
+
+        let backupDir = dir.appending(path: "\(ModelContainerBootstrap.quarantineDirPrefix)100")
+        try writeStore(at: backupDir.appending(path: "default.store"), workouts: 1, exercisesEach: 0) // score 1
+
+        ModelContainerBootstrap.restoreQuarantinedStoreIfPossible(liveStoreURL: liveURL)
+
+        #expect(try score(at: liveURL) == 9, "richer live store is preserved")
+        #expect(FileManager.default.fileExists(atPath: backupDir.path), "untaken backup is left on disk")
+    }
+
+    @Test("Unreadable backup is left untouched, never deleted")
+    func skipsUnreadableBackup() throws {
+        let dir = makeDir()
+        defer { cleanup(dir) }
+
+        let liveURL = dir.appending(path: "default.store")
+        try writeStore(at: liveURL, workouts: 1, exercisesEach: 0)
+
+        let backupDir = dir.appending(path: "\(ModelContainerBootstrap.quarantineDirPrefix)100")
+        try FileManager.default.createDirectory(at: backupDir, withIntermediateDirectories: true)
+        try Data("not a sqlite store".utf8).write(to: backupDir.appending(path: "default.store"))
+
+        ModelContainerBootstrap.restoreQuarantinedStoreIfPossible(liveStoreURL: liveURL)
+
+        #expect(try score(at: liveURL) == 1, "live store unchanged when backup is unreadable")
+        #expect(FileManager.default.fileExists(atPath: backupDir.path), "unreadable backup preserved for forensics")
     }
 }

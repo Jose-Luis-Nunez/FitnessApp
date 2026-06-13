@@ -179,34 +179,11 @@ public final class WorkoutsViewModel {
     /// Returns the file URL on success, `nil` on any I/O failure. Callers
     /// must handle the `nil` case by sharing the raw JSON string instead.
     private func writeShareFile(json: String, workout: Workout) -> URL? {
-        let filename = Self.sanitizeFilename(workout.name)
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("\(filename).fitnessworkout")
-        do {
-            try json.data(using: .utf8)?.write(to: url, options: .atomic)
-            return url
-        } catch {
-            return nil
-        }
+        WorkoutShareFileWriter.write(json: json, name: workout.name)
     }
 
-    /// Removes filesystem-unsafe characters from a workout name so it can
-    /// become a filename. Replaces each of `/ \ ? % * | " < > :` with `_`,
-    /// collapses consecutive underscores to a single one (so `???` doesn't
-    /// produce `___.fitnessworkout`), trims surrounding whitespace, and
-    /// falls back to `"workout"` if the result is empty or consists solely
-    /// of underscores.
     static func sanitizeFilename(_ name: String) -> String {
-        var result = name
-        for ch in "/\\?%*|\"<>:" {
-            result = result.replacingOccurrences(of: String(ch), with: "_")
-        }
-        result = result.replacingOccurrences(of: "_+", with: "_", options: .regularExpression)
-        result = result.trimmingCharacters(in: .whitespacesAndNewlines)
-        if result.isEmpty || result.allSatisfy({ $0 == "_" }) {
-            return "workout"
-        }
-        return result
+        WorkoutShareFileWriter.sanitizeFilename(name)
     }
 
     public func toggleMuscleGroup(_ group: MuscleCategoryGroup) {

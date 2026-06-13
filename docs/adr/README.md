@@ -64,6 +64,7 @@ Cross-links to other ADRs, plans, code, external resources.
 | 0005 | SwiftData Schema-Migration-Strategie (VersionedSchema + MigrationPlan) | accepted |
 | 0006 | Versionierte Git-Hooks via `core.hooksPath` | accepted |
 | 0007 | SessionTrainingCache entfernen, ResetAllExercisesUseCase auf TrainingCoordinatorCache umstellen | accepted |
+| 0008 | Friends Comparison: isolated JSON-blob storage + dedicated module | accepted |
 
 > **ADR-0004 Hinweis:** Die Nummer 0004 ist bewusst nicht vergeben. Zwei bestehende ADRs verweisen auf "ADR-0004" als zukünftigen Anker für zwei mögliche Trigger:
 > - **TCA-Migration** (referenziert in ADR-0001 §"Trigger eingetreten → ADR-0004 schreiben"): Wenn die Observability-Probleme von SwiftUI/SwiftData unhaltbar werden, würde ADR-0004 die Migration zu The Composable Architecture dokumentieren.

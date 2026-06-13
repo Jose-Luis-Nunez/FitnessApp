@@ -11,14 +11,6 @@ private enum Constants {
     static let titleBottomSpacing: CGFloat = AppStyle.Padding.titleBottom
     static let topPadding: CGFloat = 1
 
-    enum WorkoutTile {
-        static let contentPadding: CGFloat = 20
-        static let cornerRadius: CGFloat = AppStyle.CornerRadius.defaultButton
-        static let iconSize: CGFloat = 24
-        static let spacing: CGFloat = 12
-        static let verticalPadding: CGFloat = 16
-    }
-
     enum FAB {
         static let mainSize: CGFloat = 56
         static let optionSize: CGFloat = 48
@@ -99,7 +91,7 @@ public struct WorkoutsScreen: View {
             // Prefer the file URL so iOS treats the export as a real file
             // attachment (Mail/AirDrop/Save-to-Files/Notes). Falls back to the
             // raw JSON string if file-write failed during `requestShare`.
-            ShareSheet(items: [item.fileURL ?? item.json as Any])
+            ShareSheet(items: [item.fileURL ?? item.json as Any], tempFileURL: item.fileURL)
         }
         .alert("Export fehlgeschlagen", isPresented: Binding(
             get: { viewModel.exportErrorMessage != nil },
@@ -251,89 +243,3 @@ public struct WorkoutsScreen: View {
     private var safeAreaInset: CGFloat { safeAreaInsets.bottom }
 }
 
-private struct WorkoutTileView: View {
-    let workout: Workout
-    let isDefault: Bool
-    let exerciseCount: Int
-    let onTap: () -> Void
-    let onLongPress: () -> Void
-    let onSettingsTap: () -> Void
-
-    var body: some View {
-        Button(action: onTap) {
-            VStack(spacing: 12) {
-                // Header mit Settings
-                HStack {
-                    Spacer()
-                    Button(action: onSettingsTap) {
-                        Image("settingsIconMenu")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 30, height: 30)
-                            .foregroundColor(AppStyle.Color.white.opacity(0.8))
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-                .padding(.top, 6)
-
-                Spacer()
-
-                // Workout Name zentriert
-                Text(workout.name)
-                    .font(AppStyle.Font.categorySelectionNameFont)
-                    .foregroundColor(AppStyle.Color.white)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-
-                Spacer()
-            }
-            .padding(16)
-            .frame(height: 120)
-            .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: Constants.WorkoutTile.cornerRadius)
-                    .fill(isDefault ? AppStyle.Color.green.opacity(0.2) : AppStyle.Color.exerciseCardBackground)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Constants.WorkoutTile.cornerRadius)
-                            .stroke(isDefault ? AppStyle.Color.green : Color.clear, lineWidth: 2)
-                    )
-            )
-            .overlay(
-                // Exercise Count Circle - top left overlay
-                VStack {
-                    HStack {
-                        ZStack {
-                            // Äußerer Ring (dicker)
-                            Circle()
-                                .stroke(
-                                    isDefault ? AppStyle.Color.green : Color.white.opacity(0.6),
-                                    lineWidth: 3
-                                )
-                                .frame(width: 34, height: 34)
-
-                            // Innerer Ring (dünner)
-                            Circle()
-                                .stroke(
-                                    isDefault ? AppStyle.Color.green.opacity(0.4) : Color.white.opacity(0.3),
-                                    lineWidth: 1
-                                )
-                                .frame(width: 26, height: 26)
-
-                            Text("\(exerciseCount)")
-                                .font(AppStyle.Font.detailBadge)
-                                .foregroundColor(isDefault ? AppStyle.Color.green : Color.white)
-                        }
-                        .padding(.leading, 20)
-                        .padding(.top, 20)
-
-                        Spacer()
-                    }
-                    Spacer()
-                }
-            )
-        }
-        .onLongPressGesture {
-            onLongPress()
-        }
-    }
-}

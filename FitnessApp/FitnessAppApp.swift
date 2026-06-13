@@ -9,6 +9,7 @@ import FitnessAnalytics
 import FitnessSchedule
 import FitnessTraining
 import FitnessWorkouts
+import FitnessFriends
 import Factory
 
 @main
@@ -138,14 +139,16 @@ struct FitnessAppApp: App {
             .environment(overlayState)
             .environment(router)
             .onOpenURL { url in
-                // Routes incoming `.json` files (UTType `com.fitnesspro.workout-share`)
-                // from Files/Mail/Messages/AirDrop into the WorkoutImportCoordinator.
-                // WorkoutsScreen observes the coordinator's `pendingImportText`
-                // and presents the import sheet pre-populated with the file's
-                // contents. Pop nav stack so the user lands on the Workouts root
-                // when the sheet opens.
-                if !router.isEmpty { router.popToRoot() }
-                Container.shared.workoutImportCoordinator().handleIncomingFile(url)
+                let ext = url.pathExtension.lowercased()
+                if ext == "fitnessfriend" {
+                    Container.shared.friendImportCoordinator().handleIncomingFile(url)
+                    router.switchToProfile()
+                } else {
+                    // `.fitnessworkout` and any other file types → workout import flow.
+                    // Pop nav stack so the user lands on the Workouts root when the sheet opens.
+                    if !router.isEmpty { router.popToRoot() }
+                    Container.shared.workoutImportCoordinator().handleIncomingFile(url)
+                }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
                 overlayState.isKeyboardVisible = true

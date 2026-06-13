@@ -21,6 +21,20 @@ enum TestHelpers {
         )
     }
 
+    static func makeInMemoryContainerWithFriends() -> ModelContainer {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        return try! ModelContainer(
+            for: WorkoutModel.self,
+            ExerciseModel.self,
+            AnalyticsEntryModel.self,
+            SetProgressModel.self,
+            ExerciseFeedbackModel.self,
+            FriendModel.self,
+            migrationPlan: AppMigrationPlan.self,
+            configurations: config
+        )
+    }
+
     static func makeIsolatedDefaults() -> UserDefaults {
         let suiteName = "\(testSuiteName).\(UUID().uuidString)"
         return UserDefaults(suiteName: suiteName)!

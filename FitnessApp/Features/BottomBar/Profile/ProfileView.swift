@@ -1,6 +1,7 @@
 import SwiftUI
 import FitnessUI
 import FitnessProfile
+import FitnessFriends
 
 struct ProfileView: View {
     @State private var viewModel = ProfileViewModel()
@@ -23,6 +24,7 @@ struct ProfileView: View {
                         nicknameSection
                         bodyDataSection
                         bmiSection
+                        FriendsSection()
                         SBahnDeparturesCardView(viewModel: viewModel.sbahnVM)
                         TramDeparturesCardView(viewModel: viewModel.tramVM)
                         Spacer(minLength: AppStyle.Layout.profileBottomSpacer)

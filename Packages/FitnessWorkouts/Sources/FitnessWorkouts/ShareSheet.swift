@@ -8,14 +8,27 @@ import UIKit
 ///
 /// Available on free Apple Developer accounts — `UIActivityViewController` is
 /// standard UIKit, no entitlement required.
-struct ShareSheet: UIViewControllerRepresentable {
-    let items: [Any]
+public struct ShareSheet: UIViewControllerRepresentable {
+    public let items: [Any]
+    /// Temp file to delete after the share sheet dismisses. Pass the URL
+    /// returned by `WorkoutShareFileWriter.write(json:name:)` so it is cleaned
+    /// up regardless of whether the user completes or cancels the share.
+    public var tempFileURL: URL?
 
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    public init(items: [Any], tempFileURL: URL? = nil) {
+        self.items = items
+        self.tempFileURL = tempFileURL
     }
 
-    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {
+    public func makeUIViewController(context: Context) -> UIActivityViewController {
+        let vc = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        vc.completionWithItemsHandler = { [url = tempFileURL] _, _, _, _ in
+            if let url { try? FileManager.default.removeItem(at: url) }
+        }
+        return vc
+    }
+
+    public func updateUIViewController(_ controller: UIActivityViewController, context: Context) {
         // Nothing dynamic to update — the controller is single-use per presentation.
     }
 }

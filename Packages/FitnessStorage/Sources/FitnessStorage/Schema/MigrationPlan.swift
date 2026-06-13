@@ -4,17 +4,18 @@ import SwiftData
 
 private let migrationLogger = Logger(subsystem: "FitnessStorage", category: "AppMigrationPlan")
 
-/// Plan controlling forward migrations between SchemaV1 → SchemaV2 → ...
+/// Plan controlling forward migrations between SchemaV1 → SchemaV2 → SchemaV3 → ...
 ///
 /// Per ADR-0005, every Custom Stage MUST have a dedicated test exercising
-/// the real container-version transition (see `MigrationV1toV2Tests`).
+/// the real container-version transition (see `MigrationV1toV2Tests`,
+/// `MigrationV2toV3Tests`).
 enum AppMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [SchemaV1.self, SchemaV2.self]
+        [SchemaV1.self, SchemaV2.self, SchemaV3.self]
     }
 
     static var stages: [MigrationStage] {
-        [migrateV1toV2_addWorkoutId]
+        [migrateV1toV2_addWorkoutId, migrateV2toV3_addFriendModel]
     }
 
     /// V1 → V2: SwiftData's lightweight phase adds the new column `workoutId: UUID?`
@@ -31,6 +32,14 @@ enum AppMigrationPlan: SchemaMigrationPlan {
     /// rather than `fatalError`-ing — a failed migration would brick the install.
     /// The next save through `ExerciseModel.from(_:sortOrder:workout:)` will
     /// assign a real value.
+    /// V2 → V3: adds `FriendModel`. Lightweight because we only add a new model
+    /// with scalar fields and no relationships. No `willMigrate`/`didMigrate`
+    /// needed — existing rows are unaffected; the new table starts empty.
+    static let migrateV2toV3_addFriendModel = MigrationStage.lightweight(
+        fromVersion: SchemaV2.self,
+        toVersion: SchemaV3.self
+    )
+
     static let migrateV1toV2_addWorkoutId = MigrationStage.custom(
         fromVersion: SchemaV1.self,
         toVersion: SchemaV2.self,

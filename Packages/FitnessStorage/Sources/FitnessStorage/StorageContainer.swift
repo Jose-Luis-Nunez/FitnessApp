@@ -54,4 +54,14 @@ public extension Container {
     var loadLatestFeedbackUseCase: Factory<LoadLatestFeedbackUseCase> {
         self { MainActor.assumeIsolated { LoadLatestFeedbackUseCase() } }
     }
+
+    var friendStorage: Factory<FriendStoring> {
+        self { MainActor.assumeIsolated { FriendStorageService() } }.singleton
+    }
+    var importFriendUseCase: Factory<ImportFriendUseCase> {
+        self { MainActor.assumeIsolated { ImportFriendUseCase() } }
+    }
+    var loadFriendComparisonUseCase: Factory<LoadFriendComparisonUseCase> {
+        self { MainActor.assumeIsolated { LoadFriendComparisonUseCase() } }
+    }
 }
