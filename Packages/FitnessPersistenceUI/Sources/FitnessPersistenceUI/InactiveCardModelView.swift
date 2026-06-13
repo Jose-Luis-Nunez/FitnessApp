@@ -23,6 +23,7 @@ public struct InactiveCardModelView: View {
     @State private var isShowingAnalytics = false
     @State private var isExpanded = false
     @State private var cachedSetProgress: [SetProgress] = []
+    @AppStorage(DefaultIconColorScheme.storageKey) private var iconColorScheme: DefaultIconColorScheme = .green
 
     public init(
         model: ExerciseModel,
@@ -83,7 +84,7 @@ public struct InactiveCardModelView: View {
 private extension InactiveCardModelView {
 
     var categoryIconView: some View {
-        Image(model.displayIconName)
+        Image(iconColorScheme.iconName(for: model.displayIconName))
             .resizable()
             .scaledToFill()
             .frame(width: AppStyle.Layout.categoryIconSize, height: AppStyle.Layout.categoryIconSize, alignment: model.iconAlignment)

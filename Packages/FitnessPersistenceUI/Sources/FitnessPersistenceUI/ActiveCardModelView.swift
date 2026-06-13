@@ -20,6 +20,7 @@ public struct ActiveCardModelView: View {
     public var analyticsViewModel: AnalyticsViewModel
 
     @State private var isShowingAnalytics = false
+    @AppStorage(DefaultIconColorScheme.storageKey) private var iconColorScheme: DefaultIconColorScheme = .green
 
     public init(
         model: ExerciseModel,
@@ -186,7 +187,7 @@ public struct ActiveCardModelView: View {
                     .blur(radius: AppStyle.Blur.iconGlow)
                     .opacity(AppStyle.Opacity.overlayBackdrop)
 
-                Image(model.displayIconName)
+                Image(iconColorScheme.iconName(for: model.displayIconName))
                     .resizable()
                     .scaledToFill()
                     .frame(width: AppStyle.DeviceLayout.exerciseIconSize, height: AppStyle.DeviceLayout.exerciseIconSize, alignment: model.iconAlignment)

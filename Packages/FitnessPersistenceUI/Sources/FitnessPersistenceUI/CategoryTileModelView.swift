@@ -31,6 +31,7 @@ public struct CategoryTileModelView: View {
     public let onTap: () -> Void
 
     @Query private var exercises: [ExerciseModel]
+    @AppStorage(DefaultIconColorScheme.storageKey) private var iconColorScheme: DefaultIconColorScheme = .green
 
     public init(
         group: MuscleCategoryGroup,
@@ -140,7 +141,7 @@ public struct CategoryTileModelView: View {
                 .blur(radius: 15)
                 .opacity(0.5)
 
-            Image(group.defaultIconName)
+            Image(iconColorScheme.iconName(for: group.defaultIconName))
                 .resizable()
                 .scaledToFill()
                 .frame(width: 100, height: 100, alignment: group.iconAlignment)

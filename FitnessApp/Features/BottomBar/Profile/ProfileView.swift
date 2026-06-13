@@ -7,6 +7,7 @@ struct ProfileView: View {
     @State private var viewModel = ProfileViewModel()
     @State private var isBodyExpanded = false
     @State private var isBMIExpanded = false
+    @AppStorage(DefaultIconColorScheme.storageKey) private var iconColorScheme: DefaultIconColorScheme = .green
     @FocusState private var focusedField: ProfileField?
 
     enum ProfileField: Hashable {
@@ -24,6 +25,7 @@ struct ProfileView: View {
                         nicknameSection
                         bodyDataSection
                         bmiSection
+                        iconColorSection
                         FriendsSection()
                         SBahnDeparturesCardView(viewModel: viewModel.sbahnVM)
                         TramDeparturesCardView(viewModel: viewModel.tramVM)
@@ -48,6 +50,30 @@ struct ProfileView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text("Nickname cannot be empty.")
+        }
+    }
+
+    // MARK: - Icon Color
+
+    /// Lets the user switch the *default* category icons between the original
+    /// (`green`) and the new `grey` variants. Writes straight to `@AppStorage`,
+    /// which every card / tile observes via the shared `DefaultIconColorScheme`
+    /// key — no ViewModel plumbing needed.
+    private var iconColorSection: some View {
+        ProfileCard {
+            VStack(alignment: .leading, spacing: AppStyle.DeviceLayout.cardSpacing) {
+                Text("Default Icon Color")
+                    .font(AppStyle.Font.profileCardTitle)
+                    .foregroundColor(AppStyle.Color.greenLight)
+
+                Picker("Default Icon Color", selection: $iconColorScheme) {
+                    ForEach(DefaultIconColorScheme.allCases) { scheme in
+                        Text(scheme.displayName).tag(scheme)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .accessibilityIdentifier("id_profile_icon_color_picker")
+            }
         }
     }
 

@@ -26,6 +26,7 @@ public struct IdleActiveCardModelView: View {
     @State private var isExpanded = false
     @State private var weightPhases: [WeightPhase] = []
     @State private var lastTrainingDateFormatted: String?
+    @AppStorage(DefaultIconColorScheme.storageKey) private var iconColorScheme: DefaultIconColorScheme = .green
 
     public init(
         model: ExerciseModel,
@@ -115,7 +116,7 @@ private extension IdleActiveCardModelView {
     }
 
     var categoryIconView: some View {
-        Image(model.categoryGroup.defaultIconName)
+        Image(iconColorScheme.iconName(for: model.categoryGroup.defaultIconName))
             .resizable()
             .interpolation(.high)
             .scaledToFill()
