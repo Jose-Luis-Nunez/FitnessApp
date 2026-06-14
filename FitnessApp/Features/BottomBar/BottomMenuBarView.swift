@@ -3,13 +3,14 @@ import FitnessUI
 import FitnessExercise
 
 private enum BottomTab {
-    case home, chart, calendar, profile
+    case workouts, training, chart, calendar, profile
 }
 
 struct BottomMenuBarView: View {
     var showBackButton: Bool = true
     var narrowBy: CGFloat = 50
     var onRightAction: () -> Void = {}
+    var onTrainingTab: () -> Void = {}
     var customBackAction: (() -> Void)? = nil
 
     @Environment(AppRouter.self) private var router
@@ -24,20 +25,25 @@ struct BottomMenuBarView: View {
         let defaultWidth = UIScreen.main.bounds.width - (2 * sideMargin)
         return max(240, defaultWidth - narrowBy)
     }
-    private var selectionHeight: CGFloat { capsuleHeight - 8 }
+    /// Icon-only tabs: the selection indicator is a circle centred behind the
+    /// icon (no label row), so it never reaches toward the neighbouring tabs.
+    private let selectionDiameter: CGFloat = 46
     private let tabForeground = AppStyle.Color.white.opacity(0.98)
     private let tabSelectedForeground = AppStyle.Color.greenGlow
-    private let iconSize: CGFloat = 34
+    private let iconSize: CGFloat = 30
     private let bottomOffset: CGFloat = -33
     private let calendarIconScale: CGFloat = 1.18
     private let circleButtonSize: CGFloat = 44
 
     private var selectedTab: BottomTab {
         switch router.currentScene {
-        case .workouts, .home, .category, .training: return .home
-        case .analytics:                              return .chart
-        case .schedule:                               return .calendar
-        case .profile:                                return .profile
+        case .workouts:                    return .workouts
+        // Being inside a workout (category selection, a category, or training)
+        // lights the "Training" tab — the "Workouts" tab only lights on the list.
+        case .home, .category, .training:  return .training
+        case .analytics:                   return .chart
+        case .schedule:                    return .calendar
+        case .profile:                     return .profile
         }
     }
 
@@ -65,9 +71,14 @@ struct BottomMenuBarView: View {
 
     private var tabBar: some View {
         HStack(spacing: 0) {
-            menuItemImage(imageName: "homeIcon", label: "Workout", tab: .home) {
-                animateTabBounce(.home)
+            menuItemImage(imageName: "homeIcon", label: "Workouts", tab: .workouts) {
+                animateTabBounce(.workouts)
                 router.popToRoot()
+            }
+            // Placeholder icon until a dedicated "Training" asset exists.
+            menuItemImage(imageName: "dumbbell.fill", isSystemImage: true, label: "Training", tab: .training) {
+                animateTabBounce(.training)
+                onTrainingTab()
             }
             menuItemImage(imageName: "analyticsEntry", label: "Analytics", tab: .chart) {
                 animateTabBounce(.chart)
@@ -88,7 +99,10 @@ struct BottomMenuBarView: View {
 
     @ViewBuilder
     private var backButton: some View {
-        let shouldShow = showBackButton && !router.isEmpty
+        // A single workout's category selection (`.home`) is a root-like entry
+        // reached from the Workouts list or the Training tab — you leave it via
+        // the tab bar, not by navigating back to the list.
+        let shouldShow = showBackButton && !router.isEmpty && router.currentScene != .home
         if shouldShow {
             Button(action: {
                 if let customAction = customBackAction {
@@ -143,42 +157,45 @@ struct BottomMenuBarView: View {
     // MARK: - Tab Item
 
     @ViewBuilder
-    private func menuItemImage(imageName: String, label: String, tab: BottomTab, action: @escaping () -> Void) -> some View {
+    private func menuItemImage(imageName: String, isSystemImage: Bool = false, label: String, tab: BottomTab, action: @escaping () -> Void) -> some View {
         let isSelected = selectedTab == tab
         let targetSize: CGFloat = imageName == "menuCalenderIcon"
             ? iconSize * calendarIconScale
             : (imageName == "analyticsEntry" ? iconSize + 4 : iconSize)
 
         Button(action: action) {
-            VStack(spacing: -2) {
-                Image(imageName)
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: targetSize, height: targetSize)
-                    .foregroundColor(isSelected ? tabSelectedForeground : tabForeground)
-                    .scaleEffect(bounceTab == tab ? 1.3 : (isSelected ? 1.15 : 1.0))
-
-                Text(label)
-                    .font(AppStyle.Font.chartAxisSmall)
-                    .foregroundColor(isSelected ? tabSelectedForeground : tabForeground)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
-            .frame(maxWidth: .infinity, minHeight: capsuleHeight, maxHeight: capsuleHeight)
-            .padding(.horizontal, 6)
-            .background {
-                if isSelected {
-                    Capsule()
-                        .fill(Color.white.opacity(0.15))
-                        .frame(height: selectionHeight)
-                        .scaleEffect(y: pillBounce ? 1.4 : 1.0)
-                        .matchedGeometryEffect(id: "selectedTab", in: tabNamespace)
+            tabIcon(imageName: imageName, isSystemImage: isSystemImage)
+                .frame(width: targetSize, height: targetSize)
+                .foregroundColor(isSelected ? tabSelectedForeground : tabForeground)
+                .scaleEffect(bounceTab == tab ? 1.3 : (isSelected ? 1.15 : 1.0))
+                .frame(maxWidth: .infinity, minHeight: capsuleHeight, maxHeight: capsuleHeight)
+                .background {
+                    if isSelected {
+                        Circle()
+                            .fill(Color.white.opacity(0.15))
+                            .frame(width: selectionDiameter, height: selectionDiameter)
+                            .scaleEffect(pillBounce ? 1.4 : 1.0)
+                            .matchedGeometryEffect(id: "selectedTab", in: tabNamespace)
+                    }
                 }
-            }
         }
         .buttonStyle(PlainButtonStyle())
         .contentShape(Rectangle())
+        .accessibilityLabel(label)
+    }
+
+    @ViewBuilder
+    private func tabIcon(imageName: String, isSystemImage: Bool) -> some View {
+        if isSystemImage {
+            Image(systemName: imageName)
+                .resizable()
+                .scaledToFit()
+        } else {
+            Image(imageName)
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+        }
     }
 }
 

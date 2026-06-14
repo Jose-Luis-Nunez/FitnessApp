@@ -252,6 +252,14 @@ enum NavigationDestination: Hashable {
 
 Navigation is managed by `AppRouter` (injected as `@EnvironmentObject`). Use `router.navigate(to:)` to push, `router.pop()` to go back, `router.popToRoot()` to reset, and `router.replaceAll(with:)` for tab switches or deep links. `AppRouter` automatically derives `currentScene: AppCurrentScene` from the navigation stack — do **not** set the current scene manually. Do **not** manipulate `NavigationPath` directly in views.
 
+### Bottom bar tabs & the single-workout root rule
+
+`BottomMenuBarView` (`Features/BottomBar/`) renders **5 icon-only tabs**: **Workouts** (list root, `popToRoot()`), **Training** (quick-launch, placeholder SF-symbol `dumbbell.fill` until a dedicated asset exists), **Analytics**, **Schedule**, **Profile**. The bar width is fixed (`capsuleWidth - 2·cardHorizontalPadding`); items use `maxWidth: .infinity`, so adding a tab shrinks each column rather than widening the bar. Tabs have **no text labels** (labels are passed as `accessibilityLabel` only) — five labels would crowd the fixed-width capsule, so the design is icon-only with a circular selection indicator (`selectionDiameter`) centred behind the active icon.
+
+- **Selected-tab mapping** (`BottomMenuBarView.selectedTab`): `.workouts` scene lights **Workouts**; the in-workout scenes (`.home`, `.category`, `.training`) light **Training**. Being inside any workout screen is treated as "training", so the Workouts tab only highlights on the actual list.
+- **Training tab action** (`onTrainingTab`, wired in `FitnessAppApp`): if `workoutStorageService.defaultWorkout` is set → `setCurrentWorkout` + `replaceAll([.home])`; else if workouts exist → `overlayState.showDefaultWorkoutPicker = true` (shows `DefaultWorkoutPickerOverlay`, which sets the chosen workout as default + current and launches it); else `popToRoot()` to the list to create one.
+- **Single-workout root rule**: a single workout's category selection (`.home`) is a **root-like** entry reached from the Workouts list tile (`replaceAll([.home])`) or the Training tab — there is **no back-navigation** to the list. Both the bar's back chevron (`backButton` suppresses it when `currentScene == .home`) and the swipe-back gesture (`.home` is excluded from `.enableSwipeBack()` in `FitnessAppApp`) are disabled there. Leaving is via the tab bar.
+
 ## AppStyle Tokens
 
 All tokens in `Packages/FitnessUI/Sources/FitnessUI/AppStyle.swift`. When no token exists for a value, add one before using.

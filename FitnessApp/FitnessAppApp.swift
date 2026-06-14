@@ -79,7 +79,7 @@ struct FitnessAppApp: App {
                         }
                     .navigationBarBackButtonHidden(true)
                         .navigationDestination(for: NavigationDestination.self) { destination in
-                            Group {
+                            let view = Group {
                                 switch destination {
                                 case .home:
                                     MuscleCategorySelectionView()
@@ -101,7 +101,14 @@ struct FitnessAppApp: App {
                                         .navigationBarBackButtonHidden(true)
                                 }
                             }
-                            .enableSwipeBack()
+                            // A single workout (`.home`) is a root-like entry: no
+                            // back-navigation to the Workouts list, so swipe-back
+                            // is disabled there too (the tab bar is the way out).
+                            if case .home = destination {
+                                view
+                            } else {
+                                view.enableSwipeBack()
+                            }
                         }
                 }
                 .zIndex(overlayState.isEditingSheetVisible ? 2 : 0)
@@ -124,6 +131,19 @@ struct FitnessAppApp: App {
                             overlayState.showTrainingMiniMenu.toggle()
                         }
                     },
+                    onTrainingTab: {
+                        // Quick-launch the default workout, or prompt the user to
+                        // pick one when none is set yet.
+                        if let workout = workoutStorageService.defaultWorkout {
+                            workoutStorageService.setCurrentWorkout(workout)
+                            router.replaceAll(with: [.home])
+                        } else if !workoutStorageService.workouts.isEmpty {
+                            overlayState.showDefaultWorkoutPicker = true
+                        } else {
+                            // No workouts at all — send the user to the list to create one.
+                            router.popToRoot()
+                        }
+                    },
                     customBackAction: router.currentScene == .training ? {
                         if overlayState.isCancellingTraining {
                             return
@@ -134,6 +154,20 @@ struct FitnessAppApp: App {
                 .zIndex(Self.shouldHideBottomBar(overlayState) ? 0 : 1)
                 .opacity(Self.shouldHideBottomBar(overlayState) ? 0 : 1)
                 .allowsHitTesting(!Self.shouldHideBottomBar(overlayState))
+
+                if overlayState.showDefaultWorkoutPicker {
+                    DefaultWorkoutPickerOverlay(
+                        workouts: workoutStorageService.workouts,
+                        onPick: { workout in
+                            workoutStorageService.setAsDefaultWorkout(workout)
+                            workoutStorageService.setCurrentWorkout(workout)
+                            overlayState.showDefaultWorkoutPicker = false
+                            router.replaceAll(with: [.home])
+                        },
+                        onDismiss: { overlayState.showDefaultWorkoutPicker = false }
+                    )
+                    .zIndex(3)
+                }
             }
             .environment(\.safeAreaInsets, geo.safeAreaInsets)
             .environment(overlayState)
@@ -171,6 +205,7 @@ struct FitnessAppApp: App {
             || state.showWorkoutsMiniMenu
             || state.showWorkoutSettingsMenu
             || state.showTrainingMiniMenu
+            || state.showDefaultWorkoutPicker
             || state.isKeyboardVisible
     }
 }

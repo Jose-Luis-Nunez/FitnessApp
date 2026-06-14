@@ -145,7 +145,9 @@ public struct WorkoutsScreen: View {
                     exerciseCount: viewModel.getExerciseCount(for: workout),
                     onTap: {
                         viewModel.selectWorkout(workout)
-                        router.navigate(to: .home)
+                        // A workout is a targeted entry — open it as a root-like
+                        // screen so there is no back-navigation to the list.
+                        router.replaceAll(with: [.home])
                     },
                     onLongPress: {
                         viewModel.showFABOptions(for: workout)

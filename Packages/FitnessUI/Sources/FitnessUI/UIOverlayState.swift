@@ -11,6 +11,10 @@ public final class UIOverlayState {
     public var showWorkoutDropdown: Bool = false
     public var showWorkoutSettingsMenu: Bool = false
     public var showTrainingMiniMenu: Bool = false
+    /// Driven by the bottom-bar "Training" tab when no default workout is set:
+    /// shows a floating picker so the user can choose which workout becomes the
+    /// default (and is then launched straight into its category selection).
+    public var showDefaultWorkoutPicker: Bool = false
     public var isCancellingTraining: Bool = false
     /// Reflects whether the system keyboard is currently visible. Consumed by
     /// the root layout to hide the glass bottom bar while the user edits a
