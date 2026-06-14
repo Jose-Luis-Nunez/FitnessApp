@@ -16,10 +16,16 @@ private let logger = Logger(subsystem: "FitnessStorage", category: "FriendStorag
 public final class FriendStorageService: FriendStoring {
     public private(set) var friends: [Friend] = []
 
-    @ObservationIgnored private let modelContext: ModelContext
+    // Retain the CONTAINER, not just its mainContext — `mainContext` does not
+    // strongly hold its container, so storing only the context lets a
+    // caller-owned container deallocate and the store vanish under us. We derive
+    // the container from the injected context (`.container`) to keep the
+    // `modelContext:` init signature unchanged.
+    @ObservationIgnored private let modelContainer: ModelContainer
+    @ObservationIgnored private var modelContext: ModelContext { modelContainer.mainContext }
 
     public init(modelContext: ModelContext? = nil) {
-        self.modelContext = modelContext ?? Container.shared.modelContainer().mainContext
+        self.modelContainer = modelContext?.container ?? Container.shared.modelContainer()
         reload()
     }
 

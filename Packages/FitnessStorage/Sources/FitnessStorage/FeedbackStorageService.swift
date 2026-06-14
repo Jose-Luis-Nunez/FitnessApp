@@ -8,12 +8,16 @@ private let logger = Logger(subsystem: "FitnessStorage", category: "FeedbackStor
 
 @MainActor
 public final class FeedbackStorageService: FeedbackStoring {
-    private let context: ModelContext
+    // Retain the CONTAINER (not just its mainContext): `mainContext` does not
+    // strongly hold its container, so storing only the context lets a
+    // caller-owned container deallocate out from under us — the store vanishes
+    // and the next access traps. Holding the container keeps the shared
+    // main context alive for the service's lifetime.
+    private let modelContainer: ModelContainer
+    private var context: ModelContext { modelContainer.mainContext }
 
     public init(container: ModelContainer? = nil) {
-        let resolved = container ?? Container.shared.modelContainer()
-        self.context = ModelContext(resolved)
-        self.context.autosaveEnabled = true
+        self.modelContainer = container ?? Container.shared.modelContainer()
     }
 
     /// Upsert by `feedback.sessionId`: if a model bound to the same training

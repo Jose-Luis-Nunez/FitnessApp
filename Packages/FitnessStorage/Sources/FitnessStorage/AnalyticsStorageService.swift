@@ -8,12 +8,12 @@ private let logger = Logger(subsystem: "FitnessStorage", category: "AnalyticsSto
 
 @MainActor
 public final class AnalyticsStorageService: AnalyticsStoring {
-    private let context: ModelContext
+    // Retain the CONTAINER, not just its mainContext (see FeedbackStorageService).
+    private let modelContainer: ModelContainer
+    private var context: ModelContext { modelContainer.mainContext }
 
     public init(container: ModelContainer? = nil) {
-        let resolved = container ?? Container.shared.modelContainer()
-        self.context = ModelContext(resolved)
-        self.context.autosaveEnabled = true
+        self.modelContainer = container ?? Container.shared.modelContainer()
     }
 
     public func save(_ entries: [AnalyticsEntry], for exerciseId: UUID) {

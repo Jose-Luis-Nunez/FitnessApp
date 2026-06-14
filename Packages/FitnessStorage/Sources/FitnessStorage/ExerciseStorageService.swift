@@ -10,13 +10,15 @@ private let logger = Logger(subsystem: "FitnessStorage", category: "ExerciseStor
 @Observable
 @MainActor
 public final class ExerciseStorageService: ExerciseStoring {
+    // Retain the CONTAINER, not just its mainContext — `mainContext` does not
+    // strongly hold its container, so storing only the context lets a
+    // caller-owned container deallocate and the store vanish under us.
     @ObservationIgnored
-    private let context: ModelContext
+    private let modelContainer: ModelContainer
+    private var context: ModelContext { modelContainer.mainContext }
 
     public init(container: ModelContainer? = nil) {
-        let resolved = container ?? Container.shared.modelContainer()
-        self.context = ModelContext(resolved)
-        self.context.autosaveEnabled = true
+        self.modelContainer = container ?? Container.shared.modelContainer()
     }
 
     public func loadForWorkout(workoutId: UUID, category: MuscleCategoryGroup) -> [Exercise] {

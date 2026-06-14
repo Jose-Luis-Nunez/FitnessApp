@@ -50,6 +50,49 @@ struct ExerciseStorageServiceTests {
         #expect(result.goal == 70)
     }
 
+    // MARK: - Shared main-context coherence (Option B contract)
+
+    /// A service write must be visible via the container's `mainContext` — the
+    /// context the views' `@Query<ExerciseModel>` observe.
+    @Test func writeIsVisibleOnSharedMainContext() throws {
+        let (sut, workout) = makeSUT()
+        let exercise = TestHelpers.makeExercise(name: "Shared", category: .arms)
+        sut.saveForWorkout([exercise], workoutId: workout.id, category: .arms)
+
+        let id = exercise.id
+        let descriptor = FetchDescriptor<ExerciseModel>(predicate: #Predicate { $0.id == id })
+        let onMainContext = try container.mainContext.fetch(descriptor)
+
+        #expect(onMainContext.count == 1)
+        #expect(onMainContext.first?.name == "Shared")
+        // SUT reads back from the same shared context it wrote to (closes the loop).
+        #expect(sut.loadForWorkout(workoutId: workout.id, category: .arms).count == 1)
+    }
+
+    /// A targeted update must be reflected on the `mainContext` **in place** — the
+    /// same row object mutates (no delete+reinsert), so a `@Query` never strands a
+    /// deleted object as a phantom card. This is the crux of unifying onto one
+    /// context (Option B) combined with the targeted update (ADR-0009).
+    @Test func updateIsReflectedInPlaceOnSharedMainContext() throws {
+        let (sut, workout) = makeSUT()
+        let e = TestHelpers.makeExercise(name: "A", seatSetting: "1", category: .arms)
+        sut.saveForWorkout([e], workoutId: workout.id, category: .arms)
+
+        let id = e.id
+        let descriptor = FetchDescriptor<ExerciseModel>(predicate: #Predicate { $0.id == id })
+        let before = try container.mainContext.fetch(descriptor).first
+        #expect(before?.seatSetting == "1")
+
+        var updated = e
+        updated.seatSetting = "22 / 2"
+        sut.updateExercise(updated)
+
+        let after = try container.mainContext.fetch(descriptor)
+        #expect(after.count == 1)
+        #expect(after.first?.seatSetting == "22 / 2")
+        #expect(after.first === before) // same row instance — in-place, identity preserved
+    }
+
     // MARK: - Targeted Update (in-place, non-destructive)
 
     @Test func updateExerciseMutatesInPlacePreservingOthers() {

@@ -14,8 +14,10 @@ public final class WorkoutStorageService: WorkoutStoring {
     public var currentWorkout: Workout?
     public var defaultWorkout: Workout?
 
+    // Retain the CONTAINER, not just its mainContext (see FeedbackStorageService).
     @ObservationIgnored
-    private let context: ModelContext
+    private let modelContainer: ModelContainer
+    private var context: ModelContext { modelContainer.mainContext }
     @ObservationIgnored
     private let userDefaults: UserDefaults
     @ObservationIgnored
@@ -30,9 +32,7 @@ public final class WorkoutStorageService: WorkoutStoring {
     public init(container: ModelContainer? = nil, defaults: UserDefaults = .standard, exerciseStorage: ExerciseStoring, analyticsStorage: AnalyticsStoring) {
         self.exerciseStorage = exerciseStorage
         self.analyticsStorage = analyticsStorage
-        let resolved = container ?? Container.shared.modelContainer()
-        self.context = ModelContext(resolved)
-        self.context.autosaveEnabled = true
+        self.modelContainer = container ?? Container.shared.modelContainer()
         self.userDefaults = defaults
 
         // Two-phase startup. Phase 1 repairs any inherited inconsistency from
