@@ -5,6 +5,19 @@ import FitnessUI
 
 // MARK: - State Structs
 
+/// The last reps/weight a user dialed in for a Less or More adjustment during
+/// the current session. Used to pre-fill the picker on the next Less/More so
+/// repeated adjustments don't have to be re-entered from the exercise default.
+public struct SetAdjustment: Sendable, Equatable {
+    public var reps: Int
+    public var weight: Double
+
+    public init(reps: Int, weight: Double) {
+        self.reps = reps
+        self.weight = weight
+    }
+}
+
 public struct SetTrackingState {
     public var currentExercise: Exercise?
     public var setProgress: [SetProgress] = []
@@ -14,6 +27,11 @@ public struct SetTrackingState {
     public var isLastSetCompleted: Bool = false
     public var category: MuscleCategoryGroup?
     public var originalCategory: MuscleCategoryGroup?
+
+    /// Session-scoped memory of the most recent Less / More adjustment, kept
+    /// separately per mode so each pre-fills the picker with its own last value.
+    public var lastLessAdjustment: SetAdjustment? = nil
+    public var lastMoreAdjustment: SetAdjustment? = nil
 
     public init() {}
 
@@ -30,6 +48,8 @@ public struct SetTrackingState {
         isLastSetCompleted = false
         category = nil
         originalCategory = nil
+        lastLessAdjustment = nil
+        lastMoreAdjustment = nil
     }
 }
 
@@ -221,6 +241,8 @@ public final class ActiveSetViewModel {
         tracking.setProgress = (0..<exercise.sets).map { _ in
             SetProgress(status: .notStarted, currentReps: exercise.reps, weight: exercise.weight)
         }
+        tracking.lastLessAdjustment = nil
+        tracking.lastMoreAdjustment = nil
         tracking.isSetInProgress = true
         tracking.isLastSetCompleted = false
         quickDone.allCompleted = false
@@ -268,6 +290,13 @@ public final class ActiveSetViewModel {
         let indexToUpdate = editing.pendingEditIndex ?? tracking.currentSet
         let status: SetStatus = newReps < exercise.reps ? .completedLess : .completedMore
         let progress = SetProgress(status: status, currentReps: newReps, weight: newWeight)
+
+        // Remember this adjustment per mode so the next Less/More opens pre-filled.
+        switch status {
+        case .completedLess: tracking.lastLessAdjustment = SetAdjustment(reps: newReps, weight: newWeight)
+        case .completedMore: tracking.lastMoreAdjustment = SetAdjustment(reps: newReps, weight: newWeight)
+        default: break
+        }
 
         if tracking.setProgress.count <= indexToUpdate {
             tracking.setProgress.append(progress)
@@ -343,6 +372,8 @@ public final class ActiveSetViewModel {
         tracking.setProgress = (0..<exercise.sets).map { _ in
             SetProgress(status: .completedDone, currentReps: exercise.reps, weight: exercise.weight)
         }
+        tracking.lastLessAdjustment = nil
+        tracking.lastMoreAdjustment = nil
         quickDone.isActive = false
         quickDone.allCompleted = true
         tracking.isSetInProgress = false
@@ -399,14 +430,28 @@ public final class ActiveSetViewModel {
     // MARK: - Editing
 
     public func startEditingSet(index: Int, mode: SetEditingMode) {
-        let reps = tracking.setProgress[index].currentReps
-        let weight = tracking.setProgress[index].weight
+        let progress = tracking.setProgress[index]
 
-        editing.repsInput = String(reps)
-        editing.weightInput = WeightFormatter.format(weight)
+        // For a fresh set, pre-fill with the last adjustment of this mode so the
+        // user doesn't re-enter the same Less/More value set after set. Editing
+        // an already-completed set keeps showing that set's real values.
+        let remembered = progress.status == .notStarted ? rememberedAdjustment(for: mode) : nil
+
+        editing.repsInput = String(remembered?.reps ?? progress.currentReps)
+        editing.weightInput = WeightFormatter.format(remembered?.weight ?? progress.weight)
         editing.pendingEditIndex = index
         editing.editMode = mode
         editing.isEditing = true
+    }
+
+    /// The remembered adjustment to pre-fill for a given mode, or `nil` when the
+    /// mode has no session memory (`.edit`, or nothing recorded yet).
+    private func rememberedAdjustment(for mode: SetEditingMode) -> SetAdjustment? {
+        switch mode {
+        case .less: tracking.lastLessAdjustment
+        case .more: tracking.lastMoreAdjustment
+        case .edit: nil
+        }
     }
 
     public func cancelActiveSet() {

@@ -1,6 +1,7 @@
 import Testing
 import Foundation
 import FitnessCore
+import FitnessUI
 @testable import FitnessTraining
 import FitnessTestSupport
 
@@ -388,6 +389,88 @@ struct ActiveSetViewModelTests {
 
         #expect(sut.repsInput.isEmpty)
         #expect(sut.weightInput.isEmpty)
+    }
+
+    // MARK: - Less/More Adjustment Memory
+
+    @Test func lessPreFillsNextSetWithPreviousLessAdjustment() {
+        let sut = makeSUT()
+        let exercise = makeExercise(sets: 3, reps: 10, weight: 60)
+        sut.startSet(for: exercise, category: .arms)
+
+        // Set 0: Less to 8 @ 50.
+        sut.startEditingSet(index: 0, mode: .less)
+        sut.updateCurrentReps(8, 50)
+
+        // Set 1: opening Less should pre-fill the previous Less values.
+        sut.startEditingSet(index: 1, mode: .less)
+
+        #expect(sut.repsInput == "8")
+        #expect(sut.weightInput == WeightFormatter.format(50))
+    }
+
+    @Test func morePreFillsNextSetWithPreviousMoreAdjustment() {
+        let sut = makeSUT()
+        let exercise = makeExercise(sets: 3, reps: 10, weight: 60)
+        sut.startSet(for: exercise, category: .arms)
+
+        sut.startEditingSet(index: 0, mode: .more)
+        sut.updateCurrentReps(12, 70)
+
+        sut.startEditingSet(index: 1, mode: .more)
+
+        #expect(sut.repsInput == "12")
+        #expect(sut.weightInput == WeightFormatter.format(70))
+    }
+
+    @Test func lessAndMoreMemoryAreSeparate() {
+        let sut = makeSUT()
+        let exercise = makeExercise(sets: 3, reps: 10, weight: 60)
+        sut.startSet(for: exercise, category: .arms)
+
+        // Only a Less adjustment exists.
+        sut.startEditingSet(index: 0, mode: .less)
+        sut.updateCurrentReps(8, 50)
+
+        // Opening More has no More memory → falls back to exercise defaults.
+        sut.startEditingSet(index: 1, mode: .more)
+
+        #expect(sut.repsInput == "10")
+        #expect(sut.weightInput == WeightFormatter.format(60))
+    }
+
+    @Test func editingCompletedSetIgnoresAdjustmentMemory() {
+        let sut = makeSUT()
+        let exercise = makeExercise(sets: 3, reps: 10, weight: 60)
+        sut.startSet(for: exercise, category: .arms)
+
+        // Set 0 completed as Less 8 @ 50, then set 1 as Less 7 @ 45 — so the
+        // latest Less memory (7 @ 45) differs from set 0's real values (8 @ 50).
+        sut.startEditingSet(index: 0, mode: .less)
+        sut.updateCurrentReps(8, 50)
+        sut.startEditingSet(index: 1, mode: .less)
+        sut.updateCurrentReps(7, 45)
+
+        // Re-editing the completed set 0 shows its real stored values, not memory.
+        sut.startEditingSet(index: 0, mode: .less)
+
+        #expect(sut.repsInput == "8")
+        #expect(sut.weightInput == WeightFormatter.format(50))
+    }
+
+    @Test func startSetClearsAdjustmentMemory() {
+        let sut = makeSUT()
+        let exercise = makeExercise(sets: 3, reps: 10, weight: 60)
+        sut.startSet(for: exercise, category: .arms)
+        sut.startEditingSet(index: 0, mode: .less)
+        sut.updateCurrentReps(8, 50)
+
+        // Restarting the exercise must not leak the previous session's memory.
+        sut.startSet(for: exercise, category: .arms)
+        sut.startEditingSet(index: 0, mode: .less)
+
+        #expect(sut.repsInput == "10")
+        #expect(sut.weightInput == WeightFormatter.format(60))
     }
 
     // MARK: - formatTime
