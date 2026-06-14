@@ -78,20 +78,20 @@ public struct ActiveSetEditPickerView: View {
 
                 VStack(spacing: 0) {
                     HStack {
-                        Text("Reps")
+                        Text("Weight")
                             .font(AppStyle.Font.sheetSectionLabel)
                             .foregroundColor(textColor)
                             .frame(maxWidth: .infinity)
-                        Text("Weight")
+                        Text("Reps")
                             .font(AppStyle.Font.sheetSectionLabel)
                             .foregroundColor(textColor)
                             .frame(maxWidth: .infinity)
                     }
 
                     HStack {
-                        Picker("Reps", selection: $selectedReps) {
-                            ForEach(repsRange.map(String.init), id: \.self) { value in
-                                Text(value).tag(value).foregroundColor(pickerColor)
+                        Picker("Weight", selection: $selectedWeight) {
+                            ForEach(filteredWeightOptions, id: \.self) { value in
+                                Text("\(value) kg").tag(value).foregroundColor(pickerColor)
                             }
                         }
 #if os(iOS)
@@ -102,9 +102,9 @@ public struct ActiveSetEditPickerView: View {
                         .frame(maxWidth: .infinity)
                         .clipped()
 
-                        Picker("Weight", selection: $selectedWeight) {
-                            ForEach(filteredWeightOptions, id: \.self) { value in
-                                Text("\(value) kg").tag(value).foregroundColor(pickerColor)
+                        Picker("Reps", selection: $selectedReps) {
+                            ForEach(repsRange.map(String.init), id: \.self) { value in
+                                Text(value).tag(value).foregroundColor(pickerColor)
                             }
                         }
 #if os(iOS)
