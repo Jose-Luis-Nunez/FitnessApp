@@ -258,6 +258,19 @@ public final class TrainingCoordinator {
         vm.startEditingSet(index: editIndex, mode: .more)
     }
 
+    /// Syncs a mid-session seat edit into the in-flight session snapshot.
+    ///
+    /// The seat lives on the `ExerciseModel` and is written by the view via
+    /// SwiftData (ADR-0001). The session, however, still holds the DTO snapshot
+    /// captured once at `startTraining`, and `finishExercise` re-persists that
+    /// snapshot through `onExerciseUpdate`. Without this sync the freshly-edited
+    /// seat would be reverted to the value the exercise had when the session
+    /// started. Keeping the poke behind this method avoids the view reaching
+    /// into `activeSetViewModel.currentExercise` directly.
+    public func updateActiveSeat(_ seat: String?) {
+        activeSetViewModel.currentExercise?.seatSetting = seat
+    }
+
     public func finishExercise() {
         guard let id = focusedExerciseId else { return }
         let vm = activeSetViewModel

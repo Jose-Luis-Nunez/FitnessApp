@@ -16,6 +16,9 @@ import FitnessUI
 public struct ActiveCardModelView: View {
     @Bindable public var model: ExerciseModel
     public let onEdit: (Exercise, ExerciseEditMode) -> Void
+    /// Unused by the active variant — the seat stays editable mid-set (gated only
+    /// by `model.allowsSeatEditing`); retained for the shared card-init contract
+    /// that Idle/Inactive variants still consume.
     public let isEditable: Bool
     public var analyticsViewModel: AnalyticsViewModel
 
@@ -194,6 +197,11 @@ public struct ActiveCardModelView: View {
                     .frame(width: AppStyle.DeviceLayout.exerciseIconSize, height: AppStyle.DeviceLayout.exerciseIconSize, alignment: model.iconAlignment)
                     .clipped()
             }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                if model.allowsSeatEditing { onEdit(model.toDomain(), .seat) }
+            }
+            .accessibilityIdentifier(ExerciseCardIDs.seatEditIcon(model.id))
         }
         .frame(width: AppStyle.DeviceLayout.iconContainerWidth)
         .frame(maxHeight: .infinity)

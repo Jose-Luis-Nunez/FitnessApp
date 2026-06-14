@@ -459,6 +459,60 @@ struct EditLessMoreTests {
     }
 }
 
+// MARK: - updateActiveSeat
+
+@Suite("updateActiveSeat", .tags(.fast))
+@MainActor
+struct UpdateActiveSeatTests {
+
+    @Test func updatesInFlightSnapshot() {
+        let coordinator = makeCoordinator()
+        let exercise = makeExercise(sets: 2, seatSetting: "3")
+        coordinator.startTraining(for: exercise)
+
+        coordinator.updateActiveSeat("5 / 2")
+
+        #expect(coordinator.activeSetViewModel.currentExercise?.seatSetting == "5 / 2")
+    }
+
+    @Test func nilClearsSeat() {
+        let coordinator = makeCoordinator()
+        let exercise = makeExercise(sets: 2, seatSetting: "3")
+        coordinator.startTraining(for: exercise)
+
+        coordinator.updateActiveSeat(nil)
+
+        #expect(coordinator.activeSetViewModel.currentExercise?.seatSetting == nil)
+    }
+
+    /// Regression for the mid-session seat edit being reverted on finish:
+    /// `finishExercise` re-persists the in-flight snapshot via `onExerciseUpdate`,
+    /// so the seat edited during the session must survive to that callback.
+    @Test func editedSeatSurvivesFinish() {
+        var receivedExercise: Exercise?
+        let coordinator = makeCoordinator(
+            onExerciseUpdate: { ex, _ in receivedExercise = ex }
+        )
+        let exercise = makeExercise(sets: 1, seatSetting: "3")
+        coordinator.startTraining(for: exercise)
+
+        coordinator.updateActiveSeat("9")
+        coordinator.completeSet()
+        coordinator.finishExercise()
+
+        #expect(receivedExercise?.seatSetting == "9")
+        #expect(receivedExercise?.isCompleted == true)
+    }
+
+    @Test func doesNothingWithoutActiveSession() {
+        let coordinator = makeCoordinator()
+
+        coordinator.updateActiveSeat("5")
+
+        #expect(coordinator.activeSetViewModel.currentExercise == nil)
+    }
+}
+
 // MARK: - setCurrentExercise
 
 @Suite("setCurrentExercise", .tags(.fast))

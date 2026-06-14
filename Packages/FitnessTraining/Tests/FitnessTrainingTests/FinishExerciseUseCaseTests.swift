@@ -36,6 +36,27 @@ struct FinishExerciseUseCaseTests {
         #expect(vm.setProgress.isEmpty)
     }
 
+    @Test func persistsEditedSeatFromInFlightSnapshot() {
+        let vm = ActiveSetViewModel()
+        let exercise = makeExercise(sets: 1, seatSetting: "3")
+        vm.startSet(for: exercise, category: .arms)
+        // Mirror a mid-session seat edit (TrainingCoordinator.updateActiveSeat).
+        vm.currentExercise?.seatSetting = "9"
+        vm.completeCurrentSet()
+
+        var updatedExercise: Exercise?
+        let analyticsVM = AnalyticsViewModel(storageService: StubAnalyticsStorage())
+
+        _ = sut.execute(
+            activeSetViewModel: vm,
+            analyticsViewModel: analyticsVM,
+            findCategory: { _ in .arms },
+            onExerciseUpdate: { ex, _ in updatedExercise = ex }
+        )
+
+        #expect(updatedExercise?.seatSetting == "9")
+    }
+
     @Test func returnsNilWhenNotAllSetsDone() {
         let vm = ActiveSetViewModel()
         let exercise = makeExercise(sets: 3)

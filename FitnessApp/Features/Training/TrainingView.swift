@@ -32,6 +32,12 @@ struct TrainingView: View {
     @Query private var models: [ExerciseModel]
     @State private var phase: Phase = .waitingForQuery
 
+    /// Drives the reused "Edit Seat" overlay (`ExerciseSeatPickerView`) when the
+    /// user taps the exercise body icon during an active session. Seat editing
+    /// was previously unreachable here — the card's `onEdit` was a no-op — which
+    /// is the "Sitz verstellen geht nicht / nicht sichtbar" feedback.
+    @State private var formViewModel = ExerciseFormViewModel()
+
     private enum Phase {
         case waitingForQuery
         case active
@@ -80,6 +86,22 @@ struct TrainingView: View {
             if overlayState.showTrainingMiniMenu {
                 miniMenuOverlay
             }
+
+            // Reused "Edit Seat" overlay — same component as the idle/category flow.
+            if formViewModel.showForm {
+                Color.clear.onAppear { overlayState.isEditingSheetVisible = true }
+                ExerciseSeatPickerView(
+                    formViewModel: formViewModel,
+                    isPresented: $formViewModel.showForm,
+                    onSave: { saveSeat() },
+                    onCancel: { formViewModel.clearForm() }
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                .shadow(radius: 5)
+                .transition(.identity)
+                .zIndex(3)
+                .onDisappear { overlayState.isEditingSheetVisible = false }
+            }
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
@@ -124,7 +146,14 @@ struct TrainingView: View {
                 LazyVStack(spacing: 16) {
                     ExerciseCardModelView(
                         model: model,
-                        onEdit: { _, _ in },
+                        onEdit: { exercise, mode in
+                            guard mode == .seat else { return }
+                            withAnimation {
+                                formViewModel.loadExercise(exercise, category: category)
+                                formViewModel.editMode = .seat
+                                formViewModel.showForm = true
+                            }
+                        },
                         isEditable: !trainingCoordinator.activeSetViewModel.isSetInProgress,
                         analyticsViewModel: analyticsViewModel,
                         activeSetViewModel: trainingCoordinator.activeSetViewModel,
@@ -213,6 +242,23 @@ struct TrainingView: View {
         guard phase == .waitingForQuery, let model = models.first else { return }
         phase = .active
         trainingCoordinator.startTraining(for: model.toDomain())
+    }
+
+    /// Persists the edited seat straight onto the live `@Model` (ADR-0001 source
+    /// of truth) so the mainContext autosave propagates it to every `@Query`
+    /// (idle/inactive cards). Avoids the legacy `saveForWorkout` delete+reinsert
+    /// path, which would replace the model instance mid-session.
+    ///
+    /// `updateActiveSeat` then keeps the coordinator's in-flight session snapshot
+    /// in sync so the finish-time persistence carries the edited seat instead of
+    /// reverting it (see `TrainingCoordinator.updateActiveSeat`).
+    private func saveSeat() {
+        guard let model = models.first else { return }
+        let trimmed = formViewModel.seat.trimmingCharacters(in: .whitespaces)
+        let newSeat: String? = trimmed.isEmpty ? nil : trimmed
+        model.seatSetting = newSeat
+        trainingCoordinator.updateActiveSeat(newSeat)
+        formViewModel.clearForm()
     }
 
     private func cancelTraining() {

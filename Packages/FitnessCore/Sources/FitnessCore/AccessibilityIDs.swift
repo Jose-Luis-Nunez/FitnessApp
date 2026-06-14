@@ -27,4 +27,10 @@ public enum ExerciseCardIDs {
     public static let completedCardPrefix = "id_card_completed_"
     public static let activeCardPrefix = "id_card_active_"
     public static let idleCardPrefix = "id_card_idle_"
+
+    /// Body/muscle icon that opens the seat editor on the active and completed
+    /// cards. Shared by both variants (they never render for the same exercise
+    /// simultaneously).
+    public static func seatEditIcon(_ id: UUID) -> String { "id_card_seat_edit_icon_\(id.uuidString)" }
+    public static let seatEditIconPrefix = "id_card_seat_edit_icon_"
 }

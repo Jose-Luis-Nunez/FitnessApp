@@ -36,4 +36,11 @@ extension ExerciseModel {
     public var iconAlignment: Alignment {
         categoryGroup.iconAlignment
     }
+
+    /// Mirrors `Exercise.allowsSeatEditing`: whether the seat-edit affordance
+    /// (tapping the body icon) should be offered. Unlike name/weight edits —
+    /// which the cards gate behind `isEditable` — the seat is a physical setup
+    /// the user adjusts *during* the exercise, so it stays editable even while a
+    /// set is in progress. Only `noSeats` exercises suppress it.
+    public var allowsSeatEditing: Bool { !noSeats }
 }

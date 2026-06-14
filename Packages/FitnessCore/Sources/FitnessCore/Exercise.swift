@@ -82,4 +82,7 @@ extension Exercise {
         ? iconName
         : category.defaultIconName
     }
+
+    /// Whether the seat-edit affordance should be offered (the exercise has a seat).
+    public var allowsSeatEditing: Bool { !noSeats }
 }

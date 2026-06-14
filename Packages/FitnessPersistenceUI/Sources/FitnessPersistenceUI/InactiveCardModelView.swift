@@ -91,7 +91,20 @@ private extension InactiveCardModelView {
             .frame(width: AppStyle.Layout.categoryIconSize, height: AppStyle.Layout.categoryIconSize, alignment: model.iconAlignment)
             .clipped()
             .contentShape(Rectangle())
-            .onTapGesture { isExpanded.toggle() }
+            .onTapGesture {
+                // Tapping the muscle icon opens the reused "Edit Seat" sheet so the
+                // seat stays adjustable after the exercise is finished. Expansion
+                // remains reachable via the title chevron and the checkmark.
+                // `isEditable` is retained here (unlike the active card) because the
+                // completed card is also hosted in read-only/grid contexts where the
+                // icon must keep its expand/navigate behavior.
+                if isEditable && model.allowsSeatEditing {
+                    onEdit(model.toDomain(), .seat)
+                } else {
+                    isExpanded.toggle()
+                }
+            }
+            .accessibilityIdentifier(ExerciseCardIDs.seatEditIcon(model.id))
     }
 
     var titleSection: some View {
