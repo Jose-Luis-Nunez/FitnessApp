@@ -174,6 +174,43 @@ struct CategoryTileModelViewTests {
         #expect(try ctx.fetch(activeOnly).count == 0)
     }
 
+    /// Pins the deactivate count semantics: a deactivated open exercise drops out
+    /// of BOTH the total and the active count (4/5 → 4/4). Mirrors the view's
+    /// `exercises.filter { $0.isActive ?? true }` basis. `isActive == nil` (legacy)
+    /// must still count as active.
+    @Test("Deactivated exercise drops out of total and active counts")
+    func deactivatedExerciseExcludedFromCounts() throws {
+        let container = try makeContainer()
+        let ctx = ModelContext(container)
+        let workoutId = UUID()
+        let workout = makeWorkout(id: workoutId)
+        ctx.insert(workout)
+
+        // Two active (one nil/legacy, one explicit true) + one deactivated, all open.
+        let legacy = insertExercise(in: ctx, workoutId: workoutId, workout: workout, category: .arms, sortOrder: 0)
+        let explicit = insertExercise(in: ctx, workoutId: workoutId, workout: workout, category: .arms, sortOrder: 1)
+        explicit.isActive = true
+        let deactivated = insertExercise(in: ctx, workoutId: workoutId, workout: workout, category: .arms, sortOrder: 2)
+        deactivated.isActive = false
+        try ctx.save()
+
+        let raw = MuscleCategoryGroup.arms.rawValue
+        let wid = workoutId
+        let fetched = try ctx.fetch(FetchDescriptor<ExerciseModel>(
+            predicate: #Predicate { $0.workoutId == wid && $0.category == raw }
+        ))
+
+        // Same basis the tile uses.
+        let activeExercises = fetched.filter { $0.isActive ?? true }
+        let total = activeExercises.count
+        let active = activeExercises.filter { !$0.isCompleted }.count
+
+        #expect(fetched.count == 3)            // all rows present in the store
+        #expect(total == 2)                    // deactivated excluded from total
+        #expect(active == 2)                   // and from active
+        _ = legacy                             // silence unused warning
+    }
+
     @Test("Empty workout: predicate returns an empty list, total/active == 0")
     func emptyWorkoutHasZeroCount() throws {
         let container = try makeContainer()

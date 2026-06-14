@@ -88,17 +88,13 @@ struct MigrationV1toV2Tests {
         }
 
         let v2 = try ModelContainer(
-            for: WorkoutModel.self,
-            ExerciseModel.self,
-            AnalyticsEntryModel.self,
-            SetProgressModel.self,
-            ExerciseFeedbackModel.self,
+            for: Schema(versionedSchema: SchemaV2.self),
             migrationPlan: AppMigrationPlan.self,
             configurations: ModelConfiguration(url: url)
         )
         let ctx = ModelContext(v2)
-        let fetched = try ctx.fetch(FetchDescriptor<ExerciseModel>(
-            predicate: #Predicate<ExerciseModel> { $0.id == exerciseId }
+        let fetched = try ctx.fetch(FetchDescriptor<SchemaV2.ExerciseModel>(
+            predicate: #Predicate<SchemaV2.ExerciseModel> { $0.id == exerciseId }
         )).first
         let unwrapped = try #require(fetched)
         #expect(unwrapped.workoutId == workoutId)
@@ -138,27 +134,19 @@ struct MigrationV1toV2Tests {
 
         // First V2 open — runs migration.
         _ = try ModelContainer(
-            for: WorkoutModel.self,
-            ExerciseModel.self,
-            AnalyticsEntryModel.self,
-            SetProgressModel.self,
-            ExerciseFeedbackModel.self,
+            for: Schema(versionedSchema: SchemaV2.self),
             migrationPlan: AppMigrationPlan.self,
             configurations: ModelConfiguration(url: url)
         )
         // Second V2 open — should not corrupt anything.
         let v2Again = try ModelContainer(
-            for: WorkoutModel.self,
-            ExerciseModel.self,
-            AnalyticsEntryModel.self,
-            SetProgressModel.self,
-            ExerciseFeedbackModel.self,
+            for: Schema(versionedSchema: SchemaV2.self),
             migrationPlan: AppMigrationPlan.self,
             configurations: ModelConfiguration(url: url)
         )
         let ctx = ModelContext(v2Again)
-        let unwrapped = try #require(try ctx.fetch(FetchDescriptor<ExerciseModel>(
-            predicate: #Predicate<ExerciseModel> { $0.id == exerciseId }
+        let unwrapped = try #require(try ctx.fetch(FetchDescriptor<SchemaV2.ExerciseModel>(
+            predicate: #Predicate<SchemaV2.ExerciseModel> { $0.id == exerciseId }
         )).first)
         #expect(unwrapped.workoutId == workoutId)
     }
@@ -189,17 +177,13 @@ struct MigrationV1toV2Tests {
         }
 
         let v2 = try ModelContainer(
-            for: WorkoutModel.self,
-            ExerciseModel.self,
-            AnalyticsEntryModel.self,
-            SetProgressModel.self,
-            ExerciseFeedbackModel.self,
+            for: Schema(versionedSchema: SchemaV2.self),
             migrationPlan: AppMigrationPlan.self,
             configurations: ModelConfiguration(url: url)
         )
         let ctx = ModelContext(v2)
-        let fetched = try ctx.fetch(FetchDescriptor<ExerciseModel>(
-            predicate: #Predicate<ExerciseModel> { $0.id == exerciseId }
+        let fetched = try ctx.fetch(FetchDescriptor<SchemaV2.ExerciseModel>(
+            predicate: #Predicate<SchemaV2.ExerciseModel> { $0.id == exerciseId }
         )).first
         let unwrapped = try #require(fetched)
         #expect(unwrapped.workout == nil)

@@ -109,6 +109,12 @@ public enum AppStyle {
         public static let capsuleToggleWidth: CGFloat = 44
         public static let capsuleToggleHeight: CGFloat = 26
         public static let capsuleToggleThumb: CGFloat = 22
+
+        /// Leading radio button shown on selectable cards in deactivate/activate mode.
+        public static let selectionRadioSize: CGFloat = 24
+        public static let selectionRadioDot: CGFloat = 15
+        public static let selectionRadioFrame: CGFloat = 26
+        public static let selectionRadioStroke: CGFloat = 2
         public static let miniMenuMaxWidth: CGFloat = 320
     }
 
@@ -350,6 +356,10 @@ public enum AppStyle {
         public static let secondaryLabel: Double = 0.6
         public static let numberPadInactive: Double = 0.5
         public static let numberPadFade: Double = 0.2
+        /// Milky selection tint (deactivate/activate multi-select) — matches the
+        /// menu-bar / filter-toggle selected-pill look.
+        public static let selectionTintFill: Double = 0.15
+        public static let selectionTintStroke: Double = 0.35
     }
 
     public enum Shadow {

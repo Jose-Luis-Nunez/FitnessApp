@@ -50,6 +50,17 @@ public final class ExerciseModel {
     @_spi(PersistenceUI) public var goal: Double?
     @_spi(PersistenceUI) public var sortOrder: Int
 
+    /// Whether the exercise counts toward training/progress and is shown in the
+    /// lists. `nil`/`true` = active, `false` = deactivated. Deactivated exercises
+    /// keep all their data + history but drop out of the `"X of Y"` counts and
+    /// the default list filters; they can be reactivated.
+    ///
+    /// Optional for the same reason as `workoutId`: SwiftData's lightweight
+    /// migration step cannot validate a non-optional new property against
+    /// existing rows. `nil` lets the lightweight V3→V4 step succeed without a
+    /// backfill — an absent value is read as active via `isActive ?? true`.
+    @_spi(PersistenceUI) public var isActive: Bool?
+
     @_spi(PersistenceUI) public var workout: WorkoutModel?
 
     @_spi(PersistenceUI) public init(
@@ -66,6 +77,7 @@ public final class ExerciseModel {
         category: String,
         goal: Double? = nil,
         sortOrder: Int = 0,
+        isActive: Bool? = nil,
         workout: WorkoutModel? = nil
     ) {
         self.id = id
@@ -81,6 +93,7 @@ public final class ExerciseModel {
         self.category = category
         self.goal = goal
         self.sortOrder = sortOrder
+        self.isActive = isActive
         self.workout = workout
     }
 }
@@ -98,7 +111,8 @@ extension ExerciseModel {
             isCompleted: isCompleted,
             iconName: iconName,
             category: MuscleCategoryGroup(rawValue: category) ?? .arms,
-            goal: goal
+            goal: goal,
+            isActive: isActive ?? true
         )
     }
 
@@ -117,6 +131,7 @@ extension ExerciseModel {
             category: exercise.category.rawValue,
             goal: exercise.goal,
             sortOrder: sortOrder,
+            isActive: exercise.isActive,
             workout: workout
         )
     }
@@ -139,5 +154,6 @@ extension ExerciseModel {
         iconName = exercise.iconName
         category = exercise.category.rawValue
         goal = exercise.goal
+        isActive = exercise.isActive
     }
 }

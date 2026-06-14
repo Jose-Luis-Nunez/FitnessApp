@@ -110,7 +110,7 @@ struct ModelContainerBootstrapTests {
         _ = ModelContainerBootstrap.makeContainer(storeURL: url)
 
         let secondOpen = try ModelContainer(
-            for: Schema(versionedSchema: SchemaV3.self),
+            for: Schema(versionedSchema: SchemaV4.self),
             migrationPlan: AppMigrationPlan.self,
             configurations: ModelConfiguration(url: url)
         )
@@ -147,7 +147,7 @@ struct ModelContainerBootstrapRestoreTests {
             at: url.deletingLastPathComponent(), withIntermediateDirectories: true
         )
         let container = try ModelContainer(
-            for: Schema(versionedSchema: SchemaV3.self),
+            for: Schema(versionedSchema: SchemaV4.self),
             migrationPlan: AppMigrationPlan.self,
             configurations: ModelConfiguration(url: url)
         )
@@ -171,7 +171,7 @@ struct ModelContainerBootstrapRestoreTests {
 
     private func score(at url: URL) throws -> Int {
         let container = try ModelContainer(
-            for: Schema(versionedSchema: SchemaV3.self),
+            for: Schema(versionedSchema: SchemaV4.self),
             migrationPlan: AppMigrationPlan.self,
             configurations: ModelConfiguration(url: url)
         )

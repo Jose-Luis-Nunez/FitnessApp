@@ -1,6 +1,14 @@
 import Foundation
 import Observation
 
+/// Drives the exercise multi-select editing mode that the three-dots mini-menu
+/// starts (deactivate / activate several exercises at once).
+public enum ExerciseSelectionMode: Sendable {
+    case none
+    case deactivate
+    case activate
+}
+
 @Observable
 @MainActor
 public final class UIOverlayState {
@@ -21,6 +29,35 @@ public final class UIOverlayState {
     /// text field (otherwise the bar sits directly above the keyboard and
     /// looks like a second, conflicting toolbar).
     public var isKeyboardVisible: Bool = false
+
+    // MARK: - Exercise deactivate / activate
+
+    /// The active multi-select editing mode. `.none` means normal browsing.
+    /// Started by the "Deactivate Exercise" / "Activate Exercise" mini-menu items;
+    /// while non-`.none`, exercise rows show a leading radio button.
+    public var exerciseSelectionMode: ExerciseSelectionMode = .none
+    /// IDs ticked in the current multi-select mode.
+    public var selectedExerciseIds: Set<UUID> = []
+    /// Commit trigger: the morphed bottom bar flips this to `true`; the host list
+    /// observes it, applies the de/activation to `selectedExerciseIds`, then
+    /// resets the mode. Cancel simply resets `exerciseSelectionMode`/ids.
+    public var commitExerciseSelection: Bool = false
+
+    /// Toggles one exercise's membership in the current multi-select.
+    public func toggleSelection(_ id: UUID) {
+        if selectedExerciseIds.contains(id) {
+            selectedExerciseIds.remove(id)
+        } else {
+            selectedExerciseIds.insert(id)
+        }
+    }
+
+    /// Clears all multi-select state (Cancel, or after a committed Save).
+    public func endExerciseSelection() {
+        exerciseSelectionMode = .none
+        selectedExerciseIds = []
+        commitExerciseSelection = false
+    }
 
     public init() {}
 }

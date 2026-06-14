@@ -33,4 +33,9 @@ public enum ExerciseCardIDs {
     /// simultaneously).
     public static func seatEditIcon(_ id: UUID) -> String { "id_card_seat_edit_icon_\(id.uuidString)" }
     public static let seatEditIconPrefix = "id_card_seat_edit_icon_"
+
+    /// Leading radio button shown while the deactivate/activate multi-select
+    /// mode is active.
+    public static func selectionToggle(_ id: UUID) -> String { "id_card_selection_toggle_\(id.uuidString)" }
+    public static let selectionTogglePrefix = "id_card_selection_toggle_"
 }

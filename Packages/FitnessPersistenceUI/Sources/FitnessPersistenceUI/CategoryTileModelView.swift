@@ -57,9 +57,13 @@ public struct CategoryTileModelView: View {
     }
 
     public var body: some View {
+        // Deactivated exercises keep their data but drop out of the progress
+        // counts: a 4/5 category becomes 4/4 when its open 5th exercise is
+        // deactivated. `isActive == nil` (pre-migration rows) counts as active.
+        let activeExercises = exercises.filter { $0.isActive ?? true }
         let info = ExerciseInfo(
-            total: exercises.count,
-            active: exercises.lazy.filter { !$0.isCompleted }.count,
+            total: activeExercises.count,
+            active: activeExercises.lazy.filter { !$0.isCompleted }.count,
             hasActiveSet: hasActiveSetForCategory
         )
 

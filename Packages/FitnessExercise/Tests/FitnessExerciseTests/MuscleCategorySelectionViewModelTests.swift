@@ -360,6 +360,30 @@ struct ExerciseMutationTests {
         #expect(exercises[0].name == "Curl")
         #expect(exercises[1].name == "Press")
     }
+
+    @Test func setExerciseActiveDeactivatesThroughUpdatePath() {
+        let mock = MockExerciseManagement()
+        let exercise = makeExercise()  // isActive defaults to true
+        mock.exercisesByCategory[.arms] = [exercise]
+
+        let ws = MockWorkoutStorage()
+        ws.setCurrentWorkout(Workout(name: "Test", selectedCategories: [.arms]))
+
+        let vm = MuscleCategorySelectionViewModel(
+            coordinatorCache: MockCoordinatorCache(),
+            exerciseManagement: mock,
+            workoutStorage: ws
+        )
+        #expect(vm.getExercises(for: .arms).first?.isActive == true)
+
+        vm.setExerciseActive(exercise, active: false, category: .arms)
+        #expect(vm.getExercises(for: .arms).first?.isActive == false)
+
+        // Reactivation flips it back.
+        let deactivated = vm.getExercises(for: .arms).first!
+        vm.setExerciseActive(deactivated, active: true, category: .arms)
+        #expect(vm.getExercises(for: .arms).first?.isActive == true)
+    }
 }
 
 // MARK: - Exercise Stability Across Sessions (Phase 1c)

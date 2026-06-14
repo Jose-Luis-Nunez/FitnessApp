@@ -34,17 +34,18 @@ struct MigrationV2toV3Tests {
         try? FileManager.default.removeItem(at: url.deletingLastPathComponent())
     }
 
-    /// Writes a store stamped as `SchemaV2` (the youngest schema that still
-    /// references the live `WorkoutModel`/`ExerciseModel` classes, so the live
-    /// types match the V2 on-disk shape). Opening with the bare versioned
-    /// schema and **no** plan stamps the store with `(2,0,0)`.
+    /// Writes a store stamped as `SchemaV2` using the `SchemaV2` **snapshot**
+    /// classes — the live `WorkoutModel`/`ExerciseModel` now match the V4 shape
+    /// (with `isActive`), so seeding must use the frozen V2 form to reproduce a
+    /// genuine on-disk V2 store. Opening with the bare versioned schema and
+    /// **no** plan stamps the store with `(2,0,0)`.
     private func writeV2Store(at url: URL, workoutId: UUID, exerciseId: UUID) throws {
         let v2 = try ModelContainer(
             for: Schema(versionedSchema: SchemaV2.self),
             configurations: ModelConfiguration(url: url)
         )
         let ctx = ModelContext(v2)
-        let workout = WorkoutModel(
+        let workout = SchemaV2.WorkoutModel(
             id: workoutId,
             name: "Legs",
             selectedCategories: ["legs"],
@@ -53,8 +54,15 @@ struct MigrationV2toV3Tests {
             isDefault: true
         )
         ctx.insert(workout)
-        let exercise = ExerciseModel.from(
-            Exercise(id: exerciseId, name: "Squat", weight: 100, reps: 5, sets: 5, iconName: "x", category: .legs),
+        let exercise = SchemaV2.ExerciseModel(
+            id: exerciseId,
+            workoutId: workoutId,
+            name: "Squat",
+            weight: 100,
+            reps: 5,
+            sets: 5,
+            iconName: "x",
+            category: "legs",
             sortOrder: 0,
             workout: workout
         )
@@ -82,12 +90,12 @@ struct MigrationV2toV3Tests {
         let v3 = try openV3(at: url)
         let ctx = ModelContext(v3)
 
-        let workout = try #require(try ctx.fetch(FetchDescriptor<WorkoutModel>(
+        let workout = try #require(try ctx.fetch(FetchDescriptor<SchemaV2.WorkoutModel>(
             predicate: #Predicate { $0.id == workoutId }
         )).first)
         #expect(workout.name == "Legs")
 
-        let exercise = try #require(try ctx.fetch(FetchDescriptor<ExerciseModel>(
+        let exercise = try #require(try ctx.fetch(FetchDescriptor<SchemaV2.ExerciseModel>(
             predicate: #Predicate { $0.id == exerciseId }
         )).first)
         #expect(exercise.workoutId == workoutId, "workoutId carried over from V2 must survive")
@@ -134,8 +142,8 @@ struct MigrationV2toV3Tests {
         let v3Again = try openV3(at: url) // second open must not corrupt anything
         let ctx = ModelContext(v3Again)
 
-        #expect(try ctx.fetchCount(FetchDescriptor<WorkoutModel>()) == 1)
-        let workout = try #require(try ctx.fetch(FetchDescriptor<WorkoutModel>(
+        #expect(try ctx.fetchCount(FetchDescriptor<SchemaV2.WorkoutModel>()) == 1)
+        let workout = try #require(try ctx.fetch(FetchDescriptor<SchemaV2.WorkoutModel>(
             predicate: #Predicate { $0.id == workoutId }
         )).first)
         #expect(workout.name == "Legs")

@@ -12,7 +12,8 @@ public func makeExercise(
     isCompleted: Bool = false,
     category: MuscleCategoryGroup = .arms,
     iconName: String? = nil,
-    goal: Double? = nil
+    goal: Double? = nil,
+    isActive: Bool = true
 ) -> Exercise {
     let icon = iconName ?? category.defaultIconName
     return Exercise(
@@ -26,6 +27,7 @@ public func makeExercise(
         isCompleted: isCompleted,
         iconName: icon,
         category: category,
-        goal: goal
+        goal: goal,
+        isActive: isActive
     )
 }

@@ -11,12 +11,22 @@ private let migrationLogger = Logger(subsystem: "FitnessStorage", category: "App
 /// `MigrationV2toV3Tests`).
 enum AppMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [SchemaV1.self, SchemaV2.self, SchemaV3.self]
+        [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self]
     }
 
     static var stages: [MigrationStage] {
-        [migrateV1toV2_addWorkoutId, migrateV2toV3_addFriendModel]
+        [migrateV1toV2_addWorkoutId, migrateV2toV3_addFriendModel, migrateV3toV4_addIsActive]
     }
+
+    /// V3 → V4: adds `ExerciseModel.isActive: Bool?`. Lightweight because it is a
+    /// single additive, optional scalar — SwiftData adds the column as `NULL` for
+    /// existing rows. No backfill/`didMigrate` needed: read paths interpret an
+    /// absent value as active (`isActive ?? true`). Being lightweight, it needs no
+    /// dedicated migration test (only Custom Stages do, per ADR-0005).
+    static let migrateV3toV4_addIsActive = MigrationStage.lightweight(
+        fromVersion: SchemaV3.self,
+        toVersion: SchemaV4.self
+    )
 
     /// V1 → V2: SwiftData's lightweight phase adds the new column `workoutId: UUID?`
     /// initialised to `NULL` for all existing rows. Then `didMigrate` runs on the
@@ -45,7 +55,10 @@ enum AppMigrationPlan: SchemaMigrationPlan {
         toVersion: SchemaV2.self,
         willMigrate: nil,
         didMigrate: { context in
-            let descriptor = FetchDescriptor<ExerciseModel>()
+            // Destination of this stage is SchemaV2 — fetch the V2 snapshot type,
+            // not the live `ExerciseModel` (which is now the V4 form with
+            // `isActive` and would not match the V2 store shape).
+            let descriptor = FetchDescriptor<SchemaV2.ExerciseModel>()
             let all = try context.fetch(descriptor)
             var fixed = 0
             var orphaned = 0

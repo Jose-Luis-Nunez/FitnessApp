@@ -21,6 +21,11 @@ public struct IdleActiveCardModelView: View {
     public let isEditable: Bool
     public let onStart: ((Exercise) -> Void)?
     public let isInProgress: Bool
+    /// Selection (deactivate/activate) mode: shows a leading radio button and
+    /// hides the play button + the coaching-tip ("Glühbirne") box so the row is
+    /// narrower and all selectable cards line up at the same width.
+    public let isSelectionMode: Bool
+    public let isSelected: Bool
 
     @State private var analyticsSheetDate: AnalyticsSheetDate?
     @State private var isExpanded = false
@@ -34,7 +39,9 @@ public struct IdleActiveCardModelView: View {
         onEdit: @escaping (Exercise, ExerciseEditMode) -> Void,
         isEditable: Bool,
         onStart: ((Exercise) -> Void)?,
-        isInProgress: Bool = false
+        isInProgress: Bool = false,
+        isSelectionMode: Bool = false,
+        isSelected: Bool = false
     ) {
         self.model = model
         self.analyticsViewModel = analyticsViewModel
@@ -42,6 +49,8 @@ public struct IdleActiveCardModelView: View {
         self.isEditable = isEditable
         self.onStart = onStart
         self.isInProgress = isInProgress
+        self.isSelectionMode = isSelectionMode
+        self.isSelected = isSelected
     }
 
     private struct AnalyticsSheetDate: Identifiable {
@@ -79,7 +88,7 @@ public struct IdleActiveCardModelView: View {
 
     public var body: some View {
         CardShell(theme: theme, leading: {
-            categoryIconView
+            leadingContent
         }, trailing: {
             rightPanel
         }, titleContent: {
@@ -109,8 +118,35 @@ public struct IdleActiveCardModelView: View {
 private extension IdleActiveCardModelView {
 
     @ViewBuilder
+    var leadingContent: some View {
+        if isSelectionMode {
+            HStack(spacing: AppStyle.Padding.card) {
+                selectionRadio
+                categoryIconView
+            }
+        } else {
+            categoryIconView
+        }
+    }
+
+    var selectionRadio: some View {
+        ZStack {
+            Circle()
+                .strokeBorder(AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel), lineWidth: AppStyle.Layout.selectionRadioStroke)
+                .frame(width: AppStyle.Layout.selectionRadioSize, height: AppStyle.Layout.selectionRadioSize)
+            if isSelected {
+                Circle()
+                    .fill(AppStyle.Color.greenGlow)
+                    .frame(width: AppStyle.Layout.selectionRadioDot, height: AppStyle.Layout.selectionRadioDot)
+            }
+        }
+        .frame(width: AppStyle.Layout.selectionRadioFrame, height: AppStyle.Layout.selectionRadioFrame)
+        .accessibilityIdentifier(ExerciseCardIDs.selectionToggle(model.id))
+    }
+
+    @ViewBuilder
     var rightPanel: some View {
-        if onStart != nil, !model.isCompleted {
+        if !isSelectionMode, onStart != nil, !model.isCompleted {
             playButton
         }
     }
@@ -152,8 +188,12 @@ private extension IdleActiveCardModelView {
             verticalSeparator
             progressColumn
 
-            verticalSeparator
-            tipColumn
+            // The coaching-tip box ("Glühbirne") is hidden in selection mode to
+            // free horizontal space for the leading radio button.
+            if !isSelectionMode {
+                verticalSeparator
+                tipColumn
+            }
 
             Spacer(minLength: 0)
         }

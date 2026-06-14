@@ -1,6 +1,7 @@
 import SwiftUI
 import FitnessUI
 import FitnessExercise
+import FitnessResources
 
 private enum BottomTab {
     case workouts, training, chart, calendar, profile
@@ -14,6 +15,7 @@ struct BottomMenuBarView: View {
     var customBackAction: (() -> Void)? = nil
 
     @Environment(AppRouter.self) private var router
+    @Environment(UIOverlayState.self) private var overlayState
 
     @State private var pillBounce: Bool = false
     @State private var bounceTab: BottomTab? = nil
@@ -51,21 +53,73 @@ struct BottomMenuBarView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             GlassEffectContainer(spacing: 6) {
-                HStack(spacing: 6) {
-                    backButton
+                if overlayState.exerciseSelectionMode != .none {
+                    selectionActionBar
+                        .padding(.horizontal, 8)
+                        .padding(.bottom, bottomOffset)
+                } else {
+                    HStack(spacing: 6) {
+                        backButton
 
-                    tabBar
-                        .frame(height: capsuleHeight)
-                        .clipShape(Capsule())
-                        .glassEffect(.regular, in: .capsule)
+                        tabBar
+                            .frame(height: capsuleHeight)
+                            .clipShape(Capsule())
+                            .glassEffect(.regular, in: .capsule)
 
-                    rightActionButton
+                        rightActionButton
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.bottom, bottomOffset)
                 }
-                .padding(.horizontal, 8)
-                .padding(.bottom, bottomOffset)
             }
         }
         .frame(height: capsuleHeight + 6)
+    }
+
+    /// Multi-select morph: replaces the whole home bar the moment radio buttons
+    /// appear (`exerciseSelectionMode != .none`). With nothing ticked it shows
+    /// only **Cancel**; once ≥1 is selected it becomes **Cancel | Deactivate**
+    /// (or **Activate**). Same dimensions as the normal bar so the layout never jumps.
+    private var selectionActionBar: some View {
+        let actionLabel = overlayState.exerciseSelectionMode == .activate
+            ? L10n.selectionActivate
+            : L10n.selectionDeactivate
+        let hasSelection = !overlayState.selectedExerciseIds.isEmpty
+
+        return HStack(spacing: 0) {
+            Button(action: {
+                Haptics.impact(.light)
+                overlayState.endExerciseSelection()
+            }) {
+                Text(L10n.selectionCancel)
+                    .font(AppStyle.Font.cardValueBold)
+                    .foregroundColor(AppStyle.Color.white)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if hasSelection {
+                Rectangle()
+                    .fill(AppStyle.Color.white.opacity(AppStyle.Opacity.numberPadFade))
+                    .frame(width: 1, height: capsuleHeight * 0.5)
+
+                Button(action: {
+                    Haptics.impact(.medium)
+                    overlayState.commitExerciseSelection = true
+                }) {
+                    Text(actionLabel)
+                        .font(AppStyle.Font.cardValueBold)
+                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .frame(height: capsuleHeight)
+        .clipShape(Capsule())
+        .glassEffect(.regular, in: .capsule)
     }
 
     // MARK: - Shared Components

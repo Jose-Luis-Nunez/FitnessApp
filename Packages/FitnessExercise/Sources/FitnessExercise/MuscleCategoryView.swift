@@ -121,6 +121,9 @@ public struct MuscleCategoryView: View {
         .onChange(of: trainingCoordinator.activeSessions.count) {
             viewModel.refreshExercises()
         }
+        .onChange(of: overlayState.commitExerciseSelection) { _, _ in
+            commitSelectionIfNeeded()
+        }
         .overlay(miniMenuOverlay)
         .alert("Reset exercises?", isPresented: $viewModel.showResetConfirmation) {
             Button("Reset", role: .destructive) {
@@ -159,23 +162,98 @@ public struct MuscleCategoryView: View {
             },
             isActiveSetVisible: isActiveSetVisible,
             isResetEnabled: isResetEnabled,
-            isInProgress: isInProgress
+            isInProgress: isInProgress,
+            isSelectable: isCardSelectable(model),
+            isSelected: overlayState.selectedExerciseIds.contains(model.id),
+            onToggleSelection: { _ in overlayState.toggleSelection(model.id) },
+            onLongPress: overlayState.exerciseSelectionMode == .none
+                ? { _ in startDeactivateSelection(model.id) }
+                : nil
         )
         .frame(maxWidth: .infinity)
         .listRowSeparator(.hidden)
     }
 
+    /// Non-selectable cards render normally (no radio) so nothing jumps when the
+    /// mode toggles. The rule lives in `ExerciseSelectionRules`; this view only
+    /// supplies its in-progress source.
+    private func isCardSelectable(_ model: ExerciseModel) -> Bool {
+        ExerciseSelectionRules.isSelectable(
+            mode: overlayState.exerciseSelectionMode,
+            isActive: model.isActive ?? true,
+            isCompleted: model.isCompleted,
+            isInProgress: trainingCoordinator.activeSessions.keys.contains(model.id)
+        )
+    }
+
+    /// Long-press shortcut: enters deactivate selection mode with the pressed
+    /// (idle) card already ticked — the Cancel | Deactivate bar appears immediately.
+    private func startDeactivateSelection(_ id: UUID) {
+        overlayState.selectedExerciseIds = [id]
+        overlayState.exerciseSelectionMode = .deactivate
+    }
+
+    /// Applies the multi-select Save: de/activates every ticked exercise via the
+    /// targeted update path, then clears the mode.
+    ///
+    /// `commitExerciseSelection` lives on the shared `UIOverlayState`, so the
+    /// still-mounted home/list screen observes the same change. The scene guard
+    /// makes ownership explicit: only the foreground scene commits.
+    private func commitSelectionIfNeeded() {
+        guard router.currentScene == .category else { return }
+        guard overlayState.commitExerciseSelection else { return }
+        let active = overlayState.exerciseSelectionMode == .activate
+        for model in categoryModels where overlayState.selectedExerciseIds.contains(model.id) {
+            viewModel.setExerciseActive(model.toDomain(), active: active)
+        }
+        overlayState.endExerciseSelection()
+        viewModel.refreshExercises()
+    }
+
+    /// Whether any exercise in this category is currently deactivated — gates the
+    /// "Activate Exercise" menu item.
+    private var hasDeactivatedExercises: Bool {
+        categoryModels.contains { !($0.isActive ?? true) }
+    }
+
+    /// Gates the "Deactivate Exercise" menu item on the *same* rule the per-card
+    /// radio uses, so the item never appears when nothing is actually selectable
+    /// (e.g. every active exercise is completed or in progress).
+    private var hasDeactivatableExercises: Bool {
+        categoryModels.contains {
+            ExerciseSelectionRules.isSelectable(
+                mode: .deactivate,
+                isActive: $0.isActive ?? true,
+                isCompleted: $0.isCompleted,
+                isInProgress: trainingCoordinator.activeSessions.keys.contains($0.id)
+            )
+        }
+    }
+
     @ViewBuilder
     private var exerciseListSection: some View {
         // T7b: Bug 1 live-fix. Card rendering source is `categoryModels` (`@Query`),
-        // not `viewModel.exercises`. Sort buckets read `model.isCompleted` directly,
-        // matching the old DTO-based partitioning 1:1.
+        // not `viewModel.exercises`. Variant reads `model.isCompleted` directly.
+        //
+        // Visibility: deactivated exercises are hidden by default. In `.activate`
+        // multi-select mode the hidden (deactivated) ones are revealed instead so
+        // they can be ticked for reactivation.
+        // No jump in/out of selection mode: the visible set stays the normal
+        // "all active" list; `.activate` additionally reveals the (hidden)
+        // deactivated exercises. Which cards are *selectable* is decided per card
+        // (`isCardSelectable`) — non-idle cards simply render without a radio.
+        let mode = overlayState.exerciseSelectionMode
         let activeIds = Set(trainingCoordinator.activeSessions.keys)
-        let sorted = categoryModels.sorted { $0.sortOrder < $1.sortOrder }
+        let visible = categoryModels.filter { model in
+            let active = model.isActive ?? true
+            return mode == .activate ? true : active
+        }
 
+        // Completed exercises keep their `sortOrder` slot — no completion-based
+        // re-sort. Only the actively-training cards float to the top.
+        let sorted = visible.sorted { $0.sortOrder < $1.sortOrder }
         let inProgressModels = sorted.filter { activeIds.contains($0.id) }
-        let incompleteModels = sorted.filter { !$0.isCompleted && !activeIds.contains($0.id) }
-        let completedModels = sorted.filter { $0.isCompleted && !activeIds.contains($0.id) }
+        let restModels = sorted.filter { !activeIds.contains($0.id) }
 
         ForEach(inProgressModels, id: \.id) { model in
             makeCardContainer(
@@ -187,16 +265,7 @@ public struct MuscleCategoryView: View {
             )
         }
 
-        ForEach(incompleteModels, id: \.id) { model in
-            makeCardContainer(
-                model: model,
-                isEditable: true,
-                isActiveSetVisible: false,
-                isResetEnabled: model.isCompleted
-            )
-        }
-
-        ForEach(completedModels, id: \.id) { model in
+        ForEach(restModels, id: \.id) { model in
             makeCardContainer(
                 model: model,
                 isEditable: true,
@@ -324,6 +393,22 @@ private extension MuscleCategoryView {
                                 if viewModel.showReset {
                                     items.append(MiniActionMenuItem(icon: "arrow.counterclockwise", title: "Reset", isDestructive: false) {
                                         viewModel.showResetConfirmation = true
+                                        overlayState.showCategoryMiniMenu = false
+                                    })
+                                }
+
+                                if hasDeactivatedExercises {
+                                    items.append(MiniActionMenuItem(icon: "checkmark", title: L10n.exerciseActivate, isDestructive: false) {
+                                        overlayState.selectedExerciseIds = []
+                                        overlayState.exerciseSelectionMode = .activate
+                                        overlayState.showCategoryMiniMenu = false
+                                    })
+                                }
+
+                                if hasDeactivatableExercises {
+                                    items.append(MiniActionMenuItem(icon: "xmark", title: L10n.exerciseDeactivate, isDestructive: false) {
+                                        overlayState.selectedExerciseIds = []
+                                        overlayState.exerciseSelectionMode = .deactivate
                                         overlayState.showCategoryMiniMenu = false
                                     })
                                 }

@@ -169,7 +169,7 @@ public struct MuscleCategorySelectionView: View {
                 .coordinateSpace(name: "scroll")
             }
 
-            if isFilterBarVisible {
+            if isFilterBarVisible && overlayState.exerciseSelectionMode == .none {
                 VStack {
                     Spacer()
 
@@ -261,22 +261,45 @@ public struct MuscleCategorySelectionView: View {
             // store for the legacy Form/Picker write path.
             viewModel.refreshExercises()
         }
+        .onChange(of: overlayState.commitExerciseSelection) { _, _ in
+            commitSelectionIfNeeded()
+        }
     }
 
     private var newExerciseMenuItems: [MiniActionMenuItem] {
-        [
-            MiniActionMenuItem(
-                icon: "plus",
-                title: L10n.newExercise,
-                isDestructive: false
-            ) {
-                var transaction = Transaction()
-                transaction.disablesAnimations = true
-                withTransaction(transaction) {
-                    showCategorySelection = true
-                }
-            },
-        ]
+        // Order: New Exercise first, then the de/activate items at the end
+        // (Activate before Deactivate) — same ordering as the category view.
+        var items: [MiniActionMenuItem] = []
+
+        items.append(MiniActionMenuItem(
+            icon: "plus",
+            title: L10n.newExercise,
+            isDestructive: false
+        ) {
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) {
+                showCategorySelection = true
+            }
+        })
+
+        if hasDeactivatedExercises {
+            items.append(MiniActionMenuItem(icon: "checkmark", title: L10n.exerciseActivate, isDestructive: false) {
+                overlayState.showSelectionMiniMenu = false
+                overlayState.selectedExerciseIds = []
+                overlayState.exerciseSelectionMode = .activate
+            })
+        }
+
+        if hasDeactivatableExercises {
+            items.append(MiniActionMenuItem(icon: "xmark", title: L10n.exerciseDeactivate, isDestructive: false) {
+                overlayState.showSelectionMiniMenu = false
+                overlayState.selectedExerciseIds = []
+                overlayState.exerciseSelectionMode = .deactivate
+            })
+        }
+
+        return items
     }
 
     private var categoryMenuItems: [MiniActionMenuItem] {
@@ -454,7 +477,7 @@ public struct MuscleCategorySelectionView: View {
                     .background {
                         if currentViewMode == .overview {
                             Capsule()
-                                .fill(Color.white.opacity(0.15))
+                                .fill(AppStyle.Color.white.opacity(AppStyle.Opacity.selectionTintFill))
                                 .scaleEffect(y: filterPillBounce ? 1.4 : 1.0)
                                 .matchedGeometryEffect(id: "filterSelection", in: filterNamespace)
                         }
@@ -471,7 +494,7 @@ public struct MuscleCategorySelectionView: View {
                     .background {
                         if currentViewMode == .list {
                             Capsule()
-                                .fill(Color.white.opacity(0.15))
+                                .fill(AppStyle.Color.white.opacity(AppStyle.Opacity.selectionTintFill))
                                 .scaleEffect(y: filterPillBounce ? 1.4 : 1.0)
                                 .matchedGeometryEffect(id: "filterSelection", in: filterNamespace)
                         }
@@ -495,11 +518,21 @@ public struct MuscleCategorySelectionView: View {
 
     private var allExercisesList: some View {
         // T8a: Bug-1-style live-fix for the list-mode. Source is `allWorkoutModels`
-        // (`@Query`), not `viewModel.exercisesByCategory`. Sorting partitions
-        // uncompleted-first (matches the legacy comparator) and keeps stable order
-        // within each bucket via (category.rawValue, sortOrder).
-        let sorted = allWorkoutModels.sorted { lhs, rhs in
-            if lhs.isCompleted != rhs.isCompleted { return !lhs.isCompleted }
+        // (`@Query`), not `viewModel.exercisesByCategory`.
+        //
+        // Visibility: deactivated exercises are hidden by default; `.activate`
+        // multi-select mode reveals them instead so they can be ticked.
+        // Completed exercises keep their `(category, sortOrder)` slot — no
+        // completion-based re-sort.
+        // No jump in/out of selection mode: keep the normal "all active" list;
+        // `.activate` additionally reveals the (hidden) deactivated exercises.
+        // Selectability is decided per card (`isCardSelectable`).
+        let mode = overlayState.exerciseSelectionMode
+        let visible = allWorkoutModels.filter { model in
+            let active = model.isActive ?? true
+            return mode == .activate ? true : active
+        }
+        let sorted = visible.sorted { lhs, rhs in
             if lhs.category != rhs.category { return lhs.category < rhs.category }
             return lhs.sortOrder < rhs.sortOrder
         }
@@ -544,8 +577,65 @@ public struct MuscleCategorySelectionView: View {
             },
             isActiveSetVisible: false,
             isResetEnabled: model.isCompleted,
-            isInProgress: categoryCoordinator.isExerciseInProgress(model.id)
+            isInProgress: categoryCoordinator.isExerciseInProgress(model.id),
+            isSelectable: isCardSelectable(model),
+            isSelected: overlayState.selectedExerciseIds.contains(model.id),
+            onToggleSelection: { _ in overlayState.toggleSelection(model.id) },
+            onLongPress: overlayState.exerciseSelectionMode == .none
+                ? { _ in startDeactivateSelection(model.id) }
+                : nil
         )
+    }
+
+    /// Non-selectable cards render normally (no radio) so nothing jumps when the
+    /// mode toggles. The rule lives in `ExerciseSelectionRules`; this view only
+    /// supplies its in-progress source.
+    private func isCardSelectable(_ model: ExerciseModel) -> Bool {
+        ExerciseSelectionRules.isSelectable(
+            mode: overlayState.exerciseSelectionMode,
+            isActive: model.isActive ?? true,
+            isCompleted: model.isCompleted,
+            isInProgress: coordinatorCache.coordinator(for: model.categoryGroup).isExerciseInProgress(model.id)
+        )
+    }
+
+    /// Long-press shortcut: enters deactivate selection mode with the pressed
+    /// (idle) card already ticked — the Cancel | Deactivate bar appears immediately.
+    private func startDeactivateSelection(_ id: UUID) {
+        overlayState.selectedExerciseIds = [id]
+        overlayState.exerciseSelectionMode = .deactivate
+    }
+
+    /// Applies the multi-select Save: de/activates every ticked exercise via the
+    /// targeted update path, then clears the mode. Scene-guarded so only the
+    /// foreground (home) scene commits — the shared `commitExerciseSelection`
+    /// flag is also observed by a still-mounted pushed category screen.
+    private func commitSelectionIfNeeded() {
+        guard router.currentScene == .home else { return }
+        guard overlayState.commitExerciseSelection else { return }
+        let active = overlayState.exerciseSelectionMode == .activate
+        for model in allWorkoutModels where overlayState.selectedExerciseIds.contains(model.id) {
+            viewModel.setExerciseActive(model.toDomain(), active: active, category: model.categoryGroup)
+        }
+        overlayState.endExerciseSelection()
+        viewModel.refreshExercises()
+    }
+
+    private var hasDeactivatedExercises: Bool {
+        allWorkoutModels.contains { !($0.isActive ?? true) }
+    }
+
+    /// Gates the "Deactivate Exercise" menu item on the same rule the per-card
+    /// radio uses — never shown when nothing is actually selectable.
+    private var hasDeactivatableExercises: Bool {
+        allWorkoutModels.contains {
+            ExerciseSelectionRules.isSelectable(
+                mode: .deactivate,
+                isActive: $0.isActive ?? true,
+                isCompleted: $0.isCompleted,
+                isInProgress: coordinatorCache.coordinator(for: $0.categoryGroup).isExerciseInProgress($0.id)
+            )
+        }
     }
 
     @Environment(\.safeAreaInsets) private var safeAreaInsets

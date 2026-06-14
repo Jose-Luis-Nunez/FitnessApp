@@ -12,6 +12,10 @@ public struct Exercise: Identifiable, Codable, Equatable, Hashable {
     public var iconName: String
     public var category: MuscleCategoryGroup
     public var goal: Double?
+    /// Whether the exercise counts toward progress and is shown by default.
+    /// Deactivated exercises (`false`) keep their data + history but drop out of
+    /// the `"X of Y"` counts and the lists until reactivated.
+    public var isActive: Bool
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -25,6 +29,7 @@ public struct Exercise: Identifiable, Codable, Equatable, Hashable {
         noSeats = try container.decodeIfPresent(Bool.self, forKey: .noSeats) ?? false
         isCompleted = try container.decodeIfPresent(Bool.self, forKey: .isCompleted) ?? false
         goal = try container.decodeIfPresent(Double.self, forKey: .goal)
+        isActive = try container.decodeIfPresent(Bool.self, forKey: .isActive) ?? true
 
         if let icon = try container.decodeIfPresent(String.self, forKey: .iconName) {
             iconName = icon
@@ -50,7 +55,8 @@ public struct Exercise: Identifiable, Codable, Equatable, Hashable {
         isCompleted: Bool = false,
         iconName: String,
         category: MuscleCategoryGroup,
-        goal: Double? = nil
+        goal: Double? = nil,
+        isActive: Bool = true
     ) {
         self.id = id
         self.name = name
@@ -63,6 +69,7 @@ public struct Exercise: Identifiable, Codable, Equatable, Hashable {
         self.iconName = iconName
         self.category = category
         self.goal = goal
+        self.isActive = isActive
     }
 
     public static func == (lhs: Exercise, rhs: Exercise) -> Bool {

@@ -2,6 +2,7 @@ import SwiftUI
 import FitnessAnalytics
 import FitnessCore
 import FitnessTraining
+import FitnessUI
 @_spi(PersistenceUI) import FitnessStorage
 
 /// Container for ADR-0001: reads `model.isCompleted` directly from the `@Model`
@@ -34,6 +35,16 @@ public struct ExerciseCardModelView: View {
     public let isResetEnabled: Bool
     public let isInProgress: Bool
 
+    /// When `true` the (idle) card shows a leading radio button and tapping
+    /// anywhere on it toggles selection (deactivate/activate multi-select mode)
+    /// instead of its normal edit/start gestures.
+    public let isSelectable: Bool
+    public let isSelected: Bool
+    public let onToggleSelection: ((Exercise) -> Void)?
+    /// Long-press on an idle card (only when not already in selection mode) —
+    /// the host uses it to start the deactivate selection with this card ticked.
+    public let onLongPress: ((Exercise) -> Void)?
+
     public init(
         model: ExerciseModel,
         onEdit: @escaping (Exercise, ExerciseEditMode) -> Void,
@@ -44,7 +55,11 @@ public struct ExerciseCardModelView: View {
         onReset: ((Exercise) -> Void)?,
         isActiveSetVisible: Bool,
         isResetEnabled: Bool,
-        isInProgress: Bool = false
+        isInProgress: Bool = false,
+        isSelectable: Bool = false,
+        isSelected: Bool = false,
+        onToggleSelection: ((Exercise) -> Void)? = nil,
+        onLongPress: ((Exercise) -> Void)? = nil
     ) {
         self.model = model
         self.onEdit = onEdit
@@ -56,6 +71,10 @@ public struct ExerciseCardModelView: View {
         self.isActiveSetVisible = isActiveSetVisible
         self.isResetEnabled = isResetEnabled
         self.isInProgress = isInProgress
+        self.isSelectable = isSelectable
+        self.isSelected = isSelected
+        self.onToggleSelection = onToggleSelection
+        self.onLongPress = onLongPress
     }
 
     public var body: some View {
@@ -65,7 +84,38 @@ public struct ExerciseCardModelView: View {
             activeExerciseId: activeSetViewModel.currentExercise?.id,
             exerciseId: model.id
         )
+        // The actively-training card must stay fully interactive — never selectable.
+        let isActiveTraining = isVariantActive(variant)
 
+        if isSelectable && !isActiveTraining {
+            // The idle card renders its own leading radio + hides play/tip, so it
+            // keeps the same full width as every other card. Inner controls are
+            // disabled; a transparent overlay turns the whole row into one tap target.
+            cardVariant(variant)
+                .allowsHitTesting(false)
+                .overlay(
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture { onToggleSelection?(model.toDomain()) }
+                )
+                // Inset by the card padding so the tint matches the visible card
+                // background (CardShell insets it by `AppStyle.Padding.card`).
+                .selectedMilkyAppearance(isSelected: isSelected, horizontalInset: AppStyle.Padding.card)
+        } else if !isActiveTraining, case .idle = variant, let onLongPress {
+            // Long-press an idle card to start the deactivate selection — with a
+            // medium haptic, like the iOS home-screen long-press.
+            cardVariant(variant)
+                .onLongPressGesture(minimumDuration: 0.4) {
+                    Haptics.impact(.medium)
+                    onLongPress(model.toDomain())
+                }
+        } else {
+            cardVariant(variant)
+        }
+    }
+
+    @ViewBuilder
+    private func cardVariant(_ variant: CardVariant) -> some View {
         switch variant {
         case .completed:
             InactiveCardModelView(
@@ -90,11 +140,18 @@ public struct ExerciseCardModelView: View {
                 model: model,
                 analyticsViewModel: analyticsViewModel,
                 onEdit: onEdit,
-                isEditable: isEditable,
+                isEditable: isEditable && !isSelectable,
                 onStart: onStart,
-                isInProgress: isInProgress
+                isInProgress: isInProgress,
+                isSelectionMode: isSelectable,
+                isSelected: isSelected
             )
             .accessibilityIdentifier(ExerciseCardIDs.idleCard(model.id))
         }
+    }
+
+    private func isVariantActive(_ variant: CardVariant) -> Bool {
+        if case .active = variant { return true }
+        return false
     }
 }

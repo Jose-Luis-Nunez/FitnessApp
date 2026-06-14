@@ -14,6 +14,12 @@ public enum L10n {
     public static let cardCreationSave = "Save"
     public static let cardCreationCancel = "Cancel"
 
+    public static let exerciseDeactivate = "Deactivate Exercise"
+    public static let exerciseActivate = "Activate Exercise"
+    public static let selectionDeactivate = "Deactivate"
+    public static let selectionActivate = "Activate"
+    public static let selectionCancel = "Cancel"
+
     public static let seatChipDefaultvalue = "+"
     public static let analyticsText = "RISING"
 

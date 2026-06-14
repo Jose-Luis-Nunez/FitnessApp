@@ -153,4 +153,15 @@ public final class MuscleCategoryViewModel {
         updatedExercise.isCompleted = false
         updateExercise(updatedExercise)
     }
+
+    /// Deactivate (`active: false`) or reactivate (`active: true`) an exercise via
+    /// the targeted, non-destructive update path (ADR-0009). Deactivated exercises
+    /// keep all data/history but drop out of the progress counts and the default
+    /// list filters.
+    public func setExerciseActive(_ exercise: Exercise, active: Bool) {
+        guard exercise.isActive != active else { return }
+        var updatedExercise = exercise
+        updatedExercise.isActive = active
+        updateExercise(updatedExercise)
+    }
 }
