@@ -25,9 +25,10 @@ struct BottomMenuBarView: View {
         let defaultWidth = UIScreen.main.bounds.width - (2 * sideMargin)
         return max(240, defaultWidth - narrowBy)
     }
-    /// Icon-only tabs: the selection indicator is a circle centred behind the
-    /// icon (no label row), so it never reaches toward the neighbouring tabs.
-    private let selectionDiameter: CGFloat = 46
+    /// Icon-only tabs: the selection pill is inset only vertically (the bar's own
+    /// 4pt horizontal padding already provides the side gap at the ends), so it
+    /// fills the tab-cell width and reads as a wide horizontal pill.
+    private let selectionVerticalInset: CGFloat = 4
     private let tabForeground = AppStyle.Color.white.opacity(0.98)
     private let tabSelectedForeground = AppStyle.Color.greenGlow
     private let iconSize: CGFloat = 30
@@ -97,12 +98,21 @@ struct BottomMenuBarView: View {
         .frame(width: capsuleWidth - 2 * AppStyle.Layout.cardHorizontalPadding)
     }
 
+    /// The back button is only meaningful when the user has drilled *into* the
+    /// workout flow — a muscle category (`.category`) or a training screen
+    /// (`.training`). Every top-level menu-bar destination (Workouts, Training/
+    /// `.home`, Analytics, Schedule, Profile) is a tab switch, not a push, so it
+    /// must NOT show a back affordance.
+    private var isDrillDownScene: Bool {
+        switch router.currentScene {
+        case .category, .training:                            return true
+        case .workouts, .home, .analytics, .schedule, .profile: return false
+        }
+    }
+
     @ViewBuilder
     private var backButton: some View {
-        // A single workout's category selection (`.home`) is a root-like entry
-        // reached from the Workouts list or the Training tab — you leave it via
-        // the tab bar, not by navigating back to the list.
-        let shouldShow = showBackButton && !router.isEmpty && router.currentScene != .home
+        let shouldShow = showBackButton && !router.isEmpty && isDrillDownScene
         if shouldShow {
             Button(action: {
                 if let customAction = customBackAction {
@@ -171,9 +181,9 @@ struct BottomMenuBarView: View {
                 .frame(maxWidth: .infinity, minHeight: capsuleHeight, maxHeight: capsuleHeight)
                 .background {
                     if isSelected {
-                        Circle()
+                        Capsule()
                             .fill(Color.white.opacity(0.15))
-                            .frame(width: selectionDiameter, height: selectionDiameter)
+                            .padding(.vertical, selectionVerticalInset)
                             .scaleEffect(pillBounce ? 1.4 : 1.0)
                             .matchedGeometryEffect(id: "selectedTab", in: tabNamespace)
                     }

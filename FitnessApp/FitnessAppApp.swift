@@ -101,13 +101,16 @@ struct FitnessAppApp: App {
                                         .navigationBarBackButtonHidden(true)
                                 }
                             }
-                            // A single workout (`.home`) is a root-like entry: no
-                            // back-navigation to the Workouts list, so swipe-back
-                            // is disabled there too (the tab bar is the way out).
-                            if case .home = destination {
-                                view
-                            } else {
+                            // Swipe-back is only enabled for genuine drill-downs
+                            // (a muscle category or a training screen). Every
+                            // top-level menu-bar destination (home, profile,
+                            // analytics, schedule) is a tab switch, not a push —
+                            // you leave it via the tab bar, not by going back.
+                            switch destination {
+                            case .muscleCategory, .training:
                                 view.enableSwipeBack()
+                            case .home, .profile, .totalAnalytics, .schedule:
+                                view
                             }
                         }
                 }
