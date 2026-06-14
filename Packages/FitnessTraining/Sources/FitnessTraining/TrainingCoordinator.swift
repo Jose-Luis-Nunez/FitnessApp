@@ -258,17 +258,24 @@ public final class TrainingCoordinator {
         vm.startEditingSet(index: editIndex, mode: .more)
     }
 
-    /// Syncs a mid-session seat edit into the in-flight session snapshot.
+    /// Persists a mid-session seat edit through the app's single exercise-write
+    /// path (`onExerciseUpdate` → `ExerciseManagementService` → storage) and
+    /// updates the in-flight session snapshot so a later `finishExercise` carries
+    /// the value too.
     ///
-    /// The seat lives on the `ExerciseModel` and is written by the view via
-    /// SwiftData (ADR-0001). The session, however, still holds the DTO snapshot
-    /// captured once at `startTraining`, and `finishExercise` re-persists that
-    /// snapshot through `onExerciseUpdate`. Without this sync the freshly-edited
-    /// seat would be reverted to the value the exercise had when the session
-    /// started. Keeping the poke behind this method avoids the view reaching
-    /// into `activeSetViewModel.currentExercise` directly.
+    /// It deliberately does NOT mutate the SwiftData `@Model` from the view. The
+    /// storage service owns a separate `ModelContext` and its `saveForWorkout` is
+    /// a full delete+reinsert; a direct main-context write that the service then
+    /// deletes leaves a stale object lingering in the view's `@Query`, which
+    /// renders as a phantom empty card (a growing gap between exercises). Routing
+    /// every seat edit through the same path keeps a single source of truth.
     public func updateActiveSeat(_ seat: String?) {
-        activeSetViewModel.currentExercise?.seatSetting = seat
+        guard var exercise = activeSetViewModel.currentExercise else { return }
+        exercise.seatSetting = seat
+        activeSetViewModel.currentExercise = exercise
+        if let category = findCategory(exercise) {
+            onExerciseUpdate(exercise, category)
+        }
     }
 
     public func finishExercise() {

@@ -107,7 +107,11 @@ public final class MuscleCategoryViewModel {
             if let vm = coordinator.session(for: updatedExercise.id) {
                 vm.currentExercise = updatedExercise
             }
-            saveExercises()
+            // Targeted in-place persistence (matched by id), not the bulk
+            // `saveExercises()`/`saveForWorkout` delete+reinsert (ADR-0009).
+            // Keeps the SwiftData row identity stable so the category `@Query`
+            // never strands a deleted object as a phantom card.
+            storageService.updateExercise(updatedExercise)
         }
     }
 

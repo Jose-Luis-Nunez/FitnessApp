@@ -18,13 +18,14 @@ public final class ExerciseManagementService: ExerciseManaging {
         self.workoutStorageService = workoutStorage ?? Container.shared.workoutStorage()
     }
 
+    /// `category` is retained for `ExerciseManaging` protocol symmetry; the
+    /// targeted update locates the row by unique `id` regardless of category
+    /// (and so no longer silently no-ops when a stale category is passed).
     public func updateExercise(_ updatedExercise: Exercise, category: MuscleCategoryGroup) {
-        guard let currentWorkout = workoutStorageService.currentWorkout else { return }
-        var exercises = storageService.loadForWorkout(workoutId: currentWorkout.id, category: category)
-        if let index = exercises.firstIndex(where: { $0.id == updatedExercise.id }) {
-            exercises[index] = updatedExercise
-            saveExercises(exercises, workoutId: currentWorkout.id, category: category)
-        }
+        // Targeted in-place update (matched by id) instead of the destructive
+        // load-all → saveForWorkout delete+reinsert. Keeps the SwiftData row
+        // identity stable so the views' `@Query` updates without phantom cards.
+        storageService.updateExercise(updatedExercise)
     }
 
     public func getExercises(for category: MuscleCategoryGroup) -> [Exercise] {

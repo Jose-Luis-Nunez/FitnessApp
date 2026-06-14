@@ -121,6 +121,13 @@ extension ExerciseModel {
         )
     }
 
+    /// In-place content update: mutates the editable fields while deliberately
+    /// preserving the row's identity and placement (`id`, `workoutId`, `workout`,
+    /// `sortOrder`). This keeps the SwiftData row identity stable for `@Query`
+    /// observers — the basis of the targeted, non-destructive update in
+    /// `ExerciseStorageService.updateExercise` (ADR-0009). `category` *is* written,
+    /// so an in-place category change is honoured; cross-workout moves are
+    /// structurally impossible (`Exercise` carries no workout reference).
     func update(from exercise: Exercise) {
         name = exercise.name
         weight = exercise.weight

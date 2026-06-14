@@ -27,6 +27,15 @@ private final class MockExerciseStorage: ExerciseStoring {
     func saveForWorkout(_ exercises: [Exercise], workoutId: UUID, category: MuscleCategoryGroup) {
         savedExercises[category] = exercises
     }
+
+    func updateExercise(_ exercise: Exercise) {
+        for (category, exercises) in savedExercises {
+            if let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
+                savedExercises[category]?[index] = exercise
+                return
+            }
+        }
+    }
 }
 
 // (MockWorkoutStorage is reused from FitnessTestSupport — the stateful mock

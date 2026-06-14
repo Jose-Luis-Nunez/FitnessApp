@@ -244,19 +244,14 @@ struct TrainingView: View {
         trainingCoordinator.startTraining(for: model.toDomain())
     }
 
-    /// Persists the edited seat straight onto the live `@Model` (ADR-0001 source
-    /// of truth) so the mainContext autosave propagates it to every `@Query`
-    /// (idle/inactive cards). Avoids the legacy `saveForWorkout` delete+reinsert
-    /// path, which would replace the model instance mid-session.
-    ///
-    /// `updateActiveSeat` then keeps the coordinator's in-flight session snapshot
-    /// in sync so the finish-time persistence carries the edited seat instead of
-    /// reverting it (see `TrainingCoordinator.updateActiveSeat`).
+    /// Persists the edited seat through the coordinator, which routes it via the
+    /// app's single exercise-write path (storage service). The view must NOT
+    /// mutate the `@Model` directly: that conflicts with the storage service's
+    /// separate `ModelContext` (full delete+reinsert) and leaves phantom cards in
+    /// the category `@Query`. See `TrainingCoordinator.updateActiveSeat`.
     private func saveSeat() {
-        guard let model = models.first else { return }
         let trimmed = formViewModel.seat.trimmingCharacters(in: .whitespaces)
         let newSeat: String? = trimmed.isEmpty ? nil : trimmed
-        model.seatSetting = newSeat
         trainingCoordinator.updateActiveSeat(newSeat)
         formViewModel.clearForm()
     }

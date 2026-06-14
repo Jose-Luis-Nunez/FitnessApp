@@ -475,6 +475,24 @@ struct UpdateActiveSeatTests {
         #expect(coordinator.activeSetViewModel.currentExercise?.seatSetting == "5 / 2")
     }
 
+    /// The seat must persist through the single exercise-write path
+    /// (`onExerciseUpdate` → storage), NOT a direct main-context `@Model` write —
+    /// otherwise it conflicts with the storage service's delete+reinsert and
+    /// leaves phantom cards in the category `@Query`.
+    @Test func persistsViaOnExerciseUpdate() {
+        var received: Exercise?
+        let coordinator = makeCoordinator(
+            onExerciseUpdate: { ex, _ in received = ex }
+        )
+        let exercise = makeExercise(sets: 2, seatSetting: "3")
+        coordinator.startTraining(for: exercise)
+
+        coordinator.updateActiveSeat("5 / 2")
+
+        #expect(received?.id == exercise.id)
+        #expect(received?.seatSetting == "5 / 2")
+    }
+
     @Test func nilClearsSeat() {
         let coordinator = makeCoordinator()
         let exercise = makeExercise(sets: 2, seatSetting: "3")

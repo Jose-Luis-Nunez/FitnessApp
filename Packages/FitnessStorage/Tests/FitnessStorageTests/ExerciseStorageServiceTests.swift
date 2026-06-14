@@ -50,6 +50,56 @@ struct ExerciseStorageServiceTests {
         #expect(result.goal == 70)
     }
 
+    // MARK: - Targeted Update (in-place, non-destructive)
+
+    @Test func updateExerciseMutatesInPlacePreservingOthers() {
+        let (sut, workout) = makeSUT()
+        let e1 = TestHelpers.makeExercise(name: "A", weight: 10, seatSetting: "1", category: .arms)
+        let e2 = TestHelpers.makeExercise(name: "B", weight: 20, category: .arms)
+        sut.saveForWorkout([e1, e2], workoutId: workout.id, category: .arms)
+
+        var updated = e1
+        updated.seatSetting = "22 / 2"
+        updated.weight = 99
+        sut.updateExercise(updated)
+
+        let loaded = sut.loadForWorkout(workoutId: workout.id, category: .arms)
+        #expect(loaded.count == 2) // no duplicate, no deletion
+        let reloaded1 = loaded.first { $0.id == e1.id }
+        #expect(reloaded1?.seatSetting == "22 / 2")
+        #expect(reloaded1?.weight == 99)
+        let reloaded2 = loaded.first { $0.id == e2.id }
+        #expect(reloaded2?.name == "B")
+        #expect(reloaded2?.weight == 20)
+    }
+
+    @Test func updateExercisePreservesSortOrder() {
+        let (sut, workout) = makeSUT()
+        let exercises = (0..<3).map { TestHelpers.makeExercise(name: "E\($0)", category: .arms) }
+        sut.saveForWorkout(exercises, workoutId: workout.id, category: .arms)
+
+        var middle = exercises[1]
+        middle.seatSetting = "9"
+        sut.updateExercise(middle)
+
+        let loaded = sut.loadForWorkout(workoutId: workout.id, category: .arms)
+        #expect(loaded.map(\.id) == exercises.map(\.id)) // order unchanged
+        #expect(loaded[1].seatSetting == "9")
+    }
+
+    @Test func updateExerciseIsNoOpForUnknownId() {
+        let (sut, workout) = makeSUT()
+        let e1 = TestHelpers.makeExercise(name: "A", category: .arms)
+        sut.saveForWorkout([e1], workoutId: workout.id, category: .arms)
+
+        let stranger = TestHelpers.makeExercise(name: "X", category: .arms) // different id
+        sut.updateExercise(stranger)
+
+        let loaded = sut.loadForWorkout(workoutId: workout.id, category: .arms)
+        #expect(loaded.count == 1)
+        #expect(loaded.first?.name == "A")
+    }
+
     @Test func exerciseIdPreservedAcrossSave() {
         let (sut, workout) = makeSUT()
         let originalId = UUID()

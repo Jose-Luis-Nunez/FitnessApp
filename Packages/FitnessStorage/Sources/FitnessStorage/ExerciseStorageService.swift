@@ -64,6 +64,25 @@ public final class ExerciseStorageService: ExerciseStoring {
         _ = saveContext()
     }
 
+    public func updateExercise(_ exercise: Exercise) {
+        let id = exercise.id
+        var descriptor = FetchDescriptor<ExerciseModel>(
+            predicate: #Predicate<ExerciseModel> { $0.id == id }
+        )
+        descriptor.fetchLimit = 1
+
+        do {
+            guard let model = try context.fetch(descriptor).first else {
+                logger.error("updateExercise: no ExerciseModel found for id \(id)")
+                return
+            }
+            model.update(from: exercise)
+            _ = saveContext()
+        } catch {
+            logger.error("Failed to update exercise \(id): \(error)")
+        }
+    }
+
     private func fetchWorkoutModel(id: UUID) -> WorkoutModel? {
         var descriptor = FetchDescriptor<WorkoutModel>(
             predicate: #Predicate { $0.id == id }
