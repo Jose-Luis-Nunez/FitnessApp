@@ -360,6 +360,8 @@ public enum AppStyle {
         /// menu-bar / filter-toggle selected-pill look.
         public static let selectionTintFill: Double = 0.15
         public static let selectionTintStroke: Double = 0.35
+        /// Hairline divider between Cancel and Deactivate/Activate in the morphed bar.
+        public static let selectionDivider: Double = 0.2
     }
 
     public enum Shadow {
@@ -466,6 +468,11 @@ public enum AppStyle {
     public enum Animation {
         public static let keyboardSpring = SwiftUI.Animation.spring(response: 0.32, dampingFraction: 0.88)
         public static let snapSpring = SwiftUI.Animation.spring(response: 0.3, dampingFraction: 0.8)
+    }
+
+    public enum Duration {
+        /// Long-press threshold to enter the deactivate selection from a card.
+        public static let selectionLongPress: Double = 0.4
     }
 
     public enum Blur {

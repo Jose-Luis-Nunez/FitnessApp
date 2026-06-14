@@ -101,7 +101,7 @@ struct BottomMenuBarView: View {
 
             if hasSelection {
                 Rectangle()
-                    .fill(AppStyle.Color.white.opacity(AppStyle.Opacity.numberPadFade))
+                    .fill(AppStyle.Color.white.opacity(AppStyle.Opacity.selectionDivider))
                     .frame(width: 1, height: capsuleHeight * 0.5)
 
                 Button(action: {
@@ -236,7 +236,7 @@ struct BottomMenuBarView: View {
                 .background {
                     if isSelected {
                         Capsule()
-                            .fill(Color.white.opacity(0.15))
+                            .fill(AppStyle.Color.white.opacity(AppStyle.Opacity.selectionTintFill))
                             .padding(.vertical, selectionVerticalInset)
                             .scaleEffect(pillBounce ? 1.4 : 1.0)
                             .matchedGeometryEffect(id: "selectedTab", in: tabNamespace)

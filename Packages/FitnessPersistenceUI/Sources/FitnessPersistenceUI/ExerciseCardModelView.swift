@@ -105,7 +105,7 @@ public struct ExerciseCardModelView: View {
             // Long-press an idle card to start the deactivate selection — with a
             // medium haptic, like the iOS home-screen long-press.
             cardVariant(variant)
-                .onLongPressGesture(minimumDuration: 0.4) {
+                .onLongPressGesture(minimumDuration: AppStyle.Duration.selectionLongPress) {
                     Haptics.impact(.medium)
                     onLongPress(model.toDomain())
                 }
