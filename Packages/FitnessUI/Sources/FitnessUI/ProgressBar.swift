@@ -10,8 +10,11 @@ public struct ProgressBar: View {
     public let progress: Double
     public let totalWidth: CGFloat
 
-    private let fillColor = AppStyle.Color.greenGlow
-    private let trackColor = AppStyle.Color.progressTrack
+    @AppStorage(DefaultIconColorScheme.storageKey)
+    private var iconColorScheme: DefaultIconColorScheme = .green
+
+    private var fillColor: Color { iconColorScheme.progressFillColor }
+    private var trackColor: Color { iconColorScheme.progressTrackColor }
 
     public init(progress: Double, totalWidth: CGFloat) {
         self.progress = progress

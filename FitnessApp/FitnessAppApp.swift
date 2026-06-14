@@ -21,6 +21,10 @@ struct FitnessAppApp: App {
     @State private var overlayState = UIOverlayState()
     @State private var workoutStorageService: WorkoutStorageService
     @State private var didLaunch: Bool = false
+    /// Drives the app-wide accent re-tint (green ↔ grey). Toggling the Profile
+    /// picker writes this key; the `.id(iconColorScheme)` below rebuilds the
+    /// visual tree so every `AppStyle.Color` green token re-reads the palette.
+    @AppStorage(DefaultIconColorScheme.storageKey) private var iconColorScheme: DefaultIconColorScheme = .green
 
     init() {
         let textFieldAppearance = UITextField.appearance()
@@ -172,6 +176,11 @@ struct FitnessAppApp: App {
                     .zIndex(3)
                 }
             }
+            // Re-tint the whole UI when the scheme flips (green ↔ grey). Applied
+            // BELOW the App's @State (router/overlayState/storage), so those
+            // survive — only the visual subtree rebuilds and re-reads the accent
+            // palette. NavigationStack rebinds to the preserved router.path.
+            .id(iconColorScheme)
             .environment(\.safeAreaInsets, geo.safeAreaInsets)
             .environment(overlayState)
             .environment(router)
