@@ -123,7 +123,7 @@ struct FitnessAppApp: App {
 
                 BottomMenuBarView(
                     showBackButton: showBack,
-                    narrowBy: 50,
+                    narrowBy: 74,
                     onRightAction: {
                         switch router.currentScene {
                         case .home:
@@ -133,6 +133,9 @@ struct FitnessAppApp: App {
                         case .workouts:
                             overlayState.showWorkoutsMiniMenu.toggle()
                         case .profile, .schedule, .analytics:
+                            // Unreachable: the ellipsis button is hidden on these
+                            // scenes (see BottomMenuBarView.showsRightAction). Kept
+                            // for switch exhaustiveness over the scene enum.
                             break
                         case .training:
                             overlayState.showTrainingMiniMenu.toggle()

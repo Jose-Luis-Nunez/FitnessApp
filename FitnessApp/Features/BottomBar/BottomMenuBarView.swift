@@ -9,7 +9,11 @@ private enum BottomTab {
 
 struct BottomMenuBarView: View {
     var showBackButton: Bool = true
-    var narrowBy: CGFloat = 50
+    // `narrowBy` reserves horizontal room for the two side circle buttons by
+    // shrinking the centre tab capsule. It scales with `circleButtonSize`:
+    // growing a button by X each side means widening `narrowBy` by 2·X so the
+    // overall row width (and side margins) stay put.
+    var narrowBy: CGFloat = 74
     var onRightAction: () -> Void = {}
     var onTrainingTab: () -> Void = {}
     var customBackAction: (() -> Void)? = nil
@@ -36,7 +40,10 @@ struct BottomMenuBarView: View {
     private let iconSize: CGFloat = 30
     private let bottomOffset: CGFloat = -33
     private let calendarIconScale: CGFloat = 1.18
-    private let circleButtonSize: CGFloat = 44
+    // Side circle buttons (back / ellipsis). Kept just under `capsuleHeight` so
+    // they read as a balanced trio with the tab capsule while giving a large,
+    // easy-to-hit target. Paired with `narrowBy` (see above).
+    private let circleButtonSize: CGFloat = 56
 
     private var selectedTab: BottomTab {
         switch router.currentScene {
@@ -180,8 +187,12 @@ struct BottomMenuBarView: View {
                     .imageScale(.large)
                     .frame(width: circleButtonSize, height: circleButtonSize)
                     .circleGlass(size: circleButtonSize)
+                    // contentShape must live INSIDE the label (last modifier) so
+                    // it survives .buttonStyle(.plain) recomposing the label —
+                    // otherwise the hit area collapses to the drawn glyph. Mirrors
+                    // the selectionActionBar buttons.
+                    .contentShape(Circle())
             }
-            .contentShape(Circle())
             .buttonStyle(.plain)
         } else {
             Circle()
@@ -191,19 +202,43 @@ struct BottomMenuBarView: View {
         }
     }
 
-    private var rightActionButton: some View {
-        Button(action: {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            onRightAction()
-        }) {
-            Image(systemName: "ellipsis")
-                .foregroundColor(AppStyle.Color.white)
-                .imageScale(.medium)
-                .frame(width: circleButtonSize, height: circleButtonSize)
-                .circleGlass(size: circleButtonSize)
+    /// The ellipsis (mini-menu) button only exists on scenes that actually have
+    /// a contextual menu — the workout flow (`.workouts`, `.home`, `.category`,
+    /// `.training`). The top-level tab destinations Analytics, Schedule and
+    /// Profile have no such menu, so the button is hidden there (a clear
+    /// placeholder keeps the tab capsule centred).
+    private var showsRightAction: Bool {
+        switch router.currentScene {
+        case .workouts, .home, .category, .training: return true
+        case .analytics, .schedule, .profile:        return false
         }
-        .contentShape(Circle())
-        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var rightActionButton: some View {
+        if showsRightAction {
+            Button(action: {
+                Haptics.impact(.light)
+                onRightAction()
+            }) {
+                Image(systemName: "ellipsis")
+                    .foregroundColor(AppStyle.Color.white)
+                    .imageScale(.large)
+                    .frame(width: circleButtonSize, height: circleButtonSize)
+                    .circleGlass(size: circleButtonSize)
+                    // contentShape must live INSIDE the label (last modifier) so it
+                    // survives .buttonStyle(.plain) recomposing the label — otherwise
+                    // the hit area collapses to the thin ellipsis glyph. Mirrors the
+                    // selectionActionBar buttons.
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+        } else {
+            Circle()
+                .fill(Color.clear)
+                .frame(width: circleButtonSize, height: circleButtonSize)
+                .allowsHitTesting(false)
+        }
     }
 
     private func animateTabBounce(_ tab: BottomTab) {

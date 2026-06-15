@@ -310,7 +310,11 @@ public enum AppStyle {
         public static var trainingAccent: SwiftUI.Color { palette.trainingAccent }
         public static let inProgressGold = SwiftUI.Color(hex: "#D4A843")
 
-        public static let profileCardBackground = SwiftUI.Color(hex: "#1A1920")
+        /// Profile-family card fill. Matches the Analytics & Schedule cards
+        /// (`Color.white.opacity(Opacity.subtleBackground)`) so every top-level
+        /// tab page shares one neutral translucent grey, instead of the old
+        /// bluish solid `#1A1920` that made Profile look different.
+        public static let profileCardBackground = SwiftUI.Color.white.opacity(Opacity.subtleBackground)
         public static let bmiUnderweight = SwiftUI.Color(hex: "#5BA4CF")
         public static var bmiNormal: SwiftUI.Color { palette.glow }
         public static let bmiOverweight = SwiftUI.Color(hex: "#E8A838")
