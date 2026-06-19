@@ -39,9 +39,6 @@ private struct TrainingPickerContent: View {
                 .onTapGesture {
                     vm.isEditing = false
                 }
-                .onAppear {
-                    overlayState.isEditingSheetVisible = true
-                }
 
             ActiveSetEditPickerView(
                 title: {
@@ -94,7 +91,7 @@ private struct TrainingPickerContent: View {
             .shadow(radius: 5)
             .zIndex(99999)
             .ignoresSafeArea(edges: .all)
-            .onDisappear { overlayState.isEditingSheetVisible = false }
+            .hidesBottomBarWhilePresented(overlayState)
         }
         .id("picker-\(vm.isEditing)")
     }

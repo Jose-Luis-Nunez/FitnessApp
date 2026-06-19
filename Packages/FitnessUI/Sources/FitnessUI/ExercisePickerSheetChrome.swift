@@ -111,7 +111,7 @@ public struct SheetActionBar<Actions: View>: View {
 
     public var body: some View {
         actions()
-            .padding(.top, 24)
+            .padding(.top, AppStyle.Padding.actionBarTop)
     }
 }
 

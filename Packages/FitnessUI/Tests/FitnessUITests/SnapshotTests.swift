@@ -377,3 +377,34 @@ struct RefreshActionButtonSnapshotTests {
         assertSnapshot(of: view, named: "loading", size: CGSize(width: 200, height: 60))
     }
 }
+
+// MARK: - CardTextField Snapshots
+
+@Suite("CardTextField — Snapshots", .tags(.snapshot))
+@MainActor
+struct CardTextFieldSnapshotTests {
+
+    /// Hosts `CardTextField` with the `@FocusState` it requires.
+    private struct Host: View {
+        let text: String
+        @FocusState private var focused: Bool
+
+        var body: some View {
+            CardTextField(
+                label: "Name",
+                placeholder: "Workout Name",
+                text: .constant(text),
+                isFocused: $focused
+            )
+            .padding(.horizontal, AppStyle.Padding.horizontal)
+        }
+    }
+
+    @Test func cardTextFieldEmpty() {
+        assertSnapshot(of: Host(text: ""), named: "card-text-empty", size: CGSize(width: 350, height: 90))
+    }
+
+    @Test func cardTextFieldFilled() {
+        assertSnapshot(of: Host(text: "Leg Day"), named: "card-text-filled", size: CGSize(width: 350, height: 90))
+    }
+}

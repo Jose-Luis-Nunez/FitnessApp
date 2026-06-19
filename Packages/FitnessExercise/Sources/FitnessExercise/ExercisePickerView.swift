@@ -195,11 +195,11 @@ struct ExerciseIconHeader: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            ZStack {
-                MuscleIconBackdrop()
-                gallery
-            }
-            .frame(height: previewHeight)
+            BodyIconGallery(
+                icons: validIconOptions.isEmpty ? [resolvedIconName] : validIconOptions,
+                selection: $formViewModel.selectedIconName,
+                height: previewHeight
+            )
 
             Text(title)
                 .font(AppStyle.Font.navigationHeadline)
@@ -228,33 +228,6 @@ struct ExerciseIconHeader: View {
         formViewModel.selectedIconName.isEmpty
         ? formViewModel.selectedCategory.defaultIconName
         : formViewModel.selectedIconName
-    }
-
-    @ViewBuilder
-    private var gallery: some View {
-        if validIconOptions.count > 1 {
-            TabView(selection: $formViewModel.selectedIconName) {
-                ForEach(validIconOptions, id: \.self) { icon in
-                    Image(icon)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxWidth: .infinity)
-                        .tag(icon)
-                }
-            }
-            #if os(iOS)
-            .tabViewStyle(.page(indexDisplayMode: .automatic))
-            .indexViewStyle(.page(backgroundDisplayMode: .interactive))
-            #endif
-            .frame(height: previewHeight)
-        } else {
-            Image(resolvedIconName)
-                .resizable()
-                .scaledToFit()
-                .frame(maxWidth: .infinity)
-                .frame(height: previewHeight)
-                .clipped()
-        }
     }
 }
 
@@ -412,97 +385,13 @@ struct ExerciseNameBar: View {
     @Binding var text: String
     var isFocused: FocusState<Bool>.Binding
 
-    /// Matches the wheel-card look (`ExerciseWheelPickerRow` columns).
-    private let cornerRadius: CGFloat = 16
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(L10n.exerciseNameLabel)
-                .font(AppStyle.Font.defaultFont)
-                .foregroundColor(AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel))
-
-            ZStack(alignment: .leading) {
-                if text.isEmpty {
-                    Text(L10n.exerciseNamePlaceholder)
-                        .font(AppStyle.Font.sheetSectionLabel)
-                        .foregroundColor(AppStyle.Color.white.opacity(AppStyle.Opacity.placeholderText))
-                }
-                TextField("", text: $text)
-                    .font(AppStyle.Font.sheetSectionLabel)
-                    .foregroundColor(AppStyle.Color.white)
-                    .tint(AppStyle.Color.white)
-                    .textFieldStyle(PlainTextFieldStyle())
-                    .focused(isFocused)
-                    .submitLabel(.done)
-                    .onSubmit { isFocused.wrappedValue = false }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .background(
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(AppStyle.Color.idleCardBackground)
-                .overlay(
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .stroke(AppStyle.Color.white.opacity(AppStyle.Opacity.subtleStroke), lineWidth: 1)
-                )
+        CardTextField(
+            label: L10n.exerciseNameLabel,
+            placeholder: L10n.exerciseNamePlaceholder,
+            text: $text,
+            isFocused: isFocused
         )
-    }
-}
-
-// MARK: - Icon Backdrop
-
-/// Decorative backdrop behind the body-icon preview: a faint concentric field
-/// of dots inside a thin ring, fading toward the edges. Purely cosmetic.
-private struct MuscleIconBackdrop: View {
-    private let tint = AppStyle.Color.greenLight
-
-    var body: some View {
-        GeometryReader { geo in
-            let side = min(geo.size.width, geo.size.height)
-            let ringDiameter = side * 0.92
-
-            ZStack {
-                Canvas { context, size in
-                    let center = CGPoint(x: size.width / 2, y: size.height / 2)
-                    let maxRadius = ringDiameter / 2
-                    let ringCount = 7
-                    for ring in 1...ringCount {
-                        let radius = maxRadius * CGFloat(ring) / CGFloat(ringCount)
-                        let dotCount = max(8, ring * 7)
-                        for i in 0..<dotCount {
-                            let angle = (2 * Double.pi) * Double(i) / Double(dotCount)
-                            let point = CGPoint(
-                                x: center.x + radius * CGFloat(cos(angle)),
-                                y: center.y + radius * CGFloat(sin(angle))
-                            )
-                            let dotSize: CGFloat = 1.6
-                            let rect = CGRect(
-                                x: point.x - dotSize / 2,
-                                y: point.y - dotSize / 2,
-                                width: dotSize,
-                                height: dotSize
-                            )
-                            context.fill(Path(ellipseIn: rect), with: .color(tint.opacity(0.55)))
-                        }
-                    }
-                }
-
-                Circle()
-                    .stroke(tint.opacity(0.5), lineWidth: 1)
-                    .frame(width: ringDiameter, height: ringDiameter)
-            }
-            .frame(width: geo.size.width, height: geo.size.height)
-            .mask(
-                RadialGradient(
-                    gradient: Gradient(colors: [Color.white, Color.white.opacity(0)]),
-                    center: .center,
-                    startRadius: side * 0.2,
-                    endRadius: side * 0.62
-                )
-            )
-        }
     }
 }
 
