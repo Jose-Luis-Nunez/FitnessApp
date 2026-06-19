@@ -19,7 +19,7 @@
   - **Reps** (1...50)
   - **Sets** (1...10)
   - **Seat setting** (free text, optional, with a `noSeats` flag when not relevant)
-  - **Icon** (selection from the asset catalog via `IconPickerView`)
+  - **Icon** (chosen by swiping the body-image gallery in `ExerciseIconHeader`)
   - **Category** (`MuscleCategoryGroup`: arms / chest / back / legs / abs)
   - **Goal** (target Reps or Weight — read by `AnalyticsView`)
 - Edit Exercises individually (Name / Weight / Seat / full — four `ExerciseEditMode`s)

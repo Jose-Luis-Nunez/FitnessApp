@@ -39,31 +39,44 @@ public final class KeyboardObserver {
 public struct ExercisePickerSheetModifier: ViewModifier {
     let isContentVisible: Bool
     let backgroundColor: Color
+    let borderColor: Color?
 
     #if canImport(UIKit)
     @State private var keyboard = KeyboardObserver()
     #endif
 
-    public init(isContentVisible: Bool, backgroundColor: Color = AppStyle.Color.sheetBackground) {
+    public init(
+        isContentVisible: Bool,
+        backgroundColor: Color = AppStyle.Color.sheetBackground,
+        borderColor: Color? = nil
+    ) {
         self.isContentVisible = isContentVisible
         self.backgroundColor = backgroundColor
+        self.borderColor = borderColor
+    }
+
+    private var sheetShape: UnevenRoundedRectangle {
+        UnevenRoundedRectangle(
+            topLeadingRadius: AppStyle.CornerRadius.sheet,
+            bottomLeadingRadius: 0,
+            bottomTrailingRadius: 0,
+            topTrailingRadius: AppStyle.CornerRadius.sheet,
+            style: .continuous
+        )
     }
 
     public func body(content: Content) -> some View {
         content
             .padding(.bottom, 28)
-            .background(
-                UnevenRoundedRectangle(
-                    topLeadingRadius: AppStyle.CornerRadius.sheet,
-                    bottomLeadingRadius: 0,
-                    bottomTrailingRadius: 0,
-                    topTrailingRadius: AppStyle.CornerRadius.sheet,
-                    style: .continuous
-                )
-                .fill(backgroundColor)
-                .ignoresSafeArea(.container, edges: .bottom)
-            )
             .frame(maxWidth: .infinity)
+            .background(
+                sheetShape
+                    .fill(backgroundColor)
+                    .overlay(
+                        sheetShape.strokeBorder(borderColor ?? .clear, lineWidth: 1)
+                    )
+                    .ignoresSafeArea(.container, edges: .bottom)
+            )
             #if canImport(UIKit)
             .padding(.bottom, keyboard.height > 0 ? keyboard.height - 28 : 0)
             #endif
@@ -76,9 +89,14 @@ public struct ExercisePickerSheetModifier: ViewModifier {
 public extension View {
     func exercisePickerSheet(
         isContentVisible: Bool,
-        backgroundColor: Color = AppStyle.Color.sheetBackground
+        backgroundColor: Color = AppStyle.Color.sheetBackground,
+        borderColor: Color? = nil
     ) -> some View {
-        modifier(ExercisePickerSheetModifier(isContentVisible: isContentVisible, backgroundColor: backgroundColor))
+        modifier(ExercisePickerSheetModifier(
+            isContentVisible: isContentVisible,
+            backgroundColor: backgroundColor,
+            borderColor: borderColor
+        ))
     }
 }
 
@@ -103,6 +121,8 @@ public struct OverlaySheetContainer<Content: View, Actions: View, Overlay: View>
     @Binding var isPresented: Bool
     let allowBackdropDismiss: Bool
     let backgroundColor: Color
+    let borderColor: Color?
+    let expandsToTop: Bool
     let onCancel: () -> Void
     @ViewBuilder let overlay: () -> Overlay
     @ViewBuilder let actions: () -> Actions
@@ -114,6 +134,8 @@ public struct OverlaySheetContainer<Content: View, Actions: View, Overlay: View>
         isPresented: Binding<Bool>,
         allowBackdropDismiss: Bool = true,
         backgroundColor: Color = AppStyle.Color.sheetBackground,
+        borderColor: Color? = nil,
+        expandsToTop: Bool = false,
         onCancel: @escaping () -> Void,
         @ViewBuilder overlay: @escaping () -> Overlay,
         @ViewBuilder actions: @escaping () -> Actions,
@@ -122,6 +144,8 @@ public struct OverlaySheetContainer<Content: View, Actions: View, Overlay: View>
         _isPresented = isPresented
         self.allowBackdropDismiss = allowBackdropDismiss
         self.backgroundColor = backgroundColor
+        self.borderColor = borderColor
+        self.expandsToTop = expandsToTop
         self.onCancel = onCancel
         self.overlay = overlay
         self.actions = actions
@@ -148,13 +172,25 @@ public struct OverlaySheetContainer<Content: View, Actions: View, Overlay: View>
                     .padding(.top, 8)
                     .padding(.bottom, 10)
 
-                content()
+                // Full-height sheets scroll their content between the fixed
+                // grabber and action bar, so the content's top stays put
+                // regardless of how tall a given step is. Bottom sheets keep
+                // their natural, content-sized height.
+                if expandsToTop {
+                    ScrollView {
+                        content()
+                    }
+                    .scrollIndicators(.hidden)
+                } else {
+                    content()
+                }
 
                 SheetActionBar { actions() }
             }
             .padding(.horizontal, AppStyle.Padding.horizontal)
             .padding(.top, AppStyle.Padding.titleTop)
-            .exercisePickerSheet(isContentVisible: isContentVisible, backgroundColor: backgroundColor)
+            .frame(maxHeight: expandsToTop ? .infinity : nil, alignment: .top)
+            .exercisePickerSheet(isContentVisible: isContentVisible, backgroundColor: backgroundColor, borderColor: borderColor)
             .gesture(
                 DragGesture().onEnded { value in
                     if allowBackdropDismiss && value.translation.height > 80 { dismiss() }
@@ -181,6 +217,8 @@ public extension OverlaySheetContainer where Overlay == EmptyView, Actions == Em
         isPresented: Binding<Bool>,
         allowBackdropDismiss: Bool = true,
         backgroundColor: Color = AppStyle.Color.sheetBackground,
+        borderColor: Color? = nil,
+        expandsToTop: Bool = false,
         onCancel: @escaping () -> Void,
         @ViewBuilder content: @escaping () -> Content
     ) {
@@ -188,6 +226,8 @@ public extension OverlaySheetContainer where Overlay == EmptyView, Actions == Em
             isPresented: isPresented,
             allowBackdropDismiss: allowBackdropDismiss,
             backgroundColor: backgroundColor,
+            borderColor: borderColor,
+            expandsToTop: expandsToTop,
             onCancel: onCancel,
             overlay: { EmptyView() },
             actions: { EmptyView() },
@@ -202,6 +242,8 @@ public extension OverlaySheetContainer where Overlay == EmptyView {
         isPresented: Binding<Bool>,
         allowBackdropDismiss: Bool = true,
         backgroundColor: Color = AppStyle.Color.sheetBackground,
+        borderColor: Color? = nil,
+        expandsToTop: Bool = false,
         onCancel: @escaping () -> Void,
         @ViewBuilder actions: @escaping () -> Actions,
         @ViewBuilder content: @escaping () -> Content
@@ -210,6 +252,8 @@ public extension OverlaySheetContainer where Overlay == EmptyView {
             isPresented: isPresented,
             allowBackdropDismiss: allowBackdropDismiss,
             backgroundColor: backgroundColor,
+            borderColor: borderColor,
+            expandsToTop: expandsToTop,
             onCancel: onCancel,
             overlay: { EmptyView() },
             actions: actions,
@@ -223,6 +267,7 @@ public extension OverlaySheetContainer where Overlay == EmptyView {
 public struct ExercisePickerActionButtons: View {
     let cancelLabel: String
     let saveLabel: String
+    let cancelColor: Color
     let saveDisabled: Bool
     let onCancel: () -> Void
     let onSave: () -> Void
@@ -230,12 +275,14 @@ public struct ExercisePickerActionButtons: View {
     public init(
         cancelLabel: String = "Cancel",
         saveLabel: String = "Save",
+        cancelColor: Color = AppStyle.Color.white,
         saveDisabled: Bool,
         onCancel: @escaping () -> Void,
         onSave: @escaping () -> Void
     ) {
         self.cancelLabel = cancelLabel
         self.saveLabel = saveLabel
+        self.cancelColor = cancelColor
         self.saveDisabled = saveDisabled
         self.onCancel = onCancel
         self.onSave = onSave
@@ -246,7 +293,7 @@ public struct ExercisePickerActionButtons: View {
             Spacer()
 
             Button(cancelLabel) { onCancel() }
-                .foregroundColor(AppStyle.Color.white)
+                .foregroundColor(cancelColor)
                 .font(AppStyle.Font.pickerAction)
                 .padding(5)
                 .frame(width: 120)

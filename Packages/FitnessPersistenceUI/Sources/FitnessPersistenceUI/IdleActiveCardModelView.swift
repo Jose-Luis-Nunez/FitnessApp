@@ -236,8 +236,11 @@ private extension IdleActiveCardModelView {
             label: "Seat",
             onTap: isEditable ? { onEdit(model.toDomain(), .seat) } : nil
         ) {
-            if let seat = model.seatSetting, !seat.isEmpty {
-                Text(seat)
+            let seats = SeatSettings(encoded: model.seatSetting)
+            if !seats.positions.isEmpty {
+                // Only the first positions are shown on the card; any beyond
+                // SeatSettings.idleCardVisibleLimit are stored but hidden here.
+                Text(seats.display(limit: SeatSettings.idleCardVisibleLimit))
                     .font(AppStyle.Font.detailBadge)
                     .foregroundColor(AppStyle.Color.idleMetricValue)
                     .lineLimit(1)

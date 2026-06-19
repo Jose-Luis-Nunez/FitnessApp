@@ -1,10 +1,6 @@
 public enum L10n {
 
-    public static let cardCreationTitle = "Add Exercise"
     public static let newExercise = "New Exercise"
-    public static let cardEditTitle = "Edit Exercise"
-    public static let cardEditNameTitle = "Edit Title"
-    public static let cardEditWeightTitle = "Edit Weight"
     public static let cardEditSeatTitle = "Edit Seat"
     public static let cardCreationPlaceholderTextName = "Name"
     public static let cardCreationPlaceholderTextWeight = "Weight (kg)"
@@ -13,6 +9,24 @@ public enum L10n {
     public static let cardCreationPlaceholderTextSeat = "Seat"
     public static let cardCreationSave = "Save"
     public static let cardCreationCancel = "Cancel"
+    public static let cardCreationContinue = "Continue"
+    public static let cardCreationBack = "Back"
+    public static let exerciseNameLabel = "Exercise Name"
+    public static let exerciseNamePlaceholder = "e.g. Crunches"
+
+    public static let additionalOptionsTitle = "Additional options"
+
+    public static let seatRequiredTitle = "Seat required"
+    public static let seatRequiredSubtitle = "Enable to add one or two seat settings for this exercise."
+    public static let seatSettingsTitle = "Seat Settings"
+    public static let seatSettingsSubtitle = "Add one or two seat settings for this exercise."
+    public static let seatPositionLabel = "Seat Position"
+    public static let seatPositionPlaceholder = "e.g. Bench Seat"
+    public static let addSeatSetting = "Add another seat setting"
+    public static let weightModeDecimalTitle = "Use 0.5 kg increments"
+    public static let weightModeDecimalSubtitle = "Allows selecting weights in 0.5 kg steps."
+    public static let weightModeBodyweightTitle = "Bodyweight exercise"
+    public static let weightModeBodyweightSubtitle = "No additional weight will be added."
 
     public static let exerciseDeactivate = "Deactivate Exercise"
     public static let exerciseActivate = "Activate Exercise"

@@ -385,7 +385,6 @@ public struct MuscleCategorySelectionView: View {
             if let vm = pickerViewModel {
                 ExercisePickerView(
                     formViewModel: exerciseFormViewModel,
-                    title: editingExercise != nil ? L10n.cardEditTitle : L10n.newExercise,
                     isPresented: $isShowingExercisePicker,
                     onSave: onSave,
                     onCancel: onCancel,

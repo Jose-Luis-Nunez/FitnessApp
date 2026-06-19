@@ -64,6 +64,7 @@ Located in `Core/Model/`.
 |-------|------|----------------|
 | `AnalyticsEntry` | `AnalyticsEntry.swift` | `id`, `exerciseId`, `date`, `setProgress` |
 | `Exercise` | `Exercise.swift` | `id`, `name`, `weight`, `reps`, `sets`, `seatSetting`, `noSeats`, `isCompleted`, `iconName`, `category`, `goal`, `isActive` (default `true`; deactivated exercises drop out of progress counts + default list filters but keep their data/history). **Note:** `Equatable`/`Hashable` use only `id` — do not use `==` to detect content changes; compare fields explicitly when needed or rely on SwiftData `@Model` / `@Query` as the UI source of truth (ADR-0001). |
+| `SeatSettings` | `SeatSettings.swift` | Value type that owns the packing of multiple seat positions into the single `Exercise.seatSetting` string. `init(encoded:)` decodes (split on `/`, trim, drop empties), `encoded` packs back (`" / "`-joined, `nil` when empty), `display(limit:)` joins the first N. Policy constants `editableLimit` (4) and `idleCardVisibleLimit` (2) live here so the seat editor (`SeatSettingsEditor`) and the idle card (`IdleActiveCardModelView`) never duplicate the separator/`prefix` logic. |
 | `Workout` | `Workout.swift` | `id`, `name`, `createdDate`, `lastModified`, `selectedCategories` |
 | `MuscleCategoryGroup` | `MuscleCategoryGroup.swift` | Enum: `arms`, `chest`, `back`, `legs`, `abs`. `displayName` is provided by `FitnessUI` extension (`MuscleCategoryGroup+UI.swift`), not in FitnessCore. |
 | `SetProgress` | `SetProgress.swift` | `id`, `status` (enum: `notStarted`, `inProgress`, `completedDone/Less/More`), `currentReps`, `weight`. Conforms to `Identifiable`. |
@@ -343,6 +344,7 @@ All tokens in `Packages/FitnessUI/Sources/FitnessUI/AppStyle.swift`. When no tok
 | `sheetTitle` | 22 | bold |
 | `sheetSectionLabel` | 17 | semibold |
 | `sheetCaption` | 12 | regular |
+| `sheetControlGlyph` | 13 | bold |
 | `numberPadSelectedValue` | 48 | bold |
 
 ### Color
@@ -353,7 +355,7 @@ All tokens in `Packages/FitnessUI/Sources/FitnessUI/AppStyle.swift`. When no tok
 
 ### Opacity
 
-`overlayBackdrop` (0.55), `subtleBackground` (0.06), `subtleStroke` (0.15), `grabberHandle` (0.35), `disabledElement` (0.3), `fadedOverlay` (0.4), `idleIconGlow` (0.3 — opacity for the dark glow circle behind the idle category icon), `idlePlayButtonGlow` (0.25 — opacity for the mint halo behind the idle play button), `idleExpandedOverlay` (0.6 — background tint shown when the idle card is expanded to reveal weight phase tiles), `separatorLine` (0.3 — vertical column separator in the idle card metric row), `secondaryLabel` (0.6 — muted label text such as "Last training" date in the idle card expanded section), `numberPadInactive` (0.5), `numberPadFade` (0.2)
+`overlayBackdrop` (0.55), `subtleBackground` (0.06), `subtleStroke` (0.15), `grabberHandle` (0.35), `disabledElement` (0.3), `fadedOverlay` (0.4), `idleIconGlow` (0.3 — opacity for the dark glow circle behind the idle category icon), `idlePlayButtonGlow` (0.25 — opacity for the mint halo behind the idle play button), `idleExpandedOverlay` (0.6 — background tint shown when the idle card is expanded to reveal weight phase tiles), `separatorLine` (0.3 — vertical column separator in the idle card metric row), `secondaryLabel` (0.6 — muted label text such as "Last training" date in the idle card expanded section), `numberPadInactive` (0.5), `numberPadFade` (0.2), `placeholderText` (0.35 — placeholder text in styled sheet input fields: exercise name, seat position), `hairlineDivider` (0.08 — hairline divider between rows in the "Additional options" list of the exercise picker), `accentStroke` (0.6 — faded green outline for outlined controls, e.g. the seat-tile ✕ ring), `accentGlyph` (0.7 — green glyph at slightly reduced strength, e.g. the seat drag-handle dots), `accentDashedStroke` (0.5 — dashed green outline, e.g. the "add another seat setting" button)
 
 ### Shadow
 

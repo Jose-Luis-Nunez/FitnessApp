@@ -205,6 +205,9 @@ public enum AppStyle {
         public static let sheetTitle = SwiftUI.Font.system(size: 22, weight: .bold)
         public static let sheetSectionLabel = SwiftUI.Font.system(size: 17, weight: .semibold)
         public static let sheetCaption = SwiftUI.Font.system(size: 12, weight: .regular)
+        /// Small bold glyph inside a circular control (e.g. the "+" on the
+        /// add-seat button).
+        public static let sheetControlGlyph = SwiftUI.Font.system(size: 13, weight: .bold)
         public static let numberPadSelectedValue = SwiftUI.Font.system(size: 48, weight: .bold)
     }
 
@@ -358,6 +361,16 @@ public enum AppStyle {
         public static let idleExpandedOverlay: Double = 0.6
         public static let separatorLine: Double = 0.3
         public static let secondaryLabel: Double = 0.6
+        /// Placeholder text in styled sheet input fields (name, seat position).
+        public static let placeholderText: Double = 0.35
+        /// Hairline divider between rows in the "Additional options" list.
+        public static let hairlineDivider: Double = 0.08
+        /// Faded green outline for outlined controls (e.g. the seat-tile ✕ ring).
+        public static let accentStroke: Double = 0.6
+        /// Green glyph at slightly reduced strength (e.g. drag-handle dots).
+        public static let accentGlyph: Double = 0.7
+        /// Dashed green outline (e.g. the "add another seat setting" button).
+        public static let accentDashedStroke: Double = 0.5
         public static let numberPadInactive: Double = 0.5
         public static let numberPadFade: Double = 0.2
         /// Milky selection tint (deactivate/activate multi-select) — matches the

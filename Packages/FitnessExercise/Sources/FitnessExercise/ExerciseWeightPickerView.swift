@@ -2,6 +2,12 @@ import SwiftUI
 import FitnessResources
 import FitnessUI
 
+/// Standalone "Edit Exercise" sheet. Reuses step 1 of the create flow — the
+/// body-icon header (titled with the exercise name instead of the category)
+/// plus the set/reps/weight wheels and the bodyweight / decimal toggles
+/// (`ExerciseIconHeader` + `ExerciseDetailsEditor`). The name input field is
+/// intentionally omitted: this sheet edits an existing exercise's values, not
+/// its name.
 public struct ExerciseWeightPickerView: View {
     @Bindable public var formViewModel: ExerciseFormViewModel
     @Binding public var isPresented: Bool
@@ -10,8 +16,6 @@ public struct ExerciseWeightPickerView: View {
     public let repsRange: ClosedRange<Int>
     public let weightOptions: [String]
     public let setsRange: ClosedRange<Int>
-
-    @State private var showDecimal: Bool = false
 
     public init(
         formViewModel: ExerciseFormViewModel,
@@ -31,22 +35,17 @@ public struct ExerciseWeightPickerView: View {
         self.setsRange = setsRange
     }
 
-    private var filteredWeightOptions: [String] {
-        showDecimal ? weightOptions : weightOptions.filter { !$0.contains(",") && !$0.contains(".") }
-    }
-
-    private var hasWeight: Bool {
-        formViewModel.editingExercise?.hasWeight ?? (formViewModel.weight > 0)
-    }
-
-    private let textColor: Color = AppStyle.Color.white
-
     public var body: some View {
         OverlaySheetContainer(
             isPresented: $isPresented,
+            backgroundColor: AppStyle.Color.backgroundColor,
+            expandsToTop: true,
             onCancel: onCancel,
             actions: {
                 ExercisePickerActionButtons(
+                    cancelLabel: L10n.cardCreationCancel,
+                    saveLabel: L10n.cardCreationSave,
+                    cancelColor: AppStyle.Color.green,
                     saveDisabled: false,
                     onCancel: {
                         onCancel()
@@ -59,46 +58,15 @@ public struct ExerciseWeightPickerView: View {
                 )
             },
             content: {
-                VStack(spacing: 8) {
-                    Text(L10n.cardEditTitle)
-                        .font(AppStyle.Font.sheetTitle)
-                        .foregroundColor(textColor)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity, alignment: .center)
-
-                    if hasWeight {
-                        HStack {
-                            Spacer()
-                            HStack(spacing: 6) {
-                                Text("Decimal")
-                                    .font(AppStyle.Font.defaultFont)
-                                    .foregroundColor(textColor.opacity(0.85))
-                                Toggle("", isOn: $showDecimal)
-                                    .labelsHidden()
-                                    .toggleStyle(CapsuleToggleStyle(onColor: AppStyle.Color.greenGlow, offColor: AppStyle.Color.gray.opacity(AppStyle.Opacity.fadedOverlay)))
-                            }
-                        }
-                    }
-                }
-                .padding(.bottom, AppStyle.Padding.sectionSpacing)
-
-                ExerciseWheelPickerRow(
-                    sets: $formViewModel.sets,
-                    reps: $formViewModel.reps,
-                    weight: Binding<String>(
-                        get: { WeightFormatter.format(formViewModel.weight) },
-                        set: { if let w = WeightFormatter.parse($0) { formViewModel.weight = w } }
-                    ),
-                    setsRange: setsRange,
+                ExerciseIconHeader(formViewModel: formViewModel, title: formViewModel.name)
+                ExerciseDetailsEditor(
+                    formViewModel: formViewModel,
                     repsRange: repsRange,
-                    weightOptions: filteredWeightOptions,
-                    showWeight: hasWeight
+                    weightOptions: weightOptions,
+                    setsRange: setsRange,
+                    editingExisting: formViewModel.editingExercise != nil
                 )
             }
         )
-        .onAppear {
-            let w = formViewModel.weight
-            if w != floor(w) { showDecimal = true }
-        }
     }
 }

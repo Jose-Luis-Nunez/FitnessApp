@@ -35,131 +35,80 @@ public struct ExerciseWheelPickerRow: View {
     private let pickerColor: Color = AppStyle.Color.greenLight
 
     public var body: some View {
-        HStack(alignment: .top, spacing: 0) {
-            VStack {
-                Text("Set")
-                    .font(.headline)
-                    .foregroundColor(textColor)
-                    .frame(maxWidth: .infinity)
+        HStack(alignment: .top, spacing: 10) {
+            column("Set") {
                 Picker("Sets", selection: $sets) {
                     ForEach(setsRange, id: \.self) { value in
                         Text("\(value)").tag(value).foregroundColor(pickerColor)
                     }
                 }
-#if os(iOS)
-                .pickerStyle(.wheel)
-#else
-                .pickerStyle(.menu)
-#endif
-                .frame(maxWidth: .infinity)
-                .clipped()
             }
 
-            VStack {
-                Text("Reps")
-                    .font(.headline)
-                    .foregroundColor(textColor)
-                    .frame(maxWidth: .infinity)
+            column("Reps") {
                 Picker("Reps", selection: $reps) {
                     ForEach(repsRange, id: \.self) { value in
                         Text("\(value)").tag(value).foregroundColor(pickerColor)
                     }
                 }
-#if os(iOS)
-                .pickerStyle(.wheel)
-#else
-                .pickerStyle(.menu)
-#endif
-                .frame(maxWidth: .infinity)
-                .clipped()
             }
 
             if showWeight {
-                VStack {
-                    Text("Weight")
-                        .font(.headline)
-                        .foregroundColor(textColor)
-                        .frame(maxWidth: .infinity)
+                column("Weight") {
                     Picker("Weight", selection: $weight) {
                         ForEach(weightOptions, id: \.self) { value in
                             Text("\(value) kg").tag(value).foregroundColor(pickerColor)
                         }
                     }
+                }
+            }
+        }
+        .frame(height: 184)
+    }
+
+    /// Card look: header pinned to the top, the wheel constrained to a fixed
+    /// 3-row height and centered in the remaining card space.
+    @ViewBuilder
+    private func column<Picker: View>(_ title: String, @ViewBuilder picker: () -> Picker) -> some View {
+        VStack(spacing: 0) {
+            header(title).padding(.top, 12)
+            Spacer(minLength: 0)
+            styledPicker(picker())
+                .frame(height: cardWheelHeight)
+                .clipped()
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
+                .fill(AppStyle.Color.idleCardBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
+                        .stroke(AppStyle.Color.white.opacity(AppStyle.Opacity.subtleStroke), lineWidth: 1)
+                )
+        )
+    }
+
+    /// Wheel height tuned to show exactly three rows (selected + one above/below)
+    /// inside the taller card.
+    private let cardWheelHeight: CGFloat = 116
+    /// Corner radius of the per-column card.
+    private let cardCornerRadius: CGFloat = 16
+
+    private func header(_ title: String) -> some View {
+        Text(title)
+            .font(.headline)
+            .foregroundColor(textColor)
+            .frame(maxWidth: .infinity)
+    }
+
+    @ViewBuilder
+    private func styledPicker<Picker: View>(_ picker: Picker) -> some View {
+        picker
 #if os(iOS)
-                    .pickerStyle(.wheel)
+            .pickerStyle(.wheel)
 #else
-                    .pickerStyle(.menu)
+            .pickerStyle(.menu)
 #endif
-                    .frame(maxWidth: .infinity)
-                    .clipped()
-                }
-            }
-        }
-        .frame(height: 150)
-    }
-}
-
-// MARK: - Shared Input Fields
-
-public struct ExercisePickerInputFieldStyle: ViewModifier {
-    public init() {}
-
-    public func body(content: Content) -> some View {
-        content
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .foregroundColor(AppStyle.Color.white)
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(AppStyle.Color.sheetInputBackground)
-            )
-    }
-}
-
-public struct ExercisePickerInputField: View {
-    public var prompt: String?
-    @Binding public var text: String
-    @FocusState private var isFocused: Bool
-
-    public init(prompt: String? = nil, text: Binding<String>) {
-        self.prompt = prompt
-        _text = text
-    }
-
-    public var body: some View {
-        HStack(spacing: 8) {
-            if let prompt = prompt {
-                ZStack(alignment: .leading) {
-                    if text.isEmpty {
-                        Text(prompt)
-                            .foregroundColor(Color.white.opacity(0.55))
-                    }
-                    TextField("", text: $text)
-                        .accentColor(AppStyle.Color.white)
-                        .foregroundColor(AppStyle.Color.white)
-                        .textFieldStyle(PlainTextFieldStyle())
-                        .focused($isFocused)
-                        .submitLabel(.done)
-                        .onSubmit { isFocused = false }
-                }
-            } else {
-                TextField("", text: $text)
-                    .accentColor(AppStyle.Color.white)
-                    .foregroundColor(AppStyle.Color.white)
-                    .textFieldStyle(PlainTextFieldStyle())
-                    .focused($isFocused)
-                    .submitLabel(.done)
-                    .onSubmit { isFocused = false }
-            }
-
-            if !text.isEmpty {
-                Button(action: { text = "" }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(Color.white.opacity(0.5))
-                }
-            }
-        }
-        .compositingGroup()
-        .modifier(ExercisePickerInputFieldStyle())
+            .frame(maxWidth: .infinity)
     }
 }

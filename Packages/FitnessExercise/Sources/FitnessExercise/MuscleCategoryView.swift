@@ -294,7 +294,6 @@ public struct MuscleCategoryView: View {
         case .full:
             ExercisePickerView(
                 formViewModel: formViewModel,
-                title: formViewModel.editingExercise != nil ? L10n.cardEditTitle : L10n.cardCreationTitle,
                 isPresented: $formViewModel.showForm,
                 onSave: onSave,
                 onCancel: onCancel,

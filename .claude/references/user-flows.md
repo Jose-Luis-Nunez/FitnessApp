@@ -77,14 +77,12 @@ With a default workout set, this reduces to **3 taps until the first Set is runn
 1. On `MuscleCategorySelectionView` (list mode active) → tap the ellipsis in the BottomBar
 2. The mini menu appears with "New Exercise" → tap
 3. Category selection (5 tiles) → tap e.g. "Legs"
-4. **`ExercisePickerView`** opens as a bottom sheet (`.full` editMode):
-   - Name (free text)
-   - Weight (picker)
-   - Reps (picker, 1...50)
-   - Sets (picker, 1...10)
-   - Seat setting (`ExerciseSeatPickerView`)
-   - Icon (`IconPickerView`)
-5. **Save** → the Exercise appears in the category list
+4. **`ExercisePickerView`** opens as a bottom sheet (`.full` editMode). It is a **two-step wizard**:
+   - **Step 1 — Details:** a large preview of the selected body icon — a **swipeable paged gallery** (`TabView(.page)`, bound to `selectedIconName`) when the category offers more than one icon (e.g. Abs), otherwise a static image; the Set / Reps / Weight wheels (`ExerciseWheelPickerRow`); and the Decimal-weight / Bodyweight mode cards (`ExerciseWeightModeCards`) below them. Dark (`backgroundColor`) sheet with teal accents. Action bar: **Cancel | Continue** (Continue always enabled — the name lives on step 2).
+   - **Step 2 — Name & Machine (interim):** Name (`ExerciseNameBar`), Category, "No Seats" toggle and Seat Settings (Setting 1 / Setting 2), plus the delete (trash) action when editing. (Icon selection moved to the step-1 swipe gallery — no separate picker here.) Action bar: **Back | Save** (Save gated on `isFormValid`). Visual design of this step is still open.
+5. **Save** (step 2) → the Exercise appears in the category list. **Back** returns to step 1; **Cancel** (either step) dismisses.
+
+The step state is internal to `ExercisePickerView` (`ExercisePickerStep`); the public init and `ExerciseFormViewModel` are unchanged, so both call sites (`MuscleCategoryView`, `MuscleCategorySelectionView`) and the focused edit modes (`.name` / `.weight` / `.seat`) are untouched.
 
 Alternative path via `MuscleCategoryView`: mini menu → "Add Exercise" → same picker sheet, without the category selection step.
 
@@ -102,7 +100,7 @@ The app uses **four presentation patterns**, each for a different use case:
 | Pattern                    | What for                                      | Examples                                                              |
 | -------------------------- | --------------------------------------------- | --------------------------------------------------------------------- |
 | **Mini-Menu** (Glass-Pop)  | contextual actions, triggered by the ellipsis | Workouts (New/Rename/Delete/Default), Home (Reset / New Exercise), MuscleCategory (Add Exercise), Training (Cancel) |
-| **OverlaySheet (custom)**  | picker sheets with an action bar (Save/Cancel) | `ExercisePickerView`, `ExerciseNamePickerView`, `ExerciseWeightPickerView`, `ExerciseSeatPickerView`, `IconPickerView`, `WorkoutPickerView` |
+| **OverlaySheet (custom)**  | picker sheets with an action bar (Save/Cancel) | `ExercisePickerView`, `ExerciseNamePickerView`, `ExerciseWeightPickerView`, `ExerciseSeatPickerView`, `WorkoutPickerView` |
 | **Native `.sheet`**         | forms with detents + grabber                  | `AnalyticsView`, `FeedbackSheetView` (post-Exercise)                  |
 | **`.fullScreenCover`**      | true modal edit screens                       | `CreateWorkoutView`, `RenameWorkoutView`, `AddAnalyticsEntryView`     |
 

@@ -159,6 +159,62 @@ struct IdleCardSnapshotTests {
 
         assertSnapshot(of: view, named: "with-seat", size: CGSize(width: 393, height: 160))
     }
+
+    /// A four-part seat string must render only the first two positions on the
+    /// idle card (positions 3 & 4 are saved but hidden). Locks in the
+    /// `prefix(2)` truncation in `IdleActiveCardModelView`.
+    @Test func collapsedWithLongSeat() throws {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(
+            for: WorkoutModel.self, ExerciseModel.self,
+            configurations: config
+        )
+        let ctx = container.mainContext
+
+        let workoutId = UUID()
+        let workout = WorkoutModel(
+            id: workoutId,
+            name: "Push",
+            selectedCategories: [MuscleCategoryGroup.chest.rawValue],
+            createdDate: .now,
+            lastModified: .now
+        )
+        ctx.insert(workout)
+
+        let model = ExerciseModel(
+            id: UUID(),
+            workoutId: workoutId,
+            name: "Butterfly",
+            weight: 35,
+            reps: 12,
+            sets: 4,
+            seatSetting: "A / B / C / D",
+            noSeats: false,
+            iconName: MuscleCategoryGroup.chest.defaultIconName,
+            category: MuscleCategoryGroup.chest.rawValue,
+            workout: workout
+        )
+        ctx.insert(model)
+        try ctx.save()
+
+        let analyticsVM = AnalyticsViewModel(
+            storageService: StubAnalyticsStorage(),
+            exerciseStorage: MockExerciseStorage(),
+            workoutStorage: MockWorkoutStorage()
+        )
+
+        let view = IdleActiveCardModelView(
+            model: model,
+            analyticsViewModel: analyticsVM,
+            onEdit: { _, _ in },
+            isEditable: false,
+            onStart: { _ in },
+            isInProgress: false
+        )
+        .modelContainer(container)
+
+        assertSnapshot(of: view, named: "with-long-seat", size: CGSize(width: 393, height: 160))
+    }
 }
 
 // MARK: - InactiveCardModelView Snapshots
