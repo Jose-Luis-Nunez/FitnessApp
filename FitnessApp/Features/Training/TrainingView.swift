@@ -89,7 +89,6 @@ struct TrainingView: View {
 
             // Reused "Edit Seat" overlay — same component as the idle/category flow.
             if formViewModel.showForm {
-                Color.clear.onAppear { overlayState.isEditingSheetVisible = true }
                 ExerciseSeatPickerView(
                     formViewModel: formViewModel,
                     isPresented: $formViewModel.showForm,
@@ -100,7 +99,7 @@ struct TrainingView: View {
                 .shadow(radius: 5)
                 .transition(.identity)
                 .zIndex(3)
-                .onDisappear { overlayState.isEditingSheetVisible = false }
+                .hidesBottomBarWhilePresented(overlayState)
             }
         }
         .navigationBarTitleDisplayMode(.inline)

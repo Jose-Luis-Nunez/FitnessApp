@@ -81,27 +81,25 @@ struct WorkoutsViewModelTests {
     @Test func createNewWorkoutAddsWorkoutAndSetsCurrent() {
         let (sut, ws, _) = makeSUT()
         sut.newWorkoutName = "Pull"
-        sut.selectedMuscleGroups = [.back]
         sut.showingCreateWorkoutFullScreen = true
 
         sut.createNewWorkout()
 
         #expect(ws.workouts.count == 1)
         #expect(ws.workouts.first?.name == "Pull")
-        #expect(ws.workouts.first?.selectedCategories == [.back])
+        // New workouts are not category-restricted — they cover all categories.
+        #expect(ws.workouts.first?.selectedCategories == Set(MuscleCategoryGroup.allCases))
         #expect(ws.currentWorkout?.id == ws.workouts.first?.id)
     }
 
     @Test func createNewWorkoutResetsFormState() {
         let (sut, _, _) = makeSUT()
         sut.newWorkoutName = "Pull"
-        sut.selectedMuscleGroups = [.back]
         sut.showingCreateWorkoutFullScreen = true
 
         sut.createNewWorkout()
 
         #expect(sut.newWorkoutName.isEmpty)
-        #expect(sut.selectedMuscleGroups.isEmpty)
         #expect(sut.showingCreateWorkoutFullScreen == false)
     }
 
@@ -249,34 +247,11 @@ struct WorkoutsViewModelTests {
     @Test func showCreateWorkoutSeedsNameFromCount() {
         let existing = [Workout(name: "W1"), Workout(name: "W2")]
         let (sut, _, _) = makeSUT(seedWorkouts: existing)
-        sut.selectedMuscleGroups = [.arms]
 
         sut.showCreateWorkout()
 
         #expect(sut.newWorkoutName == "Workout 3")
-        #expect(sut.selectedMuscleGroups.isEmpty)
         #expect(sut.showingCreateWorkoutFullScreen == true)
-    }
-
-    // MARK: - toggleMuscleGroup / isMuscleGroupSelected
-
-    @Test func toggleMuscleGroupAddsWhenAbsent() {
-        let (sut, _, _) = makeSUT()
-
-        sut.toggleMuscleGroup(.chest)
-
-        #expect(sut.isMuscleGroupSelected(.chest))
-        #expect(sut.selectedMuscleGroups == [.chest])
-    }
-
-    @Test func toggleMuscleGroupRemovesWhenPresent() {
-        let (sut, _, _) = makeSUT()
-        sut.selectedMuscleGroups = [.chest, .arms]
-
-        sut.toggleMuscleGroup(.chest)
-
-        #expect(sut.isMuscleGroupSelected(.chest) == false)
-        #expect(sut.selectedMuscleGroups == [.arms])
     }
 
     // MARK: - showRenameWorkout

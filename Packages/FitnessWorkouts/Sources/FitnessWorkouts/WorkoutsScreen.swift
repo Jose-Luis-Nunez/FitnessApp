@@ -66,15 +66,20 @@ public struct WorkoutsScreen: View {
         }
         .background(AppStyle.Color.backgroundColor)
         .navigationBarTitle("")
-        .fullScreenCover(isPresented: $viewModel.showingCreateWorkoutFullScreen) {
-            CreateWorkoutView(
-                workoutName: $viewModel.newWorkoutName,
-                isPresented: $viewModel.showingCreateWorkoutFullScreen,
-                onSave: {
-                    viewModel.createNewWorkout()
-                },
-                viewModel: viewModel
-            )
+        .overlay {
+            if viewModel.showingCreateWorkoutFullScreen {
+                CreateWorkoutView(
+                    workoutName: $viewModel.newWorkoutName,
+                    isPresented: $viewModel.showingCreateWorkoutFullScreen,
+                    onSave: {
+                        viewModel.createNewWorkout()
+                    }
+                )
+                .zIndex(3)
+                // Hide the app's glass bottom bar while the sheet is up,
+                // otherwise it floats over the Cancel/Save buttons.
+                .hidesBottomBarWhilePresented(overlayState)
+            }
         }
         .fullScreenCover(isPresented: $viewModel.showingRenameWorkout) {
             RenameWorkoutView(

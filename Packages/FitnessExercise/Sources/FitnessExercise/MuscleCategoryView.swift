@@ -95,13 +95,12 @@ public struct MuscleCategoryView: View {
             }
 
             if formViewModel.showForm {
-                Color.clear.onAppear { overlayState.isEditingSheetVisible = true }
                 editPickerView
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                     .shadow(radius: 5)
                     .transition(.identity)
                     .zIndex(3)
-                    .onDisappear { overlayState.isEditingSheetVisible = false }
+                    .hidesBottomBarWhilePresented(overlayState)
             }
         }
 #if os(iOS)

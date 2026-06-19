@@ -10,6 +10,8 @@ public enum AppStyle {
         public static let activeCardIconOverflow: CGFloat = 20
         public static let titleBottomBeforeActiveCard: CGFloat = titleBottom - activeCardIconOverflow
         public static let sectionSpacing: CGFloat = 18
+        /// Gap above a sheet's bottom action bar (Cancel/Save row).
+        public static let actionBarTop: CGFloat = 24
         public static let cardVertical: CGFloat = 8
     }
 

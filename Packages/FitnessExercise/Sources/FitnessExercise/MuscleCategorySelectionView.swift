@@ -238,13 +238,12 @@ public struct MuscleCategorySelectionView: View {
 
             if isShowingExercisePicker {
                 if let editingCategory = editingCategory {
-                    Color.clear.onAppear { overlayState.isEditingSheetVisible = true }
                     selectionEditPickerView(category: editingCategory)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                         .transition(.identity)
                         .zIndex(5)
                         .ignoresSafeArea(edges: .bottom)
-                        .onDisappear { overlayState.isEditingSheetVisible = false }
+                        .hidesBottomBarWhilePresented(overlayState)
                 }
             }
         }

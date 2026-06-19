@@ -26,8 +26,13 @@ public struct AccentPalette: Sendable {
     public let progressTrack: Color     // progressTrack
     public let nausea: Color            // symptomNausea
 
-    /// Original green palette — exact current hexes. Do NOT change these values
-    /// (green mode must look identical to today; snapshots depend on it).
+    /// Original green palette. The idle-card accent trio (`idleMetricValue`,
+    /// `idleAccentFill`, `ringGlowBase`) was retuned from a pastel mint
+    /// (#8CC7A8 / #7DB89A / #B7DCC5) toward a brightened version of the brand
+    /// teal `primary` (#088177) so the idle card's accent reads as the same
+    /// green used on the New-Workout selection chrome. All other hexes are the
+    /// app's originals — do NOT change them (snapshots depend on them); the
+    /// idle-card snapshot baselines were re-recorded for this retune.
     public static let green = AccentPalette(
         primary:         Color(hex: "#088177"),
         light:           Color(hex: "#7EBBAF"),
@@ -37,9 +42,9 @@ public struct AccentPalette: Sendable {
         black:           Color(hex: "#022123"),
         dark:            Color(hex: "#013334"),
         trainingAccent:  Color(hex: "#077484"),
-        idleMetricValue: Color(hex: "#8CC7A8"),
-        idleAccentFill:  Color(hex: "#7DB89A"),
-        ringGlowBase:    Color(hex: "#B7DCC5"),
+        idleMetricValue: Color(hex: "#4FBEA6"),
+        idleAccentFill:  Color(hex: "#45AE97"),
+        ringGlowBase:    Color(hex: "#97DBCE"),
         progressTrack:   Color(hex: "#0A2726"),
         nausea:          Color(hex: "#9CCC30")
     )

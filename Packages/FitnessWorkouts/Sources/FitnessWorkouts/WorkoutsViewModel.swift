@@ -41,7 +41,6 @@ public final class WorkoutsViewModel {
     public var selectedWorkoutForAction: Workout?
     public var newWorkoutName = ""
     public var renameWorkoutName = ""
-    public var selectedMuscleGroups: Set<MuscleCategoryGroup> = []
     /// Drives the `.sheet(item:)` that presents the iOS share sheet. Set by
     /// `requestShare(for:)` after the workout JSON has been computed.
     public var workoutToShare: WorkoutShareItem?
@@ -78,11 +77,15 @@ public final class WorkoutsViewModel {
     public func createNewWorkout() {
         guard !newWorkoutName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
 
-        let workout = storageService.createWorkout(name: newWorkoutName, selectedCategories: selectedMuscleGroups)
+        // Workouts are not category-restricted (the overview always shows all
+        // five), so a new workout covers all categories — the storage default.
+        let workout = storageService.createWorkout(
+            name: newWorkoutName,
+            selectedCategories: Set(MuscleCategoryGroup.allCases)
+        )
         storageService.setCurrentWorkout(workout)
 
         newWorkoutName = ""
-        selectedMuscleGroups = []
         showingCreateWorkoutFullScreen = false
     }
 
@@ -124,7 +127,6 @@ public final class WorkoutsViewModel {
 
     public func showCreateWorkout() {
         newWorkoutName = "Workout \(workouts.count + 1)"
-        selectedMuscleGroups = []
         showingCreateWorkoutFullScreen = true
     }
 
@@ -184,18 +186,6 @@ public final class WorkoutsViewModel {
 
     static func sanitizeFilename(_ name: String) -> String {
         WorkoutShareFileWriter.sanitizeFilename(name)
-    }
-
-    public func toggleMuscleGroup(_ group: MuscleCategoryGroup) {
-        if selectedMuscleGroups.contains(group) {
-            selectedMuscleGroups.remove(group)
-        } else {
-            selectedMuscleGroups.insert(group)
-        }
-    }
-
-    public func isMuscleGroupSelected(_ group: MuscleCategoryGroup) -> Bool {
-        selectedMuscleGroups.contains(group)
     }
 
     public func showRenameWorkout(for workout: Workout) {
