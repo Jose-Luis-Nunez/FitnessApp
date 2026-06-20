@@ -64,12 +64,9 @@ public enum AppStyle {
         public static let analyticsImageSize: CGFloat = 60
         public static let seatIconSize: CGFloat = 30
         public static let analyticsEntryIconSize: CGFloat = 24
-        /// Diameter of the lightbulb icon in the idle card's Tip column.
-        /// Matches `analyticsEntryIconSize` so the Tip and Progress columns
-        /// read as a visually symmetric pair.
-        public static let tipIconSize: CGFloat = 30
-        public static let tipBoxSize: CGFloat = 32
-        public static let tipBoxCornerRadius: CGFloat = 8
+        /// Diameter of the coaching-tip icon in the idle card's trailing slot.
+        /// Slightly smaller than the play button so it reads as secondary.
+        public static let tipIconSize: CGFloat = 22
         public static let separatorHeight: CGFloat = 32
         /// Stroke width of vertical column separators in metric rows.
         /// Hairline (0.5) so the separators read as fine guides rather than

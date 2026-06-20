@@ -89,6 +89,8 @@ public struct IdleActiveCardModelView: View {
     public var body: some View {
         CardShell(theme: theme, leading: {
             leadingContent
+        }, secondTrailing: {
+            if !isSelectionMode { tipColumn }
         }, trailing: {
             rightPanel
         }, titleContent: {
@@ -103,6 +105,7 @@ public struct IdleActiveCardModelView: View {
                 AppStyle.Color.idleCardBackground.opacity(AppStyle.Opacity.idleExpandedOverlay)
             }
         })
+        .frame(minWidth: AppStyle.Layout.idleCardContentMinWidth, maxWidth: .infinity)
         .sheet(item: $analyticsSheetDate) { sheetDate in
             AnalyticsView(exercise: model.toDomain(), viewModel: analyticsViewModel, initialDate: sheetDate.date)
         }
@@ -187,13 +190,6 @@ private extension IdleActiveCardModelView {
 
             verticalSeparator
             progressColumn
-
-            // The coaching-tip box ("Glühbirne") is hidden in selection mode to
-            // free horizontal space for the leading radio button.
-            if !isSelectionMode {
-                verticalSeparator
-                tipColumn
-            }
 
             Spacer(minLength: 0)
         }
@@ -281,24 +277,15 @@ private extension IdleActiveCardModelView {
 
     var tipColumn: some View {
         Button(action: { isExpanded.toggle() }) {
-            RoundedRectangle(cornerRadius: AppStyle.Layout.tipBoxCornerRadius, style: .continuous)
-                .fill(AppStyle.Color.idleCardBackground)
-                .overlay(
-                    RoundedRectangle(cornerRadius: AppStyle.Layout.tipBoxCornerRadius, style: .continuous)
-                        .strokeBorder(AppStyle.Color.idlePlayRingBase, lineWidth: AppStyle.Layout.idlePlayRingWidth)
-                )
-                .overlay(
-                    Image("tip_coaching")
-                        .renderingMode(.template)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: AppStyle.Layout.tipIconSize, height: AppStyle.Layout.tipIconSize)
-                        .foregroundColor(AppStyle.Color.idleMetricValue)
-                )
-                .frame(width: AppStyle.Layout.tipBoxSize, height: AppStyle.Layout.tipBoxSize)
+            Image("tip_coaching_2")
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: AppStyle.Layout.tipIconSize, height: AppStyle.Layout.tipIconSize)
+                .foregroundColor(AppStyle.Color.greenGlow)
         }
         .buttonStyle(.plain)
-        .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.top] + 4 }
+        .padding(.trailing, 8)
     }
 
     @ViewBuilder

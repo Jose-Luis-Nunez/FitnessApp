@@ -118,9 +118,8 @@ private extension InactiveCardModelView {
     }
 
     var checkmarkTrailing: some View {
-        // Total width matches idlePlayButtonSize (36pt) so the title section
-        // gets the same horizontal space as the idle card on all screen sizes.
-        HStack(spacing: 0) {
+        // Separator (0.75pt) + 8pt gap + checkmark frame (idlePlayButtonSize).
+        HStack(spacing: 8) {
             Rectangle()
                 .fill(AppStyle.Color.idleDivider)
                 .frame(width: 0.75, height: 28)
