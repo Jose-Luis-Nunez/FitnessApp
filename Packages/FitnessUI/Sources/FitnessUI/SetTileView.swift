@@ -31,7 +31,7 @@ public struct SetTileView: View {
                     Text("kg")
                         .font(AppStyle.Font.chartAxisSmall)
                 }
-                .foregroundColor(AppStyle.Color.greenGlow)
+                .foregroundColor(AppStyle.Color.greenLight)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
 
@@ -41,7 +41,7 @@ public struct SetTileView: View {
             } else {
                 Text("\(reps)")
                     .font(AppStyle.Font.cardValueBold)
-                    .foregroundColor(AppStyle.Color.greenGlow)
+                    .foregroundColor(AppStyle.Color.greenLight)
 
                 Text("reps")
                     .font(AppStyle.Font.cardTinyLabel)
@@ -50,10 +50,17 @@ public struct SetTileView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
-        .overlay(
-            RoundedRectangle(cornerRadius: AppStyle.CornerRadius.defaultButton)
-                .stroke(Color.white.opacity(0.3), lineWidth: 2)
+        // Inner fill / stroke mirror the "New Exercise" wheel picker columns
+        // (see `ExerciseWheelPickerRow`); the smaller `.tile` radius keeps the
+        // compact set tile from reading too round at this size.
+        .background(
+            RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile, style: .continuous)
+                .fill(AppStyle.Color.idleCardBackground)
         )
-        .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.defaultButton))
+        .overlay(
+            RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile, style: .continuous)
+                .stroke(AppStyle.Color.white.opacity(AppStyle.Opacity.subtleStroke), lineWidth: 1.5)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile, style: .continuous))
     }
 }

@@ -1,4 +1,9 @@
 #!/bin/bash
+# Kill-switch: when this sentinel exists, all SubagentStop gates are disabled.
+# Re-enable by deleting it: rm .claude/hooks/state/checks-disabled
+if [ -f "$(cd "$(dirname "$0")" && pwd)/state/checks-disabled" ]; then
+  exit 0
+fi
 # SubagentStop hook (Claude Code): role-specific quality gates for subagents.
 #
 # Claude Code SubagentStop input (JSON via stdin):

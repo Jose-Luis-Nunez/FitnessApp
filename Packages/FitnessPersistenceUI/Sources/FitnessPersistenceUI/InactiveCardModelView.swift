@@ -51,10 +51,10 @@ public struct InactiveCardModelView: View {
     private let theme = CardTheme.inactiveOnIdle
 
     public var body: some View {
-        CardShell(theme: theme, edgeIndicator: EdgeIndicator(color: AppStyle.Color.idleAccentFill, width: AppStyle.Layout.completedBarWidth), leading: {
+        CardShell(theme: theme, leading: {
             categoryIconView
         }, trailing: {
-            checkmarkIcon
+            checkmarkTrailing
         }, titleContent: {
             titleSection
         }, expandedContent: {
@@ -88,7 +88,7 @@ private extension InactiveCardModelView {
             .resizable()
             .interpolation(.high)
             .scaledToFill()
-            .frame(width: AppStyle.Layout.categoryIconSize, height: AppStyle.Layout.categoryIconSize, alignment: model.iconAlignment)
+            .frame(width: AppStyle.Layout.idleCategoryIconSize, height: AppStyle.Layout.idleCategoryIconSize, alignment: model.iconAlignment)
             .clipped()
             .contentShape(Rectangle())
             .onTapGesture {
@@ -107,6 +107,19 @@ private extension InactiveCardModelView {
             .accessibilityIdentifier(ExerciseCardIDs.seatEditIcon(model.id))
     }
 
+    var checkmarkTrailing: some View {
+        HStack(spacing: 10) {
+            Rectangle()
+                .fill(AppStyle.Color.idleDivider)
+                .frame(width: 0.75, height: 28)
+            SharpCheckmark()
+                .stroke(AppStyle.Color.idleAccentFill, style: StrokeStyle(lineWidth: 2, lineCap: .square, lineJoin: .miter))
+                .frame(width: 14, height: 11)
+                .frame(width: AppStyle.Layout.checkmarkSize, height: AppStyle.Layout.checkmarkSize)
+        }
+        .onTapGesture { isExpanded.toggle() }
+    }
+
     var titleSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(model.name)
@@ -120,7 +133,7 @@ private extension InactiveCardModelView {
                 }
 
             HStack(spacing: 4) {
-                Text("Completed workout")
+                Text("Completed exercise")
                     .font(AppStyle.Font.cardSmallBold)
                     .foregroundColor(theme.subtitleColor)
 
@@ -135,18 +148,6 @@ private extension InactiveCardModelView {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    var checkmarkIcon: some View {
-        ZStack {
-            Circle()
-                .fill(AppStyle.Color.idleAccentFill)
-                .frame(width: AppStyle.Layout.checkmarkSize, height: AppStyle.Layout.checkmarkSize)
-
-            Image(systemName: "checkmark")
-                .font(AppStyle.Font.categoryTileCount)
-                .foregroundColor(AppStyle.Color.exerciseCardBackground)
-        }
-        .onTapGesture { isExpanded.toggle() }
-    }
 }
 
 // MARK: - Set Tiles
@@ -187,5 +188,21 @@ private extension InactiveCardModelView {
                 }
             }
         }
+    }
+}
+
+// MARK: - Sharp Checkmark
+
+/// A checkmark drawn with straight lines and miter joins — no rounded caps,
+/// giving a deliberately angular look compared to the SF Symbol variant.
+private struct SharpCheckmark: Shape {
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        // Short left leg: top-left down to the valley
+        p.move(to: CGPoint(x: rect.minX, y: rect.midY))
+        p.addLine(to: CGPoint(x: rect.width * 0.38, y: rect.maxY))
+        // Long right leg: valley up to top-right
+        p.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        return p
     }
 }

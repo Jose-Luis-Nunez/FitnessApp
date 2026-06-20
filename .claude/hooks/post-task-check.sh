@@ -1,4 +1,9 @@
 #!/bin/bash
+# Kill-switch: when this sentinel exists, all Stop-hook checks are disabled.
+# Re-enable by deleting it: rm .claude/hooks/state/checks-disabled
+if [ -f "$(cd "$(dirname "$0")" && pwd)/state/checks-disabled" ]; then
+  exit 0
+fi
 # Stop Hook Orchestrator (Claude Code): runs all checks when the agent stops.
 #
 # Claude Code Stop hook input (JSON via stdin):
