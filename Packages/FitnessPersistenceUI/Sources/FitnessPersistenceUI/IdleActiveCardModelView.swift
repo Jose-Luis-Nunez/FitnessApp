@@ -89,8 +89,6 @@ public struct IdleActiveCardModelView: View {
     public var body: some View {
         CardShell(theme: theme, leading: {
             leadingContent
-        }, secondTrailing: {
-            if !isSelectionMode { tipColumn }
         }, trailing: {
             rightPanel
         }, titleContent: {
@@ -191,7 +189,13 @@ private extension IdleActiveCardModelView {
             verticalSeparator
             progressColumn
 
-            Spacer(minLength: 0)
+            if !isSelectionMode {
+                verticalSeparator
+                Spacer(minLength: 0)
+                tipColumn
+            } else {
+                Spacer(minLength: 0)
+            }
         }
     }
 
@@ -282,10 +286,11 @@ private extension IdleActiveCardModelView {
                 .resizable()
                 .scaledToFit()
                 .frame(width: AppStyle.Layout.tipIconSize, height: AppStyle.Layout.tipIconSize)
-                .foregroundColor(AppStyle.Color.greenGlow)
+                .foregroundColor(AppStyle.Color.white)
         }
         .buttonStyle(.plain)
         .padding(.trailing, 8)
+        .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.center] - 12.5 }
     }
 
     @ViewBuilder
