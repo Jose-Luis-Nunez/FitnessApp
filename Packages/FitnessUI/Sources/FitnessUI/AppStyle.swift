@@ -50,6 +50,15 @@ public enum AppStyle {
         /// against the visible button (no excess padding around the glyph).
         public static let idlePlayButtonGlowSize: CGFloat = 38
 
+        /// Content-driven minimum total width of the idle exercise card, set by
+        /// its metric row (Weight | Seat | Data | Tip columns + separators) plus
+        /// the card's horizontal padding. The completed (inactive) card has sparse
+        /// content and adopts this as its `minWidth` so both cards render at an
+        /// identical width on every device — overflowing slightly on narrow screens
+        /// (iPhone 17) and filling within the standard margin on wide ones
+        /// (16 Pro Max) — instead of the completed card sitting narrower.
+        public static let idleCardContentMinWidth: CGFloat = 422
+
         public static let completedBarWidth: CGFloat = 8
         public static let setRowBadgeSize: CGFloat = 26
         public static let analyticsImageSize: CGFloat = 60

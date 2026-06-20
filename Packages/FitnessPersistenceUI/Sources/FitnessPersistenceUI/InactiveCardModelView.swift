@@ -67,6 +67,16 @@ public struct InactiveCardModelView: View {
                 .padding(.horizontal, AppStyle.Padding.card)
             }
         })
+        // The idle card's width is content-driven by its metric row (Weight | Seat
+        // | Data | Tip), whose minimum width is ~422pt including card padding. On
+        // narrow screens (iPhone 17, 402pt) that overflows the screen slightly so the
+        // idle card reaches closer to the edges; on wide screens (16 Pro Max) it fits
+        // within the standard margin. The completed card has sparse content and would
+        // otherwise sit at the standard margin only — narrower than the idle card on
+        // narrow screens. Matching the idle card's content minimum width here makes
+        // the two cards render identically on every device (overflow on narrow, fill
+        // on wide) instead of using a device-dependent fixed inset.
+        .frame(minWidth: AppStyle.Layout.idleCardContentMinWidth, maxWidth: .infinity)
         .contentShape(Rectangle())
         .onTapGesture { isExpanded.toggle() }
         .sheet(isPresented: $isShowingAnalytics) {
@@ -108,14 +118,16 @@ private extension InactiveCardModelView {
     }
 
     var checkmarkTrailing: some View {
-        HStack(spacing: 10) {
+        // Total width matches idlePlayButtonSize (36pt) so the title section
+        // gets the same horizontal space as the idle card on all screen sizes.
+        HStack(spacing: 0) {
             Rectangle()
                 .fill(AppStyle.Color.idleDivider)
                 .frame(width: 0.75, height: 28)
             SharpCheckmark()
                 .stroke(AppStyle.Color.idleAccentFill, style: StrokeStyle(lineWidth: 2, lineCap: .square, lineJoin: .miter))
                 .frame(width: 14, height: 11)
-                .frame(width: AppStyle.Layout.checkmarkSize, height: AppStyle.Layout.checkmarkSize)
+                .frame(width: AppStyle.Layout.idlePlayButtonSize, height: AppStyle.Layout.idlePlayButtonSize)
         }
         .onTapGesture { isExpanded.toggle() }
     }
