@@ -189,13 +189,7 @@ private extension IdleActiveCardModelView {
             verticalSeparator
             progressColumn
 
-            if !isSelectionMode {
-                verticalSeparator
-                Spacer(minLength: 0)
-                tipColumn
-            } else {
-                Spacer(minLength: 0)
-            }
+            Spacer(minLength: 0)
         }
     }
 
