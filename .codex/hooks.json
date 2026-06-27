@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/jose.nunez/Documents/repo/FitnessApp/.codex/hooks/subagent-gate.sh'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/jose.nunez/Documents/repo/FitnessApp/.codex/hooks/post-task-check.sh'"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -89,6 +89,10 @@ public struct IdleActiveCardModelView: View {
     public var body: some View {
         CardShell(theme: theme, leading: {
             leadingContent
+        }, secondTrailing: {
+            if !isSelectionMode {
+                tipColumn
+            }
         }, trailing: {
             rightPanel
         }, titleContent: {
@@ -280,11 +284,11 @@ private extension IdleActiveCardModelView {
                 .resizable()
                 .scaledToFit()
                 .frame(width: AppStyle.Layout.tipIconSize, height: AppStyle.Layout.tipIconSize)
-                .foregroundColor(AppStyle.Color.white)
+                .foregroundColor(AppStyle.Color.idleMetricValue)
+                .frame(width: AppStyle.Layout.idlePlayButtonSize, height: AppStyle.Layout.idlePlayButtonSize)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .padding(.trailing, 8)
-        .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.center] - 12.5 }
     }
 
     @ViewBuilder
