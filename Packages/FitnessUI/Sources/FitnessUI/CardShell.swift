@@ -7,9 +7,6 @@ import SwiftUI
 /// Content slots (left to right in the header HStack):
 /// - `leading`: Left edge — typically a category icon or selection control.
 /// - `titleContent`: Center area — title, subtitle, metric row.
-/// - `secondTrailing`: Optional slot between content and `trailing` — e.g. a
-///   coaching-tip icon that needs its own vertically-centered area. Defaults to
-///   `EmptyView`.
 /// - `trailing`: Right edge — typically the play button or checkmark. Defaults
 ///   to `EmptyView`.
 /// - `expandedContent`: Rendered below the header. Defaults to `EmptyView`.
@@ -19,7 +16,6 @@ import SwiftUI
 public struct CardShell<
     Leading: View,
     TitleContent: View,
-    SecondTrailing: View,
     Trailing: View,
     ExpandedContent: View,
     ContentBackground: View
@@ -28,7 +24,6 @@ public struct CardShell<
     public let edgeIndicator: EdgeIndicator?
     let leading: Leading
     let titleContent: TitleContent
-    let secondTrailing: SecondTrailing
     let trailing: Trailing
     let expandedContent: ExpandedContent
     let contentBackground: ContentBackground
@@ -37,7 +32,6 @@ public struct CardShell<
         theme: CardTheme,
         edgeIndicator: EdgeIndicator? = nil,
         @ViewBuilder leading: () -> Leading,
-        @ViewBuilder secondTrailing: () -> SecondTrailing = { EmptyView() },
         @ViewBuilder trailing: () -> Trailing = { EmptyView() },
         @ViewBuilder titleContent: () -> TitleContent,
         @ViewBuilder expandedContent: () -> ExpandedContent = { EmptyView() },
@@ -46,7 +40,6 @@ public struct CardShell<
         self.theme = theme
         self.edgeIndicator = edgeIndicator
         self.leading = leading()
-        self.secondTrailing = secondTrailing()
         self.trailing = trailing()
         self.titleContent = titleContent()
         self.expandedContent = expandedContent()
@@ -59,11 +52,12 @@ public struct CardShell<
                 HStack(spacing: AppStyle.Layout.cardHeaderSpacing) {
                     leading
 
+                    // `titleContent` carries `.frame(maxWidth: .infinity)`, so it
+                    // claims the slack between leading and trailing and pins the
+                    // trailing control to the right edge (no competing Spacer,
+                    // which would otherwise split the slack and leave the title
+                    // content short of the trailing control).
                     titleContent
-
-                    Spacer(minLength: 4)
-
-                    secondTrailing
 
                     trailing
                 }

@@ -23,15 +23,20 @@ public enum AppStyle {
         public static let activeCardMaxWidth: CGFloat = 400
         public static let categoryIconSize: CGFloat = 50
         public static let idleCategoryIconSize: CGFloat = 64
+        /// Body/muscle icon size on the idle/active exercise card only. Larger
+        /// than `idleCategoryIconSize` (used by the completed/inactive card) so
+        /// the active card reads as the focal item without growing the compact
+        /// completed card vertically.
+        public static let idleActiveCardIconSize: CGFloat = 78
         public static let checkmarkSize: CGFloat = 36
         public static let playButtonSize: CGFloat = 36
         public static let playIconSize: CGFloat = 16
-        public static let idlePlayButtonSize: CGFloat = 36
-        public static let idlePlayIconSize: CGFloat = 14
+        public static let idlePlayButtonSize: CGFloat = 46
+        public static let idlePlayIconSize: CGFloat = 18
         /// Optical centering offset for `play.fill` SF Symbol.
         /// The triangle's mass is left-leaning (apex on right), so a small
         /// positive x-offset visually centers it inside its circular container.
-        public static let idlePlayIconOpticalOffset: CGFloat = 1.5
+        public static let idlePlayIconOpticalOffset: CGFloat = 2.0
         /// Stroke width of the outer border around the idle exercise card.
         public static let idleCardBorderWidth: CGFloat = 1
         /// Stroke width of the metallic ring around the idle play button.
@@ -48,10 +53,10 @@ public enum AppStyle {
         /// blur radius does the heavy lifting for the halo softness, so a
         /// near-equal disc keeps the component's reported bounds tight
         /// against the visible button (no excess padding around the glyph).
-        public static let idlePlayButtonGlowSize: CGFloat = 38
+        public static let idlePlayButtonGlowSize: CGFloat = 48
 
         /// Content-driven minimum total width of the idle exercise card, set by
-        /// its metric row (Weight | Seat | Data | Tip columns + separators) plus
+        /// its metric row (Weight | Seat | Data columns + separators) plus
         /// the card's horizontal padding. The completed (inactive) card has sparse
         /// content and adopts this as its `minWidth` so both cards render at an
         /// identical width on every device — overflowing slightly on narrow screens
@@ -62,11 +67,20 @@ public enum AppStyle {
         public static let completedBarWidth: CGFloat = 8
         public static let setRowBadgeSize: CGFloat = 26
         public static let analyticsImageSize: CGFloat = 60
-        public static let seatIconSize: CGFloat = 30
-        public static let analyticsEntryIconSize: CGFloat = 24
-        /// Diameter of the coaching-tip icon in the idle card's trailing slot.
-        /// Slightly smaller than the play button so it reads as secondary.
-        public static let tipIconSize: CGFloat = 22
+        /// Width of the seat-arrows glyph on the idle card (height comes from `idleMetricGlyphHeight`).
+        public static let seatIconSize: CGFloat = 26
+        /// Matched height for the idle-card metric glyphs (seat arrows + Data chart) so they read as one size.
+        public static let idleMetricGlyphHeight: CGFloat = 20
+        /// Fixed, centered row heights for the idle-card metric columns so a text row and an icon row
+        /// occupy identical vertical space and the Seat/Data columns align row-for-row.
+        public static let idleMetricContentRowHeight: CGFloat = 20
+        public static let idleMetricFooterRowHeight: CGFloat = 20
+        /// Width of the Data chart glyph (landscape ~2.66:1); height comes from `idleMetricGlyphHeight`.
+        public static let analyticsEntryIconWidth: CGFloat = 40
+        /// Coaching-tip chip beside the idle card title (`tip_coaching_2` + label).
+        public static let idleCoachingChipIconSize: CGFloat = 14
+        public static let idleCoachingChipHorizontalPadding: CGFloat = 10
+        public static let idleCoachingChipVerticalPadding: CGFloat = 5
         public static let separatorHeight: CGFloat = 32
         /// Stroke width of vertical column separators in metric rows.
         /// Hairline (0.5) so the separators read as fine guides rather than
@@ -182,6 +196,16 @@ public enum AppStyle {
         public static let cardValueBold = SwiftUI.Font.system(size: 16, weight: .bold)
         public static let cardSmallMedium = SwiftUI.Font.system(size: 11, weight: .bold)
         public static let metricLabel = SwiftUI.Font.system(size: 11, weight: .medium)
+        // Idle-card metric values — one token per metric so each can be tuned
+        // independently. SF Pro bold default design, geometric tabular figures.
+        /// Weight number, e.g. "80".
+        public static let idleWeightValue = SwiftUI.Font.system(size: 30, weight: .bold)
+        /// Weight unit suffix, e.g. "kg". The bodyweight "sets x reps" row reuses
+        /// `idleWeightValue` so it reads at the same size as the kg value.
+        public static let idleWeightUnit = SwiftUI.Font.system(size: 13, weight: .bold)
+        /// Seat position value, e.g. "4 / 7".
+        public static let idleSeatValue = SwiftUI.Font.system(size: 15, weight: .bold)
+        public static let idleCoachingChipLabel = SwiftUI.Font.system(size: 12, weight: .medium)
 
         public static let iconSymbol = SwiftUI.Font.system(size: 20, weight: .semibold)
 

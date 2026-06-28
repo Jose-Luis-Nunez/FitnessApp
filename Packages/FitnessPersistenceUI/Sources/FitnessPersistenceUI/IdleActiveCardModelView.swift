@@ -22,14 +22,16 @@ public struct IdleActiveCardModelView: View {
     public let onStart: ((Exercise) -> Void)?
     public let isInProgress: Bool
     /// Selection (deactivate/activate) mode: shows a leading radio button and
-    /// hides the play button + the coaching-tip ("Glühbirne") box so the row is
-    /// narrower and all selectable cards line up at the same width.
+    /// hides the play button + the coaching-tip chip so the row is narrower and
+    /// all selectable cards line up at the same width.
     public let isSelectionMode: Bool
     public let isSelected: Bool
 
     @State private var analyticsSheetDate: AnalyticsSheetDate?
     @State private var isExpanded = false
+    @State private var isLastRunExpanded = false
     @State private var weightPhases: [WeightPhase] = []
+    @State private var lastRunSetProgress: [SetProgress] = []
     @State private var lastTrainingDateFormatted: String?
     @AppStorage(DefaultIconColorScheme.storageKey) private var iconColorScheme: DefaultIconColorScheme = .green
 
@@ -82,6 +84,10 @@ public struct IdleActiveCardModelView: View {
         } else {
             lastTrainingDateFormatted = nil
         }
+        let latestEntry = analyticsViewModel
+            .loadAnalytics(for: model.id)
+            .max(by: { $0.date < $1.date })
+        lastRunSetProgress = latestEntry?.setProgress ?? []
     }
 
     private let theme: CardTheme = .idle
@@ -89,21 +95,24 @@ public struct IdleActiveCardModelView: View {
     public var body: some View {
         CardShell(theme: theme, leading: {
             leadingContent
-        }, secondTrailing: {
-            if !isSelectionMode {
-                tipColumn
-            }
         }, trailing: {
             rightPanel
         }, titleContent: {
             titleSection
         }, expandedContent: {
-            if isExpanded, !weightPhases.isEmpty {
-                expandedContent
-                    .padding(.horizontal, 8)
+            VStack(alignment: .leading, spacing: 8) {
+                if isExpanded, !weightPhases.isEmpty {
+                    expandedContent
+                        .padding(.horizontal, 8)
+                }
+                if isLastRunExpanded, !lastRunSetProgress.isEmpty {
+                    lastRunTilesRow
+                        .frame(height: 60)
+                        .padding(.horizontal, 8)
+                }
             }
         }, contentBackground: {
-            if isExpanded {
+            if isExpanded || isLastRunExpanded {
                 AppStyle.Color.idleCardBackground.opacity(AppStyle.Opacity.idleExpandedOverlay)
             }
         })
@@ -121,6 +130,9 @@ public struct IdleActiveCardModelView: View {
 // MARK: - Header
 
 private extension IdleActiveCardModelView {
+    enum IdleMetricLayout {
+        static let separatorValueFooterAlignmentOffset: CGFloat = -14
+    }
 
     @ViewBuilder
     var leadingContent: some View {
@@ -161,24 +173,37 @@ private extension IdleActiveCardModelView {
             .resizable()
             .interpolation(.high)
             .scaledToFill()
-            .frame(width: AppStyle.Layout.idleCategoryIconSize, height: AppStyle.Layout.idleCategoryIconSize, alignment: model.categoryGroup.iconAlignment)
+            .frame(width: AppStyle.Layout.idleActiveCardIconSize, height: AppStyle.Layout.idleActiveCardIconSize, alignment: model.categoryGroup.iconAlignment)
             .clipped()
     }
 
     var titleSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(model.name)
-                .font(AppStyle.Font.idleCardTitle)
-                .foregroundColor(AppStyle.Color.idleTitle)
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
-                .onTapGesture {
-                    if isEditable { onEdit(model.toDomain(), .name) }
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .center, spacing: 0) {
+                Text(model.name)
+                    .font(AppStyle.Font.idleCardTitle)
+                    .foregroundColor(AppStyle.Color.idleTitle)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .layoutPriority(1)
+                    .onTapGesture {
+                        if isEditable { onEdit(model.toDomain(), .name) }
+                    }
+
+                Spacer(minLength: AppStyle.Layout.cardHeaderSpacing)
+
+                // Coaching tip only makes sense once there's training history to
+                // analyse — hidden (and so non-tappable) until then.
+                if !isSelectionMode, !weightPhases.isEmpty {
+                    coachingTipChip
                 }
+            }
+            .frame(maxWidth: .infinity)
 
             metricRow
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .layoutPriority(1)
     }
 
     var metricRow: some View {
@@ -186,14 +211,16 @@ private extension IdleActiveCardModelView {
             weightColumn
 
             if !model.noSeats {
+                Spacer(minLength: 0)
                 verticalSeparator
+                Spacer(minLength: 0)
                 seatColumn
             }
 
-            verticalSeparator
-            progressColumn
-
             Spacer(minLength: 0)
+            verticalSeparator
+            Spacer(minLength: 0)
+            progressColumn
         }
     }
 
@@ -202,7 +229,9 @@ private extension IdleActiveCardModelView {
             .fill(AppStyle.Color.idleDivider)
             .frame(width: AppStyle.Layout.separatorWidth, height: AppStyle.Layout.separatorHeight)
             .padding(.horizontal, AppStyle.Padding.card)
-            .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.top] + 4 }
+            .alignmentGuide(.metricLabel) { d in
+                d[VerticalAlignment.top] + IdleMetricLayout.separatorValueFooterAlignmentOffset
+            }
     }
 
     var weightColumn: some View {
@@ -213,17 +242,20 @@ private extension IdleActiveCardModelView {
             if model.hasWeight {
                 HStack(alignment: .firstTextBaseline, spacing: 3) {
                     Text(weightNumber)
-                        .font(AppStyle.Font.detailBadge)
+                        .font(AppStyle.Font.idleWeightValue)
                         .foregroundColor(AppStyle.Color.idleMetricValue)
                     Text("kg")
-                        .font(AppStyle.Font.detailBadge)
+                        .font(AppStyle.Font.idleWeightUnit)
                         .foregroundColor(AppStyle.Color.idleMetricValue)
                 }
                 .fixedSize()
             } else {
+                // Bodyweight: show "sets x reps" on one line in the same large
+                // value font as the kg value (no footer placeholder).
                 Text("\(model.sets) x \(model.reps)")
-                    .font(AppStyle.Font.detailBadge)
+                    .font(AppStyle.Font.idleWeightValue)
                     .foregroundColor(AppStyle.Color.idleMetricValue)
+                    .lineLimit(1)
                     .fixedSize()
             }
         }
@@ -232,31 +264,45 @@ private extension IdleActiveCardModelView {
     var seatColumn: some View {
         MetricColumnView(
             label: "Seat",
+            alignment: .center,
             onTap: isEditable ? { onEdit(model.toDomain(), .seat) } : nil
         ) {
-            let seats = SeatSettings(encoded: model.seatSetting)
-            if !seats.positions.isEmpty {
-                // Only the first positions are shown on the card; any beyond
-                // SeatSettings.idleCardVisibleLimit are stored but hidden here.
-                Text(seats.display(limit: SeatSettings.idleCardVisibleLimit))
-                    .font(AppStyle.Font.detailBadge)
-                    .foregroundColor(AppStyle.Color.idleMetricValue)
-                    .lineLimit(1)
-                    .fixedSize()
-            } else {
-                Image("seat_arrow_small")
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: AppStyle.Layout.seatIconSize, height: AppStyle.Layout.seatIconSize / 2)
-                    .foregroundColor(AppStyle.Color.idleMetricValue)
-                    .padding(.top, 2)
+            // Two slots — left/right seat position — with a thin divider between.
+            // Only the first positions are shown on the card; any beyond
+            // SeatSettings.idleCardVisibleLimit are stored but hidden here.
+            // Empty slots render "-" (no value yet).
+            let positions = SeatSettings(encoded: model.seatSetting).positions
+            let left = positions.indices.contains(0) ? positions[0] : "-"
+            let right = positions.indices.contains(1) ? positions[1] : "-"
+            HStack(spacing: 8) {
+                Text(left)
+                Rectangle()
+                    .fill(AppStyle.Color.idleDivider)
+                    .frame(width: AppStyle.Layout.separatorWidth, height: AppStyle.Layout.idleMetricGlyphHeight)
+                Text(right)
             }
+            .font(AppStyle.Font.idleSeatValue)
+            .foregroundColor(AppStyle.Color.idleMetricValue)
+            .lineLimit(1)
+            .fixedSize()
+            .frame(height: AppStyle.Layout.idleMetricContentRowHeight)
+        } footer: {
+            seatFooterIcon
         }
     }
 
+    var seatFooterIcon: some View {
+        Image("seat_arrow_small")
+            .renderingMode(.template)
+            .resizable()
+            .scaledToFit()
+            .frame(width: AppStyle.Layout.seatIconSize, height: AppStyle.Layout.idleMetricGlyphHeight)
+            .foregroundColor(AppStyle.Color.idleMetricValue)
+            .frame(height: AppStyle.Layout.idleMetricFooterRowHeight)
+    }
+
     var progressColumn: some View {
-        VStack(alignment: .leading, spacing: 1) {
+        VStack(alignment: .center, spacing: 4) {
             Text("Data")
                 .font(AppStyle.Font.metricLabel)
                 .foregroundColor(AppStyle.Color.idleMetricLabel)
@@ -266,29 +312,59 @@ private extension IdleActiveCardModelView {
             Button(action: {
                 analyticsSheetDate = AnalyticsSheetDate(date: Date())
             }) {
-                Image("analyticsEntry")
+                Image("analytics_icon_2")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: AppStyle.Layout.analyticsEntryIconSize, height: AppStyle.Layout.analyticsEntryIconSize)
+                    .frame(width: AppStyle.Layout.analyticsEntryIconWidth, height: AppStyle.Layout.idleMetricGlyphHeight)
                     .foregroundColor(AppStyle.Color.idleMetricValue)
+                    .frame(height: AppStyle.Layout.idleMetricContentRowHeight)
             }
             .buttonStyle(.plain)
+
+            // "Last run" only appears once the exercise has a completed run;
+            // before that the footer is omitted entirely (no placeholder).
+            if !isSelectionMode, !lastRunSetProgress.isEmpty {
+                lastRunFooter
+                    .frame(height: AppStyle.Layout.idleMetricFooterRowHeight)
+            }
         }
     }
 
-    var tipColumn: some View {
-        Button(action: { isExpanded.toggle() }) {
-            Image("tip_coaching_2")
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .frame(width: AppStyle.Layout.tipIconSize, height: AppStyle.Layout.tipIconSize)
+    var lastRunFooter: some View {
+        Button(action: { isLastRunExpanded.toggle() }) {
+            Text("Last run")
+                .font(AppStyle.Font.metricLabel)
                 .foregroundColor(AppStyle.Color.idleMetricValue)
-                .frame(width: AppStyle.Layout.idlePlayButtonSize, height: AppStyle.Layout.idlePlayButtonSize)
-                .contentShape(Rectangle())
+                .fixedSize()
         }
         .buttonStyle(.plain)
+    }
+
+    var coachingTipChip: some View {
+        Button(action: { isExpanded.toggle() }) {
+            HStack(spacing: 6) {
+                Image("tip_coaching_2")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(
+                        width: AppStyle.Layout.idleCoachingChipIconSize,
+                        height: AppStyle.Layout.idleCoachingChipIconSize
+                    )
+                Text("Tip")
+                    .font(AppStyle.Font.idleCoachingChipLabel)
+            }
+            .foregroundColor(AppStyle.Color.idleMetricValue)
+            .padding(.horizontal, AppStyle.Layout.idleCoachingChipHorizontalPadding)
+            .padding(.vertical, AppStyle.Layout.idleCoachingChipVerticalPadding)
+            .overlay {
+                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile)
+                    .strokeBorder(AppStyle.Color.idleCardBorder, lineWidth: AppStyle.Layout.idleCardBorderWidth)
+            }
+        }
+        .buttonStyle(.plain)
+        .fixedSize()
     }
 
     @ViewBuilder
@@ -347,5 +423,17 @@ private extension IdleActiveCardModelView {
                 }
             }
         }
+    }
+
+    /// Last-run per-set breakdown via the shared `SetTilesRow`. The idle card has
+    /// no reset accessory (a reset has no meaning on an idle exercise), so the
+    /// trailing slot is left empty.
+    var lastRunTilesRow: some View {
+        SetTilesRow(
+            setProgress: lastRunSetProgress,
+            hasWeight: model.hasWeight,
+            chevronColor: AppStyle.Color.idleMetricLabel.opacity(AppStyle.Opacity.separatorLine),
+            onTap: { analyticsSheetDate = AnalyticsSheetDate(date: Date()) }
+        )
     }
 }

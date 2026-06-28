@@ -1,6 +1,7 @@
 import Testing
 import SwiftUI
 import SnapshotTesting
+import FitnessCore
 import FitnessTestSupport
 @testable import FitnessUI
 
@@ -255,6 +256,56 @@ struct SetTileViewSnapshotTests {
     @Test func withoutWeight() {
         let view = SetTileView(setNumber: 3, weight: 0, reps: 15, hasWeight: false)
         assertSnapshot(of: view, named: "bodyweight", size: CGSize(width: 100, height: 90))
+    }
+}
+
+// MARK: - SetTilesRow Snapshots
+
+@Suite("SetTilesRow — Snapshots", .tags(.snapshot))
+@MainActor
+struct SetTilesRowSnapshotTests {
+
+    private func progress(_ count: Int) -> [SetProgress] {
+        (0..<count).map { i in
+            SetProgress(status: .completedDone, currentReps: 10 + i, weight: 60 + Double(i) * 2.5)
+        }
+    }
+
+    /// Three sets — fills the row exactly, no scroll chevron, no trailing accessory.
+    @Test func threeSetsNoAccessory() {
+        let view = SetTilesRow(
+            setProgress: progress(3),
+            hasWeight: true,
+            chevronColor: AppStyle.Color.idleMetricLabel.opacity(AppStyle.Opacity.separatorLine),
+            onTap: {}
+        )
+        assertSnapshot(of: view, named: "three-sets", size: CGSize(width: 360, height: 70))
+    }
+
+    /// More than three sets — the compact scroll chevron appears at the trailing edge.
+    @Test func overflowWithChevron() {
+        let view = SetTilesRow(
+            setProgress: progress(5),
+            hasWeight: false,
+            chevronColor: AppStyle.Color.idleMetricLabel.opacity(AppStyle.Opacity.separatorLine),
+            onTap: {}
+        )
+        assertSnapshot(of: view, named: "overflow-chevron", size: CGSize(width: 360, height: 70))
+    }
+
+    /// Trailing accessory (reset button) with its width reserved so the three
+    /// tiles stay exact — mirrors the completed card's reset-enabled layout.
+    @Test func withResetAccessory() {
+        let view = SetTilesRow(
+            setProgress: progress(3),
+            hasWeight: true,
+            chevronColor: AppStyle.Color.idleMetricLabel.opacity(AppStyle.Opacity.separatorLine),
+            reservedTrailingWidth: ExerciseCardLayout.ResetButton.size,
+            onTap: {}
+        ) {
+            ExerciseCardResetButton {}
+        }
+        assertSnapshot(of: view, named: "with-reset", size: CGSize(width: 360, height: 70))
     }
 }
 

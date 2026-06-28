@@ -166,37 +166,15 @@ private extension InactiveCardModelView {
 private extension InactiveCardModelView {
 
     var setTilesRow: some View {
-        GeometryReader { geo in
-            let spacing: CGFloat = 8
-            let hasMoreThan3 = cachedSetProgress.count > 3
-            let scrollChevronWidth: CGFloat = 8
-            let chevronArea: CGFloat = hasMoreThan3 ? scrollChevronWidth + spacing : 0
-            let resetTotal: CGFloat = isResetEnabled ? ExerciseCardLayout.ResetButton.size + spacing : 0
-            let scrollAreaWidth = geo.size.width - resetTotal - chevronArea
-            let tileWidth = (scrollAreaWidth - spacing * 2) / 3
-
-            HStack(spacing: spacing) {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: spacing) {
-                        ForEach(Array(cachedSetProgress.enumerated()), id: \.element.id) { index, item in
-                            SetTileView(setNumber: index + 1, weight: item.weight, reps: item.currentReps, hasWeight: model.hasWeight)
-                                .frame(width: tileWidth)
-                        }
-                    }
-                }
-                .frame(width: scrollAreaWidth)
-                .onTapGesture { isShowingAnalytics = true }
-
-                if hasMoreThan3 {
-                    Image(systemName: "chevron.compact.right")
-                        .font(AppStyle.Font.regularChip)
-                        .foregroundColor(theme.subtitleColor.opacity(AppStyle.Opacity.separatorLine))
-                        .frame(width: scrollChevronWidth)
-                }
-
-                if isResetEnabled {
-                    ExerciseCardResetButton { onReset?(model.toDomain()) }
-                }
+        SetTilesRow(
+            setProgress: cachedSetProgress,
+            hasWeight: model.hasWeight,
+            chevronColor: theme.subtitleColor.opacity(AppStyle.Opacity.separatorLine),
+            reservedTrailingWidth: isResetEnabled ? ExerciseCardLayout.ResetButton.size : 0,
+            onTap: { isShowingAnalytics = true }
+        ) {
+            if isResetEnabled {
+                ExerciseCardResetButton { onReset?(model.toDomain()) }
             }
         }
     }
