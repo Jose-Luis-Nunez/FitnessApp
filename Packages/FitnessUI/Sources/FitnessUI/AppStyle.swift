@@ -31,8 +31,8 @@ public enum AppStyle {
         public static let checkmarkSize: CGFloat = 36
         public static let playButtonSize: CGFloat = 36
         public static let playIconSize: CGFloat = 16
-        public static let idlePlayButtonSize: CGFloat = 46
-        public static let idlePlayIconSize: CGFloat = 18
+        public static let idlePlayButtonSize: CGFloat = 40
+        public static let idlePlayIconSize: CGFloat = 16
         /// Optical centering offset for `play.fill` SF Symbol.
         /// The triangle's mass is left-leaning (apex on right), so a small
         /// positive x-offset visually centers it inside its circular container.
@@ -53,7 +53,7 @@ public enum AppStyle {
         /// blur radius does the heavy lifting for the halo softness, so a
         /// near-equal disc keeps the component's reported bounds tight
         /// against the visible button (no excess padding around the glyph).
-        public static let idlePlayButtonGlowSize: CGFloat = 48
+        public static let idlePlayButtonGlowSize: CGFloat = 42
 
         /// Content-driven minimum total width of the idle exercise card, set by
         /// its metric row (Weight | Seat | Data columns + separators) plus
@@ -62,7 +62,7 @@ public enum AppStyle {
         /// identical width on every device — overflowing slightly on narrow screens
         /// (iPhone 17) and filling within the standard margin on wide ones
         /// (16 Pro Max) — instead of the completed card sitting narrower.
-        public static let idleCardContentMinWidth: CGFloat = 422
+        public static let idleCardContentMinWidth: CGFloat = 400
 
         public static let completedBarWidth: CGFloat = 8
         public static let setRowBadgeSize: CGFloat = 26
@@ -77,11 +77,14 @@ public enum AppStyle {
         public static let idleMetricFooterRowHeight: CGFloat = 20
         /// Width of the Data chart glyph (landscape ~2.66:1); height comes from `idleMetricGlyphHeight`.
         public static let analyticsEntryIconWidth: CGFloat = 40
-        /// Coaching-tip chip beside the idle card title (`tip_coaching_2` + label).
+        /// Decorative coaching-tip badge inside the idle card's Data band.
         public static let idleCoachingChipIconSize: CGFloat = 14
-        public static let idleCoachingChipHorizontalPadding: CGFloat = 10
         public static let idleCoachingChipVerticalPadding: CGFloat = 5
+        /// Minimum interaction surface for tappable controls. Visual glyphs may
+        /// remain smaller while their enclosing Button adopts this frame.
+        public static let minimumTapTargetSize: CGFloat = 44
         public static let separatorHeight: CGFloat = 32
+        public static let idleMetricSeparatorHorizontalPadding: CGFloat = 8
         /// Stroke width of vertical column separators in metric rows.
         /// Hairline (0.5) so the separators read as fine guides rather than
         /// heavy dividers between values.
@@ -199,14 +202,16 @@ public enum AppStyle {
         // Idle-card metric values — one token per metric so each can be tuned
         // independently. SF Pro bold default design, geometric tabular figures.
         /// Weight number, e.g. "80".
-        public static let idleWeightValue = SwiftUI.Font.system(size: 30, weight: .bold)
+        public static let idleWeightValue = SwiftUI.Font.system(size: 24, weight: .bold)
         /// Weight unit suffix, e.g. "kg". The bodyweight "sets x reps" row reuses
-        /// `idleWeightValue` so it reads at the same size as the kg value.
-        public static let idleWeightUnit = SwiftUI.Font.system(size: 13, weight: .bold)
+        /// `idleWeightValue` so its numbers read at the same size as the kg value.
+        public static let idleWeightUnit = SwiftUI.Font.system(size: 12, weight: .bold)
+        /// The "x" separator in the bodyweight "sets x reps" value (e.g. the "x"
+        /// in "3x15"). Smaller than `idleWeightValue` so the numbers dominate and
+        /// the glyph reads as a compact multiplier.
+        public static let idleRepsSeparator = SwiftUI.Font.system(size: 16, weight: .bold)
         /// Seat position value, e.g. "4 / 7".
         public static let idleSeatValue = SwiftUI.Font.system(size: 15, weight: .bold)
-        public static let idleCoachingChipLabel = SwiftUI.Font.system(size: 12, weight: .medium)
-
         public static let iconSymbol = SwiftUI.Font.system(size: 20, weight: .semibold)
 
         public static let calendarHeader = SwiftUI.Font.system(size: 16, weight: .semibold)
@@ -313,17 +318,16 @@ public enum AppStyle {
         /// channel so the solid block doesn't visually outshine the
         /// glyph-tier accent elements.
         public static var idleAccentFill: SwiftUI.Color { palette.idleAccentFill }
-        /// Vertical divider line between metric columns ("Weight" | "Seat" |
-        /// "Data" | tip box) on the idle card. Dark neutral grey — sits
+        /// Vertical divider line between metric columns and the trailing action
+        /// on the idle card. Dark neutral grey — sits
         /// quietly between the columns without competing with values or
         /// labels.
         public static let idleDivider = SwiftUI.Color(hex: "#3A3D3F")
 
         // MARK: Idle Card — Play Button Material
-        /// Stroke color of the hairline border around the idle play button
-        /// **and** the lightbulb tip box. Aligned with `idleMetricValue`
-        /// so all teal accents (glyphs + outlines) read as one unified
-        /// tone — matches the design-mockup's flat-accent look.
+        /// Stroke color of the hairline border around the idle play button.
+        /// Aligned with `idleMetricValue` so the teal accents read as one
+        /// unified tone — matching the design-mockup's flat-accent look.
         public static var idlePlayRingBase: SwiftUI.Color { palette.idleMetricValue }
         /// Soft mint glow rendered around the outside of the play-button ring.
         /// Same family as `idleMetricValue` but heavily desaturated via low

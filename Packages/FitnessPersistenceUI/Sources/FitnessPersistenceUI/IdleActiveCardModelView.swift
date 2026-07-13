@@ -22,7 +22,7 @@ public struct IdleActiveCardModelView: View {
     public let onStart: ((Exercise) -> Void)?
     public let isInProgress: Bool
     /// Selection (deactivate/activate) mode: shows a leading radio button and
-    /// hides the play button + the coaching-tip chip so the row is narrower and
+    /// hides the play button + the coaching-tip badge so the row is narrower and
     /// all selectable cards line up at the same width.
     public let isSelectionMode: Bool
     public let isSelected: Bool
@@ -163,9 +163,13 @@ private extension IdleActiveCardModelView {
 
     @ViewBuilder
     var rightPanel: some View {
-        if !isSelectionMode, onStart != nil, !model.isCompleted {
+        if showsTrailingAction {
             playButton
         }
+    }
+
+    var showsTrailingAction: Bool {
+        !isSelectionMode && onStart != nil && !model.isCompleted
     }
 
     var categoryIconView: some View {
@@ -190,13 +194,7 @@ private extension IdleActiveCardModelView {
                         if isEditable { onEdit(model.toDomain(), .name) }
                     }
 
-                Spacer(minLength: AppStyle.Layout.cardHeaderSpacing)
-
-                // Coaching tip only makes sense once there's training history to
-                // analyse — hidden (and so non-tappable) until then.
-                if !isSelectionMode, !weightPhases.isEmpty {
-                    coachingTipChip
-                }
+                Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity)
 
@@ -221,6 +219,10 @@ private extension IdleActiveCardModelView {
             verticalSeparator
             Spacer(minLength: 0)
             progressColumn
+            if showsTrailingAction {
+                Spacer(minLength: 0)
+                verticalSeparator
+            }
         }
     }
 
@@ -228,10 +230,20 @@ private extension IdleActiveCardModelView {
         Rectangle()
             .fill(AppStyle.Color.idleDivider)
             .frame(width: AppStyle.Layout.separatorWidth, height: AppStyle.Layout.separatorHeight)
-            .padding(.horizontal, AppStyle.Padding.card)
+            .padding(.horizontal, AppStyle.Layout.idleMetricSeparatorHorizontalPadding)
             .alignmentGuide(.metricLabel) { d in
                 d[VerticalAlignment.top] + IdleMetricLayout.separatorValueFooterAlignmentOffset
             }
+    }
+
+    /// Horizontal hairline that groups the stacked sub-areas of `progressColumn`
+    /// (above/below "Data" and between the chart and "Last run"). Sized to the
+    /// chart glyph width so the column stays as compact as the Weight/Seat
+    /// columns; kept faint so it reads as a subtle rule.
+    var horizontalSeparator: some View {
+        Rectangle()
+            .fill(AppStyle.Color.idleDivider.opacity(AppStyle.Opacity.separatorLine))
+            .frame(width: AppStyle.Layout.analyticsEntryIconWidth, height: AppStyle.Layout.separatorWidth)
     }
 
     var weightColumn: some View {
@@ -240,7 +252,7 @@ private extension IdleActiveCardModelView {
             onTap: isEditable ? { onEdit(model.toDomain(), .weight) } : nil
         ) {
             if model.hasWeight {
-                HStack(alignment: .firstTextBaseline, spacing: 3) {
+                HStack(alignment: .firstTextBaseline, spacing: 0) {
                     Text(weightNumber)
                         .font(AppStyle.Font.idleWeightValue)
                         .foregroundColor(AppStyle.Color.idleMetricValue)
@@ -250,13 +262,17 @@ private extension IdleActiveCardModelView {
                 }
                 .fixedSize()
             } else {
-                // Bodyweight: show "sets x reps" on one line in the same large
-                // value font as the kg value (no footer placeholder).
-                Text("\(model.sets) x \(model.reps)")
-                    .font(AppStyle.Font.idleWeightValue)
-                    .foregroundColor(AppStyle.Color.idleMetricValue)
-                    .lineLimit(1)
-                    .fixedSize()
+                // Bodyweight: show "sets x reps" on one line as "3x15" — no spaces
+                // around the multiplier, and the "x" rendered smaller than the
+                // numbers so the figures dominate.
+                (
+                    Text("\(model.sets)").font(AppStyle.Font.idleWeightValue)
+                        + Text("x").font(AppStyle.Font.idleRepsSeparator)
+                        + Text("\(model.reps)").font(AppStyle.Font.idleWeightValue)
+                )
+                .foregroundColor(AppStyle.Color.idleMetricValue)
+                .lineLimit(1)
+                .fixedSize()
             }
         }
     }
@@ -267,7 +283,7 @@ private extension IdleActiveCardModelView {
             alignment: .center,
             onTap: isEditable ? { onEdit(model.toDomain(), .seat) } : nil
         ) {
-            // Two slots — left/right seat position — with a thin divider between.
+            // Two slots — left/right seat position.
             // Only the first positions are shown on the card; any beyond
             // SeatSettings.idleCardVisibleLimit are stored but hidden here.
             // Empty slots render "-" (no value yet).
@@ -276,9 +292,6 @@ private extension IdleActiveCardModelView {
             let right = positions.indices.contains(1) ? positions[1] : "-"
             HStack(spacing: 8) {
                 Text(left)
-                Rectangle()
-                    .fill(AppStyle.Color.idleDivider)
-                    .frame(width: AppStyle.Layout.separatorWidth, height: AppStyle.Layout.idleMetricGlyphHeight)
                 Text(right)
             }
             .font(AppStyle.Font.idleSeatValue)
@@ -303,11 +316,7 @@ private extension IdleActiveCardModelView {
 
     var progressColumn: some View {
         VStack(alignment: .center, spacing: 4) {
-            Text("Data")
-                .font(AppStyle.Font.metricLabel)
-                .foregroundColor(AppStyle.Color.idleMetricLabel)
-                .fixedSize()
-                .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.center] }
+            dataBand
 
             Button(action: {
                 analyticsSheetDate = AnalyticsSheetDate(date: Date())
@@ -323,64 +332,121 @@ private extension IdleActiveCardModelView {
             .buttonStyle(.plain)
 
             // "Last run" only appears once the exercise has a completed run;
-            // before that the footer is omitted entirely (no placeholder).
+            // before that the footer (and its leading divider) are omitted.
             if !isSelectionMode, !lastRunSetProgress.isEmpty {
+                horizontalSeparator
                 lastRunFooter
-                    .frame(height: AppStyle.Layout.idleMetricFooterRowHeight)
             }
         }
     }
 
+    /// "Data" label + coaching badge, underlined by a hairline that separates it
+    /// from the chart below. When training history exists the whole band is the
+    /// tap target for the coaching tiles; otherwise it's a non-interactive label.
+    @ViewBuilder
+    var dataBand: some View {
+        let showCoaching = !isSelectionMode && !weightPhases.isEmpty
+        let content = VStack(spacing: 4) {
+            HStack(spacing: 6) {
+                Text("Data")
+                    .font(AppStyle.Font.metricLabel)
+                    .foregroundColor(AppStyle.Color.idleMetricLabel)
+                    .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.center] }
+
+                if showCoaching {
+                    coachingTipBadge
+                }
+            }
+            .fixedSize()
+            horizontalSeparator
+        }
+
+        if showCoaching {
+            Button(action: { isExpanded.toggle() }) {
+                content
+                    .frame(
+                        minWidth: AppStyle.Layout.minimumTapTargetSize,
+                        minHeight: AppStyle.Layout.minimumTapTargetSize
+                    )
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Coaching tips")
+            .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
+            .accessibilityHint(isExpanded ? "Collapses coaching tips" : "Expands coaching tips")
+        } else {
+            content
+        }
+    }
+
+    /// "Last run" entry: plain text + trailing chevron (no box). Taps expand the
+    /// per-set breakdown; the leading hairline lives in `progressColumn`.
     var lastRunFooter: some View {
         Button(action: { isLastRunExpanded.toggle() }) {
-            Text("Last run")
-                .font(AppStyle.Font.metricLabel)
-                .foregroundColor(AppStyle.Color.idleMetricValue)
-                .fixedSize()
+            HStack(spacing: 6) {
+                Text("Last run")
+                    .font(AppStyle.Font.metricLabel)
+                    .foregroundColor(AppStyle.Color.idleMetricValue)
+
+                Image(systemName: "chevron.right")
+                    .font(AppStyle.Font.cardSmallLabel)
+                    .foregroundColor(AppStyle.Color.idleMetricLabel)
+            }
+            .fixedSize()
+            .frame(
+                minWidth: AppStyle.Layout.minimumTapTargetSize,
+                minHeight: AppStyle.Layout.minimumTapTargetSize
+            )
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("Last run details")
+        .accessibilityValue(isLastRunExpanded ? "Expanded" : "Collapsed")
+        .accessibilityHint(isLastRunExpanded ? "Hides set details" : "Shows set details")
     }
 
-    var coachingTipChip: some View {
-        Button(action: { isExpanded.toggle() }) {
-            HStack(spacing: 6) {
-                Image("tip_coaching_2")
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(
-                        width: AppStyle.Layout.idleCoachingChipIconSize,
-                        height: AppStyle.Layout.idleCoachingChipIconSize
-                    )
-                Text("Tip")
-                    .font(AppStyle.Font.idleCoachingChipLabel)
-            }
+    /// Decorative sparkle badge. The tap that opens the coaching tiles now lives
+    /// on the enclosing `dataBand`, so this is a plain visual (no Button).
+    var coachingTipBadge: some View {
+        Image("tip_coaching_2")
+            .renderingMode(.template)
+            .resizable()
+            .scaledToFit()
+            .frame(
+                width: AppStyle.Layout.idleCoachingChipIconSize,
+                height: AppStyle.Layout.idleCoachingChipIconSize
+            )
             .foregroundColor(AppStyle.Color.idleMetricValue)
-            .padding(.horizontal, AppStyle.Layout.idleCoachingChipHorizontalPadding)
-            .padding(.vertical, AppStyle.Layout.idleCoachingChipVerticalPadding)
+            .padding(AppStyle.Layout.idleCoachingChipVerticalPadding)
             .overlay {
                 RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile)
-                    .strokeBorder(AppStyle.Color.idleCardBorder, lineWidth: AppStyle.Layout.idleCardBorderWidth)
+                    .strokeBorder(AppStyle.Color.idleMetricValue, lineWidth: AppStyle.Layout.idleCardBorderWidth)
             }
-        }
-        .buttonStyle(.plain)
-        .fixedSize()
+            .fixedSize()
+            .accessibilityHidden(true)
     }
 
     @ViewBuilder
     var playButton: some View {
         if let onStart = onStart, !model.isCompleted {
             Button(action: { onStart(model.toDomain()) }) {
-                if isInProgress {
-                    Image("trainin_progress")
-                        .renderingMode(.template)
-                        .resizable()
-                        .scaledToFit()
-                        .foregroundColor(AppStyle.Color.yellow)
-                        .frame(width: AppStyle.Layout.idlePlayButtonSize, height: AppStyle.Layout.idlePlayButtonSize)
-                } else {
-                    IdlePlayButton()
+                Group {
+                    if isInProgress {
+                        Image("trainin_progress")
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .foregroundColor(AppStyle.Color.yellow)
+                            .frame(width: AppStyle.Layout.idlePlayButtonSize, height: AppStyle.Layout.idlePlayButtonSize)
+                    } else {
+                        IdlePlayButton()
+                    }
                 }
+                .frame(
+                    minWidth: AppStyle.Layout.minimumTapTargetSize,
+                    minHeight: AppStyle.Layout.minimumTapTargetSize
+                )
+                .contentShape(Rectangle())
             }
             .accessibilityIdentifier(MuscleCategoryIDs.startExercise)
             .buttonStyle(.plain)

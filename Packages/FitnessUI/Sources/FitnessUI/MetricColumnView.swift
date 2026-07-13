@@ -8,7 +8,7 @@ import SwiftUI
 ///
 /// Used by `IdleActiveCardModelView` for the Weight and Seat columns;
 /// intentionally not used for columns that diverge from this pattern
-/// (e.g. `progressColumn` has different spacing; coaching tip is inline with the title).
+/// (e.g. `progressColumn` has different spacing and owns the coaching-tip data band).
 public struct MetricColumnView<Content: View, Footer: View>: View {
     let label: String
     let alignment: HorizontalAlignment

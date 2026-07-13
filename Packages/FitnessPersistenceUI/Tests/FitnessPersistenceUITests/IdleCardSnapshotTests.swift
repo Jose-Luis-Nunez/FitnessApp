@@ -215,6 +215,60 @@ struct IdleCardSnapshotTests {
 
         assertSnapshot(of: view, named: "with-long-seat", size: CGSize(width: 393, height: 160))
     }
+
+    @Test func collapsedWithHistory() throws {
+        let (model, container) = try makeIdleCardContainer()
+        let storage = MockAnalyticsStorage()
+        storage.save([
+            AnalyticsEntry(
+                exerciseId: model.id,
+                date: Date(timeIntervalSince1970: 1_735_689_600),
+                setProgress: [
+                    SetProgress(status: .completedDone, currentReps: 10, weight: 20),
+                    SetProgress(status: .completedDone, currentReps: 10, weight: 20),
+                    SetProgress(status: .completedDone, currentReps: 10, weight: 20),
+                ]
+            ),
+        ], for: model.id)
+        let analyticsVM = AnalyticsViewModel(
+            storageService: storage,
+            exerciseStorage: MockExerciseStorage(),
+            workoutStorage: MockWorkoutStorage()
+        )
+
+        let view = IdleActiveCardModelView(
+            model: model,
+            analyticsViewModel: analyticsVM,
+            onEdit: { _, _ in },
+            isEditable: false,
+            onStart: { _ in }
+        )
+        .modelContainer(container)
+
+        assertSnapshot(of: view, named: "with-history", size: CGSize(width: 393, height: 220))
+    }
+
+    @Test func selectionMode() throws {
+        let (model, container) = try makeIdleCardContainer()
+        let analyticsVM = AnalyticsViewModel(
+            storageService: StubAnalyticsStorage(),
+            exerciseStorage: MockExerciseStorage(),
+            workoutStorage: MockWorkoutStorage()
+        )
+
+        let view = IdleActiveCardModelView(
+            model: model,
+            analyticsViewModel: analyticsVM,
+            onEdit: { _, _ in },
+            isEditable: false,
+            onStart: { _ in },
+            isSelectionMode: true,
+            isSelected: true
+        )
+        .modelContainer(container)
+
+        assertSnapshot(of: view, named: "selection-mode", size: CGSize(width: 393, height: 160))
+    }
 }
 
 // MARK: - InactiveCardModelView Snapshots

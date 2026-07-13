@@ -68,7 +68,7 @@ public struct InactiveCardModelView: View {
             }
         })
         // The idle card's width is content-driven by its metric row (Weight | Seat
-        // | Data | Tip), whose minimum width is ~422pt including card padding. On
+        // | Data), whose minimum width is ~400pt including card padding. On
         // narrow screens (iPhone 17, 402pt) that overflows the screen slightly so the
         // idle card reaches closer to the edges; on wide screens (16 Pro Max) it fits
         // within the standard margin. The completed card has sparse content and would

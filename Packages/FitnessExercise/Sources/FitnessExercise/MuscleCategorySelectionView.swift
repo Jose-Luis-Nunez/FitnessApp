@@ -85,6 +85,14 @@ public struct MuscleCategorySelectionView: View {
         ]
     }
 
+    /// Workout-wide progress for the list-view header: completed vs total across
+    /// all **active** exercises (deactivated ones drop out of the count, matching
+    /// the category-tile progress semantics).
+    private var listProgress: (completed: Int, total: Int) {
+        let active = allWorkoutModels.filter { $0.isActive ?? true }
+        return (active.filter(\.isCompleted).count, active.count)
+    }
+
     public var body: some View {
         ZStack(alignment: .bottom) {
             AppStyle.Color.backgroundColor.ignoresSafeArea()
@@ -110,11 +118,24 @@ public struct MuscleCategorySelectionView: View {
             .zIndex(2)
 
             VStack(spacing: 0) {
-                WorkoutDropdownView(workoutName: workoutStorage.currentWorkout?.name ?? L10n.workoutFallbackName)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, AppStyle.Padding.horizontal)
-                    .padding(.top, AppStyle.Padding.titleTop)
-                    .padding(.bottom, AppStyle.Padding.titleBottom)
+                HStack(alignment: .firstTextBaseline) {
+                    WorkoutDropdownView(workoutName: workoutStorage.currentWorkout?.name ?? L10n.workoutFallbackName)
+
+                    Spacer(minLength: 8)
+
+                    // List view only: show workout-wide completed/total count on
+                    // the right, at the height of the title.
+                    if currentViewMode == .list, listProgress.total > 0 {
+                        Text("\(listProgress.completed) of \(listProgress.total)")
+                            .font(AppStyle.Font.tileValue)
+                            .foregroundColor(AppStyle.Color.idleMetricLabel)
+                            .fixedSize()
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, AppStyle.Padding.horizontal)
+                .padding(.top, AppStyle.Padding.titleTop)
+                .padding(.bottom, AppStyle.Padding.titleBottom)
 
                 ScrollView {
                     VStack(spacing: 0) {
