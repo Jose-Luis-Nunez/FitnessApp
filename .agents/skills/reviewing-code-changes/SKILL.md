@@ -12,7 +12,7 @@ description: >-
 
 ## Context
 
-For domain models, services, shared components, utilities, AppStyle tokens, and project structure see [architecture-documentation.md](../../references/architecture-documentation.md).
+For domain models, services, shared components, utilities, AppStyle tokens, and project structure see [architecture-documentation.md](../../../.claude/references/architecture-documentation.md).
 
 ## Context Management
 
@@ -95,6 +95,8 @@ Compare new/changed code against existing shared components and utilities:
 | If you see | Consider using |
 |---|---|
 | Custom chip with background + stroke | `MetricChipView` |
+| Repeated `glassEffect` availability branch | `.appGlassEffect(in:)` or `.appDarkSurface(backgroundColor:in:)` from FitnessUI |
+| Horizontal scroller of per-set tiles (`GeometryReader` + `ScrollView` of `SetTileView` + scroll chevron, optional trailing reset/accessory) | `SetTilesRow` |
 | Full-screen sheet with header + save | `WorkoutFormSheet` |
 | Expandable card with greenBlack fill | `AnalyticsDetailSection` |
 | Overlay sheet with backdrop + grabber + dismiss | `OverlaySheetContainer` (full chrome) |
@@ -630,13 +632,13 @@ After the main agent completes code changes, this skill **orchestrates** indepen
 Determine which subagents to spawn based on what changed:
 
 ```
-# Swift files changed + .Codex/ files changed:
+# Swift files changed + .codex/ files changed:
 Parallel: reviewer + tester + verifier
 
 # Only Swift files changed:
 Parallel: reviewer + tester
 
-# Only .Codex/ files changed:
+# Only .codex/ files changed:
 Single: verifier  (handled by reviewing-agent-infrastructure skill)
 ```
 
@@ -651,7 +653,7 @@ Task(
   subagent_type: "reviewer",
   description: "Review Swift code changes",
   prompt: """
-Read .Codex/agents/reviewer.md for your full role definition and review checklist.
+Read .codex/agents/reviewer.toml for your full role definition and review checklist.
 
 CHANGED FILES:
 <paste list of changed Swift files>
@@ -659,7 +661,7 @@ CHANGED FILES:
 GIT DIFF:
 <paste the git diff of changed files>
 
-For architecture context, read .Codex/references/architecture-documentation.md.
+For architecture context, read .claude/references/architecture-documentation.md.
 
 Return the full findings report.
 """
@@ -673,7 +675,7 @@ Task(
   subagent_type: "tester",
   description: "Run affected package tests",
   prompt: """
-Read .Codex/agents/tester.md for your full role definition and test commands.
+Read .codex/agents/tester.toml for your full role definition and test commands.
 
 CHANGED FILES:
 <paste list of changed Swift files>
@@ -694,7 +696,7 @@ After both subagents return:
 
 ### Fallback: Direct Review
 
-When the user explicitly asks to "review" or "check" code (not post-change validation), you may perform the review directly using the checklist above instead of spawning subagents. In this case, write a **minimal** stamp to `.Codex/hooks/state/code-changes.stamp.md`:
+When the user explicitly asks to "review" or "check" code (not post-change validation), you may perform the review directly using the checklist above instead of spawning subagents. In this case, write a **minimal** stamp to `.claude/hooks/state/code-changes.stamp.md`:
 
 ```
 date: 2026-04-11T14:30:00
@@ -724,7 +726,7 @@ If the agent genuinely found no leftover duplications, state `None.` explicitly 
 
 ## Architecture Sync
 
-When you edit Swift files, check if the change affects any of the items below. If it does, update `.Codex/references/architecture-documentation.md` in the **same commit/task** — do not defer.
+When you edit Swift files, check if the change affects any of the items below. If it does, update `.claude/references/architecture-documentation.md` in the **same commit/task** — do not defer.
 
 ### Trigger Map
 
@@ -746,7 +748,7 @@ When you edit Swift files, check if the change affects any of the items below. I
 
 ### How to Update
 
-1. Read `.Codex/references/architecture-documentation.md`
+1. Read `.claude/references/architecture-documentation.md`
 2. Find the relevant section from the trigger map
 3. Apply the minimal change (add/edit/remove the affected entry)
 4. Do not rewrite unrelated sections

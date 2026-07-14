@@ -209,31 +209,6 @@ public struct FloatingActionButtonsView: View {
     }
 
     @ViewBuilder
-    private func glassCapsuleButton(
-        text: String,
-        action: @escaping () -> Void,
-        style: MenuItemStyle
-    ) -> some View {
-        Button(action: action) {
-            ZStack {
-                TrainingGlassEffectCompat.roundedFrameGlass(
-                    width: capsuleWidth,
-                    height: capsuleHeight,
-                    cornerRadius: capsuleHeight / 2
-                )
-
-                Text(text)
-                    .font(AppStyle.Font.bottomBarButtons)
-                    .foregroundColor(AppStyle.Color.white.opacity(0.98))
-                    .frame(maxWidth: .infinity)
-            }
-        }
-        .buttonStyle(PlainButtonStyle())
-        .frame(width: capsuleWidth, height: capsuleHeight)
-        .accessibilityIdentifier(accessibilityID(for: style, text: text))
-    }
-
-    @ViewBuilder
     private func menuTextItem(
         text: String,
         action: @escaping () -> Void,
@@ -302,8 +277,8 @@ public struct FloatingActionButtonsView: View {
         .accessibilityLabel(state.accessibilityLabel)
     }
 
-    /// Shared chrome for every round glass-circle icon button in the bottom
-    /// bar (Quick-Done, Feedback): a `circleGlass()` with the standard
+    /// Shared chrome for every round surface icon button in the bottom
+    /// bar (Quick-Done, Feedback): a shared adaptive dark surface with the standard
     /// 10%-white hairline stroke, a centred bitmap icon, and a 44×44 tap
     /// target. The icon image is sized smaller than the glass circle —
     /// otherwise the frame-less `circleGlass()` would expand to match the
@@ -336,17 +311,17 @@ public struct FloatingActionButtonsView: View {
         .accessibilityIdentifier(accessibilityIdentifier)
     }
 
-    // MARK: - Glass-circle icon button geometry
+    // MARK: - Round icon button geometry
 
-    /// Outer tap-target / glass-circle diameter. Matches the bottom-bar
+    /// Outer tap-target / surface-circle diameter. Matches the bottom-bar
     /// capsule's minimum height (`capsuleHeight = max(48, ...)`) so the
     /// circular Quick-Done / Feedback buttons line up flush with the capsule
     /// they sit next to in the same `HStack`. Also exceeds Apple HIG's 44pt
     /// minimum tap target.
     private static let glassCircleSize: CGFloat = 48
-    /// Image render size inside the glass circle. ~67% of the circle diameter
+    /// Image render size inside the circular surface. ~67% of the diameter
     /// (Apple HIG glyph-in-circle proportion) so the icon visually breathes
-    /// and the frame-less `circleGlass()` isn't stretched by the image.
+    /// and the frame-less surface background isn't stretched by the image.
     private static let iconSize: CGFloat = 32
 
     private func accessibilityID(for style: MenuItemStyle, text: String) -> String {

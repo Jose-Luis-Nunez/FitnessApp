@@ -4,7 +4,8 @@ import FitnessUI
 
 /// Grid-based **multi-select** picker for pain regions, pre-scoped to the
 /// exercise's `BodyCategory`. Image-only tiles with `TrainingGlassEffectCompat`
-/// background (Liquid Glass on iOS 26+, `ultraThinMaterial` fallback). Tapping
+/// background (clear Liquid Glass on iOS 27, regular glass on iOS 26,
+/// `ultraThinMaterial` fallback on older supported platforms). Tapping
 /// a tile toggles it in `selectedRegions` — any combination of regions in the
 /// category can be active at once (e.g. lower back + obliques). Tapping an
 /// already-selected tile removes it from the selection (replaces the former

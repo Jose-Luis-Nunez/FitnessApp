@@ -20,13 +20,13 @@ You receive:
 
 Map changed files to packages:
 
-| Path prefix | Package |
-|---|---|
-| `Packages/FitnessExercise/` | FitnessExercise |
-| `Packages/FitnessTraining/` | FitnessTraining |
-| `Packages/FitnessAnalytics/` | FitnessAnalytics |
-| `Packages/FitnessStorage/` | FitnessStorage |
-| `Packages/FitnessProfile/` | FitnessProfile |
+| Path prefix | Package directory | Scheme |
+|---|---|---|
+| `Packages/FitnessExercise/` | FitnessExercise | FitnessExercise |
+| `Packages/FitnessTraining/` | FitnessTraining | FitnessTraining-Package |
+| `Packages/FitnessAnalytics/` | FitnessAnalytics | FitnessAnalytics |
+| `Packages/FitnessStorage/` | FitnessStorage | FitnessStorage |
+| `Packages/FitnessProfile/` | FitnessProfile | FitnessProfile |
 
 If changed files span multiple packages, test all affected packages.
 
@@ -35,14 +35,18 @@ If changed files span multiple packages, test all affected packages.
 For each affected SPM package:
 
 ```bash
-cd ~/Documents/repo/FitnessApp/Packages/<PackageName> && \
-DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer \
-PATH="/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer/usr/bin:$PATH" \
-xcodebuild test \
-  -scheme <PackageName> \
+cd ~/Documents/repo/FitnessApp/Packages/<PackageDirectory> && \
+DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode-beta.app/Contents/Developer \
+PATH="/Users/jose.nunez/Downloads/Xcode-beta.app/Contents/Developer/usr/bin:$PATH" \
+xcodebuild test -quiet \
+  -scheme <Scheme> \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max,OS=26.0' \
-  -skipMacroValidation 2>&1 | tail -30
+  -skipMacroValidation
 ```
+
+Most package schemes match their directory name. `FitnessTraining` is the
+exception: it exposes multiple products, so use the generated
+`FitnessTraining-Package` scheme to run its test action.
 
 All unit tests live in SPM packages. There is no app-level `FitnessAppTests` target. For app-level View changes (e.g. `ProfileView.swift`), test the corresponding package (e.g. `FitnessProfile`).
 

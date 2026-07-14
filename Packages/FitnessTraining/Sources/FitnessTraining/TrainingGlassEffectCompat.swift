@@ -1,52 +1,26 @@
 import SwiftUI
+import FitnessUI
 
-/// Fallback when `glassEffect` is unavailable (package supports macOS 14 / iOS 17).
+/// Shape helpers for training controls using FitnessUI's shared cross-version
+/// surface treatment.
 enum TrainingGlassEffectCompat {
     @ViewBuilder
     static func rectCard(cornerRadius: CGFloat) -> some View {
-        if #available(iOS 26.0, macOS 26.0, *) {
-            Color.clear.glassEffect(in: .rect(cornerRadius: cornerRadius))
-        } else {
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(.ultraThinMaterial)
-        }
+        Color.clear
+            .appGlassEffect(in: .rect(cornerRadius: cornerRadius))
     }
 
     @ViewBuilder
     static func roundedRectangleContinuous(cornerRadius: CGFloat) -> some View {
-        if #available(iOS 26.0, macOS 26.0, *) {
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(Color.clear)
-                .glassEffect()
-        } else {
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(.ultraThinMaterial)
-        }
-    }
-
-    @ViewBuilder
-    static func roundedFrameGlass(width: CGFloat, height: CGFloat, cornerRadius: CGFloat) -> some View {
-        if #available(iOS 26.0, macOS 26.0, *) {
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(Color.clear)
-                .frame(width: width, height: height)
-                .glassEffect()
-        } else {
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .frame(width: width, height: height)
-        }
+        Color.clear
+            .appDarkSurface(
+                in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            )
     }
 
     @ViewBuilder
     static func circleGlass() -> some View {
-        if #available(iOS 26.0, macOS 26.0, *) {
-            Circle()
-                .fill(Color.clear)
-                .glassEffect()
-        } else {
-            Circle()
-                .fill(.ultraThinMaterial)
-        }
+        Color.clear
+            .appDarkSurface(in: Circle())
     }
 }

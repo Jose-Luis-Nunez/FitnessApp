@@ -28,7 +28,10 @@ public struct SimpleActiveSetView: View {
         .padding(.horizontal, AppStyle.DeviceLayout.cardPadding)
         .padding(.vertical, 12)
         .background {
-            TrainingGlassEffectCompat.rectCard(cornerRadius: AppStyle.CornerRadius.card)
+            Color.clear
+                .appDarkSurface(
+                    in: .rect(cornerRadius: AppStyle.CornerRadius.card)
+                )
         }
         .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous))
         .onChange(of: viewModel.pendingSetIndex) { index in

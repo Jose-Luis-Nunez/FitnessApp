@@ -21,7 +21,7 @@ For tests that **pass** but use outdated patterns or raw API, use `updating-ui-t
 
 UI tests must run via the `FitnessApp UITests` scheme. The plain `FitnessApp` scheme builds without the `UITESTING` flag, which silently disables `UITestLaunchStrategy` — the app then launches with production data and **every** selector assertion fails for the wrong reason.
 
-See `.Codex/rules/build-and-test.mdc` § "UI Tests" for the exact `xcodebuild` command. Run a **single failing test** (`-only-testing:`) instead of the full suite while debugging.
+See `.claude/rules/build-and-test.mdc` § "UI Tests" for the exact `xcodebuild` command. Run a **single failing test** (`-only-testing:`) instead of the full suite while debugging.
 
 ### Step 2 — Diagnose the Selector
 
@@ -43,7 +43,7 @@ Common cause after a SwiftData refactor: a view switched from a passed-in domain
 
 ### Step 4 — Re-run and Write the Stamp
 
-Re-run the single test, confirm green, then update `.Codex/hooks/state/test-execution.stamp.md` with the result so the stop-hook gate passes.
+Re-run the single test, confirm green, then update `.claude/hooks/state/test-execution.stamp.md` with the result so the stop-hook gate passes.
 
 ## Handoff
 

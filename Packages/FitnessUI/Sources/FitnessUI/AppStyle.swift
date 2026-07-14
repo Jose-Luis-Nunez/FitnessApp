@@ -18,6 +18,8 @@ public enum AppStyle {
     public enum Layout {
         public static let cardHorizontalPadding: CGFloat = 16
         public static let cardHeaderSpacing: CGFloat = 10
+        /// Hairline outline width for the shared flat dark surface on iOS 27.
+        public static let darkSurfaceOutlineWidth: CGFloat = 1
         public static let chipHeight: CGFloat = 32
         public static let activeCardContentHeight: CGFloat = 80
         public static let activeCardMaxWidth: CGFloat = 400
@@ -389,6 +391,14 @@ public enum AppStyle {
         public static let overlayBackdrop: Double = 0.55
         public static let subtleBackground: Double = 0.06
         public static let subtleStroke: Double = 0.15
+        /// Shared iOS-27 dark-surface base fill, replacing the raised native
+        /// Glass bezel on app-owned cards and controls.
+        public static let darkSurfaceFill: Double = 0.85
+        /// Black depth layer over `darkSurfaceFill`; keeps the surface dark
+        /// without introducing a directional highlight.
+        public static let darkSurfaceDepth: Double = 0.2
+        /// Single neutral outline around a dark surface.
+        public static let darkSurfaceOutline: Double = 0.11
         public static let grabberHandle: Double = 0.35
         public static let disabledElement: Double = 0.3
         public static let fadedOverlay: Double = 0.4

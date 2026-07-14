@@ -114,7 +114,7 @@ gate_verifier() {
 
   for field in "${required_fields[@]}"; do
     if ! grep -q "$field" "$stamp"; then
-      emit_block "[verifier] Gate failed: stamp is missing field '$field'. Re-read .claude/agents/verifier.md and write a complete stamp with all 8 required fields."
+      emit_block "[verifier] Gate failed: stamp is missing field '$field'. Re-read .codex/agents/verifier.toml and write a complete stamp with all 8 required fields."
     fi
   done
 }
@@ -130,11 +130,11 @@ gate_reviewer() {
   has_summary=$(echo "$SUMMARY" | grep -ciE 'Summary|summary' || true)
 
   if [ "$has_severity" -eq 0 ] && [ "$has_no_issues" -eq 0 ]; then
-    emit_block "[reviewer] Gate failed: output must contain severity-tagged findings (Bug/Nit/Pre-existing) or explicitly state \"No issues found\". Re-read .claude/agents/reviewer.md and provide a complete review."
+    emit_block "[reviewer] Gate failed: output must contain severity-tagged findings (Bug/Nit/Pre-existing) or explicitly state \"No issues found\". Re-read .codex/agents/reviewer.toml and provide a complete review."
   fi
 
   if [ "$has_summary" -eq 0 ]; then
-    emit_block "[reviewer] Gate failed: output must contain a Summary section. Re-read .claude/agents/reviewer.md and include a summary line."
+    emit_block "[reviewer] Gate failed: output must contain a Summary section. Re-read .codex/agents/reviewer.toml and include a summary line."
   fi
 
   if [ ! -f "$stamp" ]; then

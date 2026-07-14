@@ -1,20 +1,26 @@
 ---
 description: >-
-  Enforces agent-infrastructure validation when .claude/ files change.
+  Enforces agent-infrastructure validation when canonical .claude/ files or
+  Codex runtime adapters change.
   Two layers: this rule (advisory) and stop hook (grind loop).
-globs: ".claude/rules/**/*.mdc,.claude/skills/**/*.md,.claude/hooks/**/*.sh,.claude/agents/**/*.md,.claude/references/**/*.md,.claude/commands/**/*.md,AGENTS.md"
+globs: ".claude/rules/**/*.mdc,.claude/skills/**/*.md,.claude/hooks/**/*.sh,.claude/agents/**/*.md,.claude/references/**/*.md,.claude/commands/**/*.md,.codex/hooks/**/*.sh,.codex/agents/**/*.toml,.agents/skills/**/*.md,AGENTS.md"
 ---
 
 # Agent Infrastructure Enforcement
 
-When you change **1+ files** under `.claude/` that are part of the agent infrastructure (rules, skills, hooks, agents, references, commands), run the `reviewing-agent-infrastructure` skill before reporting done. Write a stamp to `.claude/hooks/state/agent-infrastructure.stamp.md`.
+When you change **1+ files** under `.claude/` that are part of the canonical
+agent infrastructure, or under `.codex/` / `.agents/` that are Codex runtime
+adapters, run the `reviewing-agent-infrastructure` skill before reporting done.
+Write a stamp to `.claude/hooks/state/agent-infrastructure.stamp.md`.
 
 ## Layer 1: This Rule (L2g — Advisory)
 
-Tells you to validate. Fires when glob-matched `.claude/` files are edited.
+Tells you to validate. Fires when a glob-matched canonical or runtime-adapter
+file is edited.
 
 Skip for:
-- `.claude/hooks/state/` — runtime artifacts (stamps, hashes, scratchpads)
+- `.claude/hooks/state/` and `.codex/hooks/state/` — runtime artifacts
+  (stamps, hashes, scratchpads)
 - `.claude/plans/` — descriptive plan documents, not infrastructure (no enforcement, no references)
 
 ## Layer 2: Stop Hook — Grind Loop (L5 — Enforced)
@@ -28,4 +34,4 @@ Follow the `reviewing-agent-infrastructure` skill checklist manually. Write a st
 ## Triggered Rule Notice
 
 When this rule applies, mention it early:
-"This touches .claude/ infrastructure — agent-infrastructure validation will be required."
+"This touches agent infrastructure — agent-infrastructure validation will be required."

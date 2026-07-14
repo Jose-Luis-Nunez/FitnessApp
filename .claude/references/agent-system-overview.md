@@ -15,6 +15,15 @@ Central map of all enforcement mechanisms grouped by reliability level.
 | L5 | Stop Hook / Grind Loop | 100% | Deterministic, fires when agent says "done" |
 | L5s | SubagentStop Hook | 100% | Deterministic, fires when a subagent completes |
 
+## Runtime Ownership
+
+`.claude/` is the canonical source for rules, workflow documentation,
+architecture references, and shared runtime state. `.codex/` contains the Codex
+runtime adapters: `hooks.json`, mirrored hook scripts, and TOML role
+instructions. `.agents/skills/` contains Codex skill copies. Both runtimes
+write and validate stamps in `.claude/hooks/state/`, giving each task one source
+of validation state.
+
 ## Execution Order
 
 When the agent works on a task, enforcement fires in this order:
@@ -59,7 +68,7 @@ flowchart TD
 
 | File | Glob Pattern | What it does |
 |---|---|---|
-| `agent-infrastructure-enforcement.mdc` | `.claude/rules/**/*.mdc`, `.claude/skills/**/*.md`, `.claude/hooks/**/*.sh`, `.claude/agents/**/*.md`, `.claude/references/**/*.md`, `.claude/commands/**/*.md`, `AGENTS.md` | Enforces agent-infrastructure validation when infrastructure files under `.claude/` change. Excludes `.claude/plans/` (descriptive only) and `.claude/hooks/state/` (runtime artifacts). Two layers: this rule (advisory) + stop hook Check 6. |
+| `agent-infrastructure-enforcement.mdc` | Canonical `.claude/` rules, skills, hooks, agents, references, commands; Codex `.codex/hooks/**/*.sh`, `.codex/agents/**/*.toml`, and `.agents/skills/**/*.md`; `AGENTS.md` | Enforces agent-infrastructure validation for canonical files and Codex runtime adapters. Excludes plans and runtime state. Two layers: this rule (advisory) + stop hook Check 6. |
 
 ## L3 — Skills
 
@@ -72,7 +81,7 @@ flowchart TD
 | `writing-ui-tests/SKILL.md` | Create new XCUITests. | `ui-test-conventions.md` |
 | `updating-ui-tests/SKILL.md` | Refactor/modernize existing XCUITests (passing tests with outdated patterns). | `ui-test-conventions.md`, `debugging-ui-tests/SKILL.md` |
 | `debugging-ui-tests/SKILL.md` | Diagnose failing XCUITests: selector-not-found, scheme/build-config, fixture seeding, timing. 5-step decision tree. | `ui-test-conventions.md § Diagnosing a Failing Selector`, `build-and-test.mdc`, `reviewing-agent-effectiveness/SKILL.md`, `reviewing-agent-infrastructure/SKILL.md` |
-| `reviewing-agent-infrastructure/SKILL.md` | Validate and fix agent infrastructure after .claude/ changes. Reference integrity, agent-system-overview sync, learning persistence. Spawns verifier subagent. | `reviewing-agent-effectiveness/SKILL.md`, `reviewing-code-changes/SKILL.md`, `agents/verifier.md` |
+| `reviewing-agent-infrastructure/SKILL.md` | Validate canonical `.claude/` infrastructure and Codex runtime adapters (`.codex/`, `.agents/`). Reference integrity, overview sync, and handoff alignment. Spawns the runtime-appropriate verifier subagent. | `reviewing-agent-effectiveness/SKILL.md`, `reviewing-code-changes/SKILL.md`, `agents/verifier.md`, `.codex/agents/verifier.toml` |
 | `deep-research/SKILL.md` | Citation-backed deep research workflow. | None |
 
 ## L3 — Commands
@@ -94,14 +103,14 @@ Three enforcement patterns: **Grind Loop** (agent is sent back up to 3 times), *
 
 | File | Pattern | What it checks |
 |---|---|---|
-| `post-task-check.sh` | Orchestrator | Runs all 10 checks below, collects followup messages. |
-| `settings.json` | — | Registers `post-task-check.sh` as `Stop` hook. Claude Code's `stop_hook_active` flag prevents infinite re-firing. |
+| `post-task-check.sh` | Orchestrator | Canonical implementation under `.claude/hooks/`; mirrored under `.codex/hooks/` for Codex. Runs all 10 checks below, collects followup messages. |
+| `settings.json` / `hooks.json` | — | `.claude/settings.json` registers Claude Code's hooks; `.codex/hooks.json` registers Codex's mirrors. Both use `.claude/hooks/state/`. |
 | `checks/code-validation.sh` | Grind Loop | Swift files changed — validation stamp fresh? |
 | `checks/architecture-sync.sh` | Stateless | Structural changes — architecture-documentation.md updated? |
 | `checks/test-execution.sh` | Grind Loop | Test files changed — tests actually run? |
 | `checks/test-coverage.sh` | Hint | New ViewModel/Service — corresponding test file exists? |
 | `checks/enforcement-audit.sh` | Hint | 5+ Swift files — suggest enforcement audit? |
-| `checks/agent-infrastructure.sh` | Grind Loop + Verifier | .claude/ files changed — stamp fresh + content-validated (8 required fields)? |
+| `checks/agent-infrastructure.sh` | Grind Loop + Verifier | Canonical `.claude/` or Codex runtime-adapter files changed — is the shared stamp fresh + content-validated (8 required fields)? |
 | `checks/ui-state-sync.sh` | Hint | Diff combines `changeVersion`-style Int counter + `while !Task.isCancelled` polling loop (ui-state-sync-enforcement.mdc anti-pattern)? |
 | `checks/duplicate-state.sh` | Hint | Diff introduces a new `@State private var XViewModel` while a UUID-keyed VM cache for the same entity already exists (reviewing-code-changes §13h)? |
 | `checks/predicate-smell.sh` | Hint | Diff introduces `#Predicate` with optional/force chain, `persistentModelID` comparison, or `@ModelActor` (reviewing-code-changes §14)? |
@@ -111,24 +120,31 @@ Three enforcement patterns: **Grind Loop** (agent is sent back up to 3 times), *
 
 ## L5s — SubagentStop Hook
 
-The `SubagentStop` hook fires when a subagent (Task tool) completes. It reads the parent transcript (`transcript_path`), finds the most recent `Task` tool call, extracts the `subagent_type` plus the tool result, and applies role-specific quality gates. Failures are returned via exit code 2 + stderr (Claude Code's blocker mechanism, similar to a follow-up message). Claude Code's own `stop_hook_active` flag prevents infinite loops.
+The `SubagentStop` hook fires when a subagent completes. It reads the parent
+transcript (`transcript_path`), finds the most recent task, extracts the
+`subagent_type` plus the result, and applies role-specific quality gates.
+Canonical Claude Code hooks and Codex runtime mirrors share the stamp directory
+`.claude/hooks/state/`.
 
 | File | Role | What it checks |
 |---|---|---|
-| `subagent-gate.sh` | `verifier` | `agent-infrastructure.stamp.md` exists + has 8 required fields (result, verified_by, 6 checklist items) |
-| `subagent-gate.sh` | `reviewer` | Output contains severity tags (Bug/Nit/Pre-existing) or "No issues found" + Summary section + `code-changes.stamp.md` with `verified_by` |
-| `subagent-gate.sh` | `tester` | `test-execution.stamp.md` exists + contains success marker (all passed / TEST SUCCEEDED) |
-| `settings.json` | — | Registers `subagent-gate.sh` as `SubagentStop` hook |
+| `subagent-gate.sh` | `verifier` | Canonical `.claude/hooks/` and Codex mirror `.codex/hooks/` require all 8 fields in the shared `agent-infrastructure.stamp.md`. |
+| `subagent-gate.sh` | `reviewer` | Requires severity-tagged output or "No issues found", a Summary, and shared `code-changes.stamp.md` with `verified_by`. |
+| `subagent-gate.sh` | `tester` | Requires shared `test-execution.stamp.md` to contain a success marker (all passed / TEST SUCCEEDED). |
+| `settings.json` / `hooks.json` | — | Register the respective runtime's `SubagentStop` hook. |
 
 ## Agent Roles
 
-Reusable prompt templates for specialized subagents. Each role file lives in `.claude/agents/` and defines purpose, checklist, output format, and stamp-writing instructions.
+Reusable prompt templates for specialized subagents. Markdown role definitions
+in `.claude/agents/` serve Claude Code; matching TOML role configurations in
+`.codex/agents/` serve Codex. Both define the same purpose, checklist, output
+format, and shared stamp-writing instructions.
 
-| Role | File | Spawned by | Gate | Stamp |
-|---|---|---|---|---|
-| Verifier | `agents/verifier.md` | `reviewing-agent-infrastructure/SKILL.md` | 8 required stamp fields | `agent-infrastructure.stamp.md` |
-| Reviewer | `agents/reviewer.md` | `reviewing-code-changes/SKILL.md` | Severity tags + summary | `code-changes.stamp.md` |
-| Tester | `agents/tester.md` | `reviewing-code-changes/SKILL.md` | xcodebuild success | `test-execution.stamp.md` |
+| Role | Claude Code file | Codex file | Spawned by | Gate | Stamp |
+|---|---|---|---|---|---|
+| Verifier | `agents/verifier.md` | `.codex/agents/verifier.toml` | `reviewing-agent-infrastructure/SKILL.md` | 8 required stamp fields | `agent-infrastructure.stamp.md` |
+| Reviewer | `agents/reviewer.md` | `.codex/agents/reviewer.toml` | `reviewing-code-changes/SKILL.md` | Severity tags + summary | `code-changes.stamp.md` |
+| Tester | `agents/tester.md` | `.codex/agents/tester.toml` | `reviewing-code-changes/SKILL.md` | xcodebuild success | `test-execution.stamp.md` |
 
 ### Parallel Execution Pattern
 

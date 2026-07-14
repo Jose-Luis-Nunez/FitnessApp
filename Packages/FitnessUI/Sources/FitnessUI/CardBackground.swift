@@ -51,16 +51,11 @@ public struct CardBackground<Content: View>: View {
     private var backgroundView: some View {
         switch style {
         case .glass(let backgroundColor):
-            ZStack {
-                backgroundColor
-                if #available(iOS 26.0, macOS 26.0, *) {
-                    Color.clear
-                        .glassEffect(in: .rect(cornerRadius: AppStyle.CornerRadius.card))
-                } else {
-                    RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
-                        .fill(.ultraThinMaterial)
-                }
-            }
+            Color.clear
+                .appDarkSurface(
+                    backgroundColor: backgroundColor,
+                    in: .rect(cornerRadius: AppStyle.CornerRadius.card)
+                )
         case .gradient(let backgroundColor):
             ZStack {
                 backgroundColor.opacity(0.85)
@@ -123,4 +118,3 @@ public struct CardBackground<Content: View>: View {
         }
     }
 }
-

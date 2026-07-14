@@ -95,6 +95,7 @@ Compare new/changed code against existing shared components and utilities:
 | If you see | Consider using |
 |---|---|
 | Custom chip with background + stroke | `MetricChipView` |
+| Repeated `glassEffect` availability branch | `.appGlassEffect(in:)` or `.appDarkSurface(backgroundColor:in:)` from FitnessUI |
 | Horizontal scroller of per-set tiles (`GeometryReader` + `ScrollView` of `SetTileView` + scroll chevron, optional trailing reset/accessory) | `SetTilesRow` |
 | Full-screen sheet with header + save | `WorkoutFormSheet` |
 | Expandable card with greenBlack fill | `AnalyticsDetailSection` |
@@ -629,6 +630,10 @@ After the main agent completes code changes, this skill **orchestrates** indepen
 ### Parallel Execution Pattern
 
 Determine which subagents to spawn based on what changed:
+
+This is the Claude Code workflow: its role instructions live in `.claude/agents/`.
+The Codex runtime uses the equivalent `.codex/agents/*.toml` instructions and
+the same canonical stamp directory, `.claude/hooks/state/`.
 
 ```
 # Swift files changed + .claude/ files changed:

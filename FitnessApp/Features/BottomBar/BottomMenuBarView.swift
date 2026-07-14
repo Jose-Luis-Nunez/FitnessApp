@@ -71,7 +71,7 @@ struct BottomMenuBarView: View {
                         tabBar
                             .frame(height: capsuleHeight)
                             .clipShape(Capsule())
-                            .glassEffect(.regular, in: .capsule)
+                            .appDarkSurface(in: .capsule)
 
                         rightActionButton
                     }
@@ -126,7 +126,7 @@ struct BottomMenuBarView: View {
         }
         .frame(height: capsuleHeight)
         .clipShape(Capsule())
-        .glassEffect(.regular, in: .capsule)
+        .appDarkSurface(in: .capsule)
     }
 
     // MARK: - Shared Components
@@ -186,7 +186,7 @@ struct BottomMenuBarView: View {
                     .foregroundColor(AppStyle.Color.white)
                     .imageScale(.large)
                     .frame(width: circleButtonSize, height: circleButtonSize)
-                    .circleGlass(size: circleButtonSize)
+                    .circleGlass()
                     // contentShape must live INSIDE the label (last modifier) so
                     // it survives .buttonStyle(.plain) recomposing the label —
                     // otherwise the hit area collapses to the drawn glyph. Mirrors
@@ -225,7 +225,7 @@ struct BottomMenuBarView: View {
                     .foregroundColor(AppStyle.Color.white)
                     .imageScale(.large)
                     .frame(width: circleButtonSize, height: circleButtonSize)
-                    .circleGlass(size: circleButtonSize)
+                    .circleGlass()
                     // contentShape must live INSIDE the label (last modifier) so it
                     // survives .buttonStyle(.plain) recomposing the label — otherwise
                     // the hit area collapses to the thin ellipsis glyph. Mirrors the
@@ -301,7 +301,7 @@ struct BottomMenuBarView: View {
 // MARK: - Circle Glass Modifier
 
 private extension View {
-    func circleGlass(size: CGFloat) -> some View {
-        self.glassEffect(.regular, in: .circle)
+    func circleGlass() -> some View {
+        self.appDarkSurface(in: .circle)
     }
 }

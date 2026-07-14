@@ -59,14 +59,16 @@ public struct WorkoutTileView: View {
             .padding(16)
             .frame(height: 120)
             .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: Self.cornerRadius)
-                    .fill(isDefault ? AppStyle.Color.green.opacity(0.2) : AppStyle.Color.exerciseCardBackground)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Self.cornerRadius)
-                            .stroke(isDefault ? AppStyle.Color.green : Color.clear, lineWidth: 2)
-                    )
+            .appDarkSurface(
+                backgroundColor: isDefault ? AppStyle.Color.green.opacity(0.2) : AppStyle.Color.exerciseCardBackground,
+                in: RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
             )
+            .overlay {
+                if isDefault {
+                    RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
+                        .stroke(AppStyle.Color.green, lineWidth: 2)
+                }
+            }
             .overlay(
                 VStack {
                     HStack {

@@ -523,14 +523,8 @@ public struct MuscleCategorySelectionView: View {
         }
         .padding(filterBarPadding)
         .background {
-            if #available(iOS 26.0, macOS 26.0, *) {
-                Capsule()
-                    .fill(Color.clear)
-                    .glassEffect()
-            } else {
-                Capsule()
-                    .fill(.ultraThinMaterial)
-            }
+            Color.clear
+                .appDarkSurface(in: .capsule)
         }
         .clipShape(Capsule())
     }

@@ -14,10 +14,10 @@ description: >-
 
 The FitnessApp project uses a layered defense-in-depth architecture:
 
-- **L2 — Always-Apply Rules** (`.Codex/rules/*.mdc` with `alwaysApply: true`): Loaded into every chat. ~80% compliance.
-- **L3 — Skills** (`.Codex/skills/*/SKILL.md`): Triggered by keyword match from user prompt. ~85-90% compliance.
-- **L3 — Commands** (`.Codex/commands/*.md`): Explicit user-triggered workflows. ~85-90% compliance.
-- **L5 — Stop Hook** (`.Codex/hooks/post-task-check.sh`): Deterministic checks after agent finishes. 100% execution.
+- **L2 — Always-Apply Rules** (`.claude/rules/*.mdc` with `alwaysApply: true`): Loaded into every chat. ~80% compliance.
+- **L3 — Skills** (`.claude/skills/*/SKILL.md`): Triggered by keyword match from user prompt. ~85-90% compliance.
+- **L3 — Commands** (`.claude/commands/*.md`): Explicit user-triggered workflows. ~85-90% compliance.
+- **L5 — Stop Hook** (`.codex/hooks/post-task-check.sh`): Deterministic checks after agent finishes. 100% execution.
 - **L4 — Pre-Commit Hook** (`.git/hooks/pre-commit`): Blocks bad commits. 100% execution.
 
 ## When to Use
@@ -50,7 +50,7 @@ Walk through every mechanism and determine: FIRED / NOT FIRED / NOT APPLICABLE.
 | R2 | DEVELOPER_DIR | `build-and-test.mdc` | Were all `xcodebuild` calls prefixed with `DEVELOPER_DIR`? Was `swift test`/`swift build` avoided? |
 | R3 | Architecture Sync | `architecture-documentation-sync.mdc` | Was `architecture-documentation.md` updated when structural changes occurred? See `reviewing-code-changes` skill for trigger map. |
 | R4 | Co-Author Trailer | AGENTS.md rule | If a commit was made, does it include a `Co-authored-by: Codex` trailer? |
-| R5 | Agent Infra Enforcement | `agent-infrastructure-enforcement.mdc` | If .Codex/ files changed, was agent-infrastructure validation mentioned early? Did the agent suggest learnings after mistakes? |
+| R5 | Agent Infra Enforcement | `agent-infrastructure-enforcement.mdc` | If .claude/ or .codex/ files changed, was agent-infrastructure validation mentioned early? Did the agent suggest learnings after mistakes? |
 
 #### C: Skills
 
@@ -71,7 +71,7 @@ Walk through every mechanism and determine: FIRED / NOT FIRED / NOT APPLICABLE.
 | H3 | Check 3: Test Execution (Grind Loop) | `test-execution.sh` | Were test files changed? Was `test-execution.stamp.md` present? Did the grind loop fire? |
 | H4 | Check 4: Test Coverage (Hint) | `test-coverage.sh` | Were new ViewModel/Service files created? Do corresponding test files exist? |
 | H5 | Check 5: Enforcement Audit (Hint) | `enforcement-audit.sh` | 5+ Swift files changed — was enforcement audit suggested? |
-| H6 | Check 6: Agent Infrastructure (Grind Loop) | `agent-infrastructure.sh` | .Codex/ files changed — was `agent-infrastructure.stamp.md` present? Did the grind loop fire? |
+| H6 | Check 6: Agent Infrastructure (Grind Loop) | `agent-infrastructure.sh` | .claude/ files changed — was `agent-infrastructure.stamp.md` present? Did the grind loop fire? |
 | H7 | Pre-Commit: Validation | `.git/hooks/pre-commit` | Would a commit be blocked for missing validation? |
 | H8 | Pre-Commit: No print() | `.git/hooks/pre-commit` | Are there `print()` statements in production code? |
 | H9 | Pre-Commit: architecture-documentation.md | `.git/hooks/pre-commit` | Would a commit be blocked for stale architecture-documentation.md? |

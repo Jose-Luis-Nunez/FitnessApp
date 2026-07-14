@@ -17,6 +17,7 @@ private func assertSnapshot<V: View>(
     file: StaticString = #filePath,
     function: StaticString = #function
 ) {
+    let shouldRecord = record || ProcessInfo.processInfo.environment["RECORD_SNAPSHOTS"] == "1"
     let hosted = view
         .frame(width: size.width, height: size.height)
         .background(AppStyle.Color.backgroundColor)
@@ -29,7 +30,7 @@ private func assertSnapshot<V: View>(
         of: controller,
         as: .image(precision: 0.99, perceptualPrecision: 0.98, size: size),
         named: name,
-        record: record,
+        record: shouldRecord,
         file: file,
         testName: "\(function)",
         line: UInt(sourceLocation.line)
@@ -77,6 +78,33 @@ struct CardBackgroundSnapshotTests {
         }
         assertSnapshot(of: view, named: "idle", size: CGSize(width: 350, height: 100))
     }
+}
+
+// MARK: - Adaptive Glass Policy
+
+@Suite("Adaptive Surfaces — Policy")
+@MainActor
+struct AdaptiveSurfacePolicyTests {
+
+    @Test
+    func currentPlatformPolicy() {
+#if os(visionOS)
+        #expect(AppGlassTreatment.currentPlatform == .legacyMaterial)
+        #expect(AppDarkSurfaceTreatment.currentPlatform == .nativeGlass)
+#else
+        if #available(iOS 27.0, macOS 27.0, *) {
+            #expect(AppGlassTreatment.currentPlatform == .clear)
+            #expect(AppDarkSurfaceTreatment.currentPlatform == .flat)
+        } else if #available(iOS 26.0, macOS 26.0, *) {
+            #expect(AppGlassTreatment.currentPlatform == .regular)
+            #expect(AppDarkSurfaceTreatment.currentPlatform == .nativeGlass)
+        } else {
+            #expect(AppGlassTreatment.currentPlatform == .legacyMaterial)
+            #expect(AppDarkSurfaceTreatment.currentPlatform == .nativeGlass)
+        }
+#endif
+    }
+
 }
 
 // MARK: - CardShell Snapshots

@@ -4,9 +4,9 @@
 if [ -f "$(cd "$(dirname "$0")" && pwd)/state/checks-disabled" ]; then
   exit 0
 fi
-# Stop Hook Orchestrator (Claude Code): runs all checks when the agent stops.
+# Stop Hook Orchestrator (Codex): runs all checks when the agent stops.
 #
-# Claude Code Stop hook input (JSON via stdin):
+# Codex Stop hook input (JSON via stdin):
 #   { "session_id", "transcript_path", "cwd", "hook_event_name", "stop_hook_active" }
 #
 # We read the last assistant turn from the JSONL transcript to populate $CONTENT
@@ -15,7 +15,7 @@ fi
 #
 # Output:
 #   - exit 0 with no stdout: success, no follow-up
-#   - exit 2 with stderr text: Claude is sent back with that text as a blocker
+#   - exit 2 with stderr text: Codex is sent back with that text as a blocker
 #
 # Checks (each in its own script under checks/):
 #   1. code-validation.sh     — Grind loop: validation stamp fresh for Swift changes?
@@ -40,7 +40,7 @@ INPUT=$(cat)
 TRANSCRIPT_PATH=$(echo "$INPUT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('transcript_path',''))" 2>/dev/null || echo "")
 STOP_HOOK_ACTIVE=$(echo "$INPUT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('stop_hook_active', False))" 2>/dev/null || echo "False")
 
-# If Claude is already stopping due to a prior hook firing, don't re-fire — let it complete.
+# If Codex is already stopping due to a prior hook firing, don't re-fire — let it complete.
 if [ "$STOP_HOOK_ACTIVE" = "True" ]; then
   exit 0
 fi
@@ -127,7 +127,7 @@ done
 # --- Output ---
 
 if [ -n "$all_reasons" ]; then
-  # Exit 2 + stderr → Claude is sent back with this text as a blocker.
+  # Exit 2 + stderr → Codex is sent back with this text as a blocker.
   printf '%s\n' "$all_reasons" >&2
   exit 2
 fi

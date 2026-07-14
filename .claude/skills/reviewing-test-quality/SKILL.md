@@ -399,10 +399,14 @@ After fixing test issues, run the affected package tests to verify:
 
 ```bash
 cd ~/Documents/repo/FitnessApp/Packages/<Package> && \
-DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer \
-PATH="/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer/usr/bin:$PATH" \
+DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode-beta.app/Contents/Developer \
+PATH="/Users/jose.nunez/Downloads/Xcode-beta.app/Contents/Developer/usr/bin:$PATH" \
 xcodebuild test -scheme <Package> -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max,OS=26.0' \
 -skipMacroValidation 2>&1 | tail -30
 ```
+
+Use the generated `FitnessTraining-Package` scheme when `<Package>` is
+`FitnessTraining`; that package exposes multiple products and its product
+scheme has no test action.
 
 Write a test stamp to `.claude/hooks/state/test-execution.stamp.md` after successful execution.

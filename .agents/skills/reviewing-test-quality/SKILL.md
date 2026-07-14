@@ -15,7 +15,7 @@ description: >-
 - **Shared test utilities:** `FitnessTestSupport` package — `makeExercise()`, `MockAnalyticsStorage`, `StubAnalyticsStorage`, `waitUntil()`
 - **Package structure:** Tests live under `Packages/<PackageName>/Tests/<PackageName>Tests/`
 - **Build system:** Always use `xcodebuild` with `DEVELOPER_DIR` and `-skipMacroValidation` (see `build-and-test` rule)
-- For domain models, services, and project structure see [architecture-documentation.md](../../references/architecture-documentation.md)
+- For domain models, services, and project structure see [architecture-documentation.md](../../../.claude/references/architecture-documentation.md)
 
 ## Context Management
 
@@ -399,10 +399,14 @@ After fixing test issues, run the affected package tests to verify:
 
 ```bash
 cd ~/Documents/repo/FitnessApp/Packages/<Package> && \
-DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer \
-PATH="/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer/usr/bin:$PATH" \
+DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode-beta.app/Contents/Developer \
+PATH="/Users/jose.nunez/Downloads/Xcode-beta.app/Contents/Developer/usr/bin:$PATH" \
 xcodebuild test -scheme <Package> -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max,OS=26.0' \
 -skipMacroValidation 2>&1 | tail -30
 ```
 
-Write a test stamp to `.Codex/hooks/state/test-execution.stamp.md` after successful execution.
+Use the generated `FitnessTraining-Package` scheme when `<Package>` is
+`FitnessTraining`; that package exposes multiple products and its product
+scheme has no test action.
+
+Write a test stamp to `.claude/hooks/state/test-execution.stamp.md` after successful execution.

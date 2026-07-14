@@ -362,18 +362,22 @@ private extension IdleActiveCardModelView {
         }
 
         if showCoaching {
-            Button(action: { isExpanded.toggle() }) {
-                content
-                    .frame(
-                        minWidth: AppStyle.Layout.minimumTapTargetSize,
-                        minHeight: AppStyle.Layout.minimumTapTargetSize
-                    )
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Coaching tips")
-            .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
-            .accessibilityHint(isExpanded ? "Collapses coaching tips" : "Expands coaching tips")
+            content
+                .accessibilityHidden(true)
+                .overlay {
+                    Button(action: { isExpanded.toggle() }) {
+                        Color.clear
+                            .frame(
+                                minWidth: AppStyle.Layout.minimumTapTargetSize,
+                                minHeight: AppStyle.Layout.minimumTapTargetSize
+                            )
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Coaching tips")
+                    .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
+                    .accessibilityHint(isExpanded ? "Collapses coaching tips" : "Expands coaching tips")
+                }
         } else {
             content
         }
@@ -382,27 +386,31 @@ private extension IdleActiveCardModelView {
     /// "Last run" entry: plain text + trailing chevron (no box). Taps expand the
     /// per-set breakdown; the leading hairline lives in `progressColumn`.
     var lastRunFooter: some View {
-        Button(action: { isLastRunExpanded.toggle() }) {
-            HStack(spacing: 6) {
-                Text("Last run")
-                    .font(AppStyle.Font.metricLabel)
-                    .foregroundColor(AppStyle.Color.idleMetricValue)
+        HStack(spacing: 6) {
+            Text("Last run")
+                .font(AppStyle.Font.metricLabel)
+                .foregroundColor(AppStyle.Color.idleMetricValue)
 
-                Image(systemName: "chevron.right")
-                    .font(AppStyle.Font.cardSmallLabel)
-                    .foregroundColor(AppStyle.Color.idleMetricLabel)
-            }
-            .fixedSize()
-            .frame(
-                minWidth: AppStyle.Layout.minimumTapTargetSize,
-                minHeight: AppStyle.Layout.minimumTapTargetSize
-            )
-            .contentShape(Rectangle())
+            Image(systemName: "chevron.right")
+                .font(AppStyle.Font.cardSmallLabel)
+                .foregroundColor(AppStyle.Color.idleMetricLabel)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Last run details")
-        .accessibilityValue(isLastRunExpanded ? "Expanded" : "Collapsed")
-        .accessibilityHint(isLastRunExpanded ? "Hides set details" : "Shows set details")
+        .fixedSize()
+        .accessibilityHidden(true)
+        .overlay {
+            Button(action: { isLastRunExpanded.toggle() }) {
+                Color.clear
+                    .frame(
+                        minWidth: AppStyle.Layout.minimumTapTargetSize,
+                        minHeight: AppStyle.Layout.minimumTapTargetSize
+                    )
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Last run details")
+            .accessibilityValue(isLastRunExpanded ? "Expanded" : "Collapsed")
+            .accessibilityHint(isLastRunExpanded ? "Hides set details" : "Shows set details")
+        }
     }
 
     /// Decorative sparkle badge. The tap that opens the coaching tiles now lives

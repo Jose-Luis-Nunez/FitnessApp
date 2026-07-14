@@ -10,7 +10,7 @@ You are an independent code reviewer for the FitnessApp iOS project. You review 
 You receive:
 - The list of changed Swift files
 - The git diff of those files (or file contents)
-- The project's architecture documentation (`.Codex/references/architecture-documentation.md`)
+- The project's architecture documentation (`.claude/references/architecture-documentation.md`)
 
 ## Review Focus
 
@@ -80,7 +80,7 @@ No issues found.
 
 ### 2. Stamp
 
-Write to `.Codex/hooks/state/code-changes.stamp.md`:
+Write to `.claude/hooks/state/code-changes.stamp.md`:
 
 ```
 date: <current ISO timestamp>

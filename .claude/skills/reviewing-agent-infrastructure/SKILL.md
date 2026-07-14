@@ -1,7 +1,8 @@
 ---
 name: reviewing-agent-infrastructure
 description: >-
-  Validate and fix agent infrastructure after changes to .claude/ files.
+  Validate and fix agent infrastructure after changes to .claude/ source files
+  or .codex runtime adapters.
   Checks reference integrity, agent-system-overview sync, description accuracy,
   handoff links, hook alignment, and name consistency. Uses a Verifier subagent
   to independently confirm findings before writing the stamp. Use after editing
@@ -11,11 +12,14 @@ description: >-
 
 # Reviewing Agent Infrastructure
 
-Validate that agent-system files (.claude/) are consistent after changes. A Verifier subagent independently confirms results before the stamp is written.
+Validate that canonical agent-system files (`.claude/`) and Codex runtime
+adapters (`.codex/`) are consistent after changes. A Verifier subagent
+independently confirms results before the stamp is written.
 
 ## When to Activate
 
-- After modifying files under `.claude/` (rules, skills, hooks, references)
+- After modifying files under `.claude/` (rules, skills, hooks, references) or
+  `.codex/` (runtime hooks and role configurations)
 - After `reviewing-agent-effectiveness` identifies gaps (NOT FIRED findings)
 - User says "reflect", "learn from this", "improve agent system"
 - After the user manually corrects agent output
@@ -27,10 +31,11 @@ Validate that agent-system files (.claude/) are consistent after changes. A Veri
 
 ### 1. Reference Integrity
 
-Grep for **old names** of renamed/deleted skills, rules, or hooks across `.claude/`:
+Grep for **old names** of renamed/deleted skills, rules, or hooks across
+`.claude/` and `.codex/`:
 
 ```bash
-rg "old-skill-name" .claude/
+rg "old-skill-name" .claude/ .codex/
 ```
 
 Zero hits required. When a folder or conceptual layer was deleted, also grep for the layer name in prose text (descriptions, frontmatter, examples).
@@ -41,7 +46,8 @@ Compare files on disk with tables in `.claude/references/agent-system-overview.m
 
 - Every `.mdc` in `.claude/rules/` has a row in L2/L2g
 - Every `SKILL.md` in `.claude/skills/*/` has a row in L3
-- Every hook in `.claude/hooks/checks/` has a row in L5
+- Every hook in `.claude/hooks/checks/` and its `.codex/hooks/checks/` runtime
+  counterpart has a row in L5
 - No rows reference files that no longer exist
 
 ### 3. Description Consistency
@@ -102,17 +108,22 @@ Write the report with **all 6 section headings** — the hook checks for them:
 
 After writing the report, spawn a **Verifier subagent** via the Task tool. The Verifier independently checks the results and writes the stamp. Do NOT write the stamp yourself.
 
-The Verifier's role definition lives in `.claude/agents/verifier.md`. The `SubagentStop` hook detects `subagent_type: "verifier"` from the parent transcript and applies the verifier quality gate.
+The Claude Code role definition lives in `.claude/agents/verifier.md`; the
+Codex runtime equivalent lives in `.codex/agents/verifier.toml`. Both write
+their stamp to the canonical `.claude/hooks/state/` directory. The
+`SubagentStop` hook detects `subagent_type: "verifier"` from the parent
+transcript and applies the verifier quality gate.
 
 ```
 Task(
   subagent_type: "verifier",
   description: "Verify agent-infrastructure validation",
   prompt: """
-Read .claude/agents/verifier.md for your full role definition and instructions.
+Read `.claude/agents/verifier.md` in Claude Code, or
+`.codex/agents/verifier.toml` in Codex, for your full role definition and instructions.
 
 CHANGED FILES:
-<paste the list of changed .claude/ files>
+<paste the list of changed .claude/ and .codex/ files>
 
 REPORT FROM MAIN AGENT:
 <paste the full report>
