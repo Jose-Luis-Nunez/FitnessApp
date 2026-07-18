@@ -1,4 +1,5 @@
 import Foundation
+import FitnessCore
 
 enum TrainingIDs {
     static let doneButton = "id_button_done"
@@ -43,7 +44,4 @@ enum WorkoutLabels {
     static let typeOptions = ["Pull", "Push", "Leg", "Individual", "Full"]
 }
 
-enum BottomBarIDs {
-    static let contextMenu = "id_bottom_context_menu"
-    static let workoutsTab = "id_bottom_tab_workouts"
-}
+typealias BottomBarIDs = FitnessCore.BottomBarIDs

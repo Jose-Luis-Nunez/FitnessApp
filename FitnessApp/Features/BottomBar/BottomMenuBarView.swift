@@ -9,11 +9,11 @@ private enum BottomTab {
 
     var accessibilityIdentifier: String {
         switch self {
-        case .workouts: BottomBarIDs.workoutsTab
-        case .training: BottomBarIDs.trainingTab
-        case .chart: BottomBarIDs.analyticsTab
-        case .calendar: BottomBarIDs.scheduleTab
-        case .profile: BottomBarIDs.profileTab
+        case .workouts: FitnessCore.BottomBarIDs.workoutsTab
+        case .training: FitnessCore.BottomBarIDs.trainingTab
+        case .chart: FitnessCore.BottomBarIDs.analyticsTab
+        case .calendar: FitnessCore.BottomBarIDs.scheduleTab
+        case .profile: FitnessCore.BottomBarIDs.profileTab
         }
     }
 }
@@ -245,7 +245,7 @@ struct BottomMenuBarView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Actions")
-            .accessibilityIdentifier(BottomBarIDs.contextMenu)
+            .accessibilityIdentifier(FitnessCore.BottomBarIDs.contextMenu)
         } else {
             Circle()
                 .fill(Color.clear)

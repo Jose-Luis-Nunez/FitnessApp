@@ -155,13 +155,15 @@ public enum AppStyle {
         public static let workoutTileCompactCountInset: CGFloat = 20
         public static let workoutTileCompactSettingsTopInset: CGFloat = 22
         public static let workoutTileCompactBorderWidth: CGFloat = 2
-        public static let workoutHeroCountOuterStroke: CGFloat = 3
-        public static let workoutHeroCountInnerStroke: CGFloat = 1
         public static let workoutHeroSettingsIconSize: CGFloat = 24
         public static let workoutHeroBorderWidth: CGFloat = 1
-        public static let workoutHeroCountMinimumScale: CGFloat = 0.75
+        public static let workoutHeroMetricsTopSpacing: CGFloat = 30
+        public static let workoutHeroArtworkWidth: CGFloat = 170
+        public static let workoutHeroArtworkHeight: CGFloat = 121
+        public static let workoutHeroArtworkTrailingOverflow: CGFloat = 38
         public static let workoutHeroStartChipHorizontalPadding: CGFloat = 12
         public static let workoutHeroStartChipVerticalPadding: CGFloat = 5
+        public static let workoutHeroStartChipIconSpacing: CGFloat = 8
         public static let workoutHeroStartChipBorderWidth: CGFloat = 1
     }
 
@@ -177,6 +179,7 @@ public enum AppStyle {
         public static let pill: CGFloat = 20
         public static let overlay: CGFloat = 20
         public static let capsuleToggle: CGFloat = 12
+        public static let workoutHeroStartChip: CGFloat = 8
     }
 
     public enum Font {
@@ -202,6 +205,8 @@ public enum AppStyle {
         public static let categoryTileCount = SwiftUI.Font.system(size: 16, weight: .black)
         public static let categoryTileBadge = SwiftUI.Font.system(size: 14, weight: .heavy)
         public static let categoryTileProgress = SwiftUI.Font.system(size: 12, weight: .heavy)
+        public static let workoutHeroExerciseCount = SwiftUI.Font.system(size: 40, weight: .black)
+        public static let workoutHeroExerciseLabel = SwiftUI.Font.system(size: 12, weight: .medium)
 
         public static let tileLabel = SwiftUI.Font.system(size: 14, weight: .semibold)
         public static let tileValue = SwiftUI.Font.system(size: 16, weight: .medium)
@@ -449,7 +454,6 @@ public enum AppStyle {
         public static let categoryTileCompletionOverlay: Double = 0.3
         public static let workoutTileCompactDefaultFill: Double = 0.2
         public static let workoutHeroBorder: Double = 0.72
-        public static let workoutHeroStartChipFill: Double = 0.42
     }
 
     public enum Shadow {

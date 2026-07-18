@@ -10,7 +10,13 @@ struct WorkoutTileArtworkTests {
         #expect(WorkoutTileArtwork.assetName == "workoutDefaultIcon")
     }
 
-    @Test func artworkAlignmentMatchesWorkoutTypeSpecification() {
+    @Test func heroArtworkUsesFixedTopCropForEveryWorkoutType() {
+        for type in WorkoutType.allCases {
+            #expect(WorkoutTileArtwork.heroCropAlignment(for: type) == .top)
+        }
+    }
+
+    @Test func createWorkoutArtworkAlignmentMatchesWorkoutTypeSpecification() {
         #expect(WorkoutType.pull.iconAlignment == .top)
         #expect(WorkoutType.push.iconAlignment == .top)
         #expect(WorkoutType.leg.iconAlignment == .bottom)

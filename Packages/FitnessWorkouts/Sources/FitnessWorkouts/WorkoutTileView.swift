@@ -9,6 +9,14 @@ public enum WorkoutTileLayout {
 
 enum WorkoutTileArtwork {
     static let assetName = "workoutDefaultIcon"
+
+    /// Overview tiles use one fixed upper-body composition; only the Create-Workout preview varies by type.
+    static func heroCropAlignment(for workoutType: WorkoutType) -> Alignment {
+        switch workoutType {
+        case .pull, .push, .leg, .individual, .full:
+            return .top
+        }
+    }
 }
 
 public struct WorkoutTileView: View {
@@ -125,89 +133,107 @@ public struct WorkoutTileView: View {
     }
 
     private var heroArtwork: some View {
-        CategoryTileArtworkStage(
-            alignment: workout.type.iconAlignment
-        ) {
-            Image(WorkoutTileArtwork.assetName)
-                .resizable()
-                .interpolation(.high)
-                .scaledToFill()
-        }
-        .allowsHitTesting(false)
+        Image(WorkoutTileArtwork.assetName)
+            .resizable()
+            .interpolation(.high)
+            .scaledToFill()
+            .frame(
+                width: AppStyle.Layout.workoutHeroArtworkWidth,
+                height: AppStyle.Layout.workoutHeroArtworkHeight,
+                alignment: WorkoutTileArtwork.heroCropAlignment(for: workout.type)
+            )
+            .clipped()
+            .offset(x: AppStyle.Layout.workoutHeroArtworkTrailingOverflow)
+            .frame(
+                maxWidth: .infinity,
+                maxHeight: .infinity,
+                alignment: .bottomTrailing
+            )
+            .clipped()
+            .allowsHitTesting(false)
     }
 
     private var heroContent: some View {
-        VStack(spacing: ExerciseCardLayout.CategoryTile.contentSpacing) {
-            HStack {
-                Text(workout.name)
-                    .font(AppStyle.Font.categoryTileTitle)
-                    .foregroundColor(AppStyle.Color.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(ExerciseCardLayout.CategoryTile.minimumTextScale)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+        ZStack {
+            heroArtwork
+
+            VStack(spacing: 0) {
+                heroHeader
 
                 Spacer()
+                    .frame(height: AppStyle.Layout.workoutHeroMetricsTopSpacing)
 
-                Color.clear
-                    .frame(
-                        width: ExerciseCardLayout.CategoryTile.headerBadgeSize,
-                        height: ExerciseCardLayout.CategoryTile.headerBadgeSize
-                    )
-            }
-            .padding(.horizontal, ExerciseCardLayout.CategoryTile.contentPadding)
+                heroExerciseCount
 
-            ZStack {
-                heroArtwork
+                Spacer(minLength: 0)
 
                 HStack {
-                    heroCountBadge
-                    Spacer()
+                    startChip
+                    Spacer(minLength: 0)
                 }
+                .padding(.horizontal, ExerciseCardLayout.CategoryTile.contentPadding)
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: ExerciseCardLayout.CategoryTile.iconSize)
-            .padding(.horizontal, ExerciseCardLayout.CategoryTile.contentPadding)
-
-            Spacer().frame(height: ExerciseCardLayout.CategoryTile.footerSpacerHeight)
-
-            heroFooter
+            .padding(.vertical, ExerciseCardLayout.CategoryTile.verticalPadding)
         }
-        .padding(.vertical, ExerciseCardLayout.CategoryTile.verticalPadding)
     }
 
-    private var heroFooter: some View {
-        HStack(spacing: ExerciseCardLayout.CategoryTile.contentSpacing) {
-            Spacer(minLength: 0)
+    private var heroHeader: some View {
+        HStack {
+            Text(workout.name)
+                .font(AppStyle.Font.categoryTileTitle)
+                .foregroundColor(AppStyle.Color.white)
+                .lineLimit(1)
+                .minimumScaleFactor(ExerciseCardLayout.CategoryTile.minimumTextScale)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text(" ")
-                .font(AppStyle.Font.categoryTileProgress)
-                .foregroundColor(.clear)
+            Spacer()
+
+            Color.clear
+                .frame(
+                    width: ExerciseCardLayout.CategoryTile.headerBadgeSize,
+                    height: ExerciseCardLayout.CategoryTile.headerBadgeSize
+                )
         }
         .padding(.horizontal, ExerciseCardLayout.CategoryTile.contentPadding)
-        .overlay(alignment: .trailing) {
-            startChip
-                .padding(.trailing, ExerciseCardLayout.CategoryTile.contentPadding)
+    }
+
+    private var heroExerciseCount: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("\(exerciseCount)")
+                .font(AppStyle.Font.workoutHeroExerciseCount)
+                .foregroundColor(AppStyle.Color.green)
+                .lineLimit(1)
+
+            Text("Exercises")
+                .font(AppStyle.Font.workoutHeroExerciseLabel)
+                .foregroundColor(AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel))
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, ExerciseCardLayout.CategoryTile.contentPadding)
     }
 
     private var startChip: some View {
-        Text("Start")
-            .font(AppStyle.Font.categoryTileProgress)
-            .foregroundColor(AppStyle.Color.green)
-            .padding(.horizontal, AppStyle.Layout.workoutHeroStartChipHorizontalPadding)
-            .padding(.vertical, AppStyle.Layout.workoutHeroStartChipVerticalPadding)
-            .background {
-                Capsule(style: .continuous)
-                    .fill(AppStyle.Color.backgroundColor.opacity(AppStyle.Opacity.workoutHeroStartChipFill))
-            }
-            .overlay {
-                Capsule(style: .continuous)
-                    .stroke(
-                        AppStyle.Color.green,
-                        lineWidth: AppStyle.Layout.workoutHeroStartChipBorderWidth
-                    )
-            }
-            .fixedSize()
+        HStack(spacing: AppStyle.Layout.workoutHeroStartChipIconSpacing) {
+            Text("Start")
+                .font(AppStyle.Font.categoryTileProgress)
+
+            Image(systemName: "chevron.right")
+                .font(AppStyle.Font.categoryTileProgress)
+        }
+        .foregroundColor(AppStyle.Color.green)
+        .padding(.horizontal, AppStyle.Layout.workoutHeroStartChipHorizontalPadding)
+        .padding(.vertical, AppStyle.Layout.workoutHeroStartChipVerticalPadding)
+        .overlay {
+            RoundedRectangle(
+                cornerRadius: AppStyle.CornerRadius.workoutHeroStartChip,
+                style: .continuous
+            )
+            .stroke(
+                AppStyle.Color.green,
+                lineWidth: AppStyle.Layout.workoutHeroStartChipBorderWidth
+            )
+        }
+        .fixedSize()
     }
 
     private var heroSettingsInsetAdjustment: CGFloat {
@@ -233,29 +259,6 @@ public struct WorkoutTileView: View {
             Text("\(exerciseCount)")
                 .font(AppStyle.Font.detailBadge)
                 .foregroundColor(isDefault ? AppStyle.Color.green : AppStyle.Color.white)
-        }
-    }
-
-    private var heroCountBadge: some View {
-        ZStack {
-            Circle()
-                .stroke(AppStyle.Color.green, lineWidth: AppStyle.Layout.workoutHeroCountOuterStroke)
-                .frame(
-                    width: ExerciseCardLayout.CategoryTile.headerBadgeSize,
-                    height: ExerciseCardLayout.CategoryTile.headerBadgeSize
-                )
-            Circle()
-                .stroke(AppStyle.Color.green.opacity(AppStyle.Opacity.fadedOverlay), lineWidth: AppStyle.Layout.workoutHeroCountInnerStroke)
-                .frame(
-                    width: ExerciseCardLayout.CategoryTile.headerBadgeInnerSize,
-                    height: ExerciseCardLayout.CategoryTile.headerBadgeInnerSize
-                )
-            Text("\(exerciseCount)")
-                .font(AppStyle.Font.categoryTileCount)
-                .foregroundColor(AppStyle.Color.green)
-                .lineLimit(1)
-                .minimumScaleFactor(AppStyle.Layout.workoutHeroCountMinimumScale)
-                .frame(width: ExerciseCardLayout.CategoryTile.headerBadgeInnerSize)
         }
     }
 
