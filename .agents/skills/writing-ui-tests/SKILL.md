@@ -8,7 +8,7 @@ description: >-
 
 # Writing New UI Tests
 
-For shared conventions (DSL, constraints, template, naming) see [ui-test-conventions.md](../../references/ui-test-conventions.md).
+For shared conventions (DSL, constraints, template, naming) see [ui-test-conventions.md](../../../.claude/references/ui-test-conventions.md).
 
 ## Workflow
 
@@ -43,15 +43,15 @@ In each View, find elements the user interacts with:
 
 For each interactive element:
 1. **Accessibility Identifier** — does it have `.accessibilityIdentifier(AID.x)`? If not, add `enum AID` (or extend existing one) in the View with the new ID.
-2. **Test ID constant** — does `Config/TestAccessibilityIDs.swift` have a matching constant? If not, add it.
+2. **Test ID constant** — does `Selectors/AccessibilityIDs.swift` have a matching constant? If not, add it.
 3. **DSL function** — does `ElementActions.swift` have a function for this interaction type? If not, add it.
 4. **Fixture** — does `Fixtures/TestFixtures.swift` have a preset for this screen's data? If not, add one.
 
-If a newly added selector is not found on the first test run, follow [debugging-ui-tests/SKILL.md](../debugging-ui-tests/SKILL.md) (or directly the decision tree in [ui-test-conventions.md § Diagnosing a Failing Selector](../../references/ui-test-conventions.md#diagnosing-a-failing-selector)) before changing the AID, the production view, or the timeout.
+If a newly added selector is not found on the first test run, follow [debugging-ui-tests/SKILL.md](../debugging-ui-tests/SKILL.md) (or directly the decision tree in [ui-test-conventions.md § Diagnosing a Failing Selector](../../../.claude/references/ui-test-conventions.md#diagnosing-a-failing-selector)) before changing the AID, the production view, or the timeout.
 
 ### Step 3 — Write the Test
 
-Use the test template from [ui-test-conventions.md](../../references/ui-test-conventions.md). Key rules:
+Use the test template from [ui-test-conventions.md](../../../.claude/references/ui-test-conventions.md). Key rules:
 
 - Inherit from `BaseTest`
 - Mark test methods `@MainActor`
@@ -62,7 +62,7 @@ Use the test template from [ui-test-conventions.md](../../references/ui-test-con
 
 ### Step 4 — Review the Result
 
-Review the finished test file against the **Review Checklist** in [ui-test-conventions.md](../../references/ui-test-conventions.md). Fix any violations before considering the test done.
+Review the finished test file against the **Review Checklist** in [ui-test-conventions.md](../../../.claude/references/ui-test-conventions.md). Fix any violations before considering the test done.
 
 ## Documentation Sync
 

@@ -37,6 +37,36 @@ private func assertSnapshot<V: View>(
     )
 }
 
+// MARK: - Category Tile Artwork Snapshots
+
+@Suite("CategoryTileArtworkStage — Snapshots", .tags(.snapshot))
+@MainActor
+struct CategoryTileArtworkStageSnapshotTests {
+
+    @Test func topAligned() {
+        let view = CategoryTileArtworkStage(alignment: .top) {
+            artworkAlignmentFixture
+        }
+        assertSnapshot(of: view, named: "top", size: CGSize(width: 120, height: 120))
+    }
+
+    @Test func bottomAligned() {
+        let view = CategoryTileArtworkStage(alignment: .bottom) {
+            artworkAlignmentFixture
+        }
+        assertSnapshot(of: view, named: "bottom", size: CGSize(width: 120, height: 120))
+    }
+
+    private var artworkAlignmentFixture: some View {
+        VStack(spacing: 0) {
+            Color.orange.frame(height: 40)
+            Color.cyan.frame(height: 60)
+            Color.indigo.frame(height: 40)
+        }
+        .frame(width: ExerciseCardLayout.CategoryTile.iconArtworkSize, height: 140)
+    }
+}
+
 // MARK: - CardBackground Snapshots
 
 @Suite("CardBackground — Snapshots", .tags(.snapshot))

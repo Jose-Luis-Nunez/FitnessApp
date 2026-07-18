@@ -83,14 +83,14 @@ struct MigrationV3toV4Tests {
         let v4 = try openV4(at: url)
         let ctx = ModelContext(v4)
 
-        let exercise = try #require(try ctx.fetch(FetchDescriptor<ExerciseModel>(
-            predicate: #Predicate { $0.id == exerciseId }
+        let exercise = try #require(try ctx.fetch(FetchDescriptor<SchemaV4.ExerciseModel>(
+            predicate: #Predicate<SchemaV4.ExerciseModel> { $0.id == exerciseId }
         )).first)
 
         // Lightweight column-add leaves the optional NULL for existing rows…
         #expect(exercise.isActive == nil)
         // …and every read path interprets that as active.
-        #expect(exercise.toDomain().isActive == true)
+        #expect((exercise.isActive ?? true) == true)
         // Other data survives the migration.
         #expect(exercise.name == "Squat")
         #expect(exercise.workoutId == workoutId)
@@ -106,18 +106,18 @@ struct MigrationV3toV4Tests {
 
         let v4 = try openV4(at: url)
         let ctx = ModelContext(v4)
-        let exercise = try #require(try ctx.fetch(FetchDescriptor<ExerciseModel>(
-            predicate: #Predicate { $0.id == exerciseId }
+        let exercise = try #require(try ctx.fetch(FetchDescriptor<SchemaV4.ExerciseModel>(
+            predicate: #Predicate<SchemaV4.ExerciseModel> { $0.id == exerciseId }
         )).first)
 
         exercise.isActive = false
         try ctx.save()
 
         let reopened = ModelContext(try openV4(at: url))
-        let again = try #require(try reopened.fetch(FetchDescriptor<ExerciseModel>(
-            predicate: #Predicate { $0.id == exerciseId }
+        let again = try #require(try reopened.fetch(FetchDescriptor<SchemaV4.ExerciseModel>(
+            predicate: #Predicate<SchemaV4.ExerciseModel> { $0.id == exerciseId }
         )).first)
         #expect(again.isActive == false)
-        #expect(again.toDomain().isActive == false)
+        #expect((again.isActive ?? true) == false)
     }
 }

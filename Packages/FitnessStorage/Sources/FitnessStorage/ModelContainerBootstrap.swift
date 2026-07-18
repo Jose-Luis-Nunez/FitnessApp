@@ -24,8 +24,8 @@ private let bootstrapLogger = Logger(subsystem: "FitnessStorage", category: "Boo
 ///    `restoreQuarantinedStoreIfPossible`). This makes quarantine non-terminal:
 ///    a build where the open succeeds auto-recovers data an earlier build hid.
 ///
-/// 1. **Open with the plan.** The current live schema is `SchemaV4`; opening with
-///    `AppMigrationPlan` runs any pending forward migration (V1→V2→V3→V4). This is
+/// 1. **Open with the plan.** The current live schema is `SchemaV5`; opening with
+///    `AppMigrationPlan` runs any pending forward migration (V1→V2→V3→V4→V5). This is
 ///    the only path for normal forward migrations once a store has a valid
 ///    versioned identity, and the only path that runs at all on a fresh install.
 ///
@@ -35,11 +35,11 @@ private let bootstrapLogger = Logger(subsystem: "FitnessStorage", category: "Boo
 ///    intentionally mirror the pre-T3 storage shape (same property names/types),
 ///    so SwiftData accepts the existing rows and stamps the store with
 ///    `(1,0,0)`. We close that container immediately and re-open with the plan,
-///    which now finds a valid starting point and runs the full V1→V2→V3→V4 chain.
+///    which now finds a valid starting point and runs the full V1→V2→V3→V4→V5 chain.
 ///
 /// 3. **Quarantine + fresh start.** If (2) also fails (truly corrupt store, or a
 ///    shape we cannot map), we move the store files to a sibling `*.bak-<ts>/`
-///    directory and open a fresh V4 container. We never silently delete user
+///    directory and open a fresh V5 container. We never silently delete user
 ///    data — the backup stays on disk for forensics, manual recovery, or the
 ///    automatic step-0 restore on a later launch.
 ///
@@ -78,7 +78,7 @@ public enum ModelContainerBootstrap {
 
     static func makeContainer(storeURL: URL) -> ModelContainer {
         let configuration = ModelConfiguration(url: storeURL)
-        let liveSchema = Schema(versionedSchema: SchemaV4.self)
+        let liveSchema = Schema(versionedSchema: SchemaV5.self)
 
         if let container = openWithMigrationPlan(schema: liveSchema, configuration: configuration) {
             return container
@@ -202,7 +202,7 @@ public enum ModelContainerBootstrap {
     /// promote or discard. The container is scoped to this call so its file
     /// handles are released before the caller moves the underlying files.
     private static func storeDataScore(at url: URL) -> Int? {
-        let schema = Schema(versionedSchema: SchemaV4.self)
+        let schema = Schema(versionedSchema: SchemaV5.self)
         let configuration = ModelConfiguration(url: url)
         do {
             let container = try ModelContainer(for: schema, migrationPlan: AppMigrationPlan.self, configurations: configuration)

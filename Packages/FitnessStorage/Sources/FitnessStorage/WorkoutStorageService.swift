@@ -147,11 +147,23 @@ public final class WorkoutStorageService: WorkoutStoring {
     @ObservationIgnored
     private static let defaultAutoWorkoutName = "Workout 1"
 
-    public func createWorkout(name: String, selectedCategories: Set<MuscleCategoryGroup> = Set(MuscleCategoryGroup.allCases)) -> Workout {
-        let newWorkout = Workout(name: name, selectedCategories: selectedCategories)
+    public func createWorkout(
+        name: String,
+        selectedCategories: Set<MuscleCategoryGroup> = Set(MuscleCategoryGroup.allCases),
+        type: WorkoutType = .individual
+    ) throws -> Workout {
+        let newWorkout = Workout(name: name, selectedCategories: selectedCategories, type: type)
         let model = WorkoutModel.from(newWorkout)
         context.insert(model)
-        saveContext()
+
+        do {
+            try context.save()
+        } catch {
+            context.rollback()
+            logger.error("Failed to create workout \(newWorkout.id): \(error)")
+            throw WorkoutStorageError.persistenceFailed
+        }
+
         reload()
         return newWorkout
     }
@@ -186,7 +198,8 @@ public final class WorkoutStorageService: WorkoutStoring {
             name: resolvedName,
             createdDate: Date(),
             lastModified: Date(),
-            selectedCategories: workout.selectedCategories
+            selectedCategories: workout.selectedCategories,
+            type: workout.type
         )
 
         let model = WorkoutModel.from(importedWorkout, isDefault: false)
@@ -272,6 +285,7 @@ public final class WorkoutStorageService: WorkoutStoring {
             if let model = try context.fetch(descriptor).first {
                 model.name = workout.name
                 model.selectedCategories = workout.selectedCategories.map(\.rawValue)
+                model.typeRaw = workout.type.rawValue
                 model.lastModified = Date()
                 saveContext()
                 reload()

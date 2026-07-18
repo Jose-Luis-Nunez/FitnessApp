@@ -6,17 +6,27 @@ public final class MockWorkoutStorage: WorkoutStoring {
     public var workouts: [Workout] = []
     public var currentWorkout: Workout?
     public var defaultWorkout: Workout?
+    public var createWorkoutError: Error?
 
     public init() {}
 
-    public func createWorkout(name: String, selectedCategories: Set<MuscleCategoryGroup>) -> Workout {
-        let workout = Workout(name: name, selectedCategories: selectedCategories)
+    public func createWorkout(
+        name: String,
+        selectedCategories: Set<MuscleCategoryGroup>,
+        type: WorkoutType = .individual
+    ) throws -> Workout {
+        if let createWorkoutError { throw createWorkoutError }
+        let workout = Workout(name: name, selectedCategories: selectedCategories, type: type)
         workouts.append(workout)
         return workout
     }
 
     public func duplicateWorkout(_ workout: Workout) -> Workout {
-        let copy = Workout(name: "\(workout.name) Copy", selectedCategories: workout.selectedCategories)
+        let copy = Workout(
+            name: "\(workout.name) Copy",
+            selectedCategories: workout.selectedCategories,
+            type: workout.type
+        )
         workouts.append(copy)
         return copy
     }
@@ -38,7 +48,8 @@ public final class MockWorkoutStorage: WorkoutStoring {
             name: resolvedName,
             createdDate: Date(),
             lastModified: Date(),
-            selectedCategories: workout.selectedCategories
+            selectedCategories: workout.selectedCategories,
+            type: workout.type
         )
         workouts.append(imported)
         return imported

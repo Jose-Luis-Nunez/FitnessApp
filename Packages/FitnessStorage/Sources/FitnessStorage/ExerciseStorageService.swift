@@ -39,6 +39,19 @@ public final class ExerciseStorageService: ExerciseStoring {
         }
     }
 
+    public func exerciseCountsByWorkout() -> [UUID: Int] {
+        do {
+            let models = try context.fetch(FetchDescriptor<ExerciseModel>())
+            return models.reduce(into: [:]) { counts, model in
+                guard let workoutId = model.workoutId else { return }
+                counts[workoutId, default: 0] += 1
+            }
+        } catch {
+            logger.error("Failed to fetch exercise counts by workout: \(error)")
+            return [:]
+        }
+    }
+
     public func saveForWorkout(_ exercises: [Exercise], workoutId: UUID, category: MuscleCategoryGroup) {
         let categoryRaw = category.rawValue
         let deleteDescriptor = FetchDescriptor<ExerciseModel>(

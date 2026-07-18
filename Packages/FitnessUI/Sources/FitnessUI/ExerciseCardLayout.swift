@@ -12,9 +12,22 @@ public enum ExerciseCardLayout {
 
     /// Constants for `CategoryTile`-style cards (the muscle-category grid).
     public enum CategoryTile {
+        public static let gridSpacing: CGFloat = 10
+        public static let gridHorizontalPadding: CGFloat = AppStyle.Padding.screenHorizontal
         public static let contentPadding: CGFloat = AppStyle.Padding.screenHorizontal
+        public static let contentSpacing: CGFloat = 8
+        public static let verticalPadding: CGFloat = 12
         public static let verticalSpacing: CGFloat = 6
+        public static let height: CGFloat = 180
+        public static let footerSpacerHeight: CGFloat = 3
+        public static let headerBadgeSize: CGFloat = 32
+        public static let headerBadgeInnerSize: CGFloat = 26
         public static let iconSize: CGFloat = 80
+        public static let iconArtworkSize: CGFloat = 100
+        public static let iconGlowSize: CGFloat = iconSize * 0.9
+        public static let iconGlowBlurRadius: CGFloat = 15
+        public static let progressWidth: CGFloat = 90
+        public static let minimumTextScale: CGFloat = 0.8
     }
 
     /// Constants for the in-line progress bar inside category tiles.

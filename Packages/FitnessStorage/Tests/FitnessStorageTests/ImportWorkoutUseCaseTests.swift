@@ -32,10 +32,11 @@ struct ImportWorkoutUseCaseTests {
     private func makeEnvelopeJSON(
         version: Int = WorkoutShareEnvelope.currentVersion,
         workoutName: String = "Push Day",
+        workoutType: WorkoutType = .individual,
         exerciseCount: Int = 2,
         analyticsCount: Int = 3
     ) throws -> (jsonString: String, exerciseIds: [UUID]) {
-        let workout = Workout(name: workoutName, selectedCategories: [.chest])
+        let workout = Workout(name: workoutName, selectedCategories: [.chest], type: workoutType)
         let exercises: [Exercise] = (0..<exerciseCount).map { i in
             Exercise(
                 id: UUID(),
@@ -78,13 +79,22 @@ struct ImportWorkoutUseCaseTests {
     func validJsonImports() throws {
         let (sut, ws, _, _) = makeSUT()
         let countBefore = ws.workouts.count
-        let (json, _) = try makeEnvelopeJSON()
+        let (json, _) = try makeEnvelopeJSON(workoutType: .leg)
 
         let imported = try sut.execute(jsonString: json)
 
         #expect(ws.workouts.count == countBefore + 1)
         #expect(imported.name == "Push Day")
+        #expect(imported.type == .leg)
         #expect(imported.selectedCategories.contains(.chest))
+
+        let reloaded = WorkoutStorageService(
+            container: container,
+            defaults: TestHelpers.makeIsolatedDefaults(),
+            exerciseStorage: TestHelpers.makeNoOpExerciseStoring(),
+            analyticsStorage: TestHelpers.makeNoOpAnalyticsStoring()
+        )
+        #expect(reloaded.workouts.first { $0.id == imported.id }?.type == .leg)
     }
 
     // MARK: - UUID freshness

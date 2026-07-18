@@ -13,6 +13,10 @@ struct UITestLaunchConfig: Codable {
 
     // MARK: - Factory Methods
 
+    static func home() -> UITestLaunchConfig {
+        UITestLaunchConfig(screen: .home, category: "")
+    }
+
     static func category(_ name: String) -> UITestLaunchConfig {
         UITestLaunchConfig(screen: .category, category: name)
     }

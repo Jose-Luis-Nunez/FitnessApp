@@ -13,7 +13,7 @@ description: >-
 
 ## Before You Start
 
-Read [architecture-documentation.md](../../references/architecture-documentation.md) for domain models, services, navigation, and existing shared components.
+Read [architecture-documentation.md](../../../.claude/references/architecture-documentation.md) for domain models, services, navigation, and existing shared components.
 
 ## Steps
 
@@ -93,7 +93,7 @@ case .<featureName>:
         .onAppear { overlayState.currentScene = .<scene> }
 ```
 
-5. **Verify placement** — not everything is a feature module. See the "Where to Place New Code" table in [architecture-documentation.md](../../references/architecture-documentation.md) for pickers, shared views, utilities, and services.
+5. **Verify placement** — not everything is a feature module. See the "Where to Place New Code" table in [architecture-documentation.md](../../../.claude/references/architecture-documentation.md) for pickers, shared views, utilities, and services.
 
 6. **Run the checklist** below before finishing.
 
@@ -103,7 +103,7 @@ case .<featureName>:
 
 When adding to an existing feature (new view, new service method, new chart type, etc.):
 
-1. **Locate the feature folder** — check the Feature Map in [architecture-documentation.md](../../references/architecture-documentation.md).
+1. **Locate the feature folder** — check the Feature Map in [architecture-documentation.md](../../../.claude/references/architecture-documentation.md).
 2. **Read existing code first** — understand the ViewModel's state and the View's structure before adding.
 3. **Add to the ViewModel** — new data, new methods. Never add business logic to the View.
 4. **Reuse shared components** — check the Shared Components table before building custom UI.
@@ -133,7 +133,7 @@ Pickers belong in `Features/Picker/`, not in a feature folder. Use existing pick
 - [ ] All styling uses `AppStyle` tokens (Color, Font, Padding, CornerRadius, Opacity)
 - [ ] No hardcoded `Color(hex:)`, `.font(.system(...))`, numeric `.padding()`, `.cornerRadius()`, `.opacity()`
 - [ ] If new font sizes/weights are needed, add tokens to `AppStyle.Font` first
-- [ ] Reusable components used where applicable (see Shared Components table in [architecture-documentation.md](../../references/architecture-documentation.md))
+- [ ] Reusable components used where applicable (see Shared Components table in [architecture-documentation.md](../../../.claude/references/architecture-documentation.md))
 - [ ] Weight display uses `WeightFormatter.displayWeight(_:)`
 - [ ] Analytics date logic uses `AnalyticsDateHelper`
 - [ ] ViewModel is `ObservableObject` with `@Published` properties
@@ -141,7 +141,7 @@ Pickers belong in `Features/Picker/`, not in a feature folder. Use existing pick
 - [ ] No business logic in the View
 - [ ] Navigation registered in `NavigationDestination` enum
 - [ ] `AppCurrentScene` enum updated if new scene type
-- [ ] All interactive elements (buttons, text fields, tappable views) have `.accessibilityIdentifier("id_<context>_<element>")` — see naming patterns in [ui-test-conventions.md](../../references/ui-test-conventions.md)
+- [ ] All interactive elements (buttons, text fields, tappable views) have `.accessibilityIdentifier("id_<context>_<element>")` — see naming patterns in [ui-test-conventions.md](../../../.claude/references/ui-test-conventions.md)
 - [ ] Matching Selector constants added in `FitnessAppUITests/Selectors/<ScreenName>Selectors.swift`
 - [ ] Unit tests written for ViewModel and Service logic (at minimum: initial state, main action, edge case). Place in the relevant `Packages/*/Tests/` target. New services must have a protocol so they can be mocked in tests.
 - [ ] **Snapshot test** added when introducing a new `public` View in `Packages/FitnessUI/Sources/` or `Packages/FitnessPersistenceUI/Sources/`. Add a `@Suite` to the package's `SnapshotTests.swift` (or `IdleCardSnapshotTests.swift` in `FitnessPersistenceUI`). One `@Test` per meaningful visual variant; use `assertSnapshot(of:named:size:)` — 100×100 for small components, or scoped to the component's natural bounds for larger ones. See `reviewing-test-quality` skill, "Snapshot Tests" section, for conventions.

@@ -109,6 +109,23 @@ extension BaseTest {
     }
 
     @MainActor
+    func verifyExists(
+        label: String,
+        elementType: XCUIElement.ElementType = .button,
+        timeout: TimeInterval = TestDefaults.timeout
+    ) {
+        XCTAssertNotNil(
+            findElement(
+                in: app,
+                label: label,
+                elementType: elementType,
+                timeout: timeout
+            ),
+            "Expected element with label '\(label)' to exist"
+        )
+    }
+
+    @MainActor
     func verifyNotExists(
         _ identifier: String,
         elementType: XCUIElement.ElementType = .any,
@@ -176,6 +193,60 @@ extension BaseTest {
         let result = XCTWaiter().wait(for: [expectation], timeout: timeout)
         XCTAssertEqual(result, .completed,
                        "Expected no element with identifier starting with '\(prefix)' to exist within \(timeout)s")
+    }
+
+    @MainActor
+    func frameOf(
+        _ identifier: String,
+        elementType: XCUIElement.ElementType = .any,
+        timeout: TimeInterval = TestDefaults.timeout
+    ) -> CGRect {
+        guard let element = findElement(
+            in: app,
+            identifier: identifier,
+            elementType: elementType,
+            timeout: timeout
+        ) else {
+            XCTFail("frameOf: '\(identifier)' not found within \(timeout)s")
+            return .zero
+        }
+        return element.frame
+    }
+
+    @MainActor
+    func framesOfElements(
+        withPrefix prefix: String,
+        limit: Int,
+        elementType: XCUIElement.ElementType = .any,
+        timeout: TimeInterval = TestDefaults.timeout
+    ) -> [CGRect] {
+        let predicate = NSPredicate(format: "identifier BEGINSWITH %@", prefix)
+        let query = app.descendants(matching: elementType).matching(predicate)
+
+        guard query.firstMatch.waitForExistence(timeout: timeout) else {
+            XCTFail("framesOfElements: no element starting with '\(prefix)' found within \(timeout)s")
+            return []
+        }
+
+        let frames = query.allElementsBoundByIndex.map(\.frame).sorted { lhs, rhs in
+            if abs(lhs.minY - rhs.minY) > 0.5 {
+                return lhs.minY < rhs.minY
+            }
+            return lhs.minX < rhs.minX
+        }
+        guard frames.count >= limit else {
+            XCTFail("framesOfElements: expected at least \(limit) elements starting with '\(prefix)', found \(frames.count)")
+            return frames
+        }
+        return Array(frames.prefix(limit))
+    }
+
+    @MainActor
+    func attachDiagnosticScreenshot(named name: String) {
+        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        attachment.name = name
+        attachment.lifetime = .keepAlways
+        add(attachment)
     }
 
     // MARK: - Wait

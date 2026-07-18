@@ -1,10 +1,21 @@
 import SwiftUI
+import FitnessCore
 import FitnessUI
 import FitnessExercise
 import FitnessResources
 
 private enum BottomTab {
     case workouts, training, chart, calendar, profile
+
+    var accessibilityIdentifier: String {
+        switch self {
+        case .workouts: BottomBarIDs.workoutsTab
+        case .training: BottomBarIDs.trainingTab
+        case .chart: BottomBarIDs.analyticsTab
+        case .calendar: BottomBarIDs.scheduleTab
+        case .profile: BottomBarIDs.profileTab
+        }
+    }
 }
 
 struct BottomMenuBarView: View {
@@ -233,6 +244,8 @@ struct BottomMenuBarView: View {
                     .contentShape(Circle())
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Actions")
+            .accessibilityIdentifier(BottomBarIDs.contextMenu)
         } else {
             Circle()
                 .fill(Color.clear)
@@ -281,6 +294,7 @@ struct BottomMenuBarView: View {
         .buttonStyle(PlainButtonStyle())
         .contentShape(Rectangle())
         .accessibilityLabel(label)
+        .accessibilityIdentifier(tab.accessibilityIdentifier)
     }
 
     @ViewBuilder

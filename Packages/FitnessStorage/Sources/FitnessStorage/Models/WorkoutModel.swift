@@ -15,6 +15,9 @@ public final class WorkoutModel {
     @_spi(PersistenceUI) public var createdDate: Date
     @_spi(PersistenceUI) public var lastModified: Date
     @_spi(PersistenceUI) public var isDefault: Bool
+    /// Optional for the lightweight V4→V5 migration. Existing rows read as
+    /// `.individual`; all new writes persist a concrete `WorkoutType.rawValue`.
+    @_spi(PersistenceUI) public var typeRaw: String?
 
     @_spi(PersistenceUI) @Relationship(deleteRule: .cascade, inverse: \ExerciseModel.workout)
     public var exercises: [ExerciseModel]
@@ -26,6 +29,7 @@ public final class WorkoutModel {
         createdDate: Date,
         lastModified: Date,
         isDefault: Bool = false,
+        typeRaw: String? = nil,
         exercises: [ExerciseModel] = []
     ) {
         self.id = id
@@ -34,6 +38,7 @@ public final class WorkoutModel {
         self.createdDate = createdDate
         self.lastModified = lastModified
         self.isDefault = isDefault
+        self.typeRaw = typeRaw
         self.exercises = exercises
     }
 }
@@ -46,7 +51,8 @@ extension WorkoutModel {
             name: name,
             createdDate: createdDate,
             lastModified: lastModified,
-            selectedCategories: categories.isEmpty ? Set(MuscleCategoryGroup.allCases) : categories
+            selectedCategories: categories.isEmpty ? Set(MuscleCategoryGroup.allCases) : categories,
+            type: WorkoutType(rawValue: typeRaw ?? "") ?? .individual
         )
     }
 
@@ -57,7 +63,8 @@ extension WorkoutModel {
             selectedCategories: workout.selectedCategories.map(\.rawValue),
             createdDate: workout.createdDate,
             lastModified: workout.lastModified,
-            isDefault: isDefault
+            isDefault: isDefault,
+            typeRaw: workout.type.rawValue
         )
     }
 }

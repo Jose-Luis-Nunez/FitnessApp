@@ -43,7 +43,7 @@ In each View, find elements the user interacts with:
 
 For each interactive element:
 1. **Accessibility Identifier** — does it have `.accessibilityIdentifier(AID.x)`? If not, add `enum AID` (or extend existing one) in the View with the new ID.
-2. **Test ID constant** — does `Config/TestAccessibilityIDs.swift` have a matching constant? If not, add it.
+2. **Test ID constant** — does `Selectors/AccessibilityIDs.swift` have a matching constant? If not, add it.
 3. **DSL function** — does `ElementActions.swift` have a function for this interaction type? If not, add it.
 4. **Fixture** — does `Fixtures/TestFixtures.swift` have a preset for this screen's data? If not, add one.
 

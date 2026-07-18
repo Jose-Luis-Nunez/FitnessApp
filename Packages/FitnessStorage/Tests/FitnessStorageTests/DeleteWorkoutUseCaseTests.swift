@@ -24,9 +24,9 @@ struct DeleteWorkoutUseCaseTests {
         return (sut, ws, es)
     }
 
-    @Test func deleteWorkoutRemovesWorkout() {
+    @Test func deleteWorkoutRemovesWorkout() throws {
         let (sut, ws, _) = makeSUT()
-        let workout = ws.createWorkout(name: "To Delete")
+        let workout = try ws.createWorkout(name: "To Delete")
         let initialCount = ws.workouts.count
 
         sut.execute(workout)
@@ -35,9 +35,9 @@ struct DeleteWorkoutUseCaseTests {
         #expect(!ws.workouts.contains { $0.id == workout.id })
     }
 
-    @Test func deleteWorkoutCleansUpExercisesForSelectedCategories() {
+    @Test func deleteWorkoutCleansUpExercisesForSelectedCategories() throws {
         let (sut, ws, es) = makeSUT()
-        let workout = ws.createWorkout(name: "With Exercises", selectedCategories: [.arms, .chest])
+        let workout = try ws.createWorkout(name: "With Exercises", selectedCategories: [.arms, .chest])
 
         let armExercise = TestHelpers.makeExercise(name: "Curl", category: .arms)
         let chestExercise = TestHelpers.makeExercise(name: "Bench", category: .chest)
@@ -50,10 +50,10 @@ struct DeleteWorkoutUseCaseTests {
         #expect(es.loadForWorkout(workoutId: workout.id, category: .chest).isEmpty)
     }
 
-    @Test func deleteWorkoutDoesNotAffectOtherWorkouts() {
+    @Test func deleteWorkoutDoesNotAffectOtherWorkouts() throws {
         let (sut, ws, es) = makeSUT()
         let keepWorkout = ws.workouts.first!
-        let deleteWorkout = ws.createWorkout(name: "To Delete")
+        let deleteWorkout = try ws.createWorkout(name: "To Delete")
 
         let exercise = TestHelpers.makeExercise(name: "Curl", category: .arms)
         es.saveForWorkout([exercise], workoutId: keepWorkout.id, category: .arms)

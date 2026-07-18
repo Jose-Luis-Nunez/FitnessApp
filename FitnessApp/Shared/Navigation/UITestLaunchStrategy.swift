@@ -24,6 +24,39 @@ struct UITestLaunchStrategy: AppLaunchStrategy {
     }
 
     func prepare(workoutService: WorkoutStoring) {
+        if config.screen == .home {
+            // UI tests must not inherit workouts from a prior test launch.
+            // Reset only inside the UITESTING build, then seed two complete
+            // rows so both column and row spacing are deterministic.
+            for workout in workoutService.workouts {
+                workoutService.deleteWorkout(workout)
+            }
+
+            let fixtures: [(name: String, type: WorkoutType)] = [
+                ("Pull Fixture", .pull),
+                ("Leg Fixture", .leg),
+                ("Push Fixture", .push),
+                ("Full Fixture", .full),
+            ]
+            let seeded: [Workout]
+            do {
+                seeded = try fixtures.map { fixture in
+                    try workoutService.createWorkout(
+                        name: fixture.name,
+                        selectedCategories: Set(MuscleCategoryGroup.allCases),
+                        type: fixture.type
+                    )
+                }
+            } catch {
+                preconditionFailure("Failed to seed deterministic workout UI fixtures: \(error)")
+            }
+            if let first = seeded.first {
+                workoutService.setCurrentWorkout(first)
+                workoutService.setAsDefaultWorkout(first)
+            }
+            return
+        }
+
         let workout = Workout(name: "Test Workout")
         workoutService.setCurrentWorkout(workout)
 
@@ -48,6 +81,9 @@ struct UITestLaunchStrategy: AppLaunchStrategy {
 
     func initialNavigationStack(workoutService: WorkoutStoring) -> [NavigationDestination] {
         switch config.screen {
+        case .home:
+            return [.home]
+
         case .training:
             guard let category = MuscleCategoryGroup(rawValue: config.category),
                   let exerciseId = seededTrainingExerciseId

@@ -1,7 +1,7 @@
 import Testing
 import Foundation
 import FitnessCore
-import FitnessStorage
+import FitnessTestSupport
 @testable import FitnessFriends
 
 // MARK: - Mocks
@@ -25,27 +25,6 @@ private final class MockFriendStorage: FriendStoring {
     func loadEnvelope(for friendId: UUID) throws -> WorkoutShareEnvelope {
         throw WorkoutShareError.persistenceFailed
     }
-}
-
-@MainActor
-private final class MockWorkoutStorage: WorkoutStoring {
-    var workouts: [Workout] = []
-    var currentWorkout: Workout?
-    var defaultWorkout: Workout?
-
-    func createWorkout(name: String, selectedCategories: Set<MuscleCategoryGroup>) -> Workout {
-        let w = Workout(name: name, selectedCategories: selectedCategories)
-        workouts.append(w)
-        return w
-    }
-    func duplicateWorkout(_ workout: Workout) -> Workout { workout }
-    func importWorkout(_ workout: Workout, exercises: [Exercise], analytics: [AnalyticsEntry]) -> Workout { workout }
-    func deleteWorkout(_ workout: Workout) { workouts.removeAll { $0.id == workout.id } }
-    func updateWorkout(_ workout: Workout) {}
-    func setCurrentWorkout(_ workout: Workout) { currentWorkout = workout }
-    func setAsDefaultWorkout(_ workout: Workout) { defaultWorkout = workout }
-    func removeAsDefaultWorkout() { defaultWorkout = nil }
-    func renameWorkout(_ workout: Workout, newName: String) {}
 }
 
 // MARK: - Tests

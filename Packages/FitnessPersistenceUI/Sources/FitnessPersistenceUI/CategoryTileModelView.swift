@@ -80,19 +80,21 @@ public struct CategoryTileModelView: View {
             useGlassEffect: true,
             addPadding: false
         ) {
-            VStack(spacing: 8) {
+            VStack(spacing: ExerciseCardLayout.CategoryTile.contentSpacing) {
                 headerRow(info: info)
                 iconView
-                Spacer().frame(height: 3)
+                Spacer().frame(height: ExerciseCardLayout.CategoryTile.footerSpacerHeight)
                 progressRow(info: info)
             }
-            .padding(.vertical, 12)
+            .padding(.vertical, ExerciseCardLayout.CategoryTile.verticalPadding)
             .overlay(
                 info.isCompleted
-                    ? RoundedRectangle(cornerRadius: 16).fill(AppStyle.Color.green.opacity(0.3))
+                    ? RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card)
+                        .fill(AppStyle.Color.green.opacity(AppStyle.Opacity.categoryTileCompletionOverlay))
                     : nil
             )
         }
+        .frame(height: ExerciseCardLayout.CategoryTile.height)
     }
 
     private func headerRow(info: ExerciseInfo) -> some View {
@@ -113,7 +115,10 @@ public struct CategoryTileModelView: View {
             ZStack {
                 Circle()
                     .fill(AppStyle.Color.greenGlow)
-                    .frame(width: 32, height: 32)
+                    .frame(
+                        width: ExerciseCardLayout.CategoryTile.headerBadgeSize,
+                        height: ExerciseCardLayout.CategoryTile.headerBadgeSize
+                    )
 
                 Image(systemName: "checkmark")
                     .font(AppStyle.Font.categoryTileCount)
@@ -123,48 +128,42 @@ public struct CategoryTileModelView: View {
             ZStack {
                 Circle()
                     .fill(AppStyle.Color.greenGlow)
-                    .frame(width: 32, height: 32)
+                    .frame(
+                        width: ExerciseCardLayout.CategoryTile.headerBadgeSize,
+                        height: ExerciseCardLayout.CategoryTile.headerBadgeSize
+                    )
 
                 Image(systemName: "plus")
                     .font(AppStyle.Font.categoryTileBadge)
                     .foregroundColor(AppStyle.Color.greenBlack)
             }
         } else {
-            Spacer().frame(width: 32, height: 32)
+            Spacer().frame(
+                width: ExerciseCardLayout.CategoryTile.headerBadgeSize,
+                height: ExerciseCardLayout.CategoryTile.headerBadgeSize
+            )
         }
     }
 
     private var iconView: some View {
-        ZStack {
-            Circle()
-                .fill(AppStyle.Color.greenBlack)
-                .frame(
-                    width: ExerciseCardLayout.CategoryTile.iconSize * 0.9,
-                    height: ExerciseCardLayout.CategoryTile.iconSize * 0.9
-                )
-                .blur(radius: 15)
-                .opacity(0.5)
-
+        CategoryTileArtworkStage(alignment: group.iconAlignment) {
             Image(iconColorScheme.iconName(for: group.defaultIconName))
                 .resizable()
                 .interpolation(.high)
                 .scaledToFill()
-                .frame(width: 100, height: 100, alignment: group.iconAlignment)
-                .clipped()
                 .foregroundColor(AppStyle.Color.white)
         }
-        .frame(
-            width: ExerciseCardLayout.CategoryTile.iconSize,
-            height: ExerciseCardLayout.CategoryTile.iconSize
-        )
     }
 
     @ViewBuilder
     private func progressRow(info: ExerciseInfo) -> some View {
         if info.total > 0 {
-            HStack(spacing: 8) {
+            HStack(spacing: ExerciseCardLayout.CategoryTile.contentSpacing) {
                 if !info.isCompleted {
-                    ProgressBar(progress: info.progress, totalWidth: 90)
+                    ProgressBar(
+                        progress: info.progress,
+                        totalWidth: ExerciseCardLayout.CategoryTile.progressWidth
+                    )
                         .frame(height: ExerciseCardLayout.ProgressBar.height)
                 }
 
@@ -174,11 +173,11 @@ public struct CategoryTileModelView: View {
                     .font(AppStyle.Font.categoryTileProgress)
                     .foregroundColor(info.isCompleted ? AppStyle.Color.greenGlow : AppStyle.Color.white)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .minimumScaleFactor(ExerciseCardLayout.CategoryTile.minimumTextScale)
             }
             .padding(.horizontal, ExerciseCardLayout.CategoryTile.contentPadding)
         } else {
-            HStack(spacing: 8) {
+            HStack(spacing: ExerciseCardLayout.CategoryTile.contentSpacing) {
                 Spacer()
 
                 Text(" ")
@@ -190,24 +189,17 @@ public struct CategoryTileModelView: View {
     }
 }
 
-/// Local mirror of the `fileprivate` `ExerciseInfo` aggregation from `CategoryTileView`.
-/// Intentionally duplicated (not exposed from `FitnessExercise`) because it is `fileprivate`
-/// there and the aggregation output is simple enough. T8 deletes the old one together with
-/// the old `CategoryTileView`.
+/// View-local aggregation for category progress and completion state.
 private struct ExerciseInfo {
     let total: Int
-    let active: Int
     let completed: Int
     let isCompleted: Bool
     let progress: Double
-    let hasActiveSet: Bool
 
     init(total: Int, active: Int, hasActiveSet: Bool) {
         self.total = total
-        self.active = active
         self.completed = max(0, total - active)
         self.isCompleted = (active == 0 && total > 0 && !hasActiveSet)
         self.progress = total > 0 ? Double(completed) / Double(total) : 0.0
-        self.hasActiveSet = hasActiveSet
     }
 }

@@ -1,5 +1,4 @@
 import SwiftUI
-import FitnessCore
 
 /// Bundles the three modifiers that drive the workout-import flow on
 /// `WorkoutsScreen` so the screen body stays scannable:
@@ -24,9 +23,7 @@ struct WorkoutImportFlowModifier: ViewModifier {
                 ImportWorkoutView(
                     isPresented: $viewModel.showingImportWorkoutFullScreen,
                     initialText: pendingImportText,
-                    onImported: { workout in
-                        viewModel.handleImported(workout)
-                    }
+                    onImported: { _ in }
                 )
             }
             .onChange(of: importCoordinator.pendingImportText) { _, newText in

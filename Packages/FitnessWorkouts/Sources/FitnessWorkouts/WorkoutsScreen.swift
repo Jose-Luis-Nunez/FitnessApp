@@ -5,21 +5,10 @@ import FitnessExercise
 import Factory
 
 private enum Constants {
-    static let horizontalPadding: CGFloat = AppStyle.Padding.screenHorizontal
-    static let verticalSpacing: CGFloat = 12
+    static let horizontalPadding: CGFloat = ExerciseCardLayout.CategoryTile.gridHorizontalPadding
+    static let workoutGridSpacing: CGFloat = ExerciseCardLayout.CategoryTile.gridSpacing
     static let titleTopPadding: CGFloat = AppStyle.Padding.titleTop
     static let titleBottomSpacing: CGFloat = AppStyle.Padding.titleBottom
-    static let topPadding: CGFloat = 1
-
-    enum FAB {
-        static let mainSize: CGFloat = 56
-        static let optionSize: CGFloat = 48
-        static let spacing: CGFloat = 16
-        static let bottomPadding: CGFloat = 20
-        static let trailingPadding: CGFloat = 20
-        static let optionOffset: CGFloat = 64
-        static let fabSpacing: CGFloat = 16
-    }
 }
 
 public struct WorkoutsScreen: View {
@@ -70,6 +59,7 @@ public struct WorkoutsScreen: View {
             if viewModel.showingCreateWorkoutFullScreen {
                 CreateWorkoutView(
                     workoutName: $viewModel.newWorkoutName,
+                    workoutType: $viewModel.newWorkoutType,
                     isPresented: $viewModel.showingCreateWorkoutFullScreen,
                     onSave: {
                         viewModel.createNewWorkout()
@@ -89,7 +79,7 @@ public struct WorkoutsScreen: View {
                 onSave: {
                     viewModel.renameWorkout()
                 }
-                        )
+            )
         }
         .workoutImportFlow(viewModel: viewModel, coordinator: importCoordinator)
         .sheet(item: $viewModel.workoutToShare) { item in
@@ -106,22 +96,26 @@ public struct WorkoutsScreen: View {
         } message: {
             Text(viewModel.exportErrorMessage ?? "")
         }
+        .alert("Workout creation failed", isPresented: Binding(
+            get: { viewModel.createErrorMessage != nil },
+            set: { if !$0 { viewModel.createErrorMessage = nil } }
+        )) {
+            Button("OK", role: .cancel) { viewModel.createErrorMessage = nil }
+        } message: {
+            Text(viewModel.createErrorMessage ?? "")
+        }
         .overlay(
             settingsMiniMenu
         )
-
-      }
+    }
 
     private var mainContent: some View {
         VStack(spacing: 0) {
             headerView
             ScrollView {
-                LazyVStack(spacing: Constants.verticalSpacing) {
-                    workoutsGrid
-                }
-                .padding(.horizontal, Constants.horizontalPadding)
-                .padding(.top, Constants.topPadding)
-                .padding(.bottom, Constants.FAB.bottomPadding)
+                workoutsGrid
+                    .padding(.horizontal, Constants.horizontalPadding)
+                    .padding(.bottom, AppStyle.Layout.workoutGridBottomPadding)
             }
         }
     }
@@ -137,42 +131,43 @@ public struct WorkoutsScreen: View {
     }
 
     private var workoutsGrid: some View {
+        let exerciseCounts = viewModel.exerciseCountsByWorkout()
         let columns = [
-            GridItem(.flexible(), spacing: Constants.verticalSpacing),
-            GridItem(.flexible(), spacing: Constants.verticalSpacing)
+            GridItem(.flexible(), spacing: Constants.workoutGridSpacing),
+            GridItem(.flexible(), spacing: Constants.workoutGridSpacing)
         ]
 
-        return LazyVGrid(columns: columns, spacing: Constants.verticalSpacing) {
+        return LazyVGrid(columns: columns, spacing: Constants.workoutGridSpacing) {
             ForEach(viewModel.workouts) { workout in
                 WorkoutTileView(
                     workout: workout,
                     isDefault: viewModel.isDefaultWorkout(workout),
-                    exerciseCount: viewModel.getExerciseCount(for: workout),
+                    exerciseCount: exerciseCounts[workout.id, default: 0],
                     onTap: {
                         viewModel.selectWorkout(workout)
                         // A workout is a targeted entry — open it as a root-like
                         // screen so there is no back-navigation to the list.
                         router.replaceAll(with: [.home])
                     },
+                    layout: .hero,
                     onLongPress: {
-                        viewModel.showFABOptions(for: workout)
+                        viewModel.showWorkoutOptions(for: workout)
                     },
                     onSettingsTap: {
-                        viewModel.showFABOptions(for: workout)
+                        viewModel.showWorkoutOptions(for: workout)
                     }
                 )
             }
         }
     }
 
-
     private var settingsMiniMenu: some View {
         Group {
-            if viewModel.showingFABOptions {
+            if viewModel.showingWorkoutOptions {
                 ZStack {
                     Color.black.opacity(0.001)
                         .ignoresSafeArea()
-                        .onTapGesture { viewModel.hideFABOptions() }
+                        .onTapGesture { viewModel.hideWorkoutOptions() }
 
                     VStack {
                         Spacer()
@@ -193,7 +188,7 @@ public struct WorkoutsScreen: View {
                                     list.append(MiniActionMenuItem(icon: nil, title: "duplicate", isDestructive: false) {
                                         if let workout = viewModel.selectedWorkoutForAction {
                                             viewModel.duplicateWorkout(workout)
-                                            viewModel.hideFABOptions()
+                                            viewModel.hideWorkoutOptions()
                                         }
                                     })
                                     list.append(MiniActionMenuItem(icon: nil, title: "Export workout", isDestructive: false) {
@@ -210,12 +205,12 @@ public struct WorkoutsScreen: View {
                                         if viewModel.isDefaultWorkout(workout) {
                                             list.append(MiniActionMenuItem(icon: nil, title: "Remove as Default", isDestructive: false) {
                                                 viewModel.removeAsDefault()
-                                                viewModel.hideFABOptions()
+                                                viewModel.hideWorkoutOptions()
                                             })
                                         } else {
                                             list.append(MiniActionMenuItem(icon: nil, title: "Set as Default", isDestructive: false) {
                                                 viewModel.setAsDefault(workout)
-                                                viewModel.hideFABOptions()
+                                                viewModel.hideWorkoutOptions()
                                             })
                                         }
                                     }
@@ -249,4 +244,3 @@ public struct WorkoutsScreen: View {
     @Environment(\.safeAreaInsets) private var safeAreaInsets
     private var safeAreaInset: CGFloat { safeAreaInsets.bottom }
 }
-

@@ -24,6 +24,10 @@ private final class MockExerciseStorage: ExerciseStoring {
         savedExercises[category] ?? []
     }
 
+    func exerciseCountsByWorkout() -> [UUID: Int] {
+        [:]
+    }
+
     func saveForWorkout(_ exercises: [Exercise], workoutId: UUID, category: MuscleCategoryGroup) {
         savedExercises[category] = exercises
     }

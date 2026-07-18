@@ -20,8 +20,8 @@ private struct ScrollOffsetPreferenceKey: PreferenceKey {
 }
 
 private enum SelectionLayoutConstants {
-    static let horizontalPadding: CGFloat = AppStyle.Padding.screenHorizontal
-    static let verticalSpacing: CGFloat = 10
+    static let horizontalPadding: CGFloat = ExerciseCardLayout.CategoryTile.gridHorizontalPadding
+    static let verticalSpacing: CGFloat = ExerciseCardLayout.CategoryTile.gridSpacing
 }
 
 private enum ViewMode {

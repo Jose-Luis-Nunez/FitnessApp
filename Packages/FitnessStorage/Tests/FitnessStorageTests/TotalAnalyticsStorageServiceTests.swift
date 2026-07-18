@@ -100,10 +100,10 @@ struct TotalAnalyticsStorageServiceTests {
 
     // MARK: - loadAllAnalytics(for workoutId:)
 
-    @Test func loadAllAnalyticsForSpecificWorkout() {
+    @Test func loadAllAnalyticsForSpecificWorkout() throws {
         let (sut, ws, es, as_) = makeSUT()
         let workout1 = ws.workouts.first!
-        let workout2 = ws.createWorkout(name: "Workout 2")
+        let workout2 = try ws.createWorkout(name: "Workout 2")
 
         let ex1 = TestHelpers.makeExercise(name: "Curl", category: .arms)
         let ex2 = TestHelpers.makeExercise(name: "Bench", category: .chest)
@@ -176,10 +176,10 @@ struct TotalAnalyticsStorageServiceTests {
         #expect(sut.getAllExercisesWithAnalytics().isEmpty)
     }
 
-    @Test func getAllExercisesWithAnalyticsForSpecificWorkout() {
+    @Test func getAllExercisesWithAnalyticsForSpecificWorkout() throws {
         let (sut, ws, es, as_) = makeSUT()
         let workout1 = ws.workouts.first!
-        let workout2 = ws.createWorkout(name: "Workout 2")
+        let workout2 = try ws.createWorkout(name: "Workout 2")
 
         let ex1 = TestHelpers.makeExercise(name: "Curl", category: .arms)
         let ex2 = TestHelpers.makeExercise(name: "Bench", category: .arms)
@@ -218,4 +218,3 @@ struct TotalAnalyticsStorageServiceTests {
         #expect(all.count == 2)
     }
 }
-

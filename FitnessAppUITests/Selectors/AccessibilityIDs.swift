@@ -31,3 +31,19 @@ enum ExerciseCardIDs {
     static let activeCardPrefix = "id_card_active_"
     static let idleCardPrefix = "id_card_idle_"
 }
+
+enum WorkoutIDs {
+    static let tilePrefix = "id_workouts_tile_"
+    static let settingsPrefix = "id_workouts_settings_"
+    static let createTypePicker = "id_workouts_create_type_picker"
+}
+
+enum WorkoutLabels {
+    static let newWorkout = "New workout"
+    static let typeOptions = ["Pull", "Push", "Leg", "Individual", "Full"]
+}
+
+enum BottomBarIDs {
+    static let contextMenu = "id_bottom_context_menu"
+    static let workoutsTab = "id_bottom_tab_workouts"
+}

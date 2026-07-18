@@ -9,14 +9,17 @@ FitnessAppUITests/
 ├── Base/BaseTest.swift              # XCTestCase subclass, all tests inherit from this
 ├── Config/
 │   ├── UITestScreen.swift           # Screen enum for launch config
-│   ├── UITestLaunchConfig.swift     # Codable config sent to app via launchEnvironment
-│   └── AccessibilityIDs.swift       # ID constants mirroring view-local AIDs
+│   └── UITestLaunchConfig.swift     # Codable config sent to app via launchEnvironment
+├── Selectors/
+│   └── AccessibilityIDs.swift       # ID constants mirroring production AIDs
 ├── DSL/
 │   └── ElementActions.swift         # Free functions: tapOn, verifyExists, fill, etc.
 ├── Fixtures/
 │   ├── TestFixtures.swift           # UITestLaunchConfig factory + TestExerciseFixture
 │   └── ExerciseFixtures.swift       # Named exercise presets (.defaultArmsExercise)
-└── Tests/*Tests.swift               # Test files
+└── Tests/
+    ├── WorkoutTileVisualTests.swift # Category/workout screenshots + geometry parity
+    └── *Tests.swift                 # Other test files
 ```
 
 The app target contains `Shared/Navigation/UITestLaunchStrategy.swift` (compiled only under the `UITESTING` flag, which is set on the `UITesting` build configuration). It implements `AppLaunchStrategy`, reads `UITEST_CONFIG` from `launchEnvironment`, seeds a `WorkoutModel` + `ExerciseModel` pair into the SwiftData container (post-T8d, `TrainingView` resolves the navigated id via `@Query`, so the fixture must exist on disk before navigation), and returns the initial `[NavigationDestination]` stack to the app's `NavigationStack`.
@@ -41,7 +44,7 @@ struct MyView: View {
 }
 ```
 
-The test target maintains its own copy of the ID strings in `Config/TestAccessibilityIDs.swift`. These must be kept in sync with the view-local `enum AID`. If they drift, the test fails immediately -- which is the desired behavior.
+The test target maintains its own copy of the ID strings in `Selectors/AccessibilityIDs.swift`. These must be kept in sync with production identifiers. If they drift, the test fails immediately -- which is the desired behavior.
 
 ### Current Test ID Enums
 
@@ -54,6 +57,8 @@ The single source of truth for the constants below is `Packages/FitnessCore/Sour
 | `MuscleCategoryIDs` | `FitnessCore.AccessibilityIDs` | `IdleActiveCardModelView` (post-T8d; previously `IdleActiveCardView`) | `startExercise` |
 | `ExerciseIDs` | `FitnessCore.AccessibilityIDs` | `InactiveCardModelView` (post-T8d; previously `InactiveCardView`) | `nameLabel` |
 | `ExerciseCardIDs` | `FitnessCore.AccessibilityIDs` | `ExerciseCardModelView` (post-T8d; previously `ExerciseCardContainerView`) | `completedCard(_:)`, `activeCard(_:)`, `idleCard(_:)`, `completedCardPrefix`, `activeCardPrefix`, `idleCardPrefix` |
+| `WorkoutIDs` | `FitnessCore.AccessibilityIDs` | `WorkoutTileView`, `CreateWorkoutView` | `tilePrefix`, `settingsPrefix`, `tile(_:)`, `settings(_:)`, `createTypePicker` |
+| `BottomBarIDs` | `FitnessCore.AccessibilityIDs` | `BottomMenuBarView` | `contextMenu`, `workoutsTab`, `trainingTab`, `analyticsTab`, `scheduleTab`, `profileTab` |
 
 ## Test Fixtures
 
@@ -79,9 +84,12 @@ try launch(training: heavy)
 | Type into a text field | `fill(_:with:)` |
 | Type into a picker input button | `fillPickerInput(_:with:)` |
 | Assert element is visible | `verifyExists(_:)` |
+| Assert a system-controlled menu option is visible by label | `verifyExists(label:)` |
 | Assert element is gone | `verifyNotExists(_:)` |
 | Assert element exists by ID prefix | `verifyExistsWithPrefix(_:)` |
 | Assert no element with ID prefix | `verifyNotExistsWithPrefix(_:)` |
+| Read element frames | `frameOf(_:)` / `framesOfElements(withPrefix:limit:)` |
+| Attach a diagnostic full-screen screenshot | `attachDiagnosticScreenshot(named:)` |
 | Assert element label content | `verifyLabel(_:equals:)` |
 | Wait for label to be populated | `waitForNonEmptyLabel(_:)` |
 | Scroll until element is visible | `swipeUpUntilVisible(_:)` |
@@ -121,7 +129,7 @@ final class <Feature>UITests: BaseTest {
 Rules:
 - Inherit from `BaseTest` (provides `app`, `setUp`, `tearDown`)
 - Mark test methods `@MainActor`
-- First line: `launch(training:)`, `launch(category:)`, `launchSchedule()`, or `launchHome()`
+- First line: `launch(training:)`, `launch(category:)`, `launchCategorySelection()`, `launchSchedule()`, or `launchHome()`
 - One test method per user scenario; name it `test<WhatTheUserDoes>`
 - Only DSL functions and test ID constants -- no raw XCUITest API, no hardcoded strings
 - Always pass explicit fixture data -- no implicit defaults
@@ -178,7 +186,7 @@ Never resort to predicates or labels when an identifier can be added to the prod
 
 ### Stale IDs -- Keep in Sync
 
-When a production View's `AID` constant is renamed or deleted, update `Config/TestAccessibilityIDs.swift` to match. Stale constants that reference non-existent IDs cause test failures.
+When a production identifier is renamed or deleted, update `Selectors/AccessibilityIDs.swift` to match. Stale constants that reference non-existent IDs cause test failures.
 
 ## Diagnosing a Failing Selector
 
@@ -202,7 +210,7 @@ Work the steps in order. **Do not skip ahead.**
 
 - View-local identifiers: `id_<context>_<element>` (e.g. `id_button_done`, `id_category_tile_arms`)
 - View-local enum: `enum AID` inside each View struct
-- Test ID enums: `<Screen>IDs` (e.g. `TrainingIDs`, `HomeIDs`) in `Config/TestAccessibilityIDs.swift`
+- Test ID enums: `<Screen>IDs` (e.g. `TrainingIDs`, `HomeIDs`) in `Selectors/AccessibilityIDs.swift`
 - Dynamic IDs: static functions returning `String` (e.g. `repsField(set:)`)
 
 ## Decision Flowchart
@@ -211,9 +219,9 @@ Work the steps in order. **Do not skip ahead.**
 Need to interact with an element in a test
   |
   +-- Has enum AID with accessibilityIdentifier in the View?
-  |   +-- YES -> Add matching constant to Config/TestAccessibilityIDs.swift -> use DSL function
+  |   +-- YES -> Add matching constant to Selectors/AccessibilityIDs.swift -> use DSL function
   |   +-- NO  -> Add enum AID to View + .accessibilityIdentifier(AID.x)
-  |              -> Add matching constant to Config/TestAccessibilityIDs.swift -> use DSL function
+  |              -> Add matching constant to Selectors/AccessibilityIDs.swift -> use DSL function
   |
   +-- DSL function exists for this interaction?
       +-- YES -> Use it
@@ -231,6 +239,9 @@ try launch(training: .defaultArmsExercise)
 // Category screen
 try launch(category: "arms")
 
+// Category-selection overview (deterministic UI-test launch)
+try launchCategorySelection()
+
 // Schedule screen
 try launchSchedule()
 
@@ -246,8 +257,9 @@ The app reads the `UITEST_CONFIG` environment variable and uses `AppRouter.repla
 |----------|--------------|
 | Testing the full user journey (home to finish) | `launchHome()` + navigate via DSL |
 | Testing behavior on a specific screen | `launch(training:)`, `launch(category:)`, or `launchSchedule()` |
+| Comparing Category/Workout overview geometry | `launchCategorySelection()` then tap the Workouts tab |
 
-Supported screens: `.training` (requires `TestExerciseFixture`), `.category`, `.schedule`.
+Supported screens: `.home` (category-selection overview), `.training` (requires `TestExerciseFixture`), `.category`, `.schedule`.
 
 ## Review Checklist
 
@@ -286,7 +298,7 @@ verifyExists(ExerciseIDs.nameLabel)
 Check each test file for:
 - Inherits from `BaseTest` (not `XCTestCase` directly)
 - Test methods marked `@MainActor`
-- First line: `launch(training:)`, `launch(category:)`, `launchSchedule()`, or `launchHome()`
+- First line: `launch(training:)`, `launch(category:)`, `launchCategorySelection()`, `launchSchedule()`, or `launchHome()`
 - No business logic or complex setup in the test -- just DSL calls
 
 ### 4. Selector Completeness

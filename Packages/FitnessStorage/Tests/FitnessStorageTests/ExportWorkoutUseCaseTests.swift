@@ -59,7 +59,7 @@ struct ExportWorkoutUseCaseTests {
     @Test("export of populated workout produces decodable envelope JSON")
     func exportPopulatedWorkoutDecodes() throws {
         let sut = makeSUT()
-        let workout = sut.workoutStorage.createWorkout(name: "Push", selectedCategories: [.chest])
+        let workout = try sut.workoutStorage.createWorkout(name: "Push", selectedCategories: [.chest])
         let exercise = Exercise(name: "Bench", weight: 80, reps: 8, sets: 3, iconName: "defaultArmsIcon", category: .chest)
         sut.exerciseStorage.saveForWorkout([exercise], workoutId: workout.id, category: .chest)
         let entry = AnalyticsEntry(
@@ -86,7 +86,7 @@ struct ExportWorkoutUseCaseTests {
     @Test("export of workout with exercises across multiple categories includes all")
     func exportMultiCategoryWorkout() throws {
         let sut = makeSUT()
-        let workout = sut.workoutStorage.createWorkout(name: "Full Body", selectedCategories: [.arms, .chest, .legs])
+        let workout = try sut.workoutStorage.createWorkout(name: "Full Body", selectedCategories: [.arms, .chest, .legs])
         let armEx = Exercise(name: "Curl", weight: 20, reps: 10, sets: 3, iconName: "defaultArmsIcon", category: .arms)
         let chestEx = Exercise(name: "Bench", weight: 80, reps: 8, sets: 3, iconName: "defaultArmsIcon", category: .chest)
         let legsEx = Exercise(name: "Squat", weight: 100, reps: 6, sets: 4, iconName: "defaultArmsIcon", category: .legs)
@@ -108,7 +108,7 @@ struct ExportWorkoutUseCaseTests {
     @Test("export of empty workout yields empty exercises and analytics arrays")
     func exportEmptyWorkout() throws {
         let sut = makeSUT()
-        let workout = sut.workoutStorage.createWorkout(name: "Empty", selectedCategories: [.arms])
+        let workout = try sut.workoutStorage.createWorkout(name: "Empty", selectedCategories: [.arms])
 
         let json = try sut.exportUseCase.execute(workout: workout)
 
@@ -124,7 +124,11 @@ struct ExportWorkoutUseCaseTests {
     @Test("export → import roundtrip preserves exercise data and analytics (modulo new UUIDs)")
     func roundtripPreservesData() throws {
         let sut = makeSUT()
-        let workout = sut.workoutStorage.createWorkout(name: "Roundtrip", selectedCategories: [.chest])
+        let workout = try sut.workoutStorage.createWorkout(
+            name: "Roundtrip",
+            selectedCategories: [.chest],
+            type: .leg
+        )
         let exercise = Exercise(name: "Press", weight: 100, reps: 5, sets: 5, iconName: "defaultArmsIcon", category: .chest)
         sut.exerciseStorage.saveForWorkout([exercise], workoutId: workout.id, category: .chest)
         let entry = AnalyticsEntry(
@@ -140,6 +144,7 @@ struct ExportWorkoutUseCaseTests {
         let exportedJson = try sut.exportUseCase.execute(workout: workout)
         let imported = try sut.importUseCase.execute(jsonString: exportedJson)
 
+        #expect(imported.type == .leg)
         let importedExercises = sut.exerciseStorage.loadForWorkout(workoutId: imported.id, category: .chest)
         #expect(importedExercises.count == 1)
         let importedExercise = try #require(importedExercises.first)

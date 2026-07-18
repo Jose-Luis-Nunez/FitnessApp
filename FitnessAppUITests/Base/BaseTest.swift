@@ -21,6 +21,13 @@ class BaseTest: XCTestCase {
     // MARK: - Screen Launch Helpers
 
     @MainActor
+    func launchCategorySelection() throws {
+        let config = UITestLaunchConfig.home()
+        app.launchEnvironment["UITEST_CONFIG"] = try config.jsonString()
+        app.launch()
+    }
+
+    @MainActor
     func launch(training fixture: TestExerciseFixture) throws {
         let config = UITestLaunchConfig.training(fixture)
         app.launchEnvironment["UITEST_CONFIG"] = try config.jsonString()

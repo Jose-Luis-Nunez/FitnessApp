@@ -1,16 +1,15 @@
 import Foundation
-import SwiftUI
 import Observation
 import FitnessCore
 import FitnessStorage
 import Factory
 
 /// Identifiable wrapper that drives `.sheet(item:)` for the iOS share sheet —
-/// carries both the source workout (for the sheet identity) and the precomputed
-/// JSON (so the export is done synchronously up-front, not inside the SwiftUI
+/// carries the source workout's stable id and the precomputed JSON (so the
+/// export is done synchronously up-front, not inside the SwiftUI
 /// `content` builder where it could re-run on every body re-eval).
 ///
-/// `fileURL` points at a tmp-dir `.json` file with sanitized filename derived
+/// `fileURL` points at a temporary `.fitnessworkout` file with a sanitized name derived
 /// from `workout.name`. Sharing the file URL (instead of the raw JSON string)
 /// makes iOS treat the export as a true file attachment in Mail/Messages, a
 /// proper AirDrop file transfer, a "Save to Files" target, etc. If file-write
@@ -18,13 +17,11 @@ import Factory
 /// falls back to sharing the JSON string.
 public struct WorkoutShareItem: Identifiable {
     public let id: UUID
-    public let workout: Workout
     public let json: String
     public let fileURL: URL?
 
     public init(workout: Workout, json: String, fileURL: URL? = nil) {
         self.id = workout.id
-        self.workout = workout
         self.json = json
         self.fileURL = fileURL
     }
@@ -33,18 +30,20 @@ public struct WorkoutShareItem: Identifiable {
 @Observable
 @MainActor
 public final class WorkoutsViewModel {
-    public var showingFABOptions = false
+    public var showingWorkoutOptions = false
     public var showingCreateWorkoutFullScreen = false
     public var showingImportWorkoutFullScreen = false
     public var showingRenameWorkout = false
     public var showingDeleteConfirmation = false
     public var selectedWorkoutForAction: Workout?
     public var newWorkoutName = ""
+    public var newWorkoutType: WorkoutType = .individual
     public var renameWorkoutName = ""
     /// Drives the `.sheet(item:)` that presents the iOS share sheet. Set by
     /// `requestShare(for:)` after the workout JSON has been computed.
     public var workoutToShare: WorkoutShareItem?
     public var exportErrorMessage: String?
+    public var createErrorMessage: String?
 
     @ObservationIgnored private let storageService: WorkoutStoring
     @ObservationIgnored private let exerciseStorageService: ExerciseStoring
@@ -79,13 +78,22 @@ public final class WorkoutsViewModel {
 
         // Workouts are not category-restricted (the overview always shows all
         // five), so a new workout covers all categories — the storage default.
-        let workout = storageService.createWorkout(
-            name: newWorkoutName,
-            selectedCategories: Set(MuscleCategoryGroup.allCases)
-        )
+        let workout: Workout
+        do {
+            workout = try storageService.createWorkout(
+                name: newWorkoutName,
+                selectedCategories: Set(MuscleCategoryGroup.allCases),
+                type: newWorkoutType
+            )
+        } catch {
+            createErrorMessage = "Workout could not be saved."
+            return
+        }
         storageService.setCurrentWorkout(workout)
 
+        createErrorMessage = nil
         newWorkoutName = ""
+        newWorkoutType = .individual
         showingCreateWorkoutFullScreen = false
     }
 
@@ -96,7 +104,7 @@ public final class WorkoutsViewModel {
     public func duplicateWorkout(_ workout: Workout) {
         let duplicatedWorkout = duplicateWorkoutUseCase.execute(workout)
         storageService.setCurrentWorkout(duplicatedWorkout)
-        showingFABOptions = false
+        showingWorkoutOptions = false
     }
 
     /// Deletes the workout. Enforces the invariant that at least one workout must remain —
@@ -104,7 +112,7 @@ public final class WorkoutsViewModel {
     public func deleteWorkout(_ workout: Workout) {
         guard canDeleteWorkout else { return }
         deleteWorkoutUseCase.execute(workout)
-        showingFABOptions = false
+        showingWorkoutOptions = false
     }
 
     public func renameWorkout() {
@@ -120,13 +128,15 @@ public final class WorkoutsViewModel {
 
     // MARK: - UI Actions
 
-    public func showFABOptions(for workout: Workout) {
+    public func showWorkoutOptions(for workout: Workout) {
         selectedWorkoutForAction = workout
-        showingFABOptions = true
+        showingWorkoutOptions = true
     }
 
     public func showCreateWorkout() {
         newWorkoutName = "Workout \(workouts.count + 1)"
+        newWorkoutType = .individual
+        createErrorMessage = nil
         showingCreateWorkoutFullScreen = true
     }
 
@@ -136,24 +146,9 @@ public final class WorkoutsViewModel {
         showingImportWorkoutFullScreen = true
     }
 
-    /// Called by the import sheet after a successful import. Per spec, the
-    /// imported workout is NOT auto-activated — the user has to tap it to
-    /// switch. The storage service already triggered a reload of `workouts`,
-    /// so the new entry appears in the grid automatically — no state mutation
-    /// needed here.
-    ///
-    /// The method exists as a deliberate seam: any future post-import effect
-    /// the WorkoutsScreen would want to drive from a known-imported-workout
-    /// (scroll-to-newly-imported, brief highlight ring, success toast, send
-    /// analytics) plugs in here without changing the ImportWorkoutView
-    /// callback contract. Keep it even if the body stays empty.
-    public func handleImported(_ workout: Workout) {
-        _ = workout
-    }
-
     /// Triggers the iOS share sheet for a workout. Synchronously computes the
-    /// JSON via `ExportWorkoutUseCase`, writes it to a `.json` file in the
-    /// tmp directory (filename = sanitized workout name), and populates
+    /// JSON via `ExportWorkoutUseCase`, writes it to a `.fitnessworkout` file
+    /// in the tmp directory (filename = sanitized workout name), and populates
     /// `workoutToShare` with both the file URL and the raw JSON string. The
     /// share sheet uses the file URL so iOS treats it as a proper file
     /// attachment in Mail/Messages/AirDrop/Files. If the file-write fails
@@ -163,40 +158,23 @@ public final class WorkoutsViewModel {
     public func requestShare(for workout: Workout) {
         do {
             let json = try exportWorkoutUseCase.execute(workout: workout)
-            let fileURL = writeShareFile(json: json, workout: workout)
+            let fileURL = WorkoutShareFileWriter.write(json: json, name: workout.name)
             workoutToShare = WorkoutShareItem(workout: workout, json: json, fileURL: fileURL)
-            hideFABOptions()
+            hideWorkoutOptions()
         } catch {
             exportErrorMessage = WorkoutShareError.exportFailed.errorDescription
         }
-    }
-
-    /// Writes the JSON content to a tmp file named
-    /// `<sanitized-workout-name>.fitnessworkout`. The `.fitnessworkout`
-    /// extension is exclusively owned by FitnessApp (custom UTType
-    /// `com.fitnesspro.workout-share` in Info.plist) so iOS surfaces
-    /// FitnessApp as the "Open in" target on the receiving device — avoiding
-    /// the iOS 17+ "non-owner of public.json can't be default-open" trap.
-    /// The file's content is still JSON; only the extension differs.
-    /// Returns the file URL on success, `nil` on any I/O failure. Callers
-    /// must handle the `nil` case by sharing the raw JSON string instead.
-    private func writeShareFile(json: String, workout: Workout) -> URL? {
-        WorkoutShareFileWriter.write(json: json, name: workout.name)
-    }
-
-    static func sanitizeFilename(_ name: String) -> String {
-        WorkoutShareFileWriter.sanitizeFilename(name)
     }
 
     public func showRenameWorkout(for workout: Workout) {
         selectedWorkoutForAction = workout
         renameWorkoutName = workout.name
         showingRenameWorkout = true
-        showingFABOptions = false
+        showingWorkoutOptions = false
     }
 
-    public func hideFABOptions() {
-        showingFABOptions = false
+    public func hideWorkoutOptions() {
+        showingWorkoutOptions = false
         showingDeleteConfirmation = false
         selectedWorkoutForAction = nil
     }
@@ -209,7 +187,7 @@ public final class WorkoutsViewModel {
         if let workout = selectedWorkoutForAction {
             deleteWorkout(workout)
         }
-        hideFABOptions()
+        hideWorkoutOptions()
     }
 
     public func cancelDelete() {
@@ -234,14 +212,7 @@ public final class WorkoutsViewModel {
         storageService.removeAsDefaultWorkout()
     }
 
-    public func getExerciseCount(for workout: Workout) -> Int {
-        var totalCount = 0
-
-        for category in MuscleCategoryGroup.allCases {
-            let exercises = exerciseStorageService.loadForWorkout(workoutId: workout.id, category: category)
-            totalCount += exercises.count
-        }
-
-        return totalCount
+    public func exerciseCountsByWorkout() -> [UUID: Int] {
+        exerciseStorageService.exerciseCountsByWorkout()
     }
 }

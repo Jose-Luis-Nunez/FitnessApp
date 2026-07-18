@@ -9,6 +9,10 @@ import FitnessTestSupport
 @MainActor
 struct WorkoutsViewModelTests {
 
+    private enum StubError: Error {
+        case persistenceFailed
+    }
+
     // MARK: - Setup
 
     @MainActor
@@ -81,6 +85,7 @@ struct WorkoutsViewModelTests {
     @Test func createNewWorkoutAddsWorkoutAndSetsCurrent() {
         let (sut, ws, _) = makeSUT()
         sut.newWorkoutName = "Pull"
+        sut.newWorkoutType = .pull
         sut.showingCreateWorkoutFullScreen = true
 
         sut.createNewWorkout()
@@ -89,18 +94,38 @@ struct WorkoutsViewModelTests {
         #expect(ws.workouts.first?.name == "Pull")
         // New workouts are not category-restricted — they cover all categories.
         #expect(ws.workouts.first?.selectedCategories == Set(MuscleCategoryGroup.allCases))
+        #expect(ws.workouts.first?.type == .pull)
         #expect(ws.currentWorkout?.id == ws.workouts.first?.id)
     }
 
     @Test func createNewWorkoutResetsFormState() {
         let (sut, _, _) = makeSUT()
         sut.newWorkoutName = "Pull"
+        sut.newWorkoutType = .pull
         sut.showingCreateWorkoutFullScreen = true
 
         sut.createNewWorkout()
 
         #expect(sut.newWorkoutName.isEmpty)
+        #expect(sut.newWorkoutType == .individual)
         #expect(sut.showingCreateWorkoutFullScreen == false)
+    }
+
+    @Test func createNewWorkoutKeepsFormOpenWhenPersistenceFails() {
+        let (sut, workoutStorage, _) = makeSUT()
+        workoutStorage.createWorkoutError = StubError.persistenceFailed
+        sut.newWorkoutName = "Pull"
+        sut.newWorkoutType = .pull
+        sut.showingCreateWorkoutFullScreen = true
+
+        sut.createNewWorkout()
+
+        #expect(workoutStorage.workouts.isEmpty)
+        #expect(workoutStorage.currentWorkout == nil)
+        #expect(sut.showingCreateWorkoutFullScreen)
+        #expect(sut.createErrorMessage == "Workout could not be saved.")
+        #expect(sut.newWorkoutName == "Pull")
+        #expect(sut.newWorkoutType == .pull)
     }
 
     @Test func createNewWorkoutIgnoresEmptyName() {
@@ -138,14 +163,14 @@ struct WorkoutsViewModelTests {
     @Test func duplicateWorkoutAppendsCopyAndSetsCurrent() {
         let original = Workout(name: "Leg Day", selectedCategories: [.legs])
         let (sut, ws, _) = makeSUT(seedWorkouts: [original])
-        sut.showingFABOptions = true
+        sut.showingWorkoutOptions = true
 
         sut.duplicateWorkout(original)
 
         #expect(ws.workouts.count == 2)
         #expect(ws.workouts.last?.id != original.id)
         #expect(ws.currentWorkout?.id == ws.workouts.last?.id)
-        #expect(sut.showingFABOptions == false)
+        #expect(sut.showingWorkoutOptions == false)
     }
 
     // MARK: - deleteWorkout (invariant enforced in VM)
@@ -154,13 +179,13 @@ struct WorkoutsViewModelTests {
         let w1 = Workout(name: "A")
         let w2 = Workout(name: "B")
         let (sut, ws, _) = makeSUT(seedWorkouts: [w1, w2])
-        sut.showingFABOptions = true
+        sut.showingWorkoutOptions = true
 
         sut.deleteWorkout(w1)
 
         #expect(ws.workouts.count == 1)
         #expect(ws.workouts.contains { $0.id == w1.id } == false)
-        #expect(sut.showingFABOptions == false)
+        #expect(sut.showingWorkoutOptions == false)
     }
 
     /// Regression: the "must keep at least one workout" invariant lives in the VM
@@ -168,14 +193,14 @@ struct WorkoutsViewModelTests {
     @Test func deleteWorkoutIgnoresLastRemainingWorkout() {
         let only = Workout(name: "Only")
         let (sut, ws, _) = makeSUT(seedWorkouts: [only])
-        sut.showingFABOptions = true
+        sut.showingWorkoutOptions = true
 
         sut.deleteWorkout(only)
 
         #expect(ws.workouts.count == 1)
         #expect(ws.workouts.contains { $0.id == only.id })
         // Guard short-circuits before UI flag is cleared — documenting current behavior.
-        #expect(sut.showingFABOptions == true)
+        #expect(sut.showingWorkoutOptions == true)
     }
 
     // MARK: - renameWorkout
@@ -217,27 +242,27 @@ struct WorkoutsViewModelTests {
         #expect(ws.workouts.first?.name == "Old Name")
     }
 
-    // MARK: - showFABOptions / hideFABOptions
+    // MARK: - Workout options
 
-    @Test func showFABOptionsSetsSelectionAndOpens() {
+    @Test func showWorkoutOptionsSetsSelectionAndOpens() {
         let w = Workout(name: "X")
         let (sut, _, _) = makeSUT(seedWorkouts: [w])
 
-        sut.showFABOptions(for: w)
+        sut.showWorkoutOptions(for: w)
 
         #expect(sut.selectedWorkoutForAction?.id == w.id)
-        #expect(sut.showingFABOptions == true)
+        #expect(sut.showingWorkoutOptions == true)
     }
 
-    @Test func hideFABOptionsClearsEverything() {
+    @Test func hideWorkoutOptionsClearsEverything() {
         let w = Workout(name: "X")
         let (sut, _, _) = makeSUT(seedWorkouts: [w])
-        sut.showFABOptions(for: w)
+        sut.showWorkoutOptions(for: w)
         sut.showDeleteConfirmation()
 
-        sut.hideFABOptions()
+        sut.hideWorkoutOptions()
 
-        #expect(sut.showingFABOptions == false)
+        #expect(sut.showingWorkoutOptions == false)
         #expect(sut.showingDeleteConfirmation == false)
         #expect(sut.selectedWorkoutForAction == nil)
     }
@@ -251,6 +276,7 @@ struct WorkoutsViewModelTests {
         sut.showCreateWorkout()
 
         #expect(sut.newWorkoutName == "Workout 3")
+        #expect(sut.newWorkoutType == .individual)
         #expect(sut.showingCreateWorkoutFullScreen == true)
     }
 
@@ -259,14 +285,14 @@ struct WorkoutsViewModelTests {
     @Test func showRenameWorkoutPrefillsName() {
         let w = Workout(name: "Original")
         let (sut, _, _) = makeSUT(seedWorkouts: [w])
-        sut.showingFABOptions = true
+        sut.showingWorkoutOptions = true
 
         sut.showRenameWorkout(for: w)
 
         #expect(sut.selectedWorkoutForAction?.id == w.id)
         #expect(sut.renameWorkoutName == "Original")
         #expect(sut.showingRenameWorkout == true)
-        #expect(sut.showingFABOptions == false)
+        #expect(sut.showingWorkoutOptions == false)
     }
 
     // MARK: - Delete confirmation flow
@@ -279,23 +305,23 @@ struct WorkoutsViewModelTests {
         #expect(sut.showingDeleteConfirmation == true)
     }
 
-    @Test func confirmDeleteDeletesSelectedAndHidesFAB() {
+    @Test func confirmDeleteDeletesSelectedAndHidesOptions() {
         let w1 = Workout(name: "A")
         let w2 = Workout(name: "B")
         let (sut, ws, _) = makeSUT(seedWorkouts: [w1, w2])
-        sut.showFABOptions(for: w1)
+        sut.showWorkoutOptions(for: w1)
         sut.showDeleteConfirmation()
 
         sut.confirmDelete()
 
         #expect(ws.workouts.count == 1)
         #expect(ws.workouts.contains { $0.id == w1.id } == false)
-        #expect(sut.showingFABOptions == false)
+        #expect(sut.showingWorkoutOptions == false)
         #expect(sut.showingDeleteConfirmation == false)
         #expect(sut.selectedWorkoutForAction == nil)
     }
 
-    @Test func confirmDeleteWithoutSelectionJustHidesFAB() {
+    @Test func confirmDeleteWithoutSelectionJustHidesOptions() {
         let w1 = Workout(name: "A")
         let w2 = Workout(name: "B")
         let (sut, ws, _) = makeSUT(seedWorkouts: [w1, w2])
@@ -366,9 +392,9 @@ struct WorkoutsViewModelTests {
         #expect(sut.isDefaultWorkout(w2) == false)
     }
 
-    // MARK: - getExerciseCount
+    // MARK: - Exercise counts
 
-    @Test func getExerciseCountAggregatesAcrossCategories() {
+    @Test func exerciseCountsAggregateAcrossCategoriesInOneStorageRead() {
         let w = Workout(name: "X", selectedCategories: Set(MuscleCategoryGroup.allCases))
         let (sut, _, es) = makeSUT(seedWorkouts: [w])
 
@@ -378,17 +404,14 @@ struct WorkoutsViewModelTests {
         es.saveForWorkout([armEx], workoutId: w.id, category: .arms)
         es.saveForWorkout([chestEx1, chestEx2], workoutId: w.id, category: .chest)
 
-        // MockExerciseStorage returns the saved list per category regardless of workoutId;
-        // VM iterates over all MuscleCategoryGroup cases.
-        // Expected: 1 (arms) + 2 (chest) + 0 (others).
-        #expect(sut.getExerciseCount(for: w) == 3)
+        #expect(sut.exerciseCountsByWorkout()[w.id] == 3)
     }
 
-    @Test func getExerciseCountReturnsZeroWhenNoExercises() {
+    @Test func exerciseCountsOmitWorkoutsWithoutExercises() {
         let w = Workout(name: "X")
         let (sut, _, _) = makeSUT(seedWorkouts: [w])
 
-        #expect(sut.getExerciseCount(for: w) == 0)
+        #expect(sut.exerciseCountsByWorkout()[w.id] == nil)
     }
 
     // MARK: - Export-as-File (Share)
@@ -426,12 +449,12 @@ struct WorkoutsViewModelTests {
     }
 
     @Test func sanitizeFilename_replacesUnsafeChars() {
-        #expect(WorkoutsViewModel.sanitizeFilename("Push/Pull") == "Push_Pull")
-        #expect(WorkoutsViewModel.sanitizeFilename("A:B?C*D") == "A_B_C_D")
-        #expect(WorkoutsViewModel.sanitizeFilename("Normal Workout") == "Normal Workout")
-        #expect(WorkoutsViewModel.sanitizeFilename("   ") == "workout", "Whitespace-only collapses to fallback.")
-        #expect(WorkoutsViewModel.sanitizeFilename("???") == "workout", "All-unsafe collapses through the underscore-only guard to fallback.")
-        #expect(WorkoutsViewModel.sanitizeFilename("Push//Pull") == "Push_Pull", "Consecutive unsafe chars collapse to a single underscore.")
-        #expect(WorkoutsViewModel.sanitizeFilename("") == "workout", "Empty input uses the literal fallback.")
+        #expect(WorkoutShareFileWriter.sanitizeFilename("Push/Pull") == "Push_Pull")
+        #expect(WorkoutShareFileWriter.sanitizeFilename("A:B?C*D") == "A_B_C_D")
+        #expect(WorkoutShareFileWriter.sanitizeFilename("Normal Workout") == "Normal Workout")
+        #expect(WorkoutShareFileWriter.sanitizeFilename("   ") == "workout", "Whitespace-only collapses to fallback.")
+        #expect(WorkoutShareFileWriter.sanitizeFilename("???") == "workout", "All-unsafe collapses through the underscore-only guard to fallback.")
+        #expect(WorkoutShareFileWriter.sanitizeFilename("Push//Pull") == "Push_Pull", "Consecutive unsafe chars collapse to a single underscore.")
+        #expect(WorkoutShareFileWriter.sanitizeFilename("") == "workout", "Empty input uses the literal fallback.")
     }
 }

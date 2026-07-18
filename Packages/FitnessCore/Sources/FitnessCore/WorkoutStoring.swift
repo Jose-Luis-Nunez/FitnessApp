@@ -1,5 +1,8 @@
-import Foundation
 import Mockable
+
+public enum WorkoutStorageError: Error {
+    case persistenceFailed
+}
 
 @Mockable
 @MainActor
@@ -8,7 +11,11 @@ public protocol WorkoutStoring: AnyObject {
     var currentWorkout: Workout? { get set }
     var defaultWorkout: Workout? { get set }
 
-    func createWorkout(name: String, selectedCategories: Set<MuscleCategoryGroup>) -> Workout
+    func createWorkout(
+        name: String,
+        selectedCategories: Set<MuscleCategoryGroup>,
+        type: WorkoutType
+    ) throws -> Workout
     func duplicateWorkout(_ workout: Workout) -> Workout
     /// Persists an imported workout — sourced from a shared JSON envelope —
     /// alongside its exercises and analytics history. Implementations MUST:
@@ -31,4 +38,13 @@ public protocol WorkoutStoring: AnyObject {
     func setAsDefaultWorkout(_ workout: Workout)
     func removeAsDefaultWorkout()
     func renameWorkout(_ workout: Workout, newName: String)
+}
+
+public extension WorkoutStoring {
+    func createWorkout(
+        name: String,
+        selectedCategories: Set<MuscleCategoryGroup> = Set(MuscleCategoryGroup.allCases)
+    ) throws -> Workout {
+        try createWorkout(name: name, selectedCategories: selectedCategories, type: .individual)
+    }
 }

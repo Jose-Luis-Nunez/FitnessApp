@@ -75,10 +75,10 @@ struct ExerciseAndAnalyticsStorageTests {
         #expect(es.loadForWorkout(workoutId: workout.id, category: .legs).count == 0)
     }
 
-    @Test func exercisesIsolatedBetweenWorkouts() {
+    @Test func exercisesIsolatedBetweenWorkouts() throws {
         let ws = TestHelpers.makeWorkoutStorageService(container: container)
         let workout1 = ws.workouts.first!
-        let workout2 = ws.createWorkout(name: "Workout 2")
+        let workout2 = try ws.createWorkout(name: "Workout 2")
         let es = ExerciseStorageService(container: container)
 
         es.saveForWorkout(
@@ -198,9 +198,9 @@ struct ExerciseAndAnalyticsStorageTests {
 
     // MARK: - Cascade Delete
 
-    @Test func deleteWorkoutCascadesExercises() {
+    @Test func deleteWorkoutCascadesExercises() throws {
         let ws = TestHelpers.makeWorkoutStorageService(container: container)
-        let workout = ws.createWorkout(name: "To Delete")
+        let workout = try ws.createWorkout(name: "To Delete")
         let es = ExerciseStorageService(container: container)
 
         es.saveForWorkout(

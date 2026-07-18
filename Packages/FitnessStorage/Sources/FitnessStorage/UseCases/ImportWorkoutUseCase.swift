@@ -111,7 +111,8 @@ public struct ImportWorkoutUseCase {
             name: envelope.workout.name,
             createdDate: envelope.workout.createdDate,
             lastModified: envelope.workout.lastModified,
-            selectedCategories: expandedCategories
+            selectedCategories: expandedCategories,
+            type: envelope.workout.type
         )
 
         return (newWorkout, newExercises, newAnalytics)

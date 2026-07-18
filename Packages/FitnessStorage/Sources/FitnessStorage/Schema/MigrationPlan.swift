@@ -11,12 +11,19 @@ private let migrationLogger = Logger(subsystem: "FitnessStorage", category: "App
 /// `MigrationV2toV3Tests`).
 enum AppMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self]
+        [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self, SchemaV5.self]
     }
 
     static var stages: [MigrationStage] {
-        [migrateV1toV2_addWorkoutId, migrateV2toV3_addFriendModel, migrateV3toV4_addIsActive]
+        [migrateV1toV2_addWorkoutId, migrateV2toV3_addFriendModel, migrateV3toV4_addIsActive, migrateV4toV5_addWorkoutType]
     }
+
+    /// V4 → V5: adds `WorkoutModel.typeRaw: String?`. Existing rows remain
+    /// `nil` and are interpreted as `.individual`; new writes store a raw value.
+    static let migrateV4toV5_addWorkoutType = MigrationStage.lightweight(
+        fromVersion: SchemaV4.self,
+        toVersion: SchemaV5.self
+    )
 
     /// V3 → V4: adds `ExerciseModel.isActive: Bool?`. Lightweight because it is a
     /// single additive, optional scalar — SwiftData adds the column as `NULL` for
@@ -56,7 +63,7 @@ enum AppMigrationPlan: SchemaMigrationPlan {
         willMigrate: nil,
         didMigrate: { context in
             // Destination of this stage is SchemaV2 — fetch the V2 snapshot type,
-            // not the live `ExerciseModel` (which is now the V4 form with
+            // not the live `ExerciseModel` (whose current shape includes
             // `isActive` and would not match the V2 store shape).
             let descriptor = FetchDescriptor<SchemaV2.ExerciseModel>()
             let all = try context.fetch(descriptor)

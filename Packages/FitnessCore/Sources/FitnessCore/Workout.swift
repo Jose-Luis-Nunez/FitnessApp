@@ -6,21 +6,35 @@ public struct Workout: Identifiable, Codable, Hashable, Equatable {
     public var createdDate: Date
     public var lastModified: Date
     public var selectedCategories: Set<MuscleCategoryGroup>
+    public var type: WorkoutType
 
-    public init(name: String, selectedCategories: Set<MuscleCategoryGroup> = Set(MuscleCategoryGroup.allCases)) {
+    public init(
+        name: String,
+        selectedCategories: Set<MuscleCategoryGroup> = Set(MuscleCategoryGroup.allCases),
+        type: WorkoutType = .individual
+    ) {
         self.id = UUID()
         self.name = name
         self.createdDate = Date()
         self.lastModified = Date()
         self.selectedCategories = selectedCategories
+        self.type = type
     }
 
-    public init(id: UUID, name: String, createdDate: Date, lastModified: Date, selectedCategories: Set<MuscleCategoryGroup> = Set(MuscleCategoryGroup.allCases)) {
+    public init(
+        id: UUID,
+        name: String,
+        createdDate: Date,
+        lastModified: Date,
+        selectedCategories: Set<MuscleCategoryGroup> = Set(MuscleCategoryGroup.allCases),
+        type: WorkoutType = .individual
+    ) {
         self.id = id
         self.name = name
         self.createdDate = createdDate
         self.lastModified = lastModified
         self.selectedCategories = selectedCategories
+        self.type = type
     }
 
     public mutating func updateLastModified() {
@@ -28,7 +42,7 @@ public struct Workout: Identifiable, Codable, Hashable, Equatable {
     }
 
     enum CodingKeys: CodingKey {
-        case id, name, createdDate, lastModified, selectedCategories
+        case id, name, createdDate, lastModified, selectedCategories, type
     }
 
     public init(from decoder: Decoder) throws {
@@ -43,6 +57,7 @@ public struct Workout: Identifiable, Codable, Hashable, Equatable {
         } else {
             selectedCategories = Set(MuscleCategoryGroup.allCases)
         }
+        type = try container.decodeIfPresent(WorkoutType.self, forKey: .type) ?? .individual
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -52,6 +67,7 @@ public struct Workout: Identifiable, Codable, Hashable, Equatable {
         try container.encode(createdDate, forKey: .createdDate)
         try container.encode(lastModified, forKey: .lastModified)
         try container.encode(selectedCategories, forKey: .selectedCategories)
+        try container.encode(type, forKey: .type)
     }
 }
 
@@ -72,7 +88,8 @@ extension Workout {
             name: newName ?? "\(self.name) Copy",
             createdDate: Date(),
             lastModified: Date(),
-            selectedCategories: self.selectedCategories
+            selectedCategories: self.selectedCategories,
+            type: type
         )
     }
 }

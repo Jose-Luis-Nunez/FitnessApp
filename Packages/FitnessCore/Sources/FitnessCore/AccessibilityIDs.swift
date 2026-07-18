@@ -20,6 +20,23 @@ public enum ExerciseIDs {
     public static let nameLabel = "id_label_exercise_name"
 }
 
+public enum WorkoutIDs {
+    public static let tilePrefix = "id_workouts_tile_"
+    public static let settingsPrefix = "id_workouts_settings_"
+    public static let createTypePicker = "id_workouts_create_type_picker"
+    public static func tile(_ id: UUID) -> String { "\(tilePrefix)\(id.uuidString)" }
+    public static func settings(_ id: UUID) -> String { "\(settingsPrefix)\(id.uuidString)" }
+}
+
+public enum BottomBarIDs {
+    public static let contextMenu = "id_bottom_context_menu"
+    public static let workoutsTab = "id_bottom_tab_workouts"
+    public static let trainingTab = "id_bottom_tab_training"
+    public static let analyticsTab = "id_bottom_tab_analytics"
+    public static let scheduleTab = "id_bottom_tab_schedule"
+    public static let profileTab = "id_bottom_tab_profile"
+}
+
 public enum ExerciseCardIDs {
     public static func completedCard(_ id: UUID) -> String { "id_card_completed_\(id.uuidString)" }
     public static func activeCard(_ id: UUID) -> String { "id_card_active_\(id.uuidString)" }

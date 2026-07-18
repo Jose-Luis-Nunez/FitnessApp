@@ -258,10 +258,10 @@ struct ExerciseStorageServiceTests {
 
     // MARK: - Workout Isolation
 
-    @Test func exercisesIsolatedBetweenDifferentWorkouts() {
+    @Test func exercisesIsolatedBetweenDifferentWorkouts() throws {
         let ws = TestHelpers.makeWorkoutStorageService(container: container)
         let workout1 = ws.workouts.first!
-        let workout2 = ws.createWorkout(name: "Second")
+        let workout2 = try ws.createWorkout(name: "Second")
         let sut = ExerciseStorageService(container: container)
 
         sut.saveForWorkout(
@@ -282,6 +282,32 @@ struct ExerciseStorageServiceTests {
         #expect(w1Loaded.first!.name == "W1 Curl")
         #expect(w2Loaded.count == 1)
         #expect(w2Loaded.first!.name == "W2 Curl")
+    }
+
+    @Test func exerciseCountsAreAggregatedForAllWorkoutsInOneRead() throws {
+        let ws = TestHelpers.makeWorkoutStorageService(container: container)
+        let workout1 = ws.workouts.first!
+        let workout2 = try ws.createWorkout(name: "Second")
+        let sut = ExerciseStorageService(container: container)
+
+        sut.saveForWorkout(
+            [
+                TestHelpers.makeExercise(name: "Curl", category: .arms),
+                TestHelpers.makeExercise(name: "Press", category: .arms),
+            ],
+            workoutId: workout1.id,
+            category: .arms
+        )
+        sut.saveForWorkout(
+            [TestHelpers.makeExercise(name: "Squat", category: .legs)],
+            workoutId: workout2.id,
+            category: .legs
+        )
+
+        let counts = sut.exerciseCountsByWorkout()
+
+        #expect(counts[workout1.id] == 2)
+        #expect(counts[workout2.id] == 1)
     }
 
     // MARK: - Overwrite Behavior

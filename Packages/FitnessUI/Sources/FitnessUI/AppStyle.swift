@@ -143,6 +143,26 @@ public enum AppStyle {
         public static let selectionRadioFrame: CGFloat = 26
         public static let selectionRadioStroke: CGFloat = 2
         public static let miniMenuMaxWidth: CGFloat = 320
+
+        // MARK: Workout Tiles
+        public static let workoutGridBottomPadding: CGFloat = 20
+        public static let workoutTileCompactHeight: CGFloat = 120
+        public static let workoutTileCompactSettingsIconSize: CGFloat = 30
+        public static let workoutTileCompactCountOuterSize: CGFloat = 34
+        public static let workoutTileCompactCountInnerSize: CGFloat = 26
+        public static let workoutTileCompactCountOuterStroke: CGFloat = 3
+        public static let workoutTileCompactCountInnerStroke: CGFloat = 1
+        public static let workoutTileCompactCountInset: CGFloat = 20
+        public static let workoutTileCompactSettingsTopInset: CGFloat = 22
+        public static let workoutTileCompactBorderWidth: CGFloat = 2
+        public static let workoutHeroCountOuterStroke: CGFloat = 3
+        public static let workoutHeroCountInnerStroke: CGFloat = 1
+        public static let workoutHeroSettingsIconSize: CGFloat = 24
+        public static let workoutHeroBorderWidth: CGFloat = 1
+        public static let workoutHeroCountMinimumScale: CGFloat = 0.75
+        public static let workoutHeroStartChipHorizontalPadding: CGFloat = 12
+        public static let workoutHeroStartChipVerticalPadding: CGFloat = 5
+        public static let workoutHeroStartChipBorderWidth: CGFloat = 1
     }
 
     public enum CornerRadius {
@@ -425,6 +445,11 @@ public enum AppStyle {
         public static let selectionTintStroke: Double = 0.35
         /// Hairline divider between Cancel and Deactivate/Activate in the morphed bar.
         public static let selectionDivider: Double = 0.2
+        public static let categoryTileIconGlow: Double = 0.5
+        public static let categoryTileCompletionOverlay: Double = 0.3
+        public static let workoutTileCompactDefaultFill: Double = 0.2
+        public static let workoutHeroBorder: Double = 0.72
+        public static let workoutHeroStartChipFill: Double = 0.42
     }
 
     public enum Shadow {

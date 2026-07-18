@@ -33,7 +33,7 @@ Based on both agent reports, apply fixes:
 2. **Replace hardcoded strings** with test ID constants (e.g. `TrainingIDs.doneButton`)
 3. **Fix structure** (inherit `BaseTest`, add `@MainActor`, add launch sequence)
 4. **Add missing identifiers** — add `enum AID` entry in the production View, then add `.accessibilityIdentifier(AID.x)` to the element
-5. **Add matching test IDs** — add the new constant to the appropriate enum in `Config/TestAccessibilityIDs.swift`
+5. **Add matching test IDs** — add the new constant to the appropriate enum in `Selectors/AccessibilityIDs.swift`
 6. **Remove stale test IDs** that reference deleted `AID` constants
 7. **Make mock data explicit** — replace implicit defaults with `TestExerciseFixture` passed via `launch(training:)`
 8. **Add new test steps** for elements that were added to the screen since the test was written

@@ -36,9 +36,9 @@ struct WorkoutStorageServiceTests {
 
     // MARK: - Create
 
-    @Test func createWorkoutPersistsAndAppearsInList() {
+    @Test func createWorkoutPersistsAndAppearsInList() throws {
         let sut = makeSUT()
-        let created = sut.createWorkout(name: "Legs Day", selectedCategories: [.legs, .abs])
+        let created = try sut.createWorkout(name: "Legs Day", selectedCategories: [.legs, .abs])
 
         #expect(sut.workouts.contains { $0.id == created.id })
 
@@ -49,11 +49,43 @@ struct WorkoutStorageServiceTests {
         #expect(reloaded?.selectedCategories == [.legs, .abs])
     }
 
+    @Test func workoutTypePersistsAcrossReloads() throws {
+        let sut = makeSUT()
+        let created = try sut.createWorkout(name: "Leg Day", type: .leg)
+
+        let reloaded = makeSUT().workouts.first { $0.id == created.id }
+        #expect(reloaded?.type == .leg)
+    }
+
+    @Test func updatedWorkoutTypePersistsAcrossReloads() throws {
+        let sut = makeSUT()
+        var created = try sut.createWorkout(name: "Changing Plan", type: .pull)
+        created.type = .full
+
+        sut.updateWorkout(created)
+
+        let reloaded = makeSUT().workouts.first { $0.id == created.id }
+        #expect(reloaded?.type == .full)
+    }
+
+    @Test func unknownPersistedWorkoutTypeFallsBackToIndividual() {
+        let model = WorkoutModel(
+            id: UUID(),
+            name: "Future Workout",
+            selectedCategories: [],
+            createdDate: .now,
+            lastModified: .now,
+            typeRaw: "future-type"
+        )
+
+        #expect(model.toDomain().type == .individual)
+    }
+
     // MARK: - Rename
 
-    @Test func renameWorkoutPersistsNewName() {
+    @Test func renameWorkoutPersistsNewName() throws {
         let sut = makeSUT()
-        let created = sut.createWorkout(name: "Old Name")
+        let created = try sut.createWorkout(name: "Old Name")
         sut.renameWorkout(created, newName: "New Name")
 
         let reloaded = makeSUT()
@@ -63,9 +95,9 @@ struct WorkoutStorageServiceTests {
 
     // MARK: - Delete
 
-    @Test func deleteWorkoutRemovesFromPersistence() {
+    @Test func deleteWorkoutRemovesFromPersistence() throws {
         let sut = makeSUT()
-        let toDelete = sut.createWorkout(name: "To Delete")
+        let toDelete = try sut.createWorkout(name: "To Delete")
         let countBefore = sut.workouts.count
         sut.deleteWorkout(toDelete)
 
@@ -76,9 +108,9 @@ struct WorkoutStorageServiceTests {
         #expect(!reloaded.workouts.contains { $0.id == toDelete.id })
     }
 
-    @Test func deleteCurrentWorkoutFallsBackToFirst() {
+    @Test func deleteCurrentWorkoutFallsBackToFirst() throws {
         let sut = makeSUT()
-        let second = sut.createWorkout(name: "Second")
+        let second = try sut.createWorkout(name: "Second")
         sut.setCurrentWorkout(second)
         #expect(sut.currentWorkout?.id == second.id)
 
@@ -89,18 +121,18 @@ struct WorkoutStorageServiceTests {
 
     // MARK: - Current / Default Tracking
 
-    @Test func setCurrentWorkoutPersistsAcrossReloads() {
+    @Test func setCurrentWorkoutPersistsAcrossReloads() throws {
         let sut = makeSUT()
-        let second = sut.createWorkout(name: "Second")
+        let second = try sut.createWorkout(name: "Second")
         sut.setCurrentWorkout(second)
 
         let reloaded = makeSUT()
         #expect(reloaded.currentWorkout?.id == second.id)
     }
 
-    @Test func setAsDefaultWorkoutPersistsAcrossReloads() {
+    @Test func setAsDefaultWorkoutPersistsAcrossReloads() throws {
         let sut = makeSUT()
-        let second = sut.createWorkout(name: "Second")
+        let second = try sut.createWorkout(name: "Second")
         sut.setAsDefaultWorkout(second)
 
         let reloaded = makeSUT()
@@ -122,15 +154,19 @@ struct WorkoutStorageServiceTests {
 
     @Test func duplicateWorkoutCreatesIndependentCopy() {
         let sut = makeSUT()
-        let original = sut.workouts.first!
+        var original = sut.workouts.first!
+        original.type = .leg
+        sut.updateWorkout(original)
         let duplicate = sut.duplicateWorkout(original)
 
         #expect(duplicate.id != original.id)
         #expect(duplicate.name.contains("Copy"))
+        #expect(duplicate.type == .leg)
         #expect(sut.workouts.contains { $0.id == duplicate.id })
+        #expect(makeSUT().workouts.first { $0.id == duplicate.id }?.type == .leg)
     }
 
-    @Test func duplicateWorkoutCopiesExercisesPerCategory() {
+    @Test func duplicateWorkoutCopiesExercisesPerCategory() throws {
         let spy = MockExerciseStoring(policy: .relaxedVoid)
         let armExercise = TestHelpers.makeExercise(name: "Curl", category: .arms)
         let chestExercise = TestHelpers.makeExercise(name: "Bench", category: .chest)
@@ -140,7 +176,7 @@ struct WorkoutStorageServiceTests {
         given(spy).loadForWorkout(workoutId: .any, category: .any).willReturn([])
 
         let sut = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: spy, analyticsStorage: TestHelpers.makeNoOpAnalyticsStoring())
-        let original = sut.createWorkout(
+        let original = try sut.createWorkout(
             name: "Full Body",
             selectedCategories: [.arms, .chest]
         )
@@ -158,7 +194,7 @@ struct WorkoutStorageServiceTests {
             .called(.atLeastOnce)
     }
 
-    @Test func duplicateWorkoutSkipsEmptyCategories() {
+    @Test func duplicateWorkoutSkipsEmptyCategories() throws {
         let spy = MockExerciseStoring(policy: .relaxedVoid)
         let armExercise = TestHelpers.makeExercise(name: "Curl", category: .arms)
 
@@ -166,7 +202,7 @@ struct WorkoutStorageServiceTests {
         given(spy).loadForWorkout(workoutId: .any, category: .any).willReturn([])
 
         let sut = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: spy, analyticsStorage: TestHelpers.makeNoOpAnalyticsStoring())
-        let original = sut.createWorkout(
+        let original = try sut.createWorkout(
             name: "Arms Only",
             selectedCategories: [.arms, .legs]
         )

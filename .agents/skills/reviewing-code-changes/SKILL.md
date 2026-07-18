@@ -95,6 +95,7 @@ Compare new/changed code against existing shared components and utilities:
 | If you see | Consider using |
 |---|---|
 | Custom chip with background + stroke | `MetricChipView` |
+| Centered muscle artwork with clipped category crop + glow | `CategoryTileArtworkStage` |
 | Repeated `glassEffect` availability branch | `.appGlassEffect(in:)` or `.appDarkSurface(backgroundColor:in:)` from FitnessUI |
 | Horizontal scroller of per-set tiles (`GeometryReader` + `ScrollView` of `SetTileView` + scroll chevron, optional trailing reset/accessory) | `SetTilesRow` |
 | Full-screen sheet with header + save | `WorkoutFormSheet` |
