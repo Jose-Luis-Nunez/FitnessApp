@@ -8,6 +8,7 @@ public struct CardTextField: View {
     private let placeholder: String
     @Binding private var text: String
     private var isFocused: FocusState<Bool>.Binding
+    private let accessibilityIdentifier: String?
 
     /// Matches the wheel-card look (`ExerciseWheelPickerRow` columns).
     private let cornerRadius: CGFloat = 16
@@ -16,12 +17,14 @@ public struct CardTextField: View {
         label: String,
         placeholder: String,
         text: Binding<String>,
-        isFocused: FocusState<Bool>.Binding
+        isFocused: FocusState<Bool>.Binding,
+        accessibilityIdentifier: String? = nil
     ) {
         self.label = label
         self.placeholder = placeholder
         self._text = text
         self.isFocused = isFocused
+        self.accessibilityIdentifier = accessibilityIdentifier
     }
 
     public var body: some View {
@@ -36,14 +39,7 @@ public struct CardTextField: View {
                         .font(AppStyle.Font.sheetSectionLabel)
                         .foregroundColor(AppStyle.Color.white.opacity(AppStyle.Opacity.placeholderText))
                 }
-                TextField("", text: $text)
-                    .font(AppStyle.Font.sheetSectionLabel)
-                    .foregroundColor(AppStyle.Color.white)
-                    .tint(AppStyle.Color.white)
-                    .textFieldStyle(PlainTextFieldStyle())
-                    .focused(isFocused)
-                    .submitLabel(.done)
-                    .onSubmit { isFocused.wrappedValue = false }
+                textField
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -57,5 +53,23 @@ public struct CardTextField: View {
                         .stroke(AppStyle.Color.white.opacity(AppStyle.Opacity.subtleStroke), lineWidth: 1)
                 )
         )
+    }
+
+    @ViewBuilder
+    private var textField: some View {
+        let input = TextField("", text: $text)
+            .font(AppStyle.Font.sheetSectionLabel)
+            .foregroundColor(AppStyle.Color.white)
+            .tint(AppStyle.Color.white)
+            .textFieldStyle(PlainTextFieldStyle())
+            .focused(isFocused)
+            .submitLabel(.done)
+            .onSubmit { isFocused.wrappedValue = false }
+
+        if let accessibilityIdentifier {
+            input.accessibilityIdentifier(accessibilityIdentifier)
+        } else {
+            input
+        }
     }
 }

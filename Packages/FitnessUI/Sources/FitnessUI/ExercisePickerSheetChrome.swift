@@ -271,6 +271,7 @@ public struct ExercisePickerActionButtons: View {
     let saveDisabled: Bool
     let onCancel: () -> Void
     let onSave: () -> Void
+    let saveAccessibilityIdentifier: String?
 
     public init(
         cancelLabel: String = "Cancel",
@@ -278,7 +279,8 @@ public struct ExercisePickerActionButtons: View {
         cancelColor: Color = AppStyle.Color.white,
         saveDisabled: Bool,
         onCancel: @escaping () -> Void,
-        onSave: @escaping () -> Void
+        onSave: @escaping () -> Void,
+        saveAccessibilityIdentifier: String? = nil
     ) {
         self.cancelLabel = cancelLabel
         self.saveLabel = saveLabel
@@ -286,6 +288,7 @@ public struct ExercisePickerActionButtons: View {
         self.saveDisabled = saveDisabled
         self.onCancel = onCancel
         self.onSave = onSave
+        self.saveAccessibilityIdentifier = saveAccessibilityIdentifier
     }
 
     public var body: some View {
@@ -302,18 +305,29 @@ public struct ExercisePickerActionButtons: View {
 
             Spacer()
 
-            Button(saveLabel) { onSave() }
-                .foregroundColor(AppStyle.Color.white)
-                .font(AppStyle.Font.pickerAction)
-                .padding(5)
-                .frame(width: 140, height: 40)
-                .background(saveDisabled ? AppStyle.Color.green.opacity(0.15) : AppStyle.Color.green)
-                .cornerRadius(AppStyle.CornerRadius.editPickerViewButton)
-                .disabled(saveDisabled)
-                .frame(maxWidth: .infinity, alignment: .center)
+            saveButton
 
             Spacer()
         }
         .padding(.horizontal, 5)
+    }
+
+    @ViewBuilder
+    private var saveButton: some View {
+        let button = Button(saveLabel) { onSave() }
+            .foregroundColor(AppStyle.Color.white)
+            .font(AppStyle.Font.pickerAction)
+            .padding(5)
+            .frame(width: 140, height: 40)
+            .background(saveDisabled ? AppStyle.Color.green.opacity(0.15) : AppStyle.Color.green)
+            .cornerRadius(AppStyle.CornerRadius.editPickerViewButton)
+            .disabled(saveDisabled)
+            .frame(maxWidth: .infinity, alignment: .center)
+
+        if let saveAccessibilityIdentifier {
+            button.accessibilityIdentifier(saveAccessibilityIdentifier)
+        } else {
+            button
+        }
     }
 }

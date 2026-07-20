@@ -6,9 +6,11 @@ final class WorkoutTileVisualTests: BaseTest {
     func testWorkoutTilesMatchCategoryTileGeometry() throws {
         try launchCategorySelection()
 
-        let categoryTileFrames = ["arms", "chest", "back", "legs"].map {
-            frameOf(HomeIDs.categoryTile(for: $0), elementType: .button)
-        }
+        let categoryTileFrames = sortFramesInReadingOrder(
+            ["arms", "chest", "back", "legs"].map {
+                frameOf(HomeIDs.categoryTile(for: $0), elementType: .button)
+            }
+        )
         attachDiagnosticScreenshot(named: "category-selection-tiles")
 
         tapOn(BottomBarIDs.workoutsTab)
@@ -48,6 +50,8 @@ final class WorkoutTileVisualTests: BaseTest {
         tapOn(BottomBarIDs.contextMenu)
         tapOn(label: WorkoutLabels.newWorkout)
 
+        verifyExists(WorkoutIDs.createTitle, elementType: .staticText)
+        verifyExists(WorkoutIDs.createNameField, elementType: .textField)
         verifyExists(WorkoutIDs.createTypePicker, elementType: .button)
         tapOn(WorkoutIDs.createTypePicker)
 
@@ -55,5 +59,23 @@ final class WorkoutTileVisualTests: BaseTest {
             verifyExists(label: option, timeout: TestDefaults.shortTimeout)
         }
         attachDiagnosticScreenshot(named: "create-workout-type-menu")
+    }
+
+    @MainActor
+    func testCreateWorkoutRequiresNameAndTypeBeforeSaving() throws {
+        try launchCategorySelection()
+        tapOn(BottomBarIDs.workoutsTab)
+        tapOn(BottomBarIDs.contextMenu)
+        tapOn(label: WorkoutLabels.newWorkout)
+
+        verifyIsDisabled(WorkoutIDs.createSaveButton)
+        fill(WorkoutIDs.createNameField, with: "Pull")
+        verifyIsDisabled(WorkoutIDs.createSaveButton)
+
+        tapOn(WorkoutIDs.createTypePicker)
+        tapOn(label: WorkoutLabels.typeOptions[0])
+
+        verifyIsEnabled(WorkoutIDs.createSaveButton)
+        attachDiagnosticScreenshot(named: "create-workout-required-fields")
     }
 }

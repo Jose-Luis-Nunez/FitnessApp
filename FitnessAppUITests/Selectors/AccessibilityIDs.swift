@@ -36,7 +36,10 @@ enum ExerciseCardIDs {
 enum WorkoutIDs {
     static let tilePrefix = "id_workouts_tile_"
     static let settingsPrefix = "id_workouts_settings_"
+    static let createTitle = "id_workouts_create_title"
+    static let createNameField = "id_workouts_create_name_field"
     static let createTypePicker = "id_workouts_create_type_picker"
+    static let createSaveButton = "id_workouts_create_save_button"
 }
 
 enum WorkoutLabels {

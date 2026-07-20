@@ -107,7 +107,7 @@ struct WorkoutsViewModelTests {
         sut.createNewWorkout()
 
         #expect(sut.newWorkoutName.isEmpty)
-        #expect(sut.newWorkoutType == .individual)
+        #expect(sut.newWorkoutType == nil)
         #expect(sut.showingCreateWorkoutFullScreen == false)
     }
 
@@ -131,6 +131,16 @@ struct WorkoutsViewModelTests {
     @Test func createNewWorkoutIgnoresEmptyName() {
         let (sut, ws, _) = makeSUT()
         sut.newWorkoutName = ""
+
+        sut.createNewWorkout()
+
+        #expect(ws.workouts.isEmpty)
+    }
+
+    @Test func createNewWorkoutIgnoresMissingType() {
+        let (sut, ws, _) = makeSUT()
+        sut.newWorkoutName = "Pull"
+        sut.newWorkoutType = nil
 
         sut.createNewWorkout()
 
@@ -269,14 +279,14 @@ struct WorkoutsViewModelTests {
 
     // MARK: - showCreateWorkout
 
-    @Test func showCreateWorkoutSeedsNameFromCount() {
+    @Test func showCreateWorkoutResetsRequiredFields() {
         let existing = [Workout(name: "W1"), Workout(name: "W2")]
         let (sut, _, _) = makeSUT(seedWorkouts: existing)
 
         sut.showCreateWorkout()
 
-        #expect(sut.newWorkoutName == "Workout 3")
-        #expect(sut.newWorkoutType == .individual)
+        #expect(sut.newWorkoutName.isEmpty)
+        #expect(sut.newWorkoutType == nil)
         #expect(sut.showingCreateWorkoutFullScreen == true)
     }
 

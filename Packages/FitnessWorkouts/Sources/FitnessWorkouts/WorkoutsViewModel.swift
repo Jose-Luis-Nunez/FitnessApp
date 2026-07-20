@@ -37,7 +37,7 @@ public final class WorkoutsViewModel {
     public var showingDeleteConfirmation = false
     public var selectedWorkoutForAction: Workout?
     public var newWorkoutName = ""
-    public var newWorkoutType: WorkoutType = .individual
+    public var newWorkoutType: WorkoutType?
     public var renameWorkoutName = ""
     /// Drives the `.sheet(item:)` that presents the iOS share sheet. Set by
     /// `requestShare(for:)` after the workout JSON has been computed.
@@ -74,7 +74,8 @@ public final class WorkoutsViewModel {
     // MARK: - Workout Actions
 
     public func createNewWorkout() {
-        guard !newWorkoutName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        guard !newWorkoutName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let selectedWorkoutType = newWorkoutType else { return }
 
         // Workouts are not category-restricted (the overview always shows all
         // five), so a new workout covers all categories — the storage default.
@@ -83,7 +84,7 @@ public final class WorkoutsViewModel {
             workout = try storageService.createWorkout(
                 name: newWorkoutName,
                 selectedCategories: Set(MuscleCategoryGroup.allCases),
-                type: newWorkoutType
+                type: selectedWorkoutType
             )
         } catch {
             createErrorMessage = "Workout could not be saved."
@@ -93,7 +94,7 @@ public final class WorkoutsViewModel {
 
         createErrorMessage = nil
         newWorkoutName = ""
-        newWorkoutType = .individual
+        newWorkoutType = nil
         showingCreateWorkoutFullScreen = false
     }
 
@@ -134,8 +135,8 @@ public final class WorkoutsViewModel {
     }
 
     public func showCreateWorkout() {
-        newWorkoutName = "Workout \(workouts.count + 1)"
-        newWorkoutType = .individual
+        newWorkoutName = ""
+        newWorkoutType = nil
         createErrorMessage = nil
         showingCreateWorkoutFullScreen = true
     }

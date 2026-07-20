@@ -126,6 +126,42 @@ extension BaseTest {
     }
 
     @MainActor
+    func verifyIsDisabled(
+        _ identifier: String,
+        elementType: XCUIElement.ElementType = .button,
+        timeout: TimeInterval = TestDefaults.timeout
+    ) {
+        guard let element = findElement(
+            in: app,
+            identifier: identifier,
+            elementType: elementType,
+            timeout: timeout
+        ) else {
+            XCTFail("verifyIsDisabled: '\(identifier)' not found within \(timeout)s")
+            return
+        }
+        XCTAssertFalse(element.isEnabled, "Expected '\(identifier)' to be disabled")
+    }
+
+    @MainActor
+    func verifyIsEnabled(
+        _ identifier: String,
+        elementType: XCUIElement.ElementType = .button,
+        timeout: TimeInterval = TestDefaults.timeout
+    ) {
+        guard let element = findElement(
+            in: app,
+            identifier: identifier,
+            elementType: elementType,
+            timeout: timeout
+        ) else {
+            XCTFail("verifyIsEnabled: '\(identifier)' not found within \(timeout)s")
+            return
+        }
+        XCTAssertTrue(element.isEnabled, "Expected '\(identifier)' to be enabled")
+    }
+
+    @MainActor
     func verifyNotExists(
         _ identifier: String,
         elementType: XCUIElement.ElementType = .any,
@@ -228,12 +264,7 @@ extension BaseTest {
             return []
         }
 
-        let frames = query.allElementsBoundByIndex.map(\.frame).sorted { lhs, rhs in
-            if abs(lhs.minY - rhs.minY) > 0.5 {
-                return lhs.minY < rhs.minY
-            }
-            return lhs.minX < rhs.minX
-        }
+        let frames = sortFramesInReadingOrder(query.allElementsBoundByIndex.map(\.frame))
         guard frames.count >= limit else {
             XCTFail("framesOfElements: expected at least \(limit) elements starting with '\(prefix)', found \(frames.count)")
             return frames
@@ -308,5 +339,15 @@ extension BaseTest {
         }
 
         return element.waitForExistence(timeout: timeout) ? element : nil
+    }
+}
+
+@MainActor
+func sortFramesInReadingOrder(_ frames: [CGRect]) -> [CGRect] {
+    frames.sorted { lhs, rhs in
+        if abs(lhs.minY - rhs.minY) > 0.5 {
+            return lhs.minY < rhs.minY
+        }
+        return lhs.minX < rhs.minX
     }
 }

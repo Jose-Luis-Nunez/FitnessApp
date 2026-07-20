@@ -205,7 +205,7 @@ public enum AppStyle {
         public static let categoryTileCount = SwiftUI.Font.system(size: 16, weight: .black)
         public static let categoryTileBadge = SwiftUI.Font.system(size: 14, weight: .heavy)
         public static let categoryTileProgress = SwiftUI.Font.system(size: 12, weight: .heavy)
-        public static let workoutHeroExerciseCount = SwiftUI.Font.system(size: 40, weight: .black)
+        public static let workoutHeroExerciseCount = SwiftUI.Font.system(size: 35, weight: .bold)
         public static let workoutHeroExerciseLabel = SwiftUI.Font.system(size: 12, weight: .medium)
 
         public static let tileLabel = SwiftUI.Font.system(size: 14, weight: .semibold)

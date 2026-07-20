@@ -57,7 +57,7 @@ The single source of truth for the constants below is `Packages/FitnessCore/Sour
 | `MuscleCategoryIDs` | `FitnessCore.AccessibilityIDs` | `IdleActiveCardModelView` (post-T8d; previously `IdleActiveCardView`) | `startExercise` |
 | `ExerciseIDs` | `FitnessCore.AccessibilityIDs` | `InactiveCardModelView` (post-T8d; previously `InactiveCardView`) | `nameLabel` |
 | `ExerciseCardIDs` | `FitnessCore.AccessibilityIDs` | `ExerciseCardModelView` (post-T8d; previously `ExerciseCardContainerView`) | `completedCard(_:)`, `activeCard(_:)`, `idleCard(_:)`, `completedCardPrefix`, `activeCardPrefix`, `idleCardPrefix` |
-| `WorkoutIDs` | `FitnessCore.AccessibilityIDs` | `WorkoutTileView`, `CreateWorkoutView` | `tilePrefix`, `settingsPrefix`, `tile(_:)`, `settings(_:)`, `createTypePicker` |
+| `WorkoutIDs` | `FitnessCore.AccessibilityIDs` | `WorkoutTileView`, `CreateWorkoutView` | `tilePrefix`, `settingsPrefix`, `tile(_:)`, `settings(_:)`, `createTitle`, `createNameField`, `createTypePicker`, `createSaveButton` |
 | `BottomBarIDs` | `FitnessCore.AccessibilityIDs` | `BottomMenuBarView` | `contextMenu`, `workoutsTab`, `trainingTab`, `analyticsTab`, `scheduleTab`, `profileTab` |
 
 ## Test Fixtures
@@ -84,11 +84,13 @@ try launch(training: heavy)
 | Type into a text field | `fill(_:with:)` |
 | Type into a picker input button | `fillPickerInput(_:with:)` |
 | Assert element is visible | `verifyExists(_:)` |
+| Assert enabled state | `verifyIsEnabled(_:)` / `verifyIsDisabled(_:)` |
 | Assert a system-controlled menu option is visible by label | `verifyExists(label:)` |
 | Assert element is gone | `verifyNotExists(_:)` |
 | Assert element exists by ID prefix | `verifyExistsWithPrefix(_:)` |
 | Assert no element with ID prefix | `verifyNotExistsWithPrefix(_:)` |
 | Read element frames | `frameOf(_:)` / `framesOfElements(withPrefix:limit:)` |
+| Sort measured frames by visual reading order | `sortFramesInReadingOrder(_:)` |
 | Attach a diagnostic full-screen screenshot | `attachDiagnosticScreenshot(named:)` |
 | Assert element label content | `verifyLabel(_:equals:)` |
 | Wait for label to be populated | `waitForNonEmptyLabel(_:)` |

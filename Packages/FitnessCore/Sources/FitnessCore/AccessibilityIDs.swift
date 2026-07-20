@@ -23,7 +23,10 @@ public enum ExerciseIDs {
 public enum WorkoutIDs {
     public static let tilePrefix = "id_workouts_tile_"
     public static let settingsPrefix = "id_workouts_settings_"
+    public static let createTitle = "id_workouts_create_title"
+    public static let createNameField = "id_workouts_create_name_field"
     public static let createTypePicker = "id_workouts_create_type_picker"
+    public static let createSaveButton = "id_workouts_create_save_button"
     public static func tile(_ id: UUID) -> String { "\(tilePrefix)\(id.uuidString)" }
     public static func settings(_ id: UUID) -> String { "\(settingsPrefix)\(id.uuidString)" }
 }

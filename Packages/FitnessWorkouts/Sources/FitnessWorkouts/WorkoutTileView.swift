@@ -10,7 +10,7 @@ public enum WorkoutTileLayout {
 enum WorkoutTileArtwork {
     static let assetName = "workoutDefaultIcon"
 
-    /// Overview tiles use one fixed upper-body composition; only the Create-Workout preview varies by type.
+    /// Overview tiles use one fixed upper-body composition for every workout type.
     static func heroCropAlignment(for workoutType: WorkoutType) -> Alignment {
         switch workoutType {
         case .pull, .push, .leg, .individual, .full:

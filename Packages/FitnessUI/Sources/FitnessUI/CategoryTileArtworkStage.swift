@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The shared, centered artwork stage used by category tiles and the Create-Workout preview.
+/// The shared, centered artwork stage used by category tiles.
 /// Callers provide the image so asset lookup remains in the feature's bundle.
 public struct CategoryTileArtworkStage<Artwork: View>: View {
     private let alignment: Alignment
