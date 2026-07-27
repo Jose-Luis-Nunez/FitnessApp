@@ -13,6 +13,8 @@ public enum AppStyle {
         /// Gap above a sheet's bottom action bar (Cancel/Save row).
         public static let actionBarTop: CGFloat = 24
         public static let cardVertical: CGFloat = 8
+        /// Horizontal inset for the idle card's expanded coaching content.
+        public static let idleExpandedContentHorizontal: CGFloat = 8
     }
 
     public enum Layout {
@@ -79,14 +81,21 @@ public enum AppStyle {
         public static let idleMetricFooterRowHeight: CGFloat = 20
         /// Width of the Data chart glyph (landscape ~2.66:1); height comes from `idleMetricGlyphHeight`.
         public static let analyticsEntryIconWidth: CGFloat = 40
-        /// Decorative coaching-tip badge inside the idle card's Data band.
-        public static let idleCoachingChipIconSize: CGFloat = 14
-        public static let idleCoachingChipVerticalPadding: CGFloat = 5
+        /// Vertical gap between the idle card's "Last run" trigger and its expanded set details.
+        public static let idleLastRunExpandedTopSpacing: CGFloat = 12
+        /// Additional breathing room between the analytics icon and the "Last run" trigger.
+        public static let idleLastRunFooterTopSpacing: CGFloat = 5
+        /// Height reserved for expanded last-run tiles plus the trailing swipe/coaching rail.
+        public static let idleLastRunDetailsHeight: CGFloat = 72
+        /// Fractional tile count fitted into the idle last-run viewport so the next tile peeks in.
+        public static let idleLastRunVisibleTileCount: CGFloat = 3.4
         /// Minimum interaction surface for tappable controls. Visual glyphs may
         /// remain smaller while their enclosing Button adopts this frame.
         public static let minimumTapTargetSize: CGFloat = 44
         public static let separatorHeight: CGFloat = 32
         public static let idleMetricSeparatorHorizontalPadding: CGFloat = 8
+        /// Gap that aligns the inactive card's trailing separator with the idle card.
+        public static let inactiveTrailingSeparatorSpacing: CGFloat = 22
         /// Stroke width of vertical column separators in metric rows.
         /// Hairline (0.5) so the separators read as fine guides rather than
         /// heavy dividers between values.

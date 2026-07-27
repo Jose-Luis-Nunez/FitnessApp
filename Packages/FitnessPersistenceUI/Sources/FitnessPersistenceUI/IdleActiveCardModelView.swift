@@ -22,7 +22,7 @@ public struct IdleActiveCardModelView: View {
     public let onStart: ((Exercise) -> Void)?
     public let isInProgress: Bool
     /// Selection (deactivate/activate) mode: shows a leading radio button and
-    /// hides the play button + the coaching-tip badge so the row is narrower and
+    /// hides the play button + coaching controls so the row is narrower and
     /// all selectable cards line up at the same width.
     public let isSelectionMode: Bool
     public let isSelected: Bool
@@ -45,6 +45,32 @@ public struct IdleActiveCardModelView: View {
         isSelectionMode: Bool = false,
         isSelected: Bool = false
     ) {
+        self.init(
+            model: model,
+            analyticsViewModel: analyticsViewModel,
+            onEdit: onEdit,
+            isEditable: isEditable,
+            onStart: onStart,
+            isInProgress: isInProgress,
+            isSelectionMode: isSelectionMode,
+            isSelected: isSelected,
+            initiallyExpanded: false,
+            initiallyLastRunExpanded: false
+        )
+    }
+
+    init(
+        model: ExerciseModel,
+        analyticsViewModel: AnalyticsViewModel,
+        onEdit: @escaping (Exercise, ExerciseEditMode) -> Void,
+        isEditable: Bool,
+        onStart: ((Exercise) -> Void)?,
+        isInProgress: Bool = false,
+        isSelectionMode: Bool = false,
+        isSelected: Bool = false,
+        initiallyExpanded: Bool,
+        initiallyLastRunExpanded: Bool
+    ) {
         self.model = model
         self.analyticsViewModel = analyticsViewModel
         self.onEdit = onEdit
@@ -53,6 +79,8 @@ public struct IdleActiveCardModelView: View {
         self.isInProgress = isInProgress
         self.isSelectionMode = isSelectionMode
         self.isSelected = isSelected
+        self._isExpanded = State(initialValue: initiallyExpanded)
+        self._isLastRunExpanded = State(initialValue: initiallyLastRunExpanded)
     }
 
     private struct AnalyticsSheetDate: Identifiable {
@@ -101,14 +129,15 @@ public struct IdleActiveCardModelView: View {
             titleSection
         }, expandedContent: {
             VStack(alignment: .leading, spacing: 8) {
-                if isExpanded, !weightPhases.isEmpty {
-                    expandedContent
-                        .padding(.horizontal, 8)
-                }
                 if isLastRunExpanded, !lastRunSetProgress.isEmpty {
                     lastRunTilesRow
-                        .frame(height: 60)
-                        .padding(.horizontal, 8)
+                        .frame(height: AppStyle.Layout.idleLastRunDetailsHeight)
+                        .padding(.horizontal, AppStyle.Padding.card)
+                        .padding(.top, AppStyle.Layout.idleLastRunExpandedTopSpacing)
+                }
+                if isExpanded, !weightPhases.isEmpty {
+                    expandedContent
+                        .padding(.horizontal, AppStyle.Padding.idleExpandedContentHorizontal)
                 }
             }
         }, contentBackground: {
@@ -236,16 +265,6 @@ private extension IdleActiveCardModelView {
             }
     }
 
-    /// Horizontal hairline that groups the stacked sub-areas of `progressColumn`
-    /// (above/below "Data" and between the chart and "Last run"). Sized to the
-    /// chart glyph width so the column stays as compact as the Weight/Seat
-    /// columns; kept faint so it reads as a subtle rule.
-    var horizontalSeparator: some View {
-        Rectangle()
-            .fill(AppStyle.Color.idleDivider.opacity(AppStyle.Opacity.separatorLine))
-            .frame(width: AppStyle.Layout.analyticsEntryIconWidth, height: AppStyle.Layout.separatorWidth)
-    }
-
     var weightColumn: some View {
         MetricColumnView(
             label: model.hasWeight ? "Weight" : "Reps",
@@ -318,54 +337,20 @@ private extension IdleActiveCardModelView {
         VStack(alignment: .center, spacing: 4) {
             dataBand
 
-            Button(action: {
-                analyticsSheetDate = AnalyticsSheetDate(date: Date())
-            }) {
-                Image("analytics_icon_2")
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: AppStyle.Layout.analyticsEntryIconWidth, height: AppStyle.Layout.idleMetricGlyphHeight)
-                    .foregroundColor(AppStyle.Color.idleMetricValue)
-                    .frame(height: AppStyle.Layout.idleMetricContentRowHeight)
-            }
-            .buttonStyle(.plain)
-
-            // "Last run" only appears once the exercise has a completed run;
-            // before that the footer (and its leading divider) are omitted.
-            if !isSelectionMode, !lastRunSetProgress.isEmpty {
-                horizontalSeparator
-                lastRunFooter
-            }
-        }
-    }
-
-    /// "Data" label + coaching badge, underlined by a hairline that separates it
-    /// from the chart below. When training history exists the whole band is the
-    /// tap target for the coaching tiles; otherwise it's a non-interactive label.
-    @ViewBuilder
-    var dataBand: some View {
-        let showCoaching = !isSelectionMode && !weightPhases.isEmpty
-        let content = VStack(spacing: 4) {
-            HStack(spacing: 6) {
-                Text("Data")
-                    .font(AppStyle.Font.metricLabel)
-                    .foregroundColor(AppStyle.Color.idleMetricLabel)
-                    .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.center] }
-
-                if showCoaching {
-                    coachingTipBadge
-                }
-            }
-            .fixedSize()
-            horizontalSeparator
-        }
-
-        if showCoaching {
-            content
+            Image("analytics_icon_2")
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: AppStyle.Layout.analyticsEntryIconWidth, height: AppStyle.Layout.idleMetricGlyphHeight)
+                .foregroundColor(AppStyle.Color.idleMetricValue)
+                .frame(height: AppStyle.Layout.idleMetricContentRowHeight)
                 .accessibilityHidden(true)
-                .overlay {
-                    Button(action: { isExpanded.toggle() }) {
+                // Grow the interaction surface upward so the visual position and
+                // the spacing to "Last run" remain unchanged.
+                .overlay(alignment: .bottom) {
+                    Button(action: {
+                        analyticsSheetDate = AnalyticsSheetDate(date: Date())
+                    }) {
                         Color.clear
                             .frame(
                                 minWidth: AppStyle.Layout.minimumTapTargetSize,
@@ -374,17 +359,31 @@ private extension IdleActiveCardModelView {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Coaching tips")
-                    .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
-                    .accessibilityHint(isExpanded ? "Collapses coaching tips" : "Expands coaching tips")
+                    .accessibilityLabel("Exercise analytics")
+                    .accessibilityHint("Shows exercise analytics")
                 }
-        } else {
-            content
+
+            // "Last run" only appears once the exercise has a completed run;
+            // before that the footer is omitted.
+            if !isSelectionMode, !lastRunSetProgress.isEmpty {
+                lastRunFooter
+                    .padding(.top, AppStyle.Layout.idleLastRunFooterTopSpacing)
+            }
         }
     }
 
+    /// Non-interactive "Data" label above the analytics chart. Coaching now
+    /// lives in the expanded "Last run" trailing rail.
+    var dataBand: some View {
+        Text("Data")
+            .font(AppStyle.Font.metricLabel)
+            .foregroundColor(AppStyle.Color.idleMetricLabel)
+            .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.center] }
+            .fixedSize()
+    }
+
     /// "Last run" entry: plain text + trailing chevron (no box). Taps expand the
-    /// per-set breakdown; the leading hairline lives in `progressColumn`.
+    /// per-set breakdown.
     var lastRunFooter: some View {
         HStack(spacing: 6) {
             Text("Last run")
@@ -397,8 +396,10 @@ private extension IdleActiveCardModelView {
         }
         .fixedSize()
         .accessibilityHidden(true)
-        .overlay {
-            Button(action: { isLastRunExpanded.toggle() }) {
+        // Grow the interaction surface downward; together with the analytics
+        // target's bottom alignment this prevents competing tap regions.
+        .overlay(alignment: .top) {
+            Button(action: toggleLastRunDetails) {
                 Color.clear
                     .frame(
                         minWidth: AppStyle.Layout.minimumTapTargetSize,
@@ -413,25 +414,41 @@ private extension IdleActiveCardModelView {
         }
     }
 
-    /// Decorative sparkle badge. The tap that opens the coaching tiles now lives
-    /// on the enclosing `dataBand`, so this is a plain visual (no Button).
+    func toggleLastRunDetails() {
+        if isLastRunExpanded {
+            isExpanded = false
+        }
+        isLastRunExpanded.toggle()
+    }
+
+    var coachingTipButton: some View {
+        Button(action: { isExpanded.toggle() }) {
+            coachingTipBadge
+                .frame(
+                    minWidth: AppStyle.Layout.minimumTapTargetSize,
+                    minHeight: AppStyle.Layout.minimumTapTargetSize
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Coaching tips")
+        .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
+        .accessibilityHint(isExpanded ? "Collapses coaching tips" : "Expands coaching tips")
+    }
+
+    /// Circular coaching glyph matching the completed card's reset-button size.
     var coachingTipBadge: some View {
-        Image("tip_coaching_2")
-            .renderingMode(.template)
-            .resizable()
-            .scaledToFit()
-            .frame(
-                width: AppStyle.Layout.idleCoachingChipIconSize,
-                height: AppStyle.Layout.idleCoachingChipIconSize
-            )
-            .foregroundColor(AppStyle.Color.idleMetricValue)
-            .padding(AppStyle.Layout.idleCoachingChipVerticalPadding)
-            .overlay {
-                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile)
-                    .strokeBorder(AppStyle.Color.idleMetricValue, lineWidth: AppStyle.Layout.idleCardBorderWidth)
-            }
-            .fixedSize()
-            .accessibilityHidden(true)
+        CardActionCircleButtonVisual(
+            iconSize: ExerciseCardLayout.ResetButton.iconSize,
+            discSize: ExerciseCardLayout.ResetButton.size,
+            glowSize: ExerciseCardLayout.ResetButton.size
+        ) {
+            Image("tip_coaching_2")
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+        }
+        .accessibilityHidden(true)
     }
 
     @ViewBuilder
@@ -500,14 +517,23 @@ private extension IdleActiveCardModelView {
     }
 
     /// Last-run per-set breakdown via the shared `SetTilesRow`. The idle card has
-    /// no reset accessory (a reset has no meaning on an idle exercise), so the
-    /// trailing slot is left empty.
+    /// no reset accessory. The idle layout reveals part of the next tile as its
+    /// overflow affordance, so the coaching rail never needs a chevron.
     var lastRunTilesRow: some View {
-        SetTilesRow(
+        let showsCoaching = !weightPhases.isEmpty
+        return SetTilesRow(
             setProgress: lastRunSetProgress,
             hasWeight: model.hasWeight,
             chevronColor: AppStyle.Color.idleMetricLabel.opacity(AppStyle.Opacity.separatorLine),
-            onTap: { analyticsSheetDate = AnalyticsSheetDate(date: Date()) }
+            reservedTrailingRailWidth: showsCoaching ? AppStyle.Layout.minimumTapTargetSize : 0,
+            visibleTileCount: AppStyle.Layout.idleLastRunVisibleTileCount,
+            showsOverflowChevron: false,
+            onTap: { analyticsSheetDate = AnalyticsSheetDate(date: Date()) },
+            trailingRailAccessory: {
+                if showsCoaching {
+                    coachingTipButton
+                }
+            }
         )
     }
 }

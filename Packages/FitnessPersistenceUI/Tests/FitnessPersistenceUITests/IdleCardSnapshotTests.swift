@@ -5,7 +5,6 @@ import SnapshotTesting
 import FitnessCore
 import FitnessUI
 import FitnessAnalytics
-import FitnessTraining
 import FitnessTestSupport
 @_spi(PersistenceUI) import FitnessStorage
 @_spi(PersistenceUI) @testable import FitnessPersistenceUI
@@ -41,6 +40,21 @@ private func assertSnapshot<V: View>(
         testName: "\(function)",
         line: UInt(sourceLocation.line)
     )
+}
+
+private func appAssetImage(named name: String) throws -> Image {
+    let repositoryRoot = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+    let imageURL = repositoryRoot
+        .appendingPathComponent("FitnessApp/Assets.xcassets")
+        .appendingPathComponent("\(name).imageset")
+        .appendingPathComponent("\(name).png")
+    let image = try #require(UIImage(contentsOfFile: imageURL.path))
+    return Image(uiImage: image)
 }
 
 @MainActor
@@ -85,6 +99,30 @@ private func makeIdleCardContainer() throws -> (ExerciseModel, ModelContainer) {
 @Suite("IdleActiveCardModelView — Snapshots", .tags(.snapshot))
 @MainActor
 struct IdleCardSnapshotTests {
+
+    @Test func coachingTipAppAsset() throws {
+        let coachingTipImage = try appAssetImage(named: "tip_coaching_2")
+        let view = CardActionCircleButtonVisual(
+            iconSize: ExerciseCardLayout.ResetButton.iconSize,
+            discSize: ExerciseCardLayout.ResetButton.size,
+            glowSize: ExerciseCardLayout.ResetButton.size
+        ) {
+            coachingTipImage
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+        }
+        .frame(
+            minWidth: AppStyle.Layout.minimumTapTargetSize,
+            minHeight: AppStyle.Layout.minimumTapTargetSize
+        )
+
+        assertSnapshot(
+            of: view,
+            named: "coaching-tip-app-asset",
+            size: CGSize(width: 60, height: 60)
+        )
+    }
 
     @Test func collapsed() throws {
         let (model, container) = try makeIdleCardContainer()
@@ -246,6 +284,42 @@ struct IdleCardSnapshotTests {
         .modelContainer(container)
 
         assertSnapshot(of: view, named: "with-history", size: CGSize(width: 393, height: 220))
+    }
+
+    @Test func expandedLastRunWithOverflow() throws {
+        let (model, container) = try makeIdleCardContainer()
+        let storage = MockAnalyticsStorage()
+        storage.save([
+            AnalyticsEntry(
+                exerciseId: model.id,
+                date: Date(timeIntervalSince1970: 1_735_689_600),
+                setProgress: (0..<5).map { index in
+                    SetProgress(
+                        status: .completedDone,
+                        currentReps: 10 + index,
+                        weight: 20 + Double(index) * 2.5
+                    )
+                }
+            ),
+        ], for: model.id)
+        let analyticsVM = AnalyticsViewModel(
+            storageService: storage,
+            exerciseStorage: MockExerciseStorage(),
+            workoutStorage: MockWorkoutStorage()
+        )
+
+        let view = IdleActiveCardModelView(
+            model: model,
+            analyticsViewModel: analyticsVM,
+            onEdit: { _, _ in },
+            isEditable: false,
+            onStart: { _ in },
+            initiallyExpanded: false,
+            initiallyLastRunExpanded: true
+        )
+        .modelContainer(container)
+
+        assertSnapshot(of: view, named: "expanded-last-run-overflow", size: CGSize(width: 393, height: 360))
     }
 
     @Test func selectionMode() throws {

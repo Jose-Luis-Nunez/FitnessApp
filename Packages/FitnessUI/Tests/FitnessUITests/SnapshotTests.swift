@@ -329,6 +329,22 @@ struct SetTilesRowSnapshotTests {
         }
     }
 
+    private var coachingRailAccessory: some View {
+        CardActionCircleButtonVisual(
+            iconSize: ExerciseCardLayout.ResetButton.iconSize,
+            discSize: ExerciseCardLayout.ResetButton.size,
+            glowSize: ExerciseCardLayout.ResetButton.size
+        ) {
+            Image(systemName: "sparkles")
+                .resizable()
+                .scaledToFit()
+        }
+        .frame(
+            minWidth: AppStyle.Layout.minimumTapTargetSize,
+            minHeight: AppStyle.Layout.minimumTapTargetSize
+        )
+    }
+
     /// Three sets — fills the row exactly, no scroll chevron, no trailing accessory.
     @Test func threeSetsNoAccessory() {
         let view = SetTilesRow(
@@ -351,6 +367,45 @@ struct SetTilesRowSnapshotTests {
         assertSnapshot(of: view, named: "overflow-chevron", size: CGSize(width: 360, height: 70))
     }
 
+    /// Three narrower sets with a centered, reset-sized coaching accessory.
+    @Test func threeSetsWithTrailingRailAccessory() {
+        let view = SetTilesRow(
+            setProgress: progress(3),
+            hasWeight: true,
+            chevronColor: AppStyle.Color.idleMetricLabel.opacity(AppStyle.Opacity.separatorLine),
+            reservedTrailingRailWidth: AppStyle.Layout.minimumTapTargetSize,
+            visibleTileCount: AppStyle.Layout.idleLastRunVisibleTileCount,
+            showsOverflowChevron: false,
+            onTap: {},
+            trailingRailAccessory: { coachingRailAccessory }
+        )
+        assertSnapshot(
+            of: view,
+            named: "three-sets-trailing-rail",
+            size: CGSize(width: 360, height: 72)
+        )
+    }
+
+    /// More than three sets use the partial fourth tile as their overflow cue;
+    /// no separate chevron is rendered beside the centered coaching accessory.
+    @Test func overflowWithTrailingRailAccessory() {
+        let view = SetTilesRow(
+            setProgress: progress(5),
+            hasWeight: false,
+            chevronColor: AppStyle.Color.idleMetricLabel.opacity(AppStyle.Opacity.separatorLine),
+            reservedTrailingRailWidth: AppStyle.Layout.minimumTapTargetSize,
+            visibleTileCount: AppStyle.Layout.idleLastRunVisibleTileCount,
+            showsOverflowChevron: false,
+            onTap: {},
+            trailingRailAccessory: { coachingRailAccessory }
+        )
+        assertSnapshot(
+            of: view,
+            named: "overflow-trailing-rail",
+            size: CGSize(width: 360, height: 72)
+        )
+    }
+
     /// Trailing accessory (reset button) with its width reserved so the three
     /// tiles stay exact — mirrors the completed card's reset-enabled layout.
     @Test func withResetAccessory() {
@@ -359,10 +414,9 @@ struct SetTilesRowSnapshotTests {
             hasWeight: true,
             chevronColor: AppStyle.Color.idleMetricLabel.opacity(AppStyle.Opacity.separatorLine),
             reservedTrailingWidth: ExerciseCardLayout.ResetButton.size,
-            onTap: {}
-        ) {
-            ExerciseCardResetButton {}
-        }
+            onTap: {},
+            trailingAccessory: { ExerciseCardResetButton {} }
+        )
         assertSnapshot(of: view, named: "with-reset", size: CGSize(width: 360, height: 70))
     }
 }

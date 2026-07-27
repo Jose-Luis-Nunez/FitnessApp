@@ -118,8 +118,9 @@ private extension InactiveCardModelView {
     }
 
     var checkmarkTrailing: some View {
-        // Separator (0.75pt) + 8pt gap + checkmark frame (idlePlayButtonSize).
-        HStack(spacing: 8) {
+        // The expanded gap moves only the separator left so it aligns with the
+        // idle card while the right-anchored checkmark keeps its position.
+        HStack(spacing: AppStyle.Layout.inactiveTrailingSeparatorSpacing) {
             Rectangle()
                 .fill(AppStyle.Color.idleDivider)
                 .frame(width: 0.75, height: 28)
@@ -171,12 +172,13 @@ private extension InactiveCardModelView {
             hasWeight: model.hasWeight,
             chevronColor: theme.subtitleColor.opacity(AppStyle.Opacity.separatorLine),
             reservedTrailingWidth: isResetEnabled ? ExerciseCardLayout.ResetButton.size : 0,
-            onTap: { isShowingAnalytics = true }
-        ) {
-            if isResetEnabled {
-                ExerciseCardResetButton { onReset?(model.toDomain()) }
+            onTap: { isShowingAnalytics = true },
+            trailingAccessory: {
+                if isResetEnabled {
+                    ExerciseCardResetButton { onReset?(model.toDomain()) }
+                }
             }
-        }
+        )
     }
 }
 
