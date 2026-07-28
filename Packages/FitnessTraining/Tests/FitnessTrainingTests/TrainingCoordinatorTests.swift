@@ -70,6 +70,31 @@ struct FinishExerciseTests {
         #expect(receivedCategory == .arms)
     }
 
+    @Test func persistsEarnedWeightProgressionWhenFinishingExercise() {
+        let exercise = makeExercise(weight: 20, reps: 10, sets: 3)
+        let exerciseManagement = MockExerciseManagement()
+        exerciseManagement.exercisesByCategory[.arms] = [exercise]
+        let cache = TrainingCoordinatorCache(exerciseManagement: exerciseManagement)
+        let coordinator = cache.coordinator(for: .arms)
+        coordinator.startTraining(for: exercise)
+
+        let vm = coordinator.activeSetViewModel
+        vm.updateCurrentReps(12, 21)
+        vm.startNextSet()
+        vm.updateCurrentReps(15, 21)
+        vm.startNextSet()
+        vm.updateCurrentReps(12, 21)
+
+        coordinator.finishExercise()
+
+        let persistedExercise = exerciseManagement.getExercises(for: .arms).first
+        #expect(persistedExercise?.weight == 21)
+        #expect(persistedExercise?.reps == 12)
+        #expect(persistedExercise?.sets == 3)
+        #expect(persistedExercise?.isCompleted == true)
+        #expect(coordinator.lastCompletedExercise?.weight == 21)
+    }
+
     @Test func setsLastCompletedExerciseWhenAllSetsFinished() throws {
         let coordinator = makeCoordinator()
 

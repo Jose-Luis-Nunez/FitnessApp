@@ -4,6 +4,7 @@ import FitnessAnalytics
 
 @MainActor
 public struct FinishExerciseUseCase {
+    private let weightProgressionUseCase = ExerciseWeightProgressionUseCase()
 
     nonisolated public init() {}
 
@@ -30,7 +31,10 @@ public struct FinishExerciseUseCase {
 
         var completedExercise: Exercise?
         if activeSetViewModel.isLastSetCompleted {
-            var updated = exercise
+            var updated = weightProgressionUseCase.execute(
+                exercise: exercise,
+                setProgress: activeSetViewModel.setProgress
+            )
             updated.isCompleted = true
             onExerciseUpdate(updated, category)
             completedExercise = updated
