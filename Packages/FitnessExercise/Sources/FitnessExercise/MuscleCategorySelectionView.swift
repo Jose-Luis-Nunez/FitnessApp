@@ -520,6 +520,8 @@ public struct MuscleCategorySelectionView: View {
                     }
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Exercise list")
+            .accessibilityIdentifier(HomeIDs.listViewToggle)
         }
         .padding(filterBarPadding)
         .background {

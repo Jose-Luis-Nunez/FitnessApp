@@ -2,6 +2,7 @@ import Foundation
 import FitnessCore
 
 enum TrainingIDs {
+    static let cancelTraining = "id_training_cancel"
     static let doneButton = "id_button_done"
     static let finishButton = "id_button_finish"
     static let startButton = "id_button_start"
@@ -14,9 +15,11 @@ enum TrainingIDs {
 
 enum HomeIDs {
     static func categoryTile(for group: String) -> String { "id_category_tile_\(group)" }
+    static let listViewToggle = "id_home_list_view_toggle"
 }
 
 enum MuscleCategoryIDs {
+    static let screen = "id_muscle_category_screen"
     static let startExercise = "id_button_start_exercise"
 }
 

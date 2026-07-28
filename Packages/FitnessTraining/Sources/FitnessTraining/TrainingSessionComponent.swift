@@ -104,6 +104,7 @@ public struct CompactTimerComponent: View {
                     .cornerRadius(AppStyle.CornerRadius.timerCard)
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier(FitnessCore.TrainingIDs.cancelTraining)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 8)

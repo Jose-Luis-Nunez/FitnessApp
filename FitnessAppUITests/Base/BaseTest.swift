@@ -42,6 +42,20 @@ class BaseTest: XCTestCase {
     }
 
     @MainActor
+    func launch(exerciseList fixture: TestExerciseFixture) throws {
+        let config = UITestLaunchConfig.exerciseList(fixture)
+        app.launchEnvironment["UITEST_CONFIG"] = try config.jsonString()
+        app.launch()
+    }
+
+    @MainActor
+    func launch(exerciseCategory fixture: TestExerciseFixture) throws {
+        let config = UITestLaunchConfig.exerciseCategory(fixture)
+        app.launchEnvironment["UITEST_CONFIG"] = try config.jsonString()
+        app.launch()
+    }
+
+    @MainActor
     func launchSchedule() throws {
         let config = UITestLaunchConfig.schedule()
         app.launchEnvironment["UITEST_CONFIG"] = try config.jsonString()

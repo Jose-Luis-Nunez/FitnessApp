@@ -103,6 +103,7 @@ public struct MuscleCategoryView: View {
                     .hidesBottomBarWhilePresented(overlayState)
             }
         }
+        .accessibilityIdentifier(MuscleCategoryIDs.screen)
 #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)

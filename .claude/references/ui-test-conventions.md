@@ -19,6 +19,7 @@ FitnessAppUITests/
 │   └── ExerciseFixtures.swift       # Named exercise presets (.defaultArmsExercise)
 └── Tests/
     ├── WorkoutTileVisualTests.swift # Category/workout screenshots + geometry parity
+    ├── TrainingNavigationUITests.swift # List/category training return paths
     └── *Tests.swift                 # Other test files
 ```
 
@@ -52,9 +53,9 @@ The single source of truth for the constants below is `Packages/FitnessCore/Sour
 
 | Test Enum | Defined in | Applied in | IDs |
 |-----------|-----------|------------|-----|
-| `TrainingIDs` | `FitnessAppUITests/Selectors/AccessibilityIDs.swift` | `BottomActionBarView`, `SimpleActiveSetView` | `doneButton`, `finishButton`, `startButton`, `allDoneButton`, `quickDoneButton`, `controlButton(_:)`, `repsField(set:)`, `quickDoneSetButton(index:)` |
-| `HomeIDs` | `FitnessCore.AccessibilityIDs` | `MuscleCategorySelectionView` (category tiles via `CategoryTileModelView`) | `categoryTile(for:)` |
-| `MuscleCategoryIDs` | `FitnessCore.AccessibilityIDs` | `IdleActiveCardModelView` (post-T8d; previously `IdleActiveCardView`) | `startExercise` |
+| `TrainingIDs` | `FitnessCore.AccessibilityIDs` | `BottomActionBarView`, `SimpleActiveSetView`, `CompactTimerComponent` | `cancelTraining`, `doneButton`, `finishButton`, `startButton`, `allDoneButton`, `quickDoneButton`, `controlButton(_:)`, `repsField(set:)`, `quickDoneSetButton(index:)` |
+| `HomeIDs` | `FitnessCore.AccessibilityIDs` | `MuscleCategorySelectionView` (category tiles via `CategoryTileModelView`; list-mode toggle) | `categoryTile(for:)`, `listViewToggle`; list toggle label: `Exercise list` |
+| `MuscleCategoryIDs` | `FitnessCore.AccessibilityIDs` | `MuscleCategoryView`, `IdleActiveCardModelView` (post-T8d; previously `IdleActiveCardView`) | `screen`, `startExercise`; start button label: `Start exercise` |
 | `ExerciseIDs` | `FitnessCore.AccessibilityIDs` | `InactiveCardModelView` (post-T8d; previously `InactiveCardView`) | `nameLabel` |
 | `ExerciseCardIDs` | `FitnessCore.AccessibilityIDs` | `ExerciseCardModelView` (post-T8d; previously `ExerciseCardContainerView`) | `completedCard(_:)`, `activeCard(_:)`, `idleCard(_:)`, `completedCardPrefix`, `activeCardPrefix`, `idleCardPrefix` |
 | `WorkoutIDs` | `FitnessCore.AccessibilityIDs` | `WorkoutTileView`, `CreateWorkoutView` | `tilePrefix`, `settingsPrefix`, `tile(_:)`, `settings(_:)`, `createTitle`, `createNameField`, `createTypePicker`, `createSaveButton` |
@@ -66,6 +67,8 @@ Mock data is defined in `Fixtures/ExerciseFixtures.swift` as `TestExerciseFixtur
 
 ```swift
 try launch(training: .defaultArmsExercise)
+try launch(exerciseList: .defaultArmsExercise)
+try launch(exerciseCategory: .defaultArmsExercise)
 ```
 
 Named presets (e.g. `.defaultArmsExercise`) keep tests readable. For custom scenarios, create a fixture inline:
@@ -131,7 +134,7 @@ final class <Feature>UITests: BaseTest {
 Rules:
 - Inherit from `BaseTest` (provides `app`, `setUp`, `tearDown`)
 - Mark test methods `@MainActor`
-- First line: `launch(training:)`, `launch(category:)`, `launchCategorySelection()`, `launchSchedule()`, or `launchHome()`
+- First line: `launch(training:)`, `launch(exerciseList:)`, `launch(exerciseCategory:)`, `launch(category:)`, `launchCategorySelection()`, `launchSchedule()`, or `launchHome()`
 - One test method per user scenario; name it `test<WhatTheUserDoes>`
 - Only DSL functions and test ID constants -- no raw XCUITest API, no hardcoded strings
 - Always pass explicit fixture data -- no implicit defaults

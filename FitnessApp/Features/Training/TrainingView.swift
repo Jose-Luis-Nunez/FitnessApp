@@ -232,8 +232,7 @@ struct TrainingView: View {
         static let popDelayAfterFinish: Duration = .milliseconds(100)
 
         /// Holds the `isCancellingTraining` overlay flag for the duration of
-        /// the `router.replaceAll(with:)` transition so the mini-menu doesn't
-        /// flicker back into view on the intermediate stack frame.
+        /// the pop transition so the mini-menu doesn't flicker back into view.
         static let cancelOverlayHoldDuration: Duration = .milliseconds(200)
     }
 
@@ -256,13 +255,14 @@ struct TrainingView: View {
     }
 
     private func cancelTraining() {
-        let targetCategory = trainingCoordinator.activeSetViewModel.originalCategory ?? category
         phase = .cancelling
         overlayState.isCancellingTraining = true
         overlayState.showTrainingMiniMenu = false
 
         trainingCoordinator.cancelTraining()
-        router.replaceAll(with: [.home, .muscleCategory(targetCategory)])
+        // Return to the actual entry screen. Rebuilding a category stack here
+        // loses the list-view entry point and its selected view mode.
+        router.pop()
 
         Task { @MainActor in
             try? await Task.sleep(for: TimingConstants.cancelOverlayHoldDuration)

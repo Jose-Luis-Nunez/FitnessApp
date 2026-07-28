@@ -10,10 +10,16 @@ import Foundation
 /// selector file in the UI-test target.
 public enum HomeIDs {
     public static func categoryTile(for group: String) -> String { "id_category_tile_\(group)" }
+    public static let listViewToggle = "id_home_list_view_toggle"
 }
 
 public enum MuscleCategoryIDs {
+    public static let screen = "id_muscle_category_screen"
     public static let startExercise = "id_button_start_exercise"
+}
+
+public enum TrainingIDs {
+    public static let cancelTraining = "id_training_cancel"
 }
 
 public enum ExerciseIDs {

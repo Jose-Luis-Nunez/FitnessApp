@@ -40,4 +40,28 @@ extension UITestLaunchConfig {
             icon: fixture.icon
         )
     }
+
+    static func exerciseList(_ fixture: TestExerciseFixture) -> UITestLaunchConfig {
+        fixtureConfig(screen: .home, fixture: fixture)
+    }
+
+    static func exerciseCategory(_ fixture: TestExerciseFixture) -> UITestLaunchConfig {
+        fixtureConfig(screen: .category, fixture: fixture)
+    }
+
+    private static func fixtureConfig(
+        screen: UITestScreen,
+        fixture: TestExerciseFixture
+    ) -> UITestLaunchConfig {
+        UITestLaunchConfig(
+            screen: screen,
+            category: fixture.category,
+            exerciseName: fixture.name,
+            weight: fixture.weight,
+            reps: fixture.reps,
+            sets: fixture.sets,
+            noSeats: fixture.noSeats,
+            icon: fixture.icon
+        )
+    }
 }

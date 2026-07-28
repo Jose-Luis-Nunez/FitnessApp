@@ -9,18 +9,18 @@ import SwiftData
 struct UITestLaunchStrategy: AppLaunchStrategy {
     let config: UITestLaunchConfig
 
-    /// Stable id for the seeded training fixture, derived once at init time
+    /// Stable id for the seeded exercise fixture, derived once at init time
     /// and re-used by both `prepare(...)` and `initialNavigationStack(...)`.
     /// Per-instance (not static) so parallel UI-test runners cannot stomp
     /// each other's seed — `parallelizable = "YES"` on the UITests scheme.
     /// Post-T8d, `TrainingView` resolves this id to a live `ExerciseModel`
     /// via `@Query`, so the navigation arg and the persisted record must
     /// agree, and both phases of the launch pipeline must see the same id.
-    let seededTrainingExerciseId: UUID?
+    let seededExerciseId: UUID?
 
     init(config: UITestLaunchConfig) {
         self.config = config
-        self.seededTrainingExerciseId = config.screen == .training ? UUID() : nil
+        seededExerciseId = config.exerciseName == nil ? nil : UUID()
     }
 
     func prepare(workoutService: WorkoutStoring) {
@@ -30,6 +30,17 @@ struct UITestLaunchStrategy: AppLaunchStrategy {
             // rows so both column and row spacing are deterministic.
             for workout in workoutService.workouts {
                 workoutService.deleteWorkout(workout)
+            }
+
+            // Navigation tests start at Home with a concrete exercise fixture.
+            // Keep that distinct from the grid-geometry fixture below so the
+            // test receives a single, deterministic workout and exercise.
+            if let id = seededExerciseId,
+               let exercise = makeFixtureExercise(id: id) {
+                let workout = Workout(name: "Test Workout")
+                workoutService.setCurrentWorkout(workout)
+                seedFixture(workout: workout, exercise: exercise)
+                return
             }
 
             let fixtures: [(name: String, type: WorkoutType)] = [
@@ -60,7 +71,7 @@ struct UITestLaunchStrategy: AppLaunchStrategy {
         let workout = Workout(name: "Test Workout")
         workoutService.setCurrentWorkout(workout)
 
-        // For the training launch, seed BOTH the workout and the fixture
+        // Exercise-navigation fixtures seed BOTH the workout and the fixture
         // exercise directly into the SwiftData container. Pre-T8d the legacy
         // `TrainingView` accepted the in-memory `Exercise` literal and never
         // touched the store; post-T8d it resolves an `ExerciseModel` via
@@ -73,8 +84,7 @@ struct UITestLaunchStrategy: AppLaunchStrategy {
         // `WorkoutModel` row is never persisted, so the management service
         // saves the exercise with `workoutId == nil` and most production
         // queries won't see it.
-        guard config.screen == .training,
-              let id = seededTrainingExerciseId,
+        guard let id = seededExerciseId,
               let exercise = makeFixtureExercise(id: id) else { return }
         seedFixture(workout: workout, exercise: exercise)
     }
@@ -86,7 +96,7 @@ struct UITestLaunchStrategy: AppLaunchStrategy {
 
         case .training:
             guard let category = MuscleCategoryGroup(rawValue: config.category),
-                  let exerciseId = seededTrainingExerciseId
+                  let exerciseId = seededExerciseId
             else { return [] }
             return [.home, .muscleCategory(category), .training(exerciseId: exerciseId, category: category)]
 

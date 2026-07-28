@@ -475,6 +475,7 @@ private extension IdleActiveCardModelView {
                 .contentShape(Rectangle())
             }
             .accessibilityIdentifier(MuscleCategoryIDs.startExercise)
+            .accessibilityLabel("Start exercise")
             .buttonStyle(.plain)
         }
     }
