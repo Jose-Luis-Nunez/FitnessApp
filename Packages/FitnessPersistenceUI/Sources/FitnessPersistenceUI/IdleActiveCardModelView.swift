@@ -393,6 +393,7 @@ private extension IdleActiveCardModelView {
             Image(systemName: "chevron.right")
                 .font(AppStyle.Font.cardSmallLabel)
                 .foregroundColor(AppStyle.Color.idleMetricLabel)
+                .rotationEffect(.degrees(isLastRunExpanded ? 90 : 0))
         }
         .fixedSize()
         .accessibilityHidden(true)
