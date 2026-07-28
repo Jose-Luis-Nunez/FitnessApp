@@ -288,7 +288,15 @@ public final class ActiveSetViewModel {
         guard tracking.currentSet < exercise.sets || editing.pendingEditIndex != nil else { return }
 
         let indexToUpdate = editing.pendingEditIndex ?? tracking.currentSet
-        let status: SetStatus = newReps < exercise.reps ? .completedLess : .completedMore
+        let status: SetStatus
+        if editing.isEditing, case .less = editing.editMode {
+            // Less is an explicit user choice. A weight-only reduction leaves
+            // reps unchanged, so deriving the status from reps would otherwise
+            // incorrectly save it as More and lose the Less pre-fill memory.
+            status = .completedLess
+        } else {
+            status = newReps < exercise.reps ? .completedLess : .completedMore
+        }
         let progress = SetProgress(status: status, currentReps: newReps, weight: newWeight)
 
         // Remember this adjustment per mode so the next Less/More opens pre-filled.

@@ -409,6 +409,24 @@ struct ActiveSetViewModelTests {
         #expect(sut.weightInput == WeightFormatter.format(50))
     }
 
+    @Test func lessWithWeightOnlyReductionPreFillsNextSet() {
+        let sut = makeSUT()
+        let exercise = makeExercise(sets: 3, reps: 10, weight: 60)
+        sut.startSet(for: exercise, category: .arms)
+
+        // Set 0: Less to the same reps at a lower weight.
+        sut.startEditingSet(index: 0, mode: .less)
+        sut.updateCurrentReps(10, 50)
+
+        #expect(sut.setProgress[0].status == .completedLess)
+
+        // Set 1: Less must remember the weight-only adjustment.
+        sut.startEditingSet(index: 1, mode: .less)
+
+        #expect(sut.repsInput == "10")
+        #expect(sut.weightInput == WeightFormatter.format(50))
+    }
+
     @Test func morePreFillsNextSetWithPreviousMoreAdjustment() {
         let sut = makeSUT()
         let exercise = makeExercise(sets: 3, reps: 10, weight: 60)
