@@ -170,15 +170,14 @@ struct BottomMenuBarView: View {
         .frame(width: capsuleWidth - 2 * AppStyle.Layout.cardHorizontalPadding)
     }
 
-    /// The back button is only meaningful when the user has drilled *into* the
-    /// workout flow — a muscle category (`.category`) or a training screen
-    /// (`.training`). Every top-level menu-bar destination (Workouts, Training/
-    /// `.home`, Analytics, Schedule, Profile) is a tab switch, not a push, so it
-    /// must NOT show a back affordance.
+    /// The back button is meaningful while navigating the workout flow. Opening
+    /// a workout from the list pushes `.home`, so its category selection must
+    /// offer a way back to that list.
     private var isDrillDownScene: Bool {
         switch router.currentScene {
-        case .category, .training:                            return true
-        case .workouts, .home, .analytics, .schedule, .profile: return false
+        case .home: return router.isHomePushedFromWorkoutList
+        case .category, .training: return true
+        case .workouts, .analytics, .schedule, .profile: return false
         }
     }
 
@@ -205,6 +204,7 @@ struct BottomMenuBarView: View {
                     .contentShape(Circle())
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier(FitnessCore.BottomBarIDs.backButton)
         } else {
             Circle()
                 .fill(Color.clear)

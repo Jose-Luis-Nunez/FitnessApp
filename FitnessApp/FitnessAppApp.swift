@@ -105,12 +105,13 @@ struct FitnessAppApp: App {
                                         .navigationBarBackButtonHidden(true)
                                 }
                             }
-                            // Swipe-back is only enabled for genuine drill-downs
-                            // (a muscle category or a training screen). Every
-                            // top-level menu-bar destination (home, profile,
-                            // analytics, schedule) is a tab switch, not a push —
-                            // you leave it via the tab bar, not by going back.
+                            // Workout selection, muscle categories, and training
+                            // are drill-downs. Top-level menu-bar destinations
+                            // remain tab switches and therefore do not enable
+                            // swipe-back.
                             switch destination {
+                            case .home where router.isHomePushedFromWorkoutList:
+                                view.enableSwipeBack()
                             case .muscleCategory, .training:
                                 view.enableSwipeBack()
                             case .home, .profile, .totalAnalytics, .schedule:

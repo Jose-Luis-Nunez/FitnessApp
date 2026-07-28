@@ -32,6 +32,7 @@ public enum WorkoutIDs {
 }
 
 public enum BottomBarIDs {
+    public static let backButton = "id_bottom_back"
     public static let contextMenu = "id_bottom_context_menu"
     public static let workoutsTab = "id_bottom_tab_workouts"
     public static let trainingTab = "id_bottom_tab_training"

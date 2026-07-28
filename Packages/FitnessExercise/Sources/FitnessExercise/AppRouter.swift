@@ -14,6 +14,10 @@ public final class AppRouter {
     public private(set) var currentScene: AppCurrentScene = .workouts
 
     private var destinations: [NavigationDestination] = []
+    /// Tracks whether each destination was pushed from the preceding screen.
+    /// In particular, `.home` can be entered either from the Workouts list
+    /// (back-navigation allowed) or as the Training tab's replacement root.
+    private var wasPushed: [Bool] = []
     private var isMutating = false
 
     public init() {}
@@ -21,6 +25,7 @@ public final class AppRouter {
     public func navigate(to destination: NavigationDestination) {
         isMutating = true
         destinations.append(destination)
+        wasPushed.append(true)
         path.append(destination)
         isMutating = false
         updateScene()
@@ -30,6 +35,7 @@ public final class AppRouter {
         guard !destinations.isEmpty else { return }
         isMutating = true
         destinations.removeLast()
+        wasPushed.removeLast()
         path.removeLast()
         isMutating = false
         updateScene()
@@ -38,6 +44,7 @@ public final class AppRouter {
     public func popToRoot() {
         isMutating = true
         destinations.removeAll()
+        wasPushed.removeAll()
         path = NavigationPath()
         isMutating = false
         updateScene()
@@ -46,6 +53,7 @@ public final class AppRouter {
     public func replaceAll(with newDestinations: [NavigationDestination]) {
         isMutating = true
         destinations = newDestinations
+        wasPushed = Array(repeating: false, count: newDestinations.count)
         var newPath = NavigationPath()
         for dest in newDestinations { newPath.append(dest) }
         path = newPath
@@ -59,9 +67,17 @@ public final class AppRouter {
 
     public var isEmpty: Bool { path.isEmpty }
 
+    /// Only a workout opened from the list may return to that list. A `.home`
+    /// destination installed by a tab switch or launch strategy is a root.
+    public var isHomePushedFromWorkoutList: Bool {
+        guard destinations.last == .home else { return false }
+        return wasPushed.last ?? false
+    }
+
     private func switchTo(_ destination: NavigationDestination) {
         isMutating = true
         destinations = [destination]
+        wasPushed = [false]
         var newPath = NavigationPath()
         newPath.append(destination)
         path = newPath
@@ -73,6 +89,7 @@ public final class AppRouter {
         guard !isMutating else { return }
         while destinations.count > path.count {
             destinations.removeLast()
+            wasPushed.removeLast()
         }
         updateScene()
     }

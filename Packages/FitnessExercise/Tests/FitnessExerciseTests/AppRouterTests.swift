@@ -22,6 +22,22 @@ struct AppRouterTests {
     }
 
     @Test
+    func navigateToHome_marksItAsPushedFromWorkoutList() {
+        let router = AppRouter()
+        router.navigate(to: .home)
+
+        #expect(router.isHomePushedFromWorkoutList)
+    }
+
+    @Test
+    func replaceAllWithHome_keepsItAsRoot() {
+        let router = AppRouter()
+        router.replaceAll(with: [.home])
+
+        #expect(!router.isHomePushedFromWorkoutList)
+    }
+
+    @Test
     func switchToAnalytics_setsAnalyticsScene() {
         let router = AppRouter()
         router.switchToAnalytics()
@@ -71,6 +87,17 @@ struct AppRouterTests {
 
         router.pop()
         #expect(router.currentScene == .home)
+    }
+
+    @Test
+    func pop_restoresHomeNavigationOrigin() {
+        let router = AppRouter()
+        router.navigate(to: .home)
+        router.navigate(to: .muscleCategory(.arms))
+
+        router.pop()
+
+        #expect(router.isHomePushedFromWorkoutList)
     }
 
     @Test

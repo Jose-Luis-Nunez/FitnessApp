@@ -3,6 +3,24 @@ import XCTest
 final class WorkoutTileVisualTests: BaseTest {
 
     @MainActor
+    func testOpeningWorkoutCanNavigateBackToWorkoutList() throws {
+        try launchCategorySelection()
+        verifyNotExists(BottomBarIDs.backButton)
+        tapOn(BottomBarIDs.workoutsTab)
+
+        let workoutTile = app.buttons
+            .matching(NSPredicate(format: "identifier BEGINSWITH %@", WorkoutIDs.tilePrefix))
+            .firstMatch
+        XCTAssertTrue(workoutTile.waitForExistence(timeout: TestDefaults.timeout))
+        workoutTile.tap()
+
+        verifyExists(HomeIDs.categoryTile(for: "arms"), elementType: .button)
+        tapOn(BottomBarIDs.backButton)
+        verifyNotExists(HomeIDs.categoryTile(for: "arms"), elementType: .button)
+        XCTAssertTrue(workoutTile.isHittable)
+    }
+
+    @MainActor
     func testWorkoutTilesMatchCategoryTileGeometry() throws {
         try launchCategorySelection()
 
