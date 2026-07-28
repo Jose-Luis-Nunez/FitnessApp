@@ -287,8 +287,9 @@ public struct MuscleCategorySelectionView: View {
     }
 
     private var newExerciseMenuItems: [MiniActionMenuItem] {
-        // Order: New Exercise first, then the de/activate items at the end
-        // (Activate before Deactivate) — same ordering as the category view.
+        // Order: New Exercise first, then Activate/Deactivate when available,
+        // followed by Reset all. Activate remains before Deactivate to match the
+        // category view's ordering.
         var items: [MiniActionMenuItem] = []
 
         items.append(MiniActionMenuItem(
@@ -319,6 +320,8 @@ public struct MuscleCategorySelectionView: View {
             })
         }
 
+        items.append(resetAllMenuItem)
+
         return items
     }
 
@@ -341,18 +344,20 @@ public struct MuscleCategorySelectionView: View {
     }
 
     private var resetMenuItems: [MiniActionMenuItem] {
-        [
-            MiniActionMenuItem(
-                icon: "xmark",
-                title: "Reset all",
-                isDestructive: false,
-                action: {
-                    overlayState.showSelectionMiniMenu = false
-                    showCategorySelection = false
-                    viewModel.resetAllExercises()
-                }
-            ),
-        ]
+        [resetAllMenuItem]
+    }
+
+    private var resetAllMenuItem: MiniActionMenuItem {
+        MiniActionMenuItem(
+            icon: "xmark",
+            title: L10n.exerciseResetAll,
+            isDestructive: false,
+            action: {
+                overlayState.showSelectionMiniMenu = false
+                showCategorySelection = false
+                viewModel.resetAllExercises()
+            }
+        )
     }
 
     private func selectViewMode(_ mode: ViewMode) {

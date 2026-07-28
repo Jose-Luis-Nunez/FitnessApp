@@ -30,6 +30,7 @@ public enum L10n {
 
     public static let exerciseDeactivate = "Deactivate Exercise"
     public static let exerciseActivate = "Activate Exercise"
+    public static let exerciseResetAll = "Reset all"
     public static let selectionDeactivate = "Deactivate"
     public static let selectionActivate = "Activate"
     public static let selectionCancel = "Cancel"

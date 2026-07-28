@@ -3,6 +3,15 @@ import XCTest
 final class TrainingNavigationUITests: BaseTest {
 
     @MainActor
+    func testListMenuOffersResetAll() throws {
+        try launch(exerciseList: .defaultArmsExercise)
+        tapOn(HomeIDs.listViewToggle)
+        tapOn(BottomBarIDs.contextMenu)
+
+        verifyExists(label: "Reset all")
+    }
+
+    @MainActor
     func testListStartedTrainingBackReturnsToList() throws {
         try launch(exerciseList: .defaultArmsExercise)
         openListAndStartTraining()
