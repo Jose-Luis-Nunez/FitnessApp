@@ -54,7 +54,7 @@ The single source of truth for the constants below is `Packages/FitnessCore/Sour
 | Test Enum | Defined in | Applied in | IDs |
 |-----------|-----------|------------|-----|
 | `TrainingIDs` | `FitnessCore.AccessibilityIDs` | `BottomActionBarView`, `SimpleActiveSetView`, `CompactTimerComponent` | `cancelTraining`, `doneButton`, `finishButton`, `startButton`, `allDoneButton`, `quickDoneButton`, `controlButton(_:)`, `repsField(set:)`, `quickDoneSetButton(index:)` |
-| `HomeIDs` | `FitnessCore.AccessibilityIDs` | `MuscleCategorySelectionView` (category tiles via `CategoryTileModelView`; list-mode toggle) | `categoryTile(for:)`, `listViewToggle`; list toggle label: `Exercise list` |
+| `HomeIDs` | `FitnessCore.AccessibilityIDs` | `MuscleCategorySelectionView` (category tiles via `CategoryTileModelView`; view-mode content and toggle buttons) | `categoryTile(for:)`, `overviewContent`, `listContent`, `overviewViewToggle`, `listViewToggle`; list toggle label: `Exercise list` |
 | `MuscleCategoryIDs` | `FitnessCore.AccessibilityIDs` | `MuscleCategoryView`, `IdleActiveCardModelView` (post-T8d; previously `IdleActiveCardView`) | `screen`, `startExercise`; start button label: `Start exercise` |
 | `ExerciseIDs` | `FitnessCore.AccessibilityIDs` | `InactiveCardModelView` (post-T8d; previously `InactiveCardView`) | `nameLabel` |
 | `ExerciseCardIDs` | `FitnessCore.AccessibilityIDs` | `ExerciseCardModelView` (post-T8d; previously `ExerciseCardContainerView`) | `completedCard(_:)`, `activeCard(_:)`, `idleCard(_:)`, `completedCardPrefix`, `activeCardPrefix`, `idleCardPrefix` |

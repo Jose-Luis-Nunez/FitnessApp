@@ -130,6 +130,38 @@ struct ExerciseStorageServiceTests {
         #expect(loaded[1].seatSetting == "9")
     }
 
+    @Test func deactivateRemovesExerciseFromLearnedOrderBeforeReactivation() throws {
+        let (sut, workout) = makeSUT()
+        let first = TestHelpers.makeExercise(name: "A", category: .arms)
+        let second = TestHelpers.makeExercise(name: "B", category: .arms)
+        sut.saveForWorkout([first, second], workoutId: workout.id, category: .arms)
+
+        let order = WorkoutExerciseOrderModel(
+            workoutId: workout.id,
+            pendingExerciseIds: [first.id],
+            candidateExerciseIds: [second.id, first.id],
+            candidateRepeatCount: 1,
+            learnedExerciseIds: [second.id, first.id]
+        )
+        container.mainContext.insert(order)
+        try container.mainContext.save()
+
+        var deactivated = first
+        deactivated.isActive = false
+        sut.updateExercise(deactivated)
+
+        #expect(order.pendingExerciseIds.isEmpty)
+        #expect(order.candidateExerciseIds.isEmpty)
+        #expect(order.candidateRepeatCount == 0)
+        #expect(order.learnedExerciseIds == [second.id])
+
+        var reactivated = deactivated
+        reactivated.isActive = true
+        sut.updateExercise(reactivated)
+
+        #expect(order.learnedExerciseIds == [second.id])
+    }
+
     @Test func updateExerciseIsNoOpForUnknownId() {
         let (sut, workout) = makeSUT()
         let e1 = TestHelpers.makeExercise(name: "A", category: .arms)

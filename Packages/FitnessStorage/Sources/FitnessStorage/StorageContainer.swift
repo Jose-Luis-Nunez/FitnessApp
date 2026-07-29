@@ -23,6 +23,9 @@ public extension Container {
     var exerciseStorage: Factory<ExerciseStoring> {
         self { MainActor.assumeIsolated { ExerciseStorageService() } }.singleton
     }
+    var workoutExerciseOrderStorage: Factory<WorkoutExerciseOrderStoring> {
+        self { MainActor.assumeIsolated { WorkoutExerciseOrderStorageService() } }.singleton
+    }
     var analyticsStorage: Factory<AnalyticsStoring> {
         self { MainActor.assumeIsolated { AnalyticsStorageService() } }.singleton
     }

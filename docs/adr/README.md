@@ -65,6 +65,8 @@ Cross-links to other ADRs, plans, code, external resources.
 | 0006 | Versioned Git hooks via `core.hooksPath` | accepted |
 | 0007 | Remove SessionTrainingCache, switch ResetAllExercisesUseCase to TrainingCoordinatorCache | accepted |
 | 0008 | Friends Comparison: isolated JSON-blob storage + dedicated module | accepted |
+| 0009 | Targeted, non-destructive single-exercise update | accepted |
+| 0010 | Workout-scoped exercise-order learning | accepted |
 
 > **ADR-0004 note:** The number 0004 is intentionally unassigned. Two existing ADRs reference "ADR-0004" as a future anchor for two possible triggers:
 > - **TCA migration** (referenced in ADR-0001 §"Trigger occurred → write ADR-0004"): if the observability problems of SwiftUI/SwiftData become untenable, ADR-0004 would document the migration to The Composable Architecture.

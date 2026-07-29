@@ -8,7 +8,7 @@ final class TrainingNavigationUITests: BaseTest {
         tapOn(HomeIDs.listViewToggle)
         tapOn(BottomBarIDs.contextMenu)
 
-        verifyExists(label: "Reset all")
+        verifyExists(label: HomeLabels.resetAll)
     }
 
     @MainActor
@@ -27,6 +27,34 @@ final class TrainingNavigationUITests: BaseTest {
         openListAndStartTraining()
 
         tapOn(TrainingIDs.cancelTraining)
+
+        verifyListParent()
+    }
+
+    @MainActor
+    func testListStartedTrainingFinishReturnsToList() throws {
+        try launch(exerciseList: .defaultArmsExercise)
+        openListAndStartTraining()
+
+        finishTraining()
+
+        verifyListParent()
+        verifyExistsWithPrefix(ExerciseCardIDs.completedCardPrefix)
+    }
+
+    @MainActor
+    func testListModeSurvivesToggleRoundTripAndTrainingFinish() throws {
+        try launch(exerciseList: .defaultArmsExercise)
+        verifyOverviewParent()
+
+        tapOn(HomeIDs.listViewToggle)
+        verifyListParent()
+        tapOn(HomeIDs.overviewViewToggle)
+        verifyOverviewParent()
+        tapOn(HomeIDs.listViewToggle)
+        tapOn(MuscleCategoryIDs.startExercise)
+
+        finishTraining()
 
         verifyListParent()
     }
@@ -52,6 +80,34 @@ final class TrainingNavigationUITests: BaseTest {
     }
 
     @MainActor
+    func testCategoryStartedTrainingFinishReturnsToCategory() throws {
+        try launch(exerciseCategory: .defaultArmsExercise)
+        tapOn(MuscleCategoryIDs.startExercise)
+
+        finishTraining()
+
+        verifyCategoryParent()
+    }
+
+    @MainActor
+    func testCategoryFinishThenListFinishReturnsToList() throws {
+        try launch(exerciseCategory: .defaultArmsExercise)
+        tapOn(MuscleCategoryIDs.startExercise)
+        finishTraining()
+        verifyCategoryParent()
+
+        tapOn(BottomBarIDs.backButton)
+        verifyOverviewParent()
+        tapOn(HomeIDs.listViewToggle)
+        tapOn(BottomBarIDs.contextMenu)
+        tapOn(label: HomeLabels.resetAll)
+        tapOn(MuscleCategoryIDs.startExercise)
+        finishTraining()
+
+        verifyListParent()
+    }
+
+    @MainActor
     private func openListAndStartTraining() {
         verifyExists(HomeIDs.listViewToggle)
         tapOn(HomeIDs.listViewToggle)
@@ -61,12 +117,29 @@ final class TrainingNavigationUITests: BaseTest {
     @MainActor
     private func verifyListParent() {
         verifyExists(HomeIDs.listViewToggle)
-        verifyNotExists(HomeIDs.categoryTile(for: "arms"), elementType: .button)
+        verifyExists(HomeIDs.listContent)
+        verifyNotExists(HomeIDs.overviewContent)
+    }
+
+    @MainActor
+    private func verifyOverviewParent() {
+        verifyExists(HomeIDs.overviewViewToggle)
+        verifyExists(HomeIDs.overviewContent)
+        verifyNotExists(HomeIDs.listContent)
     }
 
     @MainActor
     private func verifyCategoryParent() {
         verifyExists(MuscleCategoryIDs.screen)
         verifyNotExists(HomeIDs.listViewToggle)
+    }
+
+    @MainActor
+    private func finishTraining() {
+        for setIndex in 1...3 {
+            tapOn(TrainingIDs.doneButton)
+            waitForNonEmptyLabel(TrainingIDs.repsField(set: setIndex - 1))
+        }
+        tapOn(TrainingIDs.finishButton)
     }
 }

@@ -10,7 +10,7 @@ import SwiftData
 /// Per ADR-0005 § Snapshot-Pflicht: V3 reuses the `SchemaV2` snapshots for the
 /// `ExerciseModel`/`WorkoutModel` relationship cluster (frozen at the pre-`isActive`
 /// form) and adds the still-live, isolated `FriendModel`. The current live schema
-/// is `SchemaV5`.
+/// is `SchemaV6`.
 enum SchemaV3: VersionedSchema {
     static var versionIdentifier = Schema.Version(3, 0, 0)
 

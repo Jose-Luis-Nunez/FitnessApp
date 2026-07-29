@@ -182,6 +182,12 @@ struct ExerciseCountsTests {
 
 // MARK: - Reset All Exercises
 
+@MainActor
+private final class NoOpWorkoutExerciseOrderStorage: WorkoutExerciseOrderStoring {
+    func recordStart(workoutId: UUID, exerciseId: UUID) {}
+    func finalizeCycle(workoutId: UUID) {}
+}
+
 @Suite("resetAllExercises", .tags(.fast))
 @MainActor
 struct ResetAllExercisesTests {
@@ -196,7 +202,9 @@ struct ResetAllExercisesTests {
 
         let resetUseCase = ResetAllExercisesUseCase(
             coordinatorCache: cache,
-            exerciseManagement: mock
+            exerciseManagement: mock,
+            workoutStorage: ws,
+            exerciseOrderStorage: NoOpWorkoutExerciseOrderStorage()
         )
         let vm = MuscleCategorySelectionViewModel(
             coordinatorCache: cache,
@@ -220,7 +228,9 @@ struct ResetAllExercisesTests {
 
         let resetUseCase = ResetAllExercisesUseCase(
             coordinatorCache: cache,
-            exerciseManagement: mock
+            exerciseManagement: mock,
+            workoutStorage: ws,
+            exerciseOrderStorage: NoOpWorkoutExerciseOrderStorage()
         )
         let vm = MuscleCategorySelectionViewModel(
             coordinatorCache: cache,

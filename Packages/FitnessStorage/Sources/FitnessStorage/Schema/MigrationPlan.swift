@@ -11,12 +11,25 @@ private let migrationLogger = Logger(subsystem: "FitnessStorage", category: "App
 /// `MigrationV2toV3Tests`).
 enum AppMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self, SchemaV5.self]
+        [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self, SchemaV5.self, SchemaV6.self]
     }
 
     static var stages: [MigrationStage] {
-        [migrateV1toV2_addWorkoutId, migrateV2toV3_addFriendModel, migrateV3toV4_addIsActive, migrateV4toV5_addWorkoutType]
+        [
+            migrateV1toV2_addWorkoutId,
+            migrateV2toV3_addFriendModel,
+            migrateV3toV4_addIsActive,
+            migrateV4toV5_addWorkoutType,
+            migrateV5toV6_addWorkoutExerciseOrder
+        ]
     }
+
+    /// V5 → V6 adds an isolated model with no relationships to existing
+    /// entities, so existing rows are unaffected and the new table starts empty.
+    static let migrateV5toV6_addWorkoutExerciseOrder = MigrationStage.lightweight(
+        fromVersion: SchemaV5.self,
+        toVersion: SchemaV6.self
+    )
 
     /// V4 → V5: adds `WorkoutModel.typeRaw: String?`. Existing rows remain
     /// `nil` and are interpreted as `.individual`; new writes store a raw value.

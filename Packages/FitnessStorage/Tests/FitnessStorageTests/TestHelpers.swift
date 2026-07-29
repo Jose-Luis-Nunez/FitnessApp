@@ -16,6 +16,7 @@ enum TestHelpers {
             AnalyticsEntryModel.self,
             SetProgressModel.self,
             ExerciseFeedbackModel.self,
+            WorkoutExerciseOrderModel.self,
             migrationPlan: AppMigrationPlan.self,
             configurations: config
         )
@@ -30,6 +31,7 @@ enum TestHelpers {
             SetProgressModel.self,
             ExerciseFeedbackModel.self,
             FriendModel.self,
+            WorkoutExerciseOrderModel.self,
             migrationPlan: AppMigrationPlan.self,
             configurations: config
         )

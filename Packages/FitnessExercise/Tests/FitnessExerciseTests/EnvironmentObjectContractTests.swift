@@ -32,7 +32,7 @@ struct MuscleCategorySelectionViewContractTests {
 
     @Test
     func requiresAppRouterAndOverlayState() {
-        let view = MuscleCategorySelectionView()
+        let view = MuscleCategorySelectionView(viewMode: .constant(.overview))
             .environment(AppRouter())
             .environment(UIOverlayState())
 
@@ -41,7 +41,7 @@ struct MuscleCategorySelectionViewContractTests {
 
     @Test
     func worksWithoutExplicitAppRouter() {
-        let view = MuscleCategorySelectionView()
+        let view = MuscleCategorySelectionView(viewMode: .constant(.overview))
             .environment(UIOverlayState())
 
         assertViewHosts(view)

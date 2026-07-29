@@ -119,6 +119,28 @@ struct WorkoutStorageServiceTests {
         #expect(sut.currentWorkout?.id != second.id)
     }
 
+    @Test func deleteWorkoutRemovesLearnedExerciseOrder() throws {
+        let sut = makeSUT()
+        let workout = try sut.createWorkout(name: "Learned")
+        container.mainContext.insert(WorkoutExerciseOrderModel(
+            workoutId: workout.id,
+            learnedExerciseIds: [UUID()]
+        ))
+        try container.mainContext.save()
+
+        sut.deleteWorkout(workout)
+
+        let workoutId = workout.id
+        let remaining = try container.mainContext.fetch(
+            FetchDescriptor<WorkoutExerciseOrderModel>(
+                predicate: #Predicate<WorkoutExerciseOrderModel> {
+                    $0.workoutId == workoutId
+                }
+            )
+        )
+        #expect(remaining.isEmpty)
+    }
+
     // MARK: - Current / Default Tracking
 
     @Test func setCurrentWorkoutPersistsAcrossReloads() throws {

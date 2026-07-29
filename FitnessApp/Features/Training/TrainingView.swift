@@ -17,7 +17,7 @@ import Factory
 /// edit, completion flag flip) propagates into the card automatically — the
 /// snapshot-sync via the legacy `ExerciseCardViewModel` is gone.
 ///
-/// Coordinator APIs (`TrainingCoordinator.startTraining(for:)`,
+/// Coordinator APIs (`TrainingCoordinator.startTraining(for:workoutId:)`,
 /// `TrainingActionBarComponent`) still operate on `Exercise` (DTO), so we
 /// bridge with `model.toDomain()` at the call sites.
 struct TrainingView: View {
@@ -238,15 +238,26 @@ struct TrainingView: View {
 
     private func startTrainingIfReady() {
         guard phase == .waitingForQuery, let model = models.first else { return }
+        let result: StartTrainingResult?
+        if let workoutId = model.workoutId {
+            result = trainingCoordinator.startTraining(
+                for: model.toDomain(),
+                workoutId: workoutId
+            )
+        } else {
+            // Legacy/orphan rows remain trainable, but cannot contribute to a
+            // workout-scoped learned order without a workout id.
+            result = trainingCoordinator.startTraining(for: model.toDomain())
+        }
+        guard result != nil else { return }
         phase = .active
-        trainingCoordinator.startTraining(for: model.toDomain())
     }
 
     /// Persists the edited seat through the coordinator, which routes it via the
     /// app's single exercise-write path (storage service). The view must NOT
-    /// mutate the `@Model` directly: that conflicts with the storage service's
-    /// separate `ModelContext` (full delete+reinsert) and leaves phantom cards in
-    /// the category `@Query`. See `TrainingCoordinator.updateActiveSeat`.
+    /// mutate the `@Model` directly: the targeted storage update owns the write
+    /// transaction and preserves the row identity observed by category queries.
+    /// See `TrainingCoordinator.updateActiveSeat`.
     private func saveSeat() {
         let trimmed = formViewModel.seat.trimmingCharacters(in: .whitespaces)
         let newSeat: String? = trimmed.isEmpty ? nil : trimmed
@@ -274,7 +285,9 @@ struct TrainingView: View {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         // swiftlint:disable:next force_try
         let container = try! ModelContainer(
-            for: WorkoutModel.self, ExerciseModel.self,
+            for: WorkoutModel.self,
+            ExerciseModel.self,
+            WorkoutExerciseOrderModel.self,
             configurations: config
         )
         let context = ModelContext(container)

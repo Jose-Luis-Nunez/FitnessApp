@@ -21,6 +21,9 @@ struct FitnessAppApp: App {
     @State private var overlayState = UIOverlayState()
     @State private var workoutStorageService: WorkoutStorageService
     @State private var didLaunch: Bool = false
+    /// Presentation state belongs to the scene-level owner so the selected
+    /// List/Overview mode survives recreation of the `.home` destination.
+    @State private var categorySelectionViewMode: MuscleCategorySelectionViewMode = .overview
     /// Drives the app-wide accent re-tint (green ↔ grey). Toggling the Profile
     /// picker writes this key; the `.id(iconColorScheme)` below rebuilds the
     /// visual tree so every `AppStyle.Color` green token re-reads the palette.
@@ -86,7 +89,9 @@ struct FitnessAppApp: App {
                             let view = Group {
                                 switch destination {
                                 case .home:
-                                    MuscleCategorySelectionView()
+                                    MuscleCategorySelectionView(
+                                        viewMode: $categorySelectionViewMode
+                                    )
                                         .navigationBarBackButtonHidden(true)
                                 case .profile:
                                     ProfileView()

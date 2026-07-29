@@ -173,37 +173,44 @@ struct ExerciseFormViewModelTests {
 
     // MARK: - createOrUpdateExercise (edit existing)
 
-    @Test func updateExercisePreservesId() {
-        let sut = makeSUT()
+    @Test func updateExercisePreservesPropertiesOutsideForm() throws {
         let original = Exercise(
-            name: "Curl", weight: 10, reps: 10, sets: 3,
-            iconName: "defaultArmsIcon", category: .arms
+            name: "Curl",
+            weight: 10,
+            reps: 10,
+            sets: 3,
+            noSeats: true,
+            isCompleted: true,
+            iconName: "defaultArmsIcon",
+            category: .arms,
+            goal: 75,
+            isActive: false
         )
+        let sut = makeSUT()
         sut.editingExercise = original
-        sut.name = "Updated Curl"
-        sut.weight = 15
-        sut.reps = 12
+        sut.name = "Incline Press"
+        sut.weight = 25
+        sut.reps = 8
         sut.sets = 4
-        sut.selectedCategory = .arms
+        sut.seat = "3"
+        sut.noSeats = false
+        sut.selectedIconName = "chestPressIcon"
+        sut.selectedCategory = .chest
 
-        let result = sut.createOrUpdateExercise()
-        #expect(result?.id == original.id)
-        #expect(result?.name == "Updated Curl")
-        #expect(result?.weight == 15)
-    }
+        let result = try #require(sut.createOrUpdateExercise())
 
-    @Test func updateExercisePreservesCompletedStatus() {
-        let sut = makeSUT()
-        let original = Exercise(
-            name: "Curl", weight: 10, reps: 10, sets: 3,
-            isCompleted: true, iconName: "defaultArmsIcon", category: .arms
-        )
-        sut.editingExercise = original
-        sut.name = "Updated"
-        sut.selectedCategory = .arms
-
-        let result = sut.createOrUpdateExercise()
-        #expect(result?.isCompleted == true)
+        #expect(result.id == original.id)
+        #expect(result.isCompleted == true)
+        #expect(result.goal == 75)
+        #expect(result.isActive == false)
+        #expect(result.name == "Incline Press")
+        #expect(result.weight == 25)
+        #expect(result.reps == 8)
+        #expect(result.sets == 4)
+        #expect(result.seatSetting == "3")
+        #expect(result.noSeats == false)
+        #expect(result.iconName == "chestPressIcon")
+        #expect(result.category == .chest)
     }
 
     // MARK: - loadExercise

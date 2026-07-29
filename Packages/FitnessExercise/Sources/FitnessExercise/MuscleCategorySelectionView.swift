@@ -24,18 +24,53 @@ private enum SelectionLayoutConstants {
     static let verticalSpacing: CGFloat = ExerciseCardLayout.CategoryTile.gridSpacing
 }
 
-private enum ViewMode {
+public enum MuscleCategorySelectionViewMode: Sendable {
     case overview
     case list
+}
+
+/// Owns the workout-dependent SwiftData predicates for list mode. The parent
+/// must apply `.id(workoutId)` so changing workouts recreates both queries with
+/// the new captured id.
+struct WorkoutScopedExerciseQueryView<Content: View>: View {
+    @Query private var exerciseModels: [ExerciseModel]
+    @Query private var orderModels: [WorkoutExerciseOrderModel]
+
+    private let content: ([ExerciseModel], [UUID]) -> Content
+
+    init(
+        workoutId: UUID,
+        @ViewBuilder content: @escaping ([ExerciseModel], [UUID]) -> Content
+    ) {
+        let capturedWorkoutId = workoutId
+        _exerciseModels = Query(
+            filter: #Predicate<ExerciseModel> {
+                $0.workoutId == capturedWorkoutId
+            }
+        )
+        _orderModels = Query(
+            filter: #Predicate<WorkoutExerciseOrderModel> {
+                $0.workoutId == capturedWorkoutId
+            }
+        )
+        self.content = content
+    }
+
+    var body: some View {
+        content(
+            exerciseModels,
+            orderModels.first?.learnedExerciseIds ?? []
+        )
+    }
 }
 
 public struct MuscleCategorySelectionView: View {
     @State private var viewModel = MuscleCategorySelectionViewModel()
     @Environment(AppRouter.self) private var router
     @Environment(UIOverlayState.self) private var overlayState
-    @State private var currentViewMode: ViewMode = .overview
+    @Binding private var currentViewMode: MuscleCategorySelectionViewMode
     @State private var filterPillBounce: Bool = false
-    @State private var filterBounceMode: ViewMode? = nil
+    @State private var filterBounceMode: MuscleCategorySelectionViewMode? = nil
     @Namespace private var filterNamespace
     @State private var analyticsViewModel = AnalyticsViewModel()
     @State private var isShowingExercisePicker = false
@@ -50,32 +85,10 @@ public struct MuscleCategorySelectionView: View {
     private var coordinatorCache: TrainingCoordinatorCaching
     private var workoutStorage: WorkoutStoring
 
-    /// T8a: Live-bound list of all `ExerciseModel`s for the current workout
-    /// (across **all** categories). Replaces the legacy
-    /// `viewModel.exercisesByCategory` snapshot path used by `allExercisesList`.
-    /// View identity is rebound on workout switch via `.id(viewModel.currentWorkoutId)`
-    /// so SwiftData re-initialises this `@Query` with the new workout id.
-    @Query private var allWorkoutModels: [ExerciseModel]
-
-    public init() {
+    public init(viewMode: Binding<MuscleCategorySelectionViewMode>) {
+        self._currentViewMode = viewMode
         self.coordinatorCache = Container.shared.trainingCoordinatorCache()
         self.workoutStorage = Container.shared.workoutStorage()
-
-        // Build the @Query predicate against the denormalised `workoutId` (T3 schema).
-        // No category filter: list-mode renders every category in one flat list.
-        // We read currentWorkout directly from the Factory-registered storage to avoid
-        // instantiating a second ViewModel (the @State viewModel above is not yet
-        // available in init — property-wrapper ordering). DI returns the same
-        // singleton instance the @State viewModel will use.
-        // Falls back to a sentinel UUID when no workout is selected so the predicate
-        // matches nothing; the view rebinds via `.id(viewModel.currentWorkoutId)`
-        // once a workout exists.
-        let wid = Container.shared.workoutStorage().currentWorkout?.id ?? UUID()
-        _allWorkoutModels = Query(
-            filter: #Predicate<ExerciseModel> { exercise in
-                exercise.workoutId == wid
-            }
-        )
     }
 
     private var adaptiveColumns: [GridItem] {
@@ -88,13 +101,38 @@ public struct MuscleCategorySelectionView: View {
     /// Workout-wide progress for the list-view header: completed vs total across
     /// all **active** exercises (deactivated ones drop out of the count, matching
     /// the category-tile progress semantics).
-    private var listProgress: (completed: Int, total: Int) {
+    private func listProgress(
+        in allWorkoutModels: [ExerciseModel]
+    ) -> (completed: Int, total: Int) {
         let active = allWorkoutModels.filter { $0.isActive ?? true }
         return (active.filter(\.isCompleted).count, active.count)
     }
 
     public var body: some View {
-        ZStack(alignment: .bottom) {
+        Group {
+            if let workoutId = viewModel.currentWorkoutId {
+                WorkoutScopedExerciseQueryView(workoutId: workoutId) {
+                    allWorkoutModels,
+                    learnedExerciseIds in
+                    content(
+                        allWorkoutModels: allWorkoutModels,
+                        learnedExerciseIds: learnedExerciseIds
+                    )
+                }
+                .id(workoutId)
+            } else {
+                content(allWorkoutModels: [], learnedExerciseIds: [])
+            }
+        }
+    }
+
+    private func content(
+        allWorkoutModels: [ExerciseModel],
+        learnedExerciseIds: [UUID]
+    ) -> some View {
+        let progress = listProgress(in: allWorkoutModels)
+
+        return ZStack(alignment: .bottom) {
             AppStyle.Color.backgroundColor.ignoresSafeArea()
 
             VStack {
@@ -125,8 +163,8 @@ public struct MuscleCategorySelectionView: View {
 
                     // List view only: show workout-wide completed/total count on
                     // the right, at the height of the title.
-                    if currentViewMode == .list, listProgress.total > 0 {
-                        Text("\(listProgress.completed) of \(listProgress.total)")
+                    if currentViewMode == .list, progress.total > 0 {
+                        Text("\(progress.completed) of \(progress.total)")
                             .font(AppStyle.Font.tileValue)
                             .foregroundColor(AppStyle.Color.idleMetricLabel)
                             .fixedSize()
@@ -178,11 +216,16 @@ public struct MuscleCategorySelectionView: View {
                                 categoryList
                             }
                             .padding(.horizontal, SelectionLayoutConstants.horizontalPadding)
+                            .accessibilityIdentifier(HomeIDs.overviewContent)
                         } else {
                             LazyVStack(spacing: ExerciseCardLayout.CategoryTile.verticalSpacing) {
-                                allExercisesList
+                                allExercisesList(
+                                    allWorkoutModels: allWorkoutModels,
+                                    learnedExerciseIds: learnedExerciseIds
+                                )
                             }
                             .padding(.horizontal, 0)
+                            .accessibilityIdentifier(HomeIDs.listContent)
                         }
                         Spacer(minLength: safeAreaInset + 24)
                     }
@@ -245,7 +288,13 @@ public struct MuscleCategorySelectionView: View {
                         Spacer()
                         MiniActionMenuView(
                             title: currentViewMode == .list && showCategorySelection ? L10n.newExercise : nil,
-                            items: currentViewMode == .list ? (showCategorySelection ? categoryMenuItems : newExerciseMenuItems) : resetMenuItems,
+                            items: currentViewMode == .list
+                                ? (
+                                    showCategorySelection
+                                        ? categoryMenuItems
+                                        : newExerciseMenuItems(allWorkoutModels: allWorkoutModels)
+                                )
+                                : resetMenuItems,
                             width: selectionMenuWidth,
                             minHeight: currentViewMode == .list && showCategorySelection ? 280 : 140
                         )
@@ -274,7 +323,6 @@ public struct MuscleCategorySelectionView: View {
         .navigationBarBackButtonHidden(true)
         .navigationBarHidden(true)
 #endif
-        .id(viewModel.currentWorkoutId)
         .onAppear {
             // The card grid is `@Query`-driven for live updates. This refresh
             // keeps `viewModel.exercisesByCategory` in sync as the backing
@@ -282,11 +330,13 @@ public struct MuscleCategorySelectionView: View {
             viewModel.refreshExercises()
         }
         .onChange(of: overlayState.commitExerciseSelection) { _, _ in
-            commitSelectionIfNeeded()
+            commitSelectionIfNeeded(allWorkoutModels: allWorkoutModels)
         }
     }
 
-    private var newExerciseMenuItems: [MiniActionMenuItem] {
+    private func newExerciseMenuItems(
+        allWorkoutModels: [ExerciseModel]
+    ) -> [MiniActionMenuItem] {
         // Order: New Exercise first, then Activate/Deactivate when available,
         // followed by Reset all. Activate remains before Deactivate to match the
         // category view's ordering.
@@ -304,7 +354,7 @@ public struct MuscleCategorySelectionView: View {
             }
         })
 
-        if hasDeactivatedExercises {
+        if hasDeactivatedExercises(in: allWorkoutModels) {
             items.append(MiniActionMenuItem(icon: "checkmark", title: L10n.exerciseActivate, isDestructive: false) {
                 overlayState.showSelectionMiniMenu = false
                 overlayState.selectedExerciseIds = []
@@ -312,7 +362,7 @@ public struct MuscleCategorySelectionView: View {
             })
         }
 
-        if hasDeactivatableExercises {
+        if hasDeactivatableExercises(in: allWorkoutModels) {
             items.append(MiniActionMenuItem(icon: "xmark", title: L10n.exerciseDeactivate, isDestructive: false) {
                 overlayState.showSelectionMiniMenu = false
                 overlayState.selectedExerciseIds = []
@@ -360,7 +410,7 @@ public struct MuscleCategorySelectionView: View {
         )
     }
 
-    private func selectViewMode(_ mode: ViewMode) {
+    private func selectViewMode(_ mode: MuscleCategorySelectionViewMode) {
         guard mode != currentViewMode else { return }
         withAnimation(.smooth) { currentViewMode = mode }
         withAnimation(.spring(response: 0.25, dampingFraction: 0.4)) { filterPillBounce = true }
@@ -508,6 +558,7 @@ public struct MuscleCategorySelectionView: View {
                     }
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier(HomeIDs.overviewViewToggle)
 
             Button(action: { selectViewMode(.list) }) {
                 Image(systemName: "list.bullet")
@@ -536,14 +587,18 @@ public struct MuscleCategorySelectionView: View {
         .clipShape(Capsule())
     }
 
-    private var allExercisesList: some View {
-        // T8a: Bug-1-style live-fix for the list-mode. Source is `allWorkoutModels`
-        // (`@Query`), not `viewModel.exercisesByCategory`.
+    private func allExercisesList(
+        allWorkoutModels: [ExerciseModel],
+        learnedExerciseIds: [UUID]
+    ) -> some View {
+        // T8a: Bug-1-style live-fix for list mode. Source is the workout-scoped
+        // query host, not `viewModel.exercisesByCategory`.
         //
         // Visibility: deactivated exercises are hidden by default; `.activate`
         // multi-select mode reveals them instead so they can be ticked.
-        // Completed exercises keep their `(category, sortOrder)` slot — no
-        // completion-based re-sort.
+        // Completed exercises keep their learned slot — no completion-based
+        // re-sort. Before a sequence has been confirmed twice, the learned
+        // array is empty and the existing `(category, sortOrder)` fallback wins.
         // No jump in/out of selection mode: keep the normal "all active" list;
         // `.activate` additionally reveals the (hidden) deactivated exercises.
         // Selectability is decided per card (`isCardSelectable`).
@@ -552,10 +607,10 @@ public struct MuscleCategorySelectionView: View {
             let active = model.isActive ?? true
             return mode == .activate ? true : active
         }
-        let sorted = visible.sorted { lhs, rhs in
-            if lhs.category != rhs.category { return lhs.category < rhs.category }
-            return lhs.sortOrder < rhs.sortOrder
-        }
+        let sorted = ExerciseListOrderResolver.sorted(
+            visible,
+            learnedExerciseIds: learnedExerciseIds
+        )
 
         return ForEach(sorted, id: \.id) { model in
             exerciseCard(for: model)
@@ -630,7 +685,9 @@ public struct MuscleCategorySelectionView: View {
     /// targeted update path, then clears the mode. Scene-guarded so only the
     /// foreground (home) scene commits — the shared `commitExerciseSelection`
     /// flag is also observed by a still-mounted pushed category screen.
-    private func commitSelectionIfNeeded() {
+    private func commitSelectionIfNeeded(
+        allWorkoutModels: [ExerciseModel]
+    ) {
         guard router.currentScene == .home else { return }
         guard overlayState.commitExerciseSelection else { return }
         let active = overlayState.exerciseSelectionMode == .activate
@@ -641,13 +698,17 @@ public struct MuscleCategorySelectionView: View {
         viewModel.refreshExercises()
     }
 
-    private var hasDeactivatedExercises: Bool {
+    private func hasDeactivatedExercises(
+        in allWorkoutModels: [ExerciseModel]
+    ) -> Bool {
         allWorkoutModels.contains { !($0.isActive ?? true) }
     }
 
     /// Gates the "Deactivate Exercise" menu item on the same rule the per-card
     /// radio uses — never shown when nothing is actually selectable.
-    private var hasDeactivatableExercises: Bool {
+    private func hasDeactivatableExercises(
+        in allWorkoutModels: [ExerciseModel]
+    ) -> Bool {
         allWorkoutModels.contains {
             ExerciseSelectionRules.isSelectable(
                 mode: .deactivate,

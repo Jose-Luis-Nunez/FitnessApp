@@ -91,6 +91,10 @@ public final class ExerciseStorageService: ExerciseStoring {
                 logger.error("updateExercise: no ExerciseModel found for id \(id)")
                 return
             }
+            let becameInactive = (model.isActive ?? true) && !exercise.isActive
+            if becameInactive, let workoutId = model.workoutId {
+                try removeFromLearnedOrder(exerciseId: id, workoutId: workoutId)
+            }
             model.update(from: exercise)
             _ = saveContext()
         } catch {
@@ -108,6 +112,26 @@ public final class ExerciseStorageService: ExerciseStoring {
         } catch {
             logger.error("Failed to fetch workout model \(id): \(error)")
             return nil
+        }
+    }
+
+    /// Deactivation makes an exercise unknown to the learned flat-list order
+    /// immediately. If it is later reactivated, the resolver therefore places
+    /// it behind all still-learned exercises using the normal fallback order.
+    private func removeFromLearnedOrder(exerciseId: UUID, workoutId: UUID) throws {
+        var descriptor = FetchDescriptor<WorkoutExerciseOrderModel>(
+            predicate: #Predicate<WorkoutExerciseOrderModel> {
+                $0.workoutId == workoutId
+            }
+        )
+        descriptor.fetchLimit = 1
+        guard let order = try context.fetch(descriptor).first else { return }
+
+        order.pendingExerciseIds.removeAll { $0 == exerciseId }
+        order.learnedExerciseIds.removeAll { $0 == exerciseId }
+        if order.candidateExerciseIds.contains(exerciseId) {
+            order.candidateExerciseIds = []
+            order.candidateRepeatCount = 0
         }
     }
 

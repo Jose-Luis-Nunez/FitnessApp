@@ -104,6 +104,64 @@ struct ExerciseManagementServiceTests {
         #expect(exercises.first?.name == "Curl")
     }
 
+    @Test func deactivateThroughManagementAtomicallyPrunesOrderAndReactivationStaysUnknown() throws {
+        let (sut, ws, es, _) = makeSUT()
+        let workout = ws.workouts.first!
+        let first = FitnessTestSupport.makeExercise(name: "Curl", category: .arms)
+        let second = FitnessTestSupport.makeExercise(name: "Press", category: .arms)
+        es.saveForWorkout([first, second], workoutId: workout.id, category: .arms)
+        let order = WorkoutExerciseOrderModel(
+            workoutId: workout.id,
+            pendingExerciseIds: [first.id],
+            candidateExerciseIds: [second.id, first.id],
+            candidateRepeatCount: 1,
+            learnedExerciseIds: [second.id, first.id]
+        )
+        container.mainContext.insert(order)
+        try container.mainContext.save()
+
+        var deactivated = first
+        deactivated.isActive = false
+        sut.updateExercise(deactivated, category: .arms)
+
+        let exerciseId = first.id
+        let workoutId = workout.id
+        let deactivatedContext = ModelContext(container)
+        let persistedDeactivated = try #require(
+            try deactivatedContext.fetch(FetchDescriptor<ExerciseModel>(
+                predicate: #Predicate { $0.id == exerciseId }
+            )).first
+        )
+        let prunedOrder = try #require(
+            try deactivatedContext.fetch(FetchDescriptor<WorkoutExerciseOrderModel>(
+                predicate: #Predicate { $0.workoutId == workoutId }
+            )).first
+        )
+        #expect(persistedDeactivated.isActive == false)
+        #expect(prunedOrder.pendingExerciseIds.isEmpty)
+        #expect(prunedOrder.candidateExerciseIds.isEmpty)
+        #expect(prunedOrder.candidateRepeatCount == 0)
+        #expect(prunedOrder.learnedExerciseIds == [second.id])
+
+        var reactivated = deactivated
+        reactivated.isActive = true
+        sut.updateExercise(reactivated, category: .arms)
+
+        let reactivatedContext = ModelContext(container)
+        let persistedReactivated = try #require(
+            try reactivatedContext.fetch(FetchDescriptor<ExerciseModel>(
+                predicate: #Predicate { $0.id == exerciseId }
+            )).first
+        )
+        let unchangedOrder = try #require(
+            try reactivatedContext.fetch(FetchDescriptor<WorkoutExerciseOrderModel>(
+                predicate: #Predicate { $0.workoutId == workoutId }
+            )).first
+        )
+        #expect(persistedReactivated.isActive == true)
+        #expect(unchangedOrder.learnedExerciseIds == [second.id])
+    }
+
     // MARK: - completeExercise
 
     @Test func completeExerciseSetsCompletedAndSavesAnalytics() {

@@ -20,9 +20,15 @@ public final class TrainingCoordinatorCache: TrainingCoordinatorCaching {
     private var coordinators: [MuscleCategoryGroup: TrainingCoordinator] = [:]
 
     @ObservationIgnored private var exerciseManagementService: ExerciseManaging
+    @ObservationIgnored private var exerciseOrderStorage: WorkoutExerciseOrderStoring
 
-    public init(exerciseManagement: ExerciseManaging? = nil) {
+    public init(
+        exerciseManagement: ExerciseManaging? = nil,
+        exerciseOrderStorage: WorkoutExerciseOrderStoring? = nil
+    ) {
         self.exerciseManagementService = exerciseManagement ?? Container.shared.exerciseManagement()
+        self.exerciseOrderStorage = exerciseOrderStorage
+            ?? Container.shared.workoutExerciseOrderStorage()
     }
 
     public func coordinator(for group: MuscleCategoryGroup) -> TrainingCoordinator {
@@ -36,6 +42,12 @@ public final class TrainingCoordinatorCache: TrainingCoordinatorCaching {
             },
             onExerciseReset: { [weak self] exercise, category in
                 self?.exerciseManagementService.resetExercise(exercise, category: category)
+            },
+            onNewSessionStarted: { [weak self] workoutId, exerciseId in
+                self?.exerciseOrderStorage.recordStart(
+                    workoutId: workoutId,
+                    exerciseId: exerciseId
+                )
             }
         )
         coordinators[group] = coordinator

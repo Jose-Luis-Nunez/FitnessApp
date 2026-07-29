@@ -180,11 +180,29 @@ struct FocusManagementTests {
         let coordinator = makeCoordinator()
 
         let exercise = makeExercise()
-        coordinator.startTraining(for: exercise)
+        let result = coordinator.startTraining(for: exercise)
 
         #expect(coordinator.currentExercise?.id == exercise.id)
         #expect(coordinator.focusedExerciseId == exercise.id)
         #expect(coordinator.isTrainingActive == true)
+        guard case .started? = result else {
+            Issue.record("Expected a new training session")
+            return
+        }
+    }
+
+    @Test func startingAnExistingSessionReportsResumed() {
+        let coordinator = makeCoordinator()
+        let exercise = makeExercise()
+
+        _ = coordinator.startTraining(for: exercise)
+        let result = coordinator.startTraining(for: exercise)
+
+        guard case .resumed? = result else {
+            Issue.record("Expected the existing training session to resume")
+            return
+        }
+        #expect(coordinator.activeSessions.count == 1)
     }
 
     @Test func startingSecondExerciseSwitchesFocusButKeepsBoth() {

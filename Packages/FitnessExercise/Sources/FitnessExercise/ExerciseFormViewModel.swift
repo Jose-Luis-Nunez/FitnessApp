@@ -50,18 +50,16 @@ public final class ExerciseFormViewModel {
         : selectedIconName
 
         if let existingExercise = editingExercise {
-            return Exercise(
-                id: existingExercise.id,
-                name: name,
-                weight: weight,
-                reps: reps,
-                sets: sets,
-                seatSetting: seat.isEmpty ? nil : seat,
-                noSeats: noSeats,
-                isCompleted: existingExercise.isCompleted,
-                iconName: icon,
-                category: selectedCategory
-            )
+            var updatedExercise = existingExercise
+            updatedExercise.name = name
+            updatedExercise.weight = weight
+            updatedExercise.reps = reps
+            updatedExercise.sets = sets
+            updatedExercise.seatSetting = seat.isEmpty ? nil : seat
+            updatedExercise.noSeats = noSeats
+            updatedExercise.iconName = icon
+            updatedExercise.category = selectedCategory
+            return updatedExercise
         } else {
             return Exercise(
                 name: name,

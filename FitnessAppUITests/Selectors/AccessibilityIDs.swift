@@ -15,7 +15,14 @@ enum TrainingIDs {
 
 enum HomeIDs {
     static func categoryTile(for group: String) -> String { "id_category_tile_\(group)" }
+    static let overviewViewToggle = "id_home_overview_view_toggle"
     static let listViewToggle = "id_home_list_view_toggle"
+    static let overviewContent = "id_home_overview_content"
+    static let listContent = "id_home_list_content"
+}
+
+enum HomeLabels {
+    static let resetAll = "Reset all"
 }
 
 enum MuscleCategoryIDs {

@@ -126,6 +126,7 @@ public struct ExerciseCardModelView: View {
                 onReset: onReset,
                 isResetEnabled: isResetEnabled
             )
+            .accessibilityElement(children: .contain)
             .accessibilityIdentifier(ExerciseCardIDs.completedCard(model.id))
         case .active:
             ActiveCardModelView(
@@ -134,6 +135,7 @@ public struct ExerciseCardModelView: View {
                 isEditable: isEditable,
                 analyticsViewModel: analyticsViewModel
             )
+            .accessibilityElement(children: .contain)
             .accessibilityIdentifier(ExerciseCardIDs.activeCard(model.id))
         case .idle:
             IdleActiveCardModelView(
@@ -146,6 +148,7 @@ public struct ExerciseCardModelView: View {
                 isSelectionMode: isSelectable,
                 isSelected: isSelected
             )
+            .accessibilityElement(children: .contain)
             .accessibilityIdentifier(ExerciseCardIDs.idleCard(model.id))
         }
     }

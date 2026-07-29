@@ -253,6 +253,14 @@ public final class WorkoutStorageService: WorkoutStoring {
         descriptor.fetchLimit = 1
 
         do {
+            let orderDescriptor = FetchDescriptor<WorkoutExerciseOrderModel>(
+                predicate: #Predicate<WorkoutExerciseOrderModel> {
+                    $0.workoutId == workoutId
+                }
+            )
+            for order in try context.fetch(orderDescriptor) {
+                context.delete(order)
+            }
             if let model = try context.fetch(descriptor).first {
                 context.delete(model)
                 saveContext()

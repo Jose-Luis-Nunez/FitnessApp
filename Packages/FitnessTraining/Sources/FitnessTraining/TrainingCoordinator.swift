@@ -112,6 +112,7 @@ public final class TrainingCoordinator {
     let findCategory: (Exercise) -> MuscleCategoryGroup?
     private let onExerciseUpdate: @MainActor (Exercise, MuscleCategoryGroup) -> Void
     private let onExerciseReset: @MainActor (Exercise, MuscleCategoryGroup) -> Void
+    private let onNewSessionStarted: @MainActor (UUID, Exercise.ID) -> Void
     private var _onAddExercise: @MainActor () -> Void
     private var _onResetAllExercises: @MainActor () -> Void
 
@@ -127,6 +128,7 @@ public final class TrainingCoordinator {
         findCategory: @escaping @MainActor (Exercise) -> MuscleCategoryGroup?,
         onExerciseUpdate: @escaping @MainActor (Exercise, MuscleCategoryGroup) -> Void,
         onExerciseReset: @escaping @MainActor (Exercise, MuscleCategoryGroup) -> Void,
+        onNewSessionStarted: @escaping @MainActor (UUID, Exercise.ID) -> Void = { _, _ in },
         onAddExercise: @escaping @MainActor () -> Void = {},
         onResetAllExercises: @escaping @MainActor () -> Void = {},
         analyticsViewModel: AnalyticsViewModel = AnalyticsViewModel(),
@@ -136,6 +138,7 @@ public final class TrainingCoordinator {
         self.findCategory = findCategory
         self.onExerciseUpdate = onExerciseUpdate
         self.onExerciseReset = onExerciseReset
+        self.onNewSessionStarted = onNewSessionStarted
         self._onAddExercise = onAddExercise
         self._onResetAllExercises = onResetAllExercises
         self.sessionFactory = sessionFactory
@@ -164,21 +167,39 @@ public final class TrainingCoordinator {
 
     // MARK: - Training Actions
 
-    public func startTraining(for exercise: Exercise) {
-        guard let category = findCategory(exercise) else { return }
+    @discardableResult
+    public func startTraining(for exercise: Exercise) -> StartTrainingResult? {
+        startTraining(for: exercise, workoutId: nil)
+    }
 
-        if let existingVM = activeSessions[exercise.id] {
+    /// Starts or resumes an exercise in a known workout. Only a genuinely new
+    /// session emits `onNewSessionStarted`; focusing an existing session does
+    /// not create another observed-order entry.
+    @discardableResult
+    public func startTraining(
+        for exercise: Exercise,
+        workoutId: UUID
+    ) -> StartTrainingResult? {
+        startTraining(for: exercise, workoutId: Optional(workoutId))
+    }
+
+    private func startTraining(
+        for exercise: Exercise,
+        workoutId: UUID?
+    ) -> StartTrainingResult? {
+        guard let category = findCategory(exercise) else { return nil }
+
+        if activeSessions[exercise.id] != nil {
             setFocusedExerciseId(exercise.id)
-            return
+            return .resumed
         }
 
         let vm = sessionFactory()
 
-        // Result intentionally unused: multi-session architecture gives each
-        // exercise its own VM, so .switchedFrom / finishPreviousTraining is never
-        // triggered from the coordinator (always nil). The use case still supports
-        // it for single-session callers.
-        _ = startTrainingUseCase.execute(
+        // Multi-session architecture gives each exercise its own VM, so
+        // `.switchedFrom` is not expected here. The result is returned so callers
+        // can distinguish a genuine new session from the `.resumed` fast path.
+        let result = startTrainingUseCase.execute(
             exercise: exercise,
             category: category,
             activeSetViewModel: vm,
@@ -188,6 +209,10 @@ public final class TrainingCoordinator {
         activeSessions[exercise.id] = vm
         activeExercises[exercise.id] = exercise
         setFocusedExerciseId(exercise.id)
+        if let workoutId {
+            onNewSessionStarted(workoutId, exercise.id)
+        }
+        return result
     }
 
     public func completeSet() {
