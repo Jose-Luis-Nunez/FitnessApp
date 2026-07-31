@@ -93,14 +93,21 @@ There are two entry points:
 - **Per-Exercise**: on an Exercise-Card → small chart icon → opens `AnalyticsView` with Hill-Chart + Weight-Milestones + result list for this one Exercise
 - **Aggregated**: BottomBar → Analytics tab → `TotalAnalyticsView` with overall stats (number of sessions, completed Exercises per category) + calendar picker for drill-down on a single day
 
+### Flow D: "I add a missed workout"
+
+1. Workouts screen → three-dot settings on the target workout → **Log Workout**
+2. Choose the workout date; all active Exercises are selected and prefilled from their current configured Sets/Reps/Weight
+3. Optionally deselect Exercises with the leading selection dot or open an Exercise's details to edit individual standard/bilateral results
+4. **Save Workout** appends one new Analytics entry per selected Exercise and closes the sheet only after persistence succeeds; existing entries on the same day remain untouched, while a storage error leaves the editor open with an English error message
+
 ## Modals, Sheets & Overlays — Overview
 
 The app uses **four presentation patterns**, each for a different use case:
 
 | Pattern                    | What for                                      | Examples                                                              |
 | -------------------------- | --------------------------------------------- | --------------------------------------------------------------------- |
-| **Mini-Menu** (Glass-Pop)  | contextual actions, triggered by the ellipsis | Workouts (New/Rename/Delete/Default), Home (Reset / New Exercise), MuscleCategory (Add Exercise), Training (Cancel) |
-| **OverlaySheet (custom)**  | picker sheets with an action bar (Save/Cancel) | `ExercisePickerView`, `ExerciseNamePickerView`, `ExerciseWeightPickerView`, `ExerciseSeatPickerView`, `WorkoutPickerView` |
+| **Mini-Menu** (Glass-Pop)  | contextual actions, triggered by the ellipsis | Workouts (New/Rename/Delete/Default/Log Workout), Home (Reset / New Exercise), MuscleCategory (Add Exercise), Training (Cancel) |
+| **OverlaySheet (custom)**  | picker sheets with an action bar (Save/Cancel) | `ExercisePickerView`, `ExerciseNamePickerView`, `ExerciseWeightPickerView`, `ExerciseSeatPickerView`, `WorkoutPickerView`, `WorkoutAnalyticsEntryView` |
 | **Native `.sheet`**         | forms with detents + grabber                  | `AnalyticsView`, `FeedbackSheetView` (post-Exercise)                  |
 | **`.fullScreenCover`**      | true modal edit screens                       | `CreateWorkoutView`, `RenameWorkoutView`, `AddAnalyticsEntryView`     |
 

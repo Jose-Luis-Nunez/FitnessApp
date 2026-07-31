@@ -69,6 +69,9 @@
   - Delete individual Sets of an entry
   - Edit existing entries
 - **Manual entry** via `AddAnalyticsEntryView` (for historical data)
+- **Workout-wide manual entry** from a workout tile's settings menu: choose one
+  date, keep or deselect active Exercises, optionally edit their prefilled
+  per-set results, then append one new Analytics entry per selected Exercise
 - **Calendar picker** — jump to a specific date, days with data are highlighted
 - **Set a goal** for the Exercise (dashed line in the chart)
 

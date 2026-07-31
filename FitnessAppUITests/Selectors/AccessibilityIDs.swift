@@ -81,6 +81,19 @@ enum AnalyticsIDs {
     }
 }
 
+enum WorkoutAnalyticsIDs {
+    static let screen = "id_workout_analytics_screen"
+    static let dateButton = "id_workout_analytics_date"
+    static let saveButton = "id_workout_analytics_save"
+    static let exerciseSelectionPrefix = "id_workout_analytics_selection_"
+    static func exerciseSelection(_ id: UUID) -> String {
+        "\(exerciseSelectionPrefix)\(id.uuidString)"
+    }
+    static func exerciseDetails(_ id: UUID) -> String {
+        "id_workout_analytics_details_\(id.uuidString)"
+    }
+}
+
 enum WorkoutIDs {
     static let tilePrefix = "id_workouts_tile_"
     static let settingsPrefix = "id_workouts_settings_"
@@ -92,6 +105,7 @@ enum WorkoutIDs {
 
 enum WorkoutLabels {
     static let newWorkout = "New workout"
+    static let addAnalytics = "Log Workout"
     static let typeOptions = ["Pull", "Push", "Leg", "Individual", "Full"]
 }
 

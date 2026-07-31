@@ -362,6 +362,7 @@ private extension IdleActiveCardModelView {
                     .buttonStyle(.plain)
                     .accessibilityLabel("Exercise analytics")
                     .accessibilityHint("Shows exercise analytics")
+                    .accessibilityIdentifier(ExerciseCardIDs.analytics(model.id))
                 }
 
             // "Last run" only appears once the exercise has a completed run;

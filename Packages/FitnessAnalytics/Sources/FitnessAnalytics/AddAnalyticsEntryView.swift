@@ -9,6 +9,7 @@ public struct AddAnalyticsEntryView: View {
     @Binding public var isPresented: Bool
     public var onSave: (AnalyticsEntry) -> Void
     public var onCancel: () -> Void
+    public let dateFormatter: DateFormatter
 
     @State private var formState: AnalyticsEntryFormState
     @State private var editingSetIndex: Int?
@@ -33,6 +34,7 @@ public struct AddAnalyticsEntryView: View {
         exercise: Exercise,
         existingEntry: AnalyticsEntry? = nil,
         isPresented: Binding<Bool>,
+        dateFormatter: DateFormatter = .germanMedium,
         onSave: @escaping (AnalyticsEntry) -> Void,
         onCancel: @escaping () -> Void
     ) {
@@ -40,6 +42,7 @@ public struct AddAnalyticsEntryView: View {
         self.exercise = exercise
         self.existingEntry = existingEntry
         _isPresented = isPresented
+        self.dateFormatter = dateFormatter
         self.onSave = onSave
         self.onCancel = onCancel
 
@@ -123,8 +126,8 @@ public struct AddAnalyticsEntryView: View {
     private var dataEntryContent: some View {
         VStack(spacing: 16) {
             Text(existingEntry != nil
-                 ? "Edit data for \(DateFormatter.germanMedium.string(from: date))"
-                 : "Data for \(DateFormatter.germanMedium.string(from: date))")
+                 ? "Edit data for \(dateFormatter.string(from: date))"
+                 : "Data for \(dateFormatter.string(from: date))")
                 .font(AppStyle.Font.sheetTitle)
                 .foregroundColor(textColor)
                 .frame(maxWidth: .infinity, alignment: .center)

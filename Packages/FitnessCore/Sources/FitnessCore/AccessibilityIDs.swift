@@ -105,3 +105,17 @@ public enum AnalyticsIDs {
         "id_analytics_set_\(index)_\(side.rawValue)"
     }
 }
+
+public enum WorkoutAnalyticsIDs {
+    public static let screen = "id_workout_analytics_screen"
+    public static let dateButton = "id_workout_analytics_date"
+    public static let saveButton = "id_workout_analytics_save"
+
+    public static func exerciseSelection(_ id: UUID) -> String {
+        "id_workout_analytics_selection_\(id.uuidString)"
+    }
+
+    public static func exerciseDetails(_ id: UUID) -> String {
+        "id_workout_analytics_details_\(id.uuidString)"
+    }
+}

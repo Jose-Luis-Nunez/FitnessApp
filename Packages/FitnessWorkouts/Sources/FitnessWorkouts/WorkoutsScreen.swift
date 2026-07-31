@@ -2,6 +2,7 @@ import SwiftUI
 import FitnessCore
 import FitnessUI
 import FitnessExercise
+import FitnessAnalytics
 import Factory
 
 private enum Constants {
@@ -71,6 +72,16 @@ public struct WorkoutsScreen: View {
                 .hidesBottomBarWhilePresented(overlayState)
             }
         }
+        .overlay {
+            if let workout = viewModel.workoutForAnalyticsEntry {
+                WorkoutAnalyticsEntryView(
+                    workout: workout,
+                    isPresented: workoutAnalyticsEntryPresentation
+                )
+                .zIndex(3)
+                .hidesBottomBarWhilePresented(overlayState)
+            }
+        }
         .fullScreenCover(isPresented: $viewModel.showingRenameWorkout) {
             RenameWorkoutView(
                 workoutName: $viewModel.renameWorkoutName,
@@ -88,7 +99,7 @@ public struct WorkoutsScreen: View {
             // raw JSON string if file-write failed during `requestShare`.
             ShareSheet(items: [item.fileURL ?? item.json as Any], tempFileURL: item.fileURL)
         }
-        .alert("Export fehlgeschlagen", isPresented: Binding(
+        .alert("Export failed", isPresented: Binding(
             get: { viewModel.exportErrorMessage != nil },
             set: { if !$0 { viewModel.exportErrorMessage = nil } }
         )) {
@@ -121,7 +132,7 @@ public struct WorkoutsScreen: View {
     }
 
     private var headerView: some View {
-        Text("Meine Workouts")
+        Text("My Workouts")
             .font(AppStyle.Font.navigationHeadline)
             .foregroundColor(AppStyle.Color.white)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -185,6 +196,11 @@ public struct WorkoutsScreen: View {
                                     ]
                                 } else {
                                     var list: [MiniActionMenuItem] = []
+                                    list.append(MiniActionMenuItem(icon: "calendar.badge.plus", title: "Log Workout", isDestructive: false) {
+                                        if let workout = viewModel.selectedWorkoutForAction {
+                                            viewModel.showWorkoutAnalyticsEntry(for: workout)
+                                        }
+                                    })
                                     list.append(MiniActionMenuItem(icon: nil, title: "duplicate", isDestructive: false) {
                                         if let workout = viewModel.selectedWorkoutForAction {
                                             viewModel.duplicateWorkout(workout)
@@ -243,4 +259,11 @@ public struct WorkoutsScreen: View {
 
     @Environment(\.safeAreaInsets) private var safeAreaInsets
     private var safeAreaInset: CGFloat { safeAreaInsets.bottom }
+
+    private var workoutAnalyticsEntryPresentation: Binding<Bool> {
+        Binding(
+            get: { viewModel.workoutForAnalyticsEntry != nil },
+            set: { if !$0 { viewModel.dismissWorkoutAnalyticsEntry() } }
+        )
+    }
 }

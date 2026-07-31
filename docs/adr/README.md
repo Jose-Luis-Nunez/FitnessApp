@@ -69,6 +69,7 @@ Cross-links to other ADRs, plans, code, external resources.
 | 0010 | Workout-scoped exercise-order learning | accepted |
 | 0011 | Logical sets and bilateral execution steps | accepted |
 | 0012 | Risk-based, content-bound agent validation | accepted |
+| 0013 | Workout analytics batch append | accepted |
 
 > **ADR-0004 note:** The number 0004 is intentionally unassigned. Two existing ADRs reference "ADR-0004" as a future anchor for two possible triggers:
 > - **TCA migration** (referenced in ADR-0001 §"Trigger occurred → write ADR-0004"): if the observability problems of SwiftUI/SwiftData become untenable, ADR-0004 would document the migration to The Composable Architecture.

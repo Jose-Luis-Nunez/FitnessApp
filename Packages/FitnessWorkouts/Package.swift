@@ -13,6 +13,7 @@ let package = Package(
         .package(path: "../FitnessStorage"),
         .package(path: "../FitnessUI"),
         .package(path: "../FitnessExercise"),
+        .package(path: "../FitnessAnalytics"),
         .package(path: "../FitnessTestSupport"),
         .package(url: "https://github.com/hmlongco/Factory.git", from: "2.5.0"),
     ],
@@ -24,6 +25,7 @@ let package = Package(
                 "FitnessStorage",
                 "FitnessUI",
                 "FitnessExercise",
+                "FitnessAnalytics",
                 .product(name: "Factory", package: "Factory"),
             ]
         ),

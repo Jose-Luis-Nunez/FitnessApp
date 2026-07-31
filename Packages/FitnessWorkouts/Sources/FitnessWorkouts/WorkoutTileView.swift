@@ -283,7 +283,7 @@ public struct WorkoutTileView: View {
     }
 
     private var exerciseCountLabel: String {
-        "\(exerciseCount) \(exerciseCount == 1 ? "Übung" : "Übungen")"
+        "\(exerciseCount) \(exerciseCount == 1 ? "exercise" : "exercises")"
     }
 
     private var tileAccessibilityIdentifier: String {

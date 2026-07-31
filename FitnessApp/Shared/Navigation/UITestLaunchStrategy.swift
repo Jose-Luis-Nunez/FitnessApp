@@ -38,7 +38,16 @@ struct UITestLaunchStrategy: AppLaunchStrategy {
             // Keep that distinct from the grid-geometry fixture below so the
             // test receives a single, deterministic workout and exercise.
             if let exercise = makePrimaryFixtureExercise() {
-                let workout = Workout(name: "Test Workout")
+                let workout: Workout
+                do {
+                    workout = try workoutService.createWorkout(
+                        name: "Test Workout",
+                        selectedCategories: Set(MuscleCategoryGroup.allCases),
+                        type: .full
+                    )
+                } catch {
+                    preconditionFailure("Failed to seed workout UI fixture: \(error)")
+                }
                 workoutService.setCurrentWorkout(workout)
                 seedFixture(
                     workout: workout,
@@ -170,16 +179,29 @@ struct UITestLaunchStrategy: AppLaunchStrategy {
     private func seedFixture(workout: Workout, exercises: [Exercise]) {
         let container = Container.shared.modelContainer()
         let context = ModelContext(container)
-
-        let workoutModel = WorkoutModel(
-            id: workout.id,
-            name: workout.name,
-            selectedCategories: workout.selectedCategories.map(\.rawValue),
-            createdDate: workout.createdDate,
-            lastModified: workout.lastModified,
-            isDefault: false
+        let workoutId = workout.id
+        let descriptor = FetchDescriptor<WorkoutModel>(
+            predicate: #Predicate { $0.id == workoutId }
         )
-        context.insert(workoutModel)
+        let workoutModel: WorkoutModel
+        do {
+            if let existing = try context.fetch(descriptor).first {
+                workoutModel = existing
+            } else {
+                let model = WorkoutModel(
+                    id: workout.id,
+                    name: workout.name,
+                    selectedCategories: workout.selectedCategories.map(\.rawValue),
+                    createdDate: workout.createdDate,
+                    lastModified: workout.lastModified,
+                    isDefault: false
+                )
+                context.insert(model)
+                workoutModel = model
+            }
+        } catch {
+            preconditionFailure("Failed to resolve workout UI fixture: \(error)")
+        }
 
         for (sortOrder, exercise) in exercises.enumerated() {
             let exerciseModel = ExerciseModel(

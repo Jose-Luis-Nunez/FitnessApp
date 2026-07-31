@@ -194,6 +194,22 @@ struct AnalyticsStorageServiceTests {
         #expect(loaded.count == 2)
     }
 
+    @Test func workoutBatchAppendsAllExercisesWithoutReplacingHistory() {
+        let sut = makeSUT()
+        let firstID = UUID()
+        let secondID = UUID()
+        let existing = TestHelpers.makeAnalyticsEntry(exerciseId: firstID)
+        let firstNew = TestHelpers.makeAnalyticsEntry(exerciseId: firstID)
+        let secondNew = TestHelpers.makeAnalyticsEntry(exerciseId: secondID)
+        sut.save([existing], for: firstID)
+
+        let succeeded = sut.appendWorkoutAnalytics([firstNew, secondNew])
+
+        #expect(succeeded)
+        #expect(Set(sut.load(for: firstID).map(\.id)) == [existing.id, firstNew.id])
+        #expect(sut.load(for: secondID).map(\.id) == [secondNew.id])
+    }
+
     @Test func largeNumberOfSetsRoundtrip() {
         let sut = makeSUT()
         let exerciseId = UUID()

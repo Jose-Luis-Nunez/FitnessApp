@@ -42,6 +42,7 @@ public final class WorkoutsViewModel {
     /// Drives the `.sheet(item:)` that presents the iOS share sheet. Set by
     /// `requestShare(for:)` after the workout JSON has been computed.
     public var workoutToShare: WorkoutShareItem?
+    public var workoutForAnalyticsEntry: Workout?
     public var exportErrorMessage: String?
     public var createErrorMessage: String?
 
@@ -132,6 +133,15 @@ public final class WorkoutsViewModel {
     public func showWorkoutOptions(for workout: Workout) {
         selectedWorkoutForAction = workout
         showingWorkoutOptions = true
+    }
+
+    public func showWorkoutAnalyticsEntry(for workout: Workout) {
+        workoutForAnalyticsEntry = workout
+        hideWorkoutOptions()
+    }
+
+    public func dismissWorkoutAnalyticsEntry() {
+        workoutForAnalyticsEntry = nil
     }
 
     public func showCreateWorkout() {

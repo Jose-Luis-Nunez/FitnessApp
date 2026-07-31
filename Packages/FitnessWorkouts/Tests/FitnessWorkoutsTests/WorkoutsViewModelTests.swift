@@ -277,6 +277,28 @@ struct WorkoutsViewModelTests {
         #expect(sut.selectedWorkoutForAction == nil)
     }
 
+    @Test func showWorkoutAnalyticsEntrySetsTargetAndClosesOptions() {
+        let workout = Workout(name: "Pull")
+        let (sut, _, _) = makeSUT(seedWorkouts: [workout])
+        sut.showWorkoutOptions(for: workout)
+
+        sut.showWorkoutAnalyticsEntry(for: workout)
+
+        #expect(sut.workoutForAnalyticsEntry?.id == workout.id)
+        #expect(!sut.showingWorkoutOptions)
+        #expect(sut.selectedWorkoutForAction == nil)
+    }
+
+    @Test func dismissWorkoutAnalyticsEntryClearsTarget() {
+        let workout = Workout(name: "Pull")
+        let (sut, _, _) = makeSUT(seedWorkouts: [workout])
+        sut.showWorkoutAnalyticsEntry(for: workout)
+
+        sut.dismissWorkoutAnalyticsEntry()
+
+        #expect(sut.workoutForAnalyticsEntry == nil)
+    }
+
     // MARK: - showCreateWorkout
 
     @Test func showCreateWorkoutResetsRequiredFields() {

@@ -10,4 +10,7 @@ public extension Container {
     var saveOrReplaceAnalyticsUseCase: Factory<SaveOrReplaceAnalyticsUseCase> {
         self { MainActor.assumeIsolated { SaveOrReplaceAnalyticsUseCase() } }
     }
+    var saveWorkoutAnalyticsUseCase: Factory<SaveWorkoutAnalyticsUseCase> {
+        self { MainActor.assumeIsolated { SaveWorkoutAnalyticsUseCase() } }
+    }
 }

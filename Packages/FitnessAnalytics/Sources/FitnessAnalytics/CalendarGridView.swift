@@ -1,20 +1,28 @@
 import FitnessUI
+import Foundation
 import SwiftUI
 
 public struct CalendarGridView: View {
     @Binding public var selectedDate: Date
     public let highlightedDates: [Date]
+    public let locale: Locale
 
     @State private var currentMonth: Date = Date()
 
-    public init(selectedDate: Binding<Date>, highlightedDates: [Date]) {
+    public init(
+        selectedDate: Binding<Date>,
+        highlightedDates: [Date],
+        locale: Locale = Locale(identifier: "de_DE")
+    ) {
         self._selectedDate = selectedDate
         self.highlightedDates = highlightedDates
+        self.locale = locale
     }
 
     private var calendar: Calendar {
         var cal = Calendar(identifier: .gregorian)
         cal.firstWeekday = 2
+        cal.locale = locale
         return cal
     }
 
@@ -125,7 +133,10 @@ public struct CalendarGridView: View {
     }
 
     private func formattedMonthYear(_ date: Date) -> String {
-        return DateFormatter.germanMonthYear.string(from: date).capitalized
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.dateFormat = "LLLL yyyy"
+        return formatter.string(from: date).capitalized
     }
 
     private func changeMonth(by offset: Int) {

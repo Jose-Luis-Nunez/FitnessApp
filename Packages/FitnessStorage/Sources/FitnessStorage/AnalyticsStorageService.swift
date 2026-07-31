@@ -7,7 +7,7 @@ import Factory
 private let logger = Logger(subsystem: "FitnessStorage", category: "AnalyticsStorageService")
 
 @MainActor
-public final class AnalyticsStorageService: AnalyticsStoring {
+public final class AnalyticsStorageService: AnalyticsStoring, WorkoutAnalyticsBatchStoring {
     // Retain the CONTAINER, not just its mainContext (see FeedbackStorageService).
     private let modelContainer: ModelContainer
     private var context: ModelContext { modelContainer.mainContext }
@@ -28,6 +28,7 @@ public final class AnalyticsStorageService: AnalyticsStoring {
             }
         } catch {
             logger.error("Failed to fetch analytics entries for deletion: \(error)")
+            return
         }
 
         for entry in entries {
@@ -36,6 +37,24 @@ public final class AnalyticsStorageService: AnalyticsStoring {
         }
 
         saveContext()
+    }
+
+    @discardableResult
+    public func appendWorkoutAnalytics(_ entries: [AnalyticsEntry]) -> Bool {
+        guard !entries.isEmpty else { return true }
+
+        for entry in entries {
+            context.insert(AnalyticsEntryModel.from(entry))
+        }
+
+        do {
+            try context.save()
+            return true
+        } catch {
+            context.rollback()
+            logger.error("Failed to append workout analytics batch: \(error)")
+            return false
+        }
     }
 
     public func load(for exerciseId: UUID) -> [AnalyticsEntry] {

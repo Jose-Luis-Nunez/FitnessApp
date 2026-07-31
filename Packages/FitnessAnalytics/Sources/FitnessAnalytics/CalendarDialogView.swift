@@ -1,4 +1,5 @@
 import FitnessUI
+import Foundation
 import SwiftUI
 
 public struct CalendarDialogView: View {
@@ -7,18 +8,21 @@ public struct CalendarDialogView: View {
     @State private var tempDate: Date
     public let highlightedDates: [Date]
     public let title: String
+    public let locale: Locale
 
     public init(
         isPresented: Binding<Bool>,
         selectedDate: Binding<Date>,
         highlightedDates: [Date] = [],
-        title: String = "Training Calendar"
+        title: String = "Training Calendar",
+        locale: Locale = Locale(identifier: "de_DE")
     ) {
         self._isPresented = isPresented
         self._selectedDate = selectedDate
         self._tempDate = State(wrappedValue: selectedDate.wrappedValue)
         self.highlightedDates = highlightedDates
         self.title = title
+        self.locale = locale
     }
 
     public var body: some View {
@@ -46,7 +50,8 @@ public struct CalendarDialogView: View {
 
                                 CalendarGridView(
                                     selectedDate: $tempDate,
-                                    highlightedDates: highlightedDates
+                                    highlightedDates: highlightedDates,
+                                    locale: locale
                                 )
                                 .frame(maxWidth: .infinity)
                                 .padding(.horizontal)
