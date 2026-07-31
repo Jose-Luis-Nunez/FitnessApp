@@ -6,6 +6,20 @@ extension TestExerciseFixture {
         sets: 3,
         noSeats: true,
         icon: "dumbbell",
-        category: "arms"
+        category: "arms",
+        bilateral: false,
+        completed: false
+    )
+
+    static let bilateralTorsoExercise = TestExerciseFixture(
+        name: "Torso Rotation",
+        weight: 20,
+        reps: 12,
+        sets: 3,
+        noSeats: true,
+        icon: "dumbbell",
+        category: "abs",
+        bilateral: true,
+        completed: false
     )
 }

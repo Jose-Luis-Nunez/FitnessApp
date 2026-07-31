@@ -49,15 +49,16 @@ The test target maintains its own copy of the ID strings in `Selectors/Accessibi
 
 ### Current Test ID Enums
 
-The single source of truth for the constants below is `Packages/FitnessCore/Sources/FitnessCore/AccessibilityIDs.swift` (hoisted into `FitnessCore` at T7-0 so the model-driven views in `FitnessPersistenceUI` can reference them without a dependency cycle). The "Applied in" column lists the views that attach the identifier via `.accessibilityIdentifier(...)`. The test target keeps a parallel copy in `FitnessAppUITests/Selectors/AccessibilityIDs.swift` (string-equal — drift = test failure, by design).
+The production sources of truth are listed per enum in the "Defined in" column below. Cross-feature identifiers live primarily in `FitnessCore/AccessibilityIDs.swift` (hoisted at T7-0 so model-driven `FitnessPersistenceUI` views can use them without a dependency cycle), while training-view-specific identifiers live in `FitnessUI/TrainingIDs.swift`. The "Applied in" column lists the views that attach each identifier via `.accessibilityIdentifier(...)`. The test target keeps a parallel copy in `FitnessAppUITests/Selectors/AccessibilityIDs.swift` (string-equal — drift = test failure, by design).
 
 | Test Enum | Defined in | Applied in | IDs |
 |-----------|-----------|------------|-----|
-| `TrainingIDs` | `FitnessCore.AccessibilityIDs` | `BottomActionBarView`, `SimpleActiveSetView`, `CompactTimerComponent` | `cancelTraining`, `doneButton`, `finishButton`, `startButton`, `allDoneButton`, `quickDoneButton`, `controlButton(_:)`, `repsField(set:)`, `quickDoneSetButton(index:)` |
+| `TrainingIDs` | `FitnessCore.AccessibilityIDs`, `FitnessUI.TrainingIDs` | `BottomActionBarView`, `SimpleActiveSetView`, `CompactTimerComponent` | `cancelTraining`, `doneButton`, `finishButton`, `startButton`, `allDoneButton`, `quickDoneButton`, `controlButton(_:)`, standard `repsField(set:)` / `quickDoneSetButton(index:)`, bilateral `repsField(logicalSet:side:)` / `quickDoneSetButton(logicalSet:side:)`, `sideHeader(_:)` |
 | `HomeIDs` | `FitnessCore.AccessibilityIDs` | `MuscleCategorySelectionView` (category tiles via `CategoryTileModelView`; view-mode content and toggle buttons) | `categoryTile(for:)`, `overviewContent`, `listContent`, `overviewViewToggle`, `listViewToggle`; list toggle label: `Exercise list` |
 | `MuscleCategoryIDs` | `FitnessCore.AccessibilityIDs` | `MuscleCategoryView`, `IdleActiveCardModelView` (post-T8d; previously `IdleActiveCardView`) | `screen`, `startExercise`; start button label: `Start exercise` |
-| `ExerciseIDs` | `FitnessCore.AccessibilityIDs` | `InactiveCardModelView` (post-T8d; previously `InactiveCardView`) | `nameLabel` |
-| `ExerciseCardIDs` | `FitnessCore.AccessibilityIDs` | `ExerciseCardModelView` (post-T8d; previously `ExerciseCardContainerView`) | `completedCard(_:)`, `activeCard(_:)`, `idleCard(_:)`, `completedCardPrefix`, `activeCardPrefix`, `idleCardPrefix` |
+| `ExerciseIDs` | `FitnessCore.AccessibilityIDs` | `ExercisePickerView`, `InactiveCardModelView` (post-T8d; previously `InactiveCardView`) | `nameLabel`, `nameField`, `fullEditContinueButton`, `fullEditSaveButton`, `bilateralToggle`, `bodyweightToggle`, `decimalWeightToggle` |
+| `ExerciseCardIDs` | `FitnessCore.AccessibilityIDs` | `ExerciseCardModelView`, `InactiveCardModelView` (post-T8d; previously legacy snapshot views) | `completedCard(_:)`, `activeCard(_:)`, `idleCard(_:)`, card prefixes, `analytics(_:)`, `analyticsPrefix` |
+| `AnalyticsIDs` | `FitnessCore.AccessibilityIDs` | `AnalyticsView`, `AddAnalyticsEntryView` | `screen`, `addDataButton`, `entryAddSetButton`, `entrySaveButton`, side-aware entry weight/reps fields, `bilateralResult(logicalSet:side:)` |
 | `WorkoutIDs` | `FitnessCore.AccessibilityIDs` | `WorkoutTileView`, `CreateWorkoutView` | `tilePrefix`, `settingsPrefix`, `tile(_:)`, `settings(_:)`, `createTitle`, `createNameField`, `createTypePicker`, `createSaveButton` |
 | `BottomBarIDs` | `FitnessCore.AccessibilityIDs` | `BottomMenuBarView` | `contextMenu`, `workoutsTab`, `trainingTab`, `analyticsTab`, `scheduleTab`, `profileTab` |
 
@@ -69,9 +70,20 @@ Mock data is defined in `Fixtures/ExerciseFixtures.swift` as `TestExerciseFixtur
 try launch(training: .defaultArmsExercise)
 try launch(exerciseList: .defaultArmsExercise)
 try launch(exerciseCategory: .defaultArmsExercise)
+try launch(
+    exerciseCategory: .bilateralTorsoExercise,
+    additional: [.defaultArmsExercise]
+)
 ```
 
 Named presets (e.g. `.defaultArmsExercise`) keep tests readable. For custom scenarios, create a fixture inline:
+
+`launch(exerciseCategory:additional:seedAnalyticsHistory:)` can opt into one
+complete analytics session dated yesterday. This keeps the completed card's
+set row genuinely tappable while leaving today's Analytics screen empty for a
+real Add-then-Edit flow. Dynamic prefix taps choose the largest visible,
+hittable match because SwiftUI may propagate one container identifier to
+multiple descendants; never rely on `firstMatch` for these card prefixes.
 
 ```swift
 let heavy = TestExerciseFixture(name: "Deadlift", weight: 120.0, reps: 5, sets: 5, noSeats: true, icon: "dumbbell", category: "back")
@@ -83,6 +95,7 @@ try launch(training: heavy)
 | Action | DSL Function |
 |--------|-------------|
 | Tap an element | `tapOn(_:)` or `tapOn(label:)` |
+| Tap the first element whose ID has a prefix | `tapOnWithPrefix(_:)` |
 | Tap if it might not appear | `tapOnIfExists(_:)` |
 | Type into a text field | `fill(_:with:)` |
 | Type into a picker input button | `fillPickerInput(_:with:)` |

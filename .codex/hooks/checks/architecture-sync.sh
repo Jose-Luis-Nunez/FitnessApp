@@ -1,16 +1,19 @@
 #!/bin/bash
-# Check 2: Structural Swift changes — was architecture-documentation.md updated?
-# Env: all_swift
+# Check 2: Current public/structural Swift changes — is architecture synced?
+# Private refactors, layout-only edits, token value swaps, and test-only changes
+# intentionally do not trigger this check.
+# Env: all_swift, CHANGE_RISK
 
 ARCH_FILE=".claude/references/architecture-documentation.md"
 arch_changed=$(git diff --name-only HEAD 2>/dev/null | grep "$ARCH_FILE" || true)
 
 new_feature_files=$(git diff --name-only --diff-filter=A HEAD 2>/dev/null | grep '^FitnessApp/Features/' || true)
-new_appstyle=$(git diff --name-only HEAD 2>/dev/null | grep 'AppStyle.swift' || true)
-new_navigation=$(git diff HEAD -- FitnessApp/FitnessAppApp.swift 2>/dev/null | grep '^+' | grep 'case [a-z]' | grep -v 'case \.' || true)
-new_shared=$(git diff --name-only --diff-filter=A HEAD 2>/dev/null | grep '^FitnessApp/Shared/' || true)
+appstyle_surface=$(git diff HEAD -- '*/AppStyle.swift' 2>/dev/null | grep -E '^[+-][[:space:]]*public static (let|var)' || true)
+new_navigation=$(git diff HEAD -- '*.swift' 2>/dev/null | grep '^+' | grep -E 'NavigationDestination|case [a-zA-Z].*Navigation' || true)
+new_shared=$(git diff --name-only --diff-filter=A HEAD 2>/dev/null | grep -E '^FitnessApp/Shared/|^Packages/Fitness(UI|PersistenceUI)/Sources/' || true)
 new_usecases=$(git diff --name-only --diff-filter=A HEAD 2>/dev/null | grep 'UseCases/' || true)
-new_services=$(git diff --name-only HEAD 2>/dev/null | grep -E 'Service\.swift|Container\.swift' || true)
+new_services=$(git diff --name-only HEAD 2>/dev/null | grep -E 'Service\.swift|Storage\.swift|Container\.swift|Coordinator\.swift' || true)
+domain_surface=$(git diff HEAD -- 'Packages/FitnessCore/Sources/**/*.swift' 2>/dev/null | grep -E '^[+-].*public (struct|class|enum|protocol|func|var|let)' || true)
 
 reasons=""
 if [ -n "$new_feature_files" ] && [ -z "$arch_changed" ]; then
@@ -19,8 +22,8 @@ fi
 if [ -n "$new_navigation" ] && [ -z "$arch_changed" ]; then
   reasons="${reasons} NavigationDestination cases changed."
 fi
-if [ -n "$new_appstyle" ] && [ -z "$arch_changed" ]; then
-  reasons="${reasons} AppStyle.swift modified."
+if [ -n "$appstyle_surface" ] && [ -z "$arch_changed" ]; then
+  reasons="${reasons} AppStyle public tokens added, renamed, or removed."
 fi
 if [ -n "$new_shared" ] && [ -z "$arch_changed" ]; then
   reasons="${reasons} New shared components added."
@@ -31,7 +34,10 @@ fi
 if [ -n "$new_services" ] && [ -z "$arch_changed" ]; then
   reasons="${reasons} Services or Container registrations changed."
 fi
+if [ -n "$domain_surface" ] && [ -z "$arch_changed" ]; then
+  reasons="${reasons} Public FitnessCore domain surface changed."
+fi
 
 if [ -n "$reasons" ]; then
-  echo "[Architecture Sync Required]${reasons} Update .claude/references/architecture-documentation.md now. See the reviewing-code-changes skill, section 'Architecture Sync', for the trigger map."
+  echo "[Architecture Sync Required]${reasons} Update only the relevant current-state section. Use reviewing-code-changes/references/architecture-routing.md."
 fi

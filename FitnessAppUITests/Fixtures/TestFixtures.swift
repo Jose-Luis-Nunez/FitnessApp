@@ -6,12 +6,16 @@ struct TestExerciseFixture {
     let noSeats: Bool
     let icon: String
     let category: String
+    let bilateral: Bool
+    let completed: Bool
 
     func with(
         name: String? = nil, weight: Double? = nil,
         reps: Int? = nil, sets: Int? = nil,
         noSeats: Bool? = nil, icon: String? = nil,
-        category: String? = nil
+        category: String? = nil,
+        bilateral: Bool? = nil,
+        completed: Bool? = nil
     ) -> TestExerciseFixture {
         TestExerciseFixture(
             name: name ?? self.name,
@@ -20,7 +24,23 @@ struct TestExerciseFixture {
             sets: sets ?? self.sets,
             noSeats: noSeats ?? self.noSeats,
             icon: icon ?? self.icon,
-            category: category ?? self.category
+            category: category ?? self.category,
+            bilateral: bilateral ?? self.bilateral,
+            completed: completed ?? self.completed
+        )
+    }
+
+    var launchConfig: UITestExerciseConfig {
+        UITestExerciseConfig(
+            category: category,
+            exerciseName: name,
+            weight: weight,
+            reps: reps,
+            sets: sets,
+            noSeats: noSeats,
+            icon: icon,
+            executionMode: bilateral ? "bilateral" : "standard",
+            isCompleted: completed
         )
     }
 }
@@ -28,7 +48,10 @@ struct TestExerciseFixture {
 // MARK: - UITestLaunchConfig factory for exercise fixtures
 
 extension UITestLaunchConfig {
-    static func training(_ fixture: TestExerciseFixture) -> UITestLaunchConfig {
+    static func training(
+        _ fixture: TestExerciseFixture,
+        additional: [TestExerciseFixture] = []
+    ) -> UITestLaunchConfig {
         UITestLaunchConfig(
             screen: .training,
             category: fixture.category,
@@ -37,21 +60,38 @@ extension UITestLaunchConfig {
             reps: fixture.reps,
             sets: fixture.sets,
             noSeats: fixture.noSeats,
-            icon: fixture.icon
+            icon: fixture.icon,
+            executionMode: fixture.bilateral ? "bilateral" : "standard",
+            isCompleted: fixture.completed,
+            additionalExercises: additional.map(\.launchConfig)
         )
     }
 
-    static func exerciseList(_ fixture: TestExerciseFixture) -> UITestLaunchConfig {
-        fixtureConfig(screen: .home, fixture: fixture)
+    static func exerciseList(
+        _ fixture: TestExerciseFixture,
+        additional: [TestExerciseFixture] = []
+    ) -> UITestLaunchConfig {
+        fixtureConfig(screen: .home, fixture: fixture, additional: additional)
     }
 
-    static func exerciseCategory(_ fixture: TestExerciseFixture) -> UITestLaunchConfig {
-        fixtureConfig(screen: .category, fixture: fixture)
+    static func exerciseCategory(
+        _ fixture: TestExerciseFixture,
+        additional: [TestExerciseFixture] = [],
+        seedAnalyticsHistory: Bool = false
+    ) -> UITestLaunchConfig {
+        fixtureConfig(
+            screen: .category,
+            fixture: fixture,
+            additional: additional,
+            seedAnalyticsHistory: seedAnalyticsHistory
+        )
     }
 
     private static func fixtureConfig(
         screen: UITestScreen,
-        fixture: TestExerciseFixture
+        fixture: TestExerciseFixture,
+        additional: [TestExerciseFixture],
+        seedAnalyticsHistory: Bool = false
     ) -> UITestLaunchConfig {
         UITestLaunchConfig(
             screen: screen,
@@ -61,7 +101,11 @@ extension UITestLaunchConfig {
             reps: fixture.reps,
             sets: fixture.sets,
             noSeats: fixture.noSeats,
-            icon: fixture.icon
+            icon: fixture.icon,
+            executionMode: fixture.bilateral ? "bilateral" : "standard",
+            isCompleted: fixture.completed,
+            additionalExercises: additional.map(\.launchConfig),
+            seedAnalyticsHistory: seedAnalyticsHistory
         )
     }
 }

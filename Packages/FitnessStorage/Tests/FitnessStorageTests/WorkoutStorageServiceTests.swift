@@ -216,6 +216,39 @@ struct WorkoutStorageServiceTests {
             .called(.atLeastOnce)
     }
 
+    @Test func duplicateWorkoutCopiesExerciseOutsideSelectedCategories() throws {
+        let spy = MockExerciseStoring(policy: .relaxedVoid)
+        let backExercise = TestHelpers.makeExercise(name: "Row", category: .back)
+
+        given(spy).loadForWorkout(workoutId: .any, category: .value(.back)).willReturn([backExercise])
+        given(spy).loadForWorkout(workoutId: .any, category: .any).willReturn([])
+
+        let sut = WorkoutStorageService(
+            container: container,
+            defaults: defaults,
+            exerciseStorage: spy,
+            analyticsStorage: TestHelpers.makeNoOpAnalyticsStoring()
+        )
+        let original = try sut.createWorkout(
+            name: "Custom",
+            selectedCategories: [.arms]
+        )
+
+        let duplicate = sut.duplicateWorkout(original)
+
+        verify(spy)
+            .saveForWorkout(
+                .matching {
+                    $0.count == 1
+                        && $0[0].name == backExercise.name
+                        && $0[0].id != backExercise.id
+                },
+                workoutId: .value(duplicate.id),
+                category: .value(.back)
+            )
+            .called(.once)
+    }
+
     @Test func duplicateWorkoutSkipsEmptyCategories() throws {
         let spy = MockExerciseStoring(policy: .relaxedVoid)
         let armExercise = TestHelpers.makeExercise(name: "Curl", category: .arms)

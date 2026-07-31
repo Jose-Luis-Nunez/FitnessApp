@@ -35,31 +35,60 @@ public struct TrainingSessionComponent: View {
     public var body: some View {
         if let exercise = coordinator.currentExercise {
             VStack(spacing: 16) {
-                HStack(alignment: .top, spacing: dynamicSpacing) {
-                    SimpleActiveSetView(
-                        exercise: exercise,
-                        setProgress: Binding(
-                            get: { coordinator.activeSetViewModel.setProgress },
-                            set: { coordinator.activeSetViewModel.setProgress = $0 }
-                        ),
-                        viewModel: coordinator.activeSetViewModel
-                    )
-                    .layoutPriority(1)
-                    .onAppear {
-                        if coordinator.activeSetViewModel.isSetInProgress {
-                            coordinator.activeSetViewModel.startTimer()
-                        }
-                    }
-
-                    CompactTimerComponent(
-                        viewModel: coordinator.activeSetViewModel,
-                        onCancel: onCancel
-                    )
-                    .frame(minWidth: 80, maxWidth: 160)
+                if exercise.executionMode == .bilateral {
+                    bilateralSession(exercise)
+                } else {
+                    standardSession(exercise)
                 }
-                .padding(.horizontal, AppStyle.Padding.card)
             }
             .padding(.vertical, 0)
+        }
+    }
+
+    private func standardSession(_ exercise: Exercise) -> some View {
+        HStack(alignment: .top, spacing: dynamicSpacing) {
+            activeSetView(exercise)
+
+            CompactTimerComponent(
+                viewModel: coordinator.activeSetViewModel,
+                onCancel: onCancel
+            )
+            .frame(minWidth: 80, maxWidth: 160)
+        }
+        .padding(.horizontal, AppStyle.Padding.card)
+    }
+
+    private func bilateralSession(_ exercise: Exercise) -> some View {
+        VStack(spacing: dynamicSpacing) {
+            activeSetView(exercise)
+
+            CompactTimerComponent(
+                viewModel: coordinator.activeSetViewModel,
+                onCancel: onCancel,
+                expanded: true
+            )
+            .frame(
+                maxWidth: .infinity,
+                minHeight: AppStyle.Layout.bilateralTimerMinHeight
+            )
+        }
+        .padding(.horizontal, AppStyle.Padding.card)
+    }
+
+    private func activeSetView(_ exercise: Exercise) -> some View {
+        SimpleActiveSetView(
+            exercise: exercise,
+            setProgress: Binding(
+                get: { coordinator.activeSetViewModel.setProgress },
+                set: { coordinator.activeSetViewModel.setProgress = $0 }
+            ),
+            viewModel: coordinator.activeSetViewModel
+        )
+        .layoutPriority(1)
+        .onAppear {
+            if coordinator.activeSetViewModel.isSetInProgress {
+                coordinator.activeSetViewModel.startTimer()
+            }
         }
     }
 }
@@ -69,10 +98,16 @@ public struct TrainingSessionComponent: View {
 public struct CompactTimerComponent: View {
     public var viewModel: ActiveSetViewModel
     public let onCancel: (() -> Void)?
+    public let expanded: Bool
 
-    public init(viewModel: ActiveSetViewModel, onCancel: (() -> Void)?) {
+    public init(
+        viewModel: ActiveSetViewModel,
+        onCancel: (() -> Void)?,
+        expanded: Bool = false
+    ) {
         self.viewModel = viewModel
         self.onCancel = onCancel
+        self.expanded = expanded
     }
 
     public var body: some View {
@@ -80,7 +115,11 @@ public struct CompactTimerComponent: View {
             Spacer()
 
             Text(max(viewModel.timerSeconds, 0).formattedAsTimer)
-                .font(.system(size: AppStyle.DeviceLayout.timerFontSize, weight: .bold))
+                .font(
+                    expanded
+                        ? AppStyle.Font.trainingTimerLarge
+                        : .system(size: AppStyle.DeviceLayout.timerFontSize, weight: .bold)
+                )
                 .foregroundColor(AppStyle.Color.white)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)

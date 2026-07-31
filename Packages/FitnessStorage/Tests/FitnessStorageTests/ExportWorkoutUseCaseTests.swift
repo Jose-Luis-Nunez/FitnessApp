@@ -129,14 +129,34 @@ struct ExportWorkoutUseCaseTests {
             selectedCategories: [.chest],
             type: .leg
         )
-        let exercise = Exercise(name: "Press", weight: 100, reps: 5, sets: 5, iconName: "defaultArmsIcon", category: .chest)
+        let exercise = Exercise(
+            name: "Press",
+            weight: 100,
+            reps: 5,
+            sets: 1,
+            iconName: "defaultArmsIcon",
+            category: .chest,
+            executionMode: .bilateral
+        )
         sut.exerciseStorage.saveForWorkout([exercise], workoutId: workout.id, category: .chest)
         let entry = AnalyticsEntry(
             exerciseId: exercise.id,
             date: Date(),
             setProgress: [
-                SetProgress(status: .completedDone, currentReps: 5, weight: 100),
-                SetProgress(status: .completedDone, currentReps: 5, weight: 100)
+                SetProgress(
+                    status: .completedDone,
+                    currentReps: 5,
+                    weight: 100,
+                    side: .left,
+                    logicalSetIndex: 0
+                ),
+                SetProgress(
+                    status: .completedMore,
+                    currentReps: 6,
+                    weight: 102.5,
+                    side: .right,
+                    logicalSetIndex: 0
+                )
             ]
         )
         sut.analyticsStorage.save([entry], for: exercise.id)
@@ -152,7 +172,8 @@ struct ExportWorkoutUseCaseTests {
         #expect(importedExercise.name == "Press")
         #expect(importedExercise.weight == 100)
         #expect(importedExercise.reps == 5)
-        #expect(importedExercise.sets == 5)
+        #expect(importedExercise.sets == 1)
+        #expect(importedExercise.executionMode == .bilateral)
         #expect(importedExercise.category == .chest)
         #expect(importedExercise.id != exercise.id, "Import must assign a fresh exercise UUID")
 
@@ -162,5 +183,8 @@ struct ExportWorkoutUseCaseTests {
         #expect(importedEntry.exerciseId == importedExercise.id, "Analytics must be remapped to the new exercise UUID")
         #expect(importedEntry.setProgress.count == 2)
         #expect(importedEntry.setProgress.first?.weight == 100)
+        #expect(importedEntry.setProgress.map(\.side) == [.left, .right])
+        #expect(importedEntry.setProgress.map(\.logicalSetIndex) == [0, 0])
+        #expect(importedEntry.setProgress.last?.currentReps == 6)
     }
 }

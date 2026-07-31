@@ -8,6 +8,9 @@ final class SetProgressModel {
     var currentReps: Int
     var weight: Double
     var sortOrder: Int
+    /// Optional execution metadata. Legacy standard sets keep both values nil.
+    var sideRaw: String?
+    var logicalSetIndex: Int?
 
     var entry: AnalyticsEntryModel?
 
@@ -16,12 +19,16 @@ final class SetProgressModel {
         currentReps: Int,
         weight: Double,
         sortOrder: Int = 0,
+        sideRaw: String? = nil,
+        logicalSetIndex: Int? = nil,
         entry: AnalyticsEntryModel? = nil
     ) {
         self.status = status
         self.currentReps = currentReps
         self.weight = weight
         self.sortOrder = sortOrder
+        self.sideRaw = sideRaw
+        self.logicalSetIndex = logicalSetIndex
         self.entry = entry
     }
 }
@@ -31,7 +38,9 @@ extension SetProgressModel {
         SetProgress(
             status: SetStatus(rawValue: status) ?? .notStarted,
             currentReps: currentReps,
-            weight: weight
+            weight: weight,
+            side: sideRaw.flatMap(ExerciseSide.init(rawValue:)),
+            logicalSetIndex: logicalSetIndex
         )
     }
 
@@ -41,6 +50,8 @@ extension SetProgressModel {
             currentReps: sp.currentReps,
             weight: sp.weight,
             sortOrder: sortOrder,
+            sideRaw: sp.side?.rawValue,
+            logicalSetIndex: sp.logicalSetIndex,
             entry: entry
         )
     }

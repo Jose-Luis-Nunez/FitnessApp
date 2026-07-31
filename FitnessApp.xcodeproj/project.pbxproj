@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		00181BFD2DABFA8500884E28 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 00181BFC2DABFA7C00884E28 /* .gitignore */; };
 		23DA6CEA2F914E74007A93EB /* FitnessProfile in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA0000000000000A /* FitnessProfile */; };
+		AA000004AABB000000000001 /* FitnessCore in Frameworks */ = {isa = PBXBuildFile; productRef = AA000004AABB000000000002 /* FitnessCore */; };
 		BB000001AA00000000000001 /* FitnessResources in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA00000000000001 /* FitnessResources */; };
 		BB000001AA00000000000002 /* FitnessCore in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA00000000000002 /* FitnessCore */; };
 		BB000001AA00000000000003 /* FitnessStorage in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA00000000000003 /* FitnessStorage */; };
@@ -21,7 +22,6 @@
 		BB000001AA0000000000000B /* FitnessWorkouts in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA0000000000000B /* FitnessWorkouts */; };
 		BB000001AA0000000000000C /* FitnessPersistenceUI in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA0000000000000C /* FitnessPersistenceUI */; };
 		BB000001AA0000000000000D /* FitnessFriends in Frameworks */ = {isa = PBXBuildFile; productRef = BB000002AA0000000000000D /* FitnessFriends */; };
-		AA000004AABB000000000001 /* FitnessCore in Frameworks */ = {isa = PBXBuildFile; productRef = AA000004AABB000000000002 /* FitnessCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -883,6 +883,10 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		AA000004AABB000000000002 /* FitnessCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FitnessCore;
+		};
 		BB000002AA00000000000001 /* FitnessResources */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = FitnessResources;
@@ -936,10 +940,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = BB000003AA0000000000000D /* XCLocalSwiftPackageReference "Packages/FitnessFriends" */;
 			productName = FitnessFriends;
-		};
-		AA000004AABB000000000002 /* FitnessCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = FitnessCore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -1,4 +1,5 @@
 import Foundation
+import FitnessCore
 
 public enum TrainingIDs {
     public static let doneButton = "id_button_done"
@@ -13,5 +14,10 @@ public enum TrainingIDs {
     public static func symptomChip(_ rawValue: String) -> String { "id_symptom_\(rawValue)" }
     public static func controlButton(_ text: String) -> String { "id_button_\(text.lowercased())" }
     public static func repsField(set index: Int) -> String { "id_reps_set_\(index)" }
-    public static func quickDoneSetButton(index: Int) -> String { "id_button_quick_done_set_\(index)" }
+    public static func repsField(logicalSet index: Int, side: ExerciseSide) -> String {
+        "id_reps_set_\(index)_\(side.rawValue)"
+    }
+    public static func sideHeader(_ side: ExerciseSide) -> String {
+        "id_training_side_\(side.rawValue)"
+    }
 }

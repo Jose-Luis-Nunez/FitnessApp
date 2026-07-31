@@ -1,5 +1,28 @@
 import Foundation
 
+public enum ExerciseExecutionMode: String, Codable, Sendable, CaseIterable {
+    case standard
+    case bilateral
+}
+
+public enum ExerciseSide: String, Codable, Sendable, CaseIterable {
+    case left
+    case right
+}
+
+/// One executable step in a training session. `logicalSetIndex` is zero-based;
+/// standard exercises have no side, bilateral exercises produce left/right
+/// steps for each logical set.
+public struct TrainingStep: Equatable, Hashable, Sendable {
+    public let logicalSetIndex: Int
+    public let side: ExerciseSide?
+
+    public init(logicalSetIndex: Int, side: ExerciseSide?) {
+        self.logicalSetIndex = logicalSetIndex
+        self.side = side
+    }
+}
+
 public struct Exercise: Identifiable, Codable, Equatable, Hashable {
     public let id: UUID
     public var name: String
@@ -16,6 +39,8 @@ public struct Exercise: Identifiable, Codable, Equatable, Hashable {
     /// Deactivated exercises (`false`) keep their data + history but drop out of
     /// the `"X of Y"` counts and the lists until reactivated.
     public var isActive: Bool
+    /// How the configured logical sets are expanded into executable steps.
+    public var executionMode: ExerciseExecutionMode
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -30,6 +55,10 @@ public struct Exercise: Identifiable, Codable, Equatable, Hashable {
         isCompleted = try container.decodeIfPresent(Bool.self, forKey: .isCompleted) ?? false
         goal = try container.decodeIfPresent(Double.self, forKey: .goal)
         isActive = try container.decodeIfPresent(Bool.self, forKey: .isActive) ?? true
+        executionMode = try container.decodeIfPresent(
+            ExerciseExecutionMode.self,
+            forKey: .executionMode
+        ) ?? .standard
 
         if let icon = try container.decodeIfPresent(String.self, forKey: .iconName) {
             iconName = icon
@@ -56,7 +85,8 @@ public struct Exercise: Identifiable, Codable, Equatable, Hashable {
         iconName: String,
         category: MuscleCategoryGroup,
         goal: Double? = nil,
-        isActive: Bool = true
+        isActive: Bool = true,
+        executionMode: ExerciseExecutionMode = .standard
     ) {
         self.id = id
         self.name = name
@@ -70,6 +100,7 @@ public struct Exercise: Identifiable, Codable, Equatable, Hashable {
         self.category = category
         self.goal = goal
         self.isActive = isActive
+        self.executionMode = executionMode
     }
 
     public static func == (lhs: Exercise, rhs: Exercise) -> Bool {
@@ -92,4 +123,18 @@ extension Exercise {
 
     /// Whether the seat-edit affordance should be offered (the exercise has a seat).
     public var allowsSeatEditing: Bool { !noSeats }
+
+    /// The frozen execution plan used by a newly started training session.
+    public var trainingSteps: [TrainingStep] {
+        (0..<sets).flatMap { logicalSetIndex in
+            switch executionMode {
+            case .standard:
+                [TrainingStep(logicalSetIndex: logicalSetIndex, side: nil)]
+            case .bilateral:
+                ExerciseSide.allCases.map {
+                    TrainingStep(logicalSetIndex: logicalSetIndex, side: $0)
+                }
+            }
+        }
+    }
 }

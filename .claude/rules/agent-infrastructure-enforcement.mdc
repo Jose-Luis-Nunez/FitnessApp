@@ -1,37 +1,16 @@
 ---
-description: >-
-  Enforces agent-infrastructure validation when canonical .claude/ files or
-  Codex runtime adapters change.
-  Two layers: this rule (advisory) and stop hook (grind loop).
-globs: ".claude/rules/**/*.mdc,.claude/skills/**/*.md,.claude/hooks/**/*.sh,.claude/agents/**/*.md,.claude/references/**/*.md,.claude/commands/**/*.md,.codex/hooks/**/*.sh,.codex/agents/**/*.toml,.agents/skills/**/*.md,AGENTS.md"
+description: Requires verification only for executable agent-system infrastructure.
+globs: ".claude/rules/**/*.mdc,.claude/skills/**/*.md,.claude/hooks/**/*.sh,.claude/agents/**/*.md,.claude/commands/**/*.md,.claude/settings.json,.claude/references/agent-system-overview.md,.codex/hooks.json,.codex/hooks/**/*.sh,.codex/agents/**/*.toml,.agents/skills/**/*.md,.githooks/**/*.sh,AGENTS.md,scripts/sync-agent-runtime.sh,scripts/generate-codex-agent.py,scripts/test-affected-packages.sh,scripts/install-hooks.sh"
 ---
 
-# Agent Infrastructure Enforcement
+# Agent Infrastructure Validation
 
-When you change **1+ files** under `.claude/` that are part of the canonical
-agent infrastructure, or under `.codex/` / `.agents/` that are Codex runtime
-adapters, run the `reviewing-agent-infrastructure` skill before reporting done.
-Write a stamp to `.claude/hooks/state/agent-infrastructure.stamp.md`.
+Run `reviewing-agent-infrastructure` after changing rules, skills, hooks,
+agents, commands, runtime adapters, `AGENTS.md`, or the agent-system overview.
+An independent verifier writes `agent-infrastructure.stamp.md`.
 
-## Layer 1: This Rule (L2g — Advisory)
+Product references such as `architecture-documentation.md`,
+`ui-test-conventions.md`, capabilities, and user flows are documentation—not
+executable agent infrastructure—and do not trigger a verifier.
 
-Tells you to validate. Fires when a glob-matched canonical or runtime-adapter
-file is edited.
-
-Skip for:
-- `.claude/hooks/state/` and `.codex/hooks/state/` — runtime artifacts
-  (stamps, hashes, scratchpads)
-- `.claude/plans/` — descriptive plan documents, not infrastructure (no enforcement, no references)
-
-## Layer 2: Stop Hook — Grind Loop (L5 — Enforced)
-
-`post-task-check.sh` Check 6 verifies `agent-infrastructure.stamp.md` exists and is fresh (< 10 min). If missing, it exits 2 with a stderr blocker message so Claude is sent back. The grind-loop cap is 3 iterations; Claude Code's `stop_hook_active` flag prevents infinite re-firing.
-
-## How to Validate
-
-Follow the `reviewing-agent-infrastructure` skill checklist manually. Write a stamp to `.claude/hooks/state/agent-infrastructure.stamp.md`.
-
-## Triggered Rule Notice
-
-When this rule applies, mention it early:
-"This touches agent infrastructure — agent-infrastructure validation will be required."
+Runtime state and descriptive plans are excluded.

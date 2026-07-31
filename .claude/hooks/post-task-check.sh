@@ -1,7 +1,9 @@
 #!/bin/bash
 # Kill-switch: when this sentinel exists, all Stop-hook checks are disabled.
-# Re-enable by deleting it: rm .claude/hooks/state/checks-disabled
-if [ -f "$(cd "$(dirname "$0")" && pwd)/state/checks-disabled" ]; then
+# Both canonical and generated adapters use the canonical .claude state.
+CANONICAL_STATE_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.claude/hooks/state"
+# Re-enable by deleting .claude/hooks/state/checks-disabled.
+if [ -f "$CANONICAL_STATE_DIR/checks-disabled" ]; then
   exit 0
 fi
 # Stop Hook Orchestrator (Claude Code): runs all checks when the agent stops.
@@ -18,20 +20,17 @@ fi
 #   - exit 2 with stderr text: Claude is sent back with that text as a blocker
 #
 # Checks (each in its own script under checks/):
-#   1. code-validation.sh     — Grind loop: validation stamp fresh for Swift changes?
+#   1. code-validation.sh     — Content-bound validation for Swift changes.
 #   2. architecture-sync.sh   — Stateless: architecture-documentation.md updated?
-#   3. test-execution.sh      — Grind loop: tests run when test files changed?
+#   3. test-execution.sh      — Content-bound final test evidence for Swift changes.
 #   4. test-coverage.sh       — Hint: new ViewModel/Service has corresponding tests?
-#   5. enforcement-audit.sh   — Hint: suggest audit for 5+ Swift file changes?
-#   6. agent-infrastructure.sh — Grind loop: agent-infra stamp fresh for .claude/ changes?
+#   5. agent-infrastructure.sh — Exact verifier evidence for runtime changes.
 #   7. ui-state-sync.sh       — Hint: Int-counter + polling-loop anti-pattern in diff?
 #   8. duplicate-state.sh     — Hint: new @State VM + existing UUID-keyed VM cache?
 #   9. predicate-smell.sh     — Hint: SwiftData predicate anti-patterns.
 #  10. adr-required.sh        — Hint: structural change without an ADR?
 #
-# Two enforcement patterns:
-#   Grind Loop — agent is sent back up to MAX_GRIND_ITERATIONS times (checks 1, 3, 6)
-#   Hint       — one-time suggestion, no retry (checks 2, 4, 5, 7, 8, 9, 10)
+# Blocking checks require matching evidence; hint checks report likely gaps.
 
 set -euo pipefail
 
@@ -84,11 +83,10 @@ fi
 # --- Shared state ---
 
 export STATE_DIR=".claude/hooks/state"
-export MAX_GRIND_ITERATIONS=3
 export CONTENT
 export HOOKS_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# Question detection: grind-loop checks skip when agent is asking the user.
+# Question detection: blocking completion checks pause while the agent asks the user.
 # Hints still fire so the agent sees them when it resumes.
 export HAS_QUESTION=$(echo "$CONTENT" | grep -ciE '\?\s*$|soll ich|shall I|should I|do you want|möchtest du|willst du' || true)
 
@@ -98,6 +96,11 @@ mkdir -p "$STATE_DIR"
 changed_swift=$(git diff --name-only HEAD 2>/dev/null | grep '\.swift$' || true)
 new_swift=$(git ls-files --others --exclude-standard 2>/dev/null | grep '\.swift$' || true)
 export all_swift=$(printf '%s\n%s' "$changed_swift" "$new_swift" | grep -v '^$' || true)
+
+# Risk and evidence are shared by the validation checks. Product documentation
+# and agent-runtime files do not participate in this fingerprint.
+source "$HOOKS_DIR/lib/change-risk.sh"
+export CHANGE_RISK=$(classify_change_risk worktree)
 
 # --- Run checks ---
 
@@ -109,7 +112,6 @@ for check in \
   "$CHECKS_DIR/architecture-sync.sh" \
   "$CHECKS_DIR/test-execution.sh" \
   "$CHECKS_DIR/test-coverage.sh" \
-  "$CHECKS_DIR/enforcement-audit.sh" \
   "$CHECKS_DIR/agent-infrastructure.sh" \
   "$CHECKS_DIR/ui-state-sync.sh" \
   "$CHECKS_DIR/duplicate-state.sh" \

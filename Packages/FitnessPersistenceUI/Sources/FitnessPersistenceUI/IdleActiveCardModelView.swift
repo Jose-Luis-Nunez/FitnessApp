@@ -219,8 +219,9 @@ private extension IdleActiveCardModelView {
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .layoutPriority(1)
+                    .accessibilityIdentifier(ExerciseIDs.nameLabel)
                     .onTapGesture {
-                        if isEditable { onEdit(model.toDomain(), .name) }
+                        if isEditable { onEdit(model.toDomain(), .full) }
                     }
 
                 Spacer(minLength: 0)

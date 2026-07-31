@@ -1,18 +1,18 @@
 ---
-description: >-
-  Enforces architecture-documentation.md sync when structural Swift changes occur.
-  Stop hook Check 2 verifies at task end.
+description: Keeps current-state architecture documentation aligned with structural changes.
 alwaysApply: true
 ---
 
-# Architecture Sync Enforcement
+# Architecture Documentation Sync
 
-When you make **structural changes** (new features, services, models, navigation,
-AppStyle tokens, shared components, utilities, tests), update
-`.claude/references/architecture-documentation.md` before reporting done.
+Update `.claude/references/architecture-documentation.md` only when the current
+public or structural architecture changes: feature/package boundaries, domain
+models, services, use cases, shared components, state ownership, navigation, or
+new/renamed AppStyle tokens.
 
-For the full trigger map (which change updates which section), see the
-`reviewing-code-changes` skill, section "Architecture Sync".
+Do not update it for private refactors, layout-only changes, token value swaps,
+or test expectation changes.
 
-The stop hook (`post-task-check.sh` Check 2) verifies `architecture-documentation.md` was
-updated when structural changes are detected.
+Route to one relevant section using
+`.claude/skills/reviewing-code-changes/references/architecture-routing.md`;
+never load or rewrite the complete document for a local change.

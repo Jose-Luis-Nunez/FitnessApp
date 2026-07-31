@@ -11,7 +11,6 @@ enum TimerResetAction: CaseIterable, CustomStringConvertible, Sendable {
     case completeLastSet
     case cancelActiveSet
     case startQuickDone
-    case completeAllQuickDone
     case updateRepsCompletingAllSets
 
     var description: String {
@@ -19,7 +18,6 @@ enum TimerResetAction: CaseIterable, CustomStringConvertible, Sendable {
         case .completeLastSet: "completeLastSet"
         case .cancelActiveSet: "cancelActiveSet"
         case .startQuickDone: "startQuickDone"
-        case .completeAllQuickDone: "completeAllQuickDone"
         case .updateRepsCompletingAllSets: "updateRepsCompletingAllSets"
         }
     }
@@ -64,9 +62,6 @@ struct ActiveSetViewModelTimerResetTests {
 
         case .startQuickDone:
             sut.startQuickDone(for: exercise, category: .arms)
-
-        case .completeAllQuickDone:
-            sut.completeAllQuickDone()
 
         case .updateRepsCompletingAllSets:
             sut.completeCurrentSet()

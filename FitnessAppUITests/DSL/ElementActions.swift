@@ -51,6 +51,42 @@ extension BaseTest {
         }
     }
 
+    @MainActor
+    func tapOnWithPrefix(
+        _ prefix: String,
+        elementType: XCUIElement.ElementType = .any,
+        timeout: TimeInterval = TestDefaults.timeout
+    ) {
+        let predicate = NSPredicate(format: "identifier BEGINSWITH %@", prefix)
+        let matches = app
+            .descendants(matching: elementType)
+            .matching(predicate)
+        guard matches.firstMatch.waitForExistence(timeout: timeout) else {
+            XCTFail("tapOnWithPrefix: no element starting with '\(prefix)' found within \(timeout)s")
+            return
+        }
+
+        let candidates = (0..<matches.count)
+            .map { matches.element(boundBy: $0) }
+            .filter {
+                $0.exists
+                    && !$0.frame.isNull
+                    && !$0.frame.isInfinite
+                    && $0.frame.width > 0
+                    && $0.frame.height > 0
+            }
+        let hittableCandidates = candidates.filter(\.isHittable)
+        guard let element = (hittableCandidates.isEmpty ? candidates : hittableCandidates)
+            .max(by: { lhs, rhs in
+                lhs.frame.width * lhs.frame.height
+                    < rhs.frame.width * rhs.frame.height
+            }) else {
+            XCTFail("tapOnWithPrefix: no visible element starting with '\(prefix)' found")
+            return
+        }
+        element.tap()
+    }
+
     // MARK: - Fill
 
     @MainActor

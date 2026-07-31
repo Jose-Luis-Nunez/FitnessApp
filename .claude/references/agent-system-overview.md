@@ -1,200 +1,168 @@
 # Agent System Overview
 
-Central map of all enforcement mechanisms grouped by reliability level.
+`.claude/` is canonical. `.agents/` and `.codex/` are generated runtime
+adapters. All runtimes write local evidence under `.claude/hooks/state/`.
 
-## Layer Overview
+## Validation Flow
 
-| Level | Type | Reliability | Trigger |
-|---|---|---|---|
-| L1 | Conversation | ~50% | User mentions it in chat |
-| L2 | Always-Apply Rules | ~80% | Loaded into every chat automatically |
-| L2g | Glob-Triggered Rules | ~80% | Loaded when matching files are edited |
-| L3 | Skills | ~85-90% | Keyword match from user prompt |
-| L3 | Commands | ~95% | Explicit user-triggered `/command` |
-| L4 | Pre-Commit Hook | 100% | Deterministic, blocks bad commits |
-| L5 | Stop Hook / Grind Loop | 100% | Deterministic, fires when agent says "done" |
-| L5s | SubagentStop Hook | 100% | Deterministic, fires when a subagent completes |
-
-## Runtime Ownership
-
-`.claude/` is the canonical source for rules, workflow documentation,
-architecture references, and shared runtime state. `.codex/` contains the Codex
-runtime adapters: `hooks.json`, mirrored hook scripts, and TOML role
-instructions. `.agents/skills/` contains Codex skill copies. Both runtimes
-write and validate stamps in `.claude/hooks/state/`, giving each task one source
-of validation state.
-
-## Execution Order
-
-When the agent works on a task, enforcement fires in this order:
-
-```mermaid
-flowchart TD
-    Start[Task starts] --> L2Rules[L2: Always-Apply Rules loaded]
-    L2Rules --> Work[Agent works on code]
-    Work --> L2gRules{Glob match?}
-    L2gRules -->|Yes| GlobRule[L2g: Conditional Rule loaded]
-    L2gRules -->|No| SkillCheck
-    GlobRule --> SkillCheck{User keyword?}
-    SkillCheck -->|Yes| L3Skill[L3: Skill activated]
-    SkillCheck -->|No| SpawnSubs
-    L3Skill --> SpawnSubs{Spawn subagents?}
-    SpawnSubs -->|Yes| Subagents["Parallel: reviewer + tester (+ verifier)"]
-    SpawnSubs -->|No| Done
-    Subagents --> L5sHook[L5s: SubagentStop Hook]
-    L5sHook -->|Gate failed| RetrySubagent[Retry subagent up to 2x]
-    L5sHook -->|Gate passed| Done[Agent says done]
-    RetrySubagent --> Subagents
-    Done --> L5Hook[L5: Stop Hook fires]
-    L5Hook -->|Missing validation| GrindLoop[Grind Loop: send back]
-    L5Hook -->|All checks pass| Commit{User commits?}
-    GrindLoop --> Work
-    Commit -->|Yes| L4Hook[L4: Pre-Commit Hook]
-    L4Hook -->|Pass| Merged[Commit accepted]
-    L4Hook -->|Fail| FixAndRetry[Fix and retry commit]
-    FixAndRetry --> Commit
+```text
+Swift diff
+  → change-risk.sh: green | yellow | red
+  → load base review + matched specialist references
+  → green: main-agent review/test
+    yellow/red: fresh reviewer + tester(run|verify)
+  → content manifests + PASS stamps
+  → Stop hook checks working contents
+  → pre-commit checks staged blobs
 ```
 
-## L2 — Always-Apply Rules
+Validation is content-bound, not time-bound. Changing a relevant file
+invalidates evidence immediately; unchanged evidence does not expire.
 
-| File | What it does | Triggers/References |
+## Risk Policy
+
+| Risk | Typical change | Required workflow |
 |---|---|---|
-| `code-changes-enforcement.mdc` | Enforces post-change validation for 1+ Swift files. Three layers: advisory rule, stop hook, pre-commit. | `post-task-check.sh`, `code-changes.stamp.md`, `reviewing-code-changes/SKILL.md` |
-| `build-and-test.mdc` | All xcodebuild commands (build, unit/UI/package tests). DEVELOPER_DIR setup. Forbids swift test/swift build. | Referenced by hook, command, 2 skills |
-| `architecture-documentation-sync.mdc` | Enforces architecture-documentation.md sync when structural Swift changes occur. Stop hook Check 2 verifies at task end. | `architecture-documentation.md`, `reviewing-code-changes/SKILL.md` |
-| `ui-state-sync-enforcement.mdc` | Forbids monotonic Int-counter (`changeVersion`, `mutationVersion`, `dataGeneration`, `revision`) + `while !Task.isCancelled` polling-loop pattern as primary UI sync. Two layers: rule (advisory) + pre-commit Check 4 (blocking) + stop hook Check 7 (hint). Override via `.claude/hooks/state/ui-state-sync-exception.stamp.md` (24h, ADR required). | `ui-state-sync.sh`, `ui-state-sync-exception.stamp.md`, ADR-0001 |
+| Green | ≤2 local presentation files; no state/API/data signal | Main-agent base review + one relevant final test/snapshot |
+| Yellow | Logic, ViewModel/use case, public UI | Fresh reviewer + one final test run or tester verification |
+| Red | Schema, storage, DI, coordinator, navigation, concurrency, package/public domain boundary, multi-package, or 10+ production files | Reviewer + tester + affected tests + app build + relevant UI tests; ADR when architectural |
 
-## L2g — Glob-Triggered Rules
+Classification is conservative. Agents may raise but never lower risk.
 
-| File | Glob Pattern | What it does |
-|---|---|---|
-| `agent-infrastructure-enforcement.mdc` | Canonical `.claude/` rules, skills, hooks, agents, references, commands; Codex `.codex/hooks/**/*.sh`, `.codex/agents/**/*.toml`, and `.agents/skills/**/*.md`; `AGENTS.md` | Enforces agent-infrastructure validation for canonical files and Codex runtime adapters. Excludes plans and runtime state. Two layers: this rule (advisory) + stop hook Check 6. |
+## Rules
 
-## L3 — Skills
-
-| File | What it does | Triggers/References |
-|---|---|---|
-| `create-feature/SKILL.md` | Scaffold new SwiftUI features with MVVM, AppStyle, navigation, tests. | `architecture-documentation.md`, `ui-test-conventions.md` |
-| `reviewing-code-changes/SKILL.md` | Orchestrator: spawns reviewer + tester subagents in parallel. Review checklist: dead code, reuse, AppStyle, layout, MVVM, navigation, architecture principles, anti-patterns, referential integrity, architecture sync. | `architecture-documentation.md`, `code-changes.stamp.md`, `agents/reviewer.md`, `agents/tester.md` |
-| `reviewing-test-quality/SKILL.md` | Unit/integration test quality review. | `architecture-documentation.md`, `test-execution.stamp.md` |
-| `reviewing-agent-effectiveness/SKILL.md` | Diagnose which enforcement mechanisms fired (FIRED/NOT FIRED/N/A report). Hands off gaps to `reviewing-agent-infrastructure` skill. | All rules, skills, hooks |
-| `writing-ui-tests/SKILL.md` | Create new XCUITests. | `ui-test-conventions.md` |
-| `updating-ui-tests/SKILL.md` | Refactor/modernize existing XCUITests (passing tests with outdated patterns). | `ui-test-conventions.md`, `debugging-ui-tests/SKILL.md` |
-| `debugging-ui-tests/SKILL.md` | Diagnose failing XCUITests: selector-not-found, scheme/build-config, fixture seeding, timing. 5-step decision tree. | `ui-test-conventions.md § Diagnosing a Failing Selector`, `build-and-test.mdc`, `reviewing-agent-effectiveness/SKILL.md`, `reviewing-agent-infrastructure/SKILL.md` |
-| `reviewing-agent-infrastructure/SKILL.md` | Validate canonical `.claude/` infrastructure and Codex runtime adapters (`.codex/`, `.agents/`). Reference integrity, overview sync, and handoff alignment. Spawns the runtime-appropriate verifier subagent. | `reviewing-agent-effectiveness/SKILL.md`, `reviewing-code-changes/SKILL.md`, `agents/verifier.md`, `.codex/agents/verifier.toml` |
-| `deep-research/SKILL.md` | Citation-backed deep research workflow. | None |
-
-## L3 — Commands
-
-| File | What it does |
+| File | Purpose |
 |---|---|
-| `validate.md` | `/validate` — run post-change validation, tests, write stamps. |
-| `buildApp.md` | `/buildApp [iphone\|sim]` — wrap `scripts/buildApp.sh`: build, install, launch on **one** target (connected iPhone or booted simulator); errors if both available and no arg given. |
+| `code-changes-enforcement.mdc` | Risk-routed, content-bound Swift validation |
+| `build-and-test.mdc` | Minimal pinned Xcode constraints and command routing |
+| `architecture-documentation-sync.mdc` | Current-state docs for structural/public changes only |
+| `ui-state-sync-enforcement.mdc` | Glob-routed ban on generic counter + polling UI sync |
+| `agent-infrastructure-enforcement.mdc` | Verifier only for executable agent-system files |
 
-## L4 — Pre-Commit Hook
+## Skills
 
-| File | What it checks |
+| Skill | Purpose |
 |---|---|
-| `.git/hooks/pre-commit` | Five blocking checks (in execution order): (1) 1+ staged Swift files without fresh `code-changes.stamp.md`; (2) `print()` in production Swift; (3) `adr-required` triggers (see L5 hooks) without ADR or exception stamp; (4) `ui-state-sync-enforcement.mdc` anti-pattern (Int-counter + polling loop) without exception stamp; (5) structural changes without `architecture-documentation.md` update. All blocks use RULE/VIOLATION/FIX format. |
+| `create-feature` | Scaffold a SwiftUI feature using project conventions |
+| `debugging-ui-tests` | Diagnose failing XCUITests |
+| `deep-research` | Citation-backed research |
+| `reviewing-agent-effectiveness` | Explicit workflow/cost audit; never file-count-triggered |
+| `reviewing-agent-infrastructure` | Validate agent runtime and spawn verifier |
+| `reviewing-code-changes` | Risk classifier, routed review, test-once evidence |
+| `reviewing-test-quality` | Explicit unit/integration test-quality review |
+| `updating-ui-tests` | Modernize existing UI tests |
+| `writing-ui-tests` | Add new UI tests |
 
-## L5 — Stop Hook
+`reviewing-code-changes/references/` holds conditional checklists for base,
+SwiftUI, SwiftData, state/services, tests, and architecture routing. Only
+matched references are loaded.
 
-Three enforcement patterns: **Grind Loop** (agent is sent back up to 3 times), **Grind Loop + Verifier** (stamp content validated, Verifier subagent writes stamp), and **Hint** (one-time suggestion).
+Codex-only source-command adapters live under `.agents/skills/source-command-*`.
 
-| File | Pattern | What it checks |
+## Commands and Scripts
+
+| File | Purpose |
+|---|---|
+| `.claude/commands/validate.md` | Explicit risk-based validation |
+| `.claude/commands/buildApp.md` | Build/install/launch command |
+| `scripts/test-affected-packages.sh` | Run each requested package test action once |
+| `scripts/sync-agent-runtime.sh` | Generate/check Codex skills, hooks, and roles |
+| `scripts/generate-codex-agent.py` | Generate TOML role from canonical Markdown |
+| `scripts/install-hooks.sh` | Configure `.githooks` as Git hooks path |
+
+## Stop Hook
+
+`post-task-check.sh` runs these checks:
+
+| Check | Type | Purpose |
 |---|---|---|
-| `post-task-check.sh` | Orchestrator | Canonical implementation under `.claude/hooks/`; mirrored under `.codex/hooks/` for Codex. Runs all 10 checks below, collects followup messages. |
-| `settings.json` / `hooks.json` | — | `.claude/settings.json` registers Claude Code's hooks; `.codex/hooks.json` registers Codex's mirrors. Both use `.claude/hooks/state/`. |
-| `checks/code-validation.sh` | Grind Loop | Swift files changed — validation stamp fresh? |
-| `checks/architecture-sync.sh` | Stateless | Structural changes — architecture-documentation.md updated? |
-| `checks/test-execution.sh` | Grind Loop | Test files changed — tests actually run? |
-| `checks/test-coverage.sh` | Hint | New ViewModel/Service — corresponding test file exists? |
-| `checks/enforcement-audit.sh` | Hint | 5+ Swift files — suggest enforcement audit? |
-| `checks/agent-infrastructure.sh` | Grind Loop + Verifier | Canonical `.claude/` or Codex runtime-adapter files changed — is the shared stamp fresh + content-validated (8 required fields)? |
-| `checks/ui-state-sync.sh` | Hint | Diff combines `changeVersion`-style Int counter + `while !Task.isCancelled` polling loop (ui-state-sync-enforcement.mdc anti-pattern)? |
-| `checks/duplicate-state.sh` | Hint | Diff introduces a new `@State private var XViewModel` while a UUID-keyed VM cache for the same entity already exists (reviewing-code-changes §13h)? |
-| `checks/predicate-smell.sh` | Hint | Diff introduces `#Predicate` with optional/force chain, `persistentModelID` comparison, or `@ModelActor` (reviewing-code-changes §14)? |
-| `checks/adr-required.sh` | Hint | Structural change detected (new @Observable in service, observation outside view, polling loop in service/VM, schema change, new package, Container.swift change) without an ADR present in working tree? |
-| `lib/grind-loop.sh` | Library | Shared grind-loop logic (stamp check, scratchpad, iteration, optional stamp content validation). |
-| `lib/adr-triggers.sh` | Library | Shared ADR trigger detection (used by both stop-hook check and `.git/hooks/pre-commit`). |
+| `code-validation.sh` | Blocking | Code manifest/stamp matches exact working contents and risk |
+| `architecture-sync.sh` | Hint | Structural/public change has current-state documentation |
+| `test-execution.sh` | Blocking | One final test result matches exact working contents |
+| `test-coverage.sh` | Hint | New ViewModel/Service has a test file |
+| `agent-infrastructure.sh` | Blocking | Executable agent-system changes have verifier evidence |
+| `ui-state-sync.sh` | Hint | Generic counter + polling smell |
+| `duplicate-state.sh` | Hint | New View-owned VM conflicts with keyed cache |
+| `predicate-smell.sh` | Hint | SwiftData predicate/query hazards |
+| `adr-required.sh` | Hint | Architectural trigger lacks ADR/exception |
 
-## L5s — SubagentStop Hook
+Effectiveness audits are explicit and never triggered by ordinary file counts.
 
-The `SubagentStop` hook fires when a subagent completes. It reads the parent
-transcript (`transcript_path`), finds the most recent task, extracts the
-`subagent_type` plus the result, and applies role-specific quality gates.
-Canonical Claude Code hooks and Codex runtime mirrors share the stamp directory
-`.claude/hooks/state/`.
+Shared libraries:
 
-| File | Role | What it checks |
+- `change-risk.sh` — conservative risk classifier.
+- `validation-evidence.sh` — manifests, hashes, worktree/staged verification.
+- `agent-infrastructure-evidence.sh` — exact fingerprint for executable
+  agent-system changes.
+- `adr-triggers.sh` — shared ADR detection.
+
+Fixture tests live in `.claude/hooks/tests/workflow-tests.sh`.
+
+## Pre-Commit
+
+`.githooks/pre-commit` blocks:
+
+1. staged Swift not covered by content-bound code review evidence;
+2. staged Swift not covered by final test evidence;
+3. production `print()`;
+4. architectural triggers without ADR/exception;
+5. generic counter + polling UI sync;
+6. structural/public changes without architecture documentation.
+
+Stamps cannot be bypassed by `touch`; staged blob hashes must match the
+manifest.
+
+## Subagents
+
+| Role | Required for | Output |
 |---|---|---|
-| `subagent-gate.sh` | `verifier` | Canonical `.claude/hooks/` and Codex mirror `.codex/hooks/` require all 8 fields in the shared `agent-infrastructure.stamp.md`. |
-| `subagent-gate.sh` | `reviewer` | Requires severity-tagged output or "No issues found", a Summary, and shared `code-changes.stamp.md` with `verified_by`. |
-| `subagent-gate.sh` | `tester` | Requires shared `test-execution.stamp.md` to contain a success marker (all passed / TEST SUCCEEDED). |
-| `settings.json` / `hooks.json` | — | Register the respective runtime's `SubagentStop` hook. |
+| Reviewer | Yellow/red Swift changes | Findings + code manifest/stamp |
+| Tester | Yellow/red Swift changes | `run` or `verify` + test manifest/stamp |
+| Verifier | Executable agent-infrastructure changes | Infrastructure stamp |
 
-## Agent Roles
+Codex agents use `fork_turns: "none"` and read the workspace directly. Prompts
+contain risk, paths, and relevant references—not the diff or conversation.
 
-Reusable prompt templates for specialized subagents. Markdown role definitions
-in `.claude/agents/` serve Claude Code; matching TOML role configurations in
-`.codex/agents/` serve Codex. Both define the same purpose, checklist, output
-format, and shared stamp-writing instructions.
+`subagent-gate.sh` verifies role output and matching evidence. Canonical roles
+live in `.claude/agents/`; generated TOML adapters live in `.codex/agents/`.
 
-| Role | Claude Code file | Codex file | Spawned by | Gate | Stamp |
-|---|---|---|---|---|---|
-| Verifier | `agents/verifier.md` | `.codex/agents/verifier.toml` | `reviewing-agent-infrastructure/SKILL.md` | 8 required stamp fields | `agent-infrastructure.stamp.md` |
-| Reviewer | `agents/reviewer.md` | `.codex/agents/reviewer.toml` | `reviewing-code-changes/SKILL.md` | Severity tags + summary | `code-changes.stamp.md` |
-| Tester | `agents/tester.md` | `.codex/agents/tester.toml` | `reviewing-code-changes/SKILL.md` | xcodebuild success | `test-execution.stamp.md` |
+## Infrastructure Boundary
 
-### Parallel Execution Pattern
+Verifier required:
 
-After the main agent completes work, the orchestrating skill spawns applicable subagents **in parallel** (multiple Task calls in one message):
+- `.claude/rules`, skills, hooks, agents, commands, settings;
+- `.claude/references/agent-system-overview.md`;
+- `.agents/skills`, `.codex/hooks`, `.codex/agents`, `.codex/hooks.json`;
+- `.githooks`, `AGENTS.md`, and agent/build workflow scripts.
 
+Verifier not required:
+
+- `architecture-documentation.md`;
+- `ui-test-conventions.md`;
+- capabilities and user flows;
+- runtime state and plans.
+
+## Runtime Evidence
+
+All files below are local and ignored:
+
+| Artifact | Meaning |
+|---|---|
+| `code-changes.manifest.tsv` | Hash per validated product/test file |
+| `code-changes.stamp.md` | Risk, reviewer, result, manifest fingerprint |
+| `test-execution.manifest.tsv` | Hash per tested product/test file |
+| `test-execution.stamp.md` | Run/verify mode, command, result, fingerprint |
+| `agent-infrastructure.stamp.md` | Independent verifier result bound to exact infrastructure contents |
+| `*.scratchpad.json` / `*.hint-hash.txt` | Bounded hook state |
+
+## Adapter Sync
+
+Run:
+
+```bash
+scripts/sync-agent-runtime.sh --write
+scripts/sync-agent-runtime.sh --check
 ```
-# Swift files changed + .claude/ files changed:
-Parallel: reviewer + tester + verifier
 
-# Only Swift files changed:
-Parallel: reviewer + tester
-
-# Only .claude/ files changed:
-Single: verifier
-```
-
-Subagents are spawned via the Task tool with `subagent_type: "<role>"` (e.g. `"reviewer"`, `"tester"`, `"verifier"`).
-
-### Defense in Depth
-
-Two independent layers catch failures:
-1. **`SubagentStop` hook (L5s)** — catches bad subagent output immediately (before main agent sees it)
-2. **`stop` hook (L5)** — catches cases where main agent skips spawning subagents entirely
-
-## References (no enforcement level)
-
-| File | What it contains |
-|---|---|
-| `architecture-documentation.md` | Feature Map, packages, navigation, services, domain models, AppStyle tokens. |
-| `ui-test-conventions.md` | DSL functions, selector patterns, timeout defaults, test templates. |
-| `agent-system-overview.md` | This file — layer map and trigger chains. |
-| `user-flows.md` | Top-down screen map, BottomBar tabs, canonical user flows, modals/sheets — used during feature planning and code review for navigation context. |
-| `capabilities.md` | Bullet inventory of what the user can do today — used to avoid duplicating existing functionality when planning new features. |
-
-## State Files
-
-| File | Written by (Skill) | Read by (Hook) | What it contains |
-|---|---|---|---|
-| `code-changes.stamp.md` | `reviewing-code-changes`, reviewer subagent | `code-validation.sh`, `subagent-gate.sh` | Proof that code validation ran |
-| `code-changes.scratchpad.json` | `code-validation.sh` | `code-validation.sh` | Grind loop state (iteration, diff hash) |
-| `test-execution.stamp.md` | `reviewing-test-quality`, `build-and-test`, tester subagent | `test-execution.sh`, `subagent-gate.sh` | Proof that tests ran |
-| `test-execution.scratchpad.json` | `test-execution.sh` | `test-execution.sh` | Grind loop state (iteration, diff hash) |
-| `agent-infrastructure.stamp.md` | Verifier subagent (spawned by `reviewing-agent-infrastructure`) | `agent-infrastructure.sh`, `subagent-gate.sh` | Proof that infra validation ran. Content-validated: must contain result, verified_by, and 6 checklist fields. |
-| `agent-infrastructure.scratchpad.json` | `agent-infrastructure.sh` | `agent-infrastructure.sh` | Grind loop state (iteration, diff hash) |
-| `agent-infrastructure.log.md` | `reviewing-agent-infrastructure` | — | Cumulative log of agent learnings |
-| `enforcement-audit.hint-hash.txt` | `enforcement-audit.sh` | `enforcement-audit.sh` | Dedup hint for enforcement audit |
-| `test-coverage.hint-hash.txt` | `test-coverage.sh` | `test-coverage.sh` | Dedup hint for test coverage |
-| `ui-state-sync.hint-hash.txt` | `ui-state-sync.sh` | `ui-state-sync.sh` | Dedup hint for ui-state-sync anti-pattern |
-| `ui-state-sync-exception.stamp.md` | (manual + ADR link) | `ui-state-sync.sh`, `.git/hooks/pre-commit` | Override for ui-state-sync-enforcement.mdc rule (valid 24h, must reference ADR) |
-| `duplicate-state.hint-hash.txt` | `duplicate-state.sh` | `duplicate-state.sh` | Dedup hint for duplicate domain-state holders |
-| `predicate-smell.hint-hash.txt` | `predicate-smell.sh` | `predicate-smell.sh` | Dedup hint for SwiftData predicate anti-patterns |
-| `adr-required.hint-hash.txt` | `adr-required.sh` | `adr-required.sh` | Dedup hint for ADR-required structural changes |
-| `adr-exception.stamp.md` | (manual + reason) | `adr-required.sh`, `.git/hooks/pre-commit` | Override for adr-required hook (valid 24h, must include reason) |
+The first generates adapters; the second fails on content drift or stale Codex
+hook files. Product references are not mirrored.

@@ -26,6 +26,7 @@ struct ExerciseFormViewModelTests {
         #expect(sut.editingExercise == nil)
         #expect(sut.selectedIconName.isEmpty)
         #expect(sut.editMode == .full)
+        #expect(sut.executionMode == .standard)
     }
 
     // MARK: - isFormValid
@@ -74,6 +75,7 @@ struct ExerciseFormViewModelTests {
         sut.noSeats = true
         sut.showForm = true
         sut.editMode = .weight
+        sut.executionMode = .bilateral
 
         sut.clearForm()
 
@@ -86,6 +88,7 @@ struct ExerciseFormViewModelTests {
         #expect(sut.editingExercise == nil)
         #expect(sut.editMode == .full)
         #expect(sut.showForm == false)
+        #expect(sut.executionMode == .standard)
     }
 
     // MARK: - toggleForm
@@ -171,6 +174,14 @@ struct ExerciseFormViewModelTests {
         #expect(exercise?.noSeats == true)
     }
 
+    @Test func createExercisePersistsBilateralMode() {
+        let sut = makeSUT()
+        sut.name = "Torso"
+        sut.executionMode = .bilateral
+
+        #expect(sut.createOrUpdateExercise()?.executionMode == .bilateral)
+    }
+
     // MARK: - createOrUpdateExercise (edit existing)
 
     @Test func updateExercisePreservesPropertiesOutsideForm() throws {
@@ -196,6 +207,7 @@ struct ExerciseFormViewModelTests {
         sut.noSeats = false
         sut.selectedIconName = "chestPressIcon"
         sut.selectedCategory = .chest
+        sut.executionMode = .bilateral
 
         let result = try #require(sut.createOrUpdateExercise())
 
@@ -211,6 +223,7 @@ struct ExerciseFormViewModelTests {
         #expect(result.noSeats == false)
         #expect(result.iconName == "chestPressIcon")
         #expect(result.category == .chest)
+        #expect(result.executionMode == .bilateral)
     }
 
     // MARK: - loadExercise
@@ -220,7 +233,9 @@ struct ExerciseFormViewModelTests {
         let exercise = Exercise(
             name: "Bench", weight: 80, reps: 8, sets: 4,
             seatSetting: "5", noSeats: false,
-            iconName: "chestPressIcon", category: .chest
+            iconName: "chestPressIcon",
+            category: .chest,
+            executionMode: .bilateral
         )
 
         sut.loadExercise(exercise, category: .chest)
@@ -234,6 +249,7 @@ struct ExerciseFormViewModelTests {
         #expect(sut.editingExercise?.id == exercise.id)
         #expect(sut.selectedCategory == .chest)
         #expect(sut.selectedIconName == "chestPressIcon")
+        #expect(sut.executionMode == .bilateral)
     }
 
     @Test func loadExerciseWithNilClearsForm() {

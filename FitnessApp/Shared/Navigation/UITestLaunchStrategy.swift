@@ -17,10 +17,12 @@ struct UITestLaunchStrategy: AppLaunchStrategy {
     /// via `@Query`, so the navigation arg and the persisted record must
     /// agree, and both phases of the launch pipeline must see the same id.
     let seededExerciseId: UUID?
+    let seededAdditionalExerciseIds: [UUID]
 
     init(config: UITestLaunchConfig) {
         self.config = config
         seededExerciseId = config.exerciseName == nil ? nil : UUID()
+        seededAdditionalExerciseIds = (config.additionalExercises ?? []).map { _ in UUID() }
     }
 
     func prepare(workoutService: WorkoutStoring) {
@@ -35,11 +37,13 @@ struct UITestLaunchStrategy: AppLaunchStrategy {
             // Navigation tests start at Home with a concrete exercise fixture.
             // Keep that distinct from the grid-geometry fixture below so the
             // test receives a single, deterministic workout and exercise.
-            if let id = seededExerciseId,
-               let exercise = makeFixtureExercise(id: id) {
+            if let exercise = makePrimaryFixtureExercise() {
                 let workout = Workout(name: "Test Workout")
                 workoutService.setCurrentWorkout(workout)
-                seedFixture(workout: workout, exercise: exercise)
+                seedFixture(
+                    workout: workout,
+                    exercises: [exercise] + makeAdditionalFixtureExercises()
+                )
                 return
             }
 
@@ -84,9 +88,11 @@ struct UITestLaunchStrategy: AppLaunchStrategy {
         // `WorkoutModel` row is never persisted, so the management service
         // saves the exercise with `workoutId == nil` and most production
         // queries won't see it.
-        guard let id = seededExerciseId,
-              let exercise = makeFixtureExercise(id: id) else { return }
-        seedFixture(workout: workout, exercise: exercise)
+        guard let exercise = makePrimaryFixtureExercise() else { return }
+        seedFixture(
+            workout: workout,
+            exercises: [exercise] + makeAdditionalFixtureExercises()
+        )
     }
 
     func initialNavigationStack(workoutService: WorkoutStoring) -> [NavigationDestination] {
@@ -117,7 +123,8 @@ struct UITestLaunchStrategy: AppLaunchStrategy {
             .forEach { $0.layer.speed = 100 }
     }
 
-    private func makeFixtureExercise(id: UUID) -> Exercise? {
+    private func makePrimaryFixtureExercise() -> Exercise? {
+        guard let id = seededExerciseId else { return nil }
         guard let name = config.exerciseName,
               let weight = config.weight,
               let reps = config.reps,
@@ -129,13 +136,38 @@ struct UITestLaunchStrategy: AppLaunchStrategy {
             id: id,
             name: name, weight: weight, reps: reps, sets: sets,
             noSeats: config.noSeats ?? true,
+            isCompleted: config.isCompleted ?? false,
             iconName: config.icon ?? "dumbbell",
-            category: category
+            category: category,
+            executionMode: ExerciseExecutionMode(
+                rawValue: config.executionMode ?? ""
+            ) ?? .standard
         )
     }
 
+    private func makeAdditionalFixtureExercises() -> [Exercise] {
+        zip(seededAdditionalExerciseIds, config.additionalExercises ?? []).compactMap {
+            id, fixture in
+            guard let category = MuscleCategoryGroup(rawValue: fixture.category) else {
+                return nil
+            }
+            return Exercise(
+                id: id,
+                name: fixture.exerciseName,
+                weight: fixture.weight,
+                reps: fixture.reps,
+                sets: fixture.sets,
+                noSeats: fixture.noSeats,
+                isCompleted: fixture.isCompleted,
+                iconName: fixture.icon,
+                category: category,
+                executionMode: ExerciseExecutionMode(rawValue: fixture.executionMode) ?? .standard
+            )
+        }
+    }
+
     @MainActor
-    private func seedFixture(workout: Workout, exercise: Exercise) {
+    private func seedFixture(workout: Workout, exercises: [Exercise]) {
         let container = Container.shared.modelContainer()
         let context = ModelContext(container)
 
@@ -149,29 +181,66 @@ struct UITestLaunchStrategy: AppLaunchStrategy {
         )
         context.insert(workoutModel)
 
-        let exerciseModel = ExerciseModel(
-            id: exercise.id,
-            workoutId: workout.id,
-            name: exercise.name,
-            weight: exercise.weight,
-            reps: exercise.reps,
-            sets: exercise.sets,
-            seatSetting: exercise.seatSetting,
-            noSeats: exercise.noSeats,
-            isCompleted: exercise.isCompleted,
-            iconName: exercise.iconName,
-            category: exercise.category.rawValue,
-            goal: exercise.goal,
-            sortOrder: 0,
-            workout: workoutModel
-        )
-        context.insert(exerciseModel)
+        for (sortOrder, exercise) in exercises.enumerated() {
+            let exerciseModel = ExerciseModel(
+                id: exercise.id,
+                workoutId: workout.id,
+                name: exercise.name,
+                weight: exercise.weight,
+                reps: exercise.reps,
+                sets: exercise.sets,
+                seatSetting: exercise.seatSetting,
+                noSeats: exercise.noSeats,
+                isCompleted: exercise.isCompleted,
+                iconName: exercise.iconName,
+                category: exercise.category.rawValue,
+                goal: exercise.goal,
+                sortOrder: sortOrder,
+                executionModeRaw: exercise.executionMode.rawValue,
+                workout: workoutModel
+            )
+            context.insert(exerciseModel)
+        }
 
         do {
             try context.save()
+            seedAnalyticsHistoryIfRequested(for: exercises.first)
         } catch {
             assertionFailure("Failed to seed UI test fixture: \(error)")
         }
+    }
+
+    @MainActor
+    private func seedAnalyticsHistoryIfRequested(for exercise: Exercise?) {
+        guard config.seedAnalyticsHistory == true,
+              let exercise,
+              let historicalDate = Calendar.current.date(
+                byAdding: .day,
+                value: -1,
+                to: Date()
+              ) else {
+            return
+        }
+
+        let progress = exercise.trainingSteps.map { step in
+            SetProgress(
+                status: .completedDone,
+                currentReps: exercise.reps,
+                weight: exercise.weight,
+                side: step.side,
+                logicalSetIndex: step.logicalSetIndex
+            )
+        }
+        Container.shared.analyticsStorage().save(
+            [
+                AnalyticsEntry(
+                    exerciseId: exercise.id,
+                    date: historicalDate,
+                    setProgress: progress
+                )
+            ],
+            for: exercise.id
+        )
     }
 }
 #endif

@@ -15,6 +15,8 @@ public enum L10n {
     public static let exerciseNamePlaceholder = "e.g. Crunches"
 
     public static let additionalOptionsTitle = "Additional options"
+    public static let bilateralExerciseTitle = "Train left and right"
+    public static let bilateralExerciseSubtitle = "Each set is completed once per side."
 
     public static let seatRequiredTitle = "Seat required"
     public static let seatRequiredSubtitle = "Enable to add one or two seat settings for this exercise."

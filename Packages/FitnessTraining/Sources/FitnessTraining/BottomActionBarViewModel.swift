@@ -8,7 +8,6 @@ public struct BottomActionBarViewModel {
     public let hasActiveExercise: Bool
     public let exercises: [Exercise]
     public let isLastSetCompleted: Bool
-    public let quickDoneModeActive: Bool
     public let quickDoneAllCompleted: Bool
     public let didEditCompleteSet: Bool
     public let didJustEditSet: Bool
@@ -20,7 +19,6 @@ public struct BottomActionBarViewModel {
         hasActiveExercise: Bool,
         exercises: [Exercise],
         isLastSetCompleted: Bool,
-        quickDoneModeActive: Bool,
         quickDoneAllCompleted: Bool,
         didEditCompleteSet: Bool,
         didJustEditSet: Bool
@@ -31,7 +29,6 @@ public struct BottomActionBarViewModel {
         self.hasActiveExercise = hasActiveExercise
         self.exercises = exercises
         self.isLastSetCompleted = isLastSetCompleted
-        self.quickDoneModeActive = quickDoneModeActive
         self.quickDoneAllCompleted = quickDoneAllCompleted
         self.didEditCompleteSet = didEditCompleteSet
         self.didJustEditSet = didJustEditSet
@@ -45,11 +42,12 @@ public struct BottomActionBarViewModel {
     }
 
     public var showStartButton: Bool {
-        hasActiveExercise && !isSetInProgress && !isLastSetCompleted && (currentExercise != nil ? currentSet < (currentExercise?.sets ?? 0) : true)
+        hasActiveExercise && !isSetInProgress && !isLastSetCompleted &&
+            (currentExercise != nil ? currentSet < (currentExercise?.trainingSteps.count ?? 0) : true)
     }
 
     public var showSetControls: Bool {
-        isSetInProgress && hasActiveExercise && !isLastSetCompleted && !quickDoneModeActive
+        isSetInProgress && hasActiveExercise && !isLastSetCompleted
     }
 
     public var showFinishButton: Bool {
@@ -69,7 +67,20 @@ public struct BottomActionBarViewModel {
         if currentSet == 0 && !didJustEditSet {
             return "Start Training"
         } else {
-            return "Start set \(currentSet + 1)"
+            guard let exercise = currentExercise,
+                  currentSet < exercise.trainingSteps.count else {
+                return "Start Training"
+            }
+            let step = exercise.trainingSteps[currentSet]
+            let setNumber = step.logicalSetIndex + 1
+            switch step.side {
+            case .left:
+                return "Start Left \(setNumber)"
+            case .right:
+                return "Start Right \(setNumber)"
+            case nil:
+                return "Start set \(setNumber)"
+            }
         }
     }
 }

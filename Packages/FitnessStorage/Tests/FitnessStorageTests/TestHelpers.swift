@@ -63,13 +63,15 @@ enum TestHelpers {
         isCompleted: Bool = false,
         category: MuscleCategoryGroup = .chest,
         iconName: String? = nil,
-        goal: Double? = nil
+        goal: Double? = nil,
+        executionMode: ExerciseExecutionMode = .standard
     ) -> Exercise {
         let icon = iconName ?? category.defaultIconName
         return Exercise(
             name: name, weight: weight, reps: reps, sets: sets,
             seatSetting: seatSetting, noSeats: noSeats, isCompleted: isCompleted,
-            iconName: icon, category: category, goal: goal
+            iconName: icon, category: category, goal: goal,
+            executionMode: executionMode
         )
     }
 

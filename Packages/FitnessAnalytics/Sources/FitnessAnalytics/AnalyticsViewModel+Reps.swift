@@ -113,7 +113,10 @@ extension AnalyticsViewModel {
             guard !allSets.isEmpty else { return nil }
             let maxReps = allSets.map(\.currentReps).max() ?? 0
             let totalReps = allSets.reduce(0) { $0 + $1.currentReps }
-            let setsReps = "\(allSets.count)×\(maxReps)"
+            let setsReps = BilateralSetGrouping.setRepsLabel(
+                forEntries: dayEntries.map(\.setProgress),
+                reps: maxReps
+            )
             return DaySession(date: day, maxReps: maxReps, setsReps: setsReps, totalReps: totalReps)
         }
         .sorted(by: { $0.date < $1.date })

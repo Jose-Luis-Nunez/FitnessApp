@@ -10,7 +10,7 @@ description: >-
 
 # Updating Existing UI Tests
 
-For shared conventions (DSL, constraints, template, naming) see [ui-test-conventions.md](../../../.claude/references/ui-test-conventions.md).
+For shared conventions (DSL, constraints, template, naming) see `.claude/references/ui-test-conventions.md`.
 
 ## Workflow
 
@@ -18,10 +18,13 @@ For shared conventions (DSL, constraints, template, naming) see [ui-test-convent
 
 Perform two analyses on the existing test:
 
-1. **Convention review** — check the test against the **Review Checklist** in [ui-test-conventions.md](../../../.claude/references/ui-test-conventions.md) (raw API usage, hardcoded strings, structure issues, selector mismatches)
+1. **Convention review** — check the test against the **Review Checklist** in `.claude/references/ui-test-conventions.md` (raw API usage, hardcoded strings, structure issues, selector mismatches)
 2. **Production scan** — read the test, extract all test ID references, find the production Views containing those identifiers. Check whether identifiers still exist in production `enum AID` constants, find new untested interactive elements, and flag stale selectors
 
-If the test fails on the first run, follow [debugging-ui-tests/SKILL.md](../debugging-ui-tests/SKILL.md). The diagnosis order in [ui-test-conventions.md § Diagnosing a Failing Selector](../../../.claude/references/ui-test-conventions.md#diagnosing-a-failing-selector) (use-case flow + selector sequence → selector present in tree? → identifier match → set + layer check → timing) is mandatory before applying any fix from Step 2.
+If the test fails on the first run, follow `debugging-ui-tests`. The diagnosis
+order in `.claude/references/ui-test-conventions.md` (use-case flow + selector
+sequence → selector present in tree? → identifier match → set + layer check →
+timing) is mandatory before applying any fix from Step 2.
 
 Apply all fixes in Step 2.
 
@@ -40,7 +43,7 @@ Based on both agent reports, apply fixes:
 
 ### Step 3 — Review the Result
 
-Review the updated test file against the **Review Checklist** in [ui-test-conventions.md](../../../.claude/references/ui-test-conventions.md). Fix any remaining violations before considering the update done.
+Review the updated test file against the **Review Checklist** in `.claude/references/ui-test-conventions.md`. Fix any remaining violations before considering the update done.
 
 ## Documentation Sync
 

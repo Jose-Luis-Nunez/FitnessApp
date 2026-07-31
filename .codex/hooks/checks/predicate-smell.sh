@@ -1,10 +1,10 @@
 #!/bin/bash
 # Check 9: SwiftData predicate anti-patterns detected in working tree?
-# Pattern: Hint — one-time suggestion, no grind loop.
+# Pattern: non-blocking one-time hint.
 # Env: STATE_DIR, all_swift, HAS_QUESTION
 #
 # Heuristic flags only — final judgement is the reviewer subagent's
-# (see reviewing-code-changes/SKILL.md §14).
+# (see swiftdata-review.md).
 
 if [ "$HAS_QUESTION" -gt 0 ]; then
   exit 0
@@ -72,6 +72,6 @@ fi
 echo "$CUR_HASH" > "$HINT_HASH_FILE"
 
 cat <<EOF
-[Hint] reviewing-code-changes §14 — SwiftData predicate anti-patterns in diff:${WARNINGS}
-See .claude/skills/reviewing-code-changes/SKILL.md §14.
+[Hint] SwiftData predicate anti-patterns in diff:${WARNINGS}
+See .claude/skills/reviewing-code-changes/references/swiftdata-review.md.
 EOF

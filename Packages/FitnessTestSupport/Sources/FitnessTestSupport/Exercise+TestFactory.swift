@@ -13,7 +13,8 @@ public func makeExercise(
     category: MuscleCategoryGroup = .arms,
     iconName: String? = nil,
     goal: Double? = nil,
-    isActive: Bool = true
+    isActive: Bool = true,
+    executionMode: ExerciseExecutionMode = .standard
 ) -> Exercise {
     let icon = iconName ?? category.defaultIconName
     return Exercise(
@@ -28,6 +29,7 @@ public func makeExercise(
         iconName: icon,
         category: category,
         goal: goal,
-        isActive: isActive
+        isActive: isActive,
+        executionMode: executionMode
     )
 }

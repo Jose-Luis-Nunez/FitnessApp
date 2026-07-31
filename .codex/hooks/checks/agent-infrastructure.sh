@@ -1,33 +1,50 @@
 #!/bin/bash
-# Check 6: canonical .claude/ or Codex runtime-adapter files changed — is the
-# agent-infrastructure stamp fresh + valid?
-# Pattern: Grind Loop with stamp content validation (Verifier Subagent Pattern)
-# Env: CONTENT, STATE_DIR, HOOKS_DIR, MAX_GRIND_ITERATIONS, HAS_QUESTION
-#
-# The stamp must contain required fields (result, verified_by, checklist items).
-# A stamp without these fields is treated as missing — the grind loop fires.
+# Executable agent infrastructure changed — does an independent verifier stamp
+# match the exact current contents?
+# Env: STATE_DIR, HOOKS_DIR, HAS_QUESTION
 
-source "$HOOKS_DIR/lib/grind-loop.sh"
+source "$HOOKS_DIR/lib/agent-infrastructure-evidence.sh"
 
-# Exclude runtime state and descriptive plan files (plans are not infrastructure).
-EXCLUDE_RE='/state/|^\.claude/plans/'
-INFRA_RE='^(\.claude/|\.codex/(hooks|agents)/|\.agents/skills/)'
-changed_cursor=$(git diff --name-only HEAD 2>/dev/null | grep -E "$INFRA_RE" | grep -Ev "$EXCLUDE_RE" || true)
-new_cursor=$(git ls-files --others --exclude-standard 2>/dev/null | grep -E "$INFRA_RE" | grep -Ev "$EXCLUDE_RE" || true)
-all_cursor=$(printf '%s\n%s' "$changed_cursor" "$new_cursor" | grep -v '^$' || true)
+all_cursor=$(agent_infrastructure_paths)
 
-if [ -z "$all_cursor" ]; then
+if [ -z "$all_cursor" ] || [ "$HAS_QUESTION" -gt 0 ]; then
   exit 0
 fi
 
 cursor_count=$(echo "$all_cursor" | wc -l | tr -d ' ')
-DIFF_HASH=$(echo "$all_cursor" | sort | shasum -a 256 | cut -d' ' -f1)
+fingerprint=$(agent_infrastructure_fingerprint)
 cursor_file_list=$(echo "$all_cursor" | head -10 | tr '\n' ', ' | sed 's/,$//')
+stamp="$STATE_DIR/agent-infrastructure.stamp.md"
 
-run_grind_loop \
-  "$STATE_DIR/agent-infrastructure.scratchpad.json" \
-  "$STATE_DIR/agent-infrastructure.stamp.md" \
-  "$DIFF_HASH" \
-  "Agent Infrastructure Validation Report|verified_by: verifier-subagent" \
-  "${cursor_count} agent-infrastructure files changed but no agent-infrastructure validation found. Run the reviewing-agent-infrastructure skill checklist, then spawn the Verifier subagent. The stamp must contain: result, verified_by, and all 6 checklist fields. Changed files: ${cursor_file_list}." \
-  "result:" "verified_by:" "reference_integrity:" "overview_sync:" "description_consistency:" "handoff_links:" "hook_alignment:" "name_consistency:"
+required_fields=(
+  "result:[[:space:]]*PASS"
+  "verified_by:[[:space:]]*verifier-subagent"
+  "source_fingerprint:[[:space:]]*${fingerprint}"
+  "reference_integrity:[[:space:]]*PASS"
+  "overview_sync:[[:space:]]*PASS"
+  "description_consistency:[[:space:]]*PASS"
+  "handoff_links:[[:space:]]*PASS"
+  "hook_alignment:[[:space:]]*PASS"
+  "name_consistency:[[:space:]]*PASS"
+)
+
+if [ -f "$stamp" ]; then
+  valid=true
+  for field in "${required_fields[@]}"; do
+    if ! grep -qE "$field" "$stamp"; then
+      valid=false
+      break
+    fi
+  done
+  if [ "$valid" = true ]; then
+    exit 0
+  fi
+fi
+
+cat <<EOF
+[Agent Infrastructure Validation Required] ${cursor_count} executable
+agent-infrastructure files changed without an independent PASS stamp for their
+exact current contents. Run reviewing-agent-infrastructure, publish its six-part
+report, then spawn the fresh verifier. Changed files: ${cursor_file_list}.
+Expected source_fingerprint: ${fingerprint}
+EOF

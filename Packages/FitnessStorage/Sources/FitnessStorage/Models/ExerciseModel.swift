@@ -60,6 +60,9 @@ public final class ExerciseModel {
     /// existing rows. `nil` lets the lightweight V3→V4 step succeed without a
     /// backfill — an absent value is read as active via `isActive ?? true`.
     @_spi(PersistenceUI) public var isActive: Bool?
+    /// `nil` represents an older/imported standard exercise; new writes persist
+    /// an `ExerciseExecutionMode.rawValue`.
+    @_spi(PersistenceUI) public var executionModeRaw: String?
 
     @_spi(PersistenceUI) public var workout: WorkoutModel?
 
@@ -78,6 +81,7 @@ public final class ExerciseModel {
         goal: Double? = nil,
         sortOrder: Int = 0,
         isActive: Bool? = nil,
+        executionModeRaw: String? = nil,
         workout: WorkoutModel? = nil
     ) {
         self.id = id
@@ -94,6 +98,7 @@ public final class ExerciseModel {
         self.goal = goal
         self.sortOrder = sortOrder
         self.isActive = isActive
+        self.executionModeRaw = executionModeRaw
         self.workout = workout
     }
 }
@@ -112,7 +117,8 @@ extension ExerciseModel {
             iconName: iconName,
             category: MuscleCategoryGroup(rawValue: category) ?? .arms,
             goal: goal,
-            isActive: isActive ?? true
+            isActive: isActive ?? true,
+            executionMode: ExerciseExecutionMode(rawValue: executionModeRaw ?? "") ?? .standard
         )
     }
 
@@ -132,6 +138,7 @@ extension ExerciseModel {
             goal: exercise.goal,
             sortOrder: sortOrder,
             isActive: exercise.isActive,
+            executionModeRaw: exercise.executionMode.rawValue,
             workout: workout
         )
     }
@@ -155,5 +162,6 @@ extension ExerciseModel {
         category = exercise.category.rawValue
         goal = exercise.goal
         isActive = exercise.isActive
+        executionModeRaw = exercise.executionMode.rawValue
     }
 }

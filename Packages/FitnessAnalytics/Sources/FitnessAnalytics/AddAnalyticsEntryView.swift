@@ -10,25 +10,13 @@ public struct AddAnalyticsEntryView: View {
     public var onSave: (AnalyticsEntry) -> Void
     public var onCancel: () -> Void
 
-    @State private var sets: [SetProgressInput] = []
+    @State private var formState: AnalyticsEntryFormState
     @State private var editingSetIndex: Int?
     @State private var editingField: EditingField?
     @State private var showDecimal: Bool = false
 
     private enum EditingField {
         case reps, weight
-    }
-
-    public struct SetProgressInput: Identifiable {
-        public let id: UUID
-        public var weight: Double
-        public var reps: Int
-
-        public init(id: UUID = UUID(), weight: Double, reps: Int) {
-            self.id = id
-            self.weight = weight
-            self.reps = reps
-        }
     }
 
     private let repsRange = 1...99
@@ -55,21 +43,16 @@ public struct AddAnalyticsEntryView: View {
         self.onSave = onSave
         self.onCancel = onCancel
 
-        if let existingEntry = existingEntry {
-            _sets = State(initialValue: existingEntry.setProgress.map { setProgress in
-                SetProgressInput(weight: setProgress.weight, reps: setProgress.currentReps)
-            })
-        } else {
-            _sets = State(initialValue: [
-                SetProgressInput(weight: exercise.weight, reps: exercise.reps)
-            ])
-        }
+        _formState = State(
+            initialValue: AnalyticsEntryFormState(
+                exercise: exercise,
+                existingEntry: existingEntry
+            )
+        )
     }
 
     private var isSaveDisabled: Bool {
-        exercise.hasWeight
-            ? sets.contains(where: { $0.weight == 0 || $0.reps == 0 })
-            : sets.contains(where: { $0.reps == 0 })
+        formState.isSaveDisabled(hasWeight: exercise.hasWeight)
     }
 
     private var isEditing: Bool { editingSetIndex != nil && editingField != nil }
@@ -85,17 +68,7 @@ public struct AddAnalyticsEntryView: View {
     }
 
     private func saveAndDismiss() {
-        let entry = AnalyticsEntry(
-            exerciseId: exercise.id,
-            date: date,
-            setProgress: sets.map { input in
-                SetProgress(
-                    status: .completedDone,
-                    currentReps: input.reps,
-                    weight: input.weight
-                )
-            }
-        )
+        let entry = formState.makeEntry(exerciseId: exercise.id, date: date)
         onSave(entry)
         isPresented = false
     }
@@ -125,7 +98,8 @@ public struct AddAnalyticsEntryView: View {
                     ExercisePickerActionButtons(
                         saveDisabled: isSaveDisabled,
                         onCancel: { dismiss() },
-                        onSave: { saveAndDismiss() }
+                        onSave: { saveAndDismiss() },
+                        saveAccessibilityIdentifier: FitnessCore.AnalyticsIDs.entrySaveButton
                     )
                 }
             },
@@ -138,7 +112,7 @@ public struct AddAnalyticsEntryView: View {
             }
         )
         .onAppear {
-            if sets.contains(where: { $0.weight != floor($0.weight) }) {
+            if formState.sets.contains(where: { $0.weight != floor($0.weight) }) {
                 showDecimal = true
             }
         }
@@ -156,7 +130,12 @@ public struct AddAnalyticsEntryView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.bottom, AppStyle.Padding.titleTop)
 
-            HStack(spacing: AppStyle.Layout.numberPadSpacing) {
+            HStack(spacing: AppStyle.Layout.analyticsInputSpacing) {
+                if formState.isBilateral {
+                    Color.clear
+                        .frame(width: AppStyle.Layout.analyticsInputSideWidth)
+                }
+
                 if exercise.hasWeight {
                     Text("Weight")
                         .font(AppStyle.Font.sheetSectionLabel)
@@ -169,61 +148,27 @@ public struct AddAnalyticsEntryView: View {
                     .foregroundColor(textColor)
                     .frame(maxWidth: .infinity, alignment: .center)
 
-                if sets.count > 1 {
-                    Color.clear.frame(width: 28)
+                if formState.isBilateral || formState.sets.count > 1 {
+                    Color.clear
+                        .frame(width: AppStyle.Layout.analyticsInputActionWidth)
                 }
             }
             .padding(.bottom, 4)
 
             ScrollView {
                 VStack(spacing: 0) {
-                    ForEach(Array(sets.enumerated()), id: \.element.id) { index, set in
-                        HStack(spacing: AppStyle.Layout.numberPadSpacing) {
-                            if exercise.hasWeight {
-                                Button(action: {
-                                    editingSetIndex = index
-                                    editingField = .weight
-                                }) {
-                                    Text(WeightFormatter.format(set.weight))
-                                        .font(AppStyle.Font.sectionTitle)
-                                        .foregroundColor(textColor)
-                                        .frame(maxWidth: .infinity, minHeight: 48)
-                                        .background(AppStyle.Color.white.opacity(AppStyle.Opacity.subtleBackground))
-                                        .cornerRadius(AppStyle.CornerRadius.tile)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile)
-                                                .stroke(AppStyle.Color.white.opacity(AppStyle.Opacity.subtleStroke), lineWidth: 1)
-                                        )
-                                }
-                            }
-
-                            Button(action: {
-                                editingSetIndex = index
-                                editingField = .reps
-                            }) {
-                                Text("\(set.reps)")
-                                    .font(AppStyle.Font.sectionTitle)
-                                    .foregroundColor(textColor)
-                                    .frame(maxWidth: .infinity, minHeight: 48)
-                                    .background(AppStyle.Color.white.opacity(AppStyle.Opacity.subtleBackground))
-                                    .cornerRadius(AppStyle.CornerRadius.tile)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile)
-                                            .stroke(AppStyle.Color.white.opacity(AppStyle.Opacity.subtleStroke), lineWidth: 1)
-                                    )
-                            }
-
-                            if sets.count > 1 {
-                                Button(action: {
-                                    _ = sets.remove(at: index)
-                                }) {
-                                    Image(systemName: "minus.circle.fill")
-                                        .foregroundColor(AppStyle.Color.greenGlow)
-                                        .font(AppStyle.Font.numberPadSymbol)
-                                }
-                            }
+                    if formState.isBilateral {
+                        ForEach(formState.logicalSetIndices, id: \.self) { logicalIndex in
+                            bilateralInputGroup(logicalIndex: logicalIndex)
                         }
-                        .padding(.vertical, 4)
+                    } else {
+                        ForEach(Array(formState.sets.enumerated()), id: \.element.id) { index, _ in
+                            inputRow(
+                                index: index,
+                                side: nil,
+                                showsDelete: formState.sets.count > 1
+                            )
+                        }
                     }
                 }
             }
@@ -234,7 +179,10 @@ public struct AddAnalyticsEntryView: View {
                 HStack {
                     Spacer()
                     Button(action: {
-                        sets.append(SetProgressInput(weight: exercise.weight, reps: exercise.reps))
+                        formState.appendSet(
+                            defaultWeight: exercise.weight,
+                            defaultReps: exercise.reps
+                        )
                     }) {
                         HStack {
                             Image(systemName: "plus.circle.fill")
@@ -243,11 +191,120 @@ public struct AddAnalyticsEntryView: View {
                         .foregroundColor(AppStyle.Color.greenGlow)
                         .padding(.vertical, 6)
                     }
+                    .accessibilityIdentifier(AnalyticsIDs.entryAddSetButton)
                 }
                 .padding(.bottom, AppStyle.Layout.sheetContentBottomPad)
             }
         }
         .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func bilateralInputGroup(logicalIndex: Int) -> some View {
+        VStack(alignment: .leading, spacing: AppStyle.Layout.bilateralColumnSpacing) {
+            HStack {
+                Text("Set \(logicalIndex + 1)")
+                    .font(AppStyle.Font.sectionHeadline)
+                    .foregroundColor(textColor)
+                Spacer()
+                if formState.logicalSetIndices.count > 1 {
+                    Button {
+                        formState.removeLogicalSet(at: logicalIndex)
+                    } label: {
+                        Image(systemName: "minus.circle.fill")
+                            .foregroundColor(AppStyle.Color.greenGlow)
+                            .font(AppStyle.Font.numberPadSymbol)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            ForEach(ExerciseSide.allCases, id: \.self) { side in
+                if let index = formState.index(
+                    logicalSetIndex: logicalIndex,
+                    side: side
+                ) {
+                    inputRow(index: index, side: side, showsDelete: false)
+                }
+            }
+        }
+        .padding(.vertical, AppStyle.Padding.cardVertical)
+    }
+
+    private func inputRow(
+        index: Int,
+        side: ExerciseSide?,
+        showsDelete: Bool
+    ) -> some View {
+        HStack(spacing: AppStyle.Layout.analyticsInputSpacing) {
+            if let side {
+                Text(side == .left ? "L" : "R")
+                    .font(AppStyle.Font.sectionHeadline)
+                    .foregroundColor(AppStyle.Color.greenGlow)
+                    .frame(width: AppStyle.Layout.analyticsInputSideWidth)
+            }
+
+            if exercise.hasWeight {
+                Button {
+                    editingSetIndex = index
+                    editingField = .weight
+                } label: {
+                    inputTile(WeightFormatter.displayWeight(formState.sets[index].weight))
+                }
+                .accessibilityIdentifier(
+                    FitnessCore.AnalyticsIDs.entryWeightField(
+                        logicalSet: formState.sets[index].logicalSetIndex ?? index,
+                        side: side
+                    )
+                )
+            }
+
+            Button {
+                editingSetIndex = index
+                editingField = .reps
+            } label: {
+                inputTile("\(formState.sets[index].reps)")
+            }
+            .accessibilityIdentifier(
+                FitnessCore.AnalyticsIDs.entryRepsField(
+                    logicalSet: formState.sets[index].logicalSetIndex ?? index,
+                    side: side
+                )
+            )
+
+            if showsDelete {
+                Button {
+                    formState.removePhysicalSet(at: index)
+                } label: {
+                    Image(systemName: "minus.circle.fill")
+                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .font(AppStyle.Font.numberPadSymbol)
+                }
+                .buttonStyle(.plain)
+                .frame(width: AppStyle.Layout.analyticsInputActionWidth)
+            } else if formState.isBilateral {
+                Color.clear
+                    .frame(width: AppStyle.Layout.analyticsInputActionWidth)
+            }
+        }
+        .padding(.vertical, AppStyle.Layout.bilateralColumnSpacing)
+    }
+
+    private func inputTile(_ value: String) -> some View {
+        Text(value)
+            .font(AppStyle.Font.sectionTitle)
+            .foregroundColor(textColor)
+            .lineLimit(1)
+            .minimumScaleFactor(AppStyle.Layout.analyticsInputMinimumScaleFactor)
+            .frame(maxWidth: .infinity, minHeight: AppStyle.Layout.minimumTapTargetSize)
+            .background(AppStyle.Color.white.opacity(AppStyle.Opacity.subtleBackground))
+            .cornerRadius(AppStyle.CornerRadius.tile)
+            .overlay(
+                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile)
+                    .stroke(
+                        AppStyle.Color.white.opacity(AppStyle.Opacity.subtleStroke),
+                        lineWidth: 1
+                    )
+            )
     }
 
     // MARK: - Wheel Picker Content
@@ -278,8 +335,8 @@ public struct AddAnalyticsEntryView: View {
         switch field {
         case .reps:
             Picker("Reps", selection: Binding(
-                get: { sets[index].reps },
-                set: { sets[index].reps = $0 }
+                get: { formState.sets[index].reps },
+                set: { formState.sets[index].reps = $0 }
             )) {
                 ForEach(repsRange, id: \.self) { value in
                     Text("\(value)").tag(value).foregroundColor(pickerColor)
@@ -296,8 +353,12 @@ public struct AddAnalyticsEntryView: View {
 
         case .weight:
             Picker("Weight", selection: Binding(
-                get: { WeightFormatter.format(sets[index].weight) },
-                set: { if let w = WeightFormatter.parse($0) { sets[index].weight = w } }
+                get: { WeightFormatter.format(formState.sets[index].weight) },
+                set: {
+                    if let weight = WeightFormatter.parse($0) {
+                        formState.sets[index].weight = weight
+                    }
+                }
             )) {
                 ForEach(weightOptions, id: \.self) { value in
                     Text("\(value) kg").tag(value).foregroundColor(pickerColor)

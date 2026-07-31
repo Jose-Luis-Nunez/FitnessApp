@@ -27,6 +27,12 @@ public enum TrainingIDs {
 
 public enum ExerciseIDs {
     public static let nameLabel = "id_label_exercise_name"
+    public static let nameField = "id_exercise_name_field"
+    public static let fullEditContinueButton = "id_exercise_full_continue"
+    public static let fullEditSaveButton = "id_exercise_full_save"
+    public static let bilateralToggle = "id_exercise_bilateral_toggle"
+    public static let bodyweightToggle = "id_exercise_bodyweight_toggle"
+    public static let decimalWeightToggle = "id_exercise_decimal_weight_toggle"
 }
 
 public enum WorkoutIDs {
@@ -68,4 +74,34 @@ public enum ExerciseCardIDs {
     /// mode is active.
     public static func selectionToggle(_ id: UUID) -> String { "id_card_selection_toggle_\(id.uuidString)" }
     public static let selectionTogglePrefix = "id_card_selection_toggle_"
+
+    public static func analytics(_ id: UUID) -> String {
+        "id_card_analytics_\(id.uuidString)"
+    }
+    public static let analyticsPrefix = "id_card_analytics_"
+}
+
+public enum AnalyticsIDs {
+    public static let screen = "id_analytics_screen"
+    public static let addDataButton = "id_analytics_add_data"
+    public static let entryAddSetButton = "id_analytics_entry_add_set"
+    public static let entrySaveButton = "id_analytics_entry_save"
+
+    public static func entryWeightField(
+        logicalSet index: Int,
+        side: ExerciseSide?
+    ) -> String {
+        "id_analytics_entry_weight_\(index)_\(side?.rawValue ?? "standard")"
+    }
+
+    public static func entryRepsField(
+        logicalSet index: Int,
+        side: ExerciseSide?
+    ) -> String {
+        "id_analytics_entry_reps_\(index)_\(side?.rawValue ?? "standard")"
+    }
+
+    public static func bilateralResult(logicalSet index: Int, side: ExerciseSide) -> String {
+        "id_analytics_set_\(index)_\(side.rawValue)"
+    }
 }

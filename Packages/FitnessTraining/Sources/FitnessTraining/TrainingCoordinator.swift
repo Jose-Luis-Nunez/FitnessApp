@@ -357,7 +357,6 @@ public final class TrainingCoordinator {
             hasActiveExercise: hasActiveExercise,
             exercises: exercises,
             isLastSetCompleted: activeSetViewModel.isLastSetCompleted,
-            quickDoneModeActive: activeSetViewModel.quickDoneModeActive,
             quickDoneAllCompleted: activeSetViewModel.quickDoneAllCompleted,
             didEditCompleteSet: activeSetViewModel.didEditCompleteSet,
             didJustEditSet: activeSetViewModel.didJustEditSet
@@ -370,7 +369,7 @@ public final class TrainingCoordinator {
                 guard let self = self else { return }
                 guard let exercise = self.activeSetViewModel.currentExercise else { return }
 
-                guard self.activeSetViewModel.currentSet < exercise.sets else {
+                guard self.activeSetViewModel.currentSet < exercise.trainingSteps.count else {
                     return
                 }
 

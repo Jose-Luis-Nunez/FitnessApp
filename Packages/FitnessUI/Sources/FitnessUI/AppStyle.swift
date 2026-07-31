@@ -70,6 +70,27 @@ public enum AppStyle {
 
         public static let completedBarWidth: CGFloat = 8
         public static let setRowBadgeSize: CGFloat = 26
+        public static let setRowChipHorizontalPadding: CGFloat = 8
+        public static let bilateralSideHeaderSize: CGFloat = 42
+        public static let bilateralColumnSpacing: CGFloat = 4
+        public static let bilateralMetricSpacingTight: CGFloat = 2
+        public static let bilateralMetricSpacingCompact: CGFloat = 4
+        public static let bilateralMetricSpacingComfortable: CGFloat = 8
+        public static let bilateralPairSpacingTight: CGFloat = 4
+        public static let bilateralPairSpacingCompact: CGFloat = 8
+        public static let bilateralPairSpacingComfortable: CGFloat = 12
+        public static let bilateralMetricChipHorizontalPaddingTight: CGFloat = 2
+        public static let bilateralMetricChipHorizontalPadding: CGFloat = 4
+        public static let bilateralTimerMinHeight: CGFloat = 170
+        public static let bilateralRepsChipContentMinWidth: CGFloat = 28
+        public static let bilateralMetricMinimumScaleFactor: CGFloat = 0.65
+        public static let analyticsInputActionWidth: CGFloat = 28
+        public static let analyticsInputSideWidth: CGFloat = 32
+        public static let analyticsInputSpacing: CGFloat = 8
+        public static let analyticsInputMinimumScaleFactor: CGFloat = 0.75
+        public static let bilateralAnalyticsMinimumScaleFactor: CGFloat = 0.7
+        public static let bilateralAnalyticsRowHeight: CGFloat = 122
+        public static let bilateralHeaderStrokeWidth: CGFloat = 2
         public static let analyticsImageSize: CGFloat = 60
         /// Width of the seat-arrows glyph on the idle card (height comes from `idleMetricGlyphHeight`).
         public static let seatIconSize: CGFloat = 26
@@ -100,8 +121,6 @@ public enum AppStyle {
         /// Hairline (0.5) so the separators read as fine guides rather than
         /// heavy dividers between values.
         public static let separatorWidth: CGFloat = 0.5
-        public static let doneButtonWidth: CGFloat = 80
-        public static let doneButtonHeight: CGFloat = 28
         public static let profileCardMinHeight: CGFloat = 100
         /// Unified minimum height for profile cards when collapsed so Nickname,
         /// Body Details, BMI and Tram header rows render at the same size.
@@ -200,6 +219,8 @@ public enum AppStyle {
         public static let idleCardTitle = SwiftUI.Font.system(size: 16, weight: .semibold)
         public static let regularChip = SwiftUI.Font.system(size: 16, weight: .semibold)
         public static let largeChip = SwiftUI.Font.system(size: 24, weight: .semibold)
+        public static let bilateralSideHeader = SwiftUI.Font.system(size: 22, weight: .medium)
+        public static let trainingTimerLarge = SwiftUI.Font.system(size: 36, weight: .bold)
         public static let defaultFont = SwiftUI.Font.system(size: 12, weight: .semibold)
         public static let bottomBarButtons = SwiftUI.Font.system(size: 16, weight: .semibold)
 

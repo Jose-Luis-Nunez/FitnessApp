@@ -5,7 +5,7 @@ A quick introduction; details live in the versioned `.claude/` files.
 ## Conventions and Architecture
 
 - **Project rules (binding):** `.claude/rules/` — among others, Swift architecture, AppStyle, Docs-Sync, Build & Test, UI-State-Sync.
-- **Structure inventory (Feature Map, Services, Models, Navigation, Shared Components):** `.claude/references/architecture-documentation.md` — **keep up to date** on structural Swift/design changes (for triggers see the `architecture-documentation-sync.mdc` rule and the `reviewing-code-changes` skill, section "Architecture Sync").
+- **Structure inventory (Feature Map, Services, Models, Navigation, Shared Components):** `.claude/references/architecture-documentation.md` — update only the relevant section for public/structural changes; do not load the full file for local work.
 - **Workflows:** `.claude/skills/` (one `SKILL.md` per skill).
 - **Subagents:** `.claude/agents/` (reviewer, tester, verifier — via `Task(subagent_type: "<role>", …)`).
 - **Slash commands:** `.claude/commands/` (e.g. `/validate`).
@@ -18,14 +18,15 @@ A quick introduction; details live in the versioned `.claude/` files.
 - Open the project: `FitnessApp.xcodeproj`
 - Scheme: **FitnessApp** (shared under `FitnessApp.xcodeproj/xcshareddata/xcschemes/`)
 
-Example via the command line (adjust the simulator if needed):
+Package tests use the pinned toolchain through:
 
 ```bash
-xcodebuild -scheme FitnessApp -destination 'platform=iOS Simulator,name=iPhone 16' build
-xcodebuild -scheme FitnessApp -destination 'platform=iOS Simulator,name=iPhone 16' test
+scripts/test-affected-packages.sh FitnessTraining
 ```
 
-Full commands including `DEVELOPER_DIR` setup and package tests: see `.claude/rules/build-and-test.mdc`.
+The minimal non-negotiable Xcode settings live in
+`.claude/rules/build-and-test.mdc`. Validation is risk-based and content-bound;
+see `.claude/references/agent-system-overview.md`.
 
 ## What you do **not** have to do
 

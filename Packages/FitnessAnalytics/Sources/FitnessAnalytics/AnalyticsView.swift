@@ -36,6 +36,7 @@ public struct AnalyticsView: View {
                 goalSetterOverlay
             }
         }
+        .accessibilityIdentifier(AnalyticsIDs.screen)
     }
 
     private func mainContent(geometry: GeometryProxy) -> some View {
@@ -256,6 +257,9 @@ public struct AnalyticsView: View {
                             Text("Add data")
                                 .font(.body)
                                 .fontWeight(.bold)
+                                .accessibilityIdentifier(
+                                    FitnessCore.AnalyticsIDs.addDataButton
+                                )
                         }
                         .foregroundColor(AppStyle.Color.greenGlow)
                         .padding(.vertical, 12)
@@ -271,6 +275,7 @@ public struct AnalyticsView: View {
                                 )
                         )
                     }
+                    .accessibilityIdentifier(FitnessCore.AnalyticsIDs.addDataButton)
 
                     Spacer()
                         .frame(maxWidth: .infinity)
@@ -297,32 +302,136 @@ public struct AnalyticsView: View {
 
     private func entryView(_ entry: AnalyticsEntry) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            List {
-                ForEach(Array(entry.setProgress.enumerated()), id: \.element.id) { index, progress in
-                    setRowView(entry: entry, index: index, progress: progress)
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets())
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button {
-                                viewModel.deleteSetFromEntry(
-                                    exerciseId: exercise.id,
-                                    entryId: entry.id,
-                                    setIndex: index
-                                )
-                            } label: {
-                                Label("Delete", systemImage: "trash")
+            if let groups = BilateralSetGrouping.groups(for: entry.setProgress) {
+                List {
+                    ForEach(groups) { group in
+                        bilateralSetRowView(entry: entry, group: group)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets())
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button {
+                                    viewModel.deleteLogicalSetFromEntry(
+                                        exerciseId: exercise.id,
+                                        entryId: entry.id,
+                                        logicalSetIndex: group.logicalSetIndex
+                                    )
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                                .tint(.red)
                             }
-                            .tint(.red)
-                        }
+                    }
                 }
+                .listStyle(PlainListStyle())
+                .scrollDisabled(true)
+                .frame(
+                    height: CGFloat(groups.count)
+                        * AppStyle.Layout.bilateralAnalyticsRowHeight
+                )
+                .background(Color.clear)
+            } else {
+                List {
+                    ForEach(Array(entry.setProgress.enumerated()), id: \.element.id) { index, progress in
+                        setRowView(entry: entry, index: index, progress: progress)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets())
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button {
+                                    viewModel.deleteSetFromEntry(
+                                        exerciseId: exercise.id,
+                                        entryId: entry.id,
+                                        setIndex: index
+                                    )
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                                .tint(.red)
+                            }
+                    }
+                }
+                .listStyle(PlainListStyle())
+                .scrollDisabled(true)
+                .frame(height: CGFloat(entry.setProgress.count * 90))
+                .background(Color.clear)
             }
-            .listStyle(PlainListStyle())
-            .scrollDisabled(true)
-            .frame(height: CGFloat(entry.setProgress.count * 90))
-            .background(Color.clear)
         }
         .padding(.horizontal, AppStyle.Padding.horizontal)
+    }
+
+    private func bilateralSetRowView(
+        entry: AnalyticsEntry,
+        group: BilateralSetGroup
+    ) -> some View {
+        Button {
+            editingEntry = entry
+            showAddDataSheet = true
+        } label: {
+            VStack(alignment: .leading, spacing: AppStyle.Padding.cardVertical) {
+                Text("Set \(group.logicalSetIndex + 1)")
+                    .font(AppStyle.Font.sectionHeadline)
+                    .foregroundColor(AppStyle.Color.white)
+
+                HStack(spacing: AppStyle.Padding.card) {
+                    bilateralResult(side: .left, progress: group.left)
+                    bilateralResult(side: .right, progress: group.right)
+                }
+            }
+            .padding(AppStyle.Padding.card)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card)
+                    .fill(AppStyle.Color.white.opacity(AppStyle.Opacity.subtleBackground))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card)
+                            .stroke(
+                                AppStyle.Color.white.opacity(AppStyle.Opacity.subtleStroke),
+                                lineWidth: 1
+                            )
+                    )
+            )
+            .padding(.top, AppStyle.Padding.titleTop)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func bilateralResult(
+        side: ExerciseSide,
+        progress: SetProgress
+    ) -> some View {
+        VStack(alignment: .leading, spacing: AppStyle.Layout.bilateralColumnSpacing) {
+            Text(side == .left ? "Left" : "Right")
+                .font(AppStyle.Font.defaultFont)
+                .foregroundColor(AppStyle.Color.greenGlow)
+
+            HStack(spacing: AppStyle.Layout.bilateralColumnSpacing) {
+                if exercise.hasWeight {
+                    Text("\(WeightFormatter.format(progress.weight)) kg")
+                        .font(AppStyle.Font.sectionHeadline)
+                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .lineLimit(1)
+                        .minimumScaleFactor(
+                            AppStyle.Layout.bilateralAnalyticsMinimumScaleFactor
+                        )
+                }
+
+                Text("\(progress.currentReps) / \(initialReps)")
+                    .font(AppStyle.Font.detailExercise)
+                    .foregroundColor(AppStyle.Color.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(
+                        AppStyle.Layout.bilateralAnalyticsMinimumScaleFactor
+                    )
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityIdentifier(
+            AnalyticsIDs.bilateralResult(
+                logicalSet: progress.logicalSetIndex ?? 0,
+                side: side
+            )
+        )
     }
 
     private func setRowView(entry: AnalyticsEntry, index: Int, progress: SetProgress) -> some View {

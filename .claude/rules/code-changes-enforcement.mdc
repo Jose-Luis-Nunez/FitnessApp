@@ -1,36 +1,28 @@
 ---
-description: >-
-  Enforces post-change validation for any Swift file change.
-  Three layers: this rule (advisory), stop hook (grind loop), pre-commit (blocking).
+description: Risk-based, content-bound validation for Swift changes.
 alwaysApply: true
 ---
 
-# Code Changes Enforcement
+# Code Change Validation
 
-Validation is enforced by **three layers** — not by this rule alone.
+Classify Swift changes with:
 
-## Layer 1: This Rule (L2 — Advisory)
+```bash
+bash .claude/hooks/lib/change-risk.sh classify
+```
 
-When you change **1+ Swift files**, run the `reviewing-code-changes` skill before reporting done. Write a stamp to `.claude/hooks/state/code-changes.stamp.md`.
+- **Green:** lightweight main-agent review plus one relevant final
+  test/snapshot; no subagents.
+- **Yellow:** independent reviewer and tester verification/run.
+- **Red:** reviewer, tester, affected tests, app build, relevant UI tests, and
+  ADR when an architectural decision is introduced.
 
-Skip **only** for pure AppStyle token swaps (`AppStyle.X` -> `AppStyle.Y` with no logic change).
+Validation is bound to exact file contents through manifests in
+`.claude/hooks/state/`. It does not expire while contents remain unchanged and
+is invalid immediately after any relevant content changes.
 
-## Layer 2: Stop Hook — Grind Loop (L5 — Enforced)
+Use `reviewing-code-changes` for the risk-routed workflow. Mention the detected
+risk early when Swift files will change.
 
-The `Stop` hook (`.claude/hooks/post-task-check.sh`) checks `git diff` for Swift changes and looks for a validation artifact. If missing, it exits 2 with a stderr blocker message and Claude is sent back. The grind-loop cap is 3 iterations; Claude Code's `stop_hook_active` flag prevents infinite re-firing.
-
-The hook checks for: `.claude/hooks/state/code-changes.stamp.md` (< 10 min old) OR validation markers in your output.
-
-## Layer 3: Pre-Commit Hook (L4 — Blocking)
-
-`.git/hooks/pre-commit` blocks commits when Swift files are staged without a recent validation report. Error messages use RULE/VIOLATION/FIX format — read them and self-correct.
-
-## How to Validate
-
-Read and follow the `reviewing-code-changes` skill (`.claude/skills/reviewing-code-changes/SKILL.md`). Write a stamp to `.claude/hooks/state/code-changes.stamp.md`.
-
-## Triggered Rule Notice
-
-When this rule applies (Swift files changed), mention it early in your first response:
-"This touches N Swift files — post-change validation will be required."
-This makes the obligation visible and prevents end-of-task surprises.
+The Stop hook enforces completion for uncommitted work. The versioned
+pre-commit hook verifies that staged blobs are covered by the same evidence.

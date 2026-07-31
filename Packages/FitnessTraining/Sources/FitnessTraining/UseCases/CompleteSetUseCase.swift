@@ -12,12 +12,13 @@ public struct CompleteSetUseCase {
     public func execute(activeSetViewModel: ActiveSetViewModel) -> Bool {
         guard let exercise = activeSetViewModel.currentExercise else { return false }
 
-        guard activeSetViewModel.currentSet < exercise.sets &&
+        let stepCount = exercise.trainingSteps.count
+        guard activeSetViewModel.currentSet < stepCount &&
               !activeSetViewModel.isLastSetCompleted else { return false }
 
         activeSetViewModel.stopTimer()
 
-        let isLastSet = (activeSetViewModel.currentSet + 1) >= exercise.sets
+        let isLastSet = (activeSetViewModel.currentSet + 1) >= stepCount
 
         activeSetViewModel.completeCurrentSet()
 

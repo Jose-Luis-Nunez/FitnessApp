@@ -1,1 +1,0 @@
-Single-context container-retention fix: aligns with existing ADR-0001 (no new architecture decision). The 'new-observable-in-service' trigger is a false positive — `modelContainer` is `@ObservationIgnored` (not a new observable property); we only swapped a stored `ModelContext` for a retained `ModelContainer` + computed context. Architecture-documentation.md updated.

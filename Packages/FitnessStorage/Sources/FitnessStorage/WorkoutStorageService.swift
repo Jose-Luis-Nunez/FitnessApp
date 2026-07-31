@@ -173,10 +173,27 @@ public final class WorkoutStorageService: WorkoutStoring {
         let model = WorkoutModel.from(duplicated)
         context.insert(model)
 
-        for category in workout.selectedCategories {
+        for category in MuscleCategoryGroup.allCases {
             let loaded = exerciseStorage.loadForWorkout(workoutId: workout.id, category: category)
             if !loaded.isEmpty {
-                exerciseStorage.saveForWorkout(loaded, workoutId: duplicated.id, category: category)
+                let copies = loaded.map { exercise in
+                    Exercise(
+                        id: UUID(),
+                        name: exercise.name,
+                        weight: exercise.weight,
+                        reps: exercise.reps,
+                        sets: exercise.sets,
+                        seatSetting: exercise.seatSetting,
+                        noSeats: exercise.noSeats,
+                        isCompleted: exercise.isCompleted,
+                        iconName: exercise.iconName,
+                        category: exercise.category,
+                        goal: exercise.goal,
+                        isActive: exercise.isActive,
+                        executionMode: exercise.executionMode
+                    )
+                }
+                exerciseStorage.saveForWorkout(copies, workoutId: duplicated.id, category: category)
             }
         }
 

@@ -82,7 +82,9 @@ public struct ImportWorkoutUseCase {
                 isCompleted: source.isCompleted,
                 iconName: source.iconName,
                 category: source.category,
-                goal: source.goal
+                goal: source.goal,
+                isActive: source.isActive,
+                executionMode: source.executionMode
             )
         }
 

@@ -5,6 +5,11 @@ import FitnessStorage
 
 @MainActor
 public struct DeleteAnalyticsSetUseCase {
+    private enum Target {
+        case physicalSet(index: Int)
+        case logicalSet(index: Int)
+    }
+
     private let storageService: AnalyticsStoring
     private let exerciseStorageService: ExerciseStoring
     private let workoutStorageService: WorkoutStoring
@@ -21,16 +26,55 @@ public struct DeleteAnalyticsSetUseCase {
 
     /// Removes a set from an analytics entry. Removes the entry entirely if no sets remain.
     /// Updates the exercise completion status when all entries for the exercise are deleted.
-    public func execute(exerciseId: UUID, entryId: UUID, setIndex: Int) {
+    public func execute(
+        exerciseId: UUID,
+        entryId: UUID,
+        setIndex: Int
+    ) {
+        execute(
+            exerciseId: exerciseId,
+            entryId: entryId,
+            target: .physicalSet(index: setIndex)
+        )
+    }
+
+    public func execute(
+        exerciseId: UUID,
+        entryId: UUID,
+        logicalSetIndex: Int
+    ) {
+        execute(
+            exerciseId: exerciseId,
+            entryId: entryId,
+            target: .logicalSet(index: logicalSetIndex)
+        )
+    }
+
+    private func execute(
+        exerciseId: UUID,
+        entryId: UUID,
+        target: Target
+    ) {
         var existingEntries = storageService.load(for: exerciseId)
 
         guard let entryIndex = existingEntries.firstIndex(where: { $0.id == entryId }) else { return }
 
         let entry = existingEntries[entryIndex]
-        guard setIndex < entry.setProgress.count else { return }
 
         var updatedSetProgress = entry.setProgress
-        updatedSetProgress.remove(at: setIndex)
+        switch target {
+        case .logicalSet(let logicalSetIndex):
+            guard updatedSetProgress.contains(where: {
+                $0.logicalSetIndex == logicalSetIndex
+            }) else {
+                return
+            }
+            updatedSetProgress.removeAll { $0.logicalSetIndex == logicalSetIndex }
+        case .physicalSet(let setIndex) where updatedSetProgress.indices.contains(setIndex):
+            updatedSetProgress.remove(at: setIndex)
+        case .physicalSet:
+            return
+        }
 
         if updatedSetProgress.isEmpty {
             existingEntries.remove(at: entryIndex)
@@ -55,11 +99,14 @@ public struct DeleteAnalyticsSetUseCase {
         guard let currentWorkout = workoutStorageService.currentWorkout else { return }
 
         for category in MuscleCategoryGroup.allCases {
-            var exercises = exerciseStorageService.loadForWorkout(workoutId: currentWorkout.id, category: category)
+            let exercises = exerciseStorageService.loadForWorkout(
+                workoutId: currentWorkout.id,
+                category: category
+            )
 
-            if let exerciseIndex = exercises.firstIndex(where: { $0.id == exerciseId }) {
-                exercises[exerciseIndex].isCompleted = isCompleted
-                exerciseStorageService.saveForWorkout(exercises, workoutId: currentWorkout.id, category: category)
+            if var exercise = exercises.first(where: { $0.id == exerciseId }) {
+                exercise.isCompleted = isCompleted
+                exerciseStorageService.updateExercise(exercise)
                 return
             }
         }

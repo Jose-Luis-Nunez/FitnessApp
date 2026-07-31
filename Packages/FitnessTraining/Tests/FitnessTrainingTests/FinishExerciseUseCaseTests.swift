@@ -89,25 +89,6 @@ struct FinishExerciseUseCaseTests {
         #expect(result == nil)
     }
 
-    @Test func resetsQuickDoneMode() {
-        let vm = ActiveSetViewModel()
-        let exercise = makeExercise(sets: 1)
-        vm.startSet(for: exercise, category: .arms)
-        vm.quickDoneModeActive = true
-        vm.completeCurrentSet()
-
-        let analyticsVM = AnalyticsViewModel(storageService: StubAnalyticsStorage())
-
-        _ = sut.execute(
-            activeSetViewModel: vm,
-            analyticsViewModel: analyticsVM,
-            findCategory: { _ in .arms },
-            onExerciseUpdate: { _, _ in }
-        )
-
-        #expect(vm.quickDoneModeActive == false)
-    }
-
     @Test func progressesIdleWeightWhenEverySetReachesTwelveReps() {
         let vm = ActiveSetViewModel()
         let exercise = makeExercise(weight: 20, reps: 10, sets: 3)

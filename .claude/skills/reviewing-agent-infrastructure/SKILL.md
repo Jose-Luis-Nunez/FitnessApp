@@ -1,25 +1,23 @@
 ---
 name: reviewing-agent-infrastructure
 description: >-
-  Validate and fix agent infrastructure after changes to .claude/ source files
-  or .codex runtime adapters.
+  Validate executable agent infrastructure after changes to rules, skills,
+  hooks, agents, commands, runtime adapters, AGENTS.md, or the agent overview.
   Checks reference integrity, agent-system-overview sync, description accuracy,
   handoff links, hook alignment, and name consistency. Uses a Verifier subagent
-  to independently confirm findings before writing the stamp. Use after editing
-  rules, skills, hooks, references, or when the user asks to reflect or improve
-  the agent system.
+  to independently confirm findings before writing the stamp. Product
+  architecture and UI-test references are outside this trigger.
 ---
 
 # Reviewing Agent Infrastructure
 
-Validate that canonical agent-system files (`.claude/`) and Codex runtime
-adapters (`.codex/`) are consistent after changes. A Verifier subagent
-independently confirms results before the stamp is written.
+Validate that canonical executable agent-system files and generated runtime
+adapters are consistent. A Verifier independently confirms results.
 
 ## When to Activate
 
-- After modifying files under `.claude/` (rules, skills, hooks, references) or
-  `.codex/` (runtime hooks and role configurations)
+- After modifying executable agent infrastructure: rules, skills, hooks,
+  agents, commands, runtime adapters, `AGENTS.md`, or the agent-system overview
 - After `reviewing-agent-effectiveness` identifies gaps (NOT FIRED findings)
 - User says "reflect", "learn from this", "improve agent system"
 - After the user manually corrects agent output
@@ -46,13 +44,14 @@ Compare files on disk with tables in `.claude/references/agent-system-overview.m
 
 - Every `.mdc` in `.claude/rules/` has a row in L2/L2g
 - Every `SKILL.md` in `.claude/skills/*/` has a row in L3
-- Every hook in `.claude/hooks/checks/` and its `.codex/hooks/checks/` runtime
-  counterpart has a row in L5
+- Every hook in `.claude/hooks/checks/` and its generated
+  `.codex/hooks/checks/` counterpart has a row in L5
 - No rows reference files that no longer exist
 
 ### 3. Description Consistency
 
-For each changed skill or rule, verify the frontmatter `description` accurately describes what the file does. Stale descriptions break Claude Code's skill triggering (Claude reads the description to decide when to invoke the skill).
+For each changed skill or rule, verify the frontmatter `description` accurately
+describes what the file does. Stale descriptions break skill routing.
 
 ### 4. Handoff Links
 
@@ -71,6 +70,12 @@ If hooks or state references changed:
 
 - YAML `name:` field matches the folder name
 - H1 heading matches the skill/rule purpose
+
+Compute the exact executable-infrastructure fingerprint before verification:
+
+```bash
+bash .claude/hooks/lib/agent-infrastructure-evidence.sh fingerprint
+```
 
 ## Output
 
@@ -106,7 +111,9 @@ Write the report with **all 6 section headings** — the hook checks for them:
 
 ### Step 2: Spawn Verifier Subagent
 
-After writing the report, spawn a **Verifier subagent** via the Task tool. The Verifier independently checks the results and writes the stamp. Do NOT write the stamp yourself.
+After writing the report, spawn a **Verifier subagent** with fresh context. In
+Codex use `fork_turns: "none"`. The Verifier independently checks the results
+and writes the stamp. Do NOT write the stamp yourself.
 
 The Claude Code role definition lives in `.claude/agents/verifier.md`; the
 Codex runtime equivalent lives in `.codex/agents/verifier.toml`. Both write
@@ -123,7 +130,7 @@ Read `.claude/agents/verifier.md` in Claude Code, or
 `.codex/agents/verifier.toml` in Codex, for your full role definition and instructions.
 
 CHANGED FILES:
-<paste the list of changed .claude/ and .codex/ files>
+<list paths; do not paste the diff or conversation>
 
 REPORT FROM MAIN AGENT:
 <paste the full report>
@@ -135,7 +142,9 @@ Return a one-line summary of your verdict.
 
 ### Step 3: Confirm Stamp
 
-After the Verifier returns, read `.claude/hooks/state/agent-infrastructure.stamp.md` and confirm it contains `result: PASS` and `verified_by: verifier-subagent`. If the Verifier reported FAIL, fix the issues and re-run from Step 1.
+After the Verifier returns, confirm the stamp contains `result: PASS`,
+`verified_by: verifier-subagent`, and the exact current `source_fingerprint`.
+If the Verifier reported FAIL, fix the issues and re-run from Step 1.
 
 ## Learnings
 

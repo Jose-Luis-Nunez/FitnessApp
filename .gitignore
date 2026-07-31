@@ -32,3 +32,4 @@ Package.resolved
 # Hook state (local only) — root and any nested package's .claude/
 .claude/hooks/state/
 **/.claude/hooks/state/
+.codex/hooks/state/

@@ -28,8 +28,11 @@ class BaseTest: XCTestCase {
     }
 
     @MainActor
-    func launch(training fixture: TestExerciseFixture) throws {
-        let config = UITestLaunchConfig.training(fixture)
+    func launch(
+        training fixture: TestExerciseFixture,
+        additional: [TestExerciseFixture] = []
+    ) throws {
+        let config = UITestLaunchConfig.training(fixture, additional: additional)
         app.launchEnvironment["UITEST_CONFIG"] = try config.jsonString()
         app.launch()
     }
@@ -42,15 +45,26 @@ class BaseTest: XCTestCase {
     }
 
     @MainActor
-    func launch(exerciseList fixture: TestExerciseFixture) throws {
-        let config = UITestLaunchConfig.exerciseList(fixture)
+    func launch(
+        exerciseList fixture: TestExerciseFixture,
+        additional: [TestExerciseFixture] = []
+    ) throws {
+        let config = UITestLaunchConfig.exerciseList(fixture, additional: additional)
         app.launchEnvironment["UITEST_CONFIG"] = try config.jsonString()
         app.launch()
     }
 
     @MainActor
-    func launch(exerciseCategory fixture: TestExerciseFixture) throws {
-        let config = UITestLaunchConfig.exerciseCategory(fixture)
+    func launch(
+        exerciseCategory fixture: TestExerciseFixture,
+        additional: [TestExerciseFixture] = [],
+        seedAnalyticsHistory: Bool = false
+    ) throws {
+        let config = UITestLaunchConfig.exerciseCategory(
+            fixture,
+            additional: additional,
+            seedAnalyticsHistory: seedAnalyticsHistory
+        )
         app.launchEnvironment["UITEST_CONFIG"] = try config.jsonString()
         app.launch()
     }

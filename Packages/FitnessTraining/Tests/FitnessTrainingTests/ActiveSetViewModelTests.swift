@@ -26,7 +26,6 @@ struct ActiveSetViewModelTests {
         #expect(sut.currentSet == 0)
         #expect(sut.isSetInProgress == false)
         #expect(sut.isLastSetCompleted == false)
-        #expect(sut.quickDoneModeActive == false)
         #expect(sut.quickDoneAllCompleted == false)
     }
 
@@ -250,7 +249,6 @@ struct ActiveSetViewModelTests {
         #expect(sut.currentSet == 0)
         #expect(sut.isSetInProgress == false)
         #expect(sut.isLastSetCompleted == false)
-        #expect(sut.quickDoneModeActive == false)
         #expect(sut.quickDoneAllCompleted == false)
     }
 
@@ -298,53 +296,6 @@ struct ActiveSetViewModelTests {
         #expect(sut.quickDoneAllCompleted == true)
         #expect(sut.isLastSetCompleted == true)
         #expect(sut.timerSeconds == 0)
-    }
-
-    @Test func processQuickDoneCompletesIndividualSet() {
-        let sut = makeSUT()
-        let exercise = makeExercise(sets: 3)
-        sut.startSet(for: exercise, category: .arms)
-
-        sut.processQuickDone(at: 0)
-
-        #expect(sut.setProgress[0].status == .completedDone)
-        #expect(sut.setProgress[1].status == .notStarted)
-    }
-
-    @Test func processQuickDoneSkipsAlreadyCompletedSet() {
-        let sut = makeSUT()
-        let exercise = makeExercise(sets: 2)
-        sut.startSet(for: exercise, category: .arms)
-
-        sut.processQuickDone(at: 0)
-        let firstId = sut.setProgress[0].id
-        sut.processQuickDone(at: 0)
-
-        #expect(sut.setProgress[0].id == firstId)
-    }
-
-    @Test func processQuickDoneAllSetsTriggersCompletion() {
-        let sut = makeSUT()
-        let exercise = makeExercise(sets: 2)
-        sut.startSet(for: exercise, category: .arms)
-
-        sut.processQuickDone(at: 0)
-        sut.processQuickDone(at: 1)
-
-        #expect(sut.quickDoneAllCompleted == true)
-        #expect(sut.isLastSetCompleted == true)
-    }
-
-    @Test func completeAllQuickDoneCompletesRemainingNotStartedSets() {
-        let sut = makeSUT()
-        let exercise = makeExercise(sets: 3)
-        sut.startSet(for: exercise, category: .arms)
-
-        sut.processQuickDone(at: 0)
-        sut.completeAllQuickDone()
-
-        #expect(sut.setProgress.allSatisfy { $0.status == .completedDone })
-        #expect(sut.quickDoneAllCompleted == true)
     }
 
     // MARK: - Timer Integration

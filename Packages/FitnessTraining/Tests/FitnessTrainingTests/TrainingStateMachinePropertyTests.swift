@@ -15,8 +15,6 @@ enum TrainingAction: CustomStringConvertible, Sendable {
     case cancelActiveSet
     case finishExercise
     case startQuickDone
-    case processQuickDone(index: Int)
-    case completeAllQuickDone
     case editLess
     case editMore
     case updateReps(reps: Int, weight: Double)
@@ -29,8 +27,6 @@ enum TrainingAction: CustomStringConvertible, Sendable {
         case .cancelActiveSet: "cancelActiveSet"
         case .finishExercise: "finishExercise"
         case .startQuickDone: "startQuickDone"
-        case .processQuickDone(let i): "processQuickDone(\(i))"
-        case .completeAllQuickDone: "completeAllQuickDone"
         case .editLess: "editLess"
         case .editMore: "editMore"
         case .updateReps(let r, let w): "updateReps(\(r), \(w))"
@@ -39,19 +35,17 @@ enum TrainingAction: CustomStringConvertible, Sendable {
     }
 
     /// Generates a random action using the provided RNG.
-    static func random(using rng: inout some RandomNumberGenerator, maxSetIndex: Int) -> TrainingAction {
-        let kind = Int.random(in: 0...10, using: &rng)
+    static func random(using rng: inout some RandomNumberGenerator) -> TrainingAction {
+        let kind = Int.random(in: 0...8, using: &rng)
         switch kind {
         case 0: return .completeCurrentSet
         case 1: return .startNextSet
         case 2: return .cancelActiveSet
         case 3: return .finishExercise
         case 4: return .startQuickDone
-        case 5: return .processQuickDone(index: Int.random(in: 0...max(0, maxSetIndex - 1), using: &rng))
-        case 6: return .completeAllQuickDone
-        case 7: return .editLess
-        case 8: return .editMore
-        case 9: return .updateReps(
+        case 5: return .editLess
+        case 6: return .editMore
+        case 7: return .updateReps(
             reps: Int.random(in: 1...20, using: &rng),
             weight: Double(Int.random(in: 5...100, using: &rng))
         )
@@ -85,14 +79,6 @@ extension TrainingAction {
             if let ex = vm.currentExercise {
                 vm.startQuickDone(for: ex, category: category)
             }
-
-        case .processQuickDone(let index):
-            if index < vm.setProgress.count {
-                vm.processQuickDone(at: index)
-            }
-
-        case .completeAllQuickDone:
-            vm.completeAllQuickDone()
 
         case .editLess:
             let idx = vm.activeSetIndex
@@ -139,17 +125,17 @@ private func assertInvariants(
     // I2: when an exercise is active, currentSet stays bounded
     if vm.currentExercise != nil {
         #expect(
-            vm.currentSet <= exercise.sets,
-            "currentSet (\(vm.currentSet)) must be <= exercise.sets (\(exercise.sets)) (\(ctx))",
+            vm.currentSet <= exercise.trainingSteps.count,
+            "currentSet (\(vm.currentSet)) must be <= trainingSteps.count (\(exercise.trainingSteps.count)) (\(ctx))",
             sourceLocation: sourceLocation
         )
     }
 
-    // I3: setProgress length matches exercise.sets (when populated)
+    // I3: setProgress length matches the derived execution plan (when populated)
     if !vm.setProgress.isEmpty {
         #expect(
-            vm.setProgress.count == exercise.sets,
-            "setProgress.count (\(vm.setProgress.count)) must match exercise.sets (\(exercise.sets)) (\(ctx))",
+            vm.setProgress.count == exercise.trainingSteps.count,
+            "setProgress.count (\(vm.setProgress.count)) must match trainingSteps.count (\(exercise.trainingSteps.count)) (\(ctx))",
             sourceLocation: sourceLocation
         )
     }
@@ -245,7 +231,7 @@ struct TrainingStateMachinePropertyTests {
         let length = Int.random(in: Self.sequenceLengthRange, using: &rng)
         var actions: [TrainingAction] = []
         for _ in 0..<length {
-            actions.append(.random(using: &rng, maxSetIndex: exercise.sets))
+            actions.append(.random(using: &rng))
         }
 
         let vm = ActiveSetViewModel()
@@ -340,7 +326,6 @@ struct TrainingStateMachinePropertyTests {
                     #expect(vm.currentSet == 0, "seed \(seed)")
                     #expect(vm.isSetInProgress == false, "seed \(seed)")
                     #expect(vm.isLastSetCompleted == false, "seed \(seed)")
-                    #expect(vm.quickDoneModeActive == false, "seed \(seed)")
                     #expect(vm.quickDoneAllCompleted == false, "seed \(seed)")
                 }
             )
@@ -349,13 +334,23 @@ struct TrainingStateMachinePropertyTests {
 
     @Test("Varying exercise sizes preserve invariants", .timeLimit(.minutes(1)))
     func varyingExerciseSizesPreserveInvariants() {
-        let configurations: [(sets: Int, reps: Int)] = [
-            (1, 1), (1, 5), (2, 3), (3, 10), (5, 8), (10, 15)
+        let configurations: [(sets: Int, reps: Int, mode: ExerciseExecutionMode)] = [
+            (1, 1, .standard),
+            (1, 5, .bilateral),
+            (2, 3, .standard),
+            (3, 10, .bilateral),
+            (5, 8, .standard),
+            (10, 15, .bilateral)
         ]
 
-        for (sets, reps) in configurations {
+        for (sets, reps, mode) in configurations {
             let exercise = FitnessTestSupport.makeExercise(
-                name: "Test", weight: 20, reps: reps, sets: sets, category: .arms
+                name: "Test",
+                weight: 20,
+                reps: reps,
+                sets: sets,
+                category: .arms,
+                executionMode: mode
             )
             for seed in UInt64(0)..<UInt64(50) {
                 generateAndRunSequence(

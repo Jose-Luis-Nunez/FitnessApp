@@ -11,7 +11,7 @@ description: >-
 
 # Debugging Failing UI Tests
 
-For shared conventions (DSL, selectors, layout, **diagnosis decision tree**) see [ui-test-conventions.md](../../../.claude/references/ui-test-conventions.md).
+For shared conventions (DSL, selectors, layout, **diagnosis decision tree**) see `.claude/references/ui-test-conventions.md`.
 
 For tests that **pass** but use outdated patterns or raw API, use `updating-ui-tests` instead.
 
@@ -25,7 +25,8 @@ See `.claude/rules/build-and-test.mdc` § "UI Tests" for the exact `xcodebuild` 
 
 ### Step 2 — Diagnose the Selector
 
-Work the **5-step decision tree** in [ui-test-conventions.md § Diagnosing a Failing Selector](../../../.claude/references/ui-test-conventions.md#diagnosing-a-failing-selector) **strictly in order**:
+Work the **5-step decision tree** under `Diagnosing a Failing Selector` in
+`.claude/references/ui-test-conventions.md` **strictly in order**:
 
 1. Use-case flow + selector sequence understood?
 2. Is the selector present in the UI hierarchy at the failure point?

@@ -79,6 +79,19 @@ public final class AnalyticsViewModel {
         deleteAnalyticsSetUseCase.execute(exerciseId: exerciseId, entryId: entryId, setIndex: setIndex)
         reloadEntries(for: exerciseId)
     }
+
+    public func deleteLogicalSetFromEntry(
+        exerciseId: UUID,
+        entryId: UUID,
+        logicalSetIndex: Int
+    ) {
+        deleteAnalyticsSetUseCase.execute(
+            exerciseId: exerciseId,
+            entryId: entryId,
+            logicalSetIndex: logicalSetIndex
+        )
+        reloadEntries(for: exerciseId)
+    }
     
     public func saveGoal(for exercise: inout Exercise, goalText: String) {
         if goalText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -87,14 +100,7 @@ public final class AnalyticsViewModel {
             exercise.goal = goalValue
         }
         
-        let category = exercise.category
-        let workoutId = workoutStorageService.currentWorkout?.id ?? UUID()
-        var exercises = exerciseStorageService.loadForWorkout(workoutId: workoutId, category: category)
-        
-        if let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
-            exercises[index] = exercise
-            exerciseStorageService.saveForWorkout(exercises, workoutId: workoutId, category: category)
-        }
+        exerciseStorageService.updateExercise(exercise)
     }
     
 }
@@ -222,12 +228,42 @@ extension AnalyticsViewModel {
         let daySessions: [DaySession] = grouped.compactMap { (day, dayEntries) in
             let allSets = dayEntries.flatMap { $0.setProgress }
             guard !allSets.isEmpty else { return nil }
+            let bilateralGroups = dayEntries.compactMap {
+                BilateralSetGrouping.groups(for: $0.setProgress)
+            }
+
+            if bilateralGroups.count == dayEntries.count {
+                let allGroups = bilateralGroups.flatMap { $0 }
+                let maxWeight = allGroups
+                    .map { max($0.left.weight, $0.right.weight) }
+                    .max() ?? 0
+                let groupsAtWeight = allGroups.filter {
+                    max($0.left.weight, $0.right.weight) == maxWeight
+                }
+                let minReps = groupsAtWeight
+                    .flatMap { [$0.left.currentReps, $0.right.currentReps] }
+                    .min() ?? 0
+                let totalReps = allSets.reduce(0) { $0 + $1.currentReps }
+                let setsReps = "\(groupsAtWeight.count)×\(minReps) / side"
+                return DaySession(
+                    date: day,
+                    weight: maxWeight,
+                    setsReps: setsReps,
+                    totalReps: totalReps
+                )
+            }
+
             let maxWeight = allSets.map(\.weight).max() ?? 0
             let setsAtWeight = allSets.filter { $0.weight == maxWeight }
             let totalReps = setsAtWeight.reduce(0) { $0 + $1.currentReps }
             let minReps = setsAtWeight.map(\.currentReps).min() ?? 0
             let setsReps = "\(setsAtWeight.count)×\(minReps)"
-            return DaySession(date: day, weight: maxWeight, setsReps: setsReps, totalReps: totalReps)
+            return DaySession(
+                date: day,
+                weight: maxWeight,
+                setsReps: setsReps,
+                totalReps: totalReps
+            )
         }
         .sorted(by: { $0.date < $1.date })
         

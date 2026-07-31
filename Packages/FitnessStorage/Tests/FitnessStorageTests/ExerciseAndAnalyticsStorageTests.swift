@@ -150,6 +150,51 @@ struct ExerciseAndAnalyticsStorageTests {
         #expect(progress[2].weight == 55)
     }
 
+    @Test("Bilateral mode and side metadata survive storage reload")
+    func bilateralMetadataRoundtrip() throws {
+        let workoutStorage = TestHelpers.makeWorkoutStorageService(container: container)
+        let workout = try #require(workoutStorage.workouts.first)
+        let exerciseStorage = ExerciseStorageService(container: container)
+        let analyticsStorage = AnalyticsStorageService(container: container)
+        let exercise = TestHelpers.makeExercise(
+            name: "Torso Rotation",
+            sets: 2,
+            category: .abs,
+            executionMode: .bilateral
+        )
+        let progress = exercise.trainingSteps.map { step in
+            SetProgress(
+                status: .completedDone,
+                currentReps: exercise.reps,
+                weight: exercise.weight,
+                side: step.side,
+                logicalSetIndex: step.logicalSetIndex
+            )
+        }
+
+        exerciseStorage.saveForWorkout([exercise], workoutId: workout.id, category: .abs)
+        analyticsStorage.save(
+            [AnalyticsEntry(exerciseId: exercise.id, date: .now, setProgress: progress)],
+            for: exercise.id
+        )
+
+        let reloadedExerciseStorage = ExerciseStorageService(container: container)
+        let reloadedAnalyticsStorage = AnalyticsStorageService(container: container)
+        let reloadedExercise = try #require(
+            reloadedExerciseStorage.loadForWorkout(
+                workoutId: workout.id,
+                category: .abs
+            ).first
+        )
+        let reloadedProgress = try #require(
+            reloadedAnalyticsStorage.load(for: exercise.id).first
+        ).setProgress
+
+        #expect(reloadedExercise.executionMode == .bilateral)
+        #expect(reloadedProgress.map(\.side) == [.left, .right, .left, .right])
+        #expect(reloadedProgress.map(\.logicalSetIndex) == [0, 0, 1, 1])
+    }
+
     @Test func analyticsSetProgressOrderPreserved() {
         let as_ = AnalyticsStorageService(container: container)
         let exerciseId = UUID()

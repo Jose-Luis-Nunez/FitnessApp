@@ -6,6 +6,45 @@ import FitnessTestSupport
 @Suite("DeleteAnalyticsSetUseCase", .tags(.fast))
 @MainActor
 struct DeleteAnalyticsSetUseCaseTests {
+    @Test func deletesBothSidesOfOneLogicalSet() {
+        let exerciseId = UUID()
+        let entryId = UUID()
+        let progress = (0..<2).flatMap { logicalIndex in
+            ExerciseSide.allCases.map {
+                SetProgress(
+                    status: .completedDone,
+                    currentReps: 12,
+                    weight: 20,
+                    side: $0,
+                    logicalSetIndex: logicalIndex
+                )
+            }
+        }
+        let storage = MockAnalyticsStorage()
+        storage.save([
+            AnalyticsEntry(
+                id: entryId,
+                exerciseId: exerciseId,
+                date: .now,
+                setProgress: progress
+            )
+        ], for: exerciseId)
+        let sut = DeleteAnalyticsSetUseCase(
+            analyticsStorage: storage,
+            exerciseStorage: MockExerciseStorage(),
+            workoutStorage: MockWorkoutStorage()
+        )
+
+        sut.execute(
+            exerciseId: exerciseId,
+            entryId: entryId,
+            logicalSetIndex: 0
+        )
+
+        let remaining = storage.load(for: exerciseId).first?.setProgress
+        #expect(remaining?.count == 2)
+        #expect(remaining?.allSatisfy { $0.logicalSetIndex == 1 } == true)
+    }
 
     private func makeSUT() -> (DeleteAnalyticsSetUseCase, MockAnalyticsStorage, MockExerciseStorage, MockWorkoutStorage) {
         let mockAnalytics = MockAnalyticsStorage()
@@ -76,6 +115,8 @@ struct DeleteAnalyticsSetUseCaseTests {
 
         let exercises = exerciseStorage.loadForWorkout(workoutId: workout.id, category: .arms)
         #expect(exercises.first?.isCompleted == false)
+        #expect(exerciseStorage.updatedExercises.map(\.id) == [exerciseId])
+        #expect(exerciseStorage.saveForWorkoutCallCount == 0)
     }
 
     @Test func deleteDoesNothingForInvalidEntryId() {

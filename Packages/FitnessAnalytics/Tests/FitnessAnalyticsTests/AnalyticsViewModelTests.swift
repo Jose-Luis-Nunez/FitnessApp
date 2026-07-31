@@ -295,6 +295,146 @@ struct RepsPhasesTests {
         let firstPhase = phases[0]
         #expect(firstPhase.hasImproved == true)
     }
+
+    @Test func setLabelCountsOnlySetsAtMaximumWeight() throws {
+        let storage = MockAnalyticsStorage()
+        let id = UUID()
+        storage.save([
+            makeEntry(
+                exerciseId: id,
+                date: date(0),
+                sets: [(40, 12), (50, 8), (50, 10)]
+            )
+        ], for: id)
+
+        let vm = AnalyticsViewModel(storageService: storage)
+        let phase = try #require(vm.weightPhases(for: id).first)
+
+        #expect(phase.startSetsReps == "2×8")
+    }
+
+    @Test func standardPhaseImprovementStillUsesRepsAtMaximumWeight() throws {
+        let storage = MockAnalyticsStorage()
+        let id = UUID()
+        storage.save([
+            makeEntry(exerciseId: id, date: date(-1), sets: [(50, 5), (40, 1)]),
+            makeEntry(exerciseId: id, date: date(0), sets: [(50, 5), (40, 100)])
+        ], for: id)
+
+        let vm = AnalyticsViewModel(storageService: storage)
+        let phase = try #require(vm.weightPhases(for: id).first)
+
+        #expect(phase.hasImproved == false)
+    }
+
+    @Test func bilateralPhaseImprovementSumsActualRepsFromBothSides() throws {
+        let storage = MockAnalyticsStorage()
+        let id = UUID()
+        storage.save([
+            makeBilateralEntry(exerciseId: id, date: date(-1), secondaryReps: 8),
+            makeBilateralEntry(exerciseId: id, date: date(0), secondaryReps: 12)
+        ], for: id)
+
+        let vm = AnalyticsViewModel(storageService: storage)
+        let phase = try #require(vm.weightPhases(for: id).first)
+
+        #expect(phase.hasImproved == true)
+    }
+
+    @Test func bilateralPhasePairsAsymmetricWeightsBeforeSelectingMaximum() throws {
+        let storage = MockAnalyticsStorage()
+        let id = UUID()
+        storage.save([
+            AnalyticsEntry(
+                exerciseId: id,
+                date: date(0),
+                setProgress: [
+                    bilateralSet(side: .left, logicalSetIndex: 0, reps: 12, weight: 20),
+                    bilateralSet(side: .right, logicalSetIndex: 0, reps: 10, weight: 22),
+                    bilateralSet(side: .left, logicalSetIndex: 1, reps: 11, weight: 22),
+                    bilateralSet(side: .right, logicalSetIndex: 1, reps: 12, weight: 21)
+                ]
+            )
+        ], for: id)
+
+        let vm = AnalyticsViewModel(storageService: storage)
+        let phase = try #require(vm.weightPhases(for: id).first)
+
+        #expect(phase.weight == 22)
+        #expect(phase.startSetsReps == "2×10 / side")
+    }
+
+    @Test func saveGoalUsesTargetedExerciseUpdate() {
+        let exerciseStorage = MockExerciseStorage()
+        var exercise = FitnessTestSupport.makeExercise(
+            name: "Curl",
+            category: .arms
+        )
+        exerciseStorage.exercisesByCategory[.arms] = [exercise]
+        let vm = AnalyticsViewModel(exerciseStorage: exerciseStorage)
+
+        vm.saveGoal(for: &exercise, goalText: "42.5")
+
+        #expect(exerciseStorage.updatedExercises.map(\.id) == [exercise.id])
+        #expect(exerciseStorage.saveForWorkoutCallCount == 0)
+        #expect(exerciseStorage.exercisesByCategory[.arms]?.first?.goal == 42.5)
+    }
+
+    private func bilateralSet(
+        side: ExerciseSide,
+        logicalSetIndex: Int,
+        reps: Int,
+        weight: Double
+    ) -> SetProgress {
+        SetProgress(
+            status: .completedDone,
+            currentReps: reps,
+            weight: weight,
+            side: side,
+            logicalSetIndex: logicalSetIndex
+        )
+    }
+
+    private func makeBilateralEntry(
+        exerciseId: UUID,
+        date: Date,
+        secondaryReps: Int
+    ) -> AnalyticsEntry {
+        AnalyticsEntry(
+            exerciseId: exerciseId,
+            date: date,
+            setProgress: [
+                SetProgress(
+                    status: .completedDone,
+                    currentReps: 5,
+                    weight: 50,
+                    side: .left,
+                    logicalSetIndex: 0
+                ),
+                SetProgress(
+                    status: .completedDone,
+                    currentReps: 5,
+                    weight: 50,
+                    side: .right,
+                    logicalSetIndex: 0
+                ),
+                SetProgress(
+                    status: .completedDone,
+                    currentReps: secondaryReps,
+                    weight: 40,
+                    side: .left,
+                    logicalSetIndex: 1
+                ),
+                SetProgress(
+                    status: .completedDone,
+                    currentReps: secondaryReps,
+                    weight: 40,
+                    side: .right,
+                    logicalSetIndex: 1
+                )
+            ]
+        )
+    }
 }
 
 // MARK: - getDailyWeightProgression

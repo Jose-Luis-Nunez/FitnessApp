@@ -96,6 +96,7 @@ public struct ExercisePickerView: View {
             // by ExerciseDetailsEditor.
             if editingExercise == nil {
                 formViewModel.noSeats = true
+                formViewModel.executionMode = .standard
                 formViewModel.sets = max(setsRange.lowerBound, min(setsRange.upperBound, 3))
                 formViewModel.reps = max(repsRange.lowerBound, min(repsRange.upperBound, 12))
                 if weightOptions.contains("20") || weightOptions.contains("20,0") || weightOptions.contains("20.0") {
@@ -129,7 +130,8 @@ public struct ExercisePickerView: View {
                     // pickers (UIKit UIPickerView) across the step swap crashes
                     // in UIView trait-change processing (EXC_BAD_ACCESS).
                     step = .machine
-                }
+                },
+                saveAccessibilityIdentifier: ExerciseIDs.fullEditContinueButton
             )
         case .machine:
             ExercisePickerActionButtons(
@@ -147,7 +149,8 @@ public struct ExercisePickerView: View {
                 onSave: {
                     onSave()
                     isPresented = false
-                }
+                },
+                saveAccessibilityIdentifier: ExerciseIDs.fullEditSaveButton
             )
         }
     }
@@ -171,7 +174,20 @@ public struct ExercisePickerView: View {
     // MARK: - Step 2: Seat / machine setup
 
     private var machineStep: some View {
-        SeatSettingsEditor(formViewModel: formViewModel)
+        VStack(spacing: AppStyle.Padding.sectionSpacing) {
+            ExerciseOptionRow(
+                systemIcon: "figure.strengthtraining.traditional",
+                title: L10n.bilateralExerciseTitle,
+                subtitle: L10n.bilateralExerciseSubtitle,
+                accessibilityIdentifier: ExerciseIDs.bilateralToggle,
+                isOn: Binding(
+                    get: { formViewModel.executionMode == .bilateral },
+                    set: { formViewModel.executionMode = $0 ? .bilateral : .standard }
+                )
+            )
+
+            SeatSettingsEditor(formViewModel: formViewModel)
+        }
     }
 }
 
@@ -390,7 +406,8 @@ struct ExerciseNameBar: View {
             label: L10n.exerciseNameLabel,
             placeholder: L10n.exerciseNamePlaceholder,
             text: $text,
-            isFocused: isFocused
+            isFocused: isFocused,
+            accessibilityIdentifier: ExerciseIDs.nameField
         )
     }
 }
@@ -420,6 +437,7 @@ private struct ExerciseWeightModeCards: View {
                 systemIcon: "figure.stand",
                 title: L10n.weightModeBodyweightTitle,
                 subtitle: L10n.weightModeBodyweightSubtitle,
+                accessibilityIdentifier: ExerciseIDs.bodyweightToggle,
                 isOn: Binding(get: { bodyweightOn }, set: { _ in onToggleBodyweight() })
             )
 
@@ -429,6 +447,7 @@ private struct ExerciseWeightModeCards: View {
                 systemIcon: "circle.lefthalf.filled",
                 title: L10n.weightModeDecimalTitle,
                 subtitle: L10n.weightModeDecimalSubtitle,
+                accessibilityIdentifier: ExerciseIDs.decimalWeightToggle,
                 isOn: Binding(get: { decimalOn }, set: { _ in onToggleDecimal() })
             )
             // Decimal increments only make sense with a weight.
@@ -450,6 +469,7 @@ private struct ExerciseOptionRow: View {
     let systemIcon: String
     let title: String
     let subtitle: String
+    let accessibilityIdentifier: String
     @Binding var isOn: Bool
 
     var body: some View {
@@ -481,6 +501,7 @@ private struct ExerciseOptionRow: View {
                     onColor: AppStyle.Color.greenGlow,
                     offColor: AppStyle.Color.gray.opacity(AppStyle.Opacity.fadedOverlay)
                 ))
+                .accessibilityIdentifier(accessibilityIdentifier)
         }
         .padding(.vertical, 14)
     }

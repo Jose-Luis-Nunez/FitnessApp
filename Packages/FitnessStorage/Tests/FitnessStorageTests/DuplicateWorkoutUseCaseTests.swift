@@ -44,4 +44,39 @@ struct DuplicateWorkoutUseCaseTests {
         #expect(duplicate.id != original.id)
         #expect(duplicate.name.contains(original.name))
     }
+
+    @Test("Duplicate preserves bilateral mode with independent exercise IDs")
+    func duplicatePreservesBilateralMode() throws {
+        let (sut, ws) = makeSUT()
+        let original = try #require(ws.workouts.first)
+        let exerciseStorage = ExerciseStorageService(container: container)
+        let bilateral = TestHelpers.makeExercise(
+            name: "Torso Rotation",
+            sets: 3,
+            category: .abs,
+            executionMode: .bilateral
+        )
+        exerciseStorage.saveForWorkout(
+            [bilateral],
+            workoutId: original.id,
+            category: .abs
+        )
+
+        let duplicate = sut.execute(original)
+
+        let originalExercise = try #require(
+            exerciseStorage.loadForWorkout(
+                workoutId: original.id,
+                category: .abs
+            ).first
+        )
+        let copiedExercise = try #require(
+            exerciseStorage.loadForWorkout(
+                workoutId: duplicate.id,
+                category: .abs
+            ).first
+        )
+        #expect(copiedExercise.executionMode == .bilateral)
+        #expect(copiedExercise.id != originalExercise.id)
+    }
 }

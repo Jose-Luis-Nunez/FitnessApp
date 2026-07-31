@@ -67,6 +67,8 @@ Cross-links to other ADRs, plans, code, external resources.
 | 0008 | Friends Comparison: isolated JSON-blob storage + dedicated module | accepted |
 | 0009 | Targeted, non-destructive single-exercise update | accepted |
 | 0010 | Workout-scoped exercise-order learning | accepted |
+| 0011 | Logical sets and bilateral execution steps | accepted |
+| 0012 | Risk-based, content-bound agent validation | accepted |
 
 > **ADR-0004 note:** The number 0004 is intentionally unassigned. Two existing ADRs reference "ADR-0004" as a future anchor for two possible triggers:
 > - **TCA migration** (referenced in ADR-0001 §"Trigger occurred → write ADR-0004"): if the observability problems of SwiftUI/SwiftData become untenable, ADR-0004 would document the migration to The Composable Architecture.
@@ -76,6 +78,6 @@ Cross-links to other ADRs, plans, code, external resources.
 
 ## Enforcement
 
-The stop-hook check `.cursor/hooks/checks/adr-required.sh` (added in T0d of the
-`observable-models-sot` plan) detects structural changes that should have an ADR
-and reminds the agent to either add a new ADR or update an existing one.
+The stop-hook check `.claude/hooks/checks/adr-required.sh` detects structural
+changes that should have an ADR and reminds the agent to add a decision or a
+documented exception.

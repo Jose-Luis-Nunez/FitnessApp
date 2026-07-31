@@ -41,7 +41,6 @@ public struct FinishExerciseUseCase {
         }
 
         activeSetViewModel.finishExercise()
-        activeSetViewModel.quickDoneModeActive = false
 
         return completedExercise
     }

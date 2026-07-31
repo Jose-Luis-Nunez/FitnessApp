@@ -1,6 +1,6 @@
 #!/bin/bash
 # Check 7: UI-state-sync anti-pattern (Int-counter + polling loop) detected in working tree?
-# Pattern: Hint — one-time suggestion before commit, no grind loop.
+# Pattern: non-blocking one-time suggestion before commit.
 # Env: CONTENT, STATE_DIR, all_swift, HAS_QUESTION
 #
 # Runs against working-tree diff (HEAD vs working) so the agent sees the smell

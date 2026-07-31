@@ -10,7 +10,10 @@ enum TrainingIDs {
     static let quickDoneButton = "id_button_quick_done"
     static func controlButton(_ text: String) -> String { "id_button_\(text.lowercased())" }
     static func repsField(set index: Int) -> String { "id_reps_set_\(index)" }
-    static func quickDoneSetButton(index: Int) -> String { "id_button_quick_done_set_\(index)" }
+    static func repsField(logicalSet index: Int, side: String) -> String {
+        "id_reps_set_\(index)_\(side)"
+    }
+    static func sideHeader(_ side: String) -> String { "id_training_side_\(side)" }
 }
 
 enum HomeIDs {
@@ -32,6 +35,23 @@ enum MuscleCategoryIDs {
 
 enum ExerciseIDs {
     static let nameLabel = "id_label_exercise_name"
+    static let nameField = "id_exercise_name_field"
+    static let fullEditContinueButton = "id_exercise_full_continue"
+    static let fullEditSaveButton = "id_exercise_full_save"
+    static let bilateralToggle = "id_exercise_bilateral_toggle"
+    static let bodyweightToggle = "id_exercise_bodyweight_toggle"
+    static let decimalWeightToggle = "id_exercise_decimal_weight_toggle"
+}
+
+enum ExerciseLabels {
+    static let newExercise = "New Exercise"
+    static let continueAction = "Continue"
+    static let saveAction = "Save"
+}
+
+enum AnalyticsLabels {
+    static let addData = "Add data"
+    static let saveAction = "Save"
 }
 
 enum ExerciseCardIDs {
@@ -41,6 +61,24 @@ enum ExerciseCardIDs {
     static let completedCardPrefix = "id_card_completed_"
     static let activeCardPrefix = "id_card_active_"
     static let idleCardPrefix = "id_card_idle_"
+    static func analytics(_ id: UUID) -> String { "id_card_analytics_\(id.uuidString)" }
+    static let analyticsPrefix = "id_card_analytics_"
+}
+
+enum AnalyticsIDs {
+    static let screen = "id_analytics_screen"
+    static let addDataButton = "id_analytics_add_data"
+    static let entryAddSetButton = "id_analytics_entry_add_set"
+    static let entrySaveButton = "id_analytics_entry_save"
+    static func entryWeightField(logicalSet index: Int, side: String?) -> String {
+        "id_analytics_entry_weight_\(index)_\(side ?? "standard")"
+    }
+    static func entryRepsField(logicalSet index: Int, side: String?) -> String {
+        "id_analytics_entry_reps_\(index)_\(side ?? "standard")"
+    }
+    static func bilateralResult(logicalSet index: Int, side: String) -> String {
+        "id_analytics_set_\(index)_\(side)"
+    }
 }
 
 enum WorkoutIDs {

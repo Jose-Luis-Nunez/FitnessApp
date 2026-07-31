@@ -1,124 +1,80 @@
 ---
 name: reviewing-agent-effectiveness
 description: >-
-  Diagnose which agent enforcement mechanisms (rules, hooks, skills)
-  fired during a task and which did not. Produces a FIRED / NOT FIRED / N/A
-  report per mechanism. Use when the user asks to review what worked, check
-  enforcement, audit the agent system, or evaluate whether rules gripped.
-  For fixing gaps found, hand off to reviewing-agent-infrastructure.
+  Audit whether risk classification, content-bound evidence, targeted skills,
+  tests, hooks, and subagents behaved as intended. Use explicitly for workflow
+  audits or after an enforcement failure; it is never auto-triggered by file count.
 ---
 
 # Reviewing Agent Effectiveness
 
-## Context
+Use this skill only when the user requests a workflow audit, when an expected
+gate failed, or when `debugging-ui-tests` hands off an infrastructure gap. It
+diagnoses; fixes hand off to `reviewing-agent-infrastructure`.
 
-The FitnessApp project uses a layered defense-in-depth architecture:
+## Audit
 
-- **L2 — Always-Apply Rules** (`.claude/rules/*.mdc` with `alwaysApply: true`): Loaded into every chat. ~80% compliance.
-- **L3 — Skills** (`.claude/skills/*/SKILL.md`): Triggered by keyword match from user prompt. ~85-90% compliance.
-- **L3 — Commands** (`.claude/commands/*.md`): Explicit user-triggered workflows. ~85-90% compliance.
-- **L5 — Stop Hook** (`.claude/hooks/post-task-check.sh`): Deterministic checks after agent finishes. 100% execution.
-- **L4 — Pre-Commit Hook** (`.git/hooks/pre-commit`): Blocks bad commits. 100% execution.
+### 1. Scope and Risk
 
-## When to Use
+- List changed production/test files.
+- Run `change-risk.sh classify`.
+- Confirm the observed risk was not lower than the expected risk.
 
-After any non-trivial implementation task, especially:
-- New features (2+ Swift files)
-- Refactoring across multiple files
-- Bug fixes touching coordinators or shared state
-- When the user asks "was hat gegriffen?" / "what rules fired?" / "enforcement audit"
-- Handoff target from `debugging-ui-tests/SKILL.md` when a UI-test failure exposes a gap in rules/skills/hooks that should have caught the issue earlier
+### 2. Prompt Routing
 
-## Audit Process
+- Green: main-agent base review only.
+- Yellow/red: fresh reviewer and tester without conversation history.
+- Confirm only matching specialist references were loaded.
+- Confirm the reviewer read only relevant architecture sections.
 
-### Step 1: Identify the Task Scope
+### 3. Evidence and Tests
 
-Determine what was done in the task being audited:
-- What files were created/modified?
-- What type of task was it? (new feature, refactoring, bug fix, test writing)
-- Was it in the current chat or a different chat? (if different, read the transcript)
+- Code and test manifests match current contents.
+- Stamps contain the matching `source_fingerprint`.
+- Green may use `main-agent`; yellow/red require reviewer/tester subagents.
+- Count final test commands. An equivalent successful command must occur once,
+  not once in the main agent and again in the tester.
+- A tester using `verify` inspected the recorded result rather than re-running.
 
-### Step 2: Check Each Enforcement Mechanism
+### 4. Deterministic Gates
 
-Walk through every mechanism and determine: FIRED / NOT FIRED / NOT APPLICABLE.
+| ID | Gate | Expected |
+|---|---|---|
+| R1 | Risk notice | Mentioned before Swift work |
+| R2 | Xcode rule | Pinned DEVELOPER_DIR; no `swift test` |
+| R3 | Architecture sync | Only structural/public changes |
+| H1 | Code evidence | Exact content manifest + PASS stamp |
+| H2 | Test evidence | One final matching run/verification |
+| H3 | Coverage hint | New ViewModel/Service has tests |
+| H4 | Agent infrastructure | Only executable agent-system changes |
+| H5 | UI state | Counter + polling smell detected |
+| H6 | Duplicate state | Duplicate state-owner smell detected |
+| H7 | Predicate | SwiftData predicate smell detected |
+| H8 | ADR | True architecture triggers only |
+| H9 | Pre-commit | Staged blobs covered by evidence |
 
-#### A: Always-Apply Rules
+Assign `FIRED`, `NOT FIRED`, or `N/A` with concrete evidence. Missing behavior is
+a gap only when its trigger applied.
 
-| ID | Rule | File | What to Check |
-|---|---|---|---|
-| R1 | Triggered Rule Notice | `code-changes-enforcement.mdc` | Did the agent mention "post-change validation will be required" early? |
-| R2 | DEVELOPER_DIR | `build-and-test.mdc` | Were all `xcodebuild` calls prefixed with `DEVELOPER_DIR`? Was `swift test`/`swift build` avoided? |
-| R3 | Architecture Sync | `architecture-documentation-sync.mdc` | Was `architecture-documentation.md` updated when structural changes occurred? See `reviewing-code-changes` skill for trigger map. |
-| R4 | Co-Author Trailer | AGENTS.md rule | If a commit was made, does it include a `Co-authored-by: Claude` trailer? |
-| R5 | Agent Infra Enforcement | `agent-infrastructure-enforcement.mdc` | If .claude/ files changed, was agent-infrastructure validation mentioned early? Did the agent suggest learnings after mistakes? |
+### 5. Cost Report
 
-#### C: Skills
+Report:
 
-| ID | Skill | File | Trigger Condition | What to Check |
-|---|---|---|---|---|
-| S1 | Create Feature | `create-feature/SKILL.md` | User asks to create new feature/screen/view | Was the skill read and followed? Were tests written? |
-| S2 | Reviewing Code Changes | `reviewing-code-changes/SKILL.md` | Swift files changed OR user asks to review code | Was the full checklist followed? Was stamp written (if post-change)? |
-| S3 | Reviewing Test Quality | `reviewing-test-quality/SKILL.md` | User asks to review tests | Was the checklist followed? |
-| S5 | Writing UI Tests | `writing-ui-tests/SKILL.md` | User asks to write UI tests | Was the skill read? |
-| S6 | Updating UI Tests | `updating-ui-tests/SKILL.md` | User asks to fix/update UI tests | Was the skill read? |
-
-#### D: Hooks
-
-| ID | Hook | File | What to Check |
-|---|---|---|---|
-| H1 | Check 1: Code Validation (Grind Loop) | `code-validation.sh` | Was `code-changes.stamp.md` present and fresh (< 10 min)? Did the grind loop fire? |
-| H2 | Check 2: Docs-Sync (Stateless) | `architecture-sync.sh` | Were structural changes detected? Was `architecture-documentation.md` updated? |
-| H3 | Check 3: Test Execution (Grind Loop) | `test-execution.sh` | Were test files changed? Was `test-execution.stamp.md` present? Did the grind loop fire? |
-| H4 | Check 4: Test Coverage (Hint) | `test-coverage.sh` | Were new ViewModel/Service files created? Do corresponding test files exist? |
-| H5 | Check 5: Enforcement Audit (Hint) | `enforcement-audit.sh` | 5+ Swift files changed — was enforcement audit suggested? |
-| H6 | Check 6: Agent Infrastructure (Grind Loop) | `agent-infrastructure.sh` | .claude/ files changed — was `agent-infrastructure.stamp.md` present? Did the grind loop fire? |
-| H7 | Pre-Commit: Validation | `.git/hooks/pre-commit` | Would a commit be blocked for missing validation? |
-| H8 | Pre-Commit: No print() | `.git/hooks/pre-commit` | Are there `print()` statements in production code? |
-| H9 | Pre-Commit: architecture-documentation.md | `.git/hooks/pre-commit` | Would a commit be blocked for stale architecture-documentation.md? |
-
-### Step 3: Build the Report
-
-For each mechanism, assign a status and record evidence:
-
-```
-| ID | Mechanism | Status | Evidence | Triggered By |
-|---|---|---|---|---|
-| R1 | Triggered Notice | FIRED | "post-change validation will be required" in first response | alwaysApply: true |
-| R3 | AppStyle Tokens | FIRED | 17 new tokens in AppStyle.swift, 0 hardcoded values | alwaysApply: true |
-| H4 | Tests Exist | NOT FIRED | New ProfileViewModel.swift without ProfileViewModelTests.swift | Design gap |
-| S3 | Test Quality Review | N/A | User did not request test review | Correct |
-```
-
-### Step 4: Visualize the Trigger Chain
-
-Create a mermaid graph showing which mechanisms triggered which actions, and where gaps occurred. Use solid arrows for successful triggers, dashed arrows for failures.
-
-### Step 5: Gap Analysis
-
-For each NOT FIRED finding:
-1. **Is it a gap or correct behavior?** (N/A = correct, NOT FIRED = potential gap)
-2. **Severity: should this be fixed?** (critical = blocks quality, minor = nice-to-have, skip = correct behavior)
-
-### Step 5.1: Hand Off to reviewing-agent-infrastructure
-
-For each gap with status NOT FIRED that represents a real deficiency (not N/A):
-run the `reviewing-agent-infrastructure` skill to persist the fix as a rule or skill update.
-Do not implement fixes inline in the audit report — the audit is a diagnosis,
-not a treatment.
-
-### Step 6: Summary
-
-```
-## Enforcement Audit Summary
-- Task: <description>
-- Files changed: <count>
-- Mechanisms checked: <total>
-- FIRED: <count> (<percentage>)
-- NOT FIRED: <count> (gaps)
-- N/A: <count> (correct)
-- Gaps to fix: <list with IDs>
-```
+- subagents spawned and whether they inherited conversation context;
+- review references loaded;
+- final test commands and duplicate count;
+- verifier usage and trigger;
+- avoidable agent runs;
+- approximate prompt savings using actual file/context sizes when available.
 
 ## Output
 
-The complete report should be presented to the user. Do NOT write it to a file unless asked — it is a conversation artifact, not a persistent stamp.
+Return one compact table plus:
+
+- risk verdict;
+- useful mechanisms;
+- avoidable work;
+- gaps to hand off;
+- estimated token/runtime savings.
+
+Do not write a stamp or modify infrastructure during the audit.

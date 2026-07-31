@@ -32,6 +32,8 @@ public struct SetTrackingState {
     /// separately per mode so each pre-fills the picker with its own last value.
     public var lastLessAdjustment: SetAdjustment? = nil
     public var lastMoreAdjustment: SetAdjustment? = nil
+    public var lastLessAdjustmentBySide: [ExerciseSide: SetAdjustment] = [:]
+    public var lastMoreAdjustmentBySide: [ExerciseSide: SetAdjustment] = [:]
 
     public init() {}
 
@@ -50,6 +52,8 @@ public struct SetTrackingState {
         originalCategory = nil
         lastLessAdjustment = nil
         lastMoreAdjustment = nil
+        lastLessAdjustmentBySide = [:]
+        lastMoreAdjustmentBySide = [:]
     }
 }
 
@@ -76,13 +80,11 @@ public struct SetEditingState {
 }
 
 public struct QuickDoneState {
-    public var isActive: Bool = false
     public var allCompleted: Bool = false
 
     public init() {}
 
     public mutating func reset() {
-        isActive = false
         allCompleted = false
     }
 }
@@ -95,7 +97,6 @@ public final class ActiveSetViewModel {
     public private(set) var tracking = SetTrackingState()
     public private(set) var editing = SetEditingState()
     public private(set) var quickDone = QuickDoneState()
-    public var pendingSetIndex: Int? = nil
     /// Elapsed timer seconds, delegated to `TimerService`. SwiftUI observes
     /// this through `@Observable` property forwarding — no polling needed.
     public var timerSeconds: Int { timerService.timerSeconds }
@@ -189,11 +190,6 @@ public final class ActiveSetViewModel {
         set { editing.didJustEditSet = newValue }
     }
 
-    public var quickDoneModeActive: Bool {
-        get { quickDone.isActive }
-        set { quickDone.isActive = newValue }
-    }
-
     public var quickDoneAllCompleted: Bool {
         get { quickDone.allCompleted }
         set { quickDone.allCompleted = newValue }
@@ -238,11 +234,19 @@ public final class ActiveSetViewModel {
 
         tracking.currentSet = 0
         tracking.activeSetIndex = 0
-        tracking.setProgress = (0..<exercise.sets).map { _ in
-            SetProgress(status: .notStarted, currentReps: exercise.reps, weight: exercise.weight)
+        tracking.setProgress = exercise.trainingSteps.map { step in
+            SetProgress(
+                status: .notStarted,
+                currentReps: exercise.reps,
+                weight: exercise.weight,
+                side: step.side,
+                logicalSetIndex: step.logicalSetIndex
+            )
         }
         tracking.lastLessAdjustment = nil
         tracking.lastMoreAdjustment = nil
+        tracking.lastLessAdjustmentBySide = [:]
+        tracking.lastMoreAdjustmentBySide = [:]
         tracking.isSetInProgress = true
         tracking.isLastSetCompleted = false
         quickDone.allCompleted = false
@@ -253,7 +257,7 @@ public final class ActiveSetViewModel {
 
     public func startNextSet() {
         guard let exercise = tracking.currentExercise,
-              tracking.currentSet < exercise.sets,
+              tracking.currentSet < exercise.trainingSteps.count,
               !tracking.isLastSetCompleted else { return }
         tracking.activeSetIndex = tracking.currentSet
         tracking.isSetInProgress = true
@@ -263,18 +267,19 @@ public final class ActiveSetViewModel {
 
     public func completeCurrentSet() {
         guard let exercise = tracking.currentExercise else { return }
-        guard tracking.currentSet < exercise.sets else { return }
+        guard tracking.currentSet < exercise.trainingSteps.count else { return }
         guard tracking.currentSet < tracking.setProgress.count else { return }
 
-        tracking.setProgress[tracking.currentSet] = SetProgress(
-            status: .completedDone,
+        let currentProgress = tracking.setProgress[tracking.currentSet]
+        tracking.setProgress[tracking.currentSet] = currentProgress.transitioned(
+            to: .completedDone,
             currentReps: exercise.reps,
             weight: exercise.weight
         )
 
         tracking.currentSet += 1
 
-        if tracking.currentSet >= exercise.sets {
+        if tracking.currentSet >= exercise.trainingSteps.count {
             tracking.isLastSetCompleted = true
             timerService.timerSeconds = 0
         }
@@ -285,7 +290,7 @@ public final class ActiveSetViewModel {
 
     public func updateCurrentReps(_ newReps: Int, _ newWeight: Double) {
         guard let exercise = tracking.currentExercise else { return }
-        guard tracking.currentSet < exercise.sets || editing.pendingEditIndex != nil else { return }
+        guard tracking.currentSet < exercise.trainingSteps.count || editing.pendingEditIndex != nil else { return }
 
         let indexToUpdate = editing.pendingEditIndex ?? tracking.currentSet
         let status: SetStatus
@@ -297,28 +302,40 @@ public final class ActiveSetViewModel {
         } else {
             status = newReps < exercise.reps ? .completedLess : .completedMore
         }
-        let progress = SetProgress(status: status, currentReps: newReps, weight: newWeight)
+        guard indexToUpdate < tracking.setProgress.count else { return }
+        let previousProgress = tracking.setProgress[indexToUpdate]
+        let progress = previousProgress.transitioned(
+            to: status,
+            currentReps: newReps,
+            weight: newWeight
+        )
 
         // Remember this adjustment per mode so the next Less/More opens pre-filled.
         switch status {
-        case .completedLess: tracking.lastLessAdjustment = SetAdjustment(reps: newReps, weight: newWeight)
-        case .completedMore: tracking.lastMoreAdjustment = SetAdjustment(reps: newReps, weight: newWeight)
+        case .completedLess:
+            remember(
+                SetAdjustment(reps: newReps, weight: newWeight),
+                mode: .less,
+                side: previousProgress.side
+            )
+        case .completedMore:
+            remember(
+                SetAdjustment(reps: newReps, weight: newWeight),
+                mode: .more,
+                side: previousProgress.side
+            )
         default: break
         }
 
-        if tracking.setProgress.count <= indexToUpdate {
-            tracking.setProgress.append(progress)
-        } else {
-            tracking.setProgress[indexToUpdate] = progress
-        }
+        tracking.setProgress[indexToUpdate] = progress
 
         let isEditingOlderSet = editing.pendingEditIndex != nil
             && editing.pendingEditIndex != tracking.activeSetIndex
         let shouldAdvance = !isEditingOlderSet
 
-        if shouldAdvance && tracking.currentSet < exercise.sets {
+        if shouldAdvance && tracking.currentSet < exercise.trainingSteps.count {
             tracking.currentSet += 1
-            if tracking.currentSet >= exercise.sets {
+            if tracking.currentSet >= exercise.trainingSteps.count {
                 tracking.isLastSetCompleted = true
             }
         }
@@ -377,12 +394,19 @@ public final class ActiveSetViewModel {
         tracking.currentExercise = exercise
         tracking.category = category
         tracking.currentSet = 0
-        tracking.setProgress = (0..<exercise.sets).map { _ in
-            SetProgress(status: .completedDone, currentReps: exercise.reps, weight: exercise.weight)
+        tracking.setProgress = exercise.trainingSteps.map { step in
+            SetProgress(
+                status: .completedDone,
+                currentReps: exercise.reps,
+                weight: exercise.weight,
+                side: step.side,
+                logicalSetIndex: step.logicalSetIndex
+            )
         }
         tracking.lastLessAdjustment = nil
         tracking.lastMoreAdjustment = nil
-        quickDone.isActive = false
+        tracking.lastLessAdjustmentBySide = [:]
+        tracking.lastMoreAdjustmentBySide = [:]
         quickDone.allCompleted = true
         tracking.isSetInProgress = false
         tracking.isLastSetCompleted = true
@@ -394,47 +418,6 @@ public final class ActiveSetViewModel {
         timerService.timerSeconds = 0
     }
 
-    public func processQuickDone(at index: Int) {
-        guard let exercise = tracking.currentExercise, index < tracking.setProgress.count else { return }
-        if tracking.setProgress[index].status == .completedDone { return }
-
-        tracking.setProgress[index] = SetProgress(
-            status: .completedDone,
-            currentReps: exercise.reps,
-            weight: exercise.weight
-        )
-
-        if tracking.allSetsCompleted {
-            tracking.isLastSetCompleted = true
-            tracking.isSetInProgress = false
-            quickDone.allCompleted = true
-            timerService.stopTimer()
-            timerService.timerSeconds = 0
-        }
-    }
-
-    public func completeAllQuickDone() {
-        guard let exercise = tracking.currentExercise else { return }
-        for index in 0..<tracking.setProgress.count {
-            let status = tracking.setProgress[index].status
-            if status == .notStarted || status == .inProgress {
-                tracking.setProgress[index] = SetProgress(
-                    status: .completedDone,
-                    currentReps: exercise.reps,
-                    weight: exercise.weight
-                )
-            }
-        }
-        quickDone.allCompleted = tracking.allSetsCompleted
-        tracking.isLastSetCompleted = quickDone.allCompleted
-
-        if quickDone.allCompleted {
-            tracking.isSetInProgress = false
-            timerService.stopTimer()
-            timerService.timerSeconds = 0
-        }
-    }
-
     // MARK: - Editing
 
     public func startEditingSet(index: Int, mode: SetEditingMode) {
@@ -443,7 +426,9 @@ public final class ActiveSetViewModel {
         // For a fresh set, pre-fill with the last adjustment of this mode so the
         // user doesn't re-enter the same Less/More value set after set. Editing
         // an already-completed set keeps showing that set's real values.
-        let remembered = progress.status == .notStarted ? rememberedAdjustment(for: mode) : nil
+        let remembered = progress.status == .notStarted
+            ? rememberedAdjustment(for: mode, side: progress.side)
+            : nil
 
         editing.repsInput = String(remembered?.reps ?? progress.currentReps)
         editing.weightInput = WeightFormatter.format(remembered?.weight ?? progress.weight)
@@ -454,11 +439,37 @@ public final class ActiveSetViewModel {
 
     /// The remembered adjustment to pre-fill for a given mode, or `nil` when the
     /// mode has no session memory (`.edit`, or nothing recorded yet).
-    private func rememberedAdjustment(for mode: SetEditingMode) -> SetAdjustment? {
+    private func rememberedAdjustment(
+        for mode: SetEditingMode,
+        side: ExerciseSide?
+    ) -> SetAdjustment? {
         switch mode {
-        case .less: tracking.lastLessAdjustment
-        case .more: tracking.lastMoreAdjustment
+        case .less:
+            side.flatMap { tracking.lastLessAdjustmentBySide[$0] }
+                ?? tracking.lastLessAdjustment
+        case .more:
+            side.flatMap { tracking.lastMoreAdjustmentBySide[$0] }
+                ?? tracking.lastMoreAdjustment
         case .edit: nil
+        }
+    }
+
+    private func remember(
+        _ adjustment: SetAdjustment,
+        mode: SetEditingMode,
+        side: ExerciseSide?
+    ) {
+        switch (mode, side) {
+        case (.less, .some(let side)):
+            tracking.lastLessAdjustmentBySide[side] = adjustment
+        case (.more, .some(let side)):
+            tracking.lastMoreAdjustmentBySide[side] = adjustment
+        case (.less, .none):
+            tracking.lastLessAdjustment = adjustment
+        case (.more, .none):
+            tracking.lastMoreAdjustment = adjustment
+        case (.edit, _):
+            break
         }
     }
 

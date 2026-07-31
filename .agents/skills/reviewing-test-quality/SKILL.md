@@ -15,7 +15,8 @@ description: >-
 - **Shared test utilities:** `FitnessTestSupport` package — `makeExercise()`, `MockAnalyticsStorage`, `StubAnalyticsStorage`, `waitUntil()`
 - **Package structure:** Tests live under `Packages/<PackageName>/Tests/<PackageName>Tests/`
 - **Build system:** Always use `xcodebuild` with `DEVELOPER_DIR` and `-skipMacroValidation` (see `build-and-test` rule)
-- For domain models, services, and project structure see [architecture-documentation.md](../../../.claude/references/architecture-documentation.md)
+- For domain models, services, and project structure, read only the relevant
+  heading in `.claude/references/architecture-documentation.md`
 
 ## Context Management
 
@@ -99,7 +100,7 @@ A `@Suite(.serialized)` trait is legitimate only when production code shares mut
 2. Grep the suite for `UserDefaults.standard` or other process-global mutables.
 3. Grep for file-backed state under a shared path.
 
-If **none** of these are present, `.serialized` is legacy and can be removed. Parallel execution then gives a 3–5× run-time speedup within that suite at zero risk. If any are present, do NOT remove `.serialized` without first migrating the production code to constructor-injected dependencies (see `reviewing-code-changes` section 13c).
+If **none** of these are present, `.serialized` is legacy and can be removed. Parallel execution then gives a 3–5× run-time speedup within that suite at zero risk. If any are present, do NOT remove `.serialized` without first migrating the production code to constructor-injected dependencies (see `reviewing-code-changes/references/state-services-review.md`).
 
 #### E.2 — Callback Fidelity (Mock-Vertragsbruch)
 

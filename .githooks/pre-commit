@@ -4,12 +4,13 @@
 # Error messages are formatted as RULE/VIOLATION/FIX so AI agents
 # can self-correct from the output (Fleek/YC W22 pattern).
 #
-# Checks (in execution order, numbered to match the in-file labels):
-#   1. Post-change validation report required for 1+ Swift files
-#   2. No print() statements in production Swift code
-#   3. ADR required for structural architecture changes (see lib/adr-triggers.sh)
-#   4. UI-state-sync anti-pattern (Int-counter + while !Task.isCancelled polling loop)
-#   5. architecture-documentation.md freshness for structural changes
+# Checks (in execution order):
+#   1. Content-bound code validation for staged Swift files
+#   2. Content-bound final test evidence for staged Swift files
+#   3. No print() statements in production Swift code
+#   4. ADR required for structural architecture changes
+#   5. UI-state-sync anti-pattern
+#   6. architecture-documentation.md freshness for structural changes
 
 set -euo pipefail
 
@@ -24,48 +25,91 @@ if [ -n "$STAGED_SWIFT" ]; then
   STAGED_SWIFT_COUNT=$(echo "$STAGED_SWIFT" | wc -l | tr -d ' ')
 fi
 
-# --- Check 1: Post-change validation for 1+ Swift files ---
-# Required when ANY Swift file is staged. Forces author to either run the
-# reviewing-code-changes skill or perform the validation verbally and touch
-# the stamp.
+# --- Shared validation evidence ---
+
+REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+EVIDENCE_LIB="$REPO_ROOT/.claude/hooks/lib/validation-evidence.sh"
+RISK_LIB="$REPO_ROOT/.claude/hooks/lib/change-risk.sh"
+
+if [ -f "$EVIDENCE_LIB" ]; then
+  # shellcheck disable=SC1090
+  source "$EVIDENCE_LIB"
+fi
+if [ -f "$RISK_LIB" ]; then
+  # shellcheck disable=SC1090
+  source "$RISK_LIB"
+fi
+
+# --- Check 1: Content-bound code validation ---
 
 if [ "$STAGED_SWIFT_COUNT" -ge 1 ]; then
   REPORT=".claude/hooks/state/code-changes.stamp.md"
-  REPORT_FRESH=false
+  MANIFEST=".claude/hooks/state/code-changes.manifest.tsv"
+  STAGED_RISK=$(classify_change_risk staged)
+  REPORT_VALID=false
+  STAMP_RISK=$(sed -n 's/^risk:[[:space:]]*//p' "$REPORT" 2>/dev/null | head -1 || true)
+  STAMP_RISK_RANK=$(change_risk_rank "${STAMP_RISK:-none}" 2>/dev/null || echo 0)
+  STAGED_RISK_RANK=$(change_risk_rank "$STAGED_RISK")
 
-  if [ -f "$REPORT" ]; then
-    REPORT_AGE=$(python3 -c "
-import os, time
-try:
-    age = time.time() - os.path.getmtime('$REPORT')
-    print('fresh' if age < 1800 else 'stale')
-except: print('stale')
-" 2>/dev/null || echo "stale")
-    if [ "$REPORT_AGE" = "fresh" ]; then
-      REPORT_FRESH=true
+  if validation_manifest_covers_staged "$MANIFEST" &&
+     validation_stamp_matches_manifest "$REPORT" "$MANIFEST" &&
+     [ "$STAMP_RISK_RANK" -ge "$STAGED_RISK_RANK" ]; then
+    if [ "$STAGED_RISK" = "green" ] ||
+       grep -q 'verified_by:[[:space:]]*reviewer-subagent' "$REPORT"; then
+      REPORT_VALID=true
     fi
   fi
 
-  if [ "$REPORT_FRESH" = false ]; then
+  if [ "$REPORT_VALID" = false ]; then
     FILE_LIST=$(echo "$STAGED_SWIFT" | head -10 | sed 's/^/  - /')
     ERRORS="${ERRORS}
 ═══════════════════════════════════════════════════════════════
-RULE: Post-change validation is required when committing 1+ Swift files.
-VIOLATION: ${STAGED_SWIFT_COUNT} Swift files staged for commit but no recent validation report found.
-  Expected: .claude/hooks/state/code-changes.stamp.md (less than 30 min old)
-  Found: $([ -f "$REPORT" ] && echo "stale report" || echo "no report")
+RULE: Content-bound code validation is required for staged Swift files.
+VIOLATION: ${STAGED_SWIFT_COUNT} Swift files are staged at risk ${STAGED_RISK},
+  but the validation manifest/stamp does not cover their exact staged contents.
 FILES:
 ${FILE_LIST}
-FIX: Run the post-change-validation skill checklist and write a stamp to
-  .claude/hooks/state/code-changes.stamp.md before committing.
-  Alternatively, run: touch .claude/hooks/state/code-changes.stamp.md
-  if validation was done verbally.
+FIX:
+  - Run the risk-appropriate reviewing-code-changes workflow.
+  - Write .claude/hooks/state/code-changes.manifest.tsv with validation-evidence.sh.
+  - Write a PASS stamp containing risk, verified_by, and source_fingerprint.
 ═══════════════════════════════════════════════════════════════"
     EXIT_CODE=1
   fi
 fi
 
-# --- Check 2: No print() in production Swift code ---
+# --- Check 2: Content-bound final test evidence ---
+
+if [ "$STAGED_SWIFT_COUNT" -ge 1 ]; then
+  TEST_REPORT=".claude/hooks/state/test-execution.stamp.md"
+  TEST_MANIFEST=".claude/hooks/state/test-execution.manifest.tsv"
+  STAGED_RISK=${STAGED_RISK:-$(classify_change_risk staged)}
+  TEST_VALID=false
+
+  if validation_manifest_covers_staged "$TEST_MANIFEST" &&
+     validation_stamp_matches_manifest "$TEST_REPORT" "$TEST_MANIFEST"; then
+    if [ "$STAGED_RISK" = "green" ] ||
+       grep -q 'verified_by:[[:space:]]*tester-subagent' "$TEST_REPORT"; then
+      TEST_VALID=true
+    fi
+  fi
+
+  if [ "$TEST_VALID" = false ]; then
+    ERRORS="${ERRORS}
+═══════════════════════════════════════════════════════════════
+RULE: Final tests must match the exact staged Swift contents.
+VIOLATION: No reusable PASS evidence covers this ${STAGED_RISK} change.
+FIX:
+  - Run the required affected tests once, or let the tester verify an existing
+    matching result without re-running it.
+  - Record test-execution.manifest.tsv and a PASS test stamp with
+    verified_by, command, result, and source_fingerprint.
+═══════════════════════════════════════════════════════════════"
+    EXIT_CODE=1
+  fi
+fi
+
+# --- Check 3: No print() in production Swift code ---
 
 if [ -n "$STAGED_SWIFT" ]; then
   PROD_SWIFT=$(echo "$STAGED_SWIFT" | grep -v 'Tests/' | grep -v 'test' || true)
@@ -94,9 +138,8 @@ FIX: Remove print() statements or replace with os_log / Logger:
   fi
 fi
 
-# --- Check 3: ADR required for structural changes ---
+# --- Check 4: ADR required for structural changes ---
 
-REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 ADR_LIB="$REPO_ROOT/.claude/hooks/lib/adr-triggers.sh"
 
 if [ -f "$ADR_LIB" ]; then
@@ -132,7 +175,7 @@ FIX:
   fi
 fi
 
-# --- Check 4: UI-state-sync anti-pattern (Int-counter + while !Task.isCancelled polling loop) ---
+# --- Check 5: UI-state-sync anti-pattern (Int-counter + while !Task.isCancelled polling loop) ---
 
 if [ -n "$STAGED_SWIFT" ]; then
   STAGED_SWIFT_DIFF=$(git diff --cached --diff-filter=AM -- '*.swift' 2>/dev/null || true)
@@ -180,15 +223,18 @@ FIX:
   fi
 fi
 
-# --- Check 5: architecture-documentation.md freshness ---
+# --- Check 6: architecture-documentation.md freshness ---
 
 ARCH_FILE=".claude/references/architecture-documentation.md"
 ARCH_STAGED=$(git diff --cached --name-only | grep "$ARCH_FILE" || true)
 
 NEW_FEATURES=$(git diff --cached --name-only --diff-filter=A | grep '^FitnessApp/Features/' || true)
 NEW_USECASES=$(git diff --cached --name-only --diff-filter=A | grep 'UseCases/' || true)
-NEW_SERVICES=$(git diff --cached --name-only | grep -E 'Service\.swift|Container\.swift' || true)
-NEW_SHARED=$(git diff --cached --name-only --diff-filter=A | grep '^FitnessApp/Shared/' || true)
+NEW_SERVICES=$(git diff --cached --name-only | grep -E 'Service\.swift|Storage\.swift|Container\.swift|Coordinator\.swift' || true)
+NEW_SHARED=$(git diff --cached --name-only --diff-filter=A | grep -E '^FitnessApp/Shared/|^Packages/Fitness(UI|PersistenceUI)/Sources/' || true)
+APPSTYLE_SURFACE=$(git diff --cached -- '*/AppStyle.swift' | grep -E '^[+-][[:space:]]*public static (let|var)' || true)
+NAVIGATION_SURFACE=$(git diff --cached -- '*.swift' | grep '^+' | grep -E 'NavigationDestination|case [a-zA-Z].*Navigation' || true)
+DOMAIN_SURFACE=$(git diff --cached -- 'Packages/FitnessCore/Sources/**/*.swift' | grep -E '^[+-].*public (struct|class|enum|protocol|func|var|let)' || true)
 
 NEEDS_ARCH=false
 ARCH_TRIGGERS=""
@@ -212,6 +258,21 @@ if [ -n "$NEW_SHARED" ] && [ -z "$ARCH_STAGED" ]; then
   ARCH_TRIGGERS="${ARCH_TRIGGERS}
   - New shared components: $(echo "$NEW_SHARED" | tr '\n' ', ')"
 fi
+if [ -n "$APPSTYLE_SURFACE" ] && [ -z "$ARCH_STAGED" ]; then
+  NEEDS_ARCH=true
+  ARCH_TRIGGERS="${ARCH_TRIGGERS}
+  - AppStyle public token surface changed"
+fi
+if [ -n "$NAVIGATION_SURFACE" ] && [ -z "$ARCH_STAGED" ]; then
+  NEEDS_ARCH=true
+  ARCH_TRIGGERS="${ARCH_TRIGGERS}
+  - Navigation surface changed"
+fi
+if [ -n "$DOMAIN_SURFACE" ] && [ -z "$ARCH_STAGED" ]; then
+  NEEDS_ARCH=true
+  ARCH_TRIGGERS="${ARCH_TRIGGERS}
+  - Public FitnessCore domain surface changed"
+fi
 
 if [ "$NEEDS_ARCH" = true ]; then
   ERRORS="${ERRORS}
@@ -220,8 +281,9 @@ RULE: architecture-documentation.md must be updated when structural changes are 
 VIOLATION: Structural changes detected but .claude/references/architecture-documentation.md
   is not staged for commit.
 TRIGGERS:${ARCH_TRIGGERS}
-FIX: Update the relevant section in .claude/references/architecture-documentation.md
-  (see reviewing-code-changes skill, section 'Architecture Sync') and stage it:
+FIX: Update only the relevant current-state section in
+  .claude/references/architecture-documentation.md (see architecture-routing.md)
+  and stage it:
   git add .claude/references/architecture-documentation.md
 ═══════════════════════════════════════════════════════════════"
   EXIT_CODE=1

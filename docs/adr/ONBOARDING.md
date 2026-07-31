@@ -91,18 +91,21 @@ Full list + latest: `docs/adr/README.md`.
 
 ## Pre-commit hook checks (what blocks your commit?)
 
-The hook (`/.githooks/pre-commit`) checks five things in this order:
+The hook (`/.githooks/pre-commit`) checks six things in this order:
 
-1. **Validation stamp**: with 1+ Swift files a fresh
-   `.cursor/hooks/state/code-changes.stamp.md` (< 30 min old) must exist.
-   → Run the `reviewing-code-changes` skill or
-     `touch .cursor/hooks/state/code-changes.stamp.md` after a manual check.
-2. **No `print()`** in production Swift. → `Logger` instead of `print()`.
-3. **ADR obligation** on structural triggers (see above).
-4. **UI state sync anti-pattern** (Int counter + polling loop). →
+1. **Code evidence**: staged Swift blobs must match the content manifest and
+   risk-appropriate PASS review.
+2. **Test evidence**: one final run or tester verification must match the same
+   staged contents.
+3. **No `print()`** in production Swift. → `Logger` instead of `print()`.
+4. **ADR obligation** on structural triggers (see above).
+5. **UI state sync anti-pattern** (Int counter + polling loop). →
    Use ADR-0001, no own counter sync.
-5. **`architecture-documentation.md` freshness** on new features /
-   services / use cases / shared components.
+6. **`architecture-documentation.md` freshness** for actual public or
+   structural changes.
+
+Stamps are not time-based and cannot be renewed with `touch`. They remain valid
+until a covered file changes.
 
 On errors the hook delivers RULE/VIOLATION/FIX-formatted messages — the
 line with `FIX:` contains the repair path.
@@ -116,11 +119,11 @@ the reason in the commit body. Code review will ask.
 |------|-----|
 | ADR index + template | `docs/adr/README.md` |
 | Individual ADRs | `docs/adr/NNNN-*.md` |
-| Hook scripts | `.githooks/` (versioned), `.cursor/hooks/checks/` (Stop hooks) |
-| Cursor rules | `.cursor/rules/*.mdc` |
-| Cursor skills (workflows) | `.cursor/skills/<name>/SKILL.md` |
-| Current architecture state | `.cursor/references/architecture-documentation.md` |
-| Migration plans | `.cursor/plans/<plan>/` |
+| Hook scripts | `.githooks/` (versioned), `.claude/hooks/checks/` (Stop hooks) |
+| Agent rules | `.claude/rules/*.mdc` |
+| Agent skills (workflows) | `.claude/skills/<name>/SKILL.md` |
+| Current architecture state | `.claude/references/architecture-documentation.md` |
+| Validation policy | `docs/adr/0012-risk-based-agent-validation.md` |
 
 ## Help
 

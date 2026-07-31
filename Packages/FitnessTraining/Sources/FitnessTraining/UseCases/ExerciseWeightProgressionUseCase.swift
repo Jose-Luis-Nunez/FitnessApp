@@ -16,7 +16,7 @@ public struct ExerciseWeightProgressionUseCase {
     /// session does not satisfy the weight-progression rule.
     public func execute(exercise: Exercise, setProgress: [SetProgress]) -> Exercise {
         guard exercise.hasWeight,
-              setProgress.count >= exercise.sets,
+              hasRequiredExecutionShape(exercise: exercise, setProgress: setProgress),
               setProgress.allSatisfy(isCompleted),
               setProgress.allSatisfy({ $0.currentReps >= Self.requiredReps }),
               let trainedWeight = setProgress.map(\.weight).min(),
@@ -28,6 +28,25 @@ public struct ExerciseWeightProgressionUseCase {
         progressedExercise.weight = trainedWeight
         progressedExercise.reps = Self.requiredReps
         return progressedExercise
+    }
+
+    private func hasRequiredExecutionShape(
+        exercise: Exercise,
+        setProgress: [SetProgress]
+    ) -> Bool {
+        guard exercise.executionMode == .bilateral else {
+            // Preserve the established standard-exercise behavior: imported
+            // or historic sessions may contain additional completed sets.
+            return setProgress.count >= exercise.trainingSteps.count
+        }
+
+        let expectedSteps = exercise.trainingSteps
+        guard setProgress.count == expectedSteps.count else { return false }
+
+        return zip(setProgress, expectedSteps).allSatisfy { progress, step in
+            progress.side == step.side
+                && progress.logicalSetIndex == step.logicalSetIndex
+        }
     }
 
     private func isCompleted(_ progress: SetProgress) -> Bool {

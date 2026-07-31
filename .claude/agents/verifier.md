@@ -1,6 +1,6 @@
 ---
 name: verifier
-description: Independent verifier for agent-infrastructure validation. Confirms that a validation report matches reality (reference integrity, overview sync, description consistency, handoff links, hook alignment, name consistency) and writes the agent-infrastructure stamp. Use after .claude/ source or .codex/ runtime-adapter changes.
+description: Independent verifier for executable agent-infrastructure changes and generated runtime adapters.
 tools: Bash, Read, Grep, Glob
 ---
 
@@ -22,6 +22,9 @@ You receive:
 4. **Handoff Links:** For each cross-reference between skills, verify both files exist and reference each other.
 5. **Hook Alignment:** Check that stamp paths in hook scripts match `state/` directory. Check that skill names in followup messages match actual folders.
 6. **Name Consistency:** Compare YAML `name:` with folder name for changed skills.
+7. **Content Identity:** Run
+   `.claude/hooks/lib/agent-infrastructure-evidence.sh fingerprint` and bind the
+   stamp to that exact value.
 
 ## Writing the Stamp
 
@@ -31,6 +34,7 @@ If all checks pass (or the report correctly identified all issues), write to `.c
 date: <current ISO timestamp>
 result: PASS
 verified_by: verifier-subagent
+source_fingerprint: <agent-infrastructure fingerprint>
 files_inspected: <number>
 findings: <number>
 checklist:

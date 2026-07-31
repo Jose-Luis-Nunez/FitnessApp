@@ -1,6 +1,18 @@
 #if UITESTING
 import Foundation
 
+struct UITestExerciseConfig: Codable {
+    let category: String
+    let exerciseName: String
+    let weight: Double
+    let reps: Int
+    let sets: Int
+    let noSeats: Bool
+    let icon: String
+    let executionMode: String
+    let isCompleted: Bool
+}
+
 struct UITestLaunchConfig: Codable {
     let screen: UITestScreen
     let category: String
@@ -10,6 +22,10 @@ struct UITestLaunchConfig: Codable {
     var sets: Int?
     var noSeats: Bool?
     var icon: String?
+    var executionMode: String?
+    var isCompleted: Bool?
+    var additionalExercises: [UITestExerciseConfig]?
+    var seedAnalyticsHistory: Bool?
 
     // MARK: - Factory Methods
 

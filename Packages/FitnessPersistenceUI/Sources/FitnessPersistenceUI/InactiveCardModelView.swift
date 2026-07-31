@@ -141,7 +141,7 @@ private extension InactiveCardModelView {
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier(ExerciseIDs.nameLabel)
                 .onTapGesture {
-                    if isEditable { onEdit(model.toDomain(), .name) }
+                    if isEditable { onEdit(model.toDomain(), .full) }
                 }
 
             HStack(spacing: 4) {
@@ -179,6 +179,7 @@ private extension InactiveCardModelView {
                 }
             }
         )
+        .accessibilityIdentifier(ExerciseCardIDs.analytics(model.id))
     }
 }
 

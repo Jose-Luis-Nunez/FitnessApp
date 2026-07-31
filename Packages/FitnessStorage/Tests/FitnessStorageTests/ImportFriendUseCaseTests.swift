@@ -30,7 +30,28 @@ struct ImportFriendUseCaseTests {
         let workout = Workout(name: workoutName, selectedCategories: [.chest])
         let exercise = Exercise(
             name: "Bench Press", weight: 80, reps: 8, sets: 3,
-            iconName: "defaultChestIcon", category: .chest
+            iconName: "defaultChestIcon", category: .chest,
+            executionMode: .bilateral
+        )
+        let analytics = AnalyticsEntry(
+            exerciseId: exercise.id,
+            date: Date(),
+            setProgress: [
+                SetProgress(
+                    status: .completedDone,
+                    currentReps: 8,
+                    weight: 80,
+                    side: .left,
+                    logicalSetIndex: 0
+                ),
+                SetProgress(
+                    status: .completedDone,
+                    currentReps: 9,
+                    weight: 80,
+                    side: .right,
+                    logicalSetIndex: 0
+                )
+            ]
         )
         let envelope = WorkoutShareEnvelope(
             version: version,
@@ -38,7 +59,7 @@ struct ImportFriendUseCaseTests {
             app: "FitnessApp",
             workout: workout,
             exercises: [exercise],
-            analytics: []
+            analytics: [analytics]
         )
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -60,6 +81,9 @@ struct ImportFriendUseCaseTests {
         #expect(friend.name == "Alice")
         #expect(friend.workoutName == "Push Day")
         #expect(storage.friends.count == 1)
+        let storedEnvelope = try storage.loadEnvelope(for: friend.id)
+        #expect(storedEnvelope.exercises.first?.executionMode == .bilateral)
+        #expect(storedEnvelope.analytics.first?.setProgress.map(\.side) == [.left, .right])
     }
 
     // MARK: - Validation errors

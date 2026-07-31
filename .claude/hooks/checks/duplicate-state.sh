@@ -1,11 +1,11 @@
 #!/bin/bash
 # Check 8: Duplicate Domain-State Holders (Bug 1 class) detected in working tree?
-# Pattern: Hint — one-time suggestion, no grind loop.
+# Pattern: non-blocking one-time hint.
 # Env: CONTENT, STATE_DIR, all_swift, HAS_QUESTION
 #
 # Fires when the diff introduces `@State private var XViewModel` AND a UUID-keyed
 # VM cache already exists somewhere in the codebase. Real blocking is up to the
-# reviewer subagent (see reviewing-code-changes/SKILL.md §13h).
+# reviewer subagent (see state-services-review.md).
 
 if [ "$HAS_QUESTION" -gt 0 ]; then
   exit 0
@@ -60,7 +60,7 @@ fi
 echo "$CUR_HASH" > "$HINT_HASH_FILE"
 
 cat <<EOF
-[Hint] reviewing-code-changes §13h — Duplicate Domain-State Holders. Diff introduces a new '@State private var ...ViewModel'; a UUID-keyed VM cache already exists in:
+[Hint] Duplicate Domain-State Holders. Diff introduces a new '@State private var ...ViewModel'; a UUID-keyed VM cache already exists in:
 $CACHE_HITS
-Two lifecycles for one identity = sync bug (see Bug 1). Prefer @Bindable on @Model, @Environment-injected single source, or pure-rendering view. See .claude/skills/reviewing-code-changes/SKILL.md §13h.
+Two lifecycles for one identity = sync bug. Prefer @Bindable on @Model, @Environment-injected single source, or pure-rendering view. See .claude/skills/reviewing-code-changes/references/state-services-review.md.
 EOF

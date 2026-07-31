@@ -16,6 +16,7 @@ public final class ExerciseFormViewModel {
     public var editingExercise: Exercise?
     public var selectedIconName: String = ""
     public var selectedCategory: MuscleCategoryGroup = .arms
+    public var executionMode: ExerciseExecutionMode = .standard
 
     public init() {}
 
@@ -30,6 +31,7 @@ public final class ExerciseFormViewModel {
         sets = 1
         seat = ""
         noSeats = false
+        executionMode = .standard
         editingExercise = nil
         editMode = .full
         showForm = false
@@ -59,6 +61,7 @@ public final class ExerciseFormViewModel {
             updatedExercise.noSeats = noSeats
             updatedExercise.iconName = icon
             updatedExercise.category = selectedCategory
+            updatedExercise.executionMode = executionMode
             return updatedExercise
         } else {
             return Exercise(
@@ -69,7 +72,8 @@ public final class ExerciseFormViewModel {
                 seatSetting: seat.isEmpty ? nil : seat,
                 noSeats: noSeats,
                 iconName: icon,
-                category: selectedCategory
+                category: selectedCategory,
+                executionMode: executionMode
             )
         }
     }
@@ -83,6 +87,7 @@ public final class ExerciseFormViewModel {
             sets = exercise.sets
             seat = exercise.seatSetting ?? ""
             noSeats = exercise.noSeats
+            executionMode = exercise.executionMode
             let validIcons = category.availableIcons
             if validIcons.contains(exercise.iconName) {
                 selectedIconName = exercise.iconName
