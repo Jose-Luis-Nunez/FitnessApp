@@ -68,11 +68,11 @@ write_fixture_evidence() {
 
   (
     cd "$repo"
-    bash "$EVIDENCE" write .claude/hooks/state/code-changes.manifest.tsv
+    bash "$EVIDENCE" write .claude/hooks/state/code-changes.manifest.tsv staged
     code_fingerprint=$(bash "$EVIDENCE" fingerprint .claude/hooks/state/code-changes.manifest.tsv)
     printf 'result: PASS\nrisk: %s\nverified_by: %s\nsource_fingerprint: %s\n' \
       "$risk" "$reviewer" "$code_fingerprint" > .claude/hooks/state/code-changes.stamp.md
-    bash "$EVIDENCE" write .claude/hooks/state/test-execution.manifest.tsv
+    bash "$EVIDENCE" write .claude/hooks/state/test-execution.manifest.tsv staged
     test_fingerprint=$(bash "$EVIDENCE" fingerprint .claude/hooks/state/test-execution.manifest.tsv)
     printf 'result: PASS\nverified_by: %s\nmode: verify\ncommand: focused fixture\ntests: 1/1\nsource_fingerprint: %s\n' \
       "$tester" "$test_fingerprint" > .claude/hooks/state/test-execution.stamp.md
@@ -99,6 +99,7 @@ new_repo() {
     printf '%s\n' '---' 'alwaysApply: true' '---' > .claude/rules/example.mdc
     cp "$REPO_ROOT/.claude/hooks/lib/validation-evidence.sh" .claude/hooks/lib/
     cp "$REPO_ROOT/.claude/hooks/lib/change-risk.sh" .claude/hooks/lib/
+    cp "$REPO_ROOT/.claude/hooks/lib/agent-infrastructure-evidence.sh" .claude/hooks/lib/
     cp "$REPO_ROOT/.claude/hooks/lib/adr-triggers.sh" .claude/hooks/lib/
     git add .
     git commit -qm baseline
@@ -131,6 +132,8 @@ expect_success "unchanged evidence remains valid" bash -c "cd '$green_repo' && b
 expect_success "manifest covers identical staged blob" bash -c "cd '$green_repo' && bash '$EVIDENCE' verify '$manifest' staged"
 printf 'struct CardView { let spacing = 9 }\n' > "$green_repo/Packages/FitnessUI/Sources/FitnessUI/CardView.swift"
 expect_failure "same-path content edit invalidates evidence" bash -c "cd '$green_repo' && bash '$EVIDENCE' verify '$manifest'"
+expect_success "unstaged follow-up does not invalidate staged evidence" \
+  bash -c "cd '$green_repo' && bash '$EVIDENCE' verify '$manifest' staged"
 
 infra_repo=$(new_repo infra)
 printf '# Architecture updated\n' > "$infra_repo/.claude/references/architecture-documentation.md"
@@ -154,7 +157,12 @@ if ! printf '%s\n' "$infra_rule_output" | grep -qi "agent-infrastructure"; then
 fi
 pass_count=$((pass_count + 1))
 
-infra_fingerprint=$(cd "$infra_repo" && bash "$REPO_ROOT/.claude/hooks/lib/agent-infrastructure-evidence.sh" fingerprint)
+(
+  cd "$infra_repo"
+  bash "$REPO_ROOT/.claude/hooks/lib/agent-infrastructure-evidence.sh" write \
+    "$TEMP_ROOT/infra-state/agent-infrastructure.manifest.tsv"
+)
+infra_fingerprint=$(cd "$infra_repo" && bash "$REPO_ROOT/.claude/hooks/lib/agent-infrastructure-evidence.sh" fingerprint "$TEMP_ROOT/infra-state/agent-infrastructure.manifest.tsv")
 cat > "$TEMP_ROOT/infra-state/agent-infrastructure.stamp.md" <<EOF
 result: PASS
 verified_by: verifier-subagent
@@ -172,6 +180,25 @@ infra_verified_output=$(
     HAS_QUESTION=0 bash "$INFRA_CHECK"
 )
 expect_equal "" "$infra_verified_output" "exact verifier stamp satisfies infra check"
+
+(
+  cd "$infra_repo"
+  git add .claude/rules/example.mdc
+)
+expect_failure "pre-commit blocks unverified infrastructure" \
+  bash -c "cd '$infra_repo' && bash '$PRE_COMMIT' >/dev/null 2>&1"
+cp "$TEMP_ROOT/infra-state/agent-infrastructure.stamp.md" \
+  "$infra_repo/.claude/hooks/state/agent-infrastructure.stamp.md"
+(
+  cd "$infra_repo"
+  bash "$REPO_ROOT/.claude/hooks/lib/agent-infrastructure-evidence.sh" write \
+    .claude/hooks/state/agent-infrastructure.manifest.tsv staged
+)
+infra_commit_fingerprint=$(cd "$infra_repo" && bash "$REPO_ROOT/.claude/hooks/lib/agent-infrastructure-evidence.sh" fingerprint .claude/hooks/state/agent-infrastructure.manifest.tsv)
+sed -i '' "s/${infra_fingerprint}/${infra_commit_fingerprint}/" \
+  "$infra_repo/.claude/hooks/state/agent-infrastructure.stamp.md"
+expect_success "pre-commit accepts exact verifier infrastructure evidence" \
+  bash -c "cd '$infra_repo' && bash '$PRE_COMMIT'"
 
 hook_repo=$(new_repo precommit)
 printf 'struct CardView { let spacing = 8 }\n' > "$hook_repo/Packages/FitnessUI/Sources/FitnessUI/CardView.swift"
@@ -234,6 +261,7 @@ expect_hook_output "$adr_repo" "adr-required" "ADR protection remains"
 expect_hook_output "$adr_repo" "architecture-documentation.md" "architecture sync protection remains"
 
 expect_success "runtime adapters are synchronized" "$REPO_ROOT/scripts/sync-agent-runtime.sh" --check
+expect_success "subagent gate remains valid shell" bash -n "$REPO_ROOT/.claude/hooks/subagent-gate.sh"
 
 kill_switch_repo="$TEMP_ROOT/kill-switch"
 mkdir -p "$kill_switch_repo/.claude/hooks/state" "$kill_switch_repo/.codex/hooks"

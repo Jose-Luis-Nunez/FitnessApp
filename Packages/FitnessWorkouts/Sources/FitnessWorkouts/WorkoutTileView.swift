@@ -97,7 +97,10 @@ public struct WorkoutTileView: View {
                 }
             )
 
-            settingsButton(iconSize: AppStyle.Layout.workoutTileCompactSettingsIconSize)
+            settingsButton(
+                iconSize: AppStyle.Layout.workoutTileCompactSettingsIconSize,
+                tapTargetSize: AppStyle.Layout.minimumTapTargetSize
+            )
                 .padding(.top, AppStyle.Layout.workoutTileCompactSettingsTopInset)
                 .padding(.trailing, AppStyle.Padding.card)
         }
@@ -126,7 +129,10 @@ public struct WorkoutTileView: View {
                 }
             )
 
-            settingsButton(iconSize: AppStyle.Layout.workoutHeroSettingsIconSize)
+            settingsButton(
+                iconSize: AppStyle.Layout.workoutHeroSettingsIconSize,
+                tapTargetSize: Self.heroSettingsTapTargetSize
+            )
                 .padding(.top, heroSettingsTopInset)
                 .padding(.trailing, heroSettingsTrailingInset)
         }
@@ -237,7 +243,7 @@ public struct WorkoutTileView: View {
     }
 
     private var heroSettingsInsetAdjustment: CGFloat {
-        (AppStyle.Layout.minimumTapTargetSize - ExerciseCardLayout.CategoryTile.headerBadgeSize) / 2
+        (Self.heroSettingsTapTargetSize - ExerciseCardLayout.CategoryTile.headerBadgeSize) / 2
     }
 
     private var heroSettingsTopInset: CGFloat {
@@ -263,7 +269,10 @@ public struct WorkoutTileView: View {
     }
 
     @ViewBuilder
-    private func settingsButton(iconSize: CGFloat) -> some View {
+    private func settingsButton(
+        iconSize: CGFloat,
+        tapTargetSize: CGFloat
+    ) -> some View {
         if let onSettingsTap {
             Button(action: onSettingsTap) {
                 Image("settingsIconMenu")
@@ -272,11 +281,13 @@ public struct WorkoutTileView: View {
                     .frame(width: iconSize, height: iconSize)
                     .foregroundColor(AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel))
                     .frame(
-                        minWidth: AppStyle.Layout.minimumTapTargetSize,
-                        minHeight: AppStyle.Layout.minimumTapTargetSize
+                        width: tapTargetSize,
+                        height: tapTargetSize
                     )
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .zIndex(1)
             .accessibilityLabel("Settings for \(workout.name)")
             .accessibilityIdentifier(settingsAccessibilityIdentifier)
         }
@@ -293,6 +304,8 @@ public struct WorkoutTileView: View {
     private var settingsAccessibilityIdentifier: String {
         WorkoutIDs.settings(workout.id)
     }
+
+    private static let heroSettingsTapTargetSize: CGFloat = 60
 
     private func interactiveTile<Content: View>(_ content: Content) -> some View {
         content

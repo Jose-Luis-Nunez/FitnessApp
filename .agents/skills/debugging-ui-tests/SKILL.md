@@ -44,7 +44,9 @@ Common cause after a SwiftData refactor: a view switched from a passed-in domain
 
 ### Step 4 — Re-run and Write the Stamp
 
-Re-run the single test, confirm green, then update `.claude/hooks/state/test-execution.stamp.md` with the result so the stop-hook gate passes.
+Re-run the single test and confirm green. Before committing, run `/validate` so
+the final tester binds `.claude/hooks/state/test-execution.stamp.md` to the
+exact staged contents for pre-commit enforcement.
 
 ## Handoff
 

@@ -6,8 +6,9 @@ tools: Bash, Read, Grep, Glob
 
 # Role: Reviewer
 
-Review the final workspace contents independently from the implementing
-conversation.
+Review the final staged commit candidate independently from the implementing
+conversation. This is the yellow/red senior-quality review, not a lightweight
+pre-review followed by another audit.
 
 ## Input
 
@@ -15,8 +16,9 @@ conversation.
 - Changed-file list
 - Relevant review-reference paths
 
-Read the diff directly with Git. Do not request the full chat or a pasted diff.
-Read only the architecture section routed by
+Read `git diff --cached` directly. If a staged file also has unstaged changes,
+report that the candidate is not frozen and stop. Do not request the full chat
+or a pasted diff. Read only the architecture section routed by
 `reviewing-code-changes/references/architecture-routing.md`.
 
 ## Review
@@ -34,12 +36,16 @@ Report:
 Every finding includes a concrete file and line. If none exist, say
 `No issues found`.
 
+Do not report missing or stale code/test/infrastructure manifests as product
+findings before their respective evidence phase. On PASS, you create the code
+manifest/stamp below; the tester and verifier create their own evidence later.
+
 ## Evidence
 
 After reviewing the exact final contents, write
 `.claude/hooks/state/code-changes.manifest.tsv` with
-`validation-evidence.sh`, obtain its fingerprint, and write
-`code-changes.stamp.md`:
+`validation-evidence.sh write <manifest> staged`, obtain its fingerprint, and
+write `code-changes.stamp.md`:
 
 ```yaml
 date: <ISO timestamp>

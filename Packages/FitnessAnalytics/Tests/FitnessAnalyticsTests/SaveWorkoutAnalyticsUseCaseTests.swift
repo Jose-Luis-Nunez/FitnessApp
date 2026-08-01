@@ -9,7 +9,7 @@ import Testing
 struct SaveWorkoutAnalyticsUseCaseTests {
     @Test func appendsEverySubmittedExerciseEntry() {
         let storage = MockAnalyticsStorage()
-        let sut = SaveWorkoutAnalyticsUseCase(analyticsStorage: storage)
+        let sut = SaveWorkoutAnalyticsUseCase(batchStorage: storage)
         let firstID = UUID()
         let secondID = UUID()
 
@@ -25,7 +25,7 @@ struct SaveWorkoutAnalyticsUseCaseTests {
 
     @Test func preservesExistingEntriesOnSameDay() {
         let storage = MockAnalyticsStorage()
-        let sut = SaveWorkoutAnalyticsUseCase(analyticsStorage: storage)
+        let sut = SaveWorkoutAnalyticsUseCase(batchStorage: storage)
         let exerciseID = UUID()
         let date = Date(timeIntervalSince1970: 1_700_000_000)
         storage.save([makeEntry(exerciseId: exerciseID, date: date, reps: 8)], for: exerciseID)
@@ -41,7 +41,7 @@ struct SaveWorkoutAnalyticsUseCaseTests {
 
     @Test func skipsEmptyEntries() {
         let storage = MockAnalyticsStorage()
-        let sut = SaveWorkoutAnalyticsUseCase(analyticsStorage: storage)
+        let sut = SaveWorkoutAnalyticsUseCase(batchStorage: storage)
         let exerciseID = UUID()
 
         let savedCount = sut.execute(entries: [
@@ -61,7 +61,7 @@ struct SaveWorkoutAnalyticsUseCaseTests {
         let existingID = UUID()
         storage.save([makeEntry(exerciseId: existingID, reps: 6)], for: existingID)
         storage.saveSucceeds = false
-        let sut = SaveWorkoutAnalyticsUseCase(analyticsStorage: storage)
+        let sut = SaveWorkoutAnalyticsUseCase(batchStorage: storage)
 
         let result = sut.execute(entries: [
             makeEntry(exerciseId: UUID(), reps: 8),

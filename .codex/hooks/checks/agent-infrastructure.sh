@@ -12,7 +12,8 @@ if [ -z "$all_cursor" ] || [ "$HAS_QUESTION" -gt 0 ]; then
 fi
 
 cursor_count=$(echo "$all_cursor" | wc -l | tr -d ' ')
-fingerprint=$(agent_infrastructure_fingerprint)
+manifest="$STATE_DIR/agent-infrastructure.manifest.tsv"
+fingerprint=$(agent_infrastructure_manifest_fingerprint "$manifest" 2>/dev/null || true)
 cursor_file_list=$(echo "$all_cursor" | head -10 | tr '\n' ', ' | sed 's/,$//')
 stamp="$STATE_DIR/agent-infrastructure.stamp.md"
 
@@ -28,7 +29,7 @@ required_fields=(
   "name_consistency:[[:space:]]*PASS"
 )
 
-if [ -f "$stamp" ]; then
+if agent_infrastructure_manifest_matches_worktree "$manifest" && [ -f "$stamp" ]; then
   valid=true
   for field in "${required_fields[@]}"; do
     if ! grep -qE "$field" "$stamp"; then

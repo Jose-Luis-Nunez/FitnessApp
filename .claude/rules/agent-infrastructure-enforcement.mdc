@@ -5,9 +5,10 @@ globs: ".claude/rules/**/*.mdc,.claude/skills/**/*.md,.claude/hooks/**/*.sh,.cla
 
 # Agent Infrastructure Validation
 
-Run `reviewing-agent-infrastructure` after changing rules, skills, hooks,
-agents, commands, runtime adapters, `AGENTS.md`, or the agent-system overview.
-An independent verifier writes `agent-infrastructure.stamp.md`.
+Before committing changes to rules, skills, hooks, agents, commands, runtime
+adapters, `AGENTS.md`, or the agent-system overview, run
+`reviewing-agent-infrastructure`. An independent verifier writes
+`agent-infrastructure.stamp.md`; pre-commit verifies the exact staged contents.
 
 Product references such as `architecture-documentation.md`,
 `ui-test-conventions.md`, capabilities, and user flows are documentation—not

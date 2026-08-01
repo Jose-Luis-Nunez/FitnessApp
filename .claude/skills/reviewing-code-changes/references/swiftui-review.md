@@ -10,7 +10,11 @@ Load when changed production files contain SwiftUI Views or AppStyle.
 - Avoid screen/device-name checks. Layout from the actual container.
 - Verify compact and large widths when horizontal content changed.
 - Preserve minimum tap targets and accessibility identifiers.
+- Custom interactive rows expose a useful VoiceOver label, value, traits, and
+  actions. Identifiers alone are not accessibility coverage.
 - Public shared Views need snapshot coverage. Existing snapshots must pass
   unchanged for claimed visual-preserving refactors.
 - A changed visual baseline must be inspected; re-recording is not proof that
   the new rendering is correct.
+- Snapshot inspection confirms referenced app artwork actually renders; an
+  empty reserved image column is a failure, not an acceptable baseline.

@@ -2,27 +2,237 @@ import FitnessCore
 import FitnessUI
 import SwiftUI
 
-enum WorkoutAnalyticsSummary {
-    static func text(for draft: WorkoutAnalyticsExerciseDraft) -> String {
-        let progress = draft.entry.setProgress
-        let reps = Set(progress.map(\.currentReps))
-        let weights = Set(progress.map(\.weight))
-        let setText = "\(draft.setCount) \(draft.setCount == 1 ? "set" : "sets")"
-        let repsText: String
-        if let repsValue = reps.count == 1 ? reps.first : nil {
-            repsText = "\(repsValue) \(repsValue == 1 ? "rep" : "reps")"
+enum WorkoutAnalyticsAccessibility {
+    static func value(for draft: WorkoutAnalyticsExerciseDraft) -> String {
+        var components = [draft.exercise.category.rawValue.capitalized]
+
+        if draft.exercise.hasWeight {
+            let weights = Set(draft.entry.setProgress.map(\.weight))
+            if weights.count == 1, let weight = weights.first {
+                components.append("\(WeightFormatter.format(weight)) kilograms")
+            } else {
+                components.append("Variable weight")
+            }
+        }
+
+        components.append(
+            "\(draft.setCount) \(draft.setCount == 1 ? "set" : "sets")"
+        )
+
+        let reps = Set(draft.entry.setProgress.map(\.currentReps))
+        if reps.count == 1, let repCount = reps.first {
+            components.append("\(repCount) \(repCount == 1 ? "rep" : "reps")")
         } else {
-            repsText = "variable reps"
+            components.append("Variable reps")
         }
 
-        guard draft.exercise.hasWeight else {
-            return "\(setText) · \(repsText)"
+        return components.joined(separator: ", ")
+    }
+}
+
+private struct WorkoutAnalyticsDraftContentLayout: Layout {
+    let spacing: CGFloat
+    let minimumIdentityWidth: CGFloat
+    let compactSectionSpacing: CGFloat
+
+    func sizeThatFits(
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout ()
+    ) -> CGSize {
+        guard subviews.count == 4 else { return .zero }
+        let selectionSize = subviews[0].sizeThatFits(.unspecified)
+        let iconSize = subviews[1].sizeThatFits(.unspecified)
+        let metricsSize = subviews[3].sizeThatFits(.unspecified)
+        let minimumRegularWidth = selectionSize.width
+            + iconSize.width
+            + minimumIdentityWidth
+            + metricsSize.width
+            + spacing * 3
+        let availableWidth = proposal.width ?? minimumRegularWidth
+
+        if availableWidth >= minimumRegularWidth {
+            let identityWidth = availableWidth
+                - selectionSize.width
+                - iconSize.width
+                - metricsSize.width
+                - spacing * 3
+            let identitySize = subviews[2].sizeThatFits(
+                ProposedViewSize(width: identityWidth, height: nil)
+            )
+            return CGSize(
+                width: availableWidth,
+                height: max(
+                    max(selectionSize.height, iconSize.height),
+                    max(identitySize.height, metricsSize.height)
+                )
+            )
         }
 
-        let weightText = weights.count == 1
-            ? WeightFormatter.displayWeight(weights.first ?? 0)
-            : "variable weight"
-        return "\(weightText) · \(setText) · \(repsText)"
+        let columnWidth = max(
+            0,
+            availableWidth - selectionSize.width - iconSize.width - spacing * 2
+        )
+        let identitySize = subviews[2].sizeThatFits(
+            ProposedViewSize(width: columnWidth, height: nil)
+        )
+        return CGSize(
+            width: availableWidth,
+            height: max(
+                max(selectionSize.height, iconSize.height),
+                identitySize.height + compactSectionSpacing + metricsSize.height
+            )
+        )
+    }
+
+    func placeSubviews(
+        in bounds: CGRect,
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout ()
+    ) {
+        guard subviews.count == 4 else { return }
+        let selectionSize = subviews[0].sizeThatFits(.unspecified)
+        let iconSize = subviews[1].sizeThatFits(.unspecified)
+        let metricsSize = subviews[3].sizeThatFits(.unspecified)
+        let minimumRegularWidth = selectionSize.width
+            + iconSize.width
+            + minimumIdentityWidth
+            + metricsSize.width
+            + spacing * 3
+
+        placeCenteredVertically(
+            subviews[0],
+            atX: bounds.minX,
+            in: bounds,
+            size: selectionSize
+        )
+        let iconX = bounds.minX + selectionSize.width + spacing
+        placeCenteredVertically(
+            subviews[1],
+            atX: iconX,
+            in: bounds,
+            size: iconSize
+        )
+
+        let columnX = iconX + iconSize.width + spacing
+        if bounds.width >= minimumRegularWidth {
+            let identityWidth = bounds.width
+                - selectionSize.width
+                - iconSize.width
+                - metricsSize.width
+                - spacing * 3
+            let identitySize = subviews[2].sizeThatFits(
+                ProposedViewSize(width: identityWidth, height: nil)
+            )
+            placeCenteredVertically(
+                subviews[2],
+                atX: columnX,
+                in: bounds,
+                size: identitySize,
+                proposedWidth: identityWidth
+            )
+            placeCenteredVertically(
+                subviews[3],
+                atX: bounds.maxX - metricsSize.width,
+                in: bounds,
+                size: metricsSize
+            )
+            return
+        }
+
+        let columnWidth = max(0, bounds.maxX - columnX)
+        let identitySize = subviews[2].sizeThatFits(
+            ProposedViewSize(width: columnWidth, height: nil)
+        )
+        subviews[2].place(
+            at: CGPoint(x: columnX, y: bounds.minY),
+            anchor: .topLeading,
+            proposal: ProposedViewSize(
+                width: columnWidth,
+                height: identitySize.height
+            )
+        )
+        subviews[3].place(
+            at: CGPoint(
+                x: columnX,
+                y: bounds.minY + identitySize.height + compactSectionSpacing
+            ),
+            anchor: .topLeading,
+            proposal: ProposedViewSize(
+                width: metricsSize.width,
+                height: metricsSize.height
+            )
+        )
+    }
+
+    private func placeCenteredVertically(
+        _ subview: LayoutSubview,
+        atX x: CGFloat,
+        in bounds: CGRect,
+        size: CGSize,
+        proposedWidth: CGFloat? = nil
+    ) {
+        subview.place(
+            at: CGPoint(x: x, y: bounds.midY - size.height / 2),
+            anchor: .topLeading,
+            proposal: ProposedViewSize(
+                width: proposedWidth ?? size.width,
+                height: size.height
+            )
+        )
+    }
+}
+
+private struct WorkoutAnalyticsDraftRowLayout: Layout {
+    func sizeThatFits(
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout ()
+    ) -> CGSize {
+        guard subviews.count == 2 else { return .zero }
+        let menuSize = subviews[1].sizeThatFits(.unspecified)
+        let availableWidth = proposal.width
+            ?? subviews[0].sizeThatFits(.unspecified).width + menuSize.width
+        let contentWidth = max(0, availableWidth - menuSize.width)
+        let contentSize = subviews[0].sizeThatFits(
+            ProposedViewSize(width: contentWidth, height: nil)
+        )
+        return CGSize(
+            width: availableWidth,
+            height: max(contentSize.height, menuSize.height)
+        )
+    }
+
+    func placeSubviews(
+        in bounds: CGRect,
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout ()
+    ) {
+        guard subviews.count == 2 else { return }
+        let menuSize = subviews[1].sizeThatFits(.unspecified)
+        let contentWidth = max(0, bounds.width - menuSize.width)
+        let contentSize = subviews[0].sizeThatFits(
+            ProposedViewSize(width: contentWidth, height: nil)
+        )
+
+        subviews[0].place(
+            at: CGPoint(x: bounds.minX, y: bounds.midY),
+            anchor: .leading,
+            proposal: ProposedViewSize(
+                width: contentWidth,
+                height: contentSize.height
+            )
+        )
+        subviews[1].place(
+            at: CGPoint(x: bounds.maxX, y: bounds.midY),
+            anchor: .trailing,
+            proposal: ProposedViewSize(
+                width: menuSize.width,
+                height: menuSize.height
+            )
+        )
     }
 }
 
@@ -33,36 +243,40 @@ public struct WorkoutAnalyticsEntryView: View {
     @State private var editingExerciseID: UUID?
     @AppStorage(DefaultIconColorScheme.storageKey)
     private var iconColorScheme: DefaultIconColorScheme = .green
+    @Environment(\.safeAreaInsets) private var safeAreaInsets
+    private let headerDateFormatter: DateFormatter
+    private let exerciseIconProvider: (Exercise, DefaultIconColorScheme) -> Image
 
     public init(workout: Workout, isPresented: Binding<Bool>) {
         _isPresented = isPresented
         _viewModel = State(
             initialValue: WorkoutAnalyticsEntryViewModel(workout: workout)
         )
+        headerDateFormatter = Self.workoutDateFormatter
+        exerciseIconProvider = { exercise, scheme in
+            Image(scheme.iconName(for: exercise.displayIconName))
+        }
+    }
+
+    init(
+        viewModel: WorkoutAnalyticsEntryViewModel,
+        isPresented: Binding<Bool>,
+        headerDateFormatter: DateFormatter,
+        exerciseIconProvider: @escaping (
+            Exercise,
+            DefaultIconColorScheme
+        ) -> Image
+    ) {
+        _isPresented = isPresented
+        _viewModel = State(initialValue: viewModel)
+        self.headerDateFormatter = headerDateFormatter
+        self.exerciseIconProvider = exerciseIconProvider
     }
 
     public var body: some View {
         ZStack {
-            OverlaySheetContainer(
-                isPresented: $isPresented,
-                allowBackdropDismiss: viewModel.saveState == .editing,
-                backgroundColor: AppStyle.Color.backgroundColor,
-                expandsToTop: true,
-                onCancel: {},
-                actions: {
-                    ExercisePickerActionButtons(
-                        saveLabel: "Save Workout",
-                        saveDisabled: !viewModel.canSave,
-                        onCancel: { isPresented = false },
-                        onSave: { saveAndDismiss() },
-                        saveAccessibilityIdentifier: WorkoutAnalyticsIDs.saveButton
-                    )
-                },
-                content: {
-                    content
-                }
-            )
-            .disabled(viewModel.saveState != .editing)
+            pageContent
+                .disabled(viewModel.saveState != .editing)
 
             CalendarDialogView(
                 isPresented: $showCalendar,
@@ -94,10 +308,118 @@ public struct WorkoutAnalyticsEntryView: View {
         }
     }
 
-    private var content: some View {
+    private var pageContent: some View {
+        ZStack(alignment: .bottom) {
+            AppStyle.Color.backgroundColor
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                stickyHeader
+
+                ScrollView {
+                    scrollableContent
+                }
+                .scrollIndicators(.hidden)
+            }
+
+            actionArea
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .ignoresSafeArea(edges: .bottom)
+    }
+
+    private var actionButtons: some View {
+        HStack(spacing: AppStyle.Padding.card) {
+            Button("Cancel") {
+                isPresented = false
+            }
+            .font(AppStyle.Font.bottomBarButtons)
+            .foregroundColor(AppStyle.Color.white)
+            .frame(
+                width: Self.cancelButtonWidth,
+                height: Self.actionButtonHeight
+            )
+            .buttonStyle(.plain)
+
+            Button {
+                saveAndDismiss()
+            } label: {
+                Text("Save Workout")
+                    .font(AppStyle.Font.bottomBarButtons)
+                    .foregroundColor(AppStyle.Color.white)
+                    .frame(
+                        maxWidth: .infinity,
+                        minHeight: Self.actionButtonHeight,
+                        maxHeight: Self.actionButtonHeight
+                    )
+                    .background(
+                        viewModel.canSave
+                            ? AppStyle.Color.green
+                            : AppStyle.Color.green.opacity(0.15)
+                    )
+                    .clipShape(
+                        RoundedRectangle(
+                            cornerRadius: AppStyle.CornerRadius.editPickerViewButton,
+                            style: .continuous
+                        )
+                    )
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: Self.saveButtonMaxWidth)
+            .disabled(!viewModel.canSave)
+            .accessibilityIdentifier(WorkoutAnalyticsIDs.saveButton)
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+    }
+
+    private var actionArea: some View {
+        ZStack(alignment: .bottom) {
+            actionAreaBackdrop
+
+            actionButtons
+                .padding(.horizontal, AppStyle.Padding.horizontal)
+                .padding(.bottom, actionButtonsBottomPadding)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var actionButtonsBottomPadding: CGFloat {
+        max(0, safeAreaInsets.bottom + Self.homeMenuBarBottomOffset)
+    }
+
+    private var actionAreaBackdrop: some View {
+        VStack(spacing: 0) {
+            LinearGradient(
+                colors: [
+                    Color.clear,
+                    Color.black.opacity(Self.actionBackdropOpacity),
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: Self.actionBackdropFadeHeight)
+
+            Color.black
+                .opacity(Self.actionBackdropOpacity)
+                .frame(
+                    height: Self.actionButtonHeight + actionButtonsBottomPadding
+                )
+        }
+        .allowsHitTesting(false)
+    }
+
+    private var stickyHeader: some View {
         VStack(alignment: .leading, spacing: AppStyle.Padding.card) {
             header
             dateButton
+        }
+        .padding(.horizontal, AppStyle.Padding.horizontal)
+        .padding(.top, AppStyle.Padding.titleTop)
+        .background(AppStyle.Color.backgroundColor)
+    }
+
+    private var scrollableContent: some View {
+        VStack(alignment: .leading, spacing: AppStyle.Padding.card) {
             selectionHeader
 
             if let saveErrorMessage = viewModel.saveErrorMessage {
@@ -109,25 +431,31 @@ public struct WorkoutAnalyticsEntryView: View {
             if viewModel.drafts.isEmpty {
                 emptyState
             } else {
-                LazyVStack(spacing: ExerciseCardLayout.CategoryTile.verticalSpacing) {
-                    ForEach(viewModel.drafts) { draft in
-                        draftRow(draft)
-                    }
-                }
+                exerciseList
             }
         }
-        .padding(.bottom, AppStyle.Padding.card)
+        .padding(.horizontal, AppStyle.Padding.horizontal)
+        .padding(.top, AppStyle.Padding.card)
+        .padding(.bottom, Self.actionOverlayClearance)
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: AppStyle.Padding.cardVertical) {
-            Text("Log Workout")
-                .font(AppStyle.Font.navigationHeadline)
-                .foregroundColor(AppStyle.Color.white)
+            Text("LOG WORKOUT")
+                .font(AppStyle.Font.sheetSectionLabel)
+                .foregroundColor(
+                    AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel)
+                )
                 .accessibilityIdentifier(WorkoutAnalyticsIDs.screen)
 
             Text(viewModel.workout.name)
-                .font(AppStyle.Font.sheetSectionLabel)
+                .font(AppStyle.Font.workoutEntryTitle)
+                .foregroundColor(AppStyle.Color.white)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+
+            Text("Review and save your workout")
+                .font(AppStyle.Font.profileSubtitle)
                 .foregroundColor(
                     AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel)
                 )
@@ -139,24 +467,71 @@ public struct WorkoutAnalyticsEntryView: View {
         Button {
             showCalendar = true
         } label: {
-            HStack {
-                Image(systemName: "calendar")
-                Text(Self.dateFormatter.string(from: viewModel.selectedDate))
+            HStack(spacing: AppStyle.Padding.card) {
+                ZStack {
+                    Circle()
+                        .fill(AppStyle.Color.sheetInputBackground)
+
+                    Image(systemName: "calendar")
+                        .font(AppStyle.Font.iconSymbol)
+                        .foregroundColor(AppStyle.Color.greenGlow)
+                }
+                .frame(
+                    width: Self.dateIconContainerSize,
+                    height: Self.dateIconContainerSize
+                )
+
+                VStack(alignment: .leading, spacing: AppStyle.Padding.cardVertical) {
+                    Text(
+                        headerDateFormatter.string(
+                            from: viewModel.selectedDate
+                        )
+                    )
+                    .font(AppStyle.Font.analyticsExerciseTitle)
+                    .foregroundColor(AppStyle.Color.white)
+
+                    Text(exerciseCountText)
+                        .font(AppStyle.Font.profileSubtitle)
+                        .foregroundColor(
+                            AppStyle.Color.white.opacity(
+                                AppStyle.Opacity.secondaryLabel
+                            )
+                        )
+                }
+
                 Spacer()
-                Image(systemName: "chevron.right")
             }
-            .font(AppStyle.Font.defaultFont)
-            .foregroundColor(AppStyle.Color.greenGlow)
-            .padding(.horizontal, AppStyle.Padding.card)
-            .frame(minHeight: AppStyle.Layout.minimumTapTargetSize)
+            .padding(.vertical, Self.dateCardVerticalPadding)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .background {
-            CardBackground(style: .idle, addPadding: false) {
-                Color.clear
-            }
+        .overlay(alignment: .top) {
+            dateDivider
         }
+        .overlay(alignment: .bottom) {
+            dateDivider
+        }
+        .accessibilityLabel("Workout date")
+        .accessibilityValue(
+            Self.dateFormatter.string(from: viewModel.selectedDate)
+        )
         .accessibilityIdentifier(WorkoutAnalyticsIDs.dateButton)
+    }
+
+    private var exerciseCountText: String {
+        let count = viewModel.drafts.count
+        return "\(count) \(count == 1 ? "Exercise" : "Exercises")"
+    }
+
+    private var dateDivider: some View {
+        Rectangle()
+            .fill(
+                AppStyle.Color.white.opacity(
+                    AppStyle.Opacity.hairlineDivider
+                )
+            )
+            .frame(height: Self.dateDividerHeight)
     }
 
     private var selectionHeader: some View {
@@ -176,46 +551,56 @@ public struct WorkoutAnalyticsEntryView: View {
             .padding(.vertical, AppStyle.Padding.card)
     }
 
-    private func draftRow(_ draft: WorkoutAnalyticsExerciseDraft) -> some View {
-        HStack(spacing: 0) {
-            Button {
-                viewModel.toggleSelection(for: draft.id)
-            } label: {
-                HStack(spacing: AppStyle.Padding.card) {
-                    HStack(spacing: AppStyle.Padding.cardVertical) {
-                        selectionIndicator(isSelected: draft.isSelected)
-                        selectionIcon(for: draft.exercise)
-                    }
+    private var exerciseList: some View {
+        LazyVStack(spacing: 0) {
+            ForEach(viewModel.drafts) { draft in
+                draftRow(draft)
 
-                    VStack(
-                        alignment: .leading,
-                        spacing: AppStyle.Padding.cardVertical
-                    ) {
-                        Text(draft.exercise.name)
-                            .font(AppStyle.Font.cardHeadline)
-                            .foregroundColor(AppStyle.Color.white)
-
-                        Text(WorkoutAnalyticsSummary.text(for: draft))
-                            .font(AppStyle.Font.detailCaption)
-                            .foregroundColor(
-                                AppStyle.Color.white.opacity(
-                                    AppStyle.Opacity.secondaryLabel
-                                )
-                            )
-                    }
-
-                    Spacer(minLength: 0)
+                if draft.id != viewModel.drafts.last?.id {
+                    exerciseRowDivider
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.leading, AppStyle.Padding.card)
-                .padding(.vertical, AppStyle.Padding.cardVertical)
-                .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel(draft.exercise.name)
-            .accessibilityValue(
-                draft.isSelected ? "Selected" : "Not selected"
+        }
+    }
+
+    private var exerciseRowDivider: some View {
+        Rectangle()
+            .fill(
+                AppStyle.Color.white.opacity(
+                    AppStyle.Opacity.hairlineDivider
+                )
             )
+            .frame(height: Self.exerciseRowDividerHeight)
+    }
+
+    private func draftRow(_ draft: WorkoutAnalyticsExerciseDraft) -> some View {
+        WorkoutAnalyticsDraftRowLayout {
+            WorkoutAnalyticsDraftContentLayout(
+                spacing: Self.exerciseRowContentSpacing,
+                minimumIdentityWidth: Self.exerciseNameMinimumWidth,
+                compactSectionSpacing: Self.compactRowSectionSpacing
+            ) {
+                selectionIndicator(isSelected: draft.isSelected)
+                selectionIcon(for: draft.exercise)
+                exerciseIdentity(draft)
+                draftMetrics(draft)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, Self.exerciseRowVerticalPadding)
+            .padding(.leading, Self.exerciseRowHorizontalPadding)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                toggleSelection(for: draft.id)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(draft.exercise.name)
+            .accessibilityValue(WorkoutAnalyticsAccessibility.value(for: draft))
+            .accessibilityAddTraits(
+                draft.isSelected ? [.isButton, .isSelected] : .isButton
+            )
+            .accessibilityAction {
+                toggleSelection(for: draft.id)
+            }
             .accessibilityIdentifier(
                 WorkoutAnalyticsIDs.exerciseSelection(draft.id)
             )
@@ -223,45 +608,156 @@ public struct WorkoutAnalyticsEntryView: View {
             Button {
                 editingExerciseID = draft.id
             } label: {
-                Image(systemName: "ellipsis.vertical")
-                    .foregroundColor(AppStyle.Color.greenGlow)
-                    .frame(
-                        width: AppStyle.Layout.minimumTapTargetSize,
-                        height: AppStyle.Layout.minimumTapTargetSize
-                    )
-                    .padding(.trailing, AppStyle.Padding.card)
-                    .padding(.vertical, AppStyle.Padding.cardVertical)
-                    .contentShape(Rectangle())
+                VStack(spacing: Self.exerciseMenuDotSpacing) {
+                    ForEach(0..<3, id: \.self) { _ in
+                        Circle()
+                            .fill(
+                                AppStyle.Color.white.opacity(
+                                    AppStyle.Opacity.secondaryLabel
+                                )
+                            )
+                            .frame(
+                                width: Self.exerciseMenuDotSize,
+                                height: Self.exerciseMenuDotSize
+                            )
+                    }
+                }
+                .frame(
+                    width: AppStyle.Layout.minimumTapTargetSize,
+                    height: AppStyle.Layout.minimumTapTargetSize
+                )
+                .padding(.trailing, Self.exerciseRowHorizontalPadding)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Details for \(draft.exercise.name)")
             .accessibilityIdentifier(
                 WorkoutAnalyticsIDs.exerciseDetails(draft.id)
             )
+            .fixedSize()
         }
-        .background {
-            CardBackground(style: .idle, addPadding: false) {
+        .frame(maxWidth: .infinity)
+    }
+
+    private func exerciseIdentity(
+        _ draft: WorkoutAnalyticsExerciseDraft
+    ) -> some View {
+        VStack(alignment: .leading, spacing: Self.exerciseTextSpacing) {
+            Text(draft.exercise.name)
+                .font(AppStyle.Font.analyticsExerciseData)
+                .foregroundColor(AppStyle.Color.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+
+            Text(draft.exercise.category.rawValue.capitalized)
+                .font(AppStyle.Font.detailCaption)
+                .foregroundColor(
+                    AppStyle.Color.white.opacity(
+                        AppStyle.Opacity.secondaryLabel
+                    )
+                )
+        }
+    }
+
+    private func draftMetrics(
+        _ draft: WorkoutAnalyticsExerciseDraft
+    ) -> some View {
+        HStack(spacing: 0) {
+            if draft.exercise.hasWeight {
+                weightMetric(value: weightValue(for: draft))
+            } else {
                 Color.clear
+                    .frame(width: Self.exerciseWeightMetricWidth)
+                    .accessibilityHidden(true)
             }
+
+            metricColumn(
+                value: "\(draft.setCount)",
+                label: draft.setCount == 1 ? "set" : "sets"
+            )
+            metricColumn(
+                value: repsValue(for: draft),
+                label: "reps"
+            )
         }
+        .fixedSize(horizontal: true, vertical: false)
+    }
+
+    private func weightMetric(value: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: Self.weightUnitSpacing) {
+            Text(value)
+                .font(AppStyle.Font.sectionTitle)
+                .foregroundColor(AppStyle.Color.greenGlow)
+                .lineLimit(1)
+                .minimumScaleFactor(0.65)
+
+            Text("kg")
+                .font(AppStyle.Font.detailCaption)
+                .foregroundColor(
+                    AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel)
+                )
+        }
+        .frame(width: Self.exerciseWeightMetricWidth)
+    }
+
+    private func metricColumn(
+        value: String,
+        label: String
+    ) -> some View {
+        VStack(spacing: Self.exerciseTextSpacing) {
+            Text(value)
+                .font(AppStyle.Font.sectionTitle)
+                .foregroundColor(AppStyle.Color.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.65)
+
+            Text(label)
+                .font(AppStyle.Font.detailCaption)
+                .foregroundColor(
+                    AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel)
+                )
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
+        .frame(width: Self.exerciseMetricWidth)
+    }
+
+    private func weightValue(
+        for draft: WorkoutAnalyticsExerciseDraft
+    ) -> String {
+        let weights = Set(draft.entry.setProgress.map(\.weight))
+        guard weights.count == 1, let weight = weights.first else {
+            return "Var"
+        }
+        return WeightFormatter.format(weight)
+    }
+
+    private func repsValue(
+        for draft: WorkoutAnalyticsExerciseDraft
+    ) -> String {
+        let reps = Set(draft.entry.setProgress.map(\.currentReps))
+        guard reps.count == 1, let value = reps.first else {
+            return "Var"
+        }
+        return "\(value)"
     }
 
     private func selectionIcon(
         for exercise: Exercise
     ) -> some View {
-        Image(iconColorScheme.iconName(for: exercise.displayIconName))
+        exerciseIconProvider(exercise, iconColorScheme)
             .resizable()
             .interpolation(.high)
             .scaledToFill()
             .frame(
-                width: AppStyle.Layout.minimumTapTargetSize,
-                height: AppStyle.Layout.minimumTapTargetSize,
+                width: Self.exerciseIconSize,
+                height: Self.exerciseIconSize,
                 alignment: exercise.iconAlignment
             )
             .clipped()
             .frame(
-                width: AppStyle.Layout.minimumTapTargetSize,
-                height: AppStyle.Layout.minimumTapTargetSize
+                width: Self.exerciseIconSize,
+                height: Self.exerciseIconSize
             )
             .contentShape(Rectangle())
     }
@@ -300,6 +796,37 @@ public struct WorkoutAnalyticsEntryView: View {
         return formatter
     }()
 
+    private static let workoutDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US")
+        formatter.dateFormat = "EEEE, MMMM d"
+        return formatter
+    }()
+
+    private static let dateIconContainerSize: CGFloat = 44
+    private static let dateCardVerticalPadding: CGFloat = 16
+    private static let dateDividerHeight: CGFloat = 0.5
+    private static let cancelButtonWidth: CGFloat = 120
+    private static let saveButtonMaxWidth: CGFloat = 225
+    private static let actionButtonHeight: CGFloat = 52
+    private static let homeMenuBarBottomOffset: CGFloat = -8
+    private static let actionBackdropFadeHeight: CGFloat = 28
+    private static let actionBackdropOpacity: Double = 0.94
+    private static let actionOverlayClearance: CGFloat = 84
+    private static let exerciseIconSize: CGFloat = 44
+    private static let exerciseWeightMetricWidth: CGFloat = 52
+    private static let exerciseMetricWidth: CGFloat = 34
+    private static let exerciseNameMinimumWidth: CGFloat = 72
+    private static let exerciseRowContentSpacing: CGFloat = 4
+    private static let exerciseRowHorizontalPadding: CGFloat = 8
+    private static let exerciseRowVerticalPadding: CGFloat = 10
+    private static let exerciseTextSpacing: CGFloat = 4
+    private static let compactRowSectionSpacing: CGFloat = 8
+    private static let exerciseMenuDotSize: CGFloat = 3
+    private static let exerciseMenuDotSpacing: CGFloat = 3
+    private static let weightUnitSpacing: CGFloat = 3
+    private static let exerciseRowDividerHeight: CGFloat = 0.5
+
     private var detailPresentationBinding: Binding<Bool> {
         Binding(
             get: { editingExerciseID != nil },
@@ -310,5 +837,10 @@ public struct WorkoutAnalyticsEntryView: View {
     private func saveAndDismiss() {
         guard viewModel.save() else { return }
         isPresented = false
+    }
+
+    private func toggleSelection(for exerciseID: UUID) {
+        guard viewModel.saveState == .editing else { return }
+        viewModel.toggleSelection(for: exerciseID)
     }
 }

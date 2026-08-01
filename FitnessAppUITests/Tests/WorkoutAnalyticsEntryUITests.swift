@@ -10,6 +10,16 @@ final class WorkoutAnalyticsEntryUITests: BaseTest {
 
         verifyExists(WorkoutAnalyticsIDs.screen)
         verifyIsEnabled(WorkoutAnalyticsIDs.saveButton)
+        verifyValueContainsWithPrefix(
+            WorkoutAnalyticsIDs.exerciseSelectionPrefix,
+            expectedComponents: [
+                "Arms",
+                "15 kilograms",
+                "3 sets",
+                "10 reps",
+            ],
+            elementType: .button
+        )
         tapOnWithPrefix(
             WorkoutAnalyticsIDs.exerciseSelectionPrefix,
             elementType: .button

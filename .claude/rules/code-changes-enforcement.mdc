@@ -24,5 +24,8 @@ is invalid immediately after any relevant content changes.
 Use `reviewing-code-changes` for the risk-routed workflow. Mention the detected
 risk early when Swift files will change.
 
-The Stop hook enforces completion for uncommitted work. The versioned
-pre-commit hook verifies that staged blobs are covered by the same evidence.
+During development, the Stop hook emits only deduplicated design hints. Before
+committing, freeze and stage the intended commit, then run `/validate`. Its
+yellow/red reviewer is the senior-quality review; final tests start only after
+Bug findings are fixed. The versioned pre-commit hook blocks staged Swift blobs
+without the required evidence.

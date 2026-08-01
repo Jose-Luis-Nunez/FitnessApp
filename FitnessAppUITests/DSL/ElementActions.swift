@@ -233,6 +233,38 @@ extension BaseTest {
     }
 
     @MainActor
+    func verifyValueContainsWithPrefix(
+        _ prefix: String,
+        expectedComponents: [String],
+        elementType: XCUIElement.ElementType = .any,
+        timeout: TimeInterval = TestDefaults.timeout
+    ) {
+        let identifierPredicate = NSPredicate(
+            format: "identifier BEGINSWITH %@",
+            prefix
+        )
+        let matches = app
+            .descendants(matching: elementType)
+            .matching(identifierPredicate)
+        guard matches.firstMatch.waitForExistence(timeout: timeout) else {
+            XCTFail(
+                "verifyValueContainsWithPrefix: no element starting with "
+                    + "'\(prefix)' found within \(timeout)s"
+            )
+            return
+        }
+
+        let value = String(describing: matches.firstMatch.value ?? "")
+        for component in expectedComponents {
+            XCTAssertTrue(
+                value.contains(component),
+                "Expected value for '\(prefix)' to contain '\(component)', "
+                    + "got '\(value)'"
+            )
+        }
+    }
+
+    @MainActor
     func verifyExistsWithPrefix(
         _ prefix: String,
         elementType: XCUIElement.ElementType = .any,

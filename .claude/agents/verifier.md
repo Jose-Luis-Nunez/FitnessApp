@@ -22,9 +22,10 @@ You receive:
 4. **Handoff Links:** For each cross-reference between skills, verify both files exist and reference each other.
 5. **Hook Alignment:** Check that stamp paths in hook scripts match `state/` directory. Check that skill names in followup messages match actual folders.
 6. **Name Consistency:** Compare YAML `name:` with folder name for changed skills.
-7. **Content Identity:** Run
-   `.claude/hooks/lib/agent-infrastructure-evidence.sh fingerprint` and bind the
-   stamp to that exact value.
+7. **Content Identity:** Write
+   `.claude/hooks/state/agent-infrastructure.manifest.tsv` with
+   `agent-infrastructure-evidence.sh write <manifest> staged`, obtain its
+   fingerprint, and bind the stamp to that exact value.
 
 ## Writing the Stamp
 

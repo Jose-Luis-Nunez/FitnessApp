@@ -38,6 +38,17 @@ rg "old-skill-name" .claude/ .codex/
 
 Zero hits required. When a folder or conceptual layer was deleted, also grep for the layer name in prose text (descriptions, frontmatter, examples).
 
+When hook responsibility or validation sequencing changed, also run a broad
+semantic search before the verifier and inspect every hit rather than checking
+only known exact phrases:
+
+```bash
+rg -ni 'stop.?hook|gate|blocking|validation evidence' .claude/ .codex/ .agents/
+```
+
+Legitimate historical/test references may remain, but stale instructions that
+assign final evidence to the development Stop hook must not.
+
 ### 2. Overview Sync
 
 Compare files on disk with tables in `.claude/references/agent-system-overview.md`:
@@ -71,10 +82,13 @@ If hooks or state references changed:
 - YAML `name:` field matches the folder name
 - H1 heading matches the skill/rule purpose
 
-Compute the exact executable-infrastructure fingerprint before verification:
+Write the exact executable-infrastructure manifest before verification:
 
 ```bash
-bash .claude/hooks/lib/agent-infrastructure-evidence.sh fingerprint
+bash .claude/hooks/lib/agent-infrastructure-evidence.sh write \
+  .claude/hooks/state/agent-infrastructure.manifest.tsv staged
+bash .claude/hooks/lib/agent-infrastructure-evidence.sh fingerprint \
+  .claude/hooks/state/agent-infrastructure.manifest.tsv
 ```
 
 ## Output
@@ -142,8 +156,9 @@ Return a one-line summary of your verdict.
 
 ### Step 3: Confirm Stamp
 
-After the Verifier returns, confirm the stamp contains `result: PASS`,
-`verified_by: verifier-subagent`, and the exact current `source_fingerprint`.
+After the Verifier returns, confirm the manifest matches the exact current
+contents and that the stamp contains `result: PASS`,
+`verified_by: verifier-subagent`, and the manifest's `source_fingerprint`.
 If the Verifier reported FAIL, fix the issues and re-run from Step 1.
 
 ## Learnings

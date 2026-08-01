@@ -13,6 +13,8 @@ short self-review and do not spawn a reviewer.
    commented-out implementations.
 8. Run or verify the smallest complete test set for the affected behavior.
 9. Fix findings introduced by the current change before reporting PASS.
+10. Treat this pass as the senior-quality review: inspect production readiness,
+    not only whether the happy path works or tests are green.
 
 Report findings as **Bug**, **Nit**, or **Pre-existing**, with file and line.
 An empty review must state `No issues found`.

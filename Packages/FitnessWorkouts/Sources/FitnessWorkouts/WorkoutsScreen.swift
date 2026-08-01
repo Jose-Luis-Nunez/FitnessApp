@@ -72,15 +72,13 @@ public struct WorkoutsScreen: View {
                 .hidesBottomBarWhilePresented(overlayState)
             }
         }
-        .overlay {
-            if let workout = viewModel.workoutForAnalyticsEntry {
-                WorkoutAnalyticsEntryView(
-                    workout: workout,
-                    isPresented: workoutAnalyticsEntryPresentation
-                )
-                .zIndex(3)
-                .hidesBottomBarWhilePresented(overlayState)
-            }
+        .fullScreenCover(item: workoutAnalyticsEntryItem) { workout in
+            WorkoutAnalyticsEntryView(
+                workout: workout,
+                isPresented: workoutAnalyticsEntryPresentation
+            )
+            .hidesBottomBarWhilePresented(overlayState)
+            .interactiveDismissDisabled()
         }
         .fullScreenCover(isPresented: $viewModel.showingRenameWorkout) {
             RenameWorkoutView(
@@ -196,11 +194,18 @@ public struct WorkoutsScreen: View {
                                     ]
                                 } else {
                                     var list: [MiniActionMenuItem] = []
-                                    list.append(MiniActionMenuItem(icon: "calendar.badge.plus", title: "Log Workout", isDestructive: false) {
-                                        if let workout = viewModel.selectedWorkoutForAction {
-                                            viewModel.showWorkoutAnalyticsEntry(for: workout)
-                                        }
-                                    })
+                                    if let workout = viewModel.selectedWorkoutForAction,
+                                       viewModel.hasActiveExercises(in: workout) {
+                                        list.append(
+                                            MiniActionMenuItem(
+                                                icon: "calendar.badge.plus",
+                                                title: "Log Workout",
+                                                isDestructive: false
+                                            ) {
+                                                viewModel.showWorkoutAnalyticsEntry(for: workout)
+                                            }
+                                        )
+                                    }
                                     list.append(MiniActionMenuItem(icon: nil, title: "duplicate", isDestructive: false) {
                                         if let workout = viewModel.selectedWorkoutForAction {
                                             viewModel.duplicateWorkout(workout)
@@ -264,6 +269,15 @@ public struct WorkoutsScreen: View {
         Binding(
             get: { viewModel.workoutForAnalyticsEntry != nil },
             set: { if !$0 { viewModel.dismissWorkoutAnalyticsEntry() } }
+        )
+    }
+
+    private var workoutAnalyticsEntryItem: Binding<Workout?> {
+        Binding(
+            get: { viewModel.workoutForAnalyticsEntry },
+            set: { workout in
+                viewModel.workoutForAnalyticsEntry = workout
+            }
         )
     }
 }

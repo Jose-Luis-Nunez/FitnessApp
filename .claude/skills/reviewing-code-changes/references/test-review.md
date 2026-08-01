@@ -4,12 +4,15 @@ Load when tests, test support, fixtures, snapshots, or UI-test infrastructure
 changed.
 
 - Tests exercise a production-reachable path, not an otherwise unused API.
-- Mocks reproduce production callback side effects; tests do not pre-prime the
-  state that the action is supposed to produce.
+- Mocks reproduce production callback side effects and preserve scope/identity
+  inputs such as workout or exercise IDs; tests do not pre-prime the state that
+  the action is supposed to produce.
 - Prefer Swift Testing and shared FitnessTestSupport utilities.
 - Time-dependent code uses an injected clock rather than real sleeps.
 - Assertions include the important negative condition, identity, ordering, or
   metadata—not only a count.
-- Snapshot fixtures are deterministic and checked in.
+- Snapshot fixtures are deterministic and checked in. Dates inject calendar,
+  locale, and timezone; app-owned images use a test-visible provider and are
+  confirmed visually in the recorded baseline.
 - UI tests use production accessibility identifiers, the shared DSL, and the
   `FitnessApp UITests` scheme.

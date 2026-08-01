@@ -4,6 +4,7 @@ import FitnessCore
 @MainActor
 public final class MockExerciseStorage: ExerciseStoring {
     public var exercisesByCategory: [MuscleCategoryGroup: [Exercise]] = [:]
+    public var loadForWorkoutHandler: ((UUID, MuscleCategoryGroup) -> [Exercise])?
     public private(set) var saveForWorkoutCallCount = 0
     public private(set) var updatedExercises: [Exercise] = []
     private var countsByWorkout: [UUID: [MuscleCategoryGroup: Int]] = [:]
@@ -11,7 +12,10 @@ public final class MockExerciseStorage: ExerciseStoring {
     public init() {}
 
     public func loadForWorkout(workoutId: UUID, category: MuscleCategoryGroup) -> [Exercise] {
-        exercisesByCategory[category] ?? []
+        if let loadForWorkoutHandler {
+            return loadForWorkoutHandler(workoutId, category)
+        }
+        return exercisesByCategory[category] ?? []
     }
 
     public func exerciseCountsByWorkout() -> [UUID: Int] {

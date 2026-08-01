@@ -7,11 +7,11 @@ import Foundation
 /// entries that already exist on the same calendar day.
 @MainActor
 public struct SaveWorkoutAnalyticsUseCase {
-    private let batchStorage: WorkoutAnalyticsBatchStoring?
+    private let batchStorage: WorkoutAnalyticsBatchStoring
 
-    public init(analyticsStorage: AnalyticsStoring? = nil) {
-        let storage = analyticsStorage ?? Container.shared.analyticsStorage()
-        self.batchStorage = storage as? WorkoutAnalyticsBatchStoring
+    public init(batchStorage: WorkoutAnalyticsBatchStoring? = nil) {
+        self.batchStorage = batchStorage
+            ?? Container.shared.workoutAnalyticsBatchStorage()
     }
 
     /// - Returns: The number of persisted entries, or `nil` after a storage failure.
@@ -19,9 +19,9 @@ public struct SaveWorkoutAnalyticsUseCase {
     public func execute(entries: [AnalyticsEntry]) -> Int? {
         let validEntries = entries.filter { !$0.setProgress.isEmpty }
 
-        guard let batchStorage,
-              batchStorage.appendWorkoutAnalytics(validEntries)
-        else { return nil }
+        guard batchStorage.appendWorkoutAnalytics(validEntries) else {
+            return nil
+        }
         return validEntries.count
     }
 }

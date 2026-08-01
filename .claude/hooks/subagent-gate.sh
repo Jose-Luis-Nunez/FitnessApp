@@ -108,9 +108,13 @@ emit_block() {
 
 gate_verifier() {
   local stamp="$STATE_DIR/agent-infrastructure.stamp.md"
+  local manifest="$STATE_DIR/agent-infrastructure.manifest.tsv"
   local fingerprint=""
   source ".claude/hooks/lib/agent-infrastructure-evidence.sh"
-  fingerprint=$(agent_infrastructure_fingerprint)
+  if ! agent_infrastructure_manifest_covers_staged "$manifest"; then
+    emit_block "[verifier] Gate failed: infrastructure manifest is missing or does not cover the exact staged candidate. Write .claude/hooks/state/agent-infrastructure.manifest.tsv from staged contents with agent-infrastructure-evidence.sh."
+  fi
+  fingerprint=$(agent_infrastructure_manifest_fingerprint "$manifest")
   local required_fields=(
     "result:[[:space:]]*PASS"
     "verified_by:[[:space:]]*verifier-subagent"
@@ -167,9 +171,9 @@ gate_reviewer() {
   fi
 
   source ".claude/hooks/lib/validation-evidence.sh"
-  if ! validation_manifest_matches_worktree "$manifest" ||
+  if ! validation_manifest_covers_staged "$manifest" ||
      ! validation_stamp_matches_manifest "$stamp" "$manifest"; then
-    emit_block "[reviewer] Gate failed: validation evidence does not match the exact current contents."
+    emit_block "[reviewer] Gate failed: validation evidence does not cover the exact staged candidate."
   fi
 }
 
@@ -195,9 +199,9 @@ gate_tester() {
   fi
 
   source ".claude/hooks/lib/validation-evidence.sh"
-  if ! validation_manifest_matches_worktree "$manifest" ||
+  if ! validation_manifest_covers_staged "$manifest" ||
      ! validation_stamp_matches_manifest "$stamp" "$manifest"; then
-    emit_block "[tester] Gate failed: test evidence does not match the exact current contents."
+    emit_block "[tester] Gate failed: test evidence does not cover the exact staged candidate."
   fi
 }
 

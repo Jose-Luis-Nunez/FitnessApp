@@ -8,12 +8,31 @@ description: >-
 
 # Reviewing Code Changes
 
+## 0. Freeze the Commit Candidate
+
+Final validation starts only after implementation is complete and no known
+finding or product decision remains open. It is not an exploratory review loop.
+
+- The intended commit must already be staged; `/validate` never stages it.
+- `git diff --name-only` must be empty for files that overlap the staged
+  candidate. Stop and resolve partial staging before spawning subagents.
+- Run `git diff --cached --check` before any expensive test command.
+- Resolve applicable ADR triggers before the reviewer/tester phase. An existing
+  ADR may justify a one-line exception; do not wait for pre-commit to discover
+  the missing coverage.
+- When product and executable agent-infrastructure files are staged together,
+  keep their evidence tracks separate: code reviewer/tester for product files,
+  infrastructure verifier for agent-system files.
+
+The yellow/red reviewer below is the senior-quality review. Do not run a
+lighter "commit ready" review and then add a second senior review afterward.
+
 ## 1. Classify
 
 Run:
 
 ```bash
-bash .claude/hooks/lib/change-risk.sh classify
+bash .claude/hooks/lib/change-risk.sh classify staged
 ```
 
 The conservative result is `green`, `yellow`, or `red`.
@@ -61,11 +80,17 @@ For yellow/red changes, spawn the reviewer with fresh context:
 The reviewer uses `.codex/agents/reviewer.toml` in Codex or
 `.claude/agents/reviewer.md` in Claude Code. Fix Bug findings and re-review the
 final contents. Report residual duplication only when one actually remains.
+Missing or stale test/infrastructure evidence is not a code finding during
+this phase; those artifacts are intentionally produced after the code review.
 
 ## 4. Test Once
 
 Development may use focused tests. Completion requires one final result bound
 to the current contents.
+
+Start the final tester only after the reviewer reports no Bug findings and the
+staged product/test contents are stable. This prevents an otherwise successful
+test run from becoming stale during senior-quality cleanup.
 
 - If no matching result exists, the tester uses `run`.
 - If the main agent already ran the complete required command on the final
@@ -78,11 +103,11 @@ tester with no conversation history.
 
 ## 5. Record Evidence
 
-After the final review:
+After the final review, the reviewer writes:
 
 ```bash
 bash .claude/hooks/lib/validation-evidence.sh write \
-  .claude/hooks/state/code-changes.manifest.tsv
+  .claude/hooks/state/code-changes.manifest.tsv staged
 bash .claude/hooks/lib/validation-evidence.sh fingerprint \
   .claude/hooks/state/code-changes.manifest.tsv
 ```

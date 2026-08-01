@@ -11,6 +11,7 @@
 #   4. ADR required for structural architecture changes
 #   5. UI-state-sync anti-pattern
 #   6. architecture-documentation.md freshness for structural changes
+#   7. Content-bound verifier evidence for staged agent infrastructure
 
 set -euo pipefail
 
@@ -287,6 +288,50 @@ FIX: Update only the relevant current-state section in
   git add .claude/references/architecture-documentation.md
 ═══════════════════════════════════════════════════════════════"
   EXIT_CODE=1
+fi
+
+# --- Check 7: Content-bound agent-infrastructure verification ---
+
+AGENT_INFRA_LIB="$REPO_ROOT/.claude/hooks/lib/agent-infrastructure-evidence.sh"
+if [ -f "$AGENT_INFRA_LIB" ]; then
+  # shellcheck disable=SC1090
+  source "$AGENT_INFRA_LIB"
+  STAGED_INFRA=$(agent_infrastructure_paths staged)
+
+  if [ -n "$STAGED_INFRA" ]; then
+    INFRA_REPORT=".claude/hooks/state/agent-infrastructure.stamp.md"
+    INFRA_MANIFEST=".claude/hooks/state/agent-infrastructure.manifest.tsv"
+    INFRA_VALID=false
+
+    if agent_infrastructure_manifest_covers_staged "$INFRA_MANIFEST" &&
+       agent_infrastructure_stamp_matches_manifest "$INFRA_REPORT" "$INFRA_MANIFEST" &&
+       grep -q 'verified_by:[[:space:]]*verifier-subagent' "$INFRA_REPORT" &&
+       grep -q 'reference_integrity:[[:space:]]*PASS' "$INFRA_REPORT" &&
+       grep -q 'overview_sync:[[:space:]]*PASS' "$INFRA_REPORT" &&
+       grep -q 'description_consistency:[[:space:]]*PASS' "$INFRA_REPORT" &&
+       grep -q 'handoff_links:[[:space:]]*PASS' "$INFRA_REPORT" &&
+       grep -q 'hook_alignment:[[:space:]]*PASS' "$INFRA_REPORT" &&
+       grep -q 'name_consistency:[[:space:]]*PASS' "$INFRA_REPORT"; then
+      INFRA_VALID=true
+    fi
+
+    if [ "$INFRA_VALID" = false ]; then
+      INFRA_FILE_LIST=$(echo "$STAGED_INFRA" | head -10 | sed 's/^/  - /')
+      ERRORS="${ERRORS}
+═══════════════════════════════════════════════════════════════
+RULE: Executable agent infrastructure requires independent verification.
+VIOLATION: Staged infrastructure is not covered by an exact verifier manifest/stamp.
+FILES:
+${INFRA_FILE_LIST}
+FIX:
+  - Run reviewing-agent-infrastructure on the final contents.
+  - Write .claude/hooks/state/agent-infrastructure.manifest.tsv with
+    agent-infrastructure-evidence.sh.
+  - Let the verifier subagent write a PASS stamp bound to that manifest.
+═══════════════════════════════════════════════════════════════"
+      EXIT_CODE=1
+    fi
+  fi
 fi
 
 # --- Output ---

@@ -229,6 +229,7 @@ public enum AppStyle {
         public static let analyticsHeadline = SwiftUI.Font.system(size: 22, weight: .bold)
         public static let analyticsBigNumber = SwiftUI.Font.system(size: 26, weight: .bold)
         public static let analyticsAxis = SwiftUI.Font.system(size: 9, weight: .medium)
+        public static let workoutEntryTitle = SwiftUI.Font.system(size: 36, weight: .bold)
 
         public static let categorySelectionNameFont = SwiftUI.Font.system(size: 20, weight: .semibold)
         public static let categoryTileTitle = SwiftUI.Font.system(size: 22, weight: .bold)

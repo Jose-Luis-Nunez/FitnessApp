@@ -6,7 +6,9 @@ CANONICAL_STATE_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.claude
 if [ -f "$CANONICAL_STATE_DIR/checks-disabled" ]; then
   exit 0
 fi
-# Stop Hook Orchestrator (Claude Code): runs all checks when the agent stops.
+# Development-hint orchestrator (Claude Code): surfaces cheap, deduplicated
+# design hints while an agent works. Commit validation intentionally happens in
+# /validate and the versioned pre-commit hook, not at every task stop.
 #
 # Claude Code Stop hook input (JSON via stdin):
 #   { "session_id", "transcript_path", "cwd", "hook_event_name", "stop_hook_active" }
@@ -16,21 +18,21 @@ fi
 # field) keep working.
 #
 # Output:
-#   - exit 0 with no stdout: success, no follow-up
-#   - exit 2 with stderr text: Claude is sent back with that text as a blocker
+#   - exit 0 with no stdout: no development hint
+#   - exit 2 with stderr text: Claude gets one actionable development hint.
+#     Hints are deduplicated by the individual check scripts and never require
+#     final test, review, or verifier evidence.
 #
 # Checks (each in its own script under checks/):
-#   1. code-validation.sh     — Content-bound validation for Swift changes.
-#   2. architecture-sync.sh   — Stateless: architecture-documentation.md updated?
-#   3. test-execution.sh      — Content-bound final test evidence for Swift changes.
-#   4. test-coverage.sh       — Hint: new ViewModel/Service has corresponding tests?
-#   5. agent-infrastructure.sh — Exact verifier evidence for runtime changes.
-#   7. ui-state-sync.sh       — Hint: Int-counter + polling-loop anti-pattern in diff?
-#   8. duplicate-state.sh     — Hint: new @State VM + existing UUID-keyed VM cache?
-#   9. predicate-smell.sh     — Hint: SwiftData predicate anti-patterns.
-#  10. adr-required.sh        — Hint: structural change without an ADR?
+#   1. architecture-sync.sh — structural/public documentation hint
+#   2. test-coverage.sh     — new ViewModel/Service without a test hint
+#   3. ui-state-sync.sh     — Int-counter + polling-loop anti-pattern hint
+#   4. duplicate-state.sh   — duplicate state-owner hint
+#   5. predicate-smell.sh   — SwiftData predicate anti-pattern hint
+#   6. adr-required.sh      — structural change without an ADR hint
 #
-# Blocking checks require matching evidence; hint checks report likely gaps.
+# Content-bound review/test evidence and infrastructure verification are
+# deliberately excluded: they run once for the final staged contents.
 
 set -euo pipefail
 
@@ -86,8 +88,7 @@ export STATE_DIR=".claude/hooks/state"
 export CONTENT
 export HOOKS_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# Question detection: blocking completion checks pause while the agent asks the user.
-# Hints still fire so the agent sees them when it resumes.
+# Hints pause while the agent asks the user and resume on later work.
 export HAS_QUESTION=$(echo "$CONTENT" | grep -ciE '\?\s*$|soll ich|shall I|should I|do you want|möchtest du|willst du' || true)
 
 mkdir -p "$STATE_DIR"
@@ -97,22 +98,14 @@ changed_swift=$(git diff --name-only HEAD 2>/dev/null | grep '\.swift$' || true)
 new_swift=$(git ls-files --others --exclude-standard 2>/dev/null | grep '\.swift$' || true)
 export all_swift=$(printf '%s\n%s' "$changed_swift" "$new_swift" | grep -v '^$' || true)
 
-# Risk and evidence are shared by the validation checks. Product documentation
-# and agent-runtime files do not participate in this fingerprint.
-source "$HOOKS_DIR/lib/change-risk.sh"
-export CHANGE_RISK=$(classify_change_risk worktree)
-
 # --- Run checks ---
 
 CHECKS_DIR="$HOOKS_DIR/checks"
 all_reasons=""
 
 for check in \
-  "$CHECKS_DIR/code-validation.sh" \
   "$CHECKS_DIR/architecture-sync.sh" \
-  "$CHECKS_DIR/test-execution.sh" \
   "$CHECKS_DIR/test-coverage.sh" \
-  "$CHECKS_DIR/agent-infrastructure.sh" \
   "$CHECKS_DIR/ui-state-sync.sh" \
   "$CHECKS_DIR/duplicate-state.sh" \
   "$CHECKS_DIR/predicate-smell.sh" \

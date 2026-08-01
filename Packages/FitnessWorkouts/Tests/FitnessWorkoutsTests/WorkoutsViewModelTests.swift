@@ -446,6 +446,53 @@ struct WorkoutsViewModelTests {
         #expect(sut.exerciseCountsByWorkout()[w.id] == nil)
     }
 
+    @Test func activeExerciseQueryRejectsEmptyWorkout() {
+        let workout = Workout(name: "Empty")
+        let (sut, _, _) = makeSUT(seedWorkouts: [workout])
+
+        #expect(!sut.hasActiveExercises(in: workout))
+    }
+
+    @Test func activeExerciseQueryRejectsWorkoutWithOnlyInactiveExercises() {
+        let workout = Workout(name: "Inactive")
+        let (sut, _, exerciseStorage) = makeSUT(seedWorkouts: [workout])
+        exerciseStorage.exercisesByCategory[.arms] = [
+            Exercise(
+                name: "Old Curl",
+                weight: 20,
+                reps: 12,
+                sets: 3,
+                iconName: "defaultArmsIcon",
+                category: .arms,
+                isActive: false
+            ),
+        ]
+
+        #expect(!sut.hasActiveExercises(in: workout))
+    }
+
+    @Test func activeExerciseQueryUsesRequestedWorkoutIdentity() {
+        let workout = Workout(name: "Active")
+        let otherWorkout = Workout(name: "Other")
+        let (sut, _, exerciseStorage) = makeSUT(
+            seedWorkouts: [workout, otherWorkout]
+        )
+        let benchPress = Exercise(
+            name: "Bench Press",
+            weight: 80,
+            reps: 8,
+            sets: 3,
+            iconName: "defaultChestIcon",
+            category: .chest
+        )
+        exerciseStorage.loadForWorkoutHandler = { workoutID, category in
+            workoutID == workout.id && category == .chest ? [benchPress] : []
+        }
+
+        #expect(sut.hasActiveExercises(in: workout))
+        #expect(!sut.hasActiveExercises(in: otherWorkout))
+    }
+
     // MARK: - Export-as-File (Share)
 
     @Test func requestShare_writesFitnessWorkoutFileToTmpWithSanitizedFilename() throws {

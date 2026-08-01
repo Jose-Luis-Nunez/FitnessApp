@@ -1,5 +1,5 @@
 #!/bin/bash
-# Content-bound validation evidence shared by Stop and pre-commit hooks.
+# Content-bound validation evidence shared by final validation and pre-commit.
 #
 # A manifest contains one line per relevant changed file:
 #   <sha256-or-DELETED><TAB><path>

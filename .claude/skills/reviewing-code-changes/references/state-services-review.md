@@ -14,5 +14,7 @@ concurrency changes.
   coordinator contract.
 - Protocol changes update production wiring, mocks, spies, and relaxed/default
   behaviors.
+- Inject the exact capability a use case requires. Do not accept a broader
+  protocol and recover the real dependency through a conditional runtime cast.
 - Avoid dual init paths that silently use different dependencies.
 - Check actor isolation and cancellation for every long-lived Task.

@@ -80,10 +80,6 @@ struct WorkoutAnalyticsEntryViewModelTests {
         #expect(draft.entry.setProgress.map(\.currentReps) == [10, 10, 10])
         #expect(draft.entry.setProgress.map(\.weight) == [60, 60, 60])
         #expect(draft.entry.setProgress.map(\.logicalSetIndex) == [0, 1, 2])
-        #expect(
-            WorkoutAnalyticsSummary.text(for: draft)
-                == "60 kg · 3 sets · 10 reps"
-        )
     }
 
     @Test func countsAppendedStandardSetWithoutLogicalIndex() throws {
@@ -141,11 +137,64 @@ struct WorkoutAnalyticsEntryViewModelTests {
         )
 
         #expect(sut.canSave)
+    }
+
+    @Test func accessibilityDescribesWeightedDraft() throws {
+        let workout = Workout(name: "Push")
+        let exercise = makeExercise(weight: 60, reps: 10, sets: 3)
+        let (sut, _) = makeSUT(
+            workout: workout,
+            exercises: [.arms: [exercise]]
+        )
+        let draft = try #require(sut.draft(for: exercise.id))
+
         #expect(
-            sut.draft(for: exercise.id).map {
-                WorkoutAnalyticsSummary.text(for: $0)
-            }
-                == "2 sets · 12 reps"
+            WorkoutAnalyticsAccessibility.value(for: draft)
+                == "Arms, 60 kilograms, 3 sets, 10 reps"
+        )
+    }
+
+    @Test func accessibilityOmitsWeightForBodyweightDraft() throws {
+        let workout = Workout(name: "Bodyweight")
+        let exercise = makeExercise(weight: 0, reps: 12, sets: 2)
+        let (sut, _) = makeSUT(
+            workout: workout,
+            exercises: [.arms: [exercise]]
+        )
+        let draft = try #require(sut.draft(for: exercise.id))
+
+        #expect(
+            WorkoutAnalyticsAccessibility.value(for: draft)
+                == "Arms, 2 sets, 12 reps"
+        )
+    }
+
+    @Test func accessibilityDescribesVariableDraftValues() {
+        let exercise = makeExercise(weight: 60, reps: 10, sets: 2)
+        let draft = WorkoutAnalyticsExerciseDraft(
+            exercise: exercise,
+            isSelected: true,
+            entry: AnalyticsEntry(
+                exerciseId: exercise.id,
+                date: .now,
+                setProgress: [
+                    SetProgress(
+                        status: .completedDone,
+                        currentReps: 10,
+                        weight: 60
+                    ),
+                    SetProgress(
+                        status: .completedDone,
+                        currentReps: 8,
+                        weight: 55
+                    ),
+                ]
+            )
+        )
+
+        #expect(
+            WorkoutAnalyticsAccessibility.value(for: draft)
+                == "Arms, Variable weight, 2 sets, Variable reps"
         )
     }
 
@@ -258,7 +307,7 @@ struct WorkoutAnalyticsEntryViewModelTests {
         exerciseStorage.exercisesByCategory = exercises
         let analytics = MockAnalyticsStorage()
         let saveUseCase = SaveWorkoutAnalyticsUseCase(
-            analyticsStorage: analytics
+            batchStorage: analytics
         )
         let sut = WorkoutAnalyticsEntryViewModel(
             workout: workout,

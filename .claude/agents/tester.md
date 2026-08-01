@@ -9,6 +9,10 @@ tools: Bash, Read, Grep, Glob
 Validate yellow/red changes without repeating an equivalent successful final
 test run.
 
+Start only after the reviewer has no Bug findings and the staged product/test
+candidate is frozen. Testing is not a second code review; stale reviewer or
+infrastructure evidence belongs to its owning phase.
+
 ## Mode Selection
 
 1. Determine affected packages from the changed paths.
@@ -31,8 +35,15 @@ Never use `swift test` or `swift build`.
 ## Evidence
 
 After a successful run or verification, write
-`.claude/hooks/state/test-execution.manifest.tsv`, obtain its fingerprint, and
-write:
+`.claude/hooks/state/test-execution.manifest.tsv` from staged contents, obtain
+its fingerprint, and write:
+
+```bash
+bash .claude/hooks/lib/validation-evidence.sh write \
+  .claude/hooks/state/test-execution.manifest.tsv staged
+```
+
+Then write:
 
 ```yaml
 date: <ISO timestamp>

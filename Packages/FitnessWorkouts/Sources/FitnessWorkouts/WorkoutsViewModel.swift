@@ -226,4 +226,12 @@ public final class WorkoutsViewModel {
     public func exerciseCountsByWorkout() -> [UUID: Int] {
         exerciseStorageService.exerciseCountsByWorkout()
     }
+
+    func hasActiveExercises(in workout: Workout) -> Bool {
+        MuscleCategoryGroup.allCases.contains { category in
+            exerciseStorageService
+                .loadForWorkout(workoutId: workout.id, category: category)
+                .contains(where: \.isActive)
+        }
+    }
 }

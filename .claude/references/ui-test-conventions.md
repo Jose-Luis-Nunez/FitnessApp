@@ -110,6 +110,7 @@ try launch(training: heavy)
 | Sort measured frames by visual reading order | `sortFramesInReadingOrder(_:)` |
 | Attach a diagnostic full-screen screenshot | `attachDiagnosticScreenshot(named:)` |
 | Assert element label content | `verifyLabel(_:equals:)` |
+| Assert prefixed element value content | `verifyValueContainsWithPrefix(_:expectedComponents:)` |
 | Wait for label to be populated | `waitForNonEmptyLabel(_:)` |
 | Scroll until element is visible | `swipeUpUntilVisible(_:)` |
 

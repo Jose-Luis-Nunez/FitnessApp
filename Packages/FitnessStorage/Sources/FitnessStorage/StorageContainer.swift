@@ -29,6 +29,9 @@ public extension Container {
     var analyticsStorage: Factory<AnalyticsStoring> {
         self { MainActor.assumeIsolated { AnalyticsStorageService() } }.singleton
     }
+    var workoutAnalyticsBatchStorage: Factory<WorkoutAnalyticsBatchStoring> {
+        self { MainActor.assumeIsolated { AnalyticsStorageService() } }.singleton
+    }
     var exerciseManagement: Factory<ExerciseManaging> {
         self { MainActor.assumeIsolated { ExerciseManagementService() } }.singleton
     }

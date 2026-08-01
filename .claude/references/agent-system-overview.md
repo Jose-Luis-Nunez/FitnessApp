@@ -8,16 +8,19 @@ adapters. All runtimes write local evidence under `.claude/hooks/state/`.
 ```text
 Swift diff
   → change-risk.sh: green | yellow | red
-  → load base review + matched specialist references
+  → development Stop hook: deduplicated design hints only
+  → freeze and stage the intended commit candidate
+  → `/validate`: diff/ADR preflight, then matched review references
   → green: main-agent review/test
-    yellow/red: fresh reviewer + tester(run|verify)
+    yellow/red: one senior-quality reviewer, then tester(run|verify)
   → content manifests + PASS stamps
-  → Stop hook checks working contents
   → pre-commit checks staged blobs
 ```
 
-Validation is content-bound, not time-bound. Changing a relevant file
-invalidates evidence immediately; unchanged evidence does not expire.
+Validation is content-bound, not time-bound. Final manifests hash the frozen
+staged candidate, so unrelated follow-up work does not invalidate the intended
+commit. Changing a staged relevant file invalidates evidence immediately;
+unchanged evidence does not expire.
 
 ## Risk Policy
 
@@ -63,24 +66,22 @@ Codex-only source-command adapters live under `.agents/skills/source-command-*`.
 
 | File | Purpose |
 |---|---|
-| `.claude/commands/validate.md` | Explicit risk-based validation |
+| `.claude/commands/validate.md` | Validate a frozen staged commit; one senior-quality review before final tests, never stages or commits |
 | `.claude/commands/buildApp.md` | Build/install/launch command |
 | `scripts/test-affected-packages.sh` | Run each requested package test action once |
 | `scripts/sync-agent-runtime.sh` | Generate/check Codex skills, hooks, and roles |
 | `scripts/generate-codex-agent.py` | Generate TOML role from canonical Markdown |
 | `scripts/install-hooks.sh` | Configure `.githooks` as Git hooks path |
 
-## Stop Hook
+## Development Stop Hook
 
-`post-task-check.sh` runs these checks:
+`post-task-check.sh` does not require final evidence or subagents. It emits a
+deduplicated hint only when it detects a likely issue in the working tree:
 
 | Check | Type | Purpose |
 |---|---|---|
-| `code-validation.sh` | Blocking | Code manifest/stamp matches exact working contents and risk |
 | `architecture-sync.sh` | Hint | Structural/public change has current-state documentation |
-| `test-execution.sh` | Blocking | One final test result matches exact working contents |
 | `test-coverage.sh` | Hint | New ViewModel/Service has a test file |
-| `agent-infrastructure.sh` | Blocking | Executable agent-system changes have verifier evidence |
 | `ui-state-sync.sh` | Hint | Generic counter + polling smell |
 | `duplicate-state.sh` | Hint | New View-owned VM conflicts with keyed cache |
 | `predicate-smell.sh` | Hint | SwiftData predicate/query hazards |
@@ -88,11 +89,23 @@ Codex-only source-command adapters live under `.agents/skills/source-command-*`.
 
 Effectiveness audits are explicit and never triggered by ordinary file counts.
 
+## Commit Evidence Checks
+
+The following retained check scripts are not Stop-hook entries. They define the
+content-bound evidence contract used by the final validation flow, workflow
+fixtures, and pre-commit enforcement:
+
+| Check | Purpose |
+|---|---|
+| `code-validation.sh` | Validates review manifest/stamp against current Swift contents and risk |
+| `test-execution.sh` | Validates final test manifest/stamp against current Swift contents and risk |
+| `agent-infrastructure.sh` | Validates verifier manifest/stamp against current infrastructure contents |
+
 Shared libraries:
 
 - `change-risk.sh` — conservative risk classifier.
 - `validation-evidence.sh` — manifests, hashes, worktree/staged verification.
-- `agent-infrastructure-evidence.sh` — exact fingerprint for executable
+- `agent-infrastructure-evidence.sh` — manifests and hashes for executable
   agent-system changes.
 - `adr-triggers.sh` — shared ADR detection.
 
@@ -108,6 +121,7 @@ Fixture tests live in `.claude/hooks/tests/workflow-tests.sh`.
 4. architectural triggers without ADR/exception;
 5. generic counter + polling UI sync;
 6. structural/public changes without architecture documentation.
+7. executable agent infrastructure without an exact independent verifier stamp.
 
 Stamps cannot be bypassed by `touch`; staged blob hashes must match the
 manifest.
@@ -152,6 +166,7 @@ All files below are local and ignored:
 | `code-changes.stamp.md` | Risk, reviewer, result, manifest fingerprint |
 | `test-execution.manifest.tsv` | Hash per tested product/test file |
 | `test-execution.stamp.md` | Run/verify mode, command, result, fingerprint |
+| `agent-infrastructure.manifest.tsv` | Hash per verified infrastructure file |
 | `agent-infrastructure.stamp.md` | Independent verifier result bound to exact infrastructure contents |
 | `*.scratchpad.json` / `*.hint-hash.txt` | Bounded hook state |
 
