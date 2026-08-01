@@ -231,7 +231,9 @@ ARCH_STAGED=$(git diff --cached --name-only | grep "$ARCH_FILE" || true)
 
 NEW_FEATURES=$(git diff --cached --name-only --diff-filter=A | grep '^FitnessApp/Features/' || true)
 NEW_USECASES=$(git diff --cached --name-only --diff-filter=A | grep 'UseCases/' || true)
-NEW_SERVICES=$(git diff --cached --name-only | grep -E 'Service\.swift|Storage\.swift|Container\.swift|Coordinator\.swift' || true)
+SERVICE_ARCH_SURFACE=$(git diff --cached -- \
+  '*Service.swift' '*Storage.swift' '*Container.swift' '*Coordinator.swift' | \
+  grep -E '^[+-][[:space:]]*(@Observable|public[[:space:]]+((private|internal)\(set\)[[:space:]]+)?(final[[:space:]]+)?(actor|class|struct|enum|protocol|func|var|let)\b)' || true)
 NEW_SHARED=$(git diff --cached --name-only --diff-filter=A | grep -E '^FitnessApp/Shared/|^Packages/Fitness(UI|PersistenceUI)/Sources/' || true)
 APPSTYLE_SURFACE=$(git diff --cached -- '*/AppStyle.swift' | grep -E '^[+-][[:space:]]*public static (let|var)' || true)
 NAVIGATION_SURFACE=$(git diff --cached -- '*.swift' | grep '^+' | grep -E 'NavigationDestination|case [a-zA-Z].*Navigation' || true)
@@ -249,10 +251,10 @@ if [ -n "$NEW_USECASES" ] && [ -z "$ARCH_STAGED" ]; then
   ARCH_TRIGGERS="${ARCH_TRIGGERS}
   - New Use Cases: $(echo "$NEW_USECASES" | tr '\n' ', ')"
 fi
-if [ -n "$NEW_SERVICES" ] && [ -z "$ARCH_STAGED" ]; then
+if [ -n "$SERVICE_ARCH_SURFACE" ] && [ -z "$ARCH_STAGED" ]; then
   NEEDS_ARCH=true
   ARCH_TRIGGERS="${ARCH_TRIGGERS}
-  - Changed services/containers: $(echo "$NEW_SERVICES" | tr '\n' ', ')"
+  - Public or state-ownership service surface changed"
 fi
 if [ -n "$NEW_SHARED" ] && [ -z "$ARCH_STAGED" ]; then
   NEEDS_ARCH=true

@@ -12,7 +12,9 @@ appstyle_surface=$(git diff HEAD -- '*/AppStyle.swift' 2>/dev/null | grep -E '^[
 new_navigation=$(git diff HEAD -- '*.swift' 2>/dev/null | grep '^+' | grep -E 'NavigationDestination|case [a-zA-Z].*Navigation' || true)
 new_shared=$(git diff --name-only --diff-filter=A HEAD 2>/dev/null | grep -E '^FitnessApp/Shared/|^Packages/Fitness(UI|PersistenceUI)/Sources/' || true)
 new_usecases=$(git diff --name-only --diff-filter=A HEAD 2>/dev/null | grep 'UseCases/' || true)
-new_services=$(git diff --name-only HEAD 2>/dev/null | grep -E 'Service\.swift|Storage\.swift|Container\.swift|Coordinator\.swift' || true)
+service_arch_surface=$(git diff HEAD -- \
+  '*Service.swift' '*Storage.swift' '*Container.swift' '*Coordinator.swift' | \
+  grep -E '^[+-][[:space:]]*(@Observable|public[[:space:]]+((private|internal)\(set\)[[:space:]]+)?(final[[:space:]]+)?(actor|class|struct|enum|protocol|func|var|let)\b)' || true)
 domain_surface=$(git diff HEAD -- 'Packages/FitnessCore/Sources/**/*.swift' 2>/dev/null | grep -E '^[+-].*public (struct|class|enum|protocol|func|var|let)' || true)
 
 reasons=""
@@ -31,8 +33,8 @@ fi
 if [ -n "$new_usecases" ] && [ -z "$arch_changed" ]; then
   reasons="${reasons} New Use Cases added."
 fi
-if [ -n "$new_services" ] && [ -z "$arch_changed" ]; then
-  reasons="${reasons} Services or Container registrations changed."
+if [ -n "$service_arch_surface" ] && [ -z "$arch_changed" ]; then
+  reasons="${reasons} Public or state-ownership service surface changed."
 fi
 if [ -n "$domain_surface" ] && [ -z "$arch_changed" ]; then
   reasons="${reasons} Public FitnessCore domain surface changed."

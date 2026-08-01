@@ -91,10 +91,12 @@ new_repo() {
     mkdir -p Packages/FitnessUI/Sources/FitnessUI
     mkdir -p Packages/FitnessExercise/Sources/FitnessExercise
     mkdir -p Packages/FitnessStorage/Sources/FitnessStorage
+    mkdir -p Packages/FitnessTraining/Sources/FitnessTraining
     mkdir -p .claude/references .claude/rules .claude/hooks/lib .claude/hooks/state
     printf 'struct CardView {}\n' > Packages/FitnessUI/Sources/FitnessUI/CardView.swift
     printf 'final class FormViewModel {}\n' > Packages/FitnessExercise/Sources/FitnessExercise/FormViewModel.swift
     printf 'final class WorkoutStorage {}\n' > Packages/FitnessStorage/Sources/FitnessStorage/WorkoutStorage.swift
+    printf 'final class TrainingCoordinator { func edit() {} }\n' > Packages/FitnessTraining/Sources/FitnessTraining/TrainingCoordinator.swift
     printf '# Architecture\n' > .claude/references/architecture-documentation.md
     printf '%s\n' '---' 'alwaysApply: true' '---' > .claude/rules/example.mdc
     cp "$REPO_ROOT/.claude/hooks/lib/validation-evidence.sh" .claude/hooks/lib/
@@ -259,6 +261,16 @@ printf '@Observable\nfinal class SyncService {}\n' > "$adr_repo/Packages/Fitness
 )
 expect_hook_output "$adr_repo" "adr-required" "ADR protection remains"
 expect_hook_output "$adr_repo" "architecture-documentation.md" "architecture sync protection remains"
+
+coordinator_behavior_repo=$(new_repo coordinator-behavior)
+printf 'final class TrainingCoordinator { func edit() { } }\n' > "$coordinator_behavior_repo/Packages/FitnessTraining/Sources/FitnessTraining/TrainingCoordinator.swift"
+(
+  cd "$coordinator_behavior_repo"
+  git add Packages/FitnessTraining/Sources/FitnessTraining/TrainingCoordinator.swift
+)
+write_fixture_evidence "$coordinator_behavior_repo" red reviewer-subagent tester-subagent
+expect_success "private coordinator behavior does not require architecture documentation" \
+  bash -c "cd '$coordinator_behavior_repo' && bash '$PRE_COMMIT' >/dev/null"
 
 expect_success "runtime adapters are synchronized" "$REPO_ROOT/scripts/sync-agent-runtime.sh" --check
 expect_success "subagent gate remains valid shell" bash -n "$REPO_ROOT/.claude/hooks/subagent-gate.sh"

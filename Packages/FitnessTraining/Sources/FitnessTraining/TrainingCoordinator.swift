@@ -259,8 +259,6 @@ public final class TrainingCoordinator {
 
     public func editLess() {
         let vm = activeSetViewModel
-        vm.stopTimer()
-
         let editIndex = vm.activeSetIndex
 
         guard editIndex >= 0 && editIndex < vm.setProgress.count else {
@@ -272,8 +270,6 @@ public final class TrainingCoordinator {
 
     public func editMore() {
         let vm = activeSetViewModel
-        vm.stopTimer()
-
         let editIndex = vm.activeSetIndex
 
         guard editIndex >= 0 && editIndex < vm.setProgress.count else {

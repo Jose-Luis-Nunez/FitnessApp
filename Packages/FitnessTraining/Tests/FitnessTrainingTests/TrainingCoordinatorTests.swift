@@ -5,19 +5,22 @@ import FitnessCore
 import FitnessAnalytics
 import FitnessStorage
 import FitnessTestSupport
+@testable import FitnessTrainingTestSupport
 
 // MARK: - Helpers
 
 @MainActor
 private func makeCoordinator(
     onExerciseUpdate: @escaping (Exercise, MuscleCategoryGroup) -> Void = { _, _ in },
-    onExerciseReset: @escaping (Exercise, MuscleCategoryGroup) -> Void = { _, _ in }
+    onExerciseReset: @escaping (Exercise, MuscleCategoryGroup) -> Void = { _, _ in },
+    sessionFactory: @escaping @MainActor () -> ActiveSetViewModel = { ActiveSetViewModel() }
 ) -> TrainingCoordinator {
     TrainingCoordinator(
         findCategory: { _ in .arms },
         onExerciseUpdate: onExerciseUpdate,
         onExerciseReset: onExerciseReset,
-        analyticsViewModel: AnalyticsViewModel(storageService: StubAnalyticsStorage())
+        analyticsViewModel: AnalyticsViewModel(storageService: StubAnalyticsStorage()),
+        sessionFactory: sessionFactory
     )
 }
 
@@ -473,17 +476,30 @@ struct EditLessMoreTests {
         #expect(vm.isEditing == false)
     }
 
-    @Test func editLessStopsTimer() {
-        let coordinator = makeCoordinator()
+    @Test("Less and More keep the current set timer running")
+    func editActionsKeepTimerRunning() {
+        let clock = FakeClock()
+        let timerService = TimerService(clock: clock)
+        let activeSetViewModel = ActiveSetViewModel(timerService: timerService)
+        let coordinator = makeCoordinator(sessionFactory: { activeSetViewModel })
         let exercise = makeExercise(sets: 3)
         coordinator.startTraining(for: exercise)
 
-        let vm = coordinator.activeSetViewModel
-        #expect(vm.isSetInProgress == true)
+        clock.advance(by: 5)
+        var expectedElapsedSeconds = 5
 
-        coordinator.editLess()
+        for editAction in [coordinator.editLess, coordinator.editMore] {
+            editAction()
 
-        #expect(vm.isEditing == true)
+            #expect(timerService.isRunning)
+            clock.advance(by: 1)
+            expectedElapsedSeconds += 1
+            #expect(timerService.elapsedSeconds() == expectedElapsedSeconds)
+
+            // Mirrors closing the picker without saving a set.
+            activeSetViewModel.isEditing = false
+            activeSetViewModel.pendingEditIndex = nil
+        }
     }
 
     @Test func editLessEditsCorrectSetAfterCompletion() {
