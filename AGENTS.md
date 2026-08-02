@@ -28,6 +28,16 @@ The minimal non-negotiable Xcode settings live in
 `.claude/rules/build-and-test.mdc`. Validation is risk-based and content-bound;
 see `.claude/references/agent-system-overview.md`.
 
+## Design Updates vs. Commit Validation
+
+- Treat UI and design changes as a development iteration by default: keep the
+  work in the working tree and do not stage it.
+- Do not start `/validate`, a reviewer or tester subagent, or write final
+  validation evidence unless the user explicitly asks to commit, stage, or run
+  final validation.
+- When the user explicitly requests that final phase, freeze and stage the
+  intended candidate, then follow the risk-based validation workflow.
+
 ## What you do **not** have to do
 
 - Do **not** rename `architecture-documentation.md` to `AGENTS.md` — it serves a different purpose and is firmly anchored in rules, hooks, and skills.

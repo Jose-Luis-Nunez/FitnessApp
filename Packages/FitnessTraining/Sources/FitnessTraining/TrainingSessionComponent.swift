@@ -139,8 +139,12 @@ public struct CompactTimerComponent: View {
                     .foregroundColor(AppStyle.Color.white)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(AppStyle.Color.green)
+                    .background(AppStyle.Color.metricChipBackground)
                     .cornerRadius(AppStyle.CornerRadius.timerCard)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: AppStyle.CornerRadius.timerCard)
+                            .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
+                    )
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier(FitnessCore.TrainingIDs.cancelTraining)
@@ -148,14 +152,12 @@ public struct CompactTimerComponent: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: AppStyle.CornerRadius.timerCard)
-                .fill(AppStyle.Color.greenBlack)
-                .overlay(
-                    RoundedRectangle(cornerRadius: AppStyle.CornerRadius.timerCard)
-                        .stroke(AppStyle.Color.greenGlow, lineWidth: 1.5)
+        .background {
+            Color.clear
+                .appDarkSurface(
+                    in: .rect(cornerRadius: AppStyle.CornerRadius.timerCard)
                 )
-        )
+        }
     }
 }
 

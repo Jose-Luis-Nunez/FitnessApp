@@ -103,10 +103,12 @@ public struct FloatingActionButtonsView: View {
         return max(240, defaultWidth - 50)
     }
 
-    private let selectionHeight: CGFloat = 46
-    private var selectionWidth: CGFloat { max(selectionHeight, selectionHeight * 2.2 - 6) }
-    private let selectionFill = Color.white.opacity(0.12)
     private let bottomOffset: CGFloat = 16
+
+    /// Active-set controls are rounded rectangles, not full capsules. Keeping
+    /// the radius proportional to their height preserves that quieter shape
+    /// across compact and regular layouts.
+    private var setControlCornerRadius: CGFloat { capsuleHeight * 0.38 }
 
     public init(
         viewModel: BottomActionBarViewModel,
@@ -143,49 +145,11 @@ public struct FloatingActionButtonsView: View {
     public var body: some View {
         ZStack(alignment: .bottom) {
             HStack(spacing: 6) {
-                ZStack {
-                    TrainingGlassEffectCompat.roundedRectangleContinuous(cornerRadius: capsuleHeight / 2)
-
-                    HStack(spacing: 18) {
-                        if viewModel.showStartButton && (viewModel.currentSet != 0 || viewModel.didJustEditSet) {
-                            menuTextItem(
-                                text: viewModel.startButtonTitle,
-                                action: onStart,
-                                style: .start
-                            )
-                        }
-
-                        if viewModel.showSetControls {
-                            menuTextItem(
-                                text: "Less",
-                                action: onEditLess,
-                                style: .control
-                            )
-
-                            menuTextItem(
-                                text: "Done",
-                                action: onCompleteSet,
-                                style: .done
-                            )
-
-                            menuTextItem(
-                                text: "More",
-                                action: onEditMore,
-                                style: .control
-                            )
-                        }
-
-                        if viewModel.showFinishButton {
-                            menuTextItem(
-                                text: "Finish",
-                                action: onFinish,
-                                style: .finish
-                            )
-                        }
-                    }
+                if viewModel.showSetControls {
+                    setControlButtons
+                } else {
+                    primaryActionCapsule
                 }
-                .frame(maxWidth: .infinity, maxHeight: capsuleHeight)
-                .clipShape(RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous))
 
                 if viewModel.showSetControls && viewModel.currentSet == 0 {
                     menuIconItem(
@@ -208,6 +172,46 @@ public struct FloatingActionButtonsView: View {
         case control, done, start, finish, allDone, quickDone, feedback
     }
 
+    /// Active-set controls deliberately use three distinct surfaces rather
+    /// than a single segmented capsule: "Done" reads as the primary action,
+    /// while "Less" and "More" remain secondary adjustments.
+    private var setControlButtons: some View {
+        HStack(spacing: 8) {
+            menuTextItem(text: "Less", action: onEditLess, style: .control)
+            menuTextItem(text: "Done", action: onCompleteSet, style: .done)
+            menuTextItem(text: "More", action: onEditMore, style: .control)
+        }
+        .frame(maxWidth: .infinity, maxHeight: capsuleHeight)
+    }
+
+    /// The start and finish states retain their existing single, shared
+    /// capsule. Only the active-set controls become separate buttons.
+    private var primaryActionCapsule: some View {
+        ZStack {
+            TrainingGlassEffectCompat.roundedRectangleContinuous(cornerRadius: capsuleHeight / 2)
+
+            HStack(spacing: 18) {
+                if viewModel.showStartButton && (viewModel.currentSet != 0 || viewModel.didJustEditSet) {
+                    menuTextItem(
+                        text: viewModel.startButtonTitle,
+                        action: onStart,
+                        style: .start
+                    )
+                }
+
+                if viewModel.showFinishButton {
+                    menuTextItem(
+                        text: "Finish",
+                        action: onFinish,
+                        style: .finish
+                    )
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: capsuleHeight)
+        .clipShape(RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous))
+    }
+
     @ViewBuilder
     private func menuTextItem(
         text: String,
@@ -221,14 +225,25 @@ public struct FloatingActionButtonsView: View {
                 .frame(maxWidth: .infinity, minHeight: capsuleHeight, maxHeight: capsuleHeight)
                 .padding(.horizontal, 2)
                 .background(alignment: .center) {
-                    if style == .done {
-                        RoundedRectangle(cornerRadius: selectionHeight / 2, style: .continuous)
-                            .fill(selectionFill)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: selectionHeight / 2, style: .continuous)
-                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                    if style == .control || style == .done {
+                        if style == .done {
+                            RoundedRectangle(
+                                cornerRadius: setControlCornerRadius,
+                                style: .continuous
                             )
-                            .frame(width: selectionWidth, height: selectionHeight)
+                            .fill(AppStyle.Color.greenBlack)
+                            .overlay(
+                                RoundedRectangle(
+                                    cornerRadius: setControlCornerRadius,
+                                    style: .continuous
+                                )
+                                .stroke(AppStyle.Color.greenGlow, lineWidth: 1.5)
+                            )
+                        } else {
+                            TrainingGlassEffectCompat.roundedRectangleContinuous(
+                                cornerRadius: setControlCornerRadius
+                            )
+                        }
                     }
                 }
                 // PlainButtonStyle only hit-tests the label's own region, so the
