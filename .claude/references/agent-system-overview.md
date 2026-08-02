@@ -9,7 +9,7 @@ adapters. All runtimes write local evidence under `.claude/hooks/state/`.
 Swift diff
   → change-risk.sh: green | yellow | red
   → development Stop hook: deduplicated design hints only
-  → freeze and stage the intended commit candidate
+  → user freezes and stages the intended commit candidate
   → `/validate`: diff/ADR preflight, then matched review references
   → green: main-agent review/test
     yellow/red: one senior-quality reviewer, then tester(run|verify)
@@ -66,7 +66,7 @@ Codex-only source-command adapters live under `.agents/skills/source-command-*`.
 
 | File | Purpose |
 |---|---|
-| `.claude/commands/validate.md` | Validate a frozen staged commit; one senior-quality review before final tests, never stages or commits |
+| `.claude/commands/validate.md` | Validate a user-staged commit; Git authority is canonical in `AGENTS.md` |
 | `.claude/commands/buildApp.md` | Build/install/launch command |
 | `scripts/test-affected-packages.sh` | Run each requested package test action once |
 | `scripts/sync-agent-runtime.sh` | Generate/check Codex skills, hooks, and roles |

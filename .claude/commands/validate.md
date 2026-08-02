@@ -9,10 +9,11 @@ remains open, and the intended commit is staged. The development Stop hook
 provides only lightweight hints; this command produces the evidence required
 by pre-commit.
 
-This command validates only. It never stages files, creates or amends a commit,
-or pushes changes.
+Git authority is canonical in the repository-root `AGENTS.md`. This command
+only operates on the user's already-staged candidate and never changes Git
+state.
 
-1. Confirm the staged commit candidate is final: no overlapping unstaged
+1. Confirm the final user-staged commit candidate: no overlapping unstaged
    changes, no pending finding/decision, and `git diff --cached --check` passes.
 2. Resolve applicable ADR triggers before starting subagents.
 3. Run `bash .claude/hooks/lib/change-risk.sh classify staged`.

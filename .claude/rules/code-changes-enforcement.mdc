@@ -25,7 +25,7 @@ Use `reviewing-code-changes` for the risk-routed workflow. Mention the detected
 risk early when Swift files will change.
 
 During development, the Stop hook emits only deduplicated design hints. Before
-committing, freeze and stage the intended commit, then run `/validate`. Its
+a user commit, validate the user-staged candidate with `/validate`. Its
 yellow/red reviewer is the senior-quality review; final tests start only after
 Bug findings are fixed. The versioned pre-commit hook blocks staged Swift blobs
-without the required evidence.
+without the required evidence. Git authority is defined in `AGENTS.md`.

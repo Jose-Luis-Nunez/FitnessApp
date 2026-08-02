@@ -28,15 +28,17 @@ The minimal non-negotiable Xcode settings live in
 `.claude/rules/build-and-test.mdc`. Validation is risk-based and content-bound;
 see `.claude/references/agent-system-overview.md`.
 
-## Design Updates vs. Commit Validation
+## UI Iteration and Git Authority
 
 - Treat UI and design changes as a development iteration by default: keep the
   work in the working tree and do not stage it.
 - Do not start `/validate`, a reviewer or tester subagent, or write final
-  validation evidence unless the user explicitly asks to commit, stage, or run
-  final validation.
-- When the user explicitly requests that final phase, freeze and stage the
-  intended candidate, then follow the risk-based validation workflow.
+  validation evidence unless the user explicitly asks for final validation.
+- **Hard Git boundary (canonical):** agents never create, amend, rewrite, or
+  push commits; commit creation is human-only. "Ready to commit" means
+  validation only, never staging. Validation operates on a candidate already
+  staged by the user; staging requires an explicit request naming the
+  candidate.
 
 ## What you do **not** have to do
 
