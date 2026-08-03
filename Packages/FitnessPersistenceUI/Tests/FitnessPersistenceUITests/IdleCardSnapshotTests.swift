@@ -42,21 +42,6 @@ private func assertSnapshot<V: View>(
     )
 }
 
-private func appAssetImage(named name: String) throws -> Image {
-    let repositoryRoot = URL(fileURLWithPath: #filePath)
-        .deletingLastPathComponent()
-        .deletingLastPathComponent()
-        .deletingLastPathComponent()
-        .deletingLastPathComponent()
-        .deletingLastPathComponent()
-    let imageURL = repositoryRoot
-        .appendingPathComponent("FitnessApp/Assets.xcassets")
-        .appendingPathComponent("\(name).imageset")
-        .appendingPathComponent("\(name).png")
-    let image = try #require(UIImage(contentsOfFile: imageURL.path))
-    return Image(uiImage: image)
-}
-
 @MainActor
 private func makeIdleCardContainer() throws -> (ExerciseModel, ModelContainer) {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)

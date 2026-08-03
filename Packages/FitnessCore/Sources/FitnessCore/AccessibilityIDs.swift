@@ -28,6 +28,7 @@ public enum TrainingIDs {
 public enum ExerciseIDs {
     public static let nameLabel = "id_label_exercise_name"
     public static let nameField = "id_exercise_name_field"
+    public static let seatPicker = "id_exercise_seat_picker"
     public static let fullEditContinueButton = "id_exercise_full_continue"
     public static let fullEditSaveButton = "id_exercise_full_save"
     public static let bilateralToggle = "id_exercise_bilateral_toggle"

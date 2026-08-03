@@ -20,10 +20,11 @@ FitnessAppUITests/
 └── Tests/
     ├── WorkoutTileVisualTests.swift # Category/workout screenshots + geometry parity
     ├── TrainingNavigationUITests.swift # List/category training return paths
+    ├── WorkoutPickerUITests.swift   # Real wheel-row selection + overlay dismissal
     └── *Tests.swift                 # Other test files
 ```
 
-The app target contains `Shared/Navigation/UITestLaunchStrategy.swift` (compiled only under the `UITESTING` flag, which is set on the `UITesting` build configuration). It implements `AppLaunchStrategy`, reads `UITEST_CONFIG` from `launchEnvironment`, seeds a `WorkoutModel` + `ExerciseModel` pair into the SwiftData container (post-T8d, `TrainingView` resolves the navigated id via `@Query`, so the fixture must exist on disk before navigation), and returns the initial `[NavigationDestination]` stack to the app's `NavigationStack`.
+The app target contains `Shared/Navigation/UITestLaunchStrategy.swift` (compiled only under the `UITESTING` flag, which is set on the `UITesting` build configuration). It implements `AppLaunchStrategy`, reads `UITEST_CONFIG` from `launchEnvironment`, seeds a `WorkoutModel` + `ExerciseModel` pair into the SwiftData container (`TrainingSheetView` resolves the presented id via `@Query`, so the fixture must exist on disk before the start tap), and returns the initial `[NavigationDestination]` stack to the app's `NavigationStack`.
 
 > Build-config note: UI tests must be run via the `FitnessApp UITests` scheme (not `FitnessApp`). Only that scheme builds with the `UITesting` configuration that defines `UITESTING`. See `.claude/rules/build-and-test.mdc` § "UI Tests".
 
@@ -53,10 +54,11 @@ The production sources of truth are listed per enum in the "Defined in" column b
 
 | Test Enum | Defined in | Applied in | IDs |
 |-----------|-----------|------------|-----|
-| `TrainingIDs` | `FitnessCore.AccessibilityIDs`, `FitnessUI.TrainingIDs` | `BottomActionBarView`, `SimpleActiveSetView`, `CompactTimerComponent` | `cancelTraining`, `doneButton`, `finishButton`, `startButton`, `allDoneButton`, `quickDoneButton`, `controlButton(_:)`, standard `repsField(set:)` / `quickDoneSetButton(index:)`, bilateral `repsField(logicalSet:side:)` / `quickDoneSetButton(logicalSet:side:)`, `sideHeader(_:)` |
+| `TrainingIDs` | `FitnessCore.AccessibilityIDs`, `FitnessUI.TrainingIDs` | `TrainingSheetView`, `TrainingSessionComponent`, `BottomActionBarView`, `SimpleActiveSetView`, `CompactTimerComponent` | sheet/backdrop/grabber/title/muscle-icon/set-scroll IDs, `cancelTraining`, `doneButton`, `finishButton`, `startButton`, `allDoneButton`, `quickDoneButton`, `controlButton(_:)`, standard `repsField(set:)` / `quickDoneSetButton(index:)`, bilateral `repsField(logicalSet:side:)` / `quickDoneSetButton(logicalSet:side:)`, `sideHeader(_:)` |
+| `WorkoutPickerIDs` | `FitnessUI.WorkoutPickerIDs` | `WorkoutDropdownView`, `WorkoutPickerView` | dropdown, overlay, native wheel, and confirmation button IDs |
 | `HomeIDs` | `FitnessCore.AccessibilityIDs` | `MuscleCategorySelectionView` (category tiles via `CategoryTileModelView`; view-mode content and toggle buttons) | `categoryTile(for:)`, `overviewContent`, `listContent`, `overviewViewToggle`, `listViewToggle`; list toggle label: `Exercise list` |
 | `MuscleCategoryIDs` | `FitnessCore.AccessibilityIDs` | `MuscleCategoryView`, `IdleActiveCardModelView` (post-T8d; previously `IdleActiveCardView`) | `screen`, `startExercise`; start button label: `Start exercise` |
-| `ExerciseIDs` | `FitnessCore.AccessibilityIDs` | `ExercisePickerView`, `InactiveCardModelView` (post-T8d; previously `InactiveCardView`) | `nameLabel`, `nameField`, `fullEditContinueButton`, `fullEditSaveButton`, `bilateralToggle`, `bodyweightToggle`, `decimalWeightToggle` |
+| `ExerciseIDs` | `FitnessCore.AccessibilityIDs` | `ExercisePickerView`, `ExerciseSeatPickerView`, `InactiveCardModelView` (post-T8d; previously `InactiveCardView`) | `nameLabel`, `nameField`, `seatPicker`, `fullEditContinueButton`, `fullEditSaveButton`, `bilateralToggle`, `bodyweightToggle`, `decimalWeightToggle` |
 | `ExerciseCardIDs` | `FitnessCore.AccessibilityIDs` | `ExerciseCardModelView`, `IdleActiveCardModelView`, `InactiveCardModelView` (post-T8d; previously legacy snapshot views) | `completedCard(_:)`, `activeCard(_:)`, `idleCard(_:)`, card prefixes, `analytics(_:)`, `analyticsPrefix` |
 | `AnalyticsIDs` | `FitnessCore.AccessibilityIDs` | `AnalyticsView`, `AddAnalyticsEntryView` | `screen`, `addDataButton`, `entryAddSetButton`, `entrySaveButton`, side-aware entry weight/reps fields, `bilateralResult(logicalSet:side:)` |
 | `WorkoutAnalyticsIDs` | `FitnessCore.AccessibilityIDs` | `WorkoutAnalyticsEntryView` | `screen`, `dateButton`, `saveButton`, `exerciseSelection(_:)`, `exerciseDetails(_:)` |
@@ -65,10 +67,9 @@ The production sources of truth are listed per enum in the "Defined in" column b
 
 ## Test Fixtures
 
-Mock data is defined in `Fixtures/ExerciseFixtures.swift` as `TestExerciseFixture` structs. Tests pass fixtures explicitly via `launch(training:)` -- the app requires all fields (no defaults).
+Mock data is defined in `Fixtures/ExerciseFixtures.swift` as `TestExerciseFixture` structs. Training tests launch an explicit Category or List fixture and then tap its Start control; the app requires all exercise fields (no defaults).
 
 ```swift
-try launch(training: .defaultArmsExercise)
 try launch(exerciseList: .defaultArmsExercise)
 try launch(exerciseCategory: .defaultArmsExercise)
 try launch(
@@ -88,7 +89,7 @@ multiple descendants; never rely on `firstMatch` for these card prefixes.
 
 ```swift
 let heavy = TestExerciseFixture(name: "Deadlift", weight: 120.0, reps: 5, sets: 5, noSeats: true, icon: "dumbbell", category: "back")
-try launch(training: heavy)
+try launch(exerciseCategory: heavy)
 ```
 
 ## DSL Function Reference
@@ -98,6 +99,8 @@ try launch(training: heavy)
 | Tap an element | `tapOn(_:)` or `tapOn(label:)` |
 | Tap the first element whose ID has a prefix | `tapOnWithPrefix(_:)` |
 | Tap if it might not appear | `tapOnIfExists(_:)` |
+| Swipe within a specific element | `swipeUpOn(_:)` / `swipeDownOn(_:)`; downward handle drags use a deterministic 120-pt travel distance |
+| Select or activate a native wheel row | `selectPickerWheelValue(_:value:)` / `tapSelectedPickerWheelRow(_:)` |
 | Type into a text field | `fill(_:with:)` |
 | Type into a picker input button | `fillPickerInput(_:with:)` |
 | Assert element is visible | `verifyExists(_:)` |
@@ -137,7 +140,8 @@ final class <Feature>UITests: BaseTest {
 
     @MainActor
     func test<Scenario>() throws {
-        try launch(training: .defaultArmsExercise)
+        try launch(exerciseCategory: .defaultArmsExercise)
+        tapOn(MuscleCategoryIDs.startExercise)
 
         tapOn(TrainingIDs.doneButton)
         verifyExists(TrainingIDs.repsField(set: 0))
@@ -149,7 +153,7 @@ final class <Feature>UITests: BaseTest {
 Rules:
 - Inherit from `BaseTest` (provides `app`, `setUp`, `tearDown`)
 - Mark test methods `@MainActor`
-- First line: `launch(training:)`, `launch(exerciseList:)`, `launch(exerciseCategory:)`, `launch(category:)`, `launchCategorySelection()`, `launchSchedule()`, or `launchHome()`
+- First line: `launch(exerciseList:)`, `launch(exerciseCategory:)`, `launch(category:)`, `launchCategorySelection()`, `launchSchedule()`, or `launchHome()`
 - One test method per user scenario; name it `test<WhatTheUserDoes>`
 - Only DSL functions and test ID constants -- no raw XCUITest API, no hardcoded strings
 - Always pass explicit fixture data -- no implicit defaults
@@ -253,8 +257,9 @@ Need to interact with an element in a test
 For tests that focus on a specific screen, use `BaseTest` launch helpers to skip intermediate screens:
 
 ```swift
-// Training screen with explicit fixture
-try launch(training: .defaultArmsExercise)
+// Category with an explicit fixture; tap Start to present training
+try launch(exerciseCategory: .defaultArmsExercise)
+tapOn(MuscleCategoryIDs.startExercise)
 
 // Category screen
 try launch(category: "arms")
@@ -276,10 +281,11 @@ The app reads the `UITEST_CONFIG` environment variable and uses `AppRouter.repla
 | Scenario | Launch method |
 |----------|--------------|
 | Testing the full user journey (home to finish) | `launchHome()` + navigate via DSL |
-| Testing behavior on a specific screen | `launch(training:)`, `launch(category:)`, or `launchSchedule()` |
+| Testing training behavior | `launch(exerciseCategory:)` or `launch(exerciseList:)`, then tap Start |
+| Testing another specific screen | `launch(category:)` or `launchSchedule()` |
 | Comparing Category/Workout overview geometry | `launchCategorySelection()` then tap the Workouts tab |
 
-Supported screens: `.home` (category-selection overview), `.training` (requires `TestExerciseFixture`), `.category`, `.schedule`.
+Supported screens: `.home` (category-selection overview), `.category`, `.schedule`. Training is a presentation over `.home` list mode or `.category`, not a direct launch screen.
 
 ## Review Checklist
 
@@ -318,7 +324,7 @@ verifyExists(ExerciseIDs.nameLabel)
 Check each test file for:
 - Inherits from `BaseTest` (not `XCTestCase` directly)
 - Test methods marked `@MainActor`
-- First line: `launch(training:)`, `launch(category:)`, `launchCategorySelection()`, `launchSchedule()`, or `launchHome()`
+- First line: `launch(exerciseList:)`, `launch(exerciseCategory:)`, `launch(category:)`, `launchCategorySelection()`, `launchSchedule()`, or `launchHome()`
 - No business logic or complex setup in the test -- just DSL calls
 
 ### 4. Selector Completeness
@@ -342,7 +348,8 @@ final class TrainingUITests: BaseTest {
 
     @MainActor
     func testFullTrainingFlow() throws {
-        try launch(training: .defaultArmsExercise)
+        try launch(exerciseCategory: .defaultArmsExercise)
+        tapOn(MuscleCategoryIDs.startExercise)
 
         for setIndex in 1...3 {
             tapOn(TrainingIDs.doneButton)

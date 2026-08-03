@@ -23,7 +23,6 @@ public struct ActiveCardModelView: View {
     public var analyticsViewModel: AnalyticsViewModel
 
     @State private var isShowingAnalytics = false
-    @AppStorage(DefaultIconColorScheme.storageKey) private var iconColorScheme: DefaultIconColorScheme = .green
 
     public init(
         model: ExerciseModel,
@@ -182,28 +181,12 @@ public struct ActiveCardModelView: View {
     }
 
     private var exerciseIconSection: some View {
-        VStack {
-            ZStack {
-                Circle()
-                    .fill(AppStyle.Color.greenBlack)
-                    .frame(width: AppStyle.DeviceLayout.exerciseIconSize * 0.9, height: AppStyle.DeviceLayout.exerciseIconSize * 0.9)
-                    .blur(radius: AppStyle.Blur.iconGlow)
-                    .opacity(AppStyle.Opacity.overlayBackdrop)
-
-                Image(iconColorScheme.iconName(for: model.displayIconName))
-                    .resizable()
-                    .interpolation(.high)
-                    .scaledToFill()
-                    .frame(width: AppStyle.DeviceLayout.exerciseIconSize, height: AppStyle.DeviceLayout.exerciseIconSize, alignment: model.iconAlignment)
-                    .clipped()
-            }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                if model.allowsSeatEditing { onEdit(model.toDomain(), .seat) }
-            }
-            .accessibilityIdentifier(ExerciseCardIDs.seatEditIcon(model.id))
-        }
-        .frame(width: AppStyle.DeviceLayout.iconContainerWidth)
-        .frame(maxHeight: .infinity)
+        ExerciseMuscleIconView(
+            iconName: model.displayIconName,
+            alignment: model.iconAlignment,
+            allowsEditing: model.allowsSeatEditing,
+            accessibilityIdentifier: ExerciseCardIDs.seatEditIcon(model.id),
+            onEdit: { onEdit(model.toDomain(), .seat) }
+        )
     }
 }

@@ -21,7 +21,7 @@ public enum CardVariant: Equatable, Sendable {
 ///   - isCompleted: `true` if the exercise has been marked as fully done
 ///     for this session. Dominates all other inputs.
 ///   - isActiveSetVisible: `true` if the parent screen is currently showing
-///     the active-set workspace (typically `TrainingView`). When `false`,
+///     the active-set workspace. When `false`,
 ///     no card can be `.active` regardless of the focused exercise id.
 ///   - activeExerciseId: id of the currently focused exercise in the
 ///     coordinator session, or `nil` if no session is focused on a single

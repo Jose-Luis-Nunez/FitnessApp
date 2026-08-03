@@ -40,9 +40,7 @@ struct BottomActionBarViewSnapshotTests {
             onEditMore: {},
             onFinish: {},
             onAddExercise: {},
-            onResetAllExercises: {},
-            barHeight: 0,
-            backgroundColor: AppStyle.Color.backgroundColor
+            onResetAllExercises: {}
         )
         .frame(width: size.width, height: size.height)
         .background(AppStyle.Color.backgroundColor)
@@ -55,7 +53,9 @@ struct BottomActionBarViewSnapshotTests {
             of: controller,
             as: .image(precision: 0.99, perceptualPrecision: 0.98, size: size),
             named: "set-controls-\(Int(width))",
-            record: .never
+            record: ProcessInfo.processInfo.environment["RECORD_SNAPSHOTS"] == "1"
+                ? .all
+                : .never
         )
     }
 
@@ -77,7 +77,9 @@ struct BottomActionBarViewSnapshotTests {
             of: controller,
             as: .image(precision: 0.99, perceptualPrecision: 0.98, size: size),
             named: "timer-surface",
-            record: .never
+            record: ProcessInfo.processInfo.environment["RECORD_SNAPSHOTS"] == "1"
+                ? .all
+                : .never
         )
     }
 }

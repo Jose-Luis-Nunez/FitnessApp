@@ -253,7 +253,11 @@ public struct SimpleActiveSetView: View {
     @Binding public var setProgress: [SetProgress]
     public var viewModel: ActiveSetViewModel
 
-    public init(exercise: Exercise, setProgress: Binding<[SetProgress]>, viewModel: ActiveSetViewModel) {
+    public init(
+        exercise: Exercise,
+        setProgress: Binding<[SetProgress]>,
+        viewModel: ActiveSetViewModel
+    ) {
         self.exercise = exercise
         _setProgress = setProgress
         self.viewModel = viewModel
@@ -268,18 +272,11 @@ public struct SimpleActiveSetView: View {
             }
         }
         .padding(.horizontal, AppStyle.DeviceLayout.cardPadding)
-        .padding(.vertical, 12)
-        .background {
-            Color.clear
-                .appDarkSurface(
-                    in: .rect(cornerRadius: AppStyle.CornerRadius.card)
-                )
-        }
-        .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous))
+        .padding(.vertical, AppStyle.Layout.activeSetVerticalPadding)
     }
 
     private var standardContent: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: AppStyle.Layout.activeSetRowSpacing) {
             ForEach(Array(setProgress.enumerated()), id: \.element.id) { index, progress in
                 SetRowView(
                     index: index,
@@ -288,12 +285,13 @@ public struct SimpleActiveSetView: View {
                     viewModel: viewModel,
                     placement: .standard
                 )
+                .id(progress.id)
             }
         }
     }
 
     private var bilateralContent: some View {
-        VStack(spacing: AppStyle.Layout.bilateralColumnSpacing) {
+        VStack(spacing: AppStyle.Layout.activeSetRowSpacing) {
             bilateralHeader
 
             ForEach(bilateralPairs) { pair in
@@ -301,6 +299,7 @@ public struct SimpleActiveSetView: View {
                     leftIndex: pair.leftIndex,
                     rightIndex: pair.rightIndex
                 )
+                .id(pair.id)
             }
         }
         .padding(.horizontal, AppStyle.DeviceLayout.cardPadding)
@@ -489,6 +488,7 @@ public extension View {
 
 private enum SetRowMetricSizing: Equatable {
     case standard
+    case standardCompact
     case bilateralComfortable
     case bilateralCompact
     case bilateralTight
@@ -497,11 +497,15 @@ private enum SetRowMetricSizing: Equatable {
         switch self {
         case .standard, .bilateralComfortable:
             AppStyle.Layout.setRowChipHorizontalPadding
-        case .bilateralCompact:
+        case .standardCompact, .bilateralCompact:
             AppStyle.Layout.bilateralMetricChipHorizontalPadding
         case .bilateralTight:
             AppStyle.Layout.bilateralMetricChipHorizontalPaddingTight
         }
+    }
+
+    var isStandard: Bool {
+        self == .standard || self == .standardCompact
     }
 }
 
@@ -526,6 +530,18 @@ private struct SetRowView: View {
         progress.status == .notStarted || progress.status == .inProgress
     }
 
+    private var canRecordAchievement: Bool {
+        isPending
+            && index == viewModel.activeSetIndex
+            && index == viewModel.currentSet
+            && viewModel.isSetInProgress
+            && !viewModel.isLastSetCompleted
+    }
+
+    private var isMetricInteractionEnabled: Bool {
+        !isPending || canRecordAchievement
+    }
+
     private var isActiveSetNumber: Bool {
         SetRowHighlightResolver.isActiveSetNumber(
             rowIndex: index,
@@ -547,19 +563,33 @@ private struct SetRowView: View {
     }
 
     private var standardRow: some View {
-        HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
+        ViewThatFits(in: .horizontal) {
+            standardRow(sizing: .standard)
+            standardRow(sizing: .standardCompact)
+        }
+    }
+
+    private func standardRow(sizing: SetRowMetricSizing) -> some View {
+        HStack(
+            spacing: sizing == .standardCompact
+                ? AppStyle.Layout.bilateralMetricSpacingCompact
+                : AppStyle.DeviceLayout.cardSpacing
+        ) {
             setNumberBadge
 
             if exercise.hasWeight {
-                weightChip(sizing: .standard)
+                weightChip(sizing: sizing)
             }
 
-            repsChip(sizing: .standard)
+            repsChip(sizing: sizing)
 
-            repsLabel
+            repsLabel(sizing: sizing)
 
         }
-        .padding(.horizontal, AppStyle.DeviceLayout.cardPadding)
+        .padding(
+            .horizontal,
+            sizing == .standardCompact ? 0 : AppStyle.DeviceLayout.cardPadding
+        )
     }
 
     private var bilateralRow: some View {
@@ -587,7 +617,7 @@ private struct SetRowView: View {
 
             repsChip(sizing: sizing)
 
-            repsLabel
+            repsLabel(sizing: sizing)
 
         }
     }
@@ -612,48 +642,84 @@ private struct SetRowView: View {
     }
 
     private func weightChip(sizing: SetRowMetricSizing) -> some View {
-        Button {
-            if !isPending {
-                viewModel.startEditingSet(index: index, mode: .edit)
-            }
-        } label: {
-            Text(WeightFormatter.displayWeight(progress.weight))
+        Button(action: handleMetricTap) {
+            Text(
+                sizing == .bilateralTight
+                    ? WeightFormatter.format(progress.weight)
+                    : WeightFormatter.displayWeight(progress.weight)
+            )
                 .lineLimit(1)
                 .minimumScaleFactor(AppStyle.Layout.bilateralMetricMinimumScaleFactor)
+                .setRowChipStyle(
+                    minWidth: sizing == .standard
+                        ? AppStyle.DeviceLayout.setRowWeightMinWidth
+                        : 0,
+                    horizontalPadding: sizing.horizontalPadding
+                )
+                .contentShape(
+                    RoundedRectangle(
+                        cornerRadius: AppStyle.CornerRadius.defaultButton,
+                        style: .continuous
+                    )
+                )
         }
-        .setRowChipStyle(
-            minWidth: sizing == .standard
-                ? AppStyle.DeviceLayout.setRowWeightMinWidth
-                : 0,
-            horizontalPadding: sizing.horizontalPadding
-        )
         .buttonStyle(PlainButtonStyle())
+        .disabled(!isMetricInteractionEnabled)
         .opacity(isHighlighted ? 1.0 : 0.3)
+        .accessibilityLabel(isPending ? "Record set result" : "Edit weight")
+        .accessibilityValue(
+            isPending
+                ? "Target \(WeightFormatter.displayWeight(exercise.weight))"
+                : WeightFormatter.displayWeight(progress.weight)
+        )
     }
 
     private func repsChip(sizing: SetRowMetricSizing) -> some View {
-        Button(!isPending ? "\(progress.currentReps)" : "") {
-            viewModel.startEditingSet(index: index, mode: .edit)
+        Button(action: handleMetricTap) {
+            Text(!isPending ? "\(progress.currentReps)" : "")
+                .frame(
+                    minWidth: !sizing.isStandard
+                        ? AppStyle.Layout.bilateralRepsChipContentMinWidth
+                        : nil
+                )
+                .setRowChipStyle(
+                    minWidth: !sizing.isStandard
+                        ? 0
+                        : (exercise.hasWeight
+                            ? (sizing == .standardCompact ? 30 : 35)
+                            : AppStyle.DeviceLayout.setRowRepsMinWidth),
+                    horizontalPadding: sizing.horizontalPadding
+                )
+                .contentShape(
+                    RoundedRectangle(
+                        cornerRadius: AppStyle.CornerRadius.defaultButton,
+                        style: .continuous
+                    )
+                )
         }
-        .frame(
-            minWidth: sizing != .standard
-                ? AppStyle.Layout.bilateralRepsChipContentMinWidth
-                : nil
-        )
-        .setRowChipStyle(
-            minWidth: sizing != .standard
-                ? 0
-                : (exercise.hasWeight ? 35 : AppStyle.DeviceLayout.setRowRepsMinWidth),
-            horizontalPadding: sizing.horizontalPadding
-        )
-        .fixedSize(horizontal: sizing != .standard, vertical: false)
+        .fixedSize(horizontal: !sizing.isStandard, vertical: false)
         .buttonStyle(PlainButtonStyle())
+        .disabled(!isMetricInteractionEnabled)
         .opacity(isHighlighted ? 1.0 : 0.3)
+        .accessibilityLabel(isPending ? "Record set result" : "Edit repetitions")
+        .accessibilityValue(isPending ? "Target \(exercise.reps)" : "\(progress.currentReps)")
         .accessibilityIdentifier(repsAccessibilityIdentifier)
     }
 
-    private var repsLabel: some View {
-        Text("of \(exercise.reps)")
+    private func handleMetricTap() {
+        if isPending {
+            viewModel.startRecordingAchievement(index: index)
+        } else {
+            viewModel.startEditingSet(index: index, mode: .edit)
+        }
+    }
+
+    private func repsLabel(sizing: SetRowMetricSizing) -> some View {
+        Text(
+            sizing == .bilateralTight
+                ? "/\(exercise.reps)"
+                : "of \(exercise.reps)"
+        )
             .font(AppStyle.Font.detailExercise)
             .foregroundColor(AppStyle.Color.white)
             .lineLimit(1)

@@ -9,18 +9,21 @@ adapters. All runtimes write local evidence under `.claude/hooks/state/`.
 Swift diff
   → change-risk.sh: green | yellow | red
   → development Stop hook: deduplicated design hints only
-  → user freezes and stages the intended commit candidate
-  → `/validate`: diff/ADR preflight, then matched review references
+  → user freezes the complete working-tree candidate
+  → `/validate`: all-change diff/ADR preflight, then matched review references
   → green: main-agent review/test
     yellow/red: one senior-quality reviewer, then tester(run|verify)
-  → content manifests + PASS stamps
-  → pre-commit checks staged blobs
+  → worktree content manifests + PASS stamps
+  → user stages unchanged reviewed contents
+  → pre-commit checks the exact staged candidate
 ```
 
-Validation is content-bound, not time-bound. Final manifests hash the frozen
-staged candidate, so unrelated follow-up work does not invalidate the intended
-commit. Changing a staged relevant file invalidates evidence immediately;
-unchanged evidence does not expire.
+Validation is content-bound, not time-bound. Final manifests hash every file
+in the frozen working-tree candidate, including untracked files and excluding
+only generated evidence state. Any later candidate edit invalidates the
+evidence immediately; unchanged evidence does not expire. After validation,
+pre-commit accepts only a staged candidate whose path/hash manifest exactly
+equals the reviewed/tested one.
 
 ## Risk Policy
 
@@ -66,7 +69,7 @@ Codex-only source-command adapters live under `.agents/skills/source-command-*`.
 
 | File | Purpose |
 |---|---|
-| `.claude/commands/validate.md` | Validate a user-staged commit; Git authority is canonical in `AGENTS.md` |
+| `.claude/commands/validate.md` | Review and validate every current working-tree change before staging; Git authority is canonical in `AGENTS.md` |
 | `.claude/commands/buildApp.md` | Build/install/launch command |
 | `scripts/test-affected-packages.sh` | Run each requested package test action once |
 | `scripts/sync-agent-runtime.sh` | Generate/check Codex skills, hooks, and roles |
@@ -104,7 +107,9 @@ fixtures, and pre-commit enforcement:
 Shared libraries:
 
 - `change-risk.sh` — conservative risk classifier.
-- `validation-evidence.sh` — manifests, hashes, worktree/staged verification.
+- `validation-evidence.sh` — complete-candidate manifests, hashes, and exact
+  worktree/staged verification; evidence-state files are excluded to avoid a
+  self-referential fingerprint.
 - `agent-infrastructure-evidence.sh` — manifests and hashes for executable
   agent-system changes.
 - `adr-triggers.sh` — shared ADR detection.
@@ -115,16 +120,17 @@ Fixture tests live in `.claude/hooks/tests/workflow-tests.sh`.
 
 `.githooks/pre-commit` blocks:
 
-1. staged Swift not covered by content-bound code review evidence;
-2. staged Swift not covered by final test evidence;
+1. staged Swift whose complete staged candidate differs from code-review evidence;
+2. staged Swift whose complete staged candidate differs from final-test evidence;
 3. production `print()`;
 4. architectural triggers without ADR/exception;
 5. generic counter + polling UI sync;
 6. structural/public changes without architecture documentation.
-7. executable agent infrastructure without an exact independent verifier stamp.
+7. executable agent infrastructure whose staged candidate differs from the
+   exact independently verified infrastructure candidate.
 
-Stamps cannot be bypassed by `touch`; staged blob hashes must match the
-manifest.
+Stamps cannot be bypassed by `touch` or partial staging: the staged path/hash
+manifest must equal the previously reviewed worktree manifest.
 
 ## Subagents
 
@@ -162,9 +168,9 @@ All files below are local and ignored:
 
 | Artifact | Meaning |
 |---|---|
-| `code-changes.manifest.tsv` | Hash per validated product/test file |
+| `code-changes.manifest.tsv` | Hash per file in the complete validated candidate |
 | `code-changes.stamp.md` | Risk, reviewer, result, manifest fingerprint |
-| `test-execution.manifest.tsv` | Hash per tested product/test file |
+| `test-execution.manifest.tsv` | Hash per file in the complete tested candidate |
 | `test-execution.stamp.md` | Run/verify mode, command, result, fingerprint |
 | `agent-infrastructure.manifest.tsv` | Hash per verified infrastructure file |
 | `agent-infrastructure.stamp.md` | Independent verifier result bound to exact infrastructure contents |

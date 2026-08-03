@@ -1,18 +1,24 @@
 import SwiftUI
 import FitnessCore
-import FitnessAnalytics
 import FitnessStorage
 import FitnessUI
 import Factory
 
 // MARK: - Training Session Component
 
+private struct ActiveSetScrollTarget: Equatable, Sendable {
+    let id: SetProgress.ID
+    let logicalSetIndex: Int
+}
+
 public struct TrainingSessionComponent: View {
     public var coordinator: TrainingCoordinator
     public let onEdit: ((Exercise, ExerciseEditMode) -> Void)?
-    public let onReset: ((Exercise) -> Void)?
     public let onCancel: (() -> Void)?
-    public let analyticsViewModel: AnalyticsViewModel
+    public let muscleArtwork: Image?
+    @State private var hasPositionedSetScroller = false
+
+    private let visibleLogicalSetCount = 3
 
     private var dynamicSpacing: CGFloat {
         AppStyle.DeviceLayout.trainingSessionSpacing
@@ -21,58 +27,193 @@ public struct TrainingSessionComponent: View {
     public init(
         coordinator: TrainingCoordinator,
         onEdit: ((Exercise, ExerciseEditMode) -> Void)? = nil,
-        onReset: ((Exercise) -> Void)? = nil,
         onCancel: (() -> Void)? = nil,
-        analyticsViewModel: AnalyticsViewModel = AnalyticsViewModel()
+        muscleArtwork: Image? = nil
     ) {
         self.coordinator = coordinator
         self.onEdit = onEdit
-        self.onReset = onReset
         self.onCancel = onCancel
-        self.analyticsViewModel = analyticsViewModel
+        self.muscleArtwork = muscleArtwork
     }
 
     public var body: some View {
         if let exercise = coordinator.currentExercise {
-            VStack(spacing: 16) {
-                if exercise.executionMode == .bilateral {
-                    bilateralSession(exercise)
-                } else {
-                    standardSession(exercise)
+            session(exercise)
+        }
+    }
+
+    private func session(_ exercise: Exercise) -> some View {
+        GeometryReader { geometry in
+            sessionColumns(exercise, availableWidth: geometry.size.width)
+                .frame(width: geometry.size.width, alignment: .leading)
+        }
+        .frame(height: sessionHeight(for: exercise))
+    }
+
+    private func sessionColumns(
+        _ exercise: Exercise,
+        availableWidth: CGFloat
+    ) -> some View {
+        let isBilateral = exercise.executionMode == .bilateral
+        let railWidth = isBilateral
+            ? min(
+                AppStyle.Layout.trainingSheetRailMinimumWidth,
+                max(
+                    AppStyle.Layout.trainingSheetBilateralRailMinimumWidth,
+                    availableWidth * 0.22
+                )
+            )
+            : min(
+                AppStyle.Layout.trainingSheetRailMaximumWidth,
+                max(
+                    AppStyle.Layout.trainingSheetRailMinimumWidth,
+                    availableWidth * 0.28
+                )
+            )
+        let horizontalPadding = isBilateral
+            ? AppStyle.Layout.trainingSheetBilateralContentHorizontalPadding
+            : min(
+                AppStyle.Layout.trainingSheetContentHorizontalPadding,
+                max(
+                    AppStyle.Layout.trainingSheetContentMinimumHorizontalPadding,
+                    AppStyle.Layout.trainingSheetContentMinimumHorizontalPadding
+                        + max(availableWidth - 320, 0) * 0.16
+                )
+            )
+        let columnSpacing = isBilateral
+            ? AppStyle.Layout.bilateralMetricSpacingCompact
+            : dynamicSpacing
+        let scrollTarget = activeSetScrollTarget(for: exercise)
+        return HStack(alignment: .top, spacing: columnSpacing) {
+            VStack(alignment: .leading, spacing: AppStyle.Padding.titleBottom) {
+                Text(exercise.name)
+                    .font(AppStyle.Font.navigationHeadline)
+                    .foregroundColor(AppStyle.Color.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .accessibilityIdentifier(TrainingIDs.sheetTitle)
+
+                ScrollViewReader { proxy in
+                    ScrollView(.vertical) {
+                        activeSetView(exercise)
+                    }
+                    .scrollIndicators(.hidden)
+                    .scrollBounceBehavior(.basedOnSize)
+                    .frame(height: setViewportHeight(for: exercise), alignment: .top)
+                    .offset(y: AppStyle.Layout.trainingSheetSetVerticalOffset)
+                    .accessibilityIdentifier(TrainingIDs.setScroll)
+                    .onAppear {
+                        positionSetScroller(
+                            proxy,
+                            target: scrollTarget,
+                            animated: false
+                        )
+                        hasPositionedSetScroller = true
+                    }
+                    .onChange(of: scrollTarget) { _, newTarget in
+                        guard hasPositionedSetScroller else { return }
+                        positionSetScroller(
+                            proxy,
+                            target: newTarget,
+                            animated: true
+                        )
+                    }
                 }
             }
-            .padding(.vertical, 0)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .layoutPriority(1)
+
+            VStack(spacing: dynamicSpacing) {
+                ExerciseMuscleIconView(
+                    iconName: exercise.displayIconName,
+                    alignment: exercise.iconAlignment,
+                    allowsEditing: exercise.allowsSeatEditing,
+                    accessibilityIdentifier: TrainingIDs.muscleIcon,
+                    size: railWidth,
+                    showsGlow: false,
+                    artwork: muscleArtwork,
+                    onEdit: { onEdit?(exercise, .seat) }
+                )
+                .frame(height: railWidth)
+
+                CompactTimerComponent(
+                    viewModel: coordinator.activeSetViewModel,
+                    onCancel: onCancel,
+                    expanded: exercise.executionMode == .bilateral
+                )
+                .frame(height: timerHeight(for: exercise))
+            }
+            .frame(width: railWidth, alignment: .top)
         }
+        .padding(.horizontal, horizontalPadding)
     }
 
-    private func standardSession(_ exercise: Exercise) -> some View {
-        HStack(alignment: .top, spacing: dynamicSpacing) {
-            activeSetView(exercise)
-
-            CompactTimerComponent(
-                viewModel: coordinator.activeSetViewModel,
-                onCancel: onCancel
-            )
-            .frame(minWidth: 80, maxWidth: 160)
-        }
-        .padding(.horizontal, AppStyle.Padding.card)
+    private func setViewportHeight(for exercise: Exercise) -> CGFloat {
+        exercise.executionMode == .bilateral
+            ? AppStyle.Layout.trainingSheetBilateralSetViewportHeight
+            : AppStyle.Layout.trainingSheetStandardSetViewportHeight
     }
 
-    private func bilateralSession(_ exercise: Exercise) -> some View {
-        VStack(spacing: dynamicSpacing) {
-            activeSetView(exercise)
+    private func timerHeight(for exercise: Exercise) -> CGFloat {
+        exercise.executionMode == .bilateral
+            ? AppStyle.Layout.trainingSheetBilateralTimerHeight
+            : AppStyle.Layout.trainingSheetTimerHeight
+    }
 
-            CompactTimerComponent(
-                viewModel: coordinator.activeSetViewModel,
-                onCancel: onCancel,
-                expanded: true
-            )
-            .frame(
-                maxWidth: .infinity,
-                minHeight: AppStyle.Layout.bilateralTimerMinHeight
+    private func sessionHeight(for exercise: Exercise) -> CGFloat {
+        exercise.executionMode == .bilateral
+            ? AppStyle.Layout.trainingSheetBilateralSessionHeight
+            : AppStyle.Layout.trainingSheetStandardSessionHeight
+    }
+
+    private func activeSetScrollTarget(
+        for exercise: Exercise
+    ) -> ActiveSetScrollTarget? {
+        let viewModel = coordinator.activeSetViewModel
+        let progress = viewModel.setProgress
+
+        guard !viewModel.quickDoneAllCompleted,
+              progress.indices.contains(viewModel.activeSetIndex) else {
+            return nil
+        }
+
+        let activeProgress = progress[viewModel.activeSetIndex]
+        let logicalSetIndex = activeProgress.logicalSetIndex
+            ?? viewModel.activeSetIndex
+
+        guard exercise.executionMode == .bilateral else {
+            return ActiveSetScrollTarget(
+                id: activeProgress.id,
+                logicalSetIndex: logicalSetIndex
             )
         }
-        .padding(.horizontal, AppStyle.Padding.card)
+
+        let pairTarget = progress.first {
+            $0.logicalSetIndex == logicalSetIndex && $0.side == .left
+        }
+        return ActiveSetScrollTarget(
+            id: pairTarget?.id ?? activeProgress.id,
+            logicalSetIndex: logicalSetIndex
+        )
+    }
+
+    private func positionSetScroller(
+        _ proxy: ScrollViewProxy,
+        target: ActiveSetScrollTarget?,
+        animated: Bool
+    ) {
+        guard let target,
+              target.logicalSetIndex >= visibleLogicalSetCount else {
+            return
+        }
+
+        if animated {
+            withAnimation(.easeInOut(duration: 0.22)) {
+                proxy.scrollTo(target.id, anchor: .bottom)
+            }
+        } else {
+            proxy.scrollTo(target.id, anchor: .bottom)
+        }
     }
 
     private func activeSetView(_ exercise: Exercise) -> some View {
@@ -111,21 +252,16 @@ public struct CompactTimerComponent: View {
     }
 
     public var body: some View {
-        VStack(spacing: 16) {
-            Spacer()
-
+        VStack(spacing: 2) {
             Text(max(viewModel.timerSeconds, 0).formattedAsTimer)
                 .font(
                     expanded
                         ? AppStyle.Font.trainingTimerLarge
-                        : .system(size: AppStyle.DeviceLayout.timerFontSize, weight: .bold)
+                        : AppStyle.Font.trainingTimer
                 )
                 .foregroundColor(AppStyle.Color.white)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
-
-            Spacer()
-                .frame(maxHeight: 10)
 
             Button(action: {
                 if let onCancel = onCancel {
@@ -135,28 +271,26 @@ public struct CompactTimerComponent: View {
                 }
             }) {
                 Text("Cancel")
-                    .font(AppStyle.Font.tileValue)
-                    .foregroundColor(AppStyle.Color.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(AppStyle.Color.metricChipBackground)
-                    .cornerRadius(AppStyle.CornerRadius.timerCard)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: AppStyle.CornerRadius.timerCard)
-                            .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
-                    )
+                    .font(AppStyle.Font.trainingTimerCancel)
+                    .foregroundColor(AppStyle.Color.idleMetricLabel)
+                    .frame(maxWidth: .infinity, minHeight: 24)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier(FitnessCore.TrainingIDs.cancelTraining)
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 8)
+        .padding(.top, 6)
+        .padding(.bottom, 2)
         .frame(maxWidth: .infinity)
-        .background {
-            Color.clear
-                .appDarkSurface(
-                    in: .rect(cornerRadius: AppStyle.CornerRadius.timerCard)
+        .overlay {
+            TrainingControlSurfaceStyle.surface(
+                in: RoundedRectangle(
+                    cornerRadius: AppStyle.CornerRadius.timerCard,
+                    style: .continuous
                 )
+            )
+            .allowsHitTesting(false)
         }
     }
 }
@@ -249,12 +383,6 @@ public struct TrainingActionBarComponent: View {
                 feedbackIconState: feedbackIconState
             )
             .zIndex(5)
-            .onChange(of: currentViewModel.isLastSetCompleted) { _ in
-            }
-            .onChange(of: currentViewModel.isSetInProgress) { _ in
-            }
-            .onChange(of: currentViewModel.currentSet) { _ in
-            }
         }
     }
 }

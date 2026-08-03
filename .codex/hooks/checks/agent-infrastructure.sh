@@ -17,26 +17,28 @@ fingerprint=$(agent_infrastructure_manifest_fingerprint "$manifest" 2>/dev/null 
 cursor_file_list=$(echo "$all_cursor" | head -10 | tr '\n' ', ' | sed 's/,$//')
 stamp="$STATE_DIR/agent-infrastructure.stamp.md"
 
-required_fields=(
-  "result:[[:space:]]*PASS"
-  "verified_by:[[:space:]]*verifier-subagent"
-  "source_fingerprint:[[:space:]]*${fingerprint}"
-  "reference_integrity:[[:space:]]*PASS"
-  "overview_sync:[[:space:]]*PASS"
-  "description_consistency:[[:space:]]*PASS"
-  "handoff_links:[[:space:]]*PASS"
-  "hook_alignment:[[:space:]]*PASS"
-  "name_consistency:[[:space:]]*PASS"
+checklist_fields=(
+  reference_integrity
+  overview_sync
+  description_consistency
+  handoff_links
+  hook_alignment
+  name_consistency
 )
 
 if agent_infrastructure_manifest_matches_worktree "$manifest" && [ -f "$stamp" ]; then
-  valid=true
-  for field in "${required_fields[@]}"; do
-    if ! grep -qE "$field" "$stamp"; then
-      valid=false
-      break
-    fi
-  done
+  valid=false
+  if validation_stamp_has_pass_result "$stamp" &&
+     validation_stamp_has_field_value "$stamp" verified_by verifier-subagent &&
+     validation_stamp_has_field_value "$stamp" source_fingerprint "$fingerprint"; then
+    valid=true
+    for field in "${checklist_fields[@]}"; do
+      if ! validation_stamp_has_field_value "$stamp" "$field" PASS; then
+        valid=false
+        break
+      fi
+    done
+  fi
   if [ "$valid" = true ]; then
     exit 0
   fi

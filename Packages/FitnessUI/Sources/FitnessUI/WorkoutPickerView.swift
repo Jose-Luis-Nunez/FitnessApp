@@ -5,8 +5,7 @@ import UIKit
 #endif
 
 public struct WorkoutPickerView: View {
-    @Environment(UIOverlayState.self) private var overlayState
-    @State private var selectedWorkout: Workout?
+    @State private var selectionState = WorkoutPickerSelectionState()
 
     private let workouts: [Workout]
     private let currentWorkout: Workout?
@@ -36,9 +35,16 @@ public struct WorkoutPickerView: View {
                     .font(AppStyle.Font.sectionTitle)
                     .foregroundColor(AppStyle.Color.white)
                     .padding(.top, 20)
+                    .accessibilityIdentifier(WorkoutPickerIDs.overlay)
 
                 ZStack {
-                    Picker("Workout", selection: $selectedWorkout) {
+                    Picker(
+                        "Workout",
+                        selection: Binding(
+                            get: { selectionState.selectedWorkout },
+                            set: { selectionState.select($0) }
+                        )
+                    ) {
                         ForEach(workouts, id: \.id) { workout in
                             Text(workout.name)
                                 .font(AppStyle.Font.numberPadKey)
@@ -48,20 +54,18 @@ public struct WorkoutPickerView: View {
                         }
                     }
                     .allowsHitTesting(true)
+                    .accessibilityIdentifier(WorkoutPickerIDs.wheel)
+                    .simultaneousGesture(
+                        TapGesture().onEnded {
+                            confirmSelection()
+                        }
+                    )
 
                     HStack {
                         Spacer()
-                        Button(action: {
-                            if let workout = selectedWorkout {
-                                onSelect(workout)
-#if os(iOS)
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-#endif
-                            }
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                overlayState.showWorkoutDropdown = false
-                            }
-                        }) {
+                        Button {
+                            confirmSelection()
+                        } label: {
                             ZStack {
                                 Circle()
                                     .fill(Color.white)
@@ -73,6 +77,7 @@ public struct WorkoutPickerView: View {
                             }
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier(WorkoutPickerIDs.confirmButton)
                         .padding(.trailing, 16)
                     }
                     .allowsHitTesting(true)
@@ -93,10 +98,46 @@ public struct WorkoutPickerView: View {
         )
         .shadow(color: .black.opacity(AppStyle.Opacity.overlayBackdrop), radius: AppStyle.Shadow.overlayRadius, x: 0, y: AppStyle.Shadow.overlayY)
         .onAppear {
-            selectedWorkout = currentWorkout
+            selectionState.select(currentWorkout)
         }
         .onChange(of: currentWorkout) { _, newWorkout in
-            selectedWorkout = newWorkout
+            selectionState.select(newWorkout)
         }
+    }
+
+    /// Both the selected wheel row and arrow use this confirmation gate. The
+    /// picker's `TapGesture` fails when the user drags, so wheel scrolling
+    /// updates only local selection while a discrete tap confirms it.
+    private func confirmSelection() {
+        guard let workout = selectionState.confirm() else { return }
+
+        onSelect(workout)
+#if os(iOS)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+#endif
+    }
+}
+
+/// Local presentation state for the workout wheel. Selection changes and
+/// confirmation are deliberately separate: wheel drags update only the local
+/// selection, while a row tap or the arrow confirms the current selection.
+/// The gate also prevents fast double confirmation.
+struct WorkoutPickerSelectionState {
+    private(set) var selectedWorkout: Workout?
+    private(set) var hasConfirmedSelection = false
+
+    mutating func select(_ workout: Workout?) {
+        selectedWorkout = workout
+    }
+
+    mutating func confirm() -> Workout? {
+        guard !hasConfirmedSelection,
+              let workout = selectedWorkout else {
+            return nil
+        }
+
+        selectedWorkout = workout
+        hasConfirmedSelection = true
+        return workout
     }
 }

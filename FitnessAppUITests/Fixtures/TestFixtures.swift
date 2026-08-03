@@ -48,25 +48,6 @@ struct TestExerciseFixture {
 // MARK: - UITestLaunchConfig factory for exercise fixtures
 
 extension UITestLaunchConfig {
-    static func training(
-        _ fixture: TestExerciseFixture,
-        additional: [TestExerciseFixture] = []
-    ) -> UITestLaunchConfig {
-        UITestLaunchConfig(
-            screen: .training,
-            category: fixture.category,
-            exerciseName: fixture.name,
-            weight: fixture.weight,
-            reps: fixture.reps,
-            sets: fixture.sets,
-            noSeats: fixture.noSeats,
-            icon: fixture.icon,
-            executionMode: fixture.bilateral ? "bilateral" : "standard",
-            isCompleted: fixture.completed,
-            additionalExercises: additional.map(\.launchConfig)
-        )
-    }
-
     static func exerciseList(
         _ fixture: TestExerciseFixture,
         additional: [TestExerciseFixture] = []

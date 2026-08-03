@@ -1,4 +1,5 @@
 import SwiftUI
+import FitnessCore
 import FitnessResources
 import FitnessUI
 
@@ -52,5 +53,6 @@ public struct ExerciseSeatPickerView: View {
                 SeatSettingsEditor(formViewModel: formViewModel)
             }
         )
+        .accessibilityIdentifier(ExerciseIDs.seatPicker)
     }
 }

@@ -268,7 +268,7 @@ public struct MuscleCategorySelectionView: View {
                         WorkoutPickerView(
                             workouts: workoutStorage.workouts,
                             currentWorkout: workoutStorage.currentWorkout,
-                            onSelect: { viewModel.selectWorkout($0) }
+                            onSelect: selectWorkoutAndDismissPicker
                         )
                     }
                     .zIndex(4)
@@ -332,6 +332,13 @@ public struct MuscleCategorySelectionView: View {
         .onChange(of: overlayState.commitExerciseSelection) { _, _ in
             commitSelectionIfNeeded(allWorkoutModels: allWorkoutModels)
         }
+    }
+
+    private func selectWorkoutAndDismissPicker(_ workout: Workout) {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            overlayState.showWorkoutDropdown = false
+        }
+        viewModel.selectWorkout(workout)
     }
 
     private func newExerciseMenuItems(
@@ -645,7 +652,7 @@ public struct MuscleCategorySelectionView: View {
                 impactFeedback.impactOccurred()
 #endif
 
-                router.navigate(to: .training(exerciseId: exerciseToStart.id, category: category))
+                router.presentTraining(exerciseId: exerciseToStart.id, category: category)
             },
             onReset: { exerciseToReset in
                 viewModel.resetExercise(exerciseToReset, category: category)

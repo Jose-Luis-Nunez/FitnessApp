@@ -87,6 +87,96 @@ extension BaseTest {
         element.tap()
     }
 
+    @MainActor
+    func swipeDownOn(
+        _ identifier: String,
+        elementType: XCUIElement.ElementType = .any,
+        timeout: TimeInterval = TestDefaults.timeout
+    ) {
+        guard let element = findElement(
+            in: app,
+            identifier: identifier,
+            elementType: elementType,
+            timeout: timeout
+        ) else {
+            XCTFail("swipeDownOn: '\(identifier)' not found within \(timeout)s")
+            return
+        }
+        // `swipeDown()` scales its travel distance to the queried element.
+        // That is too short for compact drag handles, whose production
+        // gesture intentionally requires a meaningful downward translation.
+        let start = element.coordinate(
+            withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)
+        )
+        let end = start.withOffset(CGVector(dx: 0, dy: 120))
+        start.press(forDuration: 0.05, thenDragTo: end)
+    }
+
+    @MainActor
+    func swipeUpOn(
+        _ identifier: String,
+        elementType: XCUIElement.ElementType = .any,
+        timeout: TimeInterval = TestDefaults.timeout
+    ) {
+        guard let element = findElement(
+            in: app,
+            identifier: identifier,
+            elementType: elementType,
+            timeout: timeout
+        ) else {
+            XCTFail("swipeUpOn: '\(identifier)' not found within \(timeout)s")
+            return
+        }
+        element.swipeUp()
+    }
+
+    @MainActor
+    func selectPickerWheelValue(
+        _ identifier: String,
+        value: String,
+        timeout: TimeInterval = TestDefaults.timeout
+    ) {
+        guard let picker = findElement(
+            in: app,
+            identifier: identifier,
+            elementType: .picker,
+            timeout: timeout
+        ) else {
+            XCTFail("selectPickerWheelValue: '\(identifier)' not found within \(timeout)s")
+            return
+        }
+
+        let wheel = picker.descendants(matching: .pickerWheel).firstMatch
+        guard wheel.waitForExistence(timeout: timeout) else {
+            XCTFail("selectPickerWheelValue: wheel inside '\(identifier)' not found within \(timeout)s")
+            return
+        }
+        wheel.adjust(toPickerWheelValue: value)
+    }
+
+    @MainActor
+    func tapSelectedPickerWheelRow(
+        _ identifier: String,
+        timeout: TimeInterval = TestDefaults.timeout
+    ) {
+        guard let picker = findElement(
+            in: app,
+            identifier: identifier,
+            elementType: .picker,
+            timeout: timeout
+        ) else {
+            XCTFail("tapSelectedPickerWheelRow: '\(identifier)' not found within \(timeout)s")
+            return
+        }
+
+        let wheel = picker.descendants(matching: .pickerWheel).firstMatch
+        guard wheel.waitForExistence(timeout: timeout) else {
+            XCTFail("tapSelectedPickerWheelRow: wheel inside '\(identifier)' not found within \(timeout)s")
+            return
+        }
+        wheel.tap()
+    }
+
     // MARK: - Fill
 
     @MainActor

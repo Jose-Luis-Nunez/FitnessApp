@@ -8,19 +8,24 @@ description: >-
 
 # Reviewing Code Changes
 
-## 0. Freeze the Commit Candidate
+## 0. Freeze the Working-Tree Candidate
 
 Final validation starts only after implementation is complete and no known
 finding or product decision remains open. It is not an exploratory review loop.
 
-- The intended commit must already be staged; `/validate` never stages it.
-- `git diff --name-only` must be empty for files that overlap the staged
-  candidate. Stop and resolve partial staging before spawning subagents.
-- Run `git diff --cached --check` before any expensive test command.
+- The candidate is every tracked modification and untracked file currently in
+  the working tree; `/validate` never stages it.
+- Code and test manifests fingerprint every candidate file except generated
+  evidence state. Pre-commit requires the eventual staged candidate to match
+  that manifest exactly; a subset needs its own explicit validation.
+- Inventory the combined candidate from `git diff HEAD --name-only` plus
+  untracked files. Partial staging does not narrow the review scope.
+- Run `git diff HEAD --check` before any expensive test command so staged and
+  unstaged tracked changes are checked together.
 - Resolve applicable ADR triggers before the reviewer/tester phase. An existing
   ADR may justify a one-line exception; do not wait for pre-commit to discover
   the missing coverage.
-- When product and executable agent-infrastructure files are staged together,
+- When product and executable agent-infrastructure files change together,
   keep their evidence tracks separate: code reviewer/tester for product files,
   infrastructure verifier for agent-system files.
 
@@ -32,7 +37,7 @@ lighter "commit ready" review and then add a second senior review afterward.
 Run:
 
 ```bash
-bash .claude/hooks/lib/change-risk.sh classify staged
+bash .claude/hooks/lib/change-risk.sh classify worktree
 ```
 
 The conservative result is `green`, `yellow`, or `red`.
@@ -89,7 +94,7 @@ Development may use focused tests. Completion requires one final result bound
 to the current contents.
 
 Start the final tester only after the reviewer reports no Bug findings and the
-staged product/test contents are stable. This prevents an otherwise successful
+working-tree product/test contents are stable. This prevents an otherwise successful
 test run from becoming stale during senior-quality cleanup.
 
 - If no matching result exists, the tester uses `run`.
@@ -107,7 +112,7 @@ After the final review, the reviewer writes:
 
 ```bash
 bash .claude/hooks/lib/validation-evidence.sh write \
-  .claude/hooks/state/code-changes.manifest.tsv staged
+  .claude/hooks/state/code-changes.manifest.tsv worktree
 bash .claude/hooks/lib/validation-evidence.sh fingerprint \
   .claude/hooks/state/code-changes.manifest.tsv
 ```

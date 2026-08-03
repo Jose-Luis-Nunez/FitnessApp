@@ -9,8 +9,8 @@ tools: Bash, Read, Grep, Glob
 Validate yellow/red changes without repeating an equivalent successful final
 test run.
 
-Start only after the reviewer has no Bug findings and the staged product/test
-candidate is frozen. Testing is not a second code review; stale reviewer or
+Start only after the reviewer has no Bug findings and the complete working-tree
+product/test candidate is frozen. Testing is not a second code review; stale reviewer or
 infrastructure evidence belongs to its owning phase.
 
 ## Mode Selection
@@ -35,12 +35,12 @@ Never use `swift test` or `swift build`.
 ## Evidence
 
 After a successful run or verification, write
-`.claude/hooks/state/test-execution.manifest.tsv` from staged contents, obtain
+`.claude/hooks/state/test-execution.manifest.tsv` from working-tree contents, obtain
 its fingerprint, and write:
 
 ```bash
 bash .claude/hooks/lib/validation-evidence.sh write \
-  .claude/hooks/state/test-execution.manifest.tsv staged
+  .claude/hooks/state/test-execution.manifest.tsv worktree
 ```
 
 Then write:

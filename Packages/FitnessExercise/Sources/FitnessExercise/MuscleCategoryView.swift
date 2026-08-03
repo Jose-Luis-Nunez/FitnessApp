@@ -155,7 +155,7 @@ public struct MuscleCategoryView: View {
             analyticsViewModel: analyticsViewModel,
             activeSetViewModel: trainingCoordinator.activeSetViewModel,
             onStart: { selectedExercise in
-                router.navigate(to: .training(exerciseId: selectedExercise.id, category: group))
+                router.presentTraining(exerciseId: selectedExercise.id, category: group)
             },
             onReset: { selectedExercise in
                 viewModel.resetExercise(selectedExercise)
@@ -369,18 +369,18 @@ private extension MuscleCategoryView {
                                         // tolerable. The routing target itself MUST be live: routing into a
                                         // freshly-completed Exercise would defeat the T7b live-fix.
                                         //
-                                        // Post-T8d: navigation carries only the id; `TrainingView` resolves
-                                        // it via `@Query` so the destination always renders the live model.
+                                        // Training presentation carries only the id; the app-layer sheet
+                                        // resolves it via `@Query` so it always renders the live model.
                                         let nextId = categoryModels.first(where: { !$0.isCompleted })?.id
                                         if let exerciseId = trainingCoordinator.currentExercise?.id ?? nextId {
-                                            router.navigate(to: .training(exerciseId: exerciseId, category: group))
+                                            router.presentTraining(exerciseId: exerciseId, category: group)
                                         }
                                         overlayState.showCategoryMiniMenu = false
                                     })
                                 }
 
                                 if viewModel.showCancel {
-                                    items.append(MiniActionMenuItem(icon: "xmark", title: "Cancel", isDestructive: false) { [router, overlayState] in
+                                    items.append(MiniActionMenuItem(icon: "xmark", title: "Cancel", isDestructive: false) { [overlayState] in
                                         let activeIds = Array(trainingCoordinator.activeSessions.keys)
                                         for id in activeIds {
                                             trainingCoordinator.cancelTraining(for: id)

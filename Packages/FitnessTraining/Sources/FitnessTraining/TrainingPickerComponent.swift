@@ -36,9 +36,7 @@ private struct TrainingPickerContent: View {
         ZStack {
             Color.black.opacity(0.4)
                 .ignoresSafeArea(.all)
-                .onTapGesture {
-                    vm.isEditing = false
-                }
+                .onTapGesture { cancelEditing() }
 
             ActiveSetEditPickerView(
                 title: {
@@ -46,6 +44,7 @@ private struct TrainingPickerContent: View {
                     case .less: "Less"
                     case .more: "More"
                     case .edit: "Edit"
+                    case .achievement: "Set Result"
                     }
                 }(),
                 selectedReps: $vm.repsInput,
@@ -71,20 +70,7 @@ private struct TrainingPickerContent: View {
                         isProcessingSaveCancel = false
                     }
                 },
-                onCancel: {
-                    guard !isProcessingSaveCancel else {
-                        return
-                    }
-                    isProcessingSaveCancel = true
-
-                    vm.isEditing = false
-                    vm.pendingEditIndex = nil
-
-                    Task {
-                        try? await Task.sleep(for: .milliseconds(500))
-                        isProcessingSaveCancel = false
-                    }
-                },
+                onCancel: { cancelEditing() },
                 saveDisabled: !vm.isInputValid
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
@@ -94,5 +80,20 @@ private struct TrainingPickerContent: View {
             .hidesBottomBarWhilePresented(overlayState)
         }
         .id("picker-\(vm.isEditing)")
+    }
+
+    private func cancelEditing() {
+        guard !isProcessingSaveCancel else {
+            return
+        }
+        isProcessingSaveCancel = true
+
+        vm.isEditing = false
+        vm.pendingEditIndex = nil
+
+        Task {
+            try? await Task.sleep(for: .milliseconds(500))
+            isProcessingSaveCancel = false
+        }
     }
 }

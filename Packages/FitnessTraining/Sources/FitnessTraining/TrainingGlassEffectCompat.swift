@@ -17,10 +17,25 @@ enum TrainingGlassEffectCompat {
                 in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
             )
     }
+}
+
+/// Shared flat chrome for controls that visually belong to the active-set
+/// timer. Keeping the surface package-internal prevents the timer and action
+/// buttons from drifting to subtly different outline treatments.
+enum TrainingControlSurfaceStyle {
+    static var outlineColor: Color {
+        AppStyle.Color.gray.opacity(0.7)
+    }
 
     @ViewBuilder
-    static func circleGlass() -> some View {
-        Color.clear
-            .appDarkSurface(in: Circle())
+    static func surface<S: Shape>(in shape: S) -> some View {
+        shape
+            .fill(Color.clear)
+            .overlay {
+                shape.stroke(
+                    outlineColor,
+                    lineWidth: AppStyle.Layout.darkSurfaceOutlineWidth
+                )
+            }
     }
 }

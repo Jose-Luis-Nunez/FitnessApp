@@ -52,11 +52,11 @@ if [ "$STAGED_SWIFT_COUNT" -ge 1 ]; then
   STAMP_RISK_RANK=$(change_risk_rank "${STAMP_RISK:-none}" 2>/dev/null || echo 0)
   STAGED_RISK_RANK=$(change_risk_rank "$STAGED_RISK")
 
-  if validation_manifest_covers_staged "$MANIFEST" &&
+  if validation_manifest_matches_staged "$MANIFEST" &&
      validation_stamp_matches_manifest "$REPORT" "$MANIFEST" &&
      [ "$STAMP_RISK_RANK" -ge "$STAGED_RISK_RANK" ]; then
     if [ "$STAGED_RISK" = "green" ] ||
-       grep -q 'verified_by:[[:space:]]*reviewer-subagent' "$REPORT"; then
+       validation_stamp_has_field_value "$REPORT" verified_by reviewer-subagent; then
       REPORT_VALID=true
     fi
   fi
@@ -87,10 +87,10 @@ if [ "$STAGED_SWIFT_COUNT" -ge 1 ]; then
   STAGED_RISK=${STAGED_RISK:-$(classify_change_risk staged)}
   TEST_VALID=false
 
-  if validation_manifest_covers_staged "$TEST_MANIFEST" &&
+  if validation_manifest_matches_staged "$TEST_MANIFEST" &&
      validation_stamp_matches_manifest "$TEST_REPORT" "$TEST_MANIFEST"; then
     if [ "$STAGED_RISK" = "green" ] ||
-       grep -q 'verified_by:[[:space:]]*tester-subagent' "$TEST_REPORT"; then
+       test_execution_stamp_has_required_fields "$TEST_REPORT"; then
       TEST_VALID=true
     fi
   fi
@@ -305,15 +305,15 @@ if [ -f "$AGENT_INFRA_LIB" ]; then
     INFRA_MANIFEST=".claude/hooks/state/agent-infrastructure.manifest.tsv"
     INFRA_VALID=false
 
-    if agent_infrastructure_manifest_covers_staged "$INFRA_MANIFEST" &&
+    if agent_infrastructure_manifest_matches_staged "$INFRA_MANIFEST" &&
        agent_infrastructure_stamp_matches_manifest "$INFRA_REPORT" "$INFRA_MANIFEST" &&
-       grep -q 'verified_by:[[:space:]]*verifier-subagent' "$INFRA_REPORT" &&
-       grep -q 'reference_integrity:[[:space:]]*PASS' "$INFRA_REPORT" &&
-       grep -q 'overview_sync:[[:space:]]*PASS' "$INFRA_REPORT" &&
-       grep -q 'description_consistency:[[:space:]]*PASS' "$INFRA_REPORT" &&
-       grep -q 'handoff_links:[[:space:]]*PASS' "$INFRA_REPORT" &&
-       grep -q 'hook_alignment:[[:space:]]*PASS' "$INFRA_REPORT" &&
-       grep -q 'name_consistency:[[:space:]]*PASS' "$INFRA_REPORT"; then
+       validation_stamp_has_field_value "$INFRA_REPORT" verified_by verifier-subagent &&
+       validation_stamp_has_field_value "$INFRA_REPORT" reference_integrity PASS &&
+       validation_stamp_has_field_value "$INFRA_REPORT" overview_sync PASS &&
+       validation_stamp_has_field_value "$INFRA_REPORT" description_consistency PASS &&
+       validation_stamp_has_field_value "$INFRA_REPORT" handoff_links PASS &&
+       validation_stamp_has_field_value "$INFRA_REPORT" hook_alignment PASS &&
+       validation_stamp_has_field_value "$INFRA_REPORT" name_consistency PASS; then
       INFRA_VALID=true
     fi
 
@@ -322,7 +322,8 @@ if [ -f "$AGENT_INFRA_LIB" ]; then
       ERRORS="${ERRORS}
 ═══════════════════════════════════════════════════════════════
 RULE: Executable agent infrastructure requires independent verification.
-VIOLATION: Staged infrastructure is not covered by an exact verifier manifest/stamp.
+VIOLATION: Staged infrastructure does not exactly match the independently
+  verified infrastructure candidate.
 FILES:
 ${INFRA_FILE_LIST}
 FIX:

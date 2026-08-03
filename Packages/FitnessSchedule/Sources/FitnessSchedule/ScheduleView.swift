@@ -61,7 +61,7 @@ public struct ScheduleView: View {
                         WorkoutPickerView(
                             workouts: workoutStorage.workouts,
                             currentWorkout: workoutStorage.currentWorkout,
-                            onSelect: { workoutStorage.setCurrentWorkout($0) }
+                            onSelect: selectWorkoutAndDismissPicker
                         )
                     }
                     .zIndex(4)
@@ -73,6 +73,13 @@ public struct ScheduleView: View {
         .onChange(of: workoutStorage.currentWorkout) { _ in
             viewModel.reloadData()
         }
+    }
+
+    private func selectWorkoutAndDismissPicker(_ workout: Workout) {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            overlayState.showWorkoutDropdown = false
+        }
+        workoutStorage.setCurrentWorkout(workout)
     }
 
     // MARK: - Header

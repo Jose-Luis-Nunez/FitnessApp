@@ -59,9 +59,9 @@ struct BottomMenuBarView: View {
     private var selectedTab: BottomTab {
         switch router.currentScene {
         case .workouts:                    return .workouts
-        // Being inside a workout (category selection, a category, or training)
+        // Being inside a workout (category selection or a category)
         // lights the "Training" tab — the "Workouts" tab only lights on the list.
-        case .home, .category, .training:  return .training
+        case .home, .category:             return .training
         case .analytics:                   return .chart
         case .schedule:                    return .calendar
         case .profile:                     return .profile
@@ -70,28 +70,42 @@ struct BottomMenuBarView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            GlassEffectContainer(spacing: 6) {
-                if overlayState.exerciseSelectionMode != .none {
-                    selectionActionBar
-                        .padding(.horizontal, 8)
-                        .padding(.bottom, bottomOffset)
-                } else {
-                    HStack(spacing: 6) {
-                        backButton
-
-                        tabBar
-                            .frame(height: capsuleHeight)
-                            .clipShape(Capsule())
-                            .appDarkSurface(in: .capsule)
-
-                        rightActionButton
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.bottom, bottomOffset)
-                }
-            }
+            bottomBarSurfaceContent
         }
         .frame(height: capsuleHeight + 6)
+    }
+
+    @ViewBuilder
+    private var bottomBarSurfaceContent: some View {
+        if #available(iOS 27.0, *) {
+            GlassEffectContainer(spacing: 6) {
+                bottomBarControls
+            }
+        } else {
+            bottomBarControls
+        }
+    }
+
+    @ViewBuilder
+    private var bottomBarControls: some View {
+        if overlayState.exerciseSelectionMode != .none {
+            selectionActionBar
+                .padding(.horizontal, 8)
+                .padding(.bottom, bottomOffset)
+        } else {
+            HStack(spacing: 6) {
+                backButton
+
+                tabBar
+                    .frame(height: capsuleHeight)
+                    .clipShape(Capsule())
+                    .bottomMenuSurface(in: .capsule)
+
+                rightActionButton
+            }
+            .padding(.horizontal, 8)
+            .padding(.bottom, bottomOffset)
+        }
     }
 
     /// Multi-select morph: replaces the whole home bar the moment radio buttons
@@ -137,7 +151,7 @@ struct BottomMenuBarView: View {
         }
         .frame(height: capsuleHeight)
         .clipShape(Capsule())
-        .appDarkSurface(in: .capsule)
+        .bottomMenuSurface(in: .capsule)
     }
 
     // MARK: - Shared Components
@@ -175,15 +189,18 @@ struct BottomMenuBarView: View {
     /// offer a way back to that list.
     private var isDrillDownScene: Bool {
         switch router.currentScene {
-        case .home: return router.isHomePushedFromWorkoutList
-        case .category, .training: return true
-        case .workouts, .analytics, .schedule, .profile: return false
+        case .home:
+            return router.trainingPresentation != nil
+                || router.isHomePushedFromWorkoutList
+        case .category: return true
+        case .workouts: return router.trainingPresentation != nil
+        case .analytics, .schedule, .profile: return false
         }
     }
 
     @ViewBuilder
     private var backButton: some View {
-        let shouldShow = showBackButton && !router.isEmpty && isDrillDownScene
+        let shouldShow = showBackButton && isDrillDownScene
         if shouldShow {
             Button(action: {
                 if let customAction = customBackAction {
@@ -214,13 +231,13 @@ struct BottomMenuBarView: View {
     }
 
     /// The ellipsis (mini-menu) button only exists on scenes that actually have
-    /// a contextual menu — the workout flow (`.workouts`, `.home`, `.category`,
-    /// `.training`). The top-level tab destinations Analytics, Schedule and
+    /// a contextual menu — the workout flow (`.workouts`, `.home`, `.category`).
+    /// The top-level tab destinations Analytics, Schedule and
     /// Profile have no such menu, so the button is hidden there (a clear
     /// placeholder keeps the tab capsule centred).
     private var showsRightAction: Bool {
         switch router.currentScene {
-        case .workouts, .home, .category, .training: return true
+        case .workouts, .home, .category: return true
         case .analytics, .schedule, .profile:        return false
         }
     }
@@ -316,6 +333,13 @@ struct BottomMenuBarView: View {
 
 private extension View {
     func circleGlass() -> some View {
-        self.appDarkSurface(in: .circle)
+        self.bottomMenuSurface(in: .circle)
+    }
+
+    /// iOS 26 omits the surrounding `GlassEffectContainer`; the direct surface
+    /// remains shared with the List/Muscle filter toggle on every OS version.
+    @ViewBuilder
+    func bottomMenuSurface<S: Shape>(in shape: S) -> some View {
+        self.appDarkSurface(in: shape)
     }
 }

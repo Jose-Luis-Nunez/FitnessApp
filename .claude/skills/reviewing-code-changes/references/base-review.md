@@ -15,6 +15,18 @@ short self-review and do not spawn a reviewer.
 9. Fix findings introduced by the current change before reporting PASS.
 10. Treat this pass as the senior-quality review: inspect production readiness,
     not only whether the happy path works or tests are green.
+11. Search changed code and immediate consumers for dead code: unused
+    declarations, unreachable branches, obsolete compatibility paths, and
+    helpers with no production-reachable caller.
+12. Flag introduced code smells: duplicated decisions, mixed responsibilities,
+    oversized bodies/functions, boolean-state combinations, and abstractions
+    that obscure ownership.
+13. Require unit coverage for feasible deterministic logic and state
+    transitions. Reserve UI tests for integration, presentation, and wiring
+    that a lower layer cannot prove.
+14. Verify package direction and ownership. Views do not absorb navigation,
+    persistence, or training logic; layers gain no parallel state owner or
+    reverse dependency.
 
 Report findings as **Bug**, **Nit**, or **Pre-existing**, with file and line.
 An empty review must state `No issues found`.

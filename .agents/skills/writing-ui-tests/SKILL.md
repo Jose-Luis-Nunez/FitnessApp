@@ -58,7 +58,7 @@ Use the test template from `.claude/references/ui-test-conventions.md`. Key rule
 
 - Inherit from `BaseTest`
 - Mark test methods `@MainActor`
-- First line: `launch(training:)` with explicit test data, or `launch(category:)` for screens without exercise data, or `launchHome()` for full journeys
+- First line: `launch(exerciseCategory:)` or `launch(exerciseList:)` with explicit test data, followed by the normal Start interaction when the flow needs the training sheet; use `launch(category:)` only for category screens without exercise data, or `launchHome()` for full journeys
 - Only DSL functions and test ID constants (e.g. `TrainingIDs.doneButton`) — no raw API, no hardcoded strings
 - Always pass mock data explicitly via `TestExerciseFixture` — no implicit defaults
 - Use `tapOnIfExists` for conditional elements

@@ -8,7 +8,6 @@ public enum AppStyle {
         public static let titleTop: CGFloat = 8
         public static let titleBottom: CGFloat = 17
         public static let activeCardIconOverflow: CGFloat = 20
-        public static let titleBottomBeforeActiveCard: CGFloat = titleBottom - activeCardIconOverflow
         public static let sectionSpacing: CGFloat = 18
         /// Gap above a sheet's bottom action bar (Cancel/Save row).
         public static let actionBarTop: CGFloat = 24
@@ -81,7 +80,29 @@ public enum AppStyle {
         public static let bilateralPairSpacingComfortable: CGFloat = 12
         public static let bilateralMetricChipHorizontalPaddingTight: CGFloat = 2
         public static let bilateralMetricChipHorizontalPadding: CGFloat = 4
-        public static let bilateralTimerMinHeight: CGFloat = 170
+        public static let activeSetRowSpacing: CGFloat = 16
+        public static let activeSetVerticalPadding: CGFloat = 12
+        /// Exactly three standard set rows remain visible before the set-only
+        /// scroller is needed. The value includes the card's vertical insets.
+        public static let trainingSheetStandardSetViewportHeight: CGFloat = 152
+        /// Bilateral rows additionally reserve the existing L/R header while
+        /// keeping three logical set pairs visible in the set-only scroller.
+        public static let trainingSheetBilateralSetViewportHeight: CGFloat = 218
+        public static let trainingSheetTimerHeight: CGFloat = 70
+        public static let trainingSheetBilateralTimerHeight: CGFloat = 88
+        public static let trainingSheetRailMaximumWidth: CGFloat = 120
+        public static let trainingSheetRailMinimumWidth: CGFloat = 88
+        public static let trainingSheetBilateralRailMinimumWidth: CGFloat = 72
+        public static let trainingSheetBilateralContentHorizontalPadding: CGFloat = 4
+        public static let trainingSheetContentHorizontalPadding: CGFloat = 20
+        public static let trainingSheetContentMinimumHorizontalPadding: CGFloat = 8
+        public static let trainingSheetSetVerticalOffset: CGFloat = 6
+        public static let trainingSheetStandardSessionHeight: CGFloat = 212
+        public static let trainingSheetBilateralSessionHeight: CGFloat = 270
+        public static let trainingSheetHeaderSpacing: CGFloat = 16
+        public static let trainingSheetActionBarTopSpacing: CGFloat = 14
+        public static let trainingSheetBottomBarClearance: CGFloat = 76
+        public static let trainingSheetMinimumBackdropHeight: CGFloat = 120
         public static let bilateralRepsChipContentMinWidth: CGFloat = 28
         public static let bilateralMetricMinimumScaleFactor: CGFloat = 0.65
         public static let analyticsInputActionWidth: CGFloat = 28
@@ -220,7 +241,9 @@ public enum AppStyle {
         public static let regularChip = SwiftUI.Font.system(size: 16, weight: .semibold)
         public static let largeChip = SwiftUI.Font.system(size: 24, weight: .semibold)
         public static let bilateralSideHeader = SwiftUI.Font.system(size: 22, weight: .medium)
-        public static let trainingTimerLarge = SwiftUI.Font.system(size: 36, weight: .bold)
+        public static let trainingTimer = SwiftUI.Font.system(size: 16, weight: .bold)
+        public static let trainingTimerLarge = SwiftUI.Font.system(size: 26, weight: .bold)
+        public static let trainingTimerCancel = SwiftUI.Font.system(size: 13, weight: .medium)
         public static let defaultFont = SwiftUI.Font.system(size: 12, weight: .semibold)
         public static let bottomBarButtons = SwiftUI.Font.system(size: 16, weight: .semibold)
 
@@ -578,14 +601,6 @@ public enum AppStyle {
             }
         }
 
-        public static var timerFontSize: CGFloat {
-            switch current {
-            case .compact: return 15
-            case .regular: return 16
-            case .large: return 18
-            case .extraLarge: return 20
-            }
-        }
     }
 
     public enum Animation {

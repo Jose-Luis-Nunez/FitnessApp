@@ -5,6 +5,11 @@ if [ "${BASH_SOURCE[0]}" = "$0" ]; then
   set -euo pipefail
 fi
 
+if ! declare -F validation_stamp_has_field_value >/dev/null; then
+  # shellcheck source=validation-evidence.sh
+  source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/validation-evidence.sh"
+fi
+
 agent_infrastructure_paths() {
   local mode="${1:-worktree}"
   local tracked=""
@@ -89,19 +94,17 @@ agent_infrastructure_manifest_matches_worktree() {
   return "$result"
 }
 
-agent_infrastructure_manifest_covers_staged() {
+agent_infrastructure_manifest_matches_staged() {
   local manifest="$1"
-  local path=""
-  local hash=""
+  local temporary=""
 
   [ -f "$manifest" ] || return 1
-  while IFS= read -r path; do
-    [ -z "$path" ] && continue
-    hash=$(agent_infrastructure_hash_for_path staged "$path")
-    if ! grep -Fqx "${hash}"$'\t'"${path}" "$manifest"; then
-      return 1
-    fi
-  done <<< "$(agent_infrastructure_paths staged)"
+  temporary=$(mktemp)
+  write_agent_infrastructure_manifest "$temporary" staged
+  cmp -s "$manifest" "$temporary"
+  local result=$?
+  rm -f "$temporary"
+  return "$result"
 }
 
 agent_infrastructure_stamp_matches_manifest() {
@@ -111,8 +114,8 @@ agent_infrastructure_stamp_matches_manifest() {
 
   [ -f "$stamp" ] || return 1
   fingerprint=$(agent_infrastructure_manifest_fingerprint "$manifest") || return 1
-  grep -qE 'result:[[:space:]]*PASS' "$stamp" &&
-    grep -q "source_fingerprint:[[:space:]]*${fingerprint}" "$stamp"
+  validation_stamp_has_pass_result "$stamp" &&
+    validation_stamp_has_field_value "$stamp" source_fingerprint "$fingerprint"
 }
 
 agent_infrastructure_fingerprint() {
@@ -139,7 +142,7 @@ if [ "${BASH_SOURCE[0]}" = "$0" ]; then
     verify)
       [ "$#" -ge 2 ] || { echo "Usage: agent-infrastructure-evidence.sh verify <manifest> [worktree|staged]" >&2; exit 2; }
       if [ "${3:-worktree}" = "staged" ]; then
-        agent_infrastructure_manifest_covers_staged "$2"
+        agent_infrastructure_manifest_matches_staged "$2"
       else
         agent_infrastructure_manifest_matches_worktree "$2"
       fi

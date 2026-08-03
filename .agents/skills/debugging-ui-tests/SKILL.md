@@ -46,7 +46,8 @@ Common cause after a SwiftData refactor: a view switched from a passed-in domain
 
 Re-run the single test and confirm green. Before committing, run `/validate` so
 the final tester binds `.claude/hooks/state/test-execution.stamp.md` to the
-exact staged contents for pre-commit enforcement.
+exact complete working-tree contents before staging; pre-commit later verifies
+the exact staged candidate against that evidence.
 
 ## Handoff
 

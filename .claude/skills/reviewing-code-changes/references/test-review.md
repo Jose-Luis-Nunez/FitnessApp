@@ -8,6 +8,10 @@ changed.
   inputs such as workout or exercise IDs; tests do not pre-prime the state that
   the action is supposed to produce.
 - Prefer Swift Testing and shared FitnessTestSupport utilities.
+- Cover deterministic branches, state transitions, resolver decisions, and
+  failure/cancel behavior with unit tests whenever their production boundary is
+  injectable. Do not rely on UI tests alone for behavior that a focused unit
+  test can prove faster and more precisely.
 - Time-dependent code uses an injected clock rather than real sleeps.
 - Assertions include the important negative condition, identity, ordering, or
   metadata—not only a count.

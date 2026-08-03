@@ -205,7 +205,7 @@ public final class ActiveSetViewModel {
             return newReps < exercise.reps || newWeight < exercise.weight
         case .more:
             return newReps > exercise.reps || newWeight > exercise.weight
-        case .edit:
+        case .edit, .achievement:
             return true
         }
     }
@@ -299,6 +299,13 @@ public final class ActiveSetViewModel {
             // reps unchanged, so deriving the status from reps would otherwise
             // incorrectly save it as More and lose the Less pre-fill memory.
             status = .completedLess
+        } else if editing.isEditing, case .achievement = editing.editMode {
+            status = achievementStatus(
+                reps: newReps,
+                weight: newWeight,
+                targetReps: exercise.reps,
+                targetWeight: exercise.weight
+            )
         } else {
             status = newReps < exercise.reps ? .completedLess : .completedMore
         }
@@ -420,6 +427,26 @@ public final class ActiveSetViewModel {
 
     // MARK: - Editing
 
+    /// Opens result entry for the one execution step that is currently active.
+    /// Future steps stay inert, while completed steps continue to use `.edit`
+    /// through the existing `startEditingSet` path.
+    func startRecordingAchievement(index: Int) {
+        guard tracking.setProgress.indices.contains(index),
+              tracking.isSetInProgress,
+              !tracking.isLastSetCompleted,
+              index == tracking.activeSetIndex,
+              index == tracking.currentSet else {
+            return
+        }
+
+        let status = tracking.setProgress[index].status
+        guard status == .notStarted || status == .inProgress else {
+            return
+        }
+
+        startEditingSet(index: index, mode: .achievement)
+    }
+
     public func startEditingSet(index: Int, mode: SetEditingMode) {
         let progress = tracking.setProgress[index]
 
@@ -450,7 +477,7 @@ public final class ActiveSetViewModel {
         case .more:
             side.flatMap { tracking.lastMoreAdjustmentBySide[$0] }
                 ?? tracking.lastMoreAdjustment
-        case .edit: nil
+        case .edit, .achievement: nil
         }
     }
 
@@ -468,9 +495,22 @@ public final class ActiveSetViewModel {
             tracking.lastLessAdjustment = adjustment
         case (.more, .none):
             tracking.lastMoreAdjustment = adjustment
-        case (.edit, _):
+        case (.edit, _), (.achievement, _):
             break
         }
+    }
+
+    private func achievementStatus(
+        reps: Int,
+        weight: Double,
+        targetReps: Int,
+        targetWeight: Double
+    ) -> SetStatus {
+        if reps < targetReps { return .completedLess }
+        if reps > targetReps { return .completedMore }
+        if weight < targetWeight { return .completedLess }
+        if weight > targetWeight { return .completedMore }
+        return .completedDone
     }
 
     public func cancelActiveSet() {

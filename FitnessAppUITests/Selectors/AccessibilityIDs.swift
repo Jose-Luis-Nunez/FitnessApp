@@ -3,6 +3,12 @@ import FitnessCore
 
 enum TrainingIDs {
     static let cancelTraining = "id_training_cancel"
+    static let sheet = "id_training_sheet"
+    static let sheetBackdrop = "id_training_sheet_backdrop"
+    static let sheetGrabber = "id_training_sheet_grabber"
+    static let sheetTitle = "id_training_sheet_title"
+    static let muscleIcon = "id_training_muscle_icon"
+    static let setScroll = "id_training_set_scroll"
     static let doneButton = "id_button_done"
     static let finishButton = "id_button_finish"
     static let startButton = "id_button_start"
@@ -14,6 +20,19 @@ enum TrainingIDs {
         "id_reps_set_\(index)_\(side)"
     }
     static func sideHeader(_ side: String) -> String { "id_training_side_\(side)" }
+}
+
+enum TrainingLabels {
+    static let closeTraining = "Close training"
+    static let recordSetResult = "Record set result"
+    static let muscleIllustration = "Exercise muscle illustration"
+}
+
+enum WorkoutPickerIDs {
+    static let dropdown = "id_workout_dropdown"
+    static let overlay = "id_workout_picker"
+    static let wheel = "id_workout_picker_wheel"
+    static let confirmButton = "id_workout_picker_confirm"
 }
 
 enum HomeIDs {
@@ -36,6 +55,7 @@ enum MuscleCategoryIDs {
 enum ExerciseIDs {
     static let nameLabel = "id_label_exercise_name"
     static let nameField = "id_exercise_name_field"
+    static let seatPicker = FitnessCore.ExerciseIDs.seatPicker
     static let fullEditContinueButton = "id_exercise_full_continue"
     static let fullEditSaveButton = "id_exercise_full_save"
     static let bilateralToggle = "id_exercise_bilateral_toggle"
@@ -45,6 +65,7 @@ enum ExerciseIDs {
 
 enum ExerciseLabels {
     static let newExercise = "New Exercise"
+    static let cancelAction = "Cancel"
     static let continueAction = "Continue"
     static let saveAction = "Save"
 }
@@ -61,6 +82,7 @@ enum ExerciseCardIDs {
     static let completedCardPrefix = "id_card_completed_"
     static let activeCardPrefix = "id_card_active_"
     static let idleCardPrefix = "id_card_idle_"
+    static let seatEditIconPrefix = FitnessCore.ExerciseCardIDs.seatEditIconPrefix
     static func analytics(_ id: UUID) -> String { "id_card_analytics_\(id.uuidString)" }
     static let analyticsPrefix = "id_card_analytics_"
 }
@@ -107,6 +129,8 @@ enum WorkoutLabels {
     static let newWorkout = "New workout"
     static let addAnalytics = "Log Workout"
     static let typeOptions = ["Pull", "Push", "Leg", "Individual", "Full"]
+    static let pullFixture = "Pull Fixture"
+    static let legFixture = "Leg Fixture"
 }
 
 typealias BottomBarIDs = FitnessCore.BottomBarIDs

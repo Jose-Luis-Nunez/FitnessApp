@@ -111,29 +111,32 @@ gate_verifier() {
   local manifest="$STATE_DIR/agent-infrastructure.manifest.tsv"
   local fingerprint=""
   source ".claude/hooks/lib/agent-infrastructure-evidence.sh"
-  if ! agent_infrastructure_manifest_covers_staged "$manifest"; then
-    emit_block "[verifier] Gate failed: infrastructure manifest is missing or does not cover the exact staged candidate. Write .claude/hooks/state/agent-infrastructure.manifest.tsv from staged contents with agent-infrastructure-evidence.sh."
+  if ! agent_infrastructure_manifest_matches_worktree "$manifest"; then
+    emit_block "[verifier] Gate failed: infrastructure manifest is missing or does not match the complete working-tree candidate. Write .claude/hooks/state/agent-infrastructure.manifest.tsv from working-tree contents with agent-infrastructure-evidence.sh."
   fi
   fingerprint=$(agent_infrastructure_manifest_fingerprint "$manifest")
-  local required_fields=(
-    "result:[[:space:]]*PASS"
-    "verified_by:[[:space:]]*verifier-subagent"
-    "source_fingerprint:[[:space:]]*${fingerprint}"
-    "reference_integrity:[[:space:]]*PASS"
-    "overview_sync:[[:space:]]*PASS"
-    "description_consistency:[[:space:]]*PASS"
-    "handoff_links:[[:space:]]*PASS"
-    "hook_alignment:[[:space:]]*PASS"
-    "name_consistency:[[:space:]]*PASS"
+  local checklist_fields=(
+    reference_integrity
+    overview_sync
+    description_consistency
+    handoff_links
+    hook_alignment
+    name_consistency
   )
 
   if [ ! -f "$stamp" ]; then
     emit_block "[verifier] Gate failed: stamp file missing. Write the agent-infrastructure stamp with result, verified_by, exact source_fingerprint, and all six checklist fields."
   fi
 
-  for field in "${required_fields[@]}"; do
-    if ! grep -qE "$field" "$stamp"; then
-      emit_block "[verifier] Gate failed: stamp is missing field '$field'. Re-read .claude/agents/verifier.md and write a complete PASS stamp with the fingerprint and all six checklist results."
+  if ! validation_stamp_has_pass_result "$stamp" ||
+     ! validation_stamp_has_field_value "$stamp" verified_by verifier-subagent ||
+     ! validation_stamp_has_field_value "$stamp" source_fingerprint "$fingerprint"; then
+    emit_block "[verifier] Gate failed: stamp must contain exact result, verified_by, and source_fingerprint fields."
+  fi
+
+  for field in "${checklist_fields[@]}"; do
+    if ! validation_stamp_has_field_value "$stamp" "$field" PASS; then
+      emit_block "[verifier] Gate failed: stamp is missing exact field '$field: PASS'. Re-read .claude/agents/verifier.md and write a complete PASS stamp with all six checklist results."
     fi
   done
 }
@@ -161,19 +164,15 @@ gate_reviewer() {
     emit_block "[reviewer] Gate failed: code-changes stamp missing. Write to .claude/hooks/state/code-changes.stamp.md with date, result, verified_by, files_inspected, findings fields."
   fi
 
-  if ! grep -q "verified_by:" "$stamp"; then
-    emit_block "[reviewer] Gate failed: stamp missing verified_by field. Re-write stamp with verified_by: reviewer-subagent."
-  fi
-
-  if ! grep -q "risk:" "$stamp" ||
-     ! grep -q "source_fingerprint:" "$stamp"; then
-    emit_block "[reviewer] Gate failed: stamp must contain risk and source_fingerprint."
-  fi
-
   source ".claude/hooks/lib/validation-evidence.sh"
-  if ! validation_manifest_covers_staged "$manifest" ||
+  if ! validation_stamp_has_field_value "$stamp" verified_by reviewer-subagent ||
+     ! validation_stamp_has_field_value "$stamp" risk '(green|yellow|red)'; then
+    emit_block "[reviewer] Gate failed: stamp must contain exact verified_by: reviewer-subagent and risk fields."
+  fi
+
+  if ! validation_manifest_matches_worktree "$manifest" ||
      ! validation_stamp_matches_manifest "$stamp" "$manifest"; then
-    emit_block "[reviewer] Gate failed: validation evidence does not cover the exact staged candidate."
+    emit_block "[reviewer] Gate failed: validation evidence does not match the complete working-tree candidate."
   fi
 }
 
@@ -185,23 +184,14 @@ gate_tester() {
     emit_block "[tester] Gate failed: test-execution stamp missing. Run xcodebuild test and write results to .claude/hooks/state/test-execution.stamp.md."
   fi
 
-  local has_success=0
-  has_success=$(grep -ciE 'all passed|TEST SUCCEEDED|Tests passed|Exit code: 0|exit code: 0' "$stamp" || true)
-
-  if [ "$has_success" -eq 0 ]; then
-    emit_block "[tester] Gate failed: test-execution stamp does not indicate success. Re-run failing tests and update .claude/hooks/state/test-execution.stamp.md."
-  fi
-
-  if ! grep -q "verified_by:[[:space:]]*tester-subagent" "$stamp" ||
-     ! grep -qE "mode:[[:space:]]*(run|verify)" "$stamp" ||
-     ! grep -q "source_fingerprint:" "$stamp"; then
-    emit_block "[tester] Gate failed: stamp must contain verified_by: tester-subagent, mode: run|verify, and source_fingerprint."
-  fi
-
   source ".claude/hooks/lib/validation-evidence.sh"
-  if ! validation_manifest_covers_staged "$manifest" ||
+  if ! test_execution_stamp_has_required_fields "$stamp"; then
+    emit_block "[tester] Gate failed: stamp must contain exact result: PASS, exit_code: 0, verified_by: tester-subagent, mode: run|verify, and source_fingerprint fields."
+  fi
+
+  if ! validation_manifest_matches_worktree "$manifest" ||
      ! validation_stamp_matches_manifest "$stamp" "$manifest"; then
-    emit_block "[tester] Gate failed: test evidence does not cover the exact staged candidate."
+    emit_block "[tester] Gate failed: test evidence does not match the complete working-tree candidate."
   fi
 }
 

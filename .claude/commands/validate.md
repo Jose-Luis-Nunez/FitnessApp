@@ -4,19 +4,21 @@ description: Validate before commit: run final risk-based, content-bound checks 
 
 # /validate — Validate Before Commit
 
-Run this after implementation is complete, no known finding or product decision
-remains open, and the intended commit is staged. The development Stop hook
+Run this after implementation is complete and no known finding or product
+decision remains open. The complete working tree is the validation candidate;
+the user stages it only after review succeeds. The development Stop hook
 provides only lightweight hints; this command produces the evidence required
 by pre-commit.
 
 Git authority is canonical in the repository-root `AGENTS.md`. This command
-only operates on the user's already-staged candidate and never changes Git
+reviews all tracked modifications and untracked files without changing Git
 state.
 
-1. Confirm the final user-staged commit candidate: no overlapping unstaged
-   changes, no pending finding/decision, and `git diff --cached --check` passes.
+1. Confirm the complete working-tree candidate: no pending finding/decision,
+   at least one changed path, and `git diff HEAD --check` passes. Include
+   staged, unstaged, and untracked files in the changed-file inventory.
 2. Resolve applicable ADR triggers before starting subagents.
-3. Run `bash .claude/hooks/lib/change-risk.sh classify staged`.
+3. Run `bash .claude/hooks/lib/change-risk.sh classify worktree`.
 4. Follow `.claude/skills/reviewing-code-changes/SKILL.md`.
 5. Green: perform the lightweight self-review and one relevant final test.
 6. Yellow/red: use one fresh reviewer as the senior-quality review, then start
@@ -24,11 +26,16 @@ state.
    existing matching final result instead of repeating it.
 7. Do not report stale test/infrastructure stamps as code findings before their
    respective validation phase.
-8. Write code and test manifests from staged contents with
-   `validation-evidence.sh write <manifest> staged`.
+8. Write code and test manifests from all working-tree contents with
+   `validation-evidence.sh write <manifest> worktree`.
 9. Write stamps containing the matching `source_fingerprint`.
 10. Run `.claude/hooks/tests/workflow-tests.sh` only when agent workflow files
-   themselves changed.
+    themselves changed.
+
+After PASS, staging the complete unchanged candidate preserves evidence:
+pre-commit requires the staged manifest to equal the reviewed/tested worktree
+manifest exactly. Staging only a subset requires a separate validation of that
+explicit candidate. Any candidate edit requires `/validate` again.
 
 Report risk, findings, test mode (`run` or `verify`), test counts, and evidence
 fingerprint.

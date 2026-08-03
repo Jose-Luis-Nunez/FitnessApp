@@ -35,9 +35,13 @@ see `.claude/references/agent-system-overview.md`.
 - Do not start `/validate`, a reviewer or tester subagent, or write final
   validation evidence unless the user explicitly asks for final validation.
 - **Hard Git boundary (canonical):** agents never create, amend, rewrite, or
-  push commits; commit creation is human-only. "Ready to commit" means
-  validation only, never staging. Validation operates on a candidate already
-  staged by the user; staging requires an explicit request naming the
+  push commits; commit creation is human-only. "Ready to commit" means review
+  and validation of **all current working-tree changes before staging**. Final
+  evidence is written from the complete tracked/untracked working tree; the
+  user stages that complete unchanged candidate afterward. Pre-commit requires
+  an exact path/hash match; a subset needs its own validation. Validation never
+  stages automatically, and any later candidate edit invalidates the evidence.
+  Agent-performed staging still requires an explicit request naming the
   candidate.
 
 ## What you do **not** have to do

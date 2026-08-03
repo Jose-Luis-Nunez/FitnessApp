@@ -12,7 +12,7 @@ import UIKit
 #endif
 
 @MainActor
-@Suite("Bilateral training", .tags(.fast))
+@Suite("Bilateral training", .tags(.fast), .serialized)
 struct BilateralTrainingTests {
     private func exercise() -> Exercise {
         FitnessTestSupport.makeExercise(
@@ -23,6 +23,17 @@ struct BilateralTrainingTests {
             category: .abs,
             executionMode: .bilateral
         )
+    }
+
+    private func sessionCoordinator(for exercise: Exercise) -> TrainingCoordinator {
+        let coordinator = TrainingCoordinator(
+            findCategory: { _ in exercise.category },
+            onExerciseUpdate: { _, _ in },
+            onExerciseReset: { _, _ in },
+            analyticsViewModel: AnalyticsViewModel(storageService: StubAnalyticsStorage())
+        )
+        coordinator.startTraining(for: exercise)
+        return coordinator
     }
 
     @Test("Three logical sets expand to L1 R1 L2 R2 L3 R3")
@@ -101,6 +112,32 @@ struct BilateralTrainingTests {
         #expect(sut.activeSetIndex == 2)
         #expect(sut.setProgress[0].side == .left)
         #expect(sut.setProgress[0].logicalSetIndex == 0)
+    }
+
+    @Test("Achievement entry follows the active bilateral side")
+    func achievementFollowsActiveSide() {
+        let sut = ActiveSetViewModel()
+        sut.startSet(for: exercise(), category: .abs)
+
+        sut.startRecordingAchievement(index: 1)
+        #expect(sut.isEditing == false)
+
+        sut.startRecordingAchievement(index: 0)
+        sut.updateCurrentReps(12, 20)
+        #expect(sut.setProgress[0].status == .completedDone)
+        #expect(sut.setProgress[0].side == .left)
+        #expect(sut.setProgress[0].logicalSetIndex == 0)
+
+        sut.isEditing = false
+        sut.pendingEditIndex = nil
+        sut.startNextSet()
+        #expect(sut.activeSetIndex == 1)
+        #expect(sut.setProgress[1].side == .right)
+        #expect(sut.setProgress[1].logicalSetIndex == 0)
+
+        sut.startRecordingAchievement(index: 1)
+        #expect(sut.editMode == .achievement)
+        #expect(sut.pendingEditIndex == 1)
     }
 
     @Test("Quick Done completes all six steps with metadata")
@@ -268,12 +305,186 @@ struct BilateralTrainingTests {
 
         #expect(measured.width <= width)
         #expect(measured.height > 0)
-        #expect(
-            measured.height < 210,
-            "The bilateral card must use its content height instead of the former 210pt inner minimum."
-        )
+        #expect(measured.height == AppStyle.Layout.trainingSheetBilateralSetViewportHeight)
         #expect(measured.width.isFinite)
         #expect(measured.height.isFinite)
+    }
+
+    @Test(
+        "Filled bilateral content fits the three-pair viewport",
+        arguments: [CGFloat(320), CGFloat(393), CGFloat(430)]
+    )
+    func filledBilateralCardFits(width: CGFloat) {
+        let bilateral = exercise()
+        let viewModel = ActiveSetViewModel()
+        viewModel.startSet(for: bilateral, category: .abs)
+        viewModel.setProgress = bilateral.trainingSteps.map {
+            SetProgress(
+                status: .completedDone,
+                currentReps: bilateral.reps,
+                weight: bilateral.weight,
+                side: $0.side,
+                logicalSetIndex: $0.logicalSetIndex
+            )
+        }
+        let view = SimpleActiveSetView(
+            exercise: bilateral,
+            setProgress: .constant(viewModel.setProgress),
+            viewModel: viewModel
+        )
+        let host = UIHostingController(rootView: view)
+
+        let measured = host.sizeThatFits(
+            in: CGSize(width: width, height: .greatestFiniteMagnitude)
+        )
+
+        #expect(measured.width <= width)
+        #expect(measured.height <= AppStyle.Layout.trainingSheetBilateralSetViewportHeight)
+    }
+
+    @Test(
+        "Training sheet session keeps standard columns bounded at every supported width",
+        arguments: [CGFloat(320), CGFloat(393), CGFloat(430)]
+    )
+    func standardTrainingSheetSessionFits(width: CGFloat) {
+        let standard = FitnessTestSupport.makeExercise(
+            name: "Exercise 12",
+            weight: 20,
+            reps: 12,
+            sets: 3,
+            category: .abs
+        )
+        let coordinator = sessionCoordinator(for: standard)
+        let host = UIHostingController(
+            rootView: TrainingSessionComponent(coordinator: coordinator)
+        )
+
+        let measured = host.sizeThatFits(
+            in: CGSize(width: width, height: .greatestFiniteMagnitude)
+        )
+
+        #expect(measured.width <= width)
+        #expect(measured.height == AppStyle.Layout.trainingSheetStandardSessionHeight)
+    }
+
+    @Test(
+        "Training sheet session keeps bilateral columns bounded at every supported width",
+        arguments: [CGFloat(320), CGFloat(393), CGFloat(430)]
+    )
+    func bilateralTrainingSheetSessionFits(width: CGFloat) {
+        let coordinator = sessionCoordinator(for: exercise())
+        let host = UIHostingController(
+            rootView: TrainingSessionComponent(coordinator: coordinator)
+        )
+
+        let measured = host.sizeThatFits(
+            in: CGSize(width: width, height: .greatestFiniteMagnitude)
+        )
+
+        #expect(measured.width <= width)
+        #expect(measured.height == AppStyle.Layout.trainingSheetBilateralSessionHeight)
+    }
+
+    @Test(
+        "Standard training-sheet rail stays aligned at supported widths",
+        arguments: [CGFloat(320), CGFloat(393), CGFloat(430)]
+    )
+    func standardTrainingSheetSessionSnapshot(width: CGFloat) throws {
+        let standard = FitnessTestSupport.makeExercise(
+            name: "Exercise 12",
+            weight: 20,
+            reps: 12,
+            sets: 3,
+            category: .abs
+        )
+        try assertTrainingSessionSnapshot(
+            coordinator: sessionCoordinator(for: standard),
+            width: width,
+            height: AppStyle.Layout.trainingSheetStandardSessionHeight,
+            name: "standard-\(Int(width))"
+        )
+    }
+
+    @Test(
+        "Bilateral training-sheet rail stays aligned at supported widths",
+        arguments: [CGFloat(320), CGFloat(393), CGFloat(430)]
+    )
+    func bilateralTrainingSheetSessionSnapshot(width: CGFloat) throws {
+        try assertTrainingSessionSnapshot(
+            coordinator: sessionCoordinator(for: exercise()),
+            width: width,
+            height: AppStyle.Layout.trainingSheetBilateralSessionHeight,
+            name: "bilateral-\(Int(width))"
+        )
+    }
+
+    private func assertTrainingSessionSnapshot(
+        coordinator: TrainingCoordinator,
+        width: CGFloat,
+        height: CGFloat,
+        name: String,
+        sourceLocation: SourceLocation = #_sourceLocation,
+        function: StaticString = #function
+    ) throws {
+        let size = CGSize(width: width, height: height)
+        let view = TrainingSessionComponent(
+            coordinator: coordinator,
+            muscleArtwork: try appAssetImage(named: "defaultAbsIcon")
+        )
+            .frame(width: width, height: height)
+            .background(AppStyle.Color.backgroundColor)
+        let controller = UIHostingController(rootView: view)
+        controller.view.frame = CGRect(origin: .zero, size: size)
+        controller.view.backgroundColor = .black
+
+        SnapshotTesting.assertSnapshot(
+            of: controller,
+            as: .image(precision: 0.99, perceptualPrecision: 0.98, size: size),
+            named: name,
+            record: ProcessInfo.processInfo.environment["RECORD_SNAPSHOTS"] == "1"
+                ? .all
+                : .never,
+            file: #filePath,
+            testName: "\(function)",
+            line: UInt(sourceLocation.line)
+        )
+    }
+
+    @Test("Ten sets stay inside the fixed sheet-session viewport")
+    func tenSetsUseFixedScrollViewport() {
+        let manySets = FitnessTestSupport.makeExercise(
+            name: "Ten Sets",
+            weight: 20,
+            reps: 12,
+            sets: 10,
+            category: .abs
+        )
+        let coordinator = sessionCoordinator(for: manySets)
+        let host = UIHostingController(
+            rootView: TrainingSessionComponent(coordinator: coordinator)
+        )
+
+        let measured = host.sizeThatFits(
+            in: CGSize(width: 393, height: CGFloat.greatestFiniteMagnitude)
+        )
+        let threeSetCoordinator = sessionCoordinator(
+            for: FitnessTestSupport.makeExercise(
+                name: "Three Sets",
+                weight: 20,
+                reps: 12,
+                sets: 3,
+                category: .abs
+            )
+        )
+        let threeSetHost = UIHostingController(
+            rootView: TrainingSessionComponent(coordinator: threeSetCoordinator)
+        )
+        let threeSetMeasured = threeSetHost.sizeThatFits(
+            in: CGSize(width: 393, height: CGFloat.greatestFiniteMagnitude)
+        )
+
+        #expect(abs(measured.height - threeSetMeasured.height) < 0.001)
+        #expect(coordinator.activeSetViewModel.setProgress.count == 10)
     }
 
     @Test(
@@ -404,17 +615,24 @@ private func assertSetCardSnapshot(
                 logicalSetIndex: $0.logicalSetIndex
             )
         }
-        viewModel.activeSetIndex = viewModel.setProgress.count - 1
     }
 
-    let height: CGFloat = executionMode == .bilateral ? 190 : 160
+    let height: CGFloat = executionMode == .bilateral
+        ? AppStyle.Layout.trainingSheetBilateralSetViewportHeight
+        : 160
     let size = CGSize(width: width, height: height)
-    let view = SimpleActiveSetView(
+    let content = SimpleActiveSetView(
         exercise: exercise,
         setProgress: .constant(viewModel.setProgress),
         viewModel: viewModel
     )
-    .frame(width: size.width, height: size.height)
+    let view = VStack(spacing: 0) {
+        content
+            .frame(width: size.width, alignment: .top)
+        Spacer(minLength: 0)
+    }
+    .frame(width: size.width, height: size.height, alignment: .top)
+    .clipped()
     .background(AppStyle.Color.backgroundColor)
 
     let controller = UIHostingController(rootView: view)
@@ -428,7 +646,7 @@ private func assertSetCardSnapshot(
         as: .image(precision: 0.99, perceptualPrecision: 0.98, size: size),
         named: snapshotName
             ?? "\(rightStepActive ? "right-active" : (filled ? "filled" : "empty"))-\(Int(width))",
-        record: shouldRecord,
+        record: shouldRecord ? .all : .never,
         file: file,
         testName: "\(function)",
         line: UInt(sourceLocation.line)

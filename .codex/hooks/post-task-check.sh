@@ -32,7 +32,8 @@ fi
 #   6. adr-required.sh      — structural change without an ADR hint
 #
 # Content-bound review/test evidence and infrastructure verification are
-# deliberately excluded: they run once for the final staged contents.
+# deliberately excluded: they run once for the frozen working-tree candidate
+# before staging.
 
 set -euo pipefail
 

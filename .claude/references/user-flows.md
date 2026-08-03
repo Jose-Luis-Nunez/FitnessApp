@@ -6,14 +6,15 @@
 
 On first app launch the user lands on the **Workouts screen** ("My Workouts"). There is **no splash, no onboarding wizard, no login**. If a "default workout" is flagged, the stack is pre-initialized directly to `Workouts → Home` (see `ProductionLaunchStrategy`), so the user immediately sees the home screen of their favorite workout.
 
-## BottomBar (4 tabs, fixed order)
+## BottomBar (5 tabs, fixed order)
 
-The persistent glass capsule at the bottom edge shows 4 tabs (left to right):
+The persistent glass capsule at the bottom edge shows 5 tabs (left to right):
 
-1. **Workout** (icon: `homeIcon`) — `popToRoot()` back to the Workouts screen
-2. **Analytics** (icon: `analyticsEntry`) — total analytics across all Exercises
-3. **Schedule** (icon: `menuCalenderIcon`) — training calendar + streaks
-4. **Profile** (icon: `profileMenuIcon`) — nickname, BMI, tram card
+1. **Workouts** (icon: `homeIcon`) — `popToRoot()` back to the Workouts screen
+2. **Training** (temporary SF Symbol `dumbbell.fill`) — opens the default workout, asks for one when needed, or returns to the workout list when none exists
+3. **Analytics** (icon: `analyticsEntry`) — total analytics across all Exercises
+4. **Schedule** (icon: `menuCalenderIcon`) — training calendar + streaks
+5. **Profile** (icon: `profileMenuIcon`) — nickname, BMI, tram card
 
 Next to them are two round glass buttons:
 
@@ -22,14 +23,15 @@ Next to them are two round glass buttons:
 
 The tab selection is not derived from an explicit "selectedTab" state, but from `AppRouter.currentScene`:
 
-| Scene                                    | Active tab  |
-| ---------------------------------------- | ----------- |
-| `workouts`, `home`, `category`, `training` | Workout     |
-| `analytics`                              | Analytics   |
-| `schedule`                               | Schedule    |
-| `profile`                                | Profile     |
+| Scene                | Active tab |
+| -------------------- | ---------- |
+| `workouts`           | Workouts   |
+| `home`, `category`   | Training   |
+| `analytics`          | Analytics  |
+| `schedule`           | Schedule   |
+| `profile`            | Profile    |
 
-That means: as long as the user is on the Workout/Training axis, the Workout tab stays highlighted. Switching to the Analytics/Schedule/Profile tabs replaces the stack completely (`switchTo(...)` rebuilds the `NavigationPath`).
+The workout list and the in-workout Training axis therefore remain visibly distinct. Switching to Analytics/Schedule/Profile replaces the stack completely (`switchTo(...)` rebuilds the `NavigationPath`).
 
 ## Navigation hierarchy (Workout axis)
 
@@ -41,12 +43,15 @@ MuscleCategorySelectionView ("Home")
     │   View-Modes: overview (5-tile grid) | list (all Exercises flat)
     │
     │   tap on category tile (overview)         tap on Exercise-Card "Start"
-    ▼                                           ▼
-MuscleCategoryView                          TrainingView
-    │                                           │   live ActiveSet, Timer, FAB-Bar
-    │   tap on Exercise "Start"                 │   after last Set → Feedback-Sheet
-    ▼                                           ▼
-TrainingView                                (Finish → pop back)
+    ▼                                           │
+MuscleCategoryView                          │
+    │   tap on Exercise "Start"                │
+    └──────────────────────┬────────────────────┘
+                           ▼
+               TrainingSheetView (overlay)
+               live ActiveSet, Timer, FAB-Bar
+               parent Category/List stays mounted
+               Finish/Cancel/Hide → dismiss sheet
 ```
 
 Tab axes outside this (each replaces the stack):
@@ -65,10 +70,10 @@ ProfileView         →  (card expand inline, no push)
 2. **Tap on workout tile** → `MuscleCategorySelectionView` (Home, overview mode)
 3. **Tap on muscle group tile** (e.g. "Chest") → `MuscleCategoryView`
 4. **Tap on Exercise-Card** (idle variant) → opens the card in "Active" mode with a Start button
-5. **Tap on "Start"** → `TrainingView`, a Set is running, the timer ticks
+5. **Tap on "Start"** → `TrainingSheetView` opens above the current Category/List screen, a Set is running, the timer ticks
 6. **Tap on Done/More/Less per Set** → the Coordinator writes `SetProgress`, jumps to the next Set
 7. After the last Set → automatically `FeedbackSheet` (two detents) → "Save" or "Hide"
-8. **Tap on "Finish"** in the TrainingActionBar → `pop()` back to the `MuscleCategoryView`, the card is now in the `completed` state
+8. **Tap on "Finish"** in the TrainingActionBar → dismiss the sheet; the still-mounted parent card is now in the `completed` state. Backdrop/grabber/Back only hide the sheet and retain the active session.
 
 With a default workout set, this reduces to **3 taps until the first Set is running** (the Workouts screen is skipped).
 
@@ -118,7 +123,7 @@ The app uses **four presentation patterns**, each for a different use case:
 | `workouts` | New workout                                                              |
 | `home`     | Overview mode: "Reset all" — List mode: "New Exercise" → category selection |
 | `category` | Add Exercise (opens the picker for the current category)                |
-| `training` | Cancel Training (with confirmation)                                      |
+| active Training sheet above `home` / `category` | Cancel Training (with confirmation)                    |
 | `profile`, `schedule`, `analytics` | _no mini menu_                                        |
 
 In addition, **every workout tile** has its own settings mini menu (tap on the gear or long-press): Duplicate / Rename / Set as Default / Delete (with a confirm step).

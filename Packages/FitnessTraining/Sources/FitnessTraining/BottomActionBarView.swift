@@ -19,9 +19,6 @@ public struct BottomActionBarView: View {
     public let onOpenFeedback: () -> Void
     public let feedbackIconState: FeedbackEntryIconState
 
-    private let barHeight: CGFloat = 0
-    private let backgroundColor = AppStyle.Color.backgroundColor
-
     public init(
         viewModel: BottomActionBarViewModel,
         onStart: @escaping () -> Void,
@@ -65,9 +62,7 @@ public struct BottomActionBarView: View {
                     onAddExercise: onAddExercise,
                     onResetAllExercises: onResetAllExercises,
                     onOpenFeedback: onOpenFeedback,
-                    feedbackIconState: feedbackIconState,
-                    barHeight: barHeight,
-                    backgroundColor: backgroundColor
+                    feedbackIconState: feedbackIconState
                 )
             }
             .background(Color.clear)
@@ -89,26 +84,17 @@ public struct FloatingActionButtonsView: View {
     public let onResetAllExercises: () -> Void
     public let onOpenFeedback: () -> Void
     public let feedbackIconState: FeedbackEntryIconState
-    public let barHeight: CGFloat
-    public let backgroundColor: Color
-
-    private var capsuleHeight: CGFloat { max(48, barHeight * 1.6) }
-    private let sideMargin: CGFloat = AppStyle.Layout.cardHorizontalPadding
-    private var capsuleWidth: CGFloat {
-#if os(iOS)
-        let defaultWidth = UIScreen.main.bounds.width - (2 * sideMargin)
-#else
-        let defaultWidth: CGFloat = 340
-#endif
-        return max(240, defaultWidth - 50)
-    }
+    private let capsuleHeight: CGFloat = 48
 
     private let bottomOffset: CGFloat = 16
+    private let setControlSurfaceHeight: CGFloat = 44
+    private let setControlSurfaceHorizontalInset: CGFloat = 4
 
-    /// Active-set controls are rounded rectangles, not full capsules. Keeping
-    /// the radius proportional to their height preserves that quieter shape
-    /// across compact and regular layouts.
-    private var setControlCornerRadius: CGFloat { capsuleHeight * 0.38 }
+    /// Active-set controls share the app's standard button radius so their
+    /// slimmer surfaces remain rounded rectangles rather than capsules.
+    private var setControlCornerRadius: CGFloat {
+        AppStyle.CornerRadius.bottomBarButton
+    }
 
     public init(
         viewModel: BottomActionBarViewModel,
@@ -122,9 +108,7 @@ public struct FloatingActionButtonsView: View {
         onAddExercise: @escaping () -> Void,
         onResetAllExercises: @escaping () -> Void,
         onOpenFeedback: @escaping () -> Void = {},
-        feedbackIconState: FeedbackEntryIconState = .entry,
-        barHeight: CGFloat,
-        backgroundColor: Color
+        feedbackIconState: FeedbackEntryIconState = .entry
     ) {
         self.viewModel = viewModel
         self.onStart = onStart
@@ -138,8 +122,6 @@ public struct FloatingActionButtonsView: View {
         self.onResetAllExercises = onResetAllExercises
         self.onOpenFeedback = onOpenFeedback
         self.feedbackIconState = feedbackIconState
-        self.barHeight = barHeight
-        self.backgroundColor = backgroundColor
     }
 
     public var body: some View {
@@ -188,7 +170,18 @@ public struct FloatingActionButtonsView: View {
     /// capsule. Only the active-set controls become separate buttons.
     private var primaryActionCapsule: some View {
         ZStack {
-            TrainingGlassEffectCompat.roundedRectangleContinuous(cornerRadius: capsuleHeight / 2)
+            if viewModel.showFinishButton {
+                TrainingControlSurfaceStyle.surface(
+                    in: RoundedRectangle(
+                        cornerRadius: capsuleHeight / 2,
+                        style: .continuous
+                    )
+                )
+            } else {
+                TrainingGlassEffectCompat.roundedRectangleContinuous(
+                    cornerRadius: capsuleHeight / 2
+                )
+            }
 
             HStack(spacing: 18) {
                 if viewModel.showStartButton && (viewModel.currentSet != 0 || viewModel.didJustEditSet) {
@@ -218,14 +211,19 @@ public struct FloatingActionButtonsView: View {
         action: @escaping () -> Void,
         style: MenuItemStyle
     ) -> some View {
+        let usesCompactSurface = style == .control || style == .done
+        let visibleHeight = usesCompactSurface
+            ? setControlSurfaceHeight
+            : capsuleHeight
+
         Button(action: action) {
             Text(text)
                 .font(AppStyle.Font.bottomBarButtons)
                 .foregroundColor(AppStyle.Color.white.opacity(0.98))
-                .frame(maxWidth: .infinity, minHeight: capsuleHeight, maxHeight: capsuleHeight)
+                .frame(maxWidth: .infinity, minHeight: visibleHeight, maxHeight: visibleHeight)
                 .padding(.horizontal, 2)
                 .background(alignment: .center) {
-                    if style == .control || style == .done {
+                    if usesCompactSurface {
                         if style == .done {
                             RoundedRectangle(
                                 cornerRadius: setControlCornerRadius,
@@ -239,18 +237,23 @@ public struct FloatingActionButtonsView: View {
                                 )
                                 .stroke(AppStyle.Color.greenGlow, lineWidth: 1.5)
                             )
+                            .padding(.horizontal, setControlSurfaceHorizontalInset)
                         } else {
-                            TrainingGlassEffectCompat.roundedRectangleContinuous(
-                                cornerRadius: setControlCornerRadius
+                            TrainingControlSurfaceStyle.surface(
+                                in: RoundedRectangle(
+                                    cornerRadius: setControlCornerRadius,
+                                    style: .continuous
+                                )
                             )
+                            .padding(.horizontal, setControlSurfaceHorizontalInset)
                         }
                     }
                 }
-                // PlainButtonStyle only hit-tests the label's own region, so the
-                // shape must wrap the full-width frame *here* — on the outer Button
-                // it leaves the padding dead to taps.
-                .contentShape(Rectangle())
         }
+        // The visible active-set surface is 44pt high, while the surrounding
+        // Button retains a full 48pt minimum touch target.
+        .frame(maxWidth: .infinity, minHeight: capsuleHeight, maxHeight: capsuleHeight)
+        .contentShape(Rectangle())
         .buttonStyle(PlainButtonStyle())
         .accessibilityIdentifier(accessibilityID(for: style, text: text))
     }
@@ -292,12 +295,9 @@ public struct FloatingActionButtonsView: View {
         .accessibilityLabel(state.accessibilityLabel)
     }
 
-    /// Shared chrome for every round surface icon button in the bottom
-    /// bar (Quick-Done, Feedback): a shared adaptive dark surface with the standard
-    /// 10%-white hairline stroke, a centred bitmap icon, and a 44×44 tap
-    /// target. The icon image is sized smaller than the glass circle —
-    /// otherwise the frame-less `circleGlass()` would expand to match the
-    /// largest sibling in the `ZStack`.
+    /// Shared chrome for every round surface icon button in the bottom bar
+    /// (Quick-Done, Feedback). The timer-matched transparent surface keeps the
+    /// two entry points visually aligned with the secondary training controls.
     private func glassCircleIconButton(
         assetName: String,
         renderingMode: Image.TemplateRenderingMode,
@@ -307,10 +307,7 @@ public struct FloatingActionButtonsView: View {
     ) -> some View {
         Button(action: action) {
             ZStack {
-                TrainingGlassEffectCompat.circleGlass()
-                    .overlay(
-                        Circle().stroke(AppStyle.Color.white.opacity(0.10), lineWidth: 1)
-                    )
+                TrainingControlSurfaceStyle.surface(in: Circle())
 
                 Image(assetName)
                     .renderingMode(renderingMode)

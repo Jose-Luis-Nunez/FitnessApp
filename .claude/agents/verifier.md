@@ -24,7 +24,7 @@ You receive:
 6. **Name Consistency:** Compare YAML `name:` with folder name for changed skills.
 7. **Content Identity:** Write
    `.claude/hooks/state/agent-infrastructure.manifest.tsv` with
-   `agent-infrastructure-evidence.sh write <manifest> staged`, obtain its
+   `agent-infrastructure-evidence.sh write <manifest> worktree`, obtain its
    fingerprint, and bind the stamp to that exact value.
 
 ## Writing the Stamp

@@ -331,6 +331,94 @@ struct ActiveSetViewModelTests {
         #expect(sut.repsInput == "10")
     }
 
+    @Test func achievementEntryOnlyOpensForActiveSet() {
+        let sut = makeSUT()
+        let exercise = makeExercise(sets: 3, reps: 10, weight: 60)
+        sut.startSet(for: exercise, category: .arms)
+
+        sut.startRecordingAchievement(index: 1)
+        #expect(sut.isEditing == false)
+        #expect(sut.pendingEditIndex == nil)
+
+        sut.startRecordingAchievement(index: 0)
+        #expect(sut.isEditing == true)
+        #expect(sut.pendingEditIndex == 0)
+        #expect(sut.editMode == .achievement)
+        #expect(sut.repsInput == "10")
+        #expect(sut.weightInput == WeightFormatter.format(60))
+    }
+
+    @Test func achievementAtTargetCompletesDoneAndAdvances() {
+        let sut = makeSUT()
+        let exercise = makeExercise(sets: 3, reps: 10, weight: 60)
+        sut.startSet(for: exercise, category: .arms)
+        sut.startRecordingAchievement(index: 0)
+
+        sut.updateCurrentReps(10, 60)
+
+        #expect(sut.setProgress[0].status == .completedDone)
+        #expect(sut.currentSet == 1)
+        #expect(sut.isSetInProgress == false)
+
+        sut.isEditing = false
+        sut.pendingEditIndex = nil
+        sut.startNextSet()
+
+        #expect(sut.activeSetIndex == 1)
+        #expect(sut.isSetInProgress == true)
+    }
+
+    @Test func achievementEntryRejectsPausedAndCompletedSessions() {
+        let paused = makeSUT()
+        let exercise = makeExercise(sets: 2, reps: 10, weight: 60)
+        paused.startSet(for: exercise, category: .arms)
+        paused.completeCurrentSet()
+
+        paused.startRecordingAchievement(index: 1)
+
+        #expect(paused.isEditing == false)
+        #expect(paused.pendingEditIndex == nil)
+
+        let completed = makeSUT()
+        completed.startSet(
+            for: makeExercise(sets: 1, reps: 10, weight: 60),
+            category: .arms
+        )
+        completed.completeCurrentSet()
+
+        completed.startRecordingAchievement(index: 0)
+
+        #expect(completed.isEditing == false)
+        #expect(completed.pendingEditIndex == nil)
+    }
+
+    @Test func achievementUsesRepsFirstAndWeightForTies() {
+        let lowerReps = makeSUT()
+        let exercise = makeExercise(sets: 1, reps: 10, weight: 60)
+        lowerReps.startSet(for: exercise, category: .arms)
+        lowerReps.startRecordingAchievement(index: 0)
+        lowerReps.updateCurrentReps(8, 70)
+        #expect(lowerReps.setProgress[0].status == .completedLess)
+
+        let higherReps = makeSUT()
+        higherReps.startSet(for: exercise, category: .arms)
+        higherReps.startRecordingAchievement(index: 0)
+        higherReps.updateCurrentReps(12, 50)
+        #expect(higherReps.setProgress[0].status == .completedMore)
+
+        let lowerWeight = makeSUT()
+        lowerWeight.startSet(for: exercise, category: .arms)
+        lowerWeight.startRecordingAchievement(index: 0)
+        lowerWeight.updateCurrentReps(10, 55)
+        #expect(lowerWeight.setProgress[0].status == .completedLess)
+
+        let higherWeight = makeSUT()
+        higherWeight.startSet(for: exercise, category: .arms)
+        higherWeight.startRecordingAchievement(index: 0)
+        higherWeight.updateCurrentReps(10, 65)
+        #expect(higherWeight.setProgress[0].status == .completedMore)
+    }
+
     @Test func resetEditingStateClearsInputs() {
         let sut = makeSUT()
         sut.repsInput = "12"

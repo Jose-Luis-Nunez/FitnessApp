@@ -12,13 +12,25 @@ final class TrainingNavigationUITests: BaseTest {
     }
 
     @MainActor
-    func testListStartedTrainingBackReturnsToList() throws {
+    func testListStartedTrainingBackdropDismissesToList() throws {
+        try launch(exerciseList: .defaultArmsExercise)
+        openListAndStartTraining()
+
+        tapOn(TrainingIDs.sheetBackdrop)
+
+        verifyListParent()
+        verifyNotExists(TrainingIDs.sheet)
+    }
+
+    @MainActor
+    func testListStartedTrainingBackDismissesToList() throws {
         try launch(exerciseList: .defaultArmsExercise)
         openListAndStartTraining()
 
         tapOn(BottomBarIDs.backButton)
 
         verifyListParent()
+        verifyNotExists(TrainingIDs.sheet)
     }
 
     @MainActor
@@ -29,6 +41,7 @@ final class TrainingNavigationUITests: BaseTest {
         tapOn(TrainingIDs.cancelTraining)
 
         verifyListParent()
+        verifyNotExists(TrainingIDs.sheet)
     }
 
     @MainActor
@@ -67,6 +80,32 @@ final class TrainingNavigationUITests: BaseTest {
         tapOn(BottomBarIDs.backButton)
 
         verifyCategoryParent()
+        verifyNotExists(TrainingIDs.sheet)
+    }
+
+    @MainActor
+    func testCategoryStartedTrainingSwipeDownReturnsToCategory() throws {
+        try launch(exerciseCategory: .defaultArmsExercise)
+        tapOn(MuscleCategoryIDs.startExercise)
+
+        swipeDownOn(TrainingIDs.sheetGrabber)
+
+        verifyCategoryParent()
+        verifyNotExists(TrainingIDs.sheet)
+    }
+
+    @MainActor
+    func testDismissedTrainingResumesExistingProgress() throws {
+        try launch(exerciseCategory: .defaultArmsExercise)
+        tapOn(MuscleCategoryIDs.startExercise)
+        tapOn(TrainingIDs.doneButton)
+        waitForNonEmptyLabel(TrainingIDs.repsField(set: 0))
+
+        tapOn(TrainingIDs.sheetBackdrop)
+        tapOn(MuscleCategoryIDs.startExercise)
+
+        verifyExists(TrainingIDs.sheet)
+        waitForNonEmptyLabel(TrainingIDs.repsField(set: 0))
     }
 
     @MainActor
@@ -77,6 +116,7 @@ final class TrainingNavigationUITests: BaseTest {
         tapOn(TrainingIDs.cancelTraining)
 
         verifyCategoryParent()
+        verifyNotExists(TrainingIDs.sheet)
     }
 
     @MainActor
@@ -141,5 +181,6 @@ final class TrainingNavigationUITests: BaseTest {
             waitForNonEmptyLabel(TrainingIDs.repsField(set: setIndex - 1))
         }
         tapOn(TrainingIDs.finishButton)
+        verifyNotExists(TrainingIDs.sheet)
     }
 }

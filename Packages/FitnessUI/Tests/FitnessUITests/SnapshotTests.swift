@@ -317,6 +317,32 @@ struct SetTileViewSnapshotTests {
     }
 }
 
+// MARK: - Exercise Muscle Icon Snapshots
+
+@Suite("ExerciseMuscleIconView — Snapshots", .tags(.snapshot))
+@MainActor
+struct ExerciseMuscleIconViewSnapshotTests {
+
+    @Test func trainingRailArtwork() throws {
+        let view = ExerciseMuscleIconView(
+            iconName: "defaultAbsIcon",
+            alignment: .top,
+            allowsEditing: true,
+            accessibilityIdentifier: "test_exercise_muscle_icon",
+            size: 120,
+            showsGlow: false,
+            artwork: try appAssetImage(named: "defaultAbsIcon"),
+            onEdit: {}
+        )
+
+        assertSnapshot(
+            of: view,
+            named: "training-rail",
+            size: CGSize(width: 140, height: 140)
+        )
+    }
+}
+
 // MARK: - SetTilesRow Snapshots
 
 @Suite("SetTilesRow — Snapshots", .tags(.snapshot))

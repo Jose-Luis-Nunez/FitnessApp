@@ -68,13 +68,13 @@ write_fixture_evidence() {
 
   (
     cd "$repo"
-    bash "$EVIDENCE" write .claude/hooks/state/code-changes.manifest.tsv staged
+    bash "$EVIDENCE" write .claude/hooks/state/code-changes.manifest.tsv worktree
     code_fingerprint=$(bash "$EVIDENCE" fingerprint .claude/hooks/state/code-changes.manifest.tsv)
     printf 'result: PASS\nrisk: %s\nverified_by: %s\nsource_fingerprint: %s\n' \
       "$risk" "$reviewer" "$code_fingerprint" > .claude/hooks/state/code-changes.stamp.md
-    bash "$EVIDENCE" write .claude/hooks/state/test-execution.manifest.tsv staged
+    bash "$EVIDENCE" write .claude/hooks/state/test-execution.manifest.tsv worktree
     test_fingerprint=$(bash "$EVIDENCE" fingerprint .claude/hooks/state/test-execution.manifest.tsv)
-    printf 'result: PASS\nverified_by: %s\nmode: verify\ncommand: focused fixture\ntests: 1/1\nsource_fingerprint: %s\n' \
+    printf 'result: PASS\nverified_by: %s\nmode: verify\ncommand: focused fixture\ntests: 1/1\nexit_code: 0\nsource_fingerprint: %s\n' \
       "$tester" "$test_fingerprint" > .claude/hooks/state/test-execution.stamp.md
   )
 }
@@ -121,6 +121,15 @@ red_repo=$(new_repo red)
 printf 'final class WorkoutStorage { func save() {} }\n' > "$red_repo/Packages/FitnessStorage/Sources/FitnessStorage/WorkoutStorage.swift"
 expect_equal "red" "$(cd "$red_repo" && bash "$RISK" classify)" "red storage classification"
 
+whitespace_repo=$(new_repo staged-whitespace)
+printf 'struct CardView { } \n' > "$whitespace_repo/Packages/FitnessUI/Sources/FitnessUI/CardView.swift"
+(
+  cd "$whitespace_repo"
+  git add Packages/FitnessUI/Sources/FitnessUI/CardView.swift
+)
+expect_failure "combined diff check rejects staged whitespace" \
+  bash -c "cd '$whitespace_repo' && git diff HEAD --check >/dev/null"
+
 manifest="$green_repo/.claude/hooks/state/evidence.tsv"
 (
   cd "$green_repo"
@@ -131,11 +140,47 @@ expect_success "unchanged evidence remains valid" bash -c "cd '$green_repo' && b
   cd "$green_repo"
   git add Packages/FitnessUI/Sources/FitnessUI/CardView.swift
 )
-expect_success "manifest covers identical staged blob" bash -c "cd '$green_repo' && bash '$EVIDENCE' verify '$manifest' staged"
+expect_success "manifest matches identical staged candidate" bash -c "cd '$green_repo' && bash '$EVIDENCE' verify '$manifest' staged"
 printf 'struct CardView { let spacing = 9 }\n' > "$green_repo/Packages/FitnessUI/Sources/FitnessUI/CardView.swift"
 expect_failure "same-path content edit invalidates evidence" bash -c "cd '$green_repo' && bash '$EVIDENCE' verify '$manifest'"
 expect_success "unstaged follow-up does not invalidate staged evidence" \
   bash -c "cd '$green_repo' && bash '$EVIDENCE' verify '$manifest' staged"
+
+partial_repo=$(new_repo validated-partial-candidate)
+printf 'struct SharedProvider {}\n' > "$partial_repo/Packages/FitnessUI/Sources/FitnessUI/SharedProvider.swift"
+printf 'struct Consumer { let provider = SharedProvider() }\n' > "$partial_repo/Packages/FitnessUI/Sources/FitnessUI/Consumer.swift"
+partial_manifest="$partial_repo/.claude/hooks/state/complete-candidate.tsv"
+(
+  cd "$partial_repo"
+  bash "$EVIDENCE" write "$partial_manifest" worktree
+  git add Packages/FitnessUI/Sources/FitnessUI/Consumer.swift
+)
+expect_failure "validated two-file candidate rejects staged dependent subset" \
+  bash -c "cd '$partial_repo' && bash '$EVIDENCE' verify '$partial_manifest' staged"
+(
+  cd "$partial_repo"
+  git add Packages/FitnessUI/Sources/FitnessUI/SharedProvider.swift
+)
+expect_success "validated two-file candidate accepts exact staged candidate" \
+  bash -c "cd '$partial_repo' && bash '$EVIDENCE' verify '$partial_manifest' staged"
+
+valid_test_stamp="$TEMP_ROOT/test-execution-valid.stamp.md"
+failed_test_stamp="$TEMP_ROOT/test-execution-failed.stamp.md"
+misspelled_exit_stamp="$TEMP_ROOT/test-execution-misspelled-exit.stamp.md"
+misspelled_metadata_stamp="$TEMP_ROOT/test-execution-misspelled-metadata.stamp.md"
+fixture_fingerprint=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+printf 'result: PASS\nverified_by: tester-subagent\nmode: verify\nexit_code: 0\nsource_fingerprint: %s\n' "$fixture_fingerprint" > "$valid_test_stamp"
+printf 'result: FAIL # expected result: PASS\nverified_by: tester-subagent\nmode: verify\nexit_code: 0\nsource_fingerprint: %s\n' "$fixture_fingerprint" > "$failed_test_stamp"
+printf 'result: PASS\nverified_by: tester-subagent\nmode: verify\nbad_exit_code: 0\nsource_fingerprint: %s\n' "$fixture_fingerprint" > "$misspelled_exit_stamp"
+printf 'result: PASS\nbad_verified_by: tester-subagent\nbad_mode: verify\nexit_code: 0\nbad_source_fingerprint: %s\n' "$fixture_fingerprint" > "$misspelled_metadata_stamp"
+expect_success "tester success contract accepts canonical PASS stamp" \
+  bash -c "source '$EVIDENCE'; test_execution_stamp_has_required_fields '$valid_test_stamp'"
+expect_failure "tester success contract rejects embedded PASS comment" \
+  bash -c "source '$EVIDENCE'; test_execution_stamp_has_required_fields '$failed_test_stamp'"
+expect_failure "tester success contract rejects misspelled exit field" \
+  bash -c "source '$EVIDENCE'; test_execution_stamp_has_required_fields '$misspelled_exit_stamp'"
+expect_failure "tester success contract rejects misspelled metadata fields" \
+  bash -c "source '$EVIDENCE'; test_execution_stamp_has_required_fields '$misspelled_metadata_stamp'"
 
 infra_repo=$(new_repo infra)
 printf '# Architecture updated\n' > "$infra_repo/.claude/references/architecture-documentation.md"
@@ -191,14 +236,8 @@ expect_failure "pre-commit blocks unverified infrastructure" \
   bash -c "cd '$infra_repo' && bash '$PRE_COMMIT' >/dev/null 2>&1"
 cp "$TEMP_ROOT/infra-state/agent-infrastructure.stamp.md" \
   "$infra_repo/.claude/hooks/state/agent-infrastructure.stamp.md"
-(
-  cd "$infra_repo"
-  bash "$REPO_ROOT/.claude/hooks/lib/agent-infrastructure-evidence.sh" write \
-    .claude/hooks/state/agent-infrastructure.manifest.tsv staged
-)
-infra_commit_fingerprint=$(cd "$infra_repo" && bash "$REPO_ROOT/.claude/hooks/lib/agent-infrastructure-evidence.sh" fingerprint .claude/hooks/state/agent-infrastructure.manifest.tsv)
-sed -i '' "s/${infra_fingerprint}/${infra_commit_fingerprint}/" \
-  "$infra_repo/.claude/hooks/state/agent-infrastructure.stamp.md"
+cp "$TEMP_ROOT/infra-state/agent-infrastructure.manifest.tsv" \
+  "$infra_repo/.claude/hooks/state/agent-infrastructure.manifest.tsv"
 expect_success "pre-commit accepts exact verifier infrastructure evidence" \
   bash -c "cd '$infra_repo' && bash '$PRE_COMMIT'"
 
@@ -218,6 +257,16 @@ write_fixture_evidence "$hook_repo" green main-agent main-agent
   expect_equal "green" "$(bash "$RISK" classify staged)" "staged green classification"
 )
 expect_success "pre-commit accepts exact green evidence" bash -c "cd '$hook_repo' && bash '$PRE_COMMIT'"
+
+prestage_repo=$(new_repo pre-stage-validation)
+printf 'struct CardView { let spacing = 12 }\n' > "$prestage_repo/Packages/FitnessUI/Sources/FitnessUI/CardView.swift"
+write_fixture_evidence "$prestage_repo" green main-agent main-agent
+(
+  cd "$prestage_repo"
+  git add Packages/FitnessUI/Sources/FitnessUI/CardView.swift
+)
+expect_success "pre-commit accepts evidence created before git add" \
+  bash -c "cd '$prestage_repo' && bash '$PRE_COMMIT'"
 
 printf 'struct CardView { let spacing = 10 }\n' > "$hook_repo/Packages/FitnessUI/Sources/FitnessUI/CardView.swift"
 (
@@ -273,6 +322,10 @@ expect_success "private coordinator behavior does not require architecture docum
   bash -c "cd '$coordinator_behavior_repo' && bash '$PRE_COMMIT' >/dev/null"
 
 expect_success "runtime adapters are synchronized" "$REPO_ROOT/scripts/sync-agent-runtime.sh" --check
+expect_success "review workflow checks staged and unstaged whitespace" \
+  grep -q 'git diff HEAD --check' "$REPO_ROOT/.claude/skills/reviewing-code-changes/SKILL.md"
+expect_success "validate command checks staged and unstaged whitespace" \
+  grep -q 'git diff HEAD --check' "$REPO_ROOT/.claude/commands/validate.md"
 expect_success "subagent gate remains valid shell" bash -n "$REPO_ROOT/.claude/hooks/subagent-gate.sh"
 
 kill_switch_repo="$TEMP_ROOT/kill-switch"

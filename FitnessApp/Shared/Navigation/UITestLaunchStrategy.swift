@@ -13,9 +13,8 @@ struct UITestLaunchStrategy: AppLaunchStrategy {
     /// and re-used by both `prepare(...)` and `initialNavigationStack(...)`.
     /// Per-instance (not static) so parallel UI-test runners cannot stomp
     /// each other's seed — `parallelizable = "YES"` on the UITests scheme.
-    /// Post-T8d, `TrainingView` resolves this id to a live `ExerciseModel`
-    /// via `@Query`, so the navigation arg and the persisted record must
-    /// agree, and both phases of the launch pipeline must see the same id.
+    /// Re-used while seeding the persisted fixture so live `@Query` card and
+    /// training-sheet reads resolve the same exercise identity.
     let seededExerciseId: UUID?
     let seededAdditionalExerciseIds: [UUID]
 
@@ -84,11 +83,9 @@ struct UITestLaunchStrategy: AppLaunchStrategy {
         let workout = Workout(name: "Test Workout")
         workoutService.setCurrentWorkout(workout)
 
-        // Exercise-navigation fixtures seed BOTH the workout and the fixture
-        // exercise directly into the SwiftData container. Pre-T8d the legacy
-        // `TrainingView` accepted the in-memory `Exercise` literal and never
-        // touched the store; post-T8d it resolves an `ExerciseModel` via
-        // `@Query` so we must materialise a live record.
+        // Exercise fixtures seed BOTH the workout and exercise directly into
+        // SwiftData so category/list cards and the training sheet share the
+        // same live model row.
         //
         // We seed via a fresh `ModelContext` against the same container the
         // app reads from (Factory singleton). Going through
@@ -108,12 +105,6 @@ struct UITestLaunchStrategy: AppLaunchStrategy {
         switch config.screen {
         case .home:
             return [.home]
-
-        case .training:
-            guard let category = MuscleCategoryGroup(rawValue: config.category),
-                  let exerciseId = seededExerciseId
-            else { return [] }
-            return [.home, .muscleCategory(category), .training(exerciseId: exerciseId, category: category)]
 
         case .category:
             guard let category = MuscleCategoryGroup(rawValue: config.category)

@@ -3,193 +3,243 @@ import SwiftData
 import FitnessCore
 import FitnessUI
 import FitnessExercise
-import FitnessAnalytics
 import FitnessTraining
 @_spi(PersistenceUI) import FitnessStorage
-@_spi(PersistenceUI) import FitnessPersistenceUI
 import Factory
 
-/// Hosts the active training session for a single exercise.
+/// Presents one live training session above the current category/list screen.
 ///
-/// Architecture note (ADR-0001 / T8d): the screen is parameterised by an
-/// `exerciseId`, not an `Exercise` value. The id is resolved to a live
-/// `ExerciseModel` via `@Query`, so any subsequent mutation (rename, weight
-/// edit, completion flag flip) propagates into the card automatically — the
-/// snapshot-sync via the legacy `ExerciseCardViewModel` is gone.
-///
-/// Coordinator APIs (`TrainingCoordinator.startTraining(for:workoutId:)`,
-/// `TrainingActionBarComponent`) still operate on `Exercise` (DTO), so we
-/// bridge with `model.toDomain()` at the call sites.
-struct TrainingView: View {
+/// The presentation carries only an exercise id and category. This app-layer
+/// host resolves the live SwiftData model through `@Query`, then bridges to the
+/// DTO-based `TrainingCoordinator` at the existing package boundary. Hiding
+/// the sheet never owns or clears the coordinator session.
+struct TrainingSheetView: View {
     let exerciseId: UUID
     let category: MuscleCategoryGroup
 
     @Environment(AppRouter.self) private var router
-    private var trainingCoordinator: TrainingCoordinator
-    @State private var analyticsViewModel: AnalyticsViewModel
     @Environment(UIOverlayState.self) private var overlayState
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.safeAreaInsets) private var safeAreaInsets
 
+    private var trainingCoordinator: TrainingCoordinator
     @Query private var models: [ExerciseModel]
     @State private var phase: Phase = .waitingForQuery
-
-    /// Drives the reused "Edit Seat" overlay (`ExerciseSeatPickerView`) when the
-    /// user taps the exercise body icon during an active session. Seat editing
-    /// was previously unreachable here — the card's `onEdit` was a no-op — which
-    /// is the "Sitz verstellen geht nicht / nicht sichtbar" feedback.
     @State private var formViewModel = ExerciseFormViewModel()
 
     private enum Phase {
         case waitingForQuery
         case active
         case finishing
-        case cancelling
-        case navigatedBack
     }
 
     init(exerciseId: UUID, category: MuscleCategoryGroup) {
         self.exerciseId = exerciseId
         self.category = category
 
-        // Predicate filters by id; the result is at most one model. We can't
-        // use `.first` directly inside `#Predicate`, so we evaluate `models.first`
-        // in the body. Capturing the id in the predicate as a local prevents a
-        // recapture warning if `exerciseId` is mutated later (it isn't here, but
-        // SwiftData's macro expansion is sensitive to the closure's capture set).
         let id = exerciseId
         self._models = Query(filter: #Predicate<ExerciseModel> { $0.id == id })
 
         let coordinatorCache = Container.shared.trainingCoordinatorCache()
         let coordinator = coordinatorCache.coordinator(for: category)
         self.trainingCoordinator = coordinator
-
-        self._analyticsViewModel = State(wrappedValue: coordinator.analyticsViewModel)
     }
 
-    @Environment(\.safeAreaInsets) private var safeAreaInsets
-    private var safeAreaBottomInset: CGFloat { safeAreaInsets.bottom }
-
     var body: some View {
-        ZStack(alignment: .bottom) {
-            AppStyle.Color.backgroundColor
+        GeometryReader { geometry in
+            ZStack(alignment: .bottom) {
+                Button(action: { dismissTrainingSheet() }) {
+                    Color.black.opacity(AppStyle.Opacity.overlayBackdrop)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
                 .ignoresSafeArea()
-                .animation(.easeInOut(duration: 0.2), value: trainingCoordinator.isTrainingActive)
+                .accessibilityLabel("Close training")
+                .accessibilityIdentifier(TrainingIDs.sheetBackdrop)
 
-            // The `@Query` result is empty until SwiftData materialises the row.
-            // In practice this is synchronous on a hot store, but keep the
-            // unwrap explicit so the view doesn't crash on a deep-link / cold
-            // launch into a deleted id.
-            if let model = models.first, trainingCoordinator.isTrainingActive {
-                trainingContent(model: model)
-            }
+                if let model = models.first, trainingCoordinator.isTrainingActive {
+                    sheetContent(model: model)
+                        .frame(
+                            maxHeight: max(
+                                0,
+                                geometry.size.height
+                                    - AppStyle.Layout.trainingSheetMinimumBackdropHeight
+                            ),
+                            alignment: .bottom
+                        )
 
-            // Training Mini Menu Overlay
-            if overlayState.showTrainingMiniMenu {
-                miniMenuOverlay
-            }
+                    TrainingPickerComponent(coordinator: trainingCoordinator)
 
-            // Reused "Edit Seat" overlay — same component as the idle/category flow.
-            if formViewModel.showForm {
-                ExerciseSeatPickerView(
-                    formViewModel: formViewModel,
-                    isPresented: $formViewModel.showForm,
-                    onSave: { saveSeat() },
-                    onCancel: { formViewModel.clearForm() }
-                )
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                .shadow(radius: 5)
-                .transition(.identity)
-                .zIndex(3)
-                .hidesBottomBarWhilePresented(overlayState)
+                    FeedbackSheetComponent(
+                        coordinator: trainingCoordinator,
+                        category: category
+                    )
+                }
+
+                if overlayState.showTrainingMiniMenu {
+                    miniMenuOverlay
+                }
+
+                if formViewModel.showForm {
+                    seatPicker
+                }
             }
         }
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)
-        .navigationBarHidden(true)
         .onAppear {
             startTrainingIfReady()
+            dismissIfExerciseIsMissing()
         }
         .onChange(of: models.first?.id) { _, _ in
             startTrainingIfReady()
+            dismissIfExerciseIsMissing()
         }
         .onChange(of: trainingCoordinator.isTrainingActive) { _, isActive in
-            if !isActive && phase == .active {
-                phase = .finishing
-                overlayState.showTrainingMiniMenu = false
-
-                Task { @MainActor in
-                    try? await Task.sleep(for: TimingConstants.popDelayAfterFinish)
-                    router.pop()
-                }
-            } else if !isActive && phase == .cancelling {
-                overlayState.showTrainingMiniMenu = false
-            }
+            handleTrainingActivityChange(isActive)
         }
         .onDisappear {
-            phase = .navigatedBack
             overlayState.showTrainingMiniMenu = false
         }
     }
 
-    @ViewBuilder
-    private func trainingContent(model: ExerciseModel) -> some View {
+    private func sheetContent(model: ExerciseModel) -> some View {
         VStack(spacing: 0) {
-            Text(model.name)
-                .font(AppStyle.Font.navigationHeadline)
-                .foregroundColor(AppStyle.Color.white)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, AppStyle.Padding.horizontal)
-                .padding(.top, AppStyle.Padding.titleTop)
-                .padding(.bottom, AppStyle.Padding.titleBottomBeforeActiveCard)
+            sheetHeader
 
-            ScrollView {
-                LazyVStack(spacing: 16) {
-                    ExerciseCardModelView(
-                        model: model,
-                        onEdit: { exercise, mode in
-                            guard mode == .seat else { return }
-                            withAnimation {
-                                formViewModel.loadExercise(exercise, category: category)
-                                formViewModel.editMode = .seat
-                                formViewModel.showForm = true
-                            }
-                        },
-                        isEditable: !trainingCoordinator.activeSetViewModel.isSetInProgress,
-                        analyticsViewModel: analyticsViewModel,
-                        activeSetViewModel: trainingCoordinator.activeSetViewModel,
-                        onStart: { _ in
-                            // Exercise is already started when view appears
-                        },
-                        onReset: { _ in
-                            trainingCoordinator.resetExercise()
-                        },
-                        isActiveSetVisible: trainingCoordinator.isTrainingActive,
-                        isResetEnabled: model.isCompleted
-                    )
+            Color.clear
+                .frame(height: AppStyle.Layout.trainingSheetHeaderSpacing)
 
-                    TrainingSessionComponent(
-                        coordinator: trainingCoordinator,
-                        onCancel: { cancelTraining() },
-                        analyticsViewModel: analyticsViewModel
-                    )
-                }
-                .padding(.horizontal, 0)
-                .padding(.bottom, safeAreaBottomInset + 120) // Space for FABs
-            }
+            TrainingSessionComponent(
+                coordinator: trainingCoordinator,
+                onEdit: { exercise, mode in
+                    guard mode == .seat else { return }
+                    withAnimation {
+                        formViewModel.loadExercise(exercise, category: category)
+                        formViewModel.editMode = .seat
+                        formViewModel.showForm = true
+                    }
+                },
+                onCancel: { cancelTraining() }
+            )
+
+            TrainingActionBarComponent(
+                coordinator: trainingCoordinator,
+                exercises: [model.toDomain()],
+                hasActiveExercise: trainingCoordinator.isTrainingActive
+            )
+            .padding(.top, AppStyle.Layout.trainingSheetActionBarTopSpacing)
+            .offset(y: 10)
+
+            Color.clear
+                .frame(height: AppStyle.Layout.trainingSheetBottomBarClearance)
         }
+        .frame(maxWidth: .infinity)
+        .background {
+            UnevenRoundedRectangle(
+                topLeadingRadius: AppStyle.CornerRadius.sheet,
+                bottomLeadingRadius: 0,
+                bottomTrailingRadius: 0,
+                topTrailingRadius: AppStyle.CornerRadius.sheet,
+                style: .continuous
+            )
+            .fill(
+                LinearGradient(
+                    colors: [
+                        AppStyle.Color.idleCardSoft,
+                        AppStyle.Color.idleCardBackground,
+                        AppStyle.Color.idleCardDark,
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .ignoresSafeArea(edges: .bottom)
+        }
+        .overlay {
+            ZStack {
+                UnevenRoundedRectangle(
+                    topLeadingRadius: AppStyle.CornerRadius.sheet,
+                    bottomLeadingRadius: 0,
+                    bottomTrailingRadius: 0,
+                    topTrailingRadius: AppStyle.CornerRadius.sheet,
+                    style: .continuous
+                )
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            AppStyle.Color.idleCardInnerGlow,
+                            .clear,
+                        ],
+                        center: .topLeading,
+                        startRadius: 0,
+                        endRadius: 200
+                    )
+                )
 
-        TrainingActionBarComponent(
-            coordinator: trainingCoordinator,
-            exercises: [model.toDomain()],
-            hasActiveExercise: trainingCoordinator.isTrainingActive
+                UnevenRoundedRectangle(
+                    topLeadingRadius: AppStyle.CornerRadius.sheet,
+                    bottomLeadingRadius: 0,
+                    bottomTrailingRadius: 0,
+                    topTrailingRadius: AppStyle.CornerRadius.sheet,
+                    style: .continuous
+                )
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [
+                            AppStyle.Color.idleCardBorderLight,
+                            AppStyle.Color.idleCardBorderDark,
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: AppStyle.Layout.idleCardBorderWidth
+                )
+            }
+            .ignoresSafeArea(edges: .bottom)
+            .allowsHitTesting(false)
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier(TrainingIDs.sheet)
+    }
+
+    private var sheetHeader: some View {
+        Capsule()
+            .fill(Color.white.opacity(AppStyle.Opacity.grabberHandle))
+            .frame(
+                width: AppStyle.Layout.grabberWidth,
+                height: AppStyle.Layout.grabberHeight
+            )
+            .padding(.top, 8)
+            .padding(.bottom, 10)
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
+            .accessibilityElement()
+            .accessibilityLabel("Close training")
+            .accessibilityHint("Swipe down or activate to return to the workout")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { dismissTrainingSheet() }
+            .accessibilityIdentifier(TrainingIDs.sheetGrabber)
+            .gesture(
+                DragGesture(minimumDistance: 12).onEnded { value in
+                    if value.translation.height > 80 {
+                        dismissTrainingSheet()
+                    }
+                }
+            )
+    }
+
+    private var seatPicker: some View {
+        ExerciseSeatPickerView(
+            formViewModel: formViewModel,
+            isPresented: $formViewModel.showForm,
+            onSave: { saveSeat() },
+            onCancel: { formViewModel.clearForm() }
         )
-        .padding(.bottom, safeAreaBottomInset + 12)
-
-        TrainingPickerComponent(coordinator: trainingCoordinator)
-
-        FeedbackSheetComponent(
-            coordinator: trainingCoordinator,
-            category: category
-        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        .shadow(radius: 5)
+        .transition(.identity)
+        .zIndex(3)
+        .hidesBottomBarWhilePresented(overlayState)
     }
 
     private var miniMenuOverlay: some View {
@@ -218,22 +268,11 @@ struct TrainingView: View {
                     )
                     .padding(.trailing, 12)
                 }
-                .padding(.bottom, safeAreaBottomInset - 50)
+                .padding(.bottom, safeAreaInsets.bottom - 50)
             }
             .transition(.opacity)
             .zIndex(4)
         }
-    }
-
-    private enum TimingConstants {
-        /// Lets the `isTrainingActive` `.easeInOut(duration: 0.2)` exit
-        /// animation play to completion before the navigation pops; without
-        /// this the user sees a frame of un-animated empty screen.
-        static let popDelayAfterFinish: Duration = .milliseconds(100)
-
-        /// Holds the `isCancellingTraining` overlay flag for the duration of
-        /// the pop transition so the mini-menu doesn't flicker back into view.
-        static let cancelOverlayHoldDuration: Duration = .milliseconds(200)
     }
 
     private func startTrainingIfReady() {
@@ -245,19 +284,48 @@ struct TrainingView: View {
                 workoutId: workoutId
             )
         } else {
-            // Legacy/orphan rows remain trainable, but cannot contribute to a
-            // workout-scoped learned order without a workout id.
             result = trainingCoordinator.startTraining(for: model.toDomain())
         }
-        guard result != nil else { return }
+        guard result != nil else {
+            router.dismissTraining()
+            return
+        }
         phase = .active
     }
 
-    /// Persists the edited seat through the coordinator, which routes it via the
-    /// app's single exercise-write path (storage service). The view must NOT
-    /// mutate the `@Model` directly: the targeted storage update owns the write
-    /// transaction and preserves the row identity observed by category queries.
-    /// See `TrainingCoordinator.updateActiveSeat`.
+    /// Verifies the one exceptional empty-query case without a timing guess.
+    /// `@Query` remains the live rendering source; this targeted fetch only
+    /// distinguishes an absent row from a query that has not published yet.
+    private func dismissIfExerciseIsMissing() {
+        guard models.first == nil,
+              router.trainingPresentation?.exerciseId == exerciseId else {
+            return
+        }
+
+        let id = exerciseId
+        let descriptor = FetchDescriptor<ExerciseModel>(
+            predicate: #Predicate<ExerciseModel> { $0.id == id }
+        )
+        guard let count = try? modelContext.fetchCount(descriptor), count == 0 else {
+            return
+        }
+
+        router.dismissTraining()
+    }
+
+    private func handleTrainingActivityChange(_ isActive: Bool) {
+        if !isActive && phase == .active {
+            phase = .finishing
+            overlayState.showTrainingMiniMenu = false
+            router.dismissTraining()
+        }
+    }
+
+    private func dismissTrainingSheet() {
+        overlayState.showTrainingMiniMenu = false
+        router.dismissTraining()
+    }
+
     private func saveSeat() {
         let trimmed = formViewModel.seat.trimmingCharacters(in: .whitespaces)
         let newSeat: String? = trimmed.isEmpty ? nil : trimmed
@@ -266,19 +334,10 @@ struct TrainingView: View {
     }
 
     private func cancelTraining() {
-        phase = .cancelling
-        overlayState.isCancellingTraining = true
         overlayState.showTrainingMiniMenu = false
 
         trainingCoordinator.cancelTraining()
-        // Return to the actual entry screen. Rebuilding a category stack here
-        // loses the list-view entry point and its selected view mode.
-        router.pop()
-
-        Task { @MainActor in
-            try? await Task.sleep(for: TimingConstants.cancelOverlayHoldDuration)
-            overlayState.isCancellingTraining = false
-        }
+        router.dismissTraining()
     }
 
     #Preview {
@@ -305,7 +364,7 @@ struct TrainingView: View {
             id: UUID(),
             workoutId: workoutId,
             name: "Sample Exercise",
-            weight: 20.0,
+            weight: 20,
             reps: 12,
             sets: 3,
             iconName: "defaultChestIcon",
@@ -315,11 +374,15 @@ struct TrainingView: View {
         context.insert(model)
         try? context.save()
 
-        return NavigationStack {
-            TrainingView(exerciseId: model.id, category: .chest)
+        let router = AppRouter()
+        router.presentTraining(exerciseId: model.id, category: .chest)
+
+        return ZStack {
+            AppStyle.Color.backgroundColor.ignoresSafeArea()
+            TrainingSheetView(exerciseId: model.id, category: .chest)
         }
         .environment(UIOverlayState())
-        .environment(AppRouter())
+        .environment(router)
         .modelContainer(container)
     }
 }

@@ -2,6 +2,12 @@ import Foundation
 import FitnessCore
 
 public enum TrainingIDs {
+    public static let sheet = "id_training_sheet"
+    public static let sheetBackdrop = "id_training_sheet_backdrop"
+    public static let sheetGrabber = "id_training_sheet_grabber"
+    public static let sheetTitle = "id_training_sheet_title"
+    public static let muscleIcon = "id_training_muscle_icon"
+    public static let setScroll = "id_training_set_scroll"
     public static let doneButton = "id_button_done"
     public static let finishButton = "id_button_finish"
     public static let startButton = "id_button_start"
@@ -20,4 +26,11 @@ public enum TrainingIDs {
     public static func sideHeader(_ side: ExerciseSide) -> String {
         "id_training_side_\(side.rawValue)"
     }
+}
+
+public enum WorkoutPickerIDs {
+    public static let dropdown = "id_workout_dropdown"
+    public static let overlay = "id_workout_picker"
+    public static let wheel = "id_workout_picker_wheel"
+    public static let confirmButton = "id_workout_picker_confirm"
 }

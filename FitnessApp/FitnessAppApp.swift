@@ -105,32 +105,47 @@ struct FitnessAppApp: App {
                                 case .muscleCategory(let group):
                                     MuscleCategoryView(group: group)
                                         .navigationBarBackButtonHidden(true)
-                                case .training(let exerciseId, let category):
-                                    TrainingView(exerciseId: exerciseId, category: category)
-                                        .navigationBarBackButtonHidden(true)
                                 }
                             }
-                            // Workout selection, muscle categories, and training
-                            // are drill-downs. Top-level menu-bar destinations
-                            // remain tab switches and therefore do not enable
-                            // swipe-back.
+                            // Workout selection and muscle categories are
+                            // drill-downs. Training is a separate sheet
+                            // presentation and never mutates this stack.
                             switch destination {
                             case .home where router.isHomePushedFromWorkoutList:
                                 view.enableSwipeBack()
-                            case .muscleCategory, .training:
+                            case .muscleCategory:
                                 view.enableSwipeBack()
                             case .home, .profile, .totalAnalytics, .schedule:
                                 view
                             }
                         }
                 }
-                .zIndex(overlayState.isEditingSheetVisible ? 2 : 0)
+                .zIndex(
+                    overlayState.isEditingSheetVisible && router.trainingPresentation == nil
+                        ? 2
+                        : 0
+                )
+
+                if let presentation = router.trainingPresentation {
+                    TrainingSheetView(
+                        exerciseId: presentation.exerciseId,
+                        category: presentation.category
+                    )
+                    .id(presentation.id)
+                    .zIndex(overlayState.isEditingSheetVisible ? 3 : 0.5)
+                }
+
                 let showBack = !router.isEmpty
+                    || router.trainingPresentation != nil
 
                 BottomMenuBarView(
                     showBackButton: showBack,
                     narrowBy: 74,
                     onRightAction: {
+                        if router.trainingPresentation != nil {
+                            overlayState.showTrainingMiniMenu.toggle()
+                            return
+                        }
                         switch router.currentScene {
                         case .home:
                             overlayState.showSelectionMiniMenu.toggle()
@@ -143,11 +158,10 @@ struct FitnessAppApp: App {
                             // scenes (see BottomMenuBarView.showsRightAction). Kept
                             // for switch exhaustiveness over the scene enum.
                             break
-                        case .training:
-                            overlayState.showTrainingMiniMenu.toggle()
                         }
                     },
                     onTrainingTab: {
+                        router.dismissTraining()
                         // Quick-launch the default workout, or prompt the user to
                         // pick one when none is set yet.
                         if let workout = workoutStorageService.defaultWorkout {
@@ -160,11 +174,8 @@ struct FitnessAppApp: App {
                             router.popToRoot()
                         }
                     },
-                    customBackAction: router.currentScene == .training ? {
-                        if overlayState.isCancellingTraining {
-                            return
-                        }
-                        router.pop()
+                    customBackAction: router.trainingPresentation != nil ? {
+                        router.dismissTraining()
                     } : nil
                 )
                 .zIndex(Self.shouldHideBottomBar(overlayState) ? 0 : 1)
@@ -201,7 +212,7 @@ struct FitnessAppApp: App {
                 } else {
                     // `.fitnessworkout` and any other file types → workout import flow.
                     // Pop nav stack so the user lands on the Workouts root when the sheet opens.
-                    if !router.isEmpty { router.popToRoot() }
+                    router.popToRoot()
                     Container.shared.workoutImportCoordinator().handleIncomingFile(url)
                 }
             }

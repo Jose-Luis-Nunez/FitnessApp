@@ -32,5 +32,6 @@ public struct WorkoutDropdownView: View {
                     .animation(.easeInOut(duration: 0.2), value: overlayState.showWorkoutDropdown)
             }
         }
+        .accessibilityIdentifier(WorkoutPickerIDs.dropdown)
     }
 }

@@ -21,7 +21,7 @@ file_list=$(echo "$all_swift" | head -10 | tr '\n' ', ' | sed 's/,$//')
 if validation_manifest_matches_worktree "$manifest" &&
    validation_stamp_matches_manifest "$stamp" "$manifest"; then
   if [ "$CHANGE_RISK" = "green" ] ||
-     grep -q 'verified_by:[[:space:]]*tester-subagent' "$stamp"; then
+     test_execution_stamp_has_required_fields "$stamp"; then
     exit 0
   fi
 fi

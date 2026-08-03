@@ -86,7 +86,7 @@ Write the exact executable-infrastructure manifest before verification:
 
 ```bash
 bash .claude/hooks/lib/agent-infrastructure-evidence.sh write \
-  .claude/hooks/state/agent-infrastructure.manifest.tsv staged
+  .claude/hooks/state/agent-infrastructure.manifest.tsv worktree
 bash .claude/hooks/lib/agent-infrastructure-evidence.sh fingerprint \
   .claude/hooks/state/agent-infrastructure.manifest.tsv
 ```

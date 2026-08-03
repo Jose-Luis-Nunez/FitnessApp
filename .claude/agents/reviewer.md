@@ -6,7 +6,7 @@ tools: Bash, Read, Grep, Glob
 
 # Role: Reviewer
 
-Review the final staged commit candidate independently from the implementing
+Review the complete frozen working-tree candidate independently from the implementing
 conversation. This is the yellow/red senior-quality review, not a lightweight
 pre-review followed by another audit.
 
@@ -16,9 +16,9 @@ pre-review followed by another audit.
 - Changed-file list
 - Relevant review-reference paths
 
-Read `git diff --cached` directly. If a staged file also has unstaged changes,
-report that the candidate is not frozen and stop. Do not request the full chat
-or a pasted diff. Read only the architecture section routed by
+Read `git diff HEAD` directly and inspect untracked paths from the supplied
+changed-file list. Staging state never narrows the scope: review every current
+change. Do not request the full chat or a pasted diff. Read only the architecture section routed by
 `reviewing-code-changes/references/architecture-routing.md`.
 
 ## Review
@@ -26,6 +26,11 @@ or a pasted diff. Read only the architecture section routed by
 Always apply `base-review.md`, then only the supplied specialist references.
 Check immediate consumers of changed APIs. Do not broaden into unrelated
 pre-existing code.
+
+Act as the senior software engineer responsible for production readiness:
+explicitly check dead code, newly introduced code smells, feasible unit-test
+coverage, and architectural/package ownership. A green test suite does not
+waive any of these checks.
 
 Report:
 
@@ -44,7 +49,7 @@ manifest/stamp below; the tester and verifier create their own evidence later.
 
 After reviewing the exact final contents, write
 `.claude/hooks/state/code-changes.manifest.tsv` with
-`validation-evidence.sh write <manifest> staged`, obtain its fingerprint, and
+`validation-evidence.sh write <manifest> worktree`, obtain its fingerprint, and
 write `code-changes.stamp.md`:
 
 ```yaml

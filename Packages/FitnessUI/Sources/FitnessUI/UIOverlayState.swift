@@ -23,7 +23,6 @@ public final class UIOverlayState {
     /// shows a floating picker so the user can choose which workout becomes the
     /// default (and is then launched straight into its category selection).
     public var showDefaultWorkoutPicker: Bool = false
-    public var isCancellingTraining: Bool = false
     /// Reflects whether the system keyboard is currently visible. Consumed by
     /// the root layout to hide the glass bottom bar while the user edits a
     /// text field (otherwise the bar sits directly above the keyboard and

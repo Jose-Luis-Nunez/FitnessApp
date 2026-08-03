@@ -1,12 +1,12 @@
 #!/bin/bash
 # Content-bound validation evidence shared by final validation and pre-commit.
 #
-# A manifest contains one line per relevant changed file:
+# A manifest contains one line per changed candidate file:
 #   <sha256-or-DELETED><TAB><path>
 #
-# This makes validation valid for file contents, not for an arbitrary time
-# window. Product Swift, package manifests, the Xcode project, and checked-in
-# snapshot baselines participate in the fingerprint.
+# This makes validation valid for the complete reviewed/tested candidate, not
+# for an arbitrary time window or a staged subset. Evidence state is excluded
+# because the manifests and stamps are generated from the candidate itself.
 
 if [ "${BASH_SOURCE[0]}" = "$0" ]; then
   set -euo pipefail
@@ -33,7 +33,7 @@ validation_paths() {
 
   printf '%s\n%s\n' "$tracked" "$untracked" |
     sed '/^$/d' |
-    grep -E '(\.swift$|(^|/)Package\.swift$|^FitnessApp\.xcodeproj/project\.pbxproj$|/Tests?/.*__Snapshots__/.*\.png$)' |
+    grep -Ev '^\.claude/hooks/state/' |
     sort -u || true
 }
 
@@ -96,19 +96,46 @@ validation_manifest_matches_worktree() {
   return "$result"
 }
 
-validation_manifest_covers_staged() {
+validation_manifest_matches_staged() {
   local manifest="$1"
-  local path=""
-  local hash=""
+  local temporary=""
 
   [ -f "$manifest" ] || return 1
-  while IFS= read -r path; do
-    [ -z "$path" ] && continue
-    hash=$(validation_hash_for_path staged "$path")
-    if ! grep -Fqx "${hash}"$'\t'"${path}" "$manifest"; then
-      return 1
-    fi
-  done <<< "$(validation_paths staged)"
+  temporary=$(mktemp)
+  write_validation_manifest "$temporary" staged
+  cmp -s "$manifest" "$temporary"
+  local result=$?
+  rm -f "$temporary"
+  return "$result"
+}
+
+validation_stamp_has_field_value() {
+  local stamp="$1"
+  local key="$2"
+  local value_pattern="$3"
+
+  [ -f "$stamp" ] || return 1
+  grep -qE "^[[:space:]]*${key}:[[:space:]]*${value_pattern}[[:space:]]*$" "$stamp"
+}
+
+validation_stamp_has_pass_result() {
+  validation_stamp_has_field_value "$1" result PASS
+}
+
+test_execution_stamp_has_success_contract() {
+  local stamp="$1"
+
+  validation_stamp_has_pass_result "$stamp" &&
+    validation_stamp_has_field_value "$stamp" exit_code 0
+}
+
+test_execution_stamp_has_required_fields() {
+  local stamp="$1"
+
+  test_execution_stamp_has_success_contract "$stamp" &&
+    validation_stamp_has_field_value "$stamp" verified_by tester-subagent &&
+    validation_stamp_has_field_value "$stamp" mode '(run|verify)' &&
+    validation_stamp_has_field_value "$stamp" source_fingerprint '[[:xdigit:]]{64}'
 }
 
 validation_stamp_matches_manifest() {
@@ -118,9 +145,9 @@ validation_stamp_matches_manifest() {
 
   [ -f "$stamp" ] || return 1
   [ -f "$manifest" ] || return 1
-  grep -qiE '(^|[[:space:]])result:[[:space:]]*PASS|TEST SUCCEEDED|all passed' "$stamp" || return 1
+  validation_stamp_has_pass_result "$stamp" || return 1
   fingerprint=$(validation_manifest_fingerprint "$manifest")
-  grep -q "source_fingerprint:[[:space:]]*${fingerprint}" "$stamp"
+  validation_stamp_has_field_value "$stamp" source_fingerprint "$fingerprint"
 }
 
 validation_usage() {
@@ -147,7 +174,7 @@ if [ "${BASH_SOURCE[0]}" = "$0" ]; then
     verify)
       [ "$#" -ge 2 ] || { validation_usage >&2; exit 2; }
       if [ "${3:-worktree}" = "staged" ]; then
-        validation_manifest_covers_staged "$2"
+        validation_manifest_matches_staged "$2"
       else
         validation_manifest_matches_worktree "$2"
       fi
