@@ -25,7 +25,7 @@ Use `reviewing-code-changes` for the risk-routed workflow. Mention the detected
 risk early when Swift files will change.
 
 During development, the Stop hook emits only deduplicated design hints. Before
-a user stages a commit candidate, `/validate` reviews every current working-tree
+a commit candidate is staged, `/validate` reviews every current working-tree
 change. Its yellow/red reviewer is the senior-quality review; final tests start
 only after Bug findings are fixed. The versioned pre-commit hook later requires
 the complete staged path/hash manifest to equal that exact evidence; a staged

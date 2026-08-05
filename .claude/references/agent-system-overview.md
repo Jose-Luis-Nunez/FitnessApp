@@ -14,16 +14,17 @@ Swift diff
   → green: main-agent review/test
     yellow/red: one senior-quality reviewer, then tester(run|verify)
   → worktree content manifests + PASS stamps
-  → user stages unchanged reviewed contents
+  → user, or an agent explicitly authorized under AGENTS.md, stages unchanged reviewed contents
   → pre-commit checks the exact staged candidate
 ```
 
 Validation is content-bound, not time-bound. Final manifests hash every file
 in the frozen working-tree candidate, including untracked files and excluding
 only generated evidence state. Any later candidate edit invalidates the
-evidence immediately; unchanged evidence does not expire. After validation,
-pre-commit accepts only a staged candidate whose path/hash manifest exactly
-equals the reviewed/tested one.
+evidence immediately; unchanged evidence does not expire. Staging authority
+remains governed by `AGENTS.md`; regardless of who is authorized to stage,
+pre-commit accepts only a candidate whose path/hash manifest exactly equals
+the reviewed/tested one.
 
 ## Risk Policy
 
@@ -153,7 +154,7 @@ Verifier required:
 - `.claude/rules`, skills, hooks, agents, commands, settings;
 - `.claude/references/agent-system-overview.md`;
 - `.agents/skills`, `.codex/hooks`, `.codex/agents`, `.codex/hooks.json`;
-- `.githooks`, `AGENTS.md`, and agent/build workflow scripts.
+- `.githooks`, `AGENTS.md`, `CLAUDE.md`, and agent/build workflow scripts.
 
 Verifier not required:
 

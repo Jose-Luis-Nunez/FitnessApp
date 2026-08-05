@@ -1,12 +1,12 @@
 ---
 description: Requires verification only for executable agent-system infrastructure.
-globs: ".claude/rules/**/*.mdc,.claude/skills/**/*.md,.claude/hooks/**/*.sh,.claude/agents/**/*.md,.claude/commands/**/*.md,.claude/settings.json,.claude/references/agent-system-overview.md,.codex/hooks.json,.codex/hooks/**/*.sh,.codex/agents/**/*.toml,.agents/skills/**/*.md,.githooks/**/*.sh,AGENTS.md,scripts/sync-agent-runtime.sh,scripts/generate-codex-agent.py,scripts/test-affected-packages.sh,scripts/install-hooks.sh"
+globs: ".claude/rules/**/*.mdc,.claude/skills/**/*.md,.claude/hooks/**/*.sh,.claude/agents/**/*.md,.claude/commands/**/*.md,.claude/settings.json,.claude/references/agent-system-overview.md,.codex/hooks.json,.codex/hooks/**/*.sh,.codex/agents/**/*.toml,.agents/skills/**/*.md,.githooks/**/*.sh,AGENTS.md,CLAUDE.md,scripts/sync-agent-runtime.sh,scripts/generate-codex-agent.py,scripts/test-affected-packages.sh,scripts/install-hooks.sh"
 ---
 
 # Agent Infrastructure Validation
 
 Before committing changes to rules, skills, hooks, agents, commands, runtime
-adapters, `AGENTS.md`, or the agent-system overview, run
+adapters, `AGENTS.md`, `CLAUDE.md`, or the agent-system overview, run
 `reviewing-agent-infrastructure`. An independent verifier writes
 `agent-infrastructure.stamp.md` from the complete working tree; pre-commit
 later requires the staged infrastructure manifest to equal that evidence.

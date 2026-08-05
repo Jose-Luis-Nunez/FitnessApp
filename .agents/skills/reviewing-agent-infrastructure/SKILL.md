@@ -2,7 +2,7 @@
 name: reviewing-agent-infrastructure
 description: >-
   Validate executable agent infrastructure after changes to rules, skills,
-  hooks, agents, commands, runtime adapters, AGENTS.md, or the agent overview.
+  hooks, agents, commands, runtime adapters, AGENTS.md, CLAUDE.md, or the agent overview.
   Checks reference integrity, agent-system-overview sync, description accuracy,
   handoff links, hook alignment, and name consistency. Uses a Verifier subagent
   to independently confirm findings before writing the stamp. Product
@@ -17,7 +17,7 @@ adapters are consistent. A Verifier independently confirms results.
 ## When to Activate
 
 - After modifying executable agent infrastructure: rules, skills, hooks,
-  agents, commands, runtime adapters, `AGENTS.md`, or the agent-system overview
+  agents, commands, runtime adapters, `AGENTS.md`, `CLAUDE.md`, or the agent-system overview
 - After `reviewing-agent-effectiveness` identifies gaps (NOT FIRED findings)
 - User says "reflect", "learn from this", "improve agent system"
 - After the user manually corrects agent output

@@ -6,7 +6,8 @@ description: Validate before commit: run final risk-based, content-bound checks 
 
 Run this after implementation is complete and no known finding or product
 decision remains open. The complete working tree is the validation candidate;
-the user stages it only after review succeeds. The development Stop hook
+it is staged only after review succeeds and only by an actor authorized under
+`AGENTS.md`. The development Stop hook
 provides only lightweight hints; this command produces the evidence required
 by pre-commit.
 

@@ -34,15 +34,19 @@ see `.claude/references/agent-system-overview.md`.
   work in the working tree and do not stage it.
 - Do not start `/validate`, a reviewer or tester subagent, or write final
   validation evidence unless the user explicitly asks for final validation.
-- **Hard Git boundary (canonical):** agents never create, amend, rewrite, or
-  push commits; commit creation is human-only. "Ready to commit" means review
-  and validation of **all current working-tree changes before staging**. Final
-  evidence is written from the complete tracked/untracked working tree; the
-  user stages that complete unchanged candidate afterward. Pre-commit requires
-  an exact path/hash match; a subset needs its own validation. Validation never
-  stages automatically, and any later candidate edit invalidates the evidence.
-  Agent-performed staging still requires an explicit request naming the
-  candidate.
+- **Git authority boundary (canonical):** agents do not stage, create, amend,
+  rewrite, or push commits by default. An agent may perform these Git actions
+  only when the user's instruction contains the exact phrase `my decision` and
+  directly, unambiguously names every requested action and its candidate. Only
+  the actions explicitly named in that instruction are authorized; for example,
+  `my decision: commit and push` authorizes both the commit and the push, while
+  `my decision: commit` does not authorize a push. "Ready to commit" without the
+  exact phrase `my decision` authorizes review and validation only, not staging
+  or committing. Final evidence is written from the complete tracked/untracked
+  working tree. Pre-commit requires the eventual staged candidate to match the
+  validated path/hash manifest exactly; a subset needs its own validation, and
+  any later candidate edit invalidates the evidence. Validation never stages,
+  commits, or pushes automatically.
 
 ## What you do **not** have to do
 

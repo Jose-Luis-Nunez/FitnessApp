@@ -14,7 +14,7 @@ agent_infrastructure_paths() {
   local mode="${1:-worktree}"
   local tracked=""
   local untracked=""
-  local include='^(\.claude/(rules/|skills/|hooks/(checks/|lib/|tests/|post-task-check\.sh|subagent-gate\.sh)|agents/|commands/|settings\.json$|references/agent-system-overview\.md$)|\.codex/(hooks\.json$|hooks/|agents/)|\.agents/skills/|\.githooks/|AGENTS\.md$|scripts/(sync-agent-runtime\.sh|generate-codex-agent\.py|test-affected-packages\.sh|install-hooks\.sh)$)'
+  local include='^(\.claude/(rules/|skills/|hooks/(checks/|lib/|tests/|post-task-check\.sh|subagent-gate\.sh)|agents/|commands/|settings\.json$|references/agent-system-overview\.md$)|\.codex/(hooks\.json$|hooks/|agents/)|\.agents/skills/|\.githooks/|AGENTS\.md$|CLAUDE\.md$|scripts/(sync-agent-runtime\.sh|generate-codex-agent\.py|test-affected-packages\.sh|install-hooks\.sh)$)'
   local exclude='/state/|^\.claude/plans/'
 
   case "$mode" in
