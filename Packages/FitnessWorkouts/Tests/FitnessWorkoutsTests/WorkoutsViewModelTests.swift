@@ -13,6 +13,36 @@ struct WorkoutsViewModelTests {
         case persistenceFailed
     }
 
+    @MainActor
+    private final class ExerciseCountsStorageSpy: ExerciseStoring {
+        var countsResult: [UUID: Int]
+        private(set) var countsLoadCallCount = 0
+
+        init(countsResult: [UUID: Int] = [:]) {
+            self.countsResult = countsResult
+        }
+
+        func loadForWorkout(
+            workoutId: UUID,
+            category: MuscleCategoryGroup
+        ) -> [Exercise] {
+            []
+        }
+
+        func exerciseCountsByWorkout() -> [UUID: Int] {
+            countsLoadCallCount += 1
+            return countsResult
+        }
+
+        func saveForWorkout(
+            _ exercises: [Exercise],
+            workoutId: UUID,
+            category: MuscleCategoryGroup
+        ) {}
+
+        func updateExercise(_ exercise: Exercise) {}
+    }
+
     // MARK: - Setup
 
     @MainActor
@@ -49,6 +79,44 @@ struct WorkoutsViewModelTests {
                 workoutStorage: workoutStorage
             ),
             exportWorkoutUseCase: exportUseCase
+        )
+        return (sut, workoutStorage, exerciseStorage)
+    }
+
+    @MainActor
+    private func makeCountTrackingSUT(
+        seedWorkouts: [Workout] = [],
+        countsResult: [UUID: Int] = [:]
+    ) -> (
+        sut: WorkoutsViewModel,
+        workoutStorage: MockWorkoutStorage,
+        exerciseStorage: ExerciseCountsStorageSpy
+    ) {
+        let workoutStorage = MockWorkoutStorage()
+        workoutStorage.workouts = seedWorkouts
+        workoutStorage.currentWorkout = seedWorkouts.first
+
+        let exerciseStorage = ExerciseCountsStorageSpy(countsResult: countsResult)
+        let exportExerciseStorage = MockExerciseStorage()
+        let totalAnalytics = MockTotalAnalyticsStorage(
+            analyticsStorage: MockAnalyticsStorage(),
+            exerciseStorage: exportExerciseStorage,
+            workoutStorage: workoutStorage
+        )
+        let sut = WorkoutsViewModel(
+            workoutStorage: workoutStorage,
+            exerciseStorage: exerciseStorage,
+            deleteWorkoutUseCase: DeleteWorkoutUseCase(
+                workoutStorage: workoutStorage,
+                exerciseStorage: exerciseStorage
+            ),
+            duplicateWorkoutUseCase: DuplicateWorkoutUseCase(
+                workoutStorage: workoutStorage
+            ),
+            exportWorkoutUseCase: ExportWorkoutUseCase(
+                exerciseStorage: exportExerciseStorage,
+                totalAnalyticsStorage: totalAnalytics
+            )
         )
         return (sut, workoutStorage, exerciseStorage)
     }
@@ -426,24 +494,91 @@ struct WorkoutsViewModelTests {
 
     // MARK: - Exercise counts
 
-    @Test func exerciseCountsAggregateAcrossCategoriesInOneStorageRead() {
+    @Test func exerciseCountsStayUnloadedUntilRefreshThenRemainMaterialized() {
         let w = Workout(name: "X", selectedCategories: Set(MuscleCategoryGroup.allCases))
-        let (sut, _, es) = makeSUT(seedWorkouts: [w])
+        let (sut, _, storage) = makeCountTrackingSUT(
+            seedWorkouts: [w],
+            countsResult: [w.id: 3]
+        )
 
-        let armEx = Exercise(name: "Curl", weight: 0, reps: 1, sets: 1, iconName: "defaultArmsIcon", category: .arms)
-        let chestEx1 = Exercise(name: "Bench", weight: 0, reps: 1, sets: 1, iconName: "defaultChestIcon", category: .chest)
-        let chestEx2 = Exercise(name: "Fly", weight: 0, reps: 1, sets: 1, iconName: "defaultChestIcon", category: .chest)
-        es.saveForWorkout([armEx], workoutId: w.id, category: .arms)
-        es.saveForWorkout([chestEx1, chestEx2], workoutId: w.id, category: .chest)
+        #expect(sut.exerciseCounts == nil)
+        #expect(storage.countsLoadCallCount == 0)
 
-        #expect(sut.exerciseCountsByWorkout()[w.id] == 3)
+        sut.refreshExerciseCounts()
+
+        #expect(sut.exerciseCounts?[w.id] == 3)
+        #expect(storage.countsLoadCallCount == 1)
+
+        _ = sut.exerciseCounts?[w.id]
+        _ = sut.exerciseCounts?[w.id]
+        #expect(storage.countsLoadCallCount == 1)
     }
 
-    @Test func exerciseCountsOmitWorkoutsWithoutExercises() {
+    @Test func loadedExerciseCountsOmitWorkoutsWithoutExercises() {
         let w = Workout(name: "X")
-        let (sut, _, _) = makeSUT(seedWorkouts: [w])
+        let (sut, _, _) = makeCountTrackingSUT(seedWorkouts: [w])
 
-        #expect(sut.exerciseCountsByWorkout()[w.id] == nil)
+        sut.refreshExerciseCounts()
+
+        #expect(sut.exerciseCounts != nil)
+        #expect(sut.exerciseCounts?[w.id] == nil)
+    }
+
+    @Test func successfulWorkoutCreationRefreshesExerciseCountsOnce() {
+        let first = Workout(name: "First")
+        let (sut, _, storage) = makeCountTrackingSUT(seedWorkouts: [first])
+        sut.newWorkoutName = "Created"
+        sut.newWorkoutType = .full
+
+        sut.createNewWorkout()
+
+        #expect(storage.countsLoadCallCount == 1)
+    }
+
+    @Test func successfulWorkoutDuplicationRefreshesExerciseCountsOnce() {
+        let workout = Workout(name: "First")
+        let (sut, _, storage) = makeCountTrackingSUT(seedWorkouts: [workout])
+
+        sut.duplicateWorkout(workout)
+
+        #expect(storage.countsLoadCallCount == 1)
+    }
+
+    @Test func successfulWorkoutDeletionRefreshesExerciseCountsOnce() {
+        let first = Workout(name: "First")
+        let second = Workout(name: "Second")
+        let (sut, _, storage) = makeCountTrackingSUT(
+            seedWorkouts: [first, second]
+        )
+
+        sut.deleteWorkout(first)
+
+        #expect(storage.countsLoadCallCount == 1)
+    }
+
+    @Test func failedWorkoutCreationDoesNotRefreshExerciseCounts() {
+        let (sut, workoutStorage, storage) = makeCountTrackingSUT()
+        workoutStorage.createWorkoutError = StubError.persistenceFailed
+        sut.newWorkoutName = "Pull"
+        sut.newWorkoutType = .pull
+
+        sut.createNewWorkout()
+
+        #expect(storage.countsLoadCallCount == 0)
+        #expect(sut.exerciseCounts == nil)
+    }
+
+    @Test func successfulImportIntentRefreshesExerciseCountsOnce() {
+        let workout = Workout(name: "Imported")
+        let (sut, _, storage) = makeCountTrackingSUT(
+            seedWorkouts: [workout],
+            countsResult: [workout.id: 2]
+        )
+
+        sut.workoutDidImport()
+
+        #expect(storage.countsLoadCallCount == 1)
+        #expect(sut.exerciseCounts?[workout.id] == 2)
     }
 
     @Test func activeExerciseQueryRejectsEmptyWorkout() {

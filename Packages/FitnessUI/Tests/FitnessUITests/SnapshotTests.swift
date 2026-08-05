@@ -234,9 +234,9 @@ struct MiniActionMenuSnapshotTests {
         let view = MiniActionMenuView(
             title: "Workout Options",
             items: [
-                MiniActionMenuItem(icon: "plus", title: "New Exercise", isDestructive: false, action: {}),
-                MiniActionMenuItem(icon: "pencil", title: "Rename", isDestructive: false, action: {}),
-                MiniActionMenuItem(icon: "trash", title: "Delete", isDestructive: true, action: {}),
+                MiniActionMenuItem(id: "new-exercise", icon: "plus", title: "New Exercise", isDestructive: false, action: {}),
+                MiniActionMenuItem(id: "rename", icon: "pencil", title: "Rename", isDestructive: false, action: {}),
+                MiniActionMenuItem(id: "delete", icon: "trash", title: "Delete", isDestructive: true, action: {}),
             ],
             width: 260
         )
@@ -247,7 +247,7 @@ struct MiniActionMenuSnapshotTests {
         let view = MiniActionMenuView(
             title: nil,
             items: [
-                MiniActionMenuItem(icon: "xmark", title: "Reset all", isDestructive: false, action: {}),
+                MiniActionMenuItem(id: "reset-all", icon: "xmark", title: "Reset all", isDestructive: false, action: {}),
             ],
             width: 260
         )
@@ -258,8 +258,8 @@ struct MiniActionMenuSnapshotTests {
         let view = MiniActionMenuView(
             title: nil,
             items: [
-                MiniActionMenuItem(icon: nil, title: "Confirm deletion", isDestructive: true, action: {}),
-                MiniActionMenuItem(icon: nil, title: "Cancel", isDestructive: false, action: {}),
+                MiniActionMenuItem(id: "confirm-delete", icon: nil, title: "Confirm deletion", isDestructive: true, action: {}),
+                MiniActionMenuItem(id: "cancel-delete", icon: nil, title: "Cancel", isDestructive: false, action: {}),
             ],
             width: 260
         )

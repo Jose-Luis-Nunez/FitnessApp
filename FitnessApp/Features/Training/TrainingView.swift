@@ -256,6 +256,7 @@ struct TrainingSheetView: View {
                         title: nil,
                         items: [
                             MiniActionMenuItem(
+                                id: "cancel-training",
                                 icon: "xmark",
                                 title: "Cancel",
                                 isDestructive: true

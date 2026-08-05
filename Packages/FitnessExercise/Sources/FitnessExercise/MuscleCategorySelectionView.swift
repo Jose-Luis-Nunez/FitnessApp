@@ -350,6 +350,7 @@ public struct MuscleCategorySelectionView: View {
         var items: [MiniActionMenuItem] = []
 
         items.append(MiniActionMenuItem(
+            id: "new-exercise",
             icon: "plus",
             title: L10n.newExercise,
             isDestructive: false
@@ -362,7 +363,7 @@ public struct MuscleCategorySelectionView: View {
         })
 
         if hasDeactivatedExercises(in: allWorkoutModels) {
-            items.append(MiniActionMenuItem(icon: "checkmark", title: L10n.exerciseActivate, isDestructive: false) {
+            items.append(MiniActionMenuItem(id: "activate-exercises", icon: "checkmark", title: L10n.exerciseActivate, isDestructive: false) {
                 overlayState.showSelectionMiniMenu = false
                 overlayState.selectedExerciseIds = []
                 overlayState.exerciseSelectionMode = .activate
@@ -370,7 +371,7 @@ public struct MuscleCategorySelectionView: View {
         }
 
         if hasDeactivatableExercises(in: allWorkoutModels) {
-            items.append(MiniActionMenuItem(icon: "xmark", title: L10n.exerciseDeactivate, isDestructive: false) {
+            items.append(MiniActionMenuItem(id: "deactivate-exercises", icon: "xmark", title: L10n.exerciseDeactivate, isDestructive: false) {
                 overlayState.showSelectionMiniMenu = false
                 overlayState.selectedExerciseIds = []
                 overlayState.exerciseSelectionMode = .deactivate
@@ -385,6 +386,7 @@ public struct MuscleCategorySelectionView: View {
     private var categoryMenuItems: [MiniActionMenuItem] {
         MuscleCategoryGroup.allCases.map { category in
             MiniActionMenuItem(
+                id: "category-\(category.id)",
                 icon: category.defaultIconName,
                 title: category.displayName,
                 isDestructive: false
@@ -406,6 +408,7 @@ public struct MuscleCategorySelectionView: View {
 
     private var resetAllMenuItem: MiniActionMenuItem {
         MiniActionMenuItem(
+            id: "reset-all-exercises",
             icon: "xmark",
             title: L10n.exerciseResetAll,
             isDestructive: false,

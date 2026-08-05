@@ -28,7 +28,12 @@ struct DefaultWorkoutPickerOverlay: View {
                     MiniActionMenuView(
                         title: "Choose default workout",
                         items: workouts.map { workout in
-                            MiniActionMenuItem(icon: nil, title: workout.name, isDestructive: false) {
+                            MiniActionMenuItem(
+                                id: "default-workout-\(workout.id.uuidString)",
+                                icon: nil,
+                                title: workout.name,
+                                isDestructive: false
+                            ) {
                                 onPick(workout)
                             }
                         }

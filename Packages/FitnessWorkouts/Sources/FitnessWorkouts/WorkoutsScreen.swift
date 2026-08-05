@@ -36,11 +36,11 @@ public struct WorkoutsScreen: View {
                         MiniActionMenuView(
                             title: nil,
                             items: [
-                                MiniActionMenuItem(icon: "plus", title: "New workout", isDestructive: false) {
+                                MiniActionMenuItem(id: "new-workout", icon: "plus", title: "New workout", isDestructive: false) {
                                     overlayState.showWorkoutsMiniMenu = false
                                     viewModel.showCreateWorkout()
                                 },
-                                MiniActionMenuItem(icon: "square.and.arrow.down", title: "Import workout", isDestructive: false) {
+                                MiniActionMenuItem(id: "import-workout", icon: "square.and.arrow.down", title: "Import workout", isDestructive: false) {
                                     overlayState.showWorkoutsMiniMenu = false
                                     viewModel.showImportWorkout()
                                 }
@@ -116,15 +116,18 @@ public struct WorkoutsScreen: View {
         .overlay(
             settingsMiniMenu
         )
+        .onAppear { viewModel.refreshExerciseCounts() }
     }
 
     private var mainContent: some View {
         VStack(spacing: 0) {
             headerView
             ScrollView {
-                workoutsGrid
-                    .padding(.horizontal, Constants.horizontalPadding)
-                    .padding(.bottom, AppStyle.Layout.workoutGridBottomPadding)
+                if let exerciseCounts = viewModel.exerciseCounts {
+                    workoutsGrid(exerciseCounts: exerciseCounts)
+                        .padding(.horizontal, Constants.horizontalPadding)
+                        .padding(.bottom, AppStyle.Layout.workoutGridBottomPadding)
+                }
             }
         }
     }
@@ -139,8 +142,7 @@ public struct WorkoutsScreen: View {
             .padding(.bottom, Constants.titleBottomSpacing)
     }
 
-    private var workoutsGrid: some View {
-        let exerciseCounts = viewModel.exerciseCountsByWorkout()
+    private func workoutsGrid(exerciseCounts: [UUID: Int]) -> some View {
         let columns = [
             GridItem(.flexible(), spacing: Constants.workoutGridSpacing),
             GridItem(.flexible(), spacing: Constants.workoutGridSpacing)
@@ -185,10 +187,10 @@ public struct WorkoutsScreen: View {
                             let items: [MiniActionMenuItem] = {
                                 if viewModel.showingDeleteConfirmation {
                                     return [
-                                        MiniActionMenuItem(icon: nil, title: "Confirm deletion", isDestructive: true) {
+                                        MiniActionMenuItem(id: "confirm-delete-workout", icon: nil, title: "Confirm deletion", isDestructive: true) {
                                             viewModel.confirmDelete()
                                         },
-                                        MiniActionMenuItem(icon: nil, title: "Cancel", isDestructive: false) {
+                                        MiniActionMenuItem(id: "cancel-delete-workout", icon: nil, title: "Cancel", isDestructive: false) {
                                             viewModel.cancelDelete()
                                         }
                                     ]
@@ -198,6 +200,7 @@ public struct WorkoutsScreen: View {
                                        viewModel.hasActiveExercises(in: workout) {
                                         list.append(
                                             MiniActionMenuItem(
+                                                id: "log-workout",
                                                 icon: "calendar.badge.plus",
                                                 title: "Log Workout",
                                                 isDestructive: false
@@ -206,37 +209,37 @@ public struct WorkoutsScreen: View {
                                             }
                                         )
                                     }
-                                    list.append(MiniActionMenuItem(icon: nil, title: "duplicate", isDestructive: false) {
+                                    list.append(MiniActionMenuItem(id: "duplicate-workout", icon: nil, title: "duplicate", isDestructive: false) {
                                         if let workout = viewModel.selectedWorkoutForAction {
                                             viewModel.duplicateWorkout(workout)
                                             viewModel.hideWorkoutOptions()
                                         }
                                     })
-                                    list.append(MiniActionMenuItem(icon: nil, title: "Export workout", isDestructive: false) {
+                                    list.append(MiniActionMenuItem(id: "export-workout", icon: nil, title: "Export workout", isDestructive: false) {
                                         if let workout = viewModel.selectedWorkoutForAction {
                                             viewModel.requestShare(for: workout)
                                         }
                                     })
-                                    list.append(MiniActionMenuItem(icon: nil, title: "Rename", isDestructive: false) {
+                                    list.append(MiniActionMenuItem(id: "rename-workout", icon: nil, title: "Rename", isDestructive: false) {
                                         if let workout = viewModel.selectedWorkoutForAction {
                                             viewModel.showRenameWorkout(for: workout)
                                         }
                                     })
                                     if let workout = viewModel.selectedWorkoutForAction {
                                         if viewModel.isDefaultWorkout(workout) {
-                                            list.append(MiniActionMenuItem(icon: nil, title: "Remove as Default", isDestructive: false) {
+                                            list.append(MiniActionMenuItem(id: "remove-default-workout", icon: nil, title: "Remove as Default", isDestructive: false) {
                                                 viewModel.removeAsDefault()
                                                 viewModel.hideWorkoutOptions()
                                             })
                                         } else {
-                                            list.append(MiniActionMenuItem(icon: nil, title: "Set as Default", isDestructive: false) {
+                                            list.append(MiniActionMenuItem(id: "set-default-workout", icon: nil, title: "Set as Default", isDestructive: false) {
                                                 viewModel.setAsDefault(workout)
                                                 viewModel.hideWorkoutOptions()
                                             })
                                         }
                                     }
                                     if viewModel.canDeleteWorkout {
-                                        list.append(MiniActionMenuItem(icon: nil, title: "Delete", isDestructive: true) {
+                                        list.append(MiniActionMenuItem(id: "delete-workout", icon: nil, title: "Delete", isDestructive: true) {
                                             viewModel.showDeleteConfirmation()
                                         })
                                     }

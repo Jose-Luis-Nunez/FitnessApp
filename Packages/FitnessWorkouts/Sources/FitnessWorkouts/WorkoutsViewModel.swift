@@ -45,6 +45,7 @@ public final class WorkoutsViewModel {
     public var workoutForAnalyticsEntry: Workout?
     public var exportErrorMessage: String?
     public var createErrorMessage: String?
+    private(set) var exerciseCounts: [UUID: Int]?
 
     @ObservationIgnored private let storageService: WorkoutStoring
     @ObservationIgnored private let exerciseStorageService: ExerciseStoring
@@ -97,6 +98,7 @@ public final class WorkoutsViewModel {
         newWorkoutName = ""
         newWorkoutType = nil
         showingCreateWorkoutFullScreen = false
+        refreshExerciseCounts()
     }
 
     public func selectWorkout(_ workout: Workout) {
@@ -107,6 +109,7 @@ public final class WorkoutsViewModel {
         let duplicatedWorkout = duplicateWorkoutUseCase.execute(workout)
         storageService.setCurrentWorkout(duplicatedWorkout)
         showingWorkoutOptions = false
+        refreshExerciseCounts()
     }
 
     /// Deletes the workout. Enforces the invariant that at least one workout must remain —
@@ -115,6 +118,7 @@ public final class WorkoutsViewModel {
         guard canDeleteWorkout else { return }
         deleteWorkoutUseCase.execute(workout)
         showingWorkoutOptions = false
+        refreshExerciseCounts()
     }
 
     public func renameWorkout() {
@@ -223,8 +227,12 @@ public final class WorkoutsViewModel {
         storageService.removeAsDefaultWorkout()
     }
 
-    public func exerciseCountsByWorkout() -> [UUID: Int] {
-        exerciseStorageService.exerciseCountsByWorkout()
+    func refreshExerciseCounts() {
+        exerciseCounts = exerciseStorageService.exerciseCountsByWorkout()
+    }
+
+    func workoutDidImport() {
+        refreshExerciseCounts()
     }
 
     func hasActiveExercises(in workout: Workout) -> Bool {

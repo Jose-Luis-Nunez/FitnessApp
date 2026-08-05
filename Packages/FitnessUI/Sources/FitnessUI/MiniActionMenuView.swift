@@ -1,13 +1,21 @@
 import SwiftUI
 
 public struct MiniActionMenuItem: Identifiable {
-    public let id = UUID()
+    /// Stable semantic identity, unique among the items in one menu.
+    public let id: String
     public let icon: String?
     public let title: String
     public let isDestructive: Bool
     public let action: () -> Void
 
-    public init(icon: String?, title: String, isDestructive: Bool = false, action: @escaping () -> Void) {
+    public init(
+        id: String,
+        icon: String?,
+        title: String,
+        isDestructive: Bool = false,
+        action: @escaping () -> Void
+    ) {
+        self.id = id
         self.icon = icon
         self.title = title
         self.isDestructive = isDestructive

@@ -351,7 +351,7 @@ private extension MuscleCategoryView {
                                 var items: [MiniActionMenuItem] = []
 
                                 if viewModel.showNewExercise {
-                                    items.append(MiniActionMenuItem(icon: "plus", title: L10n.newExercise, isDestructive: false) {
+                                    items.append(MiniActionMenuItem(id: "new-exercise", icon: "plus", title: L10n.newExercise, isDestructive: false) {
                                         withAnimation {
                                             formViewModel.loadExercise(nil, category: group)
                                             formViewModel.toggleForm()
@@ -361,7 +361,7 @@ private extension MuscleCategoryView {
                                 }
 
                                 if viewModel.showStartTraining {
-                                    items.append(MiniActionMenuItem(icon: "play.fill", title: "Start Training", isDestructive: false) {
+                                    items.append(MiniActionMenuItem(id: "start-training", icon: "play.fill", title: "Start Training", isDestructive: false) {
                                         // T8c: route from the live `categoryModels` @Query instead of the
                                         // legacy `viewModel.exercises` snapshot. The Mini-Menu Bools above
                                         // (`showStartTraining`/`showReset`) still read the snapshot — they
@@ -380,7 +380,7 @@ private extension MuscleCategoryView {
                                 }
 
                                 if viewModel.showCancel {
-                                    items.append(MiniActionMenuItem(icon: "xmark", title: "Cancel", isDestructive: false) { [overlayState] in
+                                    items.append(MiniActionMenuItem(id: "cancel-training", icon: "xmark", title: "Cancel", isDestructive: false) { [overlayState] in
                                         let activeIds = Array(trainingCoordinator.activeSessions.keys)
                                         for id in activeIds {
                                             trainingCoordinator.cancelTraining(for: id)
@@ -390,14 +390,14 @@ private extension MuscleCategoryView {
                                 }
 
                                 if viewModel.showReset {
-                                    items.append(MiniActionMenuItem(icon: "arrow.counterclockwise", title: "Reset", isDestructive: false) {
+                                    items.append(MiniActionMenuItem(id: "reset-exercises", icon: "arrow.counterclockwise", title: "Reset", isDestructive: false) {
                                         viewModel.showResetConfirmation = true
                                         overlayState.showCategoryMiniMenu = false
                                     })
                                 }
 
                                 if hasDeactivatedExercises {
-                                    items.append(MiniActionMenuItem(icon: "checkmark", title: L10n.exerciseActivate, isDestructive: false) {
+                                    items.append(MiniActionMenuItem(id: "activate-exercises", icon: "checkmark", title: L10n.exerciseActivate, isDestructive: false) {
                                         overlayState.selectedExerciseIds = []
                                         overlayState.exerciseSelectionMode = .activate
                                         overlayState.showCategoryMiniMenu = false
@@ -405,7 +405,7 @@ private extension MuscleCategoryView {
                                 }
 
                                 if hasDeactivatableExercises {
-                                    items.append(MiniActionMenuItem(icon: "xmark", title: L10n.exerciseDeactivate, isDestructive: false) {
+                                    items.append(MiniActionMenuItem(id: "deactivate-exercises", icon: "xmark", title: L10n.exerciseDeactivate, isDestructive: false) {
                                         overlayState.selectedExerciseIds = []
                                         overlayState.exerciseSelectionMode = .deactivate
                                         overlayState.showCategoryMiniMenu = false
@@ -413,7 +413,7 @@ private extension MuscleCategoryView {
                                 }
 
                                 if items.isEmpty {
-                                    items.append(MiniActionMenuItem(icon: "plus", title: L10n.newExercise, isDestructive: false) {
+                                    items.append(MiniActionMenuItem(id: "new-exercise", icon: "plus", title: L10n.newExercise, isDestructive: false) {
                                         withAnimation {
                                             formViewModel.loadExercise(nil, category: group)
                                             formViewModel.toggleForm()

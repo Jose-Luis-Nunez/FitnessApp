@@ -23,7 +23,7 @@ struct WorkoutImportFlowModifier: ViewModifier {
                 ImportWorkoutView(
                     isPresented: $viewModel.showingImportWorkoutFullScreen,
                     initialText: pendingImportText,
-                    onImported: { _ in }
+                    onImported: { _ in viewModel.workoutDidImport() }
                 )
             }
             .onChange(of: importCoordinator.pendingImportText) { _, newText in
