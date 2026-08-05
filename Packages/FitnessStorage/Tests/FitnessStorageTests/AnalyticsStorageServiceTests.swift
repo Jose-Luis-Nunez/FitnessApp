@@ -4,6 +4,21 @@ import SwiftData
 import FitnessCore
 import FitnessTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
+
+private enum FailureAwareLoadError: Error {
+    case injected
+}
+
+@MainActor
+private final class FailureAwareAnalyticsStorage: AnalyticsStoring {
+    func save(_ entries: [AnalyticsEntry], for exerciseId: UUID) {}
+    func load(for exerciseId: UUID) -> [AnalyticsEntry] { [] }
+
+    func loadHistory(for exerciseId: UUID) throws -> [AnalyticsEntry] {
+        throw FailureAwareLoadError.injected
+    }
+}
+
 @Suite("AnalyticsStorageService", .tags(.integration))
 @MainActor
 struct AnalyticsStorageServiceTests {
@@ -208,6 +223,58 @@ struct AnalyticsStorageServiceTests {
         #expect(succeeded)
         #expect(Set(sut.load(for: firstID).map(\.id)) == [existing.id, firstNew.id])
         #expect(sut.load(for: secondID).map(\.id) == [secondNew.id])
+    }
+
+    @Test func batchLoadWithEmptyIDsReturnsEmptyResult() throws {
+        let sut = makeSUT()
+
+        #expect(try sut.loadBatch(for: []).isEmpty)
+    }
+
+    @Test func batchDefaultPropagatesFailureAwareSingleLoadError() {
+        let sut = FailureAwareAnalyticsStorage()
+
+        #expect(throws: FailureAwareLoadError.injected) {
+            try sut.loadBatch(for: [UUID()])
+        }
+    }
+
+    @Test func batchLoadNormalizesIDsAndReturnsEveryRequestedHistorySortedByDate() throws {
+        let sut = makeSUT()
+        let requestedID = UUID()
+        let emptyID = UUID()
+        let foreignID = UUID()
+        let oldDate = Date(timeIntervalSince1970: 100)
+        let newDate = Date(timeIntervalSince1970: 200)
+        sut.appendWorkoutAnalytics([
+            TestHelpers.makeAnalyticsEntry(exerciseId: requestedID, date: newDate),
+            TestHelpers.makeAnalyticsEntry(exerciseId: foreignID, date: newDate),
+            TestHelpers.makeAnalyticsEntry(exerciseId: requestedID, date: oldDate),
+        ])
+
+        let result = try sut.loadBatch(for: [requestedID, emptyID, requestedID])
+
+        #expect(Set(result.keys) == [requestedID, emptyID])
+        #expect(result[requestedID]?.map(\.date) == [oldDate, newDate])
+        #expect(result[emptyID]?.isEmpty == true)
+        #expect(result[foreignID] == nil)
+    }
+
+    @Test func batchLoadHandlesMoreThanTwoHundredIDs() throws {
+        let sut = makeSUT()
+        let ids = (0..<401).map { _ in UUID() }
+        let entries = ids.map { TestHelpers.makeAnalyticsEntry(exerciseId: $0) }
+        #expect(sut.appendWorkoutAnalytics(entries))
+
+        let result = try sut.loadBatch(for: ids)
+
+        #expect(result.count == ids.count)
+        #expect(Set(result.keys) == Set(ids))
+        for id in ids {
+            let loaded = try #require(result[id])
+            #expect(loaded.count == 1)
+            #expect(loaded.first?.exerciseId == id)
+        }
     }
 
     @Test func largeNumberOfSetsRoundtrip() {

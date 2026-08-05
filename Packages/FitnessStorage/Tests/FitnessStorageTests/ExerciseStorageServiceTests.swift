@@ -316,6 +316,58 @@ struct ExerciseStorageServiceTests {
         #expect(w2Loaded.first!.name == "W2 Curl")
     }
 
+    @Test func workoutWideLoadIsIsolatedAndPreservesCategorySortOrder() throws {
+        let ws = TestHelpers.makeWorkoutStorageService(container: container)
+        let workout1 = ws.workouts.first!
+        let workout2 = try ws.createWorkout(name: "Second")
+        let sut = ExerciseStorageService(container: container)
+        for category in MuscleCategoryGroup.allCases.reversed() {
+            sut.saveForWorkout(
+                [
+                    TestHelpers.makeExercise(name: "\(category.rawValue)-1", category: category),
+                    TestHelpers.makeExercise(name: "\(category.rawValue)-2", category: category),
+                ],
+                workoutId: workout1.id,
+                category: category
+            )
+        }
+        sut.saveForWorkout(
+            [TestHelpers.makeExercise(name: "Foreign", category: .arms)],
+            workoutId: workout2.id,
+            category: .arms
+        )
+
+        let loaded = try sut.loadWorkoutExercises(for: workout1.id)
+        let expectedNames = MuscleCategoryGroup.allCases.flatMap { category in
+            ["\(category.rawValue)-1", "\(category.rawValue)-2"]
+        }
+
+        #expect(loaded.map(\.name) == expectedNames)
+        #expect(loaded.allSatisfy { $0.name != "Foreign" })
+    }
+
+    @Test func mockWorkoutScopedFixtureTracksUpdatesAndReseeding() throws {
+        let workoutId = UUID()
+        let mock = MockExerciseStorage()
+        let arms = TestHelpers.makeExercise(name: "Curl", category: .arms)
+        let chest = TestHelpers.makeExercise(name: "Press", category: .chest)
+        mock.seedExercises([arms, chest], workoutId: workoutId)
+        var moved = arms
+        moved.name = "Row"
+        moved.category = .back
+
+        mock.updateExercise(moved)
+
+        #expect(try mock.loadWorkoutExercises(for: workoutId).map(\.name) == ["Press", "Row"])
+        #expect(mock.exerciseCountsByWorkout()[workoutId] == 2)
+        #expect(try mock.loadWorkoutExercises(for: UUID()).isEmpty)
+
+        mock.seedExercises([moved], workoutId: workoutId)
+
+        #expect(try mock.loadWorkoutExercises(for: workoutId).map(\.id) == [moved.id])
+        #expect(mock.exerciseCountsByWorkout()[workoutId] == 1)
+    }
+
     @Test func exerciseCountsAreAggregatedForAllWorkoutsInOneRead() throws {
         let ws = TestHelpers.makeWorkoutStorageService(container: container)
         let workout1 = ws.workouts.first!

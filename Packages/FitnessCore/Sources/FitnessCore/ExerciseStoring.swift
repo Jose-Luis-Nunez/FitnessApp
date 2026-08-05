@@ -5,6 +5,10 @@ import Mockable
 @MainActor
 public protocol ExerciseStoring {
     func loadForWorkout(workoutId: UUID, category: MuscleCategoryGroup) -> [Exercise]
+    /// Failure-aware workout-wide read used to build coherent snapshots.
+    /// Production storage performs one workout-scoped fetch; this default
+    /// preserves lightweight conformers and the domain category order.
+    func loadWorkoutExercises(for workoutId: UUID) throws -> [Exercise]
     /// Returns all persisted exercise counts grouped by workout id in one
     /// storage read. Overview screens use this instead of issuing one query
     /// per category and workout during SwiftUI rendering. This is a best-effort
@@ -17,4 +21,12 @@ public protocol ExerciseStoring {
     /// stable so a SwiftData `@Query` updates smoothly instead of leaving a
     /// deleted object lingering as a phantom card.
     func updateExercise(_ exercise: Exercise)
+}
+
+public extension ExerciseStoring {
+    func loadWorkoutExercises(for workoutId: UUID) throws -> [Exercise] {
+        MuscleCategoryGroup.allCases.flatMap {
+            loadForWorkout(workoutId: workoutId, category: $0)
+        }
+    }
 }

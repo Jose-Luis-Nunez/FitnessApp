@@ -39,6 +39,21 @@ public final class ExerciseStorageService: ExerciseStoring {
         }
     }
 
+    public func loadWorkoutExercises(for workoutId: UUID) throws -> [Exercise] {
+        let descriptor = FetchDescriptor<ExerciseModel>(
+            predicate: #Predicate<ExerciseModel> { $0.workoutId == workoutId },
+            sortBy: [SortDescriptor(\.sortOrder)]
+        )
+
+        let modelsByCategory = Dictionary(
+            grouping: try context.fetch(descriptor),
+            by: { MuscleCategoryGroup(rawValue: $0.category) ?? .arms }
+        )
+        return MuscleCategoryGroup.allCases.flatMap { category in
+            (modelsByCategory[category] ?? []).map { $0.toDomain() }
+        }
+    }
+
     public func exerciseCountsByWorkout() -> [UUID: Int] {
         do {
             let models = try context.fetch(FetchDescriptor<ExerciseModel>())

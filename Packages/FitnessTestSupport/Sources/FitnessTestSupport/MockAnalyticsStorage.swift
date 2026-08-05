@@ -3,8 +3,18 @@ import FitnessCore
 
 @MainActor
 public final class MockAnalyticsStorage: AnalyticsStoring, WorkoutAnalyticsBatchStoring {
+    public enum LoadError: Error {
+        case injected
+    }
+
     public private(set) var savedEntries: [UUID: [AnalyticsEntry]] = [:]
+    public private(set) var loadCallCount = 0
+    public private(set) var loadedExerciseIDs: [UUID] = []
+    public private(set) var batchLoadCallCount = 0
+    public private(set) var lastBatchExerciseIDs: [UUID] = []
     public var saveSucceeds = true
+    public var singleLoadFails = false
+    public var batchLoadFails = false
 
     public init() {}
 
@@ -25,7 +35,41 @@ public final class MockAnalyticsStorage: AnalyticsStoring, WorkoutAnalyticsBatch
     }
 
     public func load(for exerciseId: UUID) -> [AnalyticsEntry] {
-        savedEntries[exerciseId] ?? []
+        trackedSingleLoad(for: exerciseId)
+    }
+
+    public func loadHistory(for exerciseId: UUID) throws -> [AnalyticsEntry] {
+        loadCallCount += 1
+        loadedExerciseIDs.append(exerciseId)
+        if singleLoadFails { throw LoadError.injected }
+        return savedEntries[exerciseId] ?? []
+    }
+
+    private func trackedSingleLoad(for exerciseId: UUID) -> [AnalyticsEntry] {
+        loadCallCount += 1
+        loadedExerciseIDs.append(exerciseId)
+        return savedEntries[exerciseId] ?? []
+    }
+
+    public func loadBatch(for exerciseIds: [UUID]) throws -> [UUID: [AnalyticsEntry]] {
+        batchLoadCallCount += 1
+        lastBatchExerciseIDs = exerciseIds
+        if batchLoadFails { throw LoadError.injected }
+        return batchResult(for: exerciseIds)
+    }
+
+    private func batchResult(for exerciseIds: [UUID]) -> [UUID: [AnalyticsEntry]] {
+        var seen: Set<UUID> = []
+        return Dictionary(uniqueKeysWithValues: exerciseIds.filter { seen.insert($0).inserted }.map { id in
+            (id, savedEntries[id] ?? [])
+        })
+    }
+
+    public func resetLoadTracking() {
+        loadCallCount = 0
+        loadedExerciseIDs = []
+        batchLoadCallCount = 0
+        lastBatchExerciseIDs = []
     }
 }
 
