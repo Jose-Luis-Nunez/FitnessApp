@@ -28,11 +28,11 @@ public struct ScheduleView: View {
                     )
                     .padding(.horizontal, AppStyle.Padding.horizontal)
 
-                    StreakBannerView(streakData: viewModel.streakData())
+                    StreakBannerView(streakData: viewModel.materializedStreakData)
                         .padding(.horizontal, AppStyle.Padding.horizontal)
 
                     WeekSummaryView(
-                        summary: viewModel.weekSummary(for: selectedDate),
+                        summary: viewModel.selectedWeekSummary,
                         selectedDate: selectedDate,
                         onDayTap: { date in
                             withAnimation(.easeInOut(duration: 0.2)) {
@@ -69,9 +69,12 @@ public struct ScheduleView: View {
         }
         .background(AppStyle.Color.backgroundColor)
         .standardToolbar(title: "Schedule")
-        .onAppear { viewModel.reloadData() }
-        .onChange(of: workoutStorage.currentWorkout) { _ in
-            viewModel.reloadData()
+        .onAppear { viewModel.reloadData(referenceDate: selectedDate) }
+        .onChange(of: selectedDate) { _, date in
+            viewModel.materializeSelection(for: date)
+        }
+        .onChange(of: workoutStorage.currentWorkout) { _, _ in
+            viewModel.reloadData(referenceDate: selectedDate)
         }
     }
 
@@ -95,9 +98,6 @@ public struct ScheduleView: View {
 
     @ViewBuilder
     private var dayDetailSection: some View {
-        let detail = viewModel.dayDetail(for: selectedDate)
-        let exerciseCount = viewModel.exerciseCountForDay(selectedDate)
-
         VStack(alignment: .leading, spacing: 8) {
             Text("Training Details")
                 .font(AppStyle.Font.sectionTitle)
@@ -105,8 +105,8 @@ public struct ScheduleView: View {
 
             ScheduleDayDetailView(
                 date: selectedDate,
-                workoutDetail: detail,
-                exerciseCount: exerciseCount
+                workoutDetail: viewModel.selectedDayDetail,
+                exerciseCount: viewModel.selectedDayExerciseCount
             )
         }
     }

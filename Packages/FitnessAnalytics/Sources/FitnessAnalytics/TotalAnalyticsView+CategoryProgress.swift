@@ -14,10 +14,9 @@ extension TotalAnalyticsView {
             GeometryReader { geometry in
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(spacing: 12) {
-                        let categoryData = viewModel.getCategoryProgressData()
                         let cardWidth = geometry.size.width * 0.90 - (AppStyle.Padding.horizontal * 2)
 
-                        ForEach(categoryData) { data in
+                        ForEach(categoryProgressData) { data in
                             categoryCard(data: data)
                                 .frame(width: cardWidth)
                                 .frame(height: 300)

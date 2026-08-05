@@ -7,7 +7,7 @@ extension TotalAnalyticsView {
         AnalyticsDetailSection(shouldShowIndicator: shouldShowRhythmScrollIndicator()) {
             AnalyticsDetailHeader(
                 title: "Training Rhythm",
-                subtitle: viewModel.getTrainingRhythmDetail()?.rhythmLabel,
+                subtitle: rhythmDetailData?.rhythmLabel,
                 onBack: { showRhythmDetail = false }
             )
         } content: {
@@ -17,7 +17,7 @@ extension TotalAnalyticsView {
 
     private var rhythmDetailContent: some View {
         VStack(alignment: .leading, spacing: 16) {
-            if let rhythmDetail = viewModel.getTrainingRhythmDetail() {
+            if let rhythmDetail = rhythmDetailData {
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Last 5 training days")
@@ -105,7 +105,7 @@ extension TotalAnalyticsView {
     }
 
     func shouldShowRhythmScrollIndicator() -> Bool {
-        guard let rhythmDetail = viewModel.getTrainingRhythmDetail() else { return false }
+        guard let rhythmDetail = rhythmDetailData else { return false }
         return rhythmDetail.trainingDates.count > 3
     }
 }

@@ -431,6 +431,55 @@ struct GetLastTrainingDayCompletionRateTests {
 @Suite("snapshot cache invalidation", .tags(.fast))
 @MainActor
 struct SnapshotCacheInvalidationTests {
+    @Test func materializesCompleteDisplayStateFromOneSnapshot() {
+        let exercises = [
+            makeExercise(name: "Curl", category: .arms),
+            makeExercise(name: "Bench", category: .chest),
+            makeExercise(name: "Row", category: .back),
+        ]
+        let firstDay = date(-3)
+        let lastDay = date(0)
+        let entries = Dictionary(uniqueKeysWithValues: exercises.enumerated().map { index, exercise in
+            (
+                exercise.id,
+                [
+                    makeEntry(
+                        exerciseId: exercise.id,
+                        date: firstDay,
+                        sets: [(Double(20 + index * 10), 10)]
+                    ),
+                    makeEntry(
+                        exerciseId: exercise.id,
+                        date: lastDay,
+                        sets: [(Double(25 + index * 10), 10)]
+                    ),
+                ]
+            )
+        })
+        let (vm, _, _, analytics) = setupMocks(exercises: exercises, entries: entries)
+        let now = Date(timeIntervalSince1970: 1_893_456_000)
+
+        vm.materializeDisplayState(now: now)
+
+        #expect(analytics.batchLoadCallCount == 1)
+        #expect(vm.displayState.datesWithData.count == 2)
+        #expect(vm.displayState.categoryProgress.flatMap(\.exercises).count == 3)
+        #expect(vm.displayState.workoutDetail?.categories.flatMap(\.exercises).count == 3)
+        #expect(vm.displayState.rhythmDetail?.trainingDates.count == 2)
+        #expect(vm.displayState.tiles.map(\.kind) == [
+            .currentMonthTraining,
+            .currentYearTraining,
+            .lastWorkoutCompletion,
+            .trainingRhythm,
+            .mostTrainedCategory,
+            .leastTrainedCategory,
+            .mostImprovedCategory,
+        ])
+        #expect(vm.displayState.tiles[2].value == "100%")
+        #expect(vm.displayState.tiles[3].value == "Weekly")
+        #expect(vm.displayState.tiles[1].label == "Training 2030")
+    }
+
     @Test func refreshDataObservesNewBackingEntries() {
         let exercise = makeExercise(name: "Curl", category: .arms)
         let initial = makeEntry(exerciseId: exercise.id, date: date(-1), sets: [(20, 10)])

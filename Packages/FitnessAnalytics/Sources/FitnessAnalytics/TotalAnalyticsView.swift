@@ -7,7 +7,8 @@ import Factory
 // MARK: - Analytics Tile Data Model
 
 public struct AnalyticsTileData: Identifiable {
-    public let id: UUID
+    public var id: Kind { kind }
+    public let kind: Kind
     public let type: TileType
     public let value: String
     public let label: String
@@ -17,8 +18,18 @@ public struct AnalyticsTileData: Identifiable {
         case text
     }
 
-    public init(id: UUID = UUID(), type: TileType, value: String, label: String) {
-        self.id = id
+    public enum Kind: String, Sendable {
+        case currentMonthTraining
+        case currentYearTraining
+        case lastWorkoutCompletion
+        case trainingRhythm
+        case mostTrainedCategory
+        case leastTrainedCategory
+        case mostImprovedCategory
+    }
+
+    public init(kind: Kind, type: TileType, value: String, label: String) {
+        self.kind = kind
         self.type = type
         self.value = value
         self.label = label
@@ -26,17 +37,20 @@ public struct AnalyticsTileData: Identifiable {
 }
 
 public struct TotalAnalyticsView: View {
-    public var viewModel: TotalAnalyticsViewModel
-    @Environment(\.dismiss) private var dismiss
+    @State private var viewModel: TotalAnalyticsViewModel
     @State private var selectedDate: Date = Date()
     @State private var showCalendarDialog: Bool = false
     @State var showWorkoutDetail: Bool = false
     @State var showRhythmDetail: Bool = false
 
-    @State private var datesWithData: Set<Date> = []
+    @MainActor
+    public init() {
+        _viewModel = State(initialValue: TotalAnalyticsViewModel())
+    }
 
-    public init(viewModel: TotalAnalyticsViewModel = TotalAnalyticsViewModel()) {
-        self.viewModel = viewModel
+    @MainActor
+    public init(viewModel: TotalAnalyticsViewModel) {
+        _viewModel = State(initialValue: viewModel)
     }
 
     @Injected(\.workoutStorage) private var workoutStorageService
@@ -48,7 +62,7 @@ public struct TotalAnalyticsView: View {
                 CalendarDialogView(
                     isPresented: $showCalendarDialog,
                     selectedDate: $selectedDate,
-                    highlightedDates: Array(datesWithData),
+                    highlightedDates: Array(viewModel.displayState.datesWithData),
                     title: "Training Calendar"
                 )
             }
@@ -56,9 +70,20 @@ public struct TotalAnalyticsView: View {
         .background(AppStyle.Color.backgroundColor)
         .standardToolbar(title: "Total Analytics")
         .onAppear {
-            viewModel.refreshData()
-            datesWithData = viewModel.allDatesWithData()
+            viewModel.materializeDisplayState()
         }
+    }
+
+    var categoryProgressData: [CategoryProgressData] {
+        viewModel.displayState.categoryProgress
+    }
+
+    var workoutDetailData: WorkoutDetailData? {
+        viewModel.displayState.workoutDetail
+    }
+
+    var rhythmDetailData: TrainingRhythmDetailData? {
+        viewModel.displayState.rhythmDetail
     }
 
     private func mainContent(geometry: GeometryProxy) -> some View {
@@ -135,51 +160,6 @@ public struct TotalAnalyticsView: View {
         .padding(.bottom, 10)
     }
 
-    private var analyticsTiles: [AnalyticsTileData] {
-        let mostTrained = viewModel.getMostTrainedCategory()
-        let leastTrained = viewModel.getLeastTrainedCategory()
-        let mostImproved = viewModel.getCategoryWithMostImprovements()
-        let completionRate = viewModel.getLastTrainingDayCompletionRate()
-
-        return [
-            AnalyticsTileData(
-                type: .number,
-                value: "\(viewModel.totalWorkoutDaysInCurrentMonth())",
-                label: "Training \(viewModel.currentMonthName())"
-            ),
-            AnalyticsTileData(
-                type: .number,
-                value: "\(viewModel.totalWorkoutDaysInYear())",
-                label: "Training \(Calendar.current.component(.year, from: Date()))"
-            ),
-            AnalyticsTileData(
-                type: .number,
-                value: "\(completionRate.percentage)%",
-                label: "Last Workout Completion"
-            ),
-            AnalyticsTileData(
-                type: .text,
-                value: "\(viewModel.getTrainingRhythm())",
-                label: "Training Rhythm"
-            ),
-            AnalyticsTileData(
-                type: .text,
-                value: "\(mostTrained.category.displayName)",
-                label: "Category with most exercise"
-            ),
-            AnalyticsTileData(
-                type: .text,
-                value: "\(leastTrained.category.displayName)",
-                label: "Category with least exercise"
-            ),
-            AnalyticsTileData(
-                type: .text,
-                value: "\(mostImproved.category.displayName)",
-                label: "Category with most Improvements"
-            )
-        ]
-    }
-
     @ViewBuilder
     private var overallStatsView: some View {
         if showWorkoutDetail {
@@ -188,7 +168,7 @@ public struct TotalAnalyticsView: View {
             rhythmDetailView
         } else {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 8) {
-                ForEach(analyticsTiles) { tile in
+                ForEach(viewModel.displayState.tiles) { tile in
                     analyticsTileView(for: tile)
                 }
             }
@@ -212,21 +192,30 @@ public struct TotalAnalyticsView: View {
             }
         }
 
-        if tile.label == "Last Workout Completion" {
-            tileView
-                .onTapGesture {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        showWorkoutDetail = true
-                    }
+        switch tile.kind {
+        case .lastWorkoutCompletion:
+            Button {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    showWorkoutDetail = true
                 }
-        } else if tile.label == "Training Rhythm" {
-            tileView
-                .onTapGesture {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        showRhythmDetail = true
-                    }
+            } label: {
+                tileView
+            }
+            .buttonStyle(.plain)
+        case .trainingRhythm:
+            Button {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    showRhythmDetail = true
                 }
-        } else {
+            } label: {
+                tileView
+            }
+            .buttonStyle(.plain)
+        case .currentMonthTraining,
+             .currentYearTraining,
+             .mostTrainedCategory,
+             .leastTrainedCategory,
+             .mostImprovedCategory:
             tileView
         }
     }

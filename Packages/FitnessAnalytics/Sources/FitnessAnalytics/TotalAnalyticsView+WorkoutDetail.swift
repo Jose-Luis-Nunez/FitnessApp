@@ -8,7 +8,7 @@ extension TotalAnalyticsView {
         AnalyticsDetailSection(shouldShowIndicator: shouldShowScrollIndicator()) {
             AnalyticsDetailHeader(
                 title: "Last Workout",
-                subtitle: viewModel.getLastTrainingDayWorkoutDetail().map { DateFormatter.germanShort.string(from: $0.date) },
+                subtitle: workoutDetailData.map { DateFormatter.germanShort.string(from: $0.date) },
                 onBack: { showWorkoutDetail = false }
             )
         } content: {
@@ -18,7 +18,7 @@ extension TotalAnalyticsView {
 
     private var workoutDetailContent: some View {
         LazyVStack(alignment: .leading, spacing: 12) {
-            if let workoutDetail = viewModel.getLastTrainingDayWorkoutDetail() {
+            if let workoutDetail = workoutDetailData {
                 ForEach(workoutDetail.categories, id: \.category) { categoryDetail in
                     categoryDetailSection(categoryDetail: categoryDetail)
                 }
@@ -73,7 +73,7 @@ extension TotalAnalyticsView {
     }
 
     func shouldShowScrollIndicator() -> Bool {
-        guard let workoutDetail = viewModel.getLastTrainingDayWorkoutDetail() else { return false }
+        guard let workoutDetail = workoutDetailData else { return false }
 
         let totalExercises = workoutDetail.categories.reduce(0) { total, category in
             total + category.exercises.count
