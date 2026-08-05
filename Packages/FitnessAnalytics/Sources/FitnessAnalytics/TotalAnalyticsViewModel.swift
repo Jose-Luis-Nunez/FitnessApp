@@ -4,6 +4,9 @@ import FitnessCore
 import FitnessStorage
 import FitnessUI
 import Factory
+import os
+
+private let logger = Logger(subsystem: "FitnessAnalytics", category: "TotalAnalyticsViewModel")
 
 // MARK: - Workout Detail Data Models
 
@@ -71,42 +74,159 @@ public struct IdentifiableDate: Identifiable {
     }
 }
 
+public struct TotalAnalyticsDisplayState {
+    public let datesWithData: Set<Date>
+    public let categoryProgress: [CategoryProgressData]
+    public let workoutDetail: WorkoutDetailData?
+    public let rhythmDetail: TrainingRhythmDetailData?
+    public let tiles: [AnalyticsTileData]
+
+    public static let empty = TotalAnalyticsDisplayState(
+        datesWithData: [],
+        categoryProgress: [],
+        workoutDetail: nil,
+        rhythmDetail: nil,
+        tiles: []
+    )
+}
+
 @Observable
 @MainActor
 public final class TotalAnalyticsViewModel {
+    public private(set) var displayState: TotalAnalyticsDisplayState = .empty
     @ObservationIgnored private let storageService: TotalAnalyticsStoring
     @ObservationIgnored private let workoutStorage: WorkoutStoring
-    @ObservationIgnored private let exerciseStorage: ExerciseStoring
 
     // MARK: - Cached Data
 
-    @ObservationIgnored private var cachedAllEntries: [AnalyticsEntry]?
     @ObservationIgnored private var cachedCategoryProgress: [CategoryProgressData]?
+    @ObservationIgnored private var cachedSnapshot: WorkoutAnalyticsSnapshot?
 
-    nonisolated public init(
+    public init(
         totalAnalyticsStorage: TotalAnalyticsStoring? = nil,
-        workoutStorage: WorkoutStoring? = nil,
-        exerciseStorage: ExerciseStoring? = nil
+        workoutStorage: WorkoutStoring? = nil
     ) {
         self.storageService = totalAnalyticsStorage ?? Container.shared.totalAnalyticsStorage()
         self.workoutStorage = workoutStorage ?? Container.shared.workoutStorage()
-        self.exerciseStorage = exerciseStorage ?? Container.shared.exerciseStorage()
     }
 
-    /// Clears all cached data, forcing the next access to re-fetch from storage.
-    /// Call from `onAppear` or when the underlying data changes.
-    public func refreshData() {
-        cachedAllEntries = nil
-        cachedCategoryProgress = nil
+    /// Atomically replaces the current workout snapshot. A failed refresh keeps
+    /// the previous snapshot only when it belongs to the same workout.
+    @discardableResult
+    public func refreshData() -> Bool {
+        guard let workoutId = workoutStorage.currentWorkout?.id else {
+            clearCachedData()
+            return true
+        }
+
+        let canKeepCurrentSnapshot = cachedSnapshot?.workoutId == workoutId
+        do {
+            cache(try storageService.loadSnapshot(for: workoutId))
+            return true
+        } catch {
+            logger.error("Failed to refresh analytics snapshot for workout \(workoutId): \(error)")
+            if !canKeepCurrentSnapshot {
+                clearCachedData()
+            }
+            return canKeepCurrentSnapshot
+        }
+    }
+
+    public func materializeDisplayState(now: Date = Date()) {
+        guard refreshData() else {
+            displayState = .empty
+            return
+        }
+        let mostTrained = getMostTrainedCategory()
+        let leastTrained = getLeastTrainedCategory()
+        let mostImproved = getCategoryWithMostImprovements()
+        let completionRate = getLastTrainingDayCompletionRate()
+        displayState = TotalAnalyticsDisplayState(
+            datesWithData: allDatesWithData(),
+            categoryProgress: getCategoryProgressData(),
+            workoutDetail: getLastTrainingDayWorkoutDetail(),
+            rhythmDetail: getTrainingRhythmDetail(),
+            tiles: [
+                AnalyticsTileData(
+                    kind: .currentMonthTraining,
+                    type: .number,
+                    value: "\(totalWorkoutDaysInCurrentMonth())",
+                    label: "Training \(currentMonthName())"
+                ),
+                AnalyticsTileData(
+                    kind: .currentYearTraining,
+                    type: .number,
+                    value: "\(totalWorkoutDaysInYear())",
+                    label: "Training \(Calendar.current.component(.year, from: now))"
+                ),
+                AnalyticsTileData(
+                    kind: .lastWorkoutCompletion,
+                    type: .number,
+                    value: "\(completionRate.percentage)%",
+                    label: "Last Workout Completion"
+                ),
+                AnalyticsTileData(
+                    kind: .trainingRhythm,
+                    type: .text,
+                    value: getTrainingRhythm(),
+                    label: "Training Rhythm"
+                ),
+                AnalyticsTileData(
+                    kind: .mostTrainedCategory,
+                    type: .text,
+                    value: mostTrained.category.displayName,
+                    label: "Category with most exercise"
+                ),
+                AnalyticsTileData(
+                    kind: .leastTrainedCategory,
+                    type: .text,
+                    value: leastTrained.category.displayName,
+                    label: "Category with least exercise"
+                ),
+                AnalyticsTileData(
+                    kind: .mostImprovedCategory,
+                    type: .text,
+                    value: mostImproved.category.displayName,
+                    label: "Category with most Improvements"
+                ),
+            ]
+        )
     }
 
     // MARK: - Data Loading
 
     public func loadAllAnalytics() -> [AnalyticsEntry] {
-        if let cached = cachedAllEntries { return cached }
-        let entries = storageService.loadAllAnalytics()
-        cachedAllEntries = entries
-        return entries
+        workoutSnapshot()?.entries ?? []
+    }
+
+    private func workoutSnapshot() -> WorkoutAnalyticsSnapshot? {
+        guard let workoutId = workoutStorage.currentWorkout?.id else {
+            clearCachedData()
+            return nil
+        }
+        if let cachedSnapshot, cachedSnapshot.workoutId == workoutId {
+            return cachedSnapshot
+        }
+
+        clearCachedData()
+        do {
+            let snapshot = try storageService.loadSnapshot(for: workoutId)
+            cache(snapshot)
+            return snapshot
+        } catch {
+            logger.error("Failed to load analytics snapshot for workout \(workoutId): \(error)")
+            return nil
+        }
+    }
+
+    private func cache(_ snapshot: WorkoutAnalyticsSnapshot) {
+        cachedSnapshot = snapshot
+        cachedCategoryProgress = nil
+    }
+
+    private func clearCachedData() {
+        cachedSnapshot = nil
+        cachedCategoryProgress = nil
     }
 
     public func loadAnalytics(for date: Date) -> [AnalyticsEntry] {
@@ -116,7 +236,10 @@ public final class TotalAnalyticsViewModel {
     }
 
     public func getAllExercisesWithAnalytics() -> [Exercise] {
-        return storageService.getAllExercisesWithAnalytics()
+        guard let snapshot = workoutSnapshot() else { return [] }
+        return snapshot.exercises.filter {
+            !(snapshot.entriesByExerciseId[$0.id] ?? []).isEmpty
+        }
     }
 
     // MARK: - Statistics
@@ -205,7 +328,7 @@ public final class TotalAnalyticsViewModel {
         let result = categories.map { category in
             let categoryExercises = exercises.filter { $0.category == category }
             let exerciseProgressData = categoryExercises.compactMap { exercise -> ExerciseProgressData? in
-                let entries = storageService.loadAnalytics(for: exercise.id)
+                let entries = workoutSnapshot()?.entries(for: exercise.id) ?? []
                 guard !entries.isEmpty else { return nil }
 
                 let sortedEntries = entries.sorted { $0.date < $1.date }
@@ -252,12 +375,10 @@ public final class TotalAnalyticsViewModel {
             return (completed: 0, total: 0, percentage: 0)
         }
 
-        var allExercises: [Exercise] = []
-
-        for category in MuscleCategoryGroup.allCases {
-            let categoryExercises = exerciseStorage.loadForWorkout(workoutId: currentWorkout.id, category: category)
-            allExercises.append(contentsOf: categoryExercises)
+        guard let snapshot = workoutSnapshot(), snapshot.workoutId == currentWorkout.id else {
+            return (completed: 0, total: 0, percentage: 0)
         }
+        let allExercises = snapshot.exercises
 
         guard !allExercises.isEmpty else {
             return (completed: 0, total: 0, percentage: 0)
@@ -265,7 +386,7 @@ public final class TotalAnalyticsViewModel {
 
         let calendar = Calendar.current
         let completedExercises = allExercises.filter { exercise in
-            let entries = storageService.loadAnalytics(for: exercise.id)
+            let entries = snapshot.entries(for: exercise.id)
             return entries.contains { entry in
                 calendar.isDate(entry.date, inSameDayAs: date)
             }
@@ -290,14 +411,17 @@ public final class TotalAnalyticsViewModel {
 
         let calendar = Calendar.current
         var categoryDetails: [CategoryDetailData] = []
+        guard let snapshot = workoutSnapshot(), snapshot.workoutId == currentWorkout.id else {
+            return nil
+        }
 
         for category in MuscleCategoryGroup.allCases {
-            let categoryExercises = exerciseStorage.loadForWorkout(workoutId: currentWorkout.id, category: category)
+            let categoryExercises = snapshot.exercises.filter { $0.category == category }
 
             guard !categoryExercises.isEmpty else { continue }
 
             let exerciseDetails = categoryExercises.map { exercise in
-                let entries = storageService.loadAnalytics(for: exercise.id)
+                let entries = snapshot.entries(for: exercise.id)
                 let isCompleted = entries.contains { entry in
                     calendar.isDate(entry.date, inSameDayAs: date)
                 }

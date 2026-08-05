@@ -41,11 +41,7 @@ private func setupMocks(
     workoutStorage.currentWorkout = workout
     workoutStorage.workouts = [workout]
 
-    for exercise in exercises {
-        var existing = exerciseStorage.exercisesByCategory[exercise.category] ?? []
-        existing.append(exercise)
-        exerciseStorage.exercisesByCategory[exercise.category] = existing
-    }
+    exerciseStorage.seedExercises(exercises, workoutId: workout.id)
 
     for (id, entryList) in entries {
         analyticsStorage.save(entryList, for: id)
@@ -59,8 +55,7 @@ private func setupMocks(
 
     let vm = TotalAnalyticsViewModel(
         totalAnalyticsStorage: totalStorage,
-        workoutStorage: workoutStorage,
-        exerciseStorage: exerciseStorage
+        workoutStorage: workoutStorage
     )
 
     return (vm, workoutStorage, exerciseStorage, analyticsStorage)
@@ -120,6 +115,82 @@ struct ReloadDataTests {
 
         #expect(vm.trainingDaySet.isEmpty)
         #expect(vm.datesWithData.isEmpty)
+        #expect(vm.materializedStreakData.current == 0)
+        #expect(vm.materializedStreakData.longest == 0)
+        #expect(vm.selectedWeekSummary.days.count == 7)
+        #expect(vm.selectedDayDetail?.categories.isEmpty == true)
+        #expect(vm.selectedDayExerciseCount == 0)
+    }
+
+    @Test func materializesVisibleStateAndUpdatesSelection() {
+        let (exercises, analyticsVM, _) = setupTrainingDays(offsets: [0])
+        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
+        let today = date(0)
+
+        vm.reloadData(referenceDate: today)
+
+        #expect(vm.materializedStreakData.current == 1)
+        #expect(vm.materializedStreakData.longest == 1)
+        #expect(vm.selectedWeekSummary.trainingDayCount == 1)
+        #expect(vm.selectedWeekSummary.totalExercises == 3)
+        #expect(vm.selectedDayDetail != nil)
+        #expect(vm.selectedDayExerciseCount == 3)
+
+        vm.materializeSelection(for: date(-14))
+
+        #expect(vm.selectedWeekSummary.trainingDayCount == 0)
+        #expect(vm.selectedWeekSummary.totalExercises == 0)
+        #expect(vm.selectedDayDetail != nil)
+        let selectedExercises = vm.selectedDayDetail?.categories.flatMap(\.exercises) ?? []
+        #expect(Set(selectedExercises.map(\.exercise.id)) == Set(exercises.map(\.id)))
+        #expect(selectedExercises.allSatisfy { !$0.isCompleted })
+        #expect(vm.selectedDayExerciseCount == 0)
+    }
+
+    @Test func failedSnapshotDoesNotPublishPartiallyMaterializedState() {
+        let exercises = [
+            makeExercise(name: "Ex1", category: .arms),
+            makeExercise(name: "Ex2", category: .chest),
+            makeExercise(name: "Ex3", category: .back),
+        ]
+        let today = date(0)
+        let entries = Dictionary(uniqueKeysWithValues: exercises.map { exercise in
+            (exercise.id, [makeEntry(
+                exerciseId: exercise.id,
+                date: today,
+                sets: [(20, 10)]
+            )])
+        })
+        let (analyticsVM, _, _, analyticsStorage) = setupMocks(
+            exercises: exercises,
+            entries: entries
+        )
+        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
+        analyticsStorage.batchLoadFails = true
+
+        vm.reloadData(referenceDate: today)
+
+        #expect(vm.trainingDaySet.isEmpty)
+        #expect(vm.datesWithData.isEmpty)
+        #expect(vm.selectedDayDetail == nil)
+        #expect(vm.selectedDayExerciseCount == 0)
+        #expect(analyticsStorage.batchLoadCallCount == 1)
+
+        vm.materializeSelection(for: date(-7))
+
+        #expect(vm.trainingDaySet.isEmpty)
+        #expect(vm.datesWithData.isEmpty)
+        #expect(vm.selectedDayDetail == nil)
+        #expect(vm.selectedDayExerciseCount == 0)
+        #expect(analyticsStorage.batchLoadCallCount == 1)
+
+        analyticsStorage.batchLoadFails = false
+        vm.reloadData(referenceDate: today)
+
+        #expect(vm.trainingDaySet.count == 1)
+        #expect(vm.datesWithData.count == 1)
+        #expect(vm.selectedDayExerciseCount == 3)
+        #expect(analyticsStorage.batchLoadCallCount == 2)
     }
 }
 
@@ -185,8 +256,8 @@ struct WeekSummaryTests {
         let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
         let summary = vm.weekSummary(for: date(0))
 
-        #expect(summary.trainingDayCount >= 0)
-        #expect(summary.totalExercises >= 0)
+        #expect(summary.trainingDayCount == 1)
+        #expect(summary.totalExercises == 3)
     }
 }
 

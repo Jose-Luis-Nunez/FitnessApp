@@ -28,24 +28,66 @@ public struct StreakData {
 public final class ScheduleViewModel {
     public var trainingDaySet: Set<Date> = []
     public var datesWithData: Set<Date> = []
+    public private(set) var materializedStreakData = StreakData(
+        current: 0,
+        longest: 0,
+        rhythmLabel: ""
+    )
+    public private(set) var selectedWeekSummary = WeekSummaryData(
+        calendarWeek: 0,
+        days: [],
+        totalExercises: 0,
+        trainingDayCount: 0
+    )
+    public private(set) var selectedDayDetail: WorkoutDetailData?
+    public private(set) var selectedDayExerciseCount = 0
 
     private let totalAnalyticsVM: TotalAnalyticsViewModel
 
     @ObservationIgnored private var cachedStreakData: StreakData?
     @ObservationIgnored private var cachedTrainingDays: [Date]?
     @ObservationIgnored private var cachedWeekSummaries: [Date: WeekSummaryData] = [:]
+    @ObservationIgnored private var canMaterializeSelection = false
 
-    public init(totalAnalyticsVM: TotalAnalyticsViewModel = TotalAnalyticsViewModel()) {
+    public init() {
+        self.totalAnalyticsVM = TotalAnalyticsViewModel()
+    }
+
+    public init(totalAnalyticsVM: TotalAnalyticsViewModel) {
         self.totalAnalyticsVM = totalAnalyticsVM
     }
 
-    public func reloadData() {
-        totalAnalyticsVM.refreshData()
+    public func reloadData(referenceDate: Date = Date()) {
         cachedTrainingDays = nil
         cachedStreakData = nil
         cachedWeekSummaries = [:]
+        guard totalAnalyticsVM.refreshData() else {
+            canMaterializeSelection = false
+            trainingDaySet = []
+            datesWithData = []
+            materializedStreakData = StreakData(current: 0, longest: 0, rhythmLabel: "")
+            selectedWeekSummary = WeekSummaryData(
+                calendarWeek: 0,
+                days: [],
+                totalExercises: 0,
+                trainingDayCount: 0
+            )
+            selectedDayDetail = nil
+            selectedDayExerciseCount = 0
+            return
+        }
+        canMaterializeSelection = true
         trainingDaySet = Set(trainingDays())
         datesWithData = totalAnalyticsVM.allDatesWithData()
+        materializedStreakData = streakData()
+        materializeSelection(for: referenceDate)
+    }
+
+    public func materializeSelection(for date: Date) {
+        guard canMaterializeSelection else { return }
+        selectedWeekSummary = weekSummary(for: date)
+        selectedDayDetail = dayDetail(for: date)
+        selectedDayExerciseCount = exerciseCountForDay(date)
     }
 
     // MARK: - Training Days

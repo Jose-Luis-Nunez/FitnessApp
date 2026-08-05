@@ -1,6 +1,9 @@
 import Foundation
 import FitnessCore
 import Factory
+import os
+
+private let logger = Logger(subsystem: "FitnessStorage", category: "TotalAnalyticsStorageService")
 
 @MainActor
 public final class TotalAnalyticsStorageService: TotalAnalyticsStoring {
@@ -22,29 +25,22 @@ public final class TotalAnalyticsStorageService: TotalAnalyticsStoring {
         analyticsStorage.load(for: exerciseId)
     }
 
+    public func loadSnapshot(for workoutId: UUID) throws -> WorkoutAnalyticsSnapshot {
+        let exercises = try exerciseStorage.loadWorkoutExercises(for: workoutId)
+        let entriesByExerciseId = try analyticsStorage.loadBatch(for: exercises.map(\.id))
+        return WorkoutAnalyticsSnapshot(
+            workoutId: workoutId,
+            exercises: exercises,
+            entriesByExerciseId: entriesByExerciseId
+        )
+    }
+
     public func loadAllAnalytics() -> [AnalyticsEntry] {
         return loadAllAnalytics(for: nil)
     }
 
     public func loadAllAnalytics(for workoutId: UUID?) -> [AnalyticsEntry] {
-        var allEntries: [AnalyticsEntry] = []
-
-        let targetWorkoutId = workoutId ?? workoutStorage.currentWorkout?.id
-
-        guard let workoutId = targetWorkoutId else {
-            return []
-        }
-
-        for category in MuscleCategoryGroup.allCases {
-            let exercises = exerciseStorage.loadForWorkout(workoutId: workoutId, category: category)
-
-            for exercise in exercises {
-                let entries = analyticsStorage.load(for: exercise.id)
-                allEntries.append(contentsOf: entries)
-            }
-        }
-
-        return allEntries.sorted { $0.date > $1.date }
+        legacySnapshot(for: workoutId)?.entries ?? []
     }
 
     public func loadAllAnalytics(for date: Date) -> [AnalyticsEntry] {
@@ -61,25 +57,21 @@ public final class TotalAnalyticsStorageService: TotalAnalyticsStoring {
     }
 
     public func getAllExercisesWithAnalytics(for workoutId: UUID?) -> [Exercise] {
-        var exercisesWithAnalytics: [Exercise] = []
-
-        let targetWorkoutId = workoutId ?? workoutStorage.currentWorkout?.id
-
-        guard let workoutId = targetWorkoutId else {
-            return []
+        guard let snapshot = legacySnapshot(for: workoutId) else { return [] }
+        return snapshot.exercises.filter {
+            !(snapshot.entriesByExerciseId[$0.id] ?? []).isEmpty
         }
+    }
 
-        for category in MuscleCategoryGroup.allCases {
-            let exercises = exerciseStorage.loadForWorkout(workoutId: workoutId, category: category)
-
-            for exercise in exercises {
-                let entries = analyticsStorage.load(for: exercise.id)
-                if !entries.isEmpty {
-                    exercisesWithAnalytics.append(exercise)
-                }
-            }
+    private func legacySnapshot(for workoutId: UUID?) -> WorkoutAnalyticsSnapshot? {
+        guard let targetWorkoutId = workoutId ?? workoutStorage.currentWorkout?.id else {
+            return nil
         }
-
-        return exercisesWithAnalytics
+        do {
+            return try loadSnapshot(for: targetWorkoutId)
+        } catch {
+            logger.error("Failed to load analytics snapshot for workout \(targetWorkoutId): \(error)")
+            return nil
+        }
     }
 }

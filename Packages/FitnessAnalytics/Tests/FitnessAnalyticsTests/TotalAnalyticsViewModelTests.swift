@@ -39,11 +39,7 @@ private func setupMocks(
     workoutStorage.currentWorkout = workout
     workoutStorage.workouts = [workout]
 
-    for exercise in exercises {
-        var existing = exerciseStorage.exercisesByCategory[exercise.category] ?? []
-        existing.append(exercise)
-        exerciseStorage.exercisesByCategory[exercise.category] = existing
-    }
+    exerciseStorage.seedExercises(exercises, workoutId: workout.id)
 
     for (id, entryList) in entries {
         analyticsStorage.save(entryList, for: id)
@@ -57,8 +53,7 @@ private func setupMocks(
 
     let vm = TotalAnalyticsViewModel(
         totalAnalyticsStorage: totalStorage,
-        workoutStorage: workoutStorage,
-        exerciseStorage: exerciseStorage
+        workoutStorage: workoutStorage
     )
 
     return (vm, workoutStorage, exerciseStorage, analyticsStorage)
@@ -404,5 +399,97 @@ struct GetLastTrainingDayCompletionRateTests {
         let result = vm.getLastTrainingDayCompletionRate()
 
         #expect(result.percentage == 0)
+    }
+
+    @Test func includesExercisesWithoutHistoryInCompletionDenominator() {
+        let completed = [
+            makeExercise(name: "Completed 1", category: .arms),
+            makeExercise(name: "Completed 2", category: .chest),
+            makeExercise(name: "Completed 3", category: .back),
+        ]
+        let withoutHistory = makeExercise(name: "Not trained", category: .chest)
+        let entries = Dictionary(uniqueKeysWithValues: completed.map { exercise in
+            (exercise.id, [makeEntry(
+                exerciseId: exercise.id,
+                date: date(0),
+                sets: [(20, 10)]
+            )])
+        })
+        let (vm, _, _, _) = setupMocks(
+            exercises: completed + [withoutHistory],
+            entries: entries
+        )
+
+        let result = vm.getLastTrainingDayCompletionRate()
+
+        #expect(result.completed == 3)
+        #expect(result.total == 4)
+        #expect(result.percentage == 75)
+    }
+}
+
+@Suite("snapshot cache invalidation", .tags(.fast))
+@MainActor
+struct SnapshotCacheInvalidationTests {
+    @Test func refreshDataObservesNewBackingEntries() {
+        let exercise = makeExercise(name: "Curl", category: .arms)
+        let initial = makeEntry(exerciseId: exercise.id, date: date(-1), sets: [(20, 10)])
+        let (vm, _, _, analytics) = setupMocks(
+            exercises: [exercise],
+            entries: [exercise.id: [initial]]
+        )
+
+        #expect(vm.loadAllAnalytics().map(\.id) == [initial.id])
+        let added = makeEntry(exerciseId: exercise.id, date: date(0), sets: [(22, 10)])
+        analytics.save([initial, added], for: exercise.id)
+        #expect(vm.loadAllAnalytics().map(\.id) == [initial.id])
+
+        vm.refreshData()
+
+        #expect(Set(vm.loadAllAnalytics().map(\.id)) == Set([initial.id, added.id]))
+    }
+
+    @Test func failedInitialLoadIsNotCachedAsSuccessfulEmptyHistory() {
+        let exercise = makeExercise(name: "Curl", category: .arms)
+        let entry = makeEntry(exerciseId: exercise.id, date: date(0), sets: [(20, 10)])
+        let (vm, _, _, analytics) = setupMocks(
+            exercises: [exercise],
+            entries: [exercise.id: [entry]]
+        )
+        analytics.batchLoadFails = true
+
+        #expect(vm.loadAllAnalytics().isEmpty)
+        #expect(analytics.batchLoadCallCount == 1)
+
+        analytics.batchLoadFails = false
+
+        #expect(vm.loadAllAnalytics().map(\.id) == [entry.id])
+        #expect(analytics.batchLoadCallCount == 2)
+    }
+
+    @Test func failedRefreshKeepsOneCoherentSnapshotForTheSameWorkout() {
+        let exercise = makeExercise(name: "Curl", category: .arms)
+        let initial = makeEntry(exerciseId: exercise.id, date: date(-1), sets: [(20, 10)])
+        let (vm, _, _, analytics) = setupMocks(
+            exercises: [exercise],
+            entries: [exercise.id: [initial]]
+        )
+        vm.materializeDisplayState()
+        let initialDates = vm.displayState.datesWithData
+
+        analytics.save([
+            initial,
+            makeEntry(exerciseId: exercise.id, date: date(0), sets: [(22, 10)]),
+        ], for: exercise.id)
+        analytics.batchLoadFails = true
+
+        vm.materializeDisplayState()
+
+        #expect(vm.displayState.datesWithData == initialDates)
+
+        analytics.batchLoadFails = false
+        vm.materializeDisplayState()
+
+        #expect(vm.displayState.datesWithData.count == 2)
     }
 }

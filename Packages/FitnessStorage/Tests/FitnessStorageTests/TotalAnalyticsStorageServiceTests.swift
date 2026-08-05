@@ -29,6 +29,78 @@ struct TotalAnalyticsStorageServiceTests {
         return (sut, ws, es, as_)
     }
 
+    // MARK: - loadSnapshot(for:)
+
+    @Test func loadSnapshotUsesOneWorkoutReadAndOneOrderedBatchRead() throws {
+        let workoutId = UUID()
+        let withHistory = TestHelpers.makeExercise(name: "Curl", category: .arms)
+        let withoutHistory = TestHelpers.makeExercise(name: "Bench", category: .chest)
+        let exerciseStorage = MockExerciseStorage()
+        exerciseStorage.seedExercises([withHistory, withoutHistory], workoutId: workoutId)
+        let analyticsStorage = MockAnalyticsStorage()
+        let entry = TestHelpers.makeAnalyticsEntry(exerciseId: withHistory.id)
+        analyticsStorage.save([entry], for: withHistory.id)
+        analyticsStorage.resetLoadTracking()
+        let sut = TotalAnalyticsStorageService(
+            analyticsStorage: analyticsStorage,
+            exerciseStorage: exerciseStorage,
+            workoutStorage: MockWorkoutStorage()
+        )
+
+        let snapshot = try sut.loadSnapshot(for: workoutId)
+
+        #expect(exerciseStorage.workoutWideLoadCallCount == 1)
+        #expect(exerciseStorage.requestedWorkoutIDs == [workoutId])
+        #expect(analyticsStorage.batchLoadCallCount == 1)
+        #expect(analyticsStorage.lastBatchExerciseIDs == [withHistory.id, withoutHistory.id])
+        #expect(snapshot.workoutId == workoutId)
+        #expect(snapshot.exercises.map(\.id) == [withHistory.id, withoutHistory.id])
+        #expect(snapshot.entries.map(\.id) == [entry.id])
+        #expect(snapshot.entriesByExerciseId[withoutHistory.id]?.isEmpty == true)
+    }
+
+    @Test func loadSnapshotPropagatesBatchFailure() {
+        let workoutId = UUID()
+        let exercise = TestHelpers.makeExercise(name: "Curl", category: .arms)
+        let exerciseStorage = MockExerciseStorage()
+        exerciseStorage.seedExercises([exercise], workoutId: workoutId)
+        let analyticsStorage = MockAnalyticsStorage()
+        analyticsStorage.batchLoadFails = true
+        let sut = TotalAnalyticsStorageService(
+            analyticsStorage: analyticsStorage,
+            exerciseStorage: exerciseStorage,
+            workoutStorage: MockWorkoutStorage()
+        )
+
+        #expect(throws: MockAnalyticsStorage.LoadError.self) {
+            try sut.loadSnapshot(for: workoutId)
+        }
+    }
+
+    @Test func loadSnapshotIsIsolatedToRequestedWorkout() throws {
+        let (sut, workoutStorage, exerciseStorage, analyticsStorage) = makeSUT()
+        let workout1 = workoutStorage.workouts.first!
+        let workout2 = try workoutStorage.createWorkout(name: "Workout 2")
+        let exercise1 = TestHelpers.makeExercise(name: "Curl", category: .arms)
+        let exercise2 = TestHelpers.makeExercise(name: "Bench", category: .chest)
+        exerciseStorage.saveForWorkout([exercise1], workoutId: workout1.id, category: .arms)
+        exerciseStorage.saveForWorkout([exercise2], workoutId: workout2.id, category: .chest)
+        analyticsStorage.save(
+            [TestHelpers.makeAnalyticsEntry(exerciseId: exercise1.id)],
+            for: exercise1.id
+        )
+        analyticsStorage.save(
+            [TestHelpers.makeAnalyticsEntry(exerciseId: exercise2.id)],
+            for: exercise2.id
+        )
+
+        let snapshot = try sut.loadSnapshot(for: workout1.id)
+
+        #expect(snapshot.exercises.map(\.id) == [exercise1.id])
+        #expect(Set(snapshot.entriesByExerciseId.keys) == [exercise1.id])
+        #expect(snapshot.entries.allSatisfy { $0.exerciseId == exercise1.id })
+    }
+
     // MARK: - loadAnalytics(for exerciseId:)
 
     @Test func loadAnalyticsForExerciseReturnsEntries() {

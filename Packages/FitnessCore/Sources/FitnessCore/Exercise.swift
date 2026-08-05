@@ -23,7 +23,7 @@ public struct TrainingStep: Equatable, Hashable, Sendable {
     }
 }
 
-public struct Exercise: Identifiable, Codable, Equatable, Hashable {
+public struct Exercise: Identifiable, Codable, Equatable, Hashable, Sendable {
     public let id: UUID
     public var name: String
     public var weight: Double
