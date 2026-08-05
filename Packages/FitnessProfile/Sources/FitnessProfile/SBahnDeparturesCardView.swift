@@ -4,7 +4,6 @@ import FitnessUI
 public struct SBahnDeparturesCardView: View {
 
     @Bindable private var viewModel: SBahnDeparturesViewModel
-    @Environment(\.scenePhase) private var scenePhase
 
     public init(viewModel: SBahnDeparturesViewModel) {
         self.viewModel = viewModel
@@ -32,11 +31,6 @@ public struct SBahnDeparturesCardView: View {
         )
         .background(AppStyle.Color.profileCardBackground)
         .cornerRadius(AppStyle.CornerRadius.card)
-        .onChange(of: scenePhase) { _, newPhase in
-            if newPhase == .active {
-                viewModel.onBecameActive()
-            }
-        }
     }
 
     // MARK: - Header
@@ -82,7 +76,7 @@ public struct SBahnDeparturesCardView: View {
             endpointPill(text: viewModel.fromLabel, caption: "Start")
 
             Button {
-                viewModel.swap()
+                Task { await viewModel.swap() }
             } label: {
                 Image(systemName: "arrow.left.arrow.right")
                     .font(AppStyle.Font.profileEditIcon)
@@ -92,6 +86,7 @@ public struct SBahnDeparturesCardView: View {
                     .cornerRadius(AppStyle.CornerRadius.defaultButton)
             }
             .accessibilityIdentifier("id_profile_sbahn_swap")
+            .disabled(viewModel.isLoading)
 
             endpointPill(text: viewModel.toLabel, caption: "Destination")
         }
@@ -124,7 +119,11 @@ public struct SBahnDeparturesCardView: View {
         } else if !viewModel.departures.isEmpty {
             departuresList
         } else if viewModel.errorMessage == nil {
-            emptyRow
+            if viewModel.lastUpdated == nil {
+                requestPromptRow
+            } else {
+                emptyRow
+            }
         }
 
         if let error = viewModel.errorMessage {
@@ -144,6 +143,13 @@ public struct SBahnDeparturesCardView: View {
 
     private var emptyRow: some View {
         Text("No trains in the next 60 minutes.")
+            .font(AppStyle.Font.detailCaption)
+            .foregroundColor(AppStyle.Color.gray)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var requestPromptRow: some View {
+        Text("Tap Refresh to load departures.")
             .font(AppStyle.Font.detailCaption)
             .foregroundColor(AppStyle.Color.gray)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -352,8 +358,8 @@ public struct SBahnDeparturesCardView: View {
     @ViewBuilder
     private var footerStatusText: some View {
         if let lastUpdated = viewModel.formattedLastUpdated {
-            if viewModel.isStale {
-                Text("No internet · cached \(lastUpdated)")
+            if viewModel.isShowingCachedResult {
+                Text("Last request \(lastUpdated)")
                     .font(AppStyle.Font.sheetCaption)
                     .foregroundColor(AppStyle.Color.yellow)
             } else {

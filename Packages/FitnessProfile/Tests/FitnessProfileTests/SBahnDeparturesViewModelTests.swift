@@ -109,14 +109,14 @@ struct SBahnDeparturesViewModelTests {
         #expect(vm.departures.map(\.id) == ["a", "b"])
         #expect(vm.errorMessage == nil)
         #expect(vm.lastUpdated != nil)
-        #expect(vm.isStale == false)
+        #expect(vm.isShowingCachedResult == false)
         #expect(vm.isLoading == false)
         #expect(cache.saveCount == 1)
     }
 
     // MARK: - Refresh failure with cache fallback
 
-    @Test func refresh_networkError_fallsBackToCacheAndMarksStale() async {
+    @Test func refresh_networkError_keepsCacheVisibleAndSurfacesError() async {
         let service = MockService()
         service.error = .network
         let cache = MockCache()
@@ -130,8 +130,8 @@ struct SBahnDeparturesViewModelTests {
         await vm.refresh()
 
         #expect(vm.departures.map(\.id) == ["cached"])
-        #expect(vm.isStale == true)
-        #expect(vm.errorMessage == nil)
+        #expect(vm.isShowingCachedResult == true)
+        #expect(vm.errorMessage == BVGSBahnError.network.errorDescription)
     }
 
     @Test func refresh_networkError_withoutCache_setsErrorMessage() async {
@@ -147,7 +147,7 @@ struct SBahnDeparturesViewModelTests {
 
     // MARK: - Cache preload on init
 
-    @Test func init_loadsCachedDeparturesAsStale() {
+    @Test func init_loadsCachedDepartures() {
         let cache = MockCache()
         cache.preload(
             fromStopId: SBahnDeparturesViewModel.defaultOrigin.stopId,
@@ -157,7 +157,7 @@ struct SBahnDeparturesViewModelTests {
         let vm = Self.makeVM(cache: cache)
 
         #expect(vm.departures.map(\.id) == ["init-cached"])
-        #expect(vm.isStale == true)
+        #expect(vm.isShowingCachedResult == true)
     }
 
     // MARK: - Bridge passthrough
@@ -197,44 +197,93 @@ struct SBahnDeparturesViewModelTests {
 
     // MARK: - Swap
 
-    @Test func swap_togglesReversedAndScheduleRefresh() async {
-        let service = MockService()
-        service.results = [Self.makeDeparture(id: "swap-result")]
-        let vm = Self.makeVM(service: service)
-
+    @Test func swapShowsReverseCacheThenFetchesExactlyOnce() async throws {
+        let service = BlockableMockService()
+        let cache = MockCache()
+        cache.preload(
+            fromStopId: SBahnDeparturesViewModel.defaultDestination.stopId,
+            toStopId: SBahnDeparturesViewModel.defaultOrigin.stopId,
+            departures: [Self.makeDeparture(id: "reverse-cached")]
+        )
+        let vm = SBahnDeparturesViewModel(
+            service: service,
+            cache: cache,
+            maxResults: 3
+        )
         let initialFrom = vm.fromStopId
-        vm.swap()
+        let request = Task { await vm.swap() }
+        try await service.waitUntilRequested()
+
         #expect(vm.fromStopId != initialFrom)
         #expect(vm.isReversed == true)
+        #expect(vm.departures.map(\.id) == ["reverse-cached"])
+        #expect(vm.isShowingCachedResult)
+        #expect(service.callCount == 1)
+        #expect(service.lastFromStopId == SBahnDeparturesViewModel.defaultDestination.stopId)
+        #expect(service.lastToStopId == SBahnDeparturesViewModel.defaultOrigin.stopId)
 
-        // Yield so the Task spawned by swap()/scheduleRefresh() can run.
-        try? await Task.sleep(nanoseconds: 50_000_000)
-        #expect(service.callCount >= 1)
+        service.resume(with: [Self.makeDeparture(id: "reverse-live")])
+        await request.value
+
+        #expect(vm.departures.map(\.id) == ["reverse-live"])
+        #expect(vm.isShowingCachedResult == false)
     }
 
-    // MARK: - Toggle expanded triggers refresh
+    @Test func swapWithoutCachedReverseRouteShowsLoadingAndFetches() async throws {
+        let service = BlockableMockService()
+        let cache = MockCache()
+        cache.preload(
+            fromStopId: SBahnDeparturesViewModel.defaultOrigin.stopId,
+            toStopId: SBahnDeparturesViewModel.defaultDestination.stopId,
+            departures: [Self.makeDeparture(id: "forward-cached")]
+        )
+        let vm = SBahnDeparturesViewModel(
+            service: service,
+            cache: cache,
+            maxResults: 3
+        )
+        let request = Task { await vm.swap() }
+        try await service.waitUntilRequested()
 
-    @Test func toggleExpanded_whenExpanding_schedulesRefresh() async {
+        #expect(vm.isLoading)
+        #expect(vm.departures.isEmpty)
+        #expect(vm.lastUpdated == nil)
+        #expect(vm.isShowingCachedResult == false)
+        #expect(service.callCount == 1)
+
+        service.resume(with: [Self.makeDeparture(id: "reverse-live")])
+        await request.value
+        #expect(vm.departures.map(\.id) == ["reverse-live"])
+    }
+
+    @Test func failedSwapKeepsReverseCacheVisibleAndSurfacesError() async {
         let service = MockService()
-        service.results = [Self.makeDeparture(id: "toggle-result")]
+        service.error = .rateLimited
+        let cache = MockCache()
+        cache.preload(
+            fromStopId: SBahnDeparturesViewModel.defaultDestination.stopId,
+            toStopId: SBahnDeparturesViewModel.defaultOrigin.stopId,
+            departures: [Self.makeDeparture(id: "reverse-cached")]
+        )
+        let vm = Self.makeVM(service: service, cache: cache)
+
+        await vm.swap()
+
+        #expect(vm.isReversed)
+        #expect(vm.departures.map(\.id) == ["reverse-cached"])
+        #expect(vm.isShowingCachedResult)
+        #expect(vm.errorMessage == BVGSBahnError.rateLimited.errorDescription)
+    }
+
+    // MARK: - Toggle expanded is presentation-only
+
+    @Test func toggleExpandedDoesNotFetch() {
+        let service = MockService()
         let vm = Self.makeVM(service: service)
 
         vm.toggleExpanded()
+
         #expect(vm.isExpanded == true)
-
-        try? await Task.sleep(nanoseconds: 50_000_000)
-        #expect(service.callCount >= 1)
-    }
-
-    // MARK: - onBecameActive only refreshes when expanded + stale
-
-    @Test func onBecameActive_whenCollapsed_doesNotRefresh() async {
-        let service = MockService()
-        let vm = Self.makeVM(service: service)
-        // VM starts collapsed (isExpanded = false)
-        vm.onBecameActive()
-
-        try? await Task.sleep(nanoseconds: 50_000_000)
         #expect(service.callCount == 0)
     }
 
@@ -256,10 +305,9 @@ struct SBahnDeparturesViewModelTests {
         #expect(vm.isLoading == false)
     }
 
-    @Test func refresh_whenCancelled_clearsIsLoading() async {
-        // Verifies the cancellation-leak bug fix: when a refresh task is
-        // cancelled mid-flight (e.g. by a second scheduleRefresh()), the
-        // `defer { isLoading = false }` still fires.
+    @Test func refresh_whenCancelled_clearsIsLoading() async throws {
+        // A caller may still cancel a manual refresh when the screen leaves.
+        // The loading state must unwind on that path as well.
         //
         // Deterministic version: use BlockableMockService that suspends on
         // a CheckedContinuation. This way the test controls EXACTLY when
@@ -272,7 +320,7 @@ struct SBahnDeparturesViewModelTests {
         )
         let task = Task { await vm.refresh() }
         // Wait until the service has actually entered the suspended state.
-        await service.awaitSuspension()
+        try await service.waitUntilRequested()
         #expect(vm.isLoading == true)
 
         task.cancel()
@@ -283,19 +331,48 @@ struct SBahnDeparturesViewModelTests {
         #expect(vm.isLoading == false)
     }
 
-    // MARK: - Failure backoff (lastFailureAt)
+    @Test func secondManualRefreshWhileLoadingDoesNotStartAnotherRequest() async throws {
+        let service = BlockableMockService()
+        let vm = SBahnDeparturesViewModel(
+            service: service,
+            cache: MockCache(),
+            maxResults: 3
+        )
+        let firstRequest = Task { await vm.refresh() }
+        try await service.waitUntilRequested()
 
-    @Test func onBecameActive_recentFailure_doesNotRefetch() async {
-        let service = MockService()
-        service.error = .network
-        let vm = Self.makeVM(service: service)
-        vm.toggleExpanded()                // schedules first refresh, fails
-        try? await Task.sleep(nanoseconds: 80_000_000)
-        let countAfterFirst = service.callCount
+        await vm.refresh()
 
-        vm.onBecameActive()                // should be suppressed by backoff
-        try? await Task.sleep(nanoseconds: 80_000_000)
-        #expect(service.callCount == countAfterFirst)
+        #expect(service.callCount == 1)
+        service.resumeWithCancellation()
+        await firstRequest.value
+    }
+
+    @Test func secondSwapWhileLoadingDoesNotRequestOrChangeDirectionAgain() async throws {
+        let service = BlockableMockService()
+        let cache = MockCache()
+        let vm = SBahnDeparturesViewModel(
+            service: service,
+            cache: cache,
+            maxResults: 3
+        )
+        let request = Task { await vm.swap() }
+        try await service.waitUntilRequested()
+
+        await vm.swap()
+
+        #expect(vm.isReversed)
+        #expect(service.callCount == 1)
+        service.resume(with: [Self.makeDeparture(id: "reverse-result")])
+        await request.value
+
+        #expect(vm.isReversed)
+        #expect(vm.departures.map(\.id) == ["reverse-result"])
+        let cachedReverse = cache.load(
+            fromStopId: SBahnDeparturesViewModel.defaultDestination.stopId,
+            toStopId: SBahnDeparturesViewModel.defaultOrigin.stopId
+        )
+        #expect(cachedReverse?.departures.map(\.id) == ["reverse-result"])
     }
 
     /// MockService that suspends on a continuation, allowing tests to
@@ -305,19 +382,30 @@ struct SBahnDeparturesViewModelTests {
     private final class BlockableMockService: BVGSBahnServicing, @unchecked Sendable {
         private let lock = NSLock()
         private var continuation: CheckedContinuation<[SBahnDeparture], Error>?
-        private var suspensionCallback: (() -> Void)?
+        private var storedCallCount = 0
+        private var storedFromStopId: String?
+        private var storedToStopId: String?
 
-        func awaitSuspension() async {
-            await withCheckedContinuation { (cb: CheckedContinuation<Void, Never>) in
-                lock.lock()
-                if continuation != nil {
-                    lock.unlock()
-                    cb.resume()
-                } else {
-                    suspensionCallback = { cb.resume() }
-                    lock.unlock()
-                }
-            }
+        var callCount: Int {
+            lock.lock()
+            defer { lock.unlock() }
+            return storedCallCount
+        }
+
+        var lastFromStopId: String? {
+            lock.lock()
+            defer { lock.unlock() }
+            return storedFromStopId
+        }
+
+        var lastToStopId: String? {
+            lock.lock()
+            defer { lock.unlock() }
+            return storedToStopId
+        }
+
+        func waitUntilRequested() async throws {
+            try await waitUntil { self.callCount == 1 }
         }
 
         func resumeWithCancellation() {
@@ -328,6 +416,14 @@ struct SBahnDeparturesViewModelTests {
             c?.resume(throwing: CancellationError())
         }
 
+        func resume(with departures: [SBahnDeparture]) {
+            lock.lock()
+            let c = continuation
+            continuation = nil
+            lock.unlock()
+            c?.resume(returning: departures)
+        }
+
         func fetchSBahnRoute(
             fromStopId: String,
             toStopId: String,
@@ -335,11 +431,11 @@ struct SBahnDeparturesViewModelTests {
         ) async throws -> [SBahnDeparture] {
             try await withCheckedThrowingContinuation { c in
                 lock.lock()
+                storedCallCount += 1
+                storedFromStopId = fromStopId
+                storedToStopId = toStopId
                 continuation = c
-                let cb = suspensionCallback
-                suspensionCallback = nil
                 lock.unlock()
-                cb?()
             }
         }
     }

@@ -17,25 +17,26 @@ public final class SBahnDeparturesViewModel {
     }
 
     /// Default endpoints for the S-Bahn-Card: S+U Alexanderplatz → S Ostkreuz.
-    public static let defaultOrigin = Endpoint(stopId: "900100003", label: "Alexanderplatz")
-    public static let defaultDestination = Endpoint(stopId: "900120003", label: "Ostkreuz")
-
-    /// 60s TTL on app resume — same as Tram. Avoids hammering the API on
-    /// quick app-switches.
-    public static let foregroundStaleThreshold: TimeInterval = 60
+    nonisolated public static let defaultOrigin = Endpoint(
+        stopId: "900100003",
+        label: "Alexanderplatz"
+    )
+    nonisolated public static let defaultDestination = Endpoint(
+        stopId: "900120003",
+        label: "Ostkreuz"
+    )
 
     // MARK: - Observable State
 
     public private(set) var isExpanded: Bool = false
     public private(set) var departures: [SBahnDeparture] = []
-    public var isLoading: Bool = false
-    public var errorMessage: String?
-    public var lastUpdated: Date?
-    public var isReversed: Bool = false
-    /// True when the displayed departures come from the cache (no live
-    /// confirmation since app start, or last refresh failed but a cache hit
-    /// was used as fallback).
-    public var isStale: Bool = false
+    public private(set) var isLoading: Bool = false
+    public private(set) var errorMessage: String?
+    public private(set) var lastUpdated: Date?
+    public private(set) var isReversed: Bool = false
+    /// True when the displayed departures are the last successful cached
+    /// request rather than a result fetched during the current app session.
+    public private(set) var isShowingCachedResult: Bool = false
     /// ID of the row whose detail panel is currently expanded; `nil` = none.
     public var expandedDetailRowID: String?
 
@@ -46,7 +47,6 @@ public final class SBahnDeparturesViewModel {
     private let origin: Endpoint
     private let destination: Endpoint
     private let maxResults: Int
-    private let scheduler = RefreshScheduler()
 
     // MARK: - Init
 
@@ -76,16 +76,15 @@ public final class SBahnDeparturesViewModel {
 
     public func toggleExpanded() {
         isExpanded.toggle()
-        if isExpanded {
-            scheduleRefresh()
-        }
     }
 
-    public func swap() {
+    public func swap() async {
+        guard !isLoading else { return }
+
         isReversed.toggle()
-        loadCachedSnapshot()
         errorMessage = nil
-        scheduleRefresh()
+        loadCachedSnapshot()
+        await refresh()
     }
 
     public func toggleDetailExpansion(rowID: String) {
@@ -93,70 +92,67 @@ public final class SBahnDeparturesViewModel {
     }
 
     public func refresh() async {
+        guard !isLoading else { return }
+
+        let requestedFromStopId = fromStopId
+        let requestedToStopId = toStopId
         isLoading = true
-        // `defer` guarantees the loading flag is cleared on every exit path —
-        // including `Task.isCancelled` early returns — so the spinner can't
-        // get orphaned when the scheduler cancels an in-flight task.
         defer { isLoading = false }
         do {
             let result = try await service.fetchSBahnRoute(
-                fromStopId: fromStopId,
-                toStopId: toStopId,
+                fromStopId: requestedFromStopId,
+                toStopId: requestedToStopId,
                 maxResults: maxResults
             )
             guard !Task.isCancelled else { return }
+            cache.save(
+                fromStopId: requestedFromStopId,
+                toStopId: requestedToStopId,
+                departures: result
+            )
+            guard requestedFromStopId == fromStopId,
+                  requestedToStopId == toStopId else { return }
             departures = result
             errorMessage = nil
             lastUpdated = Date()
-            isStale = false
-            scheduler.reportSuccess()
-            cache.save(fromStopId: fromStopId, toStopId: toStopId, departures: result)
+            isShowingCachedResult = false
         } catch is CancellationError {
             return
         } catch {
-            handleRefreshFailure(error)
-            scheduler.reportFailure()
-        }
-    }
-
-    /// Called when host scene transitions back to `.active`. Refresh only if
-    /// expanded AND no recent failure. Backoff logic lives in
-    /// `RefreshScheduler`.
-    public func onBecameActive() {
-        guard isExpanded else { return }
-        if scheduler.shouldSkipAutoRefresh(staleThreshold: Self.foregroundStaleThreshold) {
-            return
-        }
-        let isStaleData = lastUpdated.map { Date().timeIntervalSince($0) > Self.foregroundStaleThreshold } ?? true
-        if isStaleData {
-            scheduleRefresh()
-        }
-    }
-
-    private func scheduleRefresh() {
-        scheduler.schedule { [weak self] in
-            await self?.refresh()
+            guard requestedFromStopId == fromStopId,
+                  requestedToStopId == toStopId else { return }
+            handleRefreshFailure(
+                error,
+                fromStopId: requestedFromStopId,
+                toStopId: requestedToStopId
+            )
         }
     }
 
     // MARK: - Cache helpers
 
     private func loadCachedSnapshot() {
+        departures = []
+        lastUpdated = nil
+        isShowingCachedResult = false
+        expandedDetailRowID = nil
         guard let cached = cache.load(fromStopId: fromStopId, toStopId: toStopId) else {
             return
         }
         departures = cached.departures
         lastUpdated = cached.savedAt
-        isStale = true
+        isShowingCachedResult = true
     }
 
-    private func handleRefreshFailure(_ error: Error) {
+    private func handleRefreshFailure(
+        _ error: Error,
+        fromStopId: String,
+        toStopId: String
+    ) {
         if let cached = cache.load(fromStopId: fromStopId, toStopId: toStopId) {
             departures = cached.departures
             lastUpdated = cached.savedAt
-            isStale = true
-            errorMessage = nil
-            return
+            isShowingCachedResult = true
         }
         if let sbahnError = error as? BVGSBahnError {
             errorMessage = sbahnError.errorDescription ?? "Failed to load."
@@ -170,6 +166,7 @@ public final class SBahnDeparturesViewModel {
     private static let timeFormatter: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "de_DE")
+        f.timeZone = TimeZone(identifier: "Europe/Berlin")
         f.dateFormat = "HH:mm"
         return f
     }()

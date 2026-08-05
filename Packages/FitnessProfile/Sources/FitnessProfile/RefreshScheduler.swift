@@ -1,10 +1,9 @@
 import Foundation
 
 /// Composable helper that captures the auto-refresh + failure-backoff
-/// behaviour shared by `TramDeparturesViewModel` and
-/// `SBahnDeparturesViewModel`. Each ViewModel composes one and delegates
-/// scheduling/backoff decisions to it; the actual `refresh()` body still
-/// lives in the ViewModel because it's typed (different services).
+/// behaviour used by `TramDeparturesViewModel`. The ViewModel delegates
+/// scheduling/backoff decisions to it; its typed `refresh()` body remains
+/// in the ViewModel.
 ///
 /// Lifecycle:
 /// - `schedule(_:)` cancels any in-flight task and starts a new one.
@@ -13,7 +12,7 @@ import Foundation
 /// - Before any auto-refresh (e.g. `onBecameActive`) consult
 ///   `shouldSkipAutoRefresh(staleThreshold:)` to honour the backoff.
 ///
-/// Manual refreshes (RefreshActionButton, swap) bypass this scheduler's
+/// Manual Tram refreshes (RefreshActionButton, swap) bypass this scheduler's
 /// `shouldSkipAutoRefresh` check by design — user intent always wins over
 /// automatic suppression.
 @MainActor

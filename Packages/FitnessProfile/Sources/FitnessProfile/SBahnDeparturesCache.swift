@@ -21,10 +21,10 @@ public protocol SBahnDeparturesCaching: Sendable {
 
 // MARK: - UserDefaults Implementation
 
-/// Mirrors `TramDeparturesCache`: persist last-successful API result per
-/// (from, to) tuple so the offline fallback works after process restart.
-/// Payload is small (≤ 6 departures + bridge hints ≈ < 4 KB) so UserDefaults
-/// is the right tool.
+/// Persists the last successful API result per `(from, to)` tuple. The card
+/// restores it immediately after launch or a direction change while a
+/// user-initiated request loads fresh data. The payload is bounded to four
+/// departures plus bridge hints, so UserDefaults is sufficient.
 public final class SBahnDeparturesCache: SBahnDeparturesCaching, @unchecked Sendable {
     private let defaults: UserDefaults
     private let encoder: JSONEncoder

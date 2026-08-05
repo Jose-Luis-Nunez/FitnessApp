@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import FitnessTestSupport
 @testable import FitnessProfile
 
 /// Integration tests for the slim `BVGSBahnService` orchestrator. The
@@ -16,23 +17,80 @@ struct BVGSBahnServiceTests {
         var pools: [String: [TransitDeparture]] = [:]
         var stopovers: [String: [TransitStopover]] = [:]
         var error: BVGSBahnError?
-        private(set) var fetchedStopIds: [String] = []
-        private(set) var fetchedDirections: [String?] = []
-        private(set) var fetchedTripIds: [String] = []
+        var failingStopoverTripIds: Set<String> = []
+        var stopoverRequestGate: StopoverRequestGate?
+        private let lock = NSLock()
+        private var storedFetchedStopIds: [String] = []
+        private var storedFetchedDirections: [String?] = []
+        private var storedFetchedTripIds: [String] = []
+        private var activeStopoverRequests = 0
+        private var storedMaxConcurrentStopoverRequests = 0
+
+        var fetchedStopIds: [String] { withLock { storedFetchedStopIds } }
+        var fetchedDirections: [String?] { withLock { storedFetchedDirections } }
+        var fetchedTripIds: [String] { withLock { storedFetchedTripIds } }
+        var maxConcurrentStopoverRequests: Int { withLock { storedMaxConcurrentStopoverRequests } }
 
         func fetchSuburbanDepartures(
             stopId: String,
             directionStopId: String?
         ) async throws -> [TransitDeparture] {
-            fetchedStopIds.append(stopId)
-            fetchedDirections.append(directionStopId)
+            withLock {
+                storedFetchedStopIds.append(stopId)
+                storedFetchedDirections.append(directionStopId)
+            }
             if let error { throw error }
             return pools[stopId] ?? []
         }
 
         func fetchTripStopovers(tripId: String) async throws -> [TransitStopover] {
-            fetchedTripIds.append(tripId)
+            beginStopoverRequest(tripId: tripId)
+            defer { endStopoverRequest() }
+            if let stopoverRequestGate {
+                await stopoverRequestGate.wait()
+            }
+            if failingStopoverTripIds.contains(tripId) {
+                throw BVGSBahnError.network
+            }
             return stopovers[tripId] ?? []
+        }
+
+        private func beginStopoverRequest(tripId: String) {
+            withLock {
+                storedFetchedTripIds.append(tripId)
+                activeStopoverRequests += 1
+                storedMaxConcurrentStopoverRequests = max(
+                    storedMaxConcurrentStopoverRequests,
+                    activeStopoverRequests
+                )
+            }
+        }
+
+        private func endStopoverRequest() {
+            withLock { activeStopoverRequests -= 1 }
+        }
+
+        @discardableResult
+        private func withLock<T>(_ operation: () -> T) -> T {
+            lock.lock()
+            defer { lock.unlock() }
+            return operation()
+        }
+    }
+
+    private actor StopoverRequestGate {
+        private var blocked: [CheckedContinuation<Void, Never>] = []
+
+        func wait() async {
+            await withCheckedContinuation { continuation in
+                blocked.append(continuation)
+            }
+        }
+
+        func releaseAll() {
+            let continuations = blocked
+            blocked.removeAll()
+            continuations.forEach { $0.resume() }
         }
     }
 
@@ -40,7 +98,7 @@ struct BVGSBahnServiceTests {
         _ hhmm: String,
         line: String,
         direction: String,
-        tripId: String
+        tripId: String?
     ) -> TransitDeparture {
         let comps = hhmm.split(separator: ":")
         var c = DateComponents()
@@ -182,6 +240,198 @@ struct BVGSBahnServiceTests {
         )
 
         #expect(result.map(\.id) == ["first", "second"])
+    }
+
+    @Test func sixtyDepartures_fetchOnlyFourDetailsWithAtMostFourConcurrentRequests() async throws {
+        let client = MockClient()
+        let requestGate = StopoverRequestGate()
+        client.stopoverRequestGate = requestGate
+        let start = Self.dep("06:00", line: "S3", direction: "S Erkner Bhf", tripId: "trip-0").plannedWhen
+        client.pools[Self.config.originStopId] = (0..<60).map { index in
+            let when = start.addingTimeInterval(TimeInterval(index * 60))
+            return TransitDeparture(
+                tripId: "trip-\(index)",
+                line: "S3",
+                direction: "S Erkner Bhf",
+                plannedWhen: when,
+                when: when
+            )
+        }
+        let service = BVGSBahnService(client: client, configuration: Self.config)
+
+        let request = Task {
+            try await service.fetchSBahnRoute(
+                fromStopId: Self.config.originStopId,
+                toStopId: Self.config.destinationStopId,
+                maxResults: 4
+            )
+        }
+        do {
+            try await waitUntil { client.fetchedTripIds.count == 4 }
+        } catch {
+            await requestGate.releaseAll()
+            request.cancel()
+            _ = try? await request.value
+            throw error
+        }
+
+        #expect(Set(client.fetchedTripIds) == Set(["trip-0", "trip-1", "trip-2", "trip-3"]))
+        #expect(client.fetchedTripIds.count == 4)
+        #expect(client.maxConcurrentStopoverRequests == 4)
+        await requestGate.releaseAll()
+        let result = try await request.value
+        #expect(result.map(\.id) == ["trip-0", "trip-1", "trip-2", "trip-3"])
+    }
+
+    @Test func duplicateTripIds_areFetchedOnlyOnce() async throws {
+        let client = MockClient()
+        client.pools[Self.config.originStopId] = [
+            Self.dep("06:42", line: "S3", direction: "S Erkner Bhf", tripId: "same-trip"),
+            Self.dep("06:44", line: "S3", direction: "S Erkner Bhf", tripId: "same-trip"),
+        ]
+        let service = BVGSBahnService(client: client, configuration: Self.config)
+
+        let result = try await service.fetchSBahnRoute(
+            fromStopId: Self.config.originStopId,
+            toStopId: Self.config.destinationStopId,
+            maxResults: 4
+        )
+
+        #expect(client.fetchedTripIds == ["same-trip"])
+        #expect(result.map(\.id) == ["same-trip"])
+    }
+
+    @Test func departuresWithoutTripIdsUseTheirFullFallbackIdentity() async throws {
+        let client = MockClient()
+        client.pools[Self.config.originStopId] = [
+            Self.dep("06:42", line: "S3", direction: "S Erkner Bhf", tripId: nil),
+            Self.dep("06:42", line: "S3", direction: "S Ahrensfelde Bhf (Berlin)", tripId: nil),
+        ]
+        let service = BVGSBahnService(client: client, configuration: Self.config)
+
+        let result = try await service.fetchSBahnRoute(
+            fromStopId: Self.config.originStopId,
+            toStopId: Self.config.destinationStopId,
+            maxResults: 4
+        )
+
+        #expect(result.count == 2)
+        #expect(Set(result.map(\.id)).count == 2)
+        #expect(client.fetchedTripIds.isEmpty)
+    }
+
+    @Test func fallbackIdentityRemainsStableWhenLiveTimeChanges() async throws {
+        let client = MockClient()
+        let scheduled = Self.dep(
+            "06:42",
+            line: "S3",
+            direction: "S Erkner Bhf",
+            tripId: nil
+        )
+        client.pools[Self.config.originStopId] = [scheduled]
+        let service = BVGSBahnService(client: client, configuration: Self.config)
+
+        let first = try await service.fetchSBahnRoute(
+            fromStopId: Self.config.originStopId,
+            toStopId: Self.config.destinationStopId,
+            maxResults: 1
+        )
+        client.pools[Self.config.originStopId] = [
+            TransitDeparture(
+                tripId: nil,
+                line: scheduled.line,
+                direction: scheduled.direction,
+                plannedWhen: scheduled.plannedWhen,
+                when: scheduled.when.addingTimeInterval(120)
+            )
+        ]
+        let second = try await service.fetchSBahnRoute(
+            fromStopId: Self.config.originStopId,
+            toStopId: Self.config.destinationStopId,
+            maxResults: 1
+        )
+
+        #expect(first.map(\.id) == second.map(\.id))
+    }
+
+    @Test func zeroResults_doesNotFetchStopovers() async throws {
+        let client = MockClient()
+        client.pools[Self.config.originStopId] = [
+            Self.dep("06:42", line: "S3", direction: "S Erkner Bhf", tripId: "unused"),
+        ]
+        let service = BVGSBahnService(client: client, configuration: Self.config)
+
+        let result = try await service.fetchSBahnRoute(
+            fromStopId: Self.config.originStopId,
+            toStopId: Self.config.destinationStopId,
+            maxResults: 0
+        )
+
+        #expect(result.isEmpty)
+        #expect(client.fetchedStopIds.isEmpty)
+        #expect(client.fetchedTripIds.isEmpty)
+    }
+
+    @Test func negativeMaxResultsDoesNotFetchAnything() async throws {
+        let client = MockClient()
+        let service = BVGSBahnService(client: client, configuration: Self.config)
+
+        let result = try await service.fetchSBahnRoute(
+            fromStopId: Self.config.originStopId,
+            toStopId: Self.config.destinationStopId,
+            maxResults: -1
+        )
+
+        #expect(result.isEmpty)
+        #expect(client.fetchedStopIds.isEmpty)
+        #expect(client.fetchedTripIds.isEmpty)
+    }
+
+    @Test func failedStopoverFallsBackAndRemainsRetryable() async throws {
+        let client = MockClient()
+        client.pools[Self.config.originStopId] = [
+            Self.dep("06:42", line: "S3", direction: "S Erkner Bhf", tripId: "retry-trip")
+        ]
+        client.failingStopoverTripIds = ["retry-trip"]
+        let service = BVGSBahnService(client: client, configuration: Self.config)
+
+        let first = try await service.fetchSBahnRoute(
+            fromStopId: Self.config.originStopId,
+            toStopId: Self.config.destinationStopId,
+            maxResults: 1
+        )
+        #expect(first.count == 1)
+
+        client.failingStopoverTripIds = []
+        let second = try await service.fetchSBahnRoute(
+            fromStopId: Self.config.originStopId,
+            toStopId: Self.config.destinationStopId,
+            maxResults: 1
+        )
+
+        #expect(second.count == 1)
+        #expect(client.fetchedTripIds == ["retry-trip", "retry-trip"])
+    }
+
+    @Test func repeatedRefreshFetchesStopoversAgain() async throws {
+        let client = MockClient()
+        client.pools[Self.config.originStopId] = [
+            Self.dep("06:00", line: "S3", direction: "S Erkner Bhf", tripId: "fresh-trip"),
+        ]
+        let service = BVGSBahnService(client: client, configuration: Self.config)
+
+        _ = try await service.fetchSBahnRoute(
+            fromStopId: Self.config.originStopId,
+            toStopId: Self.config.destinationStopId,
+            maxResults: 1
+        )
+        _ = try await service.fetchSBahnRoute(
+            fromStopId: Self.config.originStopId,
+            toStopId: Self.config.destinationStopId,
+            maxResults: 1
+        )
+
+        #expect(client.fetchedTripIds == ["fresh-trip", "fresh-trip"])
     }
 
     // MARK: - Reverse direction (Ostkreuz → Alex) with bridge logic

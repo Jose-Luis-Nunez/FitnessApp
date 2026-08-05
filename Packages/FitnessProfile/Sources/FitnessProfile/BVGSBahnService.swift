@@ -22,17 +22,10 @@ public protocol BVGSBahnServicing: Sendable {
 /// into the user-visible Alex → Ostkreuz routing. The class itself is
 /// almost stateless: it holds the injected dependencies and runs the
 /// 4-step orchestration on each `fetchSBahnRoute` call.
-public final class BVGSBahnService: BVGSBahnServicing, @unchecked Sendable {
+public final class BVGSBahnService: BVGSBahnServicing, Sendable {
+    private static let stopoverConcurrencyLimit = 4
     private let client: BVGTransitClienting
     private let routeConfigurations: [SBahnRouteConfiguration]
-
-    /// In-memory cache of stopover-list-per-tripId, populated lazily as
-    /// trips show up in refresh results. Within a session a tripId's
-    /// stopover list is stable, so caching avoids re-fetching on every
-    /// 60s auto-refresh. Cleared on service deallocation (i.e. typically
-    /// only on app cold start).
-    private let stopoversCacheLock = NSLock()
-    private var stopoversCache: [String: [TransitStopover]] = [:]
 
     public init(
         client: BVGTransitClienting = BVGTransitClient(),
@@ -71,6 +64,8 @@ public final class BVGSBahnService: BVGSBahnServicing, @unchecked Sendable {
         toStopId: String,
         maxResults: Int = 4
     ) async throws -> [SBahnDeparture] {
+        guard maxResults > 0 else { return [] }
+
         // Match the requested (from, to) against all configured routes.
         // If a configuration matches, run the full classifier + bridge
         // pipeline against it — works symmetrically for forward and
@@ -147,15 +142,23 @@ public final class BVGSBahnService: BVGSBahnServicing, @unchecked Sendable {
         // arrival we need. For non-bridge trips that's the original trip's
         // tripId; for bridge trips it's the BRIDGE train's tripId because
         // that's the train the user is on at the moment of arrival.
-        let arrivalTripIds: [String] = prepared.compactMap { trip in
+        var seenDepartureIds: Set<String> = []
+        let limitedPrepared = Array(prepared
+            .sorted { $0.dep.plannedWhen < $1.dep.plannedWhen }
+            .filter { trip in
+                seenDepartureIds.insert(Self.departureID(for: trip.dep)).inserted
+            }
+            .prefix(maxResults))
+        var seenTripIds: Set<String> = []
+        let arrivalTripIds: [String] = limitedPrepared.compactMap { trip in
             if let bridge = trip.bridge { return bridge.bridgeTripId }
             return trip.dep.tripId
-        }
+        }.filter { seenTripIds.insert($0).inserted }
         let stopoversByTripId = await fetchStopoversInParallel(tripIds: arrivalTripIds)
 
         // Third-pass: build SBahnDepartures with API-derived arrival when
         // available, falling back to the configuration's static estimate.
-        let resolved: [SBahnDeparture] = prepared.map { trip in
+        let resolved: [SBahnDeparture] = limitedPrepared.map { trip in
             let arrival = arrivalAtDestination(
                 dep: trip.dep,
                 bridge: trip.bridge,
@@ -165,11 +168,7 @@ public final class BVGSBahnService: BVGSBahnServicing, @unchecked Sendable {
             return Self.makeDeparture(from: trip.dep, bridge: trip.bridge, arrival: arrival)
         }
 
-        return Array(
-            resolved
-                .sorted { $0.plannedWhen < $1.plannedWhen }
-                .prefix(max(maxResults, 0))
-        )
+        return resolved
     }
 
     // MARK: - Arrival lookup (API-truth via stopovers)
@@ -177,59 +176,30 @@ public final class BVGSBahnService: BVGSBahnServicing, @unchecked Sendable {
     private func fetchStopoversInParallel(
         tripIds: [String]
     ) async -> [String: [TransitStopover]] {
-        // Hit the cache first so back-to-back refreshes don't re-fetch.
-        var (hits, misses) = cachedStopoversAndMisses(for: tripIds)
-
-        // Fetch the misses concurrently. A failed lookup just skips the
-        // trip — the caller will fall back to the static estimate.
-        let fetched: [String: [TransitStopover]] = await withTaskGroup(of: (String, [TransitStopover]?).self) { group in
-            for tripId in misses {
+        // A failed detail lookup is deliberately local to that trip: the
+        // caller still has a configuration-based arrival estimate.
+        await withTaskGroup(of: (String, [TransitStopover]?).self) { group in
+            var iterator = tripIds.makeIterator()
+            for _ in 0..<min(Self.stopoverConcurrencyLimit, tripIds.count) {
+                guard let tripId = iterator.next() else { break }
                 group.addTask { [client] in
                     let stopovers = try? await client.fetchTripStopovers(tripId: tripId)
                     return (tripId, stopovers)
                 }
             }
             var result: [String: [TransitStopover]] = [:]
-            for await (tripId, stopovers) in group {
+            while let (tripId, stopovers) = await group.next() {
                 if let stopovers {
                     result[tripId] = stopovers
                 }
+                if let nextTripId = iterator.next() {
+                    group.addTask { [client] in
+                        let nextStopovers = try? await client.fetchTripStopovers(tripId: nextTripId)
+                        return (nextTripId, nextStopovers)
+                    }
+                }
             }
             return result
-        }
-
-        storeStopovers(fetched)
-        for (tripId, stopovers) in fetched {
-            hits[tripId] = stopovers
-        }
-        return hits
-    }
-
-    /// Synchronous helper around the cache lock — keeps the NSLock call
-    /// out of the async context (Swift 6 compliance).
-    private func cachedStopoversAndMisses(
-        for tripIds: [String]
-    ) -> (hits: [String: [TransitStopover]], misses: [String]) {
-        stopoversCacheLock.lock()
-        defer { stopoversCacheLock.unlock() }
-        var hits: [String: [TransitStopover]] = [:]
-        var misses: [String] = []
-        for tripId in tripIds {
-            if let cached = stopoversCache[tripId] {
-                hits[tripId] = cached
-            } else {
-                misses.append(tripId)
-            }
-        }
-        return (hits, misses)
-    }
-
-    /// Synchronous helper around the cache lock for inserts.
-    private func storeStopovers(_ entries: [String: [TransitStopover]]) {
-        stopoversCacheLock.lock()
-        defer { stopoversCacheLock.unlock() }
-        for (tripId, list) in entries {
-            stopoversCache[tripId] = list
         }
     }
 
@@ -288,12 +258,12 @@ public final class BVGSBahnService: BVGSBahnServicing, @unchecked Sendable {
             stopId: fromStopId,
             directionStopId: toStopId
         )
-        return Array(
-            trips
-                .map { Self.makeDeparture(from: $0, bridge: nil) }
-                .sorted { $0.plannedWhen < $1.plannedWhen }
-                .prefix(max(maxResults, 0))
-        )
+        var seenIds: Set<String> = []
+        return Array(trips
+            .map { Self.makeDeparture(from: $0, bridge: nil) }
+            .sorted { $0.plannedWhen < $1.plannedWhen }
+            .filter { seenIds.insert($0.id).inserted }
+            .prefix(maxResults))
     }
 
     // MARK: - Internals
@@ -320,9 +290,8 @@ public final class BVGSBahnService: BVGSBahnServicing, @unchecked Sendable {
         bridge: BridgeHint?,
         arrival: Date? = nil
     ) -> SBahnDeparture {
-        let id = dep.tripId ?? "\(dep.line)-\(dep.plannedWhen.timeIntervalSince1970)"
         return SBahnDeparture(
-            id: id,
+            id: departureID(for: dep),
             line: dep.line,
             direction: dep.direction,
             plannedWhen: dep.plannedWhen,
@@ -330,5 +299,13 @@ public final class BVGSBahnService: BVGSBahnServicing, @unchecked Sendable {
             bridge: bridge,
             arrivalAtDestination: arrival
         )
+    }
+
+    private static func departureID(for departure: TransitDeparture) -> String {
+        departure.tripId ?? [
+            departure.line,
+            departure.direction,
+            String(departure.plannedWhen.timeIntervalSince1970),
+        ].joined(separator: "|")
     }
 }
