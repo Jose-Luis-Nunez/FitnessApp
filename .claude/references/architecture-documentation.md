@@ -2,474 +2,273 @@
 
 ## Reading Guide
 
-This is a lookup reference, not a prompt to load wholesale. Locate headings
-with `rg -n '^## |^### '` and read only the section matched by
+This file is a lookup reference for the current architecture. Locate the relevant
+heading with `rg -n '^## |^### '` and read only the section selected by
 `.claude/skills/reviewing-code-changes/references/architecture-routing.md`.
 
-Entries describe the current architecture. Historical decisions and rollout
-sequence belong in ADRs and Git history; new entries must not add task-by-task
-change logs.
+Document stable ownership, package boundaries, data flow, navigation, persistence
+and public component contracts here. Implementation details such as token values,
+view geometry, private methods, test inventories and rollout history belong in
+source code, tests, ADRs or Git history.
 
 ## Architectural Decisions (ADRs)
 
-Project-wide architectural decisions live in [`docs/adr/`](../../docs/adr/README.md). Each ADR is immutable once accepted; new decisions supersede via a fresh ADR.
+Project-wide decisions live in [`docs/adr/`](../../docs/adr/README.md). Accepted
+ADRs are immutable; a conflicting decision requires a new ADR that supersedes the
+old one.
 
-| ID | Title | Status |
-|----|-------|--------|
-| [0001](../../docs/adr/0001-model-as-ui-source-of-truth.md) | @Model as UI Single Source of Truth | accepted |
-| [0002](../../docs/adr/0002-persistence-ui-package.md) | FitnessPersistenceUI Package | accepted (T4 skeleton + T5 cards + T6 tile + T7-0 cycle-break + T7a tile rollout + T7b card rollout + T8a list-mode rollout landed) |
-| [0003](../../docs/adr/0003-coordinator-session-contract.md) | Coordinator Session-State Contract | accepted |
-| [0010](../../docs/adr/0010-workout-exercise-order-learning.md) | Workout-scoped exercise-order learning | accepted |
-| [0011](../../docs/adr/0011-logical-sets-and-bilateral-execution-steps.md) | Logical sets and bilateral execution steps | accepted |
-| [0012](../../docs/adr/0012-risk-based-agent-validation.md) | Risk-based, content-bound agent validation | accepted |
-| [0013](../../docs/adr/0013-workout-analytics-batch-append.md) | Workout analytics batch append | accepted |
-| [0014](../../docs/adr/0014-training-session-sheet-presentation.md) | Training session sheet presentation | accepted |
-| [0015](../../docs/adr/0015-batched-analytics-snapshots.md) | Batched analytics snapshots and targeted UI invalidation | accepted |
-| [0016](../../docs/adr/0016-demand-loaded-card-analytics.md) | Demand-loaded exercise-card analytics | accepted |
-
-When making a structural change that conflicts with an existing ADR, write a new ADR superseding the old one. The stop-hook `adr-required.sh` (T0d) reminds the agent to do so.
+| ID | Decision |
+|---|---|
+| [0001](../../docs/adr/0001-model-as-ui-source-of-truth.md) | SwiftData models are the UI source of truth. |
+| [0002](../../docs/adr/0002-persistence-ui-package.md) | `FitnessPersistenceUI` owns the primary SwiftData-to-SwiftUI integration boundary. |
+| [0003](../../docs/adr/0003-coordinator-session-contract.md) | Training session state is owned by the coordinator. |
+| [0005](../../docs/adr/0005-schema-migration-strategy.md) | Released SwiftData changes use versioned schemas and migrations. |
+| [0006](../../docs/adr/0006-versioned-git-hooks.md) | Repository hooks are versioned and installed from the repository. |
+| [0007](../../docs/adr/0007-remove-session-training-cache.md) | Persisted exercise state replaces the former session training cache. |
+| [0008](../../docs/adr/0008-friends-comparison-isolated-blob-storage.md) | Imported friend workouts remain isolated as versioned blobs. |
+| [0009](../../docs/adr/0009-targeted-exercise-update.md) | Single-exercise mutations use targeted persistence updates. |
+| [0010](../../docs/adr/0010-workout-exercise-order-learning.md) | Exercise order is learned per workout across completed cycles. |
+| [0011](../../docs/adr/0011-logical-sets-and-bilateral-execution-steps.md) | Logical sets and bilateral execution steps are distinct concepts. |
+| [0012](../../docs/adr/0012-risk-based-agent-validation.md) | Agent validation is risk-based and bound to exact content. |
+| [0013](../../docs/adr/0013-workout-analytics-batch-append.md) | Workout-wide analytics entries are appended atomically as a batch. |
+| [0014](../../docs/adr/0014-training-session-sheet-presentation.md) | Training is an app-level presentation above its parent navigation flow. |
+| [0015](../../docs/adr/0015-batched-analytics-snapshots.md) | Workout-wide analytics screens consume batched snapshots. |
+| [0016](../../docs/adr/0016-demand-loaded-card-analytics.md) | Exercise cards load analytics progressively according to user intent. |
 
 ## Feature Map
 
-```
-Features/
-  Analytics/          — Exercise analytics, charts, total analytics overview
-  BottomBar/          — Bottom navigation bar, bottom action bar
-    Profile/          — User profile: nickname, body data (weight/height/age), BMI via API
-  Exercise/
-    ActiveSet/        — Active set tracking during training, timer service
-    ExerciseCard/     — Card UI for exercises (idle, active, inactive states)
-    MuscleCategory/   — Muscle category detail screen with live `ExerciseCardModelView` rows from a workout/category-scoped `@Query<ExerciseModel>`. Query identity rebinds when the workout changes. Starting from a card or Mini-Menu passes only `(exerciseId, category)` to `AppRouter.presentTraining`; the app-layer sheet resolves the live model. Form and picker mutations remain on `MuscleCategoryViewModel`, while card completion state stays SwiftData-driven. Deactivate/activate selection is owned by `UIOverlayState.exerciseSelectionMode`; selectable rows remain in their learned/fallback order and hidden inactive rows appear only for activation.
-    Storage/          — Exercise persistence and management services
-  MuscleGroupSelection/ — Home screen: muscle group category grid. MuscleCategorySelectionViewModel accepts optional `coordinatorCache`, `exerciseManagement`, `workoutStorage` via constructor injection (defaults to Factory singleton). The `exerciseStorage` parameter that existed transiently after T8d was removed in the post-audit cleanup — its previous consumer (`changeVersion`-driven `startStorageObservation` polling) is gone, and SwiftData `@Query` in the views is now the live read path. **T7a**: the overview-mode tile grid (`MuscleCategorySelectionView.categoryList`) renders `CategoryTileModelView` from `FitnessPersistenceUI` (gated on `viewModel.currentWorkoutId`) — Bug 2 fixed live because the tile's `@Query<ExerciseModel>` reacts to SwiftData writes without going through `refreshExercises()`. **T8a**: list mode renders `ExerciseCardModelView` across all categories from `WorkoutScopedExerciseQueryView`, whose exercise and order queries are both filtered by the captured `workoutId`; the parent applies `.id(workoutId)` so both predicates rebind together on a workout switch. **Learned order (V6)**: `TrainingCoordinator` emits `onNewSessionStarted(workoutId:exerciseId:)` only for a genuine new session; `TrainingCoordinatorCache` persists that event in `WorkoutExerciseOrderModel.pendingExerciseIds`. Global "Reset All" finalizes the cycle. A sequence must occur twice consecutively before promotion to `learnedExerciseIds`, while one deviation remains only a candidate. List mode consumes the learned IDs returned by the same workout-scoped query host, sorts confirmed IDs across categories first, and appends unknown/new/reactivated exercises by the existing `(category, sortOrder)` fallback. Deactivation immediately removes an ID from learned/pending state and invalidates a candidate containing it; unavailable IDs are ignored and pruned on finalization. The list stays stable during a cycle; overview and category views never consume this learned order. **T8d**: deleted the legacy `cardViewModels: [UUID: ExerciseCardViewModel]` cache + `cardViewModel(for:category:)` accessor + `startStorageObservation` polling loop, and removed the `struct CategoryTileView` from `FitnessExercise` (its layout constants now live as `ExerciseCardLayout` in `FitnessUI`). The `viewModel.exercisesByCategory` snapshot remains as the form/picker write-path's backing store, refreshed via `refreshExercises()` from `.onAppear` and `startWorkoutObservation()`. **Post-T8 product fix**: `viewModel.categories` is now a `let` constant equal to `MuscleCategoryGroup.allCases` (sorted by rawValue). The overview tile-grid is workout-agnostic and always shows all 5 categories — `Workout.selectedCategories` is no longer read by any UI surface (it survives at the persistence layer for future use). Rationale: the per-category "New Exercise" Mini-Menu always lists all categories, so a workout with `selectedCategories = [.abs]` could legitimately accumulate Schulter/Brust/Bein-exercises that the overview would silently hide while list-mode (no category filter) shows them — a class of "missing tile" bug. Pinning `categories = allCases` makes both view modes consistent. The `startWorkoutObservation()` task now only re-runs `refreshExercises()` on workout switch. **Deactivate/activate** (list-mode): completed exercises keep their learned/fallback slot and, while selecting, the normal list stays in place (no jump) — `.activate` also reveals deactivated cards. The list-mode three-dots Mini-Menu (`newExerciseMenuItems`) gains "Activate Exercise" (when `hasDeactivatedExercises`) and "Deactivate Exercise"; long-pressing an idle card starts the same multi-select with that card preselected. `commitSelectionIfNeeded` resolves each ticked model's category and calls `viewModel.setExerciseActive(_:active:category:)`. The filter-toggle is hidden while selecting. The bottom bar (`BottomMenuBarView`) morphs the moment `exerciseSelectionMode != .none` — Cancel-only with nothing ticked, then Cancel | Deactivate(/Activate) once ≥1 is selected. Selectable rows render via the idle card in selection style: a leading radio, no play button, no coaching badge/action, and the translucent `selectedMilkyAppearance()` when ticked.
-  Picker/             — All picker sheets (exercise, weight, seat, icon, name, active-set edit)
-  Schedule/           — Training calendar, streaks, week summary, day details (implementation: `Packages/FitnessSchedule` SPM target)
-  Training/           — Active training is an app-level bottom-sheet presentation, not a navigation destination (ADR-0014). `AppRouter.trainingPresentation` carries only `(exerciseId, category)` while the parent Category/List navigation stack remains mounted. `TrainingSheetView` resolves the live `ExerciseModel` via an id-filtered `@Query`, bridges to DTO-based `TrainingCoordinator` APIs with `model.toDomain()`, and never owns session lifetime: backdrop/grabber/Back dismiss presentation only; Cancel and Finish remain coordinator actions. The sheet omits the former active metric card, keeps a fixed title, and composes `TrainingSessionComponent` as a bounded left set scroller plus a fixed right muscle-icon/timer rail; standard rows and bilateral L/R pairs reuse the existing `SimpleActiveSetView` state machine and styles. `ExerciseMuscleIconView` in `FitnessUI` is shared with `ActiveCardModelView`, preserving theme mapping, glow, crop, seat-edit gating and accessibility id. Seat writes still route through `TrainingCoordinator.updateActiveSeat(_:)` and the targeted storage path from ADR-0009; no view mutates `ExerciseModel` directly.
-  Workouts/           — (removed; extracted into `Packages/FitnessWorkouts` SPM target)
+The app target composes package entry points, owns the root router and hosts the
+bottom navigation. Product logic lives in Swift packages:
 
-Packages/
-  Workout tile presentation — `FitnessWorkouts.WorkoutTileView` has source-compatible `.compact` and image-led `.hero` layouts. `WorkoutsScreen` renders two `.hero` tiles per row; embedded pickers retain `.compact`. Hero tiles retain the Category tile's title/header geometry, but present a left-aligned 40-point exercise count with the secondary label `Exercises`, an outlined transparent `Start` chip with a trailing chevron, and a custom right-aligned upper-body artwork crop. The `Start` text, chevron, count, and outline use `AppStyle.Color.green`; the transparent chip shows the underlying tile glass surface. The grids reuse `ExerciseCardLayout.CategoryTile` for 15-point screen insets, 10-point row/column spacing, 180-point height, and card padding. Every Hero tile uses `workoutDefaultIcon` with a fixed top crop, independently from `Workout.type`, so hands and legs stay outside the tile. Default workouts are identified only by their green card outline; no additional "Als Nächstes" label is rendered.
-  Workout tile tests — `WorkoutTileArtworkTests` verifies the shared asset and the fixed top crop in every Hero tile.
-  Workout tile accessibility — `FitnessCore.WorkoutIDs` is the production source of truth for dynamic tile/settings identifiers and the Create-Workout title, name field, type picker, and Save button; `FitnessCore.BottomBarIDs` identifies the five bottom tabs plus the contextual-action button used to open the create flow. `FitnessAppUITests` imports `FitnessCore` and aliases `BottomBarIDs`, so these identifiers are not duplicated across production and UI-test targets.
-  FitnessProfile/     — SPM library for profile feature (`BMIService`, `ProfileViewModel`, `ProfileStore`, `BVGTramService`, `TramDeparturesViewModel`, `TramDeparturesCardView`, `TramDeparturesCache`, `BVGSBahnService` (slim orchestrator), `BVGTransitClient` (HTTP-Layer), `SBahnRouteConfiguration` (injectable stop IDs / travel times / classifier tables), `SBahnClassifier` (pure classification functions), `SBahnBridgeResolver` (pure bridge resolution), `SBahnDeparturesViewModel`, `SBahnDeparturesCardView`, `SBahnDeparturesCache`, `SBahnDeparture` + `BridgeHint` + `TransitDeparture` domain types). Depends on `FitnessUI`. Tests: `BMIServiceTests` (stubbed API), `ProfileViewModelTests`, `BVGTramServiceTests` (stubbed API), `TramDeparturesViewModelTests` (MockService + MockCache), `TramDeparturesCacheTests` (ephemerer `UserDefaults(suiteName:)`), `SBahnClassifierTests` (pure table-driven tests per line/direction combination, no mocks), `SBahnBridgeResolverTests` (pure, with synthetic `[TransitDeparture]` pools, standalone filter, 5-min-window boundary, earliest-wins), `BVGTransitClientTests` (HTTP error mapping with `StubURLProtocol`), `BVGSBahnServiceTests` (integration with MockClient + real pure components: happy path, bridge resolution, pass-through filter, sorting + clipping), `SBahnDeparturesViewModelTests` (MockService + MockCache). **Tram sub-feature**: expandable card with start↔destination swap, the next 3 Tram 21 departures between Blockdammweg (`900162504`) and Marktstr. (`900160535`) from `v6.bvg.transport.rest/stops/{id}/departures?tram=true`. **S-Bahn sub-feature** (rendered directly below the Tram card, same expand mechanism): route S+U Alexanderplatz (`900100003`) ↔ S Ostkreuz (`900120003`), the next 6 S-Bahn departures. The classifier distinguishes `east-direct` (S3/S5/S7 trains that run through Ostkreuz), `east-short@Ostbahnhof` (short-turn trains), `east-short@Warschauer` (S9 trips toward BER, plus genuine Warschauer terminals). For `east-short`, the bridge resolver checks whether a **standalone** connecting S-Bahn runs from the transfer station (Ostbahnhof or Warschauer Str., both tested in parallel) — standalone-ness is determined by comparing `tripId` against the Alex pool: a matching tripId = a pass-through train (= "an S-Bahn the user would also catch while waiting at Alex") = not allowed as a bridge. Trips without a useful bridge are hidden. Each row is tappable to a detail view (planned vs. actual departure, delay, terminal, transfer details if any). **Refresh strategy identical to Tram**: a one-time refresh on expand, a manual refresh via `RefreshActionButton`, and `onBecameActive()` only triggers when `lastUpdated > 60 s`. A UserDefaults cache (`SBahnDeparturesCache`, key `sbahn.cache.<from>.<to>`) serves as the offline fallback with an `isStale=true` flag. The BMI and body-data cards in `ProfileView` use the same expand pattern.
-  FitnessTraining/    — SPM library mirroring training flow types from the app (`TrainingCoordinator`, active set VM/cache/timer, bottom action bar, session/picker components). Bilateral exercises use one `ActiveSetViewModel` over `Exercise.trainingSteps`; Less/More adjustment memory is side-scoped, Quick Done fills all steps, and progression requires every Left/Right execution. Sources: `Packages/FitnessTraining/Sources/FitnessTraining/`. Also exposes `FitnessTrainingTestSupport` library with `FakeClock` (deterministic `TimerClock` for tests).
-  FitnessAnalytics/   — Persists execution results flat. Workout-wide reads are represented by the Sendable `WorkoutAnalyticsSnapshot` (Exercises, deterministically ordered flat Entries, and `entriesByExerciseId`); Total Analytics and Schedule materialize their visible state from one snapshot so SwiftUI `body` evaluation performs no storage work. A Factory-singleton `AnalyticsViewModel` owns one bounded 128-Exercise cache shared across Home, category, training, and workout-log surfaces. Its per-Exercise stages separate identifier-only history availability, the latest Entry, and complete history: idle Cards check availability on appearance, load the latest Entry only after Last run is opened, and load complete history only for coaching phases; completed Cards load their latest Entry when expanded. Parent lists never prefetch Card analytics, and every Card observes only its Exercise-specific revision. Failed reads do not publish successful-looking empty state, while confirmed workout-log writes update availability and invalidate only affected detail stages. Internal `BilateralSetGrouping` pairs complete Left/Right metadata by logical set for display and labels; mixed/legacy data stays flat. Weight phases pair first and then filter using the pair's maximum side weight, so asymmetric Left/Right weights retain logical `/ side` grouping. `AnalyticsEntryFormState` is the single owner for manual standard/bilateral add and edit, preserving result IDs plus side/logical-set metadata. `WorkoutAnalyticsEntryView` loads every active Exercise for an explicit workout, expands configured `trainingSteps` into prefilled drafts, uses an English locale throughout its calendar/detail flow, reuses `AddAnalyticsEntryView` for local detail editing, and terminally saves at most once through `SaveWorkoutAnalyticsUseCase`; that use case appends one new entry per selected Exercise, deliberately preserves existing same-day history, and only dismisses after persistence reports success. Logical-set deletion removes both sides, max metrics inspect both sides, total reps sum every physical execution, and exercise mutations use targeted `updateExercise` (ADR-0009).
-  FitnessFriends/     — SPM library for the Friends comparison feature. `FriendsSection` (public `View` embedded in `ProfileView`; collapsible card showing own user row + friend tiles + comparison area), `FriendsViewModel` (`@Observable @MainActor`; expansion, friend selection, auto-select when 1 friend, export-picker flow, comparison re-compute on `selectedFriendId`/`currentWorkout` change), `AddFriendSheet` + `AddFriendViewModel` (name + JSON paste, calls `ImportFriendUseCase`, surfaces shared `WorkoutShareError` messages), `ExportWorkoutPickerSheet` (workout dropdown → `ExportWorkoutUseCase` → `ShareSheet`), `FriendComparisonView` (two-column layout: category counts + training-days-this-month + total exercises; drills into `FriendCategoryDetailView` per category), `FriendCategoryDetailView` (matched exercise pairs by name — weight + reps side-by-side + friend-exclusive count footer). Depends on `FitnessCore`, `FitnessStorage`, `FitnessUI`, `FitnessWorkouts`. New domain types in `FitnessCore`: `Friend`, `FriendStoring` (`@Mockable`), `FriendComparison`/`FriendComparisonMetrics`/`FriendCategoryComparison`/`ExercisePair`, `FriendMetricsCalculator` (stateless, `now`-injectable). New storage: `FriendModel` (`@Model`, `@_spi(PersistenceUI)`; stores `envelopeJSON: String` blob — re-import replaces), `FriendStorageService`, `ImportFriendUseCase`, `LoadFriendComparisonUseCase` (in `FitnessStorage`). SwiftData `SchemaV3` adds `FriendModel`; lightweight migration V2→V3. New shared helpers in `FitnessWorkouts`: `WorkoutShareFileWriter` (public; extracted from `WorkoutsViewModel`), `ShareSheet` is now `public`. Container registrations: `friendStorage`, `importFriendUseCase`, `loadFriendComparisonUseCase` in `StorageContainer`. Tests: `FriendMetricsCalculatorTests` (FitnessCore), `ImportFriendUseCaseTests` + `LoadFriendComparisonUseCaseTests` + `MigrationV2toV3Tests` (FitnessStorage), `FriendsViewModelTests` + `AddFriendViewModelTests` (FitnessFriends).
-  FitnessWorkouts/    — SPM library for the workouts feature. `WorkoutShareFileWriter` (public `enum`; `write(json:name:)` + `sanitizeFilename(_:)` — extracted from `WorkoutsViewModel` so `FitnessFriends` can reuse the same tmp-file write path). `ShareSheet` is now `public` (was internal). `WorkoutTileView` (public `View`; `.compact` retains its circular exercise-count badge, while `.hero` uses a left-aligned 40-point count, transparent outlined `Start` chip with chevron, and a fixed top crop of `workoutDefaultIcon`; both retain the green default outline and optional long-press/settings callbacks — extracted from `WorkoutsScreen` so `FitnessFriends` can render friend tiles with the same chrome). `WorkoutsScreen` (entry view headed `My Workouts`; owns workout-management actions and presents `FitnessAnalytics.WorkoutAnalyticsEntryView` as a workout-scoped historical-entry flow; observes `WorkoutImportCoordinator.pendingImportText` to auto-open the import sheet when a `.fitnessworkout` file is opened in another app), `WorkoutsViewModel` (workout CRUD + UI state + import/export/backfill presentation plumbing; constructor-DI with Factory-container fallbacks, enforces "must keep ≥1 workout" invariant in `deleteWorkout`; creates workouts only when the form supplies a non-empty name and an explicit type; holds `workoutToShare: WorkoutShareItem?` to drive sharing), `CreateWorkoutView` (Create-Exercise-style `BodyIconGallery` header titled `New Workout`, `Workout Name` field with `e.g. Pull, Push` placeholder, explicit `Select Workout Type` default plus Pull/Push/Leg/Individual/Full dropdown, and a disabled-until-valid Cancel | Save action bar), `RenameWorkoutView`, `ImportWorkoutView`, `ImportWorkoutViewModel`, `ShareSheet`, `WorkoutImportCoordinator`, and `WorkoutImportFlowModifier`. Depends on `FitnessCore`, `FitnessStorage`, `FitnessUI`, `FitnessExercise` (for `AppRouter`), and `FitnessAnalytics` (for workout-wide historical entry).
-  FitnessTestSupport/ — Shared test utilities: `makeExercise` factory, `MockAnalyticsStorage`, `StubAnalyticsStorage`, `MockExerciseStorage`, `MockWorkoutStorage` (mutates state on delete/rename/duplicate), `MockTotalAnalyticsStorage`, `MockExerciseManagement` (full `ExerciseManaging` impl with spy fields `updatedExercises`/`resetExercises`), `WorkoutExerciseOrderStorageSpy` (records starts/finalizations and exposes a finalize hook for ordering assertions), `InMemoryFeedbackStorage` (upsert-by-sessionId `FeedbackStoring`), `waitUntil` (throws `WaitUntilTimeoutError` on timeout), `appAssetImage(named:)` plus `AppAssetImageError` (deterministically load checked-in app artwork through SwiftUI for package snapshots), and `TestTags` (Swift Testing `Tag` extensions: `.fast`, `.snapshot`, `.integration`, `.ui` for selective test runs via Xcode test plans or `xcodebuild -only-testing-tags`). Depends on `FitnessCore` and `Mockable`; SwiftUI is used as a system framework by the app-asset snapshot loader. No explicit `swift-testing` SPM dependency — `import Testing` resolves from the Xcode toolchain (Xcode 16+). This was cleaned up to eliminate the `_TestingInternals` module conflict that blocked adoption of macro-based libraries (Mockable, swift-snapshot-testing, etc.). **Mockable adoption**: all 7 FitnessCore storage/management protocols (`ExerciseStoring`, `AnalyticsStoring`, `FeedbackStoring`, `WorkoutStoring`, `ExerciseManaging`, `TotalAnalyticsStoring`, `WorkoutExerciseOrderStoring`) are annotated `@Mockable`, generating their corresponding `Mock…` types in debug builds via the `MOCKING` flag. These replace hand-written stubs where appropriate (e.g. `NoOpExerciseStorage` → `MockExerciseStoring(policy: .relaxedVoid)` + catch-all `given`). Complex behavioral fakes (e.g. `MockWorkoutStorage`, `WorkoutExerciseOrderStorageSpy`, `InMemoryFeedbackStorage`) are retained for tests that depend on their stateful logic.
-  FitnessPersistenceUI/ — Primary SwiftUI integration surface for SwiftData `@Model`s. Allowed `@_spi(PersistenceUI) import FitnessStorage` consumers are this package, `FitnessStorage` tests, the `FitnessExercise` query hosts (`MuscleCategorySelectionView`, `MuscleCategoryView`), and the app-layer `TrainingSheetView`. `ExerciseCardModelView`, `CategoryTileModelView`, and their live-bound variants read `ExerciseModel` directly; package rendering and coordinator APIs receive domain values only at explicit `model.toDomain()` boundaries. `TrainingSheetView` resolves the presented exercise through an id-filtered `@Query` but leaves Category/List cards mounted underneath and does not render a second exercise card. `ExerciseModel+UI` supplies the SPI-scoped display conveniences used by these views. See [ADR-0001](../../docs/adr/0001-model-as-ui-source-of-truth.md), [ADR-0002](../../docs/adr/0002-persistence-ui-package.md), and [ADR-0014](../../docs/adr/0014-training-session-sheet-presentation.md).
+| Package | Responsibility |
+|---|---|
+| `FitnessCore` | Sendable domain values, storage protocols, identifiers and pure domain rules. It has no SwiftData or feature-UI ownership. |
+| `FitnessStorage` | SwiftData models, schema migrations, storage services and persistence-oriented use cases. |
+| `FitnessUI` | AppStyle, reusable visual primitives, shared card/sheet chrome and accessibility contracts. |
+| `FitnessPersistenceUI` | SwiftUI components whose live state is backed directly by permitted SwiftData models and queries. |
+| `FitnessExercise` | Workout home, category/list flows, exercise forms and navigation destinations. It hosts the approved workout-scoped query boundaries used by persistence-backed cards. |
+| `FitnessTraining` | Training coordinator, active-set state, timer, feedback flow and the app-presented training sheet content. |
+| `FitnessAnalytics` | Exercise analytics, workout-wide analytics, entry forms and analytics view models. |
+| `FitnessSchedule` | Calendar, streak and day-detail projections built from workout analytics. |
+| `FitnessWorkouts` | Workout CRUD UI, import/export, workout sharing and workout-scoped analytics entry. |
+| `FitnessProfile` | Profile and body metrics plus BMI, Tram and S-Bahn integrations. |
+| `FitnessFriends` | Friend import and workout comparison while keeping imported data isolated from the user's workout store. |
+| `FitnessResources` | Package-owned resources shared by package UI. |
+| `FitnessTestSupport` | Stateful fakes, fixtures and asynchronous test helpers shared by package tests. It is not production architecture. |
 
-Tests/
-  FitnessAppUITests/      — UI tests (XCUITest). `TrainingUITests` starts from explicit Category fixtures and covers the sheet-based standard flow, bilateral L1/R1/L2/R2/L3/R3 flow, and the ten-set scoped-scroll edge case. `TrainingNavigationUITests` verifies backdrop, grabber, Back, Cancel, Finish, and hide/resume behavior without changing the actual List/Category parent. `BilateralExerciseFlowUITests` exercises the real create/edit toggle, focus-switch resume on the Right step, and manual paired Analytics add/edit; `WorkoutTileVisualTests` resets and seeds four deterministic workouts, launches the Category overview, captures both overview screens, and compares two complete rows for width, height, outer edges, column gap, and row gap.
-  Packages/*/Tests/       — Package-level unit tests per SPM module
-    FitnessAnalyticsTests/  — AnalyticsViewModelTests (including asymmetric L/R weight phases and targeted goal updates), ExerciseCardAnalyticsLoadingTests (availability/latest/history drill-down, retry, LRU, and targeted revisions), TotalAnalyticsViewModelTests, SaveAnalyticsUseCaseTests, DeleteAnalyticsSetUseCaseTests (explicit standard/logical targets, bilateral pair deletion, targeted completion update), SaveOrReplaceAnalyticsUseCaseTests, BilateralAnalyticsTests (pair validation, flat fallback, logical labels across multiple sessions, independent side metrics), AnalyticsEntryFormStateTests (metadata-preserving add/edit), and AnalyticsEntryFormSnapshotTests (manual bilateral form at 320/393/430-point widths).
-    FitnessExerciseTests/   — MuscleCategorySelectionViewModelTests (categories, exercise counts, reset, find category, exercise mutations, exercise stability, **T7a `currentWorkoutId` exposure**), MuscleCategoryViewModelTests (mutations, refresh-on-coordinator-completion, **T7b `currentWorkoutId` exposure**), ExerciseFormViewModelTests (including execution-mode default/load/save/reset), ResetAllExercisesUseCaseTests (including exact finalize → cancel → reset ordering), ExerciseListOrderResolverTests (confirmed cross-category ranks + existing fallback), WorkoutScopedExerciseQueryViewTests (hosted two-workout exercise/order predicate rebinding). T8d removed the `card VM cache` / `coordinator completion integration` suites along with the polling+caching architecture they exercised.
-    FitnessStorageTests/    — WorkoutStorageServiceTests, ExerciseStorageServiceTests, AnalyticsStorageServiceTests, ExerciseAndAnalyticsStorageTests (including bilateral mode/side reload), DataMigrationServiceTests, ExerciseManagementServiceTests, TotalAnalyticsStorageServiceTests, DeleteWorkoutUseCaseTests, DuplicateWorkoutUseCaseTests (all workout exercises copied even outside `selectedCategories`; bilateral mode preserved under fresh exercise IDs), **ImportWorkoutUseCaseTests**, **ExportWorkoutUseCaseTests** (version-1 bilateral Export→Import metadata roundtrip), ImportFriendUseCaseTests (canonical friend envelope retains bilateral metadata), FeedbackStorageServiceTests, SaveFeedbackUseCaseTests, LoadLatestFeedbackUseCaseTests. TestHelpers provides `makeWorkoutStorageService`, `makeNoOpExerciseStoring()`, and `makeNoOpAnalyticsStoring()`.
-    FitnessTrainingTests/   — TrainingCoordinatorTests, TrainingCoordinatorCacheTests, StartTrainingUseCaseTests, CompleteSetUseCaseTests, FinishExerciseUseCaseTests, ExerciseWeightProgressionUseCaseTests, CancelTrainingUseCaseTests, ResetExerciseUseCaseTests, ActiveSetViewModelTests, ActiveSetViewModelTimerResetTests, BilateralTrainingTests (L/R sequence, finish gating, side-scoped adjustments, older-step edits, Quick Done, progression, cancel, coordinator resume, hosted 320/393/430-point layouts, pure column-metric assertions, serialized empty/filled, Right-active, and 320-point maximum-value boundary snapshots, and compact/large standard-layout regression snapshots), TrainingStateMachinePropertyTests (standard and bilateral random configurations), BottomActionBarViewModelTests, TimerServiceTests, feedback suites
-    FitnessUITests/          — Snapshot and policy tests (swift-snapshot-testing, 42 tests): CategoryTileArtworkStageSnapshotTests (synthetic top/bottom crop baselines for the shared stage; not full Category/Workout tile snapshots), CardBackgroundSnapshotTests (gradient/glass/no-padding/idle), AdaptiveSurfacePolicyTests (runtime-conditional mapping assertion for native Glass and the flat dark-surface policy), CardShellSnapshotTests, MiniActionMenuSnapshotTests, WorkoutDropdownViewSnapshotTests, SetTileViewSnapshotTests, SetTilesRowSnapshotTests (including the optional trailing rail, fractional next-tile peek, hidden-chevron mode, and unchanged reset accessory), ProgressBarSnapshotTests, MetricChipViewSnapshotTests, CapsuleToggleStyleSnapshotTests, IdlePlayButtonSnapshotTests, ExerciseCardResetButtonSnapshotTests, RefreshActionButtonSnapshotTests, CardTextFieldSnapshotTests. Liquid Glass itself is composited after the snapshot renderer and is therefore verified manually on iOS 27 rather than with a misleading PNG baseline. Reference PNGs in `__Snapshots__/`.
-    FitnessCoreTests/       — BodyRegionTests, ExerciseFeedbackTests, WorkoutTypeTests, BilateralExerciseTests (execution-step order plus backward-compatible Exercise/SetProgress Codable defaults)
-    FitnessScheduleTests/   — ScheduleViewModelTests
-    FitnessWorkoutsTests/   — WorkoutsViewModelTests (create/rename/delete/duplicate/default workout, selected workout type, workout-options flow, exercise-count aggregation), WorkoutTileArtworkTests (`workoutDefaultIcon`, fixed-top Hero crop for all types)
-    FitnessPersistenceUITests/ — PackageSetupTests (3 smoke-tests: module-version export, in-memory ModelContainer build, cross-module @Model property round-trip via `@_spi(PersistenceUI)`); ExerciseCardModelViewTests (T5: 4 ResolveVariant logic tests + 1 Bug-1 sanity test that mutates `model.isCompleted` on a real in-memory ModelContainer and asserts the resolved variant flips from `.idle` to `.completed`); CategoryTileModelViewTests (T6: 5 tests proving the `(workoutId, category)` predicate against a real in-memory `ModelContainer` — count aggregation, workout isolation, completion mutation, empty-workout zero-count, and deactivated-exercise filtering); IdleCardSnapshotTests (7 snapshot tests: collapsed, seat, long-seat, history, expanded last-run overflow, a focused snapshot that loads the real app-catalog `tip_coaching_2` PNG, and selection-mode variants for `IdleActiveCardModelView`); InactiveCardSnapshotTests (1 collapsed snapshot for `InactiveCardModelView`)
+### Main feature flows
 
-### TimerService (Clock abstraction)
-
-`FitnessTraining.TimerService` injects a `TimerClock` protocol for deterministic tests. The default `SystemTimerClock` wraps `Date()`; tests substitute a `FakeClock` to advance time synchronously. `TimerService.elapsedSeconds()` is a synchronous derived query for unit tests. The `init(clock:tickInterval:)` initializer also accepts a short `tickInterval` (defaults to 1 s in production), which the live `Task`-based tick loop uses to publish into `timerSeconds` — tests shorten this to a few ms and advance the `FakeClock` to verify the publication path deterministically.
-```
+- Workout and exercise lists render from workout-scoped SwiftData queries. Forms
+  and business operations write through services or use cases; views do not mutate
+  persisted models as an alternative write path.
+- Starting training presents `TrainingSheetView` above the current Home or Category
+  stack. The router owns presentation, while `TrainingCoordinator` owns the session.
+- Exercise cards use demand-loaded analytics: availability for action visibility,
+  the latest entry for an opened last-run section, and full history only for the
+  coaching/phase drill-down. Parent lists do not prefetch full histories.
+- `TotalAnalyticsView` and `ScheduleView` use a workout-wide
+  `WorkoutAnalyticsSnapshot` so their rendered state is materialized before SwiftUI
+  body evaluation.
+- Profile transit cards restore route-scoped persisted results. S-Bahn network
+  loads occur only after Refresh or a direction change; opening the card or returning
+  to the foreground does not trigger a request.
 
 ## Domain Models
 
-Located in `Core/Model/`.
+Domain types live in `FitnessCore` unless a type is strictly feature-local.
+SwiftData models in `FitnessStorage` map persistence to these values and are not a
+second domain model.
 
-| Model | File | Key Properties |
-|-------|------|----------------|
-| `AnalyticsEntry` | `AnalyticsEntry.swift` | `id`, `exerciseId`, `date`, `setProgress` |
-| `WorkoutAnalyticsSnapshot` | `Packages/FitnessCore/Sources/FitnessCore/WorkoutAnalyticsSnapshot.swift` | Sendable workout-wide read value containing the explicit `workoutId`, uniquely identified Exercises, deterministic flat Analytics entries, and exactly one keyed history per Exercise. Construction asserts these internal identity invariants instead of normalizing impossible workout duplicates. |
-| `Exercise` | `Exercise.swift` | `id`, `name`, `weight`, `reps`, `sets` (logical count), `seatSetting`, `noSeats`, `isCompleted`, `iconName`, `category`, `goal`, `isActive`, `executionMode` (`standard` default / `bilateral`). `trainingSteps` derives side-less standard steps or ordered Left/Right pairs. **Note:** `Equatable`/`Hashable` use only `id` — do not use `==` to detect content changes; compare fields explicitly when needed or rely on SwiftData `@Model` / `@Query` as the UI source of truth (ADR-0001). |
-| `TrainingStep` | `Exercise.swift` | Zero-based `logicalSetIndex` plus optional `ExerciseSide`; immutable derived execution-plan value. |
-| `SeatSettings` | `SeatSettings.swift` | Value type that owns the packing of multiple seat positions into the single `Exercise.seatSetting` string. `init(encoded:)` decodes (split on `/`, trim, drop empties), `encoded` packs back (`" / "`-joined, `nil` when empty), `display(limit:)` joins the first N. Policy constants `editableLimit` (4) and `idleCardVisibleLimit` (2) live here so the seat editor (`SeatSettingsEditor`) and the idle card (`IdleActiveCardModelView`) never duplicate the separator/`prefix` logic. |
-| `Workout` | `Workout.swift` | `id`, `name`, `createdDate`, `lastModified`, `selectedCategories`, `type: WorkoutType` (Codable fallback `.individual`) |
-| `WorkoutType` | `WorkoutType.swift` | `pull`, `push`, `leg`, `individual`, `full`; stable persisted selection independent from workout name. User-facing `displayName` lives in the `FitnessUI` extension `WorkoutType+UI.swift`. |
-| `MuscleCategoryGroup` | `MuscleCategoryGroup.swift` | Enum: `arms`, `chest`, `back`, `legs`, `abs`. `displayName` is provided by `FitnessUI` extension (`MuscleCategoryGroup+UI.swift`), not in FitnessCore. |
-| `SetProgress` | `SetProgress.swift` | `id`, `status` (enum: `notStarted`, `inProgress`, `completedDone/Less/More`), `currentReps`, `weight`, optional `side`, optional zero-based `logicalSetIndex`. Missing metadata is the standard/legacy flat representation. |
-| `WeightPhase` | `WeightPhase.swift` | `id`, `weight`, `sessionCount`, `durationDays`, `startSetsReps`, `startDate`, `endSetsReps`, `endDate`, `hasImproved`, `maxReps` |
-| `SetEditingMode` | `SetEditingMode.swift` | Enum: `less`, `more`, `edit`, `achievement`; the latter records the active set through the shared picker while preserving `edit` for completed sets. |
-| `ExerciseEditMode` | `ExerciseEditMode.swift` (SPM: `Packages/FitnessCore`) | Enum: `full`, `name`, `weight`, `seat` — shared with `FitnessTraining` |
-| `ExerciseFeedback` | `Packages/FitnessCore/Sources/FitnessCore/ExerciseFeedback.swift` | `id`, `sessionId`, `exerciseId`, `date`, optional `energyLevel` (1...5), optional `painCategory` (`BodyCategory`), `painRegions` (`Set<BodyRegion>` — multi-select; may be empty), `symptoms` (`Set<Symptom>`), optional `note`. `sessionId` ties the feedback to a specific training session — two sessions of the same exercise on the same day produce two records (analytics-style). `hasAnyContent` gates persistence (empty feedback is skipped). |
-| `BodyCategory` | `Packages/FitnessCore/Sources/FitnessCore/BodyCategory.swift` | Enum: `back`, `abs`, `chest`, `arm`, `legs`. `from(muscleGroup:)` maps `MuscleCategoryGroup` -> feedback category. |
-| `BodyRegion` | `Packages/FitnessCore/Sources/FitnessCore/BodyRegion.swift` | Enum of 32 regions (neck L/R, shoulders L/R, upper/middle/lower back, abs, obliques L/R, chest L/R/full, biceps L/R, triceps L/R, forearm L/R, hand L/R, wrist L/R, thigh front/back/inner/outer, knees L/R, calf, foot, ankle). `category` maps each region to a `BodyCategory`, `regions(in:)` filters by category, `iconAssetName` returns the asset-catalog image name used by the pain-region grid (missing assets → empty space, the tile border + title stay visible). English display names. |
-| `Symptom` | `Packages/FitnessCore/Sources/FitnessCore/Symptom.swift` | Enum: `pain`, `dizziness`, `nausea`, `muscleWeakness` |
-| `WorkoutShareEnvelope` | `Packages/FitnessCore/Sources/FitnessCore/WorkoutShareEnvelope.swift` | `version: Int` (currently `1`), `exportedAt: Date`, `app: String` (`"FitnessApp"`), `workout: Workout`, `exercises: [Exercise]`, `analytics: [AnalyticsEntry]`. Codable + Sendable. Top-level transport DTO for the workout-sharing feature; encoded as pretty-printed JSON with sorted keys + ISO-8601 dates. Schema-evolution rule: only breaking changes bump `version`; additive optional fields ride on `Codable` default-decoding. Note: `Workout.isDefault`-equivalent flag is NOT included — per-device metadata, not portable. |
-| `WorkoutShareError` | `Packages/FitnessCore/Sources/FitnessCore/WorkoutShareError.swift` | `LocalizedError`-conforming enum with 4 cases: `.invalidJSON`, `.unsupportedVersion(Int)`, `.schemaMismatch(detail: String)`, `.persistenceFailed`. English `errorDescription` for user-facing pills; the `detail` payload on `.schemaMismatch` is for logs, not UI. |
+| Type | Architectural meaning |
+|---|---|
+| `Workout` / `WorkoutType` | A workout and its user-selected classification. Workout identity scopes exercises, learned order and analytics aggregation. |
+| `Exercise` | Training configuration and current progress for one workout exercise. Identity is stable across UI projections and targeted writes. |
+| `TrainingStep` | One executable step derived from an exercise's logical sets; bilateral exercises produce side-specific steps. |
+| `AnalyticsEntry` / `SetProgress` | A dated exercise result and its physical execution results. Side and logical-set metadata preserve bilateral meaning without nesting persistence records. |
+| `WorkoutAnalyticsSnapshot` | Sendable workout-wide read model containing exercises, deterministic flat entries and entries grouped by exercise ID. |
+| `WeightPhase` | A derived analytics interval used for coaching and progress presentation. |
+| `SeatSettings` | Optional equipment configuration associated with an exercise. |
+| `ExerciseFeedback`, `Symptom`, `BodyRegion` | Per-training-session subjective feedback and its typed classifications. |
+| `WorkoutShareEnvelope` | Versioned import/export boundary containing a workout, exercises and analytics. Imported identities are regenerated. |
+| `Friend` and comparison values | Metadata and pure comparison projections for imported friend workout envelopes. |
+| `MuscleCategoryGroup` | Stable category identity shared by exercise, training and navigation features. |
 
 ## Services
 
-All services are registered in a [hmlongco/Factory](https://github.com/hmlongco/Factory) DI container. Access via `@Injected(\.keyPath)` or `Container.shared.keyPath()`. No more `static let shared` singletons — use the container instead.
+Factory containers register production implementations and define their lifetimes.
+View models receive protocols or use cases through constructor injection, with
+container resolution only as the composition default. Services own I/O; views do
+not call storage or networking directly.
 
-**Container registrations:**
-- `Packages/FitnessStorage/Sources/FitnessStorage/StorageContainer.swift` — `workoutStorage`, `exerciseStorage`, `workoutExerciseOrderStorage`, `analyticsStorage`, `exerciseManagement`, `totalAnalyticsStorage`, `feedbackStorage`, `deleteWorkoutUseCase`, `duplicateWorkoutUseCase`, `importWorkoutUseCase`, `exportWorkoutUseCase`, `saveFeedbackUseCase`, `loadLatestFeedbackUseCase`
-- `Packages/FitnessAnalytics/Sources/FitnessAnalytics/AnalyticsContainer.swift` — `analyticsViewModel`, `saveAnalyticsUseCase`, `deleteAnalyticsSetUseCase`, `saveOrReplaceAnalyticsUseCase`, `saveWorkoutAnalyticsUseCase`
-- `Packages/FitnessExercise/Sources/FitnessExercise/ExerciseContainer.swift` — `resetAllExercisesUseCase`
-- `Packages/FitnessTraining/Sources/FitnessTraining/TrainingContainer.swift` — `trainingCoordinatorCache`
-- `Packages/FitnessWorkouts/Sources/FitnessWorkouts/WorkoutsContainer.swift` — `workoutImportCoordinator`
+### Persistence services
 
-| Service | File | Container Key | Scope | Purpose |
-|---------|------|---------------|-------|---------|
-| `WorkoutStorageService` | `Packages/FitnessStorage/.../WorkoutStorageService.swift` | `\.workoutStorage` | singleton | Workout CRUD (incl. import), current/default selection, and the per-workout `WorkoutType`. The type is stored by `WorkoutModel.typeRaw` in SwiftData; pre-V5 rows with `nil` or unknown values read as `.individual`. `createWorkout(..., type:)` persists before exposing the new workout, rolls the context back on save failure, and throws the public `WorkoutStorageError.persistenceFailed`. |
-| `ExerciseStorageService` | `Packages/FitnessStorage/.../ExerciseStorageService.swift` | `\.exerciseStorage` | singleton | Exercise persistence per workout/category. SwiftData-backed, `@Observable`. Errors logged via `os.Logger`. Accepts optional `ModelContainer` via constructor injection (defaults to Factory singleton). Conforms to `ExerciseStoring` protocol (`FitnessCore`). `loadWorkoutExercises(for:)` performs one workout-scoped fetch for snapshot consumers; the protocol default preserves compatibility for lightweight conformers. `exerciseCountsByWorkout()` performs one best-effort bulk read and groups counts by workout id for overview badges, avoiding five category fetches per workout during SwiftUI rendering; a fetch failure is logged and represented by an empty map, consistent with the service's overview-read fallback. `updateExercise(_:)` does a **targeted, non-destructive** in-place update of a single row (fetch by `id` → `ExerciseModel.update(from:)` → save), preserving row identity / `sortOrder` / `workout`; `saveForWorkout` (full delete+reinsert) is reserved for add/delete/reorder/bulk ([ADR-0009](../../docs/adr/0009-targeted-exercise-update.md)). T8d removed the `changeVersion: Int` monotonic counter — live UI reads now flow through SwiftData `@Query` against `ExerciseModel` (see `FitnessPersistenceUI`). **Single context:** all SwiftData storage services (`Exercise`/`Analytics`/`Workout`/`Feedback`) use the container's shared `mainContext` — the same context the views' `@Query` observe (single source of truth, ADR-0001) — and **retain the `ModelContainer`** (`let modelContainer`, with `context` derived from it). `mainContext` does **not** strongly hold its container; storing only the context would let a caller-owned container deallocate, leaving the context pointing at a freed store that traps on next access. |
-| `WorkoutExerciseOrderStorageService` | `Packages/FitnessStorage/.../WorkoutExerciseOrderStorageService.swift` | `\.workoutExerciseOrderStorage` | singleton | Implements `WorkoutExerciseOrderStoring`. Records unique first starts per workout cycle, completes partial observations with the prior learned/default order, requires two consecutive identical observations before promotion, and persists pending/candidate/confirmed ID arrays in `WorkoutExerciseOrderModel`. Unavailable IDs are pruned at finalization; `ExerciseStorageService` additionally removes newly deactivated IDs immediately so reactivation uses fallback placement. Failures roll back and are logged without blocking training/reset. |
-| `ExerciseManagementService` | `Packages/FitnessStorage/.../ExerciseManagementService.swift` | `\.exerciseManagement` | singleton | Exercise business logic (add, remove, reorder). Conforms to `ExerciseManaging` protocol (`FitnessCore`). Constructor-DI for `ExerciseStoring`, `AnalyticsStoring`, `WorkoutStoring` (defaults to `Container.shared`). `updateExercise`/`completeExercise`/`resetExercise` route through the targeted `storageService.updateExercise(_:)` (in-place); `addExercise`/`resetAllExercises` still use the bulk `saveForWorkout`. |
-| `AnalyticsStorageService` | `Packages/FitnessStorage/.../AnalyticsStorageService.swift` | `\.analyticsStorage`, `\.workoutAnalyticsBatchStorage` | singleton | Per-exercise analytics entry persistence. SwiftData-backed. Failure-aware reads keep failed fetches distinct from successful empty histories. Card availability uses an identifier-only query limited to one result; Last run uses a descending, single-entry fetch; complete histories and workout-wide batch reads remain separate intents. The public batch boundary normalizes duplicate IDs and performs sorted `IN` reads in fixed 200-ID chunks; its protocol default preserves compatibility for mocks and custom stores. Its additional `WorkoutAnalyticsBatchStoring` conformance inserts the full workout-backfill batch and commits it with one context save, rolling back on failure so the terminal flow only dismisses after atomic persistence succeeds. Other failures are logged via `os.Logger`. Accepts optional `ModelContainer` via constructor injection (defaults to Factory singleton). Conforms to `AnalyticsStoring` protocol (`FitnessCore`). |
-| `TotalAnalyticsStorageService` | `Packages/FitnessStorage/.../TotalAnalyticsStorageService.swift` | `\.totalAnalyticsStorage` | singleton | Cross-exercise analytics loading, workout-scoped. Its failure-aware `loadSnapshot(for:)` requires an explicit workout ID and builds `WorkoutAnalyticsSnapshot` with one workout-wide Exercise read plus chunked Analytics batch reads. Legacy nonthrowing readers derive their results from that path and retain their documented logged-empty fallback. Conforms to `TotalAnalyticsStoring` protocol (`FitnessCore`). Constructor-DI for `AnalyticsStoring`, `ExerciseStoring`, `WorkoutStoring` (defaults to `Container.shared`). |
-| `FeedbackStorageService` | `Packages/FitnessStorage/.../FeedbackStorageService.swift` | `\.feedbackStorage` | singleton | Persists subjective post-exercise feedback (energy level, pain category + **multi-select** pain regions, symptoms, note). SwiftData-backed via `ExerciseFeedbackModel` (`painRegionsRaw: [String]`; legacy `painRegionRaw: String?` is still read at load time to merge pre-migration entries into the array; `sessionId: UUID?` optional purely for lightweight migration of pre-session rows — production saves always provide a non-nil value). **Upsert semantics**: `save(_:)` fetches the existing model whose `sessionId` matches `feedback.sessionId`; if found, it updates the row in place via `ExerciseFeedbackModel.update(from:)`, otherwise it inserts a new row. Re-saving inside the same open sheet (Done -> reopen -> edit -> Save) overwrites the same row; two distinct sessions of the same exercise (e.g. user starts the exercise, finishes, starts again later the same day) produce two distinct rows — analytics-style one-row-per-completed-session semantics. Conforms to `FeedbackStoring` protocol (`FitnessCore`). |
-| `DataMigrationService` | `Packages/FitnessStorage/.../DataMigrationService.swift` | — | static | One-time migration from JSON/UserDefaults to SwiftData. Runs on first launch after update. |
-| `ModelContainer` | via `StorageContainer.swift` (delegates to `ModelContainerBootstrap.makeProductionContainer()`) | `\.modelContainer` | singleton | Shared SwiftData container for all `@Model` types (`WorkoutModel`, `ExerciseModel`, `WorkoutExerciseOrderModel`, `AnalyticsEntryModel`, `SetProgressModel`, `ExerciseFeedbackModel`, `FriendModel`). Built via `ModelContainerBootstrap` (`Packages/FitnessStorage/.../ModelContainerBootstrap.swift`), which (0) restores a richer prior quarantine, (a) opens the store as `Schema(versionedSchema: SchemaV6.self)` with `AppMigrationPlan` (V1→V2→V3→V4→V5→V6), (b) adopts pre-versioned stores as V1 before replaying the plan, (c) quarantines irrecoverable stores instead of deleting them, and (d) runs the legacy JSON migration before returning. This ordering prevents `WorkoutStorageService` from seeding an auto-default before imported workouts are visible. |
-| `BMIService` | `Packages/FitnessProfile/Sources/FitnessProfile/BMIService.swift` | — | per-use | Fetches BMI from external API (bmicalculatorapi.vercel.app), parses category (Underweight/Normal/Overweight/Obesity), with BMI-value fallback for unknown categories. Conforms to `BMIServicing: Sendable` protocol (`fetchBMI(weightKg:heightM:)` + `calculateBMILocally(weightKg:heightM:)`) so `ProfileViewModel` can be unit-tested against a stub instead of hitting the real endpoint. Default init wires `URLSession.shared`; tests inject a `StubURLProtocol`-backed ephemeral session (same pattern as `BVGTramService`). |
-| `BVGTramService` | `Packages/FitnessProfile/Sources/FitnessProfile/BVGTramService.swift` | — | per-use | Fetches live tram departures from `v6.bvg.transport.rest/stops/{id}/departures`. Filters by line name client-side, decodes `when`/`plannedWhen` via `.iso8601`, maps HTTP 429 to `.rateLimited`, 5xx to `.serverError`, malformed JSON to `.decoding`. Conforms to `BVGTramServicing` protocol so the view model can be tested with a `MockService`. Default init wires `URLSession.shared`; tests inject a `StubURLProtocol`-backed ephemeral session. |
-| `TramDeparturesCache` | `Packages/FitnessProfile/Sources/FitnessProfile/TramDeparturesCache.swift` | — | per-use | Persists the last successful `[TramDeparture]` response per `(line, from, to)` in `UserDefaults` (key `tram.cache.<line>.<from>.<to>`, JSON via `.iso8601`). Read by the view model in `init` and after every failed refresh as a fallback, so the card shows data even without a network connection (with an `isStale=true` flag and a "No internet · cached HH:mm" footer). Conforms to `TramDeparturesCaching`; tests inject `UserDefaults(suiteName:)`. |
-| `BVGSBahnService` | `Packages/FitnessProfile/Sources/FitnessProfile/BVGSBahnService.swift` | — | per-use | **Slim orchestrator** (~120 lines) for the S-Bahn smart-routing pipeline. Holds an array `routeConfigurations` (default: `[.standardBerlinForward, .standardBerlinReverse]`). On each `fetchSBahnRoute(from:to:max:)`, it matches (from, to) against the configurations. **Match** → full pipeline (classifier + bridge resolver), **No match** → fallback `fetchDirectionFiltered` with a server-side `direction=` filter (route-aware without local tables). Bridges for the configured routes work symmetrically in both directions — e.g. the reverse Ostkreuz → Alex recognizes short-turns @ Ostbahnhof / @ Warschauer with standalone west-bound bridges. Conforms to `BVGSBahnServicing`. |
-| `BVGTransitClient` | `Packages/FitnessProfile/Sources/FitnessProfile/BVGTransitClient.swift` | — | per-use | HTTP client over `v6.bvg.transport.rest/stops/{id}/departures?suburban=true`. `fetchSuburbanDepartures(stopId:directionStopId:)` with an optional `direction` filter (server-side route-aware). Returns `[TransitDeparture]` (a domain type) instead of raw DTOs. Error mapping (429/500/decoding/network) is identical to `BVGTramService`. Conforms to `BVGTransitClienting` for mock injection in integration tests. |
-| `SBahnClassifier` | `Packages/FitnessProfile/Sources/FitnessProfile/SBahnClassifier.swift` | — | pure namespace | Pure classification functions: `classify(line:direction:configuration:)` → `SBahnClassification` (eastDirect / eastShortOstbahnhof / eastShortWarschauer / west / unknown), and `isEastDirectAtTransfer(...)` for the bridge-pool filter. **Direction-neutral:** reads `passesDestinationKeywords` / `wrongDirectionKeywords` / `bypassLineKeywords[line]` from the configuration; what "passes" or "wrong" means depends on the forward/reverse configuration mounted at the time. Stateless, no I/O — directly testable with `#expect(...)`. |
-| `SBahnBridgeResolver` | `Packages/FitnessProfile/Sources/FitnessProfile/SBahnBridgeResolver.swift` | — | pure namespace | Pure logic: for a short-turn departure, find a standalone bridge trip within the 5-min window after arrival at the transfer station. Standalone-ness is determined by `tripId ∉ originTripIds`. If both transfer points (Ostbahnhof + Warschauer) have candidates → the earliest bridge departure wins. Stateless, deterministic. Works symmetrically in forward/reverse thanks to its direction-neutral configuration. |
-| `SBahnRouteConfiguration` | `Packages/FitnessProfile/Sources/FitnessProfile/SBahnRouteConfiguration.swift` | — | data | Immutable value object with all the tunable routing values per (origin → destination) pair. Direction-neutrally named fields: `passesDestinationKeywords` (terminals that run past the destination), `wrongDirectionKeywords` (to filter out), `bypassLineKeywords: [String: [String]]` (line → bypass terminals, e.g. S9 → BER for forward), `transferStopIds`, `travelTimes` (direction-specific — Alex→Warschauer = 6 min vs. Ostkreuz→Warschauer = 2 min), `bridgeWindow`. Static defaults: `.standardBerlinForward` (Alex → Ostkreuz with S9 bypass) and `.standardBerlinReverse` (Ostkreuz → Alex without bypass). `.standardBerlin` as a backward-compat alias = forward. |
-| `SBahnDeparturesCache` | `Packages/FitnessProfile/Sources/FitnessProfile/SBahnDeparturesCache.swift` | — | per-use | Persists the last successful `[SBahnDeparture]` response (incl. `BridgeHint` data) per `(from, to)` in `UserDefaults` (key `sbahn.cache.<from>.<to>`, JSON via `.iso8601`). Same fallback path as `TramDeparturesCache`. Conforms to `SBahnDeparturesCaching`. |
-| `TimerService` | `Packages/FitnessTraining/.../TimerService.swift` | — | per-use | Rest timer during active sets |
-| `TrainingCoordinatorCache` | `Packages/FitnessTraining/.../TrainingCoordinatorCache.swift` | `\.trainingCoordinatorCache` | singleton | Per-category `TrainingCoordinator` cache. Conforms to `TrainingCoordinatorCaching` protocol. Ensures all views share the same coordinator per `MuscleCategoryGroup`. Constructor-injects `ExerciseManaging` and `WorkoutExerciseOrderStoring`; wires fresh-session events to `recordStart`, while resume emits nothing. Use `coordinator(for:)` for category-scoped access, `findCoordinator(for:)` to locate the coordinator for a specific exercise. `ResetAllExercisesUseCase` iterates coordinators from this cache to cancel all active sessions. |
-| `WorkoutImportCoordinator` | `Packages/FitnessWorkouts/.../WorkoutImportCoordinator.swift` | `\.workoutImportCoordinator` | singleton | `@Observable @MainActor` bridge between the App-level `.onOpenURL(_:)` handler and the WorkoutsScreen's import-sheet. Holds `pendingImportText: String?`. `handleIncomingFile(_:)` reads a security-scoped file URL (Files/Mail/Messages/AirDrop incoming `.fitnessworkout` of UTType `com.fitnesspro.workout-share`), decodes UTF-8, sets `pendingImportText`. WorkoutsScreen observes the property and presents the Import sheet pre-populated. `clearPending()` resets after consumption. Singleton lifetime is critical for the cold-launch path — onOpenURL fires before any view mounts, so the coordinator must persist the value until WorkoutsScreen reads it. |
-| `ExerciseFeedbackDraftStore` | `Packages/FitnessTraining/.../Feedback/ExerciseFeedbackDraftStore.swift` | — (owned by `TrainingCoordinator`) | per-coordinator | `@MainActor @Observable` single-slot, in-memory draft store for feedback that has not been persisted yet. Holds at most one `ExerciseFeedback` (the draft for the currently active exercise). Drafts are **never persisted** to SwiftData and are silently discarded when the active exercise changes (`handleActiveExerciseChange(to:)`), the training is cancelled, or the exercise is finished. Owned by `TrainingCoordinator` and consumed by both `FeedbackViewModel` (for autosave + prepopulation) and `FeedbackEntryIconResolver` (for the bottom-bar icon's "draft" state). |
+| Service | Lifetime | Responsibility |
+|---|---|---|
+| `ModelContainerBootstrap` / shared `ModelContainer` | singleton | Opens the versioned SwiftData store, adopts supported legacy stores, restores or quarantines recoverable files, runs legacy import before storage services can seed defaults, and retains the container used by UI queries. |
+| `WorkoutStorageService` | singleton | Workout CRUD, current/default workout selection and workout-scoped imports. |
+| `ExerciseStorageService` | singleton | Workout/category reads, targeted exercise updates, bulk operations and workout-wide counts. Single-exercise mutations follow ADR-0009. |
+| `ExerciseManagementService` | singleton | Exercise business operations composed over exercise, analytics and workout storage. |
+| `WorkoutExerciseOrderStorageService` | singleton | Records workout-scoped starts, finalizes cycles and promotes an order only after repeated matching observations. |
+| `AnalyticsStorageService` | singleton | Separates history availability, latest-entry, complete-history and chunked workout batch reads. Workout batch appends commit atomically. |
+| `TotalAnalyticsStorageService` | singleton | Builds a workout-scoped `WorkoutAnalyticsSnapshot` from one exercise read plus bounded analytics batches. |
+| `FeedbackStorageService` | singleton | Stores feedback per completed session and updates an existing record for the same session. |
+| `FriendStorageService` | singleton | Stores imported friend envelopes independently from live workout models. |
+
+Analytics read intents stay separate because they have different costs:
+
+- Card visibility checks fetch only whether an entry exists.
+- Opening a last-run section fetches at most the newest entry.
+- Coaching and exercise analytics request one exercise's complete history.
+- Total analytics and schedule use workout-wide batched snapshots.
+
+Successful analytics writes invalidate only the affected exercise's cached stages.
+Failed reads are not converted into cacheable empty results, so the same user intent
+can retry without losing already visible data.
+
+### Feature and integration services
+
+| Service | Owner | Responsibility |
+|---|---|---|
+| `TrainingCoordinatorCache` | `FitnessTraining` | Provides one coordinator per muscle category and connects new-session events to learned exercise order. |
+| `TimerService` | `FitnessTraining` | Rest timer over an injectable clock boundary. |
+| `ExerciseFeedbackDraftStore` | `TrainingCoordinator` | Keeps the current exercise's unsaved feedback in memory; drafts are discarded with the owning session/exercise lifecycle. |
+| `WorkoutImportCoordinator` | `FitnessWorkouts` | Bridges app-level incoming files to the Workouts import flow, including cold launch before the screen mounts. |
+| `BMIService` | `FitnessProfile` | Fetches remote BMI classification and provides a deterministic local calculation fallback. |
+| `BVGTramService` / `TramDeparturesCache` | `FitnessProfile` | Loads live Tram departures and persists the latest route-scoped successful result. |
+| `BVGTransitClient` | `FitnessProfile` | Maps BVG HTTP responses and transport errors into transit domain values. |
+| `BVGSBahnService` | `FitnessProfile` | Orchestrates configured-route classification, bridge resolution and direction-filtered fallback. It limits each visible load to the requested candidates before making stopover detail requests. |
+| `SBahnClassifier` / `SBahnBridgeResolver` | `FitnessProfile` | Pure, direction-neutral S-Bahn routing rules with no I/O or cache ownership. |
+| `SBahnRouteConfiguration` | `FitnessProfile` | Immutable route-specific vocabulary, stops, travel assumptions and bridge window. |
+| `SBahnDeparturesCache` | `FitnessProfile` | Persists the latest successful result per direction. A direction change displays that result immediately and then performs one explicit refresh. |
 
 ### SwiftData Schema Versioning
 
-Per ADR-0005, every post-release schema change goes through `VersionedSchema` + `SchemaMigrationPlan`. ADR-0011 records the scoped pre-release exception used by the current bilateral fields. Files live under `Packages/FitnessStorage/Sources/FitnessStorage/Schema/`:
+The current store is `SchemaV6`, migrated by `AppMigrationPlan`:
 
-| File | Purpose |
+| Version | Structural change |
 |---|---|
-| `Schema/SchemaV1.swift` | `enum SchemaV1: VersionedSchema` — frozen pre-migration form. Snapshots `WorkoutModel` and `ExerciseModel` (hybrid rule: changed class + relationship-closure rule for the `WorkoutModel.exercises` relationship); `SetProgressModel`, `AnalyticsEntryModel`, `ExerciseFeedbackModel` are live refs. |
-| `Schema/SchemaV2.swift` | `enum SchemaV2: VersionedSchema` — frozen pre-`isActive` form. Snapshots `WorkoutModel` + `ExerciseModel` (the relationship cluster) because V4 changes `ExerciseModel` again; the other models are live refs. `SchemaV3` reuses these snapshots (`SchemaV2.models + [FriendModel.self]`). |
-| `Schema/SchemaV3.swift` | `enum SchemaV3: VersionedSchema` — adds the isolated `FriendModel`; the `ExerciseModel`/`WorkoutModel` cluster is the `SchemaV2` snapshot. |
-| `Schema/SchemaV4.swift` | `enum SchemaV4: VersionedSchema` — frozen pre-`typeRaw` form. Snapshots the Workout/Exercise relationship cluster, including `ExerciseModel.isActive`. |
-| `Schema/SchemaV5.swift` | `enum SchemaV5: VersionedSchema` — historical pre-order-learning boundary. `WorkoutModel` carries optional `typeRaw`; `nil` reads as `.individual`. Because this pre-release schema still references the live `ExerciseModel` and `SetProgressModel`, it now also sees their optional bilateral fields; it is intentionally not a byte-frozen pre-bilateral snapshot (ADR-0011). |
-| `Schema/SchemaV6.swift` | `enum SchemaV6: VersionedSchema` — **current pre-release live form**. Includes `WorkoutExerciseOrderModel` plus optional bilateral fields on the live `ExerciseModel`/`SetProgressModel`. Per ADR-0011, no V7 stage exists because there are no customer installations; development installs are reinstalled and can restore workouts through import. |
-| `Schema/MigrationPlan.swift` | `enum AppMigrationPlan: SchemaMigrationPlan` with `migrateV1toV2_addWorkoutId` (custom backfill), `migrateV2toV3_addFriendModel`, `migrateV3toV4_addIsActive`, `migrateV4toV5_addWorkoutType`, and `migrateV5toV6_addWorkoutExerciseOrder` (lightweight additive table). |
+| V1 → V2 | Adds the workout foreign key used by scoped exercise queries. |
+| V2 → V3 | Adds isolated friend storage. |
+| V3 → V4 | Adds exercise activation state. |
+| V4 → V5 | Adds workout type. |
+| V5 → V6 | Adds workout-scoped learned exercise order. |
 
-Tests:
-- `Packages/FitnessStorage/Tests/FitnessStorageTests/Schema/MigrationV1toV2Tests.swift` — exercises the real V1 → V2 container transition (backfill, idempotency, orphan survival).
-- `Packages/FitnessStorage/Tests/FitnessStorageTests/Schema/ModelContainerBootstrapTests.swift` — exercises the production bootstrap fallback by calling `ModelContainerBootstrap.makeContainer(storeURL:)`/`restoreQuarantinedStoreIfPossible(liveStoreURL:)` directly against scratch URLs: writes a pre-T3-shape store (no `VersionedSchema`) and verifies the V1-adoption recovery survives the chained V1→V2→V3 migration with `workoutId` backfilled, plus a restore suite asserting a richer quarantined backup is promoted over a sparse live store, a richer live store is never clobbered, and an unreadable backup is left on disk.
-- `Packages/FitnessStorage/Tests/FitnessStorageTests/Schema/MigrationV2toV3Tests.swift` — exercises the real V2→V3 container transition using the frozen `SchemaV2` classes, and verifies workouts/exercises survive while the new `FriendModel` table starts empty. `migrateV3toV4_addIsActive` remains a lightweight optional-column migration.
-- `Packages/FitnessStorage/Tests/FitnessStorageTests/Schema/MigrationV4toV5Tests.swift` — verifies pre-V5 workouts migrate with `typeRaw == nil`/`.individual`, preserves workout fields plus the Workout↔Exercise relationship/FK and `isActive`, and verifies selected workout types round-trip in the V5 store.
-- `Packages/FitnessStorage/Tests/FitnessStorageTests/Schema/MigrationV5toV6Tests.swift` — verifies V5 workouts, exercises, analytics, and set-progress data survive the lightweight transition and the new workout-order table starts empty and accepts learned state.
-- `Packages/FitnessStorage/Tests/FitnessStorageTests/WorkoutExerciseOrderStorageServiceTests.swift` — covers two-cycle promotion, one-off deviations, replacement after two matching deviations, candidate reset, duplicate starts, partial-cycle fallback, workout isolation, and persistence across service instances.
-- `Packages/FitnessStorage/Tests/FitnessStorageTests/WorkoutStorageServiceHealingTests.swift` — pins the four-marker heuristic (`name == "Workout 1"`, `exercises.isEmpty`, `isDefault`, strictly newer than another workout) used by `WorkoutStorageService.healInheritedAutoDefaultIfNeeded`. Covers the canonical inherited-auto-default shape (heal fires) plus four false-positive guards (fresh install, user-created "Workout 1", auto-default with exercises, oldest-empty "Workout 1").
-- `Packages/FitnessStorage/Tests/FitnessStorageTests/LegacyMigrationServiceInitOrderingTests.swift` — pins the ordering contract between `DataMigrationService` (legacy JSON → SwiftData import) and `WorkoutStorageService.init`. Plants legacy JSON workouts + UserDefaults blob and asserts (1) prevention path (migration before service init → clean post-migration state with no auto-default) and (2) cure path (forced broken order seeds an auto-default that the next service init heals).
+Additive fields that must survive lightweight migration remain optional when the
+old rows cannot satisfy a non-optional column before migration code runs. Their
+domain mapping supplies the current default. Bilateral fields follow the scoped
+pre-release policy recorded in ADR-0011.
 
-`ExerciseModel.workoutId: UUID?` (Optional!) is the denormalised foreign key replacing the `$0.workout?.id == workoutId` predicate (§14a anti-pattern). Optional because SwiftData's lightweight column-add validates against existing rows before any custom `didMigrate` runs — see ADR-0005 § "Optionality rule for new properties". `ExerciseModel.isActive: Bool?` (also Optional, V4) follows the same rule — `nil`/`true` = active, `false` = deactivated; all read paths use `isActive ?? true` so pre-V4 rows count as active without a backfill.
-
-**SPI exposure (T4 + T7)**: `ExerciseModel` and `WorkoutModel` are declared `@_spi(PersistenceUI) public final class` — every stored property and `init` carries the same marker. They become visible to consumers that opt in with `@_spi(PersistenceUI) import FitnessStorage`. **Allowed consumers** (per ADR-0002):
-
-1. `FitnessPersistenceUI` — primary integration surface (all ModelViews + extensions).
-2. `FitnessStorage`'s own tests via `@_spi(PersistenceUI) @testable import FitnessStorage`.
-3. Specific `@Query`-host views in `FitnessExercise`: `MuscleCategorySelectionView` (T7a + T8a + learned `WorkoutExerciseOrderModel` order), `MuscleCategoryView` (T7b). These embed ModelViews from `FitnessPersistenceUI` and need direct model-query access.
-
-Each new entry in (3) is a deliberate boundary loosening and is review-required. Other feature packages (`FitnessTraining`, `FitnessWorkouts`, `FitnessProfile`, `FitnessAnalytics`) keep their plain `import FitnessStorage` and continue to see only the `public` service API. See [ADR-0002](../../docs/adr/0002-persistence-ui-package.md). Note: in this Xcode/Swift toolchain `@_spi` × `@Model` macro composes cleanly — the macro-bug ADR-0002 anticipated did not materialise.
+`ExerciseModel`, `WorkoutModel` and related persistence types are exposed through
+`@_spi(PersistenceUI)`. The allowed consumers are `FitnessPersistenceUI`, storage
+tests, and the explicit query-host views in `FitnessExercise`. Other feature
+packages use public domain and service APIs. Extending this SPI boundary requires
+architecture review under ADR-0002.
 
 ## Use Cases
 
-Single-responsibility types with one `execute(...)` method. ViewModels call Use Cases; Views never call services directly. Located in `UseCases/` folders within the relevant package.
+Use cases coordinate multi-step business operations and provide one semantic
+entry point to view models or coordinators. Simple storage reads do not require a
+wrapper merely to satisfy naming consistency.
 
-| Use Case | File | Container Key | Purpose |
-|----------|------|---------------|---------|
-| `DeleteWorkoutUseCase` | `Packages/FitnessStorage/.../UseCases/DeleteWorkoutUseCase.swift` | `\.deleteWorkoutUseCase` | Delete workout, handle current-workout fallback, clean up exercise files |
-| `DuplicateWorkoutUseCase` | `Packages/FitnessStorage/.../UseCases/DuplicateWorkoutUseCase.swift` | `\.duplicateWorkoutUseCase` | Copy a workout and every exercise belonging to it across `MuscleCategoryGroup.allCases`; `Workout.selectedCategories` is metadata and never limits copied exercises. Bilateral mode and per-result side/logical-set metadata are preserved. |
-| `ImportWorkoutUseCase` | `Packages/FitnessStorage/.../UseCases/ImportWorkoutUseCase.swift` | `\.importWorkoutUseCase` | Decode a `WorkoutShareEnvelope` JSON string → regenerate fresh UUIDs for workout / all exercises / all analytics entries → remap `AnalyticsEntry.exerciseId` to the new exercise IDs (orphans dropped) → preserve execution mode and side/logical-set analytics metadata → expand `selectedCategories` to cover any imported exercise categories → persist via `WorkoutStoring.importWorkout(_:exercises:analytics:)`. Throws `WorkoutShareError` for `.invalidJSON`, `.unsupportedVersion(Int)`, `.schemaMismatch(detail:)`. Per-spec: never overwrites existing workouts — name collisions get " (imported)" / " (imported N)" suffix. |
-| `ExportWorkoutUseCase` | `Packages/FitnessStorage/.../UseCases/ExportWorkoutUseCase.swift` | `\.exportWorkoutUseCase` | Aggregate all exercises across `MuscleCategoryGroup.allCases` for a workout plus all `AnalyticsEntry` via `TotalAnalyticsStoring.loadAllAnalytics(for: workoutId)` → pack into `WorkoutShareEnvelope` (version 1, including additive bilateral metadata, pretty-printed, ISO-8601 dates, sorted keys) → return JSON `String`. Consumed by the iOS `UIActivityViewController` share sheet (see `FitnessWorkouts.ShareSheet`). |
-| `SaveAnalyticsUseCase` | `Packages/FitnessAnalytics/.../UseCases/SaveAnalyticsUseCase.swift` | `\.saveAnalyticsUseCase` | Create analytics entry and append to exercise history |
-| `DeleteAnalyticsSetUseCase` | `Packages/FitnessAnalytics/.../UseCases/DeleteAnalyticsSetUseCase.swift` | `\.deleteAnalyticsSetUseCase` | Explicit overloads remove either one legacy/standard result or both sides of a bilateral logical set, remove the entry if empty, then update exercise completion through targeted `ExerciseStoring.updateExercise` (ADR-0009). |
-| `SaveOrReplaceAnalyticsUseCase` | `Packages/FitnessAnalytics/.../UseCases/SaveOrReplaceAnalyticsUseCase.swift` | `\.saveOrReplaceAnalyticsUseCase` | Find existing entry for date and replace, or append new |
-| `SaveWorkoutAnalyticsUseCase` | `Packages/FitnessAnalytics/.../UseCases/SaveWorkoutAnalyticsUseCase.swift` | `\.saveWorkoutAnalyticsUseCase` | Depends directly on `WorkoutAnalyticsBatchStoring`; appends one new Analytics entry per selected workout Exercise while preserving every existing same-day entry, and returns `nil` on persistence failure so the editor remains open |
-| `ResetAllExercisesUseCase` | `Packages/FitnessExercise/.../UseCases/ResetAllExercisesUseCase.swift` | `\.resetAllExercisesUseCase` | Finalize the current workout's observed list order, cancel all active sets, then reset exercises across categories. |
-| `StartTrainingUseCase` | `Packages/FitnessTraining/.../UseCases/StartTrainingUseCase.swift` | — (direct) | Determine resume vs fresh start, initialize active set |
-| `CompleteSetUseCase` | `Packages/FitnessTraining/.../UseCases/CompleteSetUseCase.swift` | — (direct) | Validate and complete the current execution step, then start the next derived step if not last |
-| `ExerciseWeightProgressionUseCase` | `Packages/FitnessTraining/.../UseCases/ExerciseWeightProgressionUseCase.swift` | `FinishExerciseUseCase` | Pure idle-card progression rule: retain the logical set count, adopt the lowest higher training weight across the completed session, and set 12 reps only when every required execution step (including both sides) meets the rule. |
-| `FinishExerciseUseCase` | `Packages/FitnessTraining/.../UseCases/FinishExerciseUseCase.swift` | — (direct) | Stop timer, save analytics, apply earned idle-card weight progression, mark exercise completed, reset state |
-| `CancelTrainingUseCase` | `Packages/FitnessTraining/.../UseCases/CancelTrainingUseCase.swift` | — (direct) | Cancel active set and clear training state |
-| `ResetExerciseUseCase` | `Packages/FitnessTraining/.../UseCases/ResetExerciseUseCase.swift` | — (direct) | Stop timer, trigger exercise reset callback, clear progress |
-| `SaveFeedbackUseCase` | `Packages/FitnessStorage/.../UseCases/SaveFeedbackUseCase.swift` | `\.saveFeedbackUseCase` | Persists `ExerciseFeedback` via `feedbackStorage`. Returns `false` for empty feedback (skipped — nothing written). |
-| `LoadLatestFeedbackUseCase` | `Packages/FitnessStorage/.../UseCases/LoadLatestFeedbackUseCase.swift` | `\.loadLatestFeedbackUseCase` | Resolves the most recently saved `ExerciseFeedback` for an exercise via constructor-injected `FeedbackStoring` (default: `Container.shared.feedbackStorage()`). Generic look-up; **not** used by `FeedbackViewModel` for prepopulation in the per-session model (the VM filters `feedbackStorage.load(for:)` by its own `sessionId` so a fresh session always starts blank). Available for cross-cutting consumers (reports, analytics summaries, debugging). |
+| Area | Use-case boundary |
+|---|---|
+| Workouts | Delete chooses a valid current-workout fallback; duplicate copies all workout exercises; import regenerates identities and never overwrites an existing workout; export creates the versioned share envelope. |
+| Analytics | Save/replace and logical-set deletion preserve bilateral metadata; workout-wide entry appends use the atomic batch boundary. |
+| Training | Start, complete, finish, cancel and reset operate on coordinator state and persist only through their injected boundaries. Weight progression is a pure rule applied when an exercise finishes. |
+| Exercise management | Reset-all finalizes the observed workout order, cancels active sessions and resets the workout's exercises. |
+| Feedback | Saving persists non-empty per-session feedback; read operations distinguish the active session from historical feedback. |
+| Friends | Import validates and isolates a share envelope; comparison loads the friend snapshot and calculates typed metrics without merging it into user data. |
 
 ## Shared Components
 
-Located in `Shared/`.
+Shared UI lives in `FitnessUI` when it is persistence-independent. Components
+that need SwiftData models or `@Query` live in `FitnessPersistenceUI`; feature-only
+composition remains in the owning feature package.
 
-| Component | File | Purpose |
-|-----------|------|---------|
-| `WorkoutFormSheet` | `View/WorkoutFormSheet.swift` | Full-screen form sheet with title, save, dismiss |
-| `WorkoutDropdownView` | `Packages/FitnessUI/Sources/FitnessUI/WorkoutDropdownView.swift` | Workout name dropdown button. Takes `workoutName: String` and optional `titleFont` — no DI, callers pass data from their own storage reference. |
-| `WorkoutPickerView` | `Packages/FitnessUI/Sources/FitnessUI/WorkoutPickerView.swift` | Wheel picker for workout selection. Takes `workouts: [Workout]`, `currentWorkout: Workout?`, `onSelect: (Workout) -> Void` — no DI, callers pass data from their own storage reference. |
-| `MiniActionMenuView` | `View/MiniActionMenuView.swift` | Small context menu with icon + title rows |
-| `CapsuleToggleStyle` | `View/CapsuleToggleStyle.swift` | Reusable toggle style with on/off colors |
-| `TrainingSessionComponent` | `Packages/FitnessTraining/.../TrainingSessionComponent.swift` | Coordinator-driven sheet session body: a fixed-height vertical set scroller on the left and a fixed `ExerciseMuscleIconView` + `CompactTimerComponent` rail on the right. Standard rows and bilateral L/R pair rows both reuse `SimpleActiveSetView`/`SetRowView`; only the set column scrolls when its content exceeds the viewport. Production resolves artwork by name; previews/snapshots may inject the same app artwork explicitly because package runners do not own the app asset catalog. The connected bottom action bar retains Less/Done/More, Quick-Done, Finish and feedback. |
-| `ExerciseMuscleIconView` | `Packages/FitnessUI/.../ExerciseMuscleIconView.swift` | Shared themed body-art rendering for the active card and training sheet, including glow, crop alignment, optional seat-edit tap, VoiceOver semantics, caller-provided accessibility id, and optional explicit `Image` injection for bundle-safe previews/snapshots. |
-| `TrainingPickerComponent` | `View/TrainingPickerComponent.swift` (SPM copy: `Packages/FitnessTraining/.../TrainingPickerComponent.swift`) | Coordinator-backed shared Weight/Reps picker for Less, More, completed-set Edit, and active-set `Set Result`; Save advances only active entries, while Cancel/backdrop dismiss without changing progress. |
-| `TrainingIDs` | `Packages/FitnessUI/Sources/FitnessUI/TrainingIDs.swift` | Accessibility identifiers for training FABs and set rows; bilateral row IDs include logical set index plus side while standard IDs stay source-compatible. |
-| `AnalyticsIDs` / `ExerciseCardIDs.analytics` | `Packages/FitnessCore/Sources/FitnessCore/AccessibilityIDs.swift` | Cross-package identifiers used by the bilateral end-to-end UI test to open a completed card's Analytics entry and address each logical-set/side result. |
-| `UIOverlayState` | `Packages/FitnessUI/Sources/FitnessUI/UIOverlayState.swift` | Global overlay/menu visibility (also still in app `Shared/State/UIOverlayState.swift` until unified). Also drives the exercise deactivate/activate multi-select mode: `exerciseSelectionMode` (`.none`/`.deactivate`/`.activate`; non-`.none` morphs the bottom bar — Cancel-only until ≥1 ticked, then Cancel | Deactivate/Activate), `selectedExerciseIds`, and `commitExerciseSelection` (Save trigger observed by the host list, applied then reset via `endExerciseSelection()`). |
-| `ActiveSetEditPickerView` | `Packages/FitnessUI/Sources/FitnessUI/ActiveSetEditPickerView.swift` | Reps/weight wheel sheet for active-set edits |
-| `FitnessWheelPickerColumn<Value: Hashable, Label: View>` | `Packages/FitnessUI/Sources/FitnessUI/FitnessWheelPickerColumn.swift` | Generic wheel-picker column — title + typed `Binding<Value>` selection + `[Value]` options + custom `@ViewBuilder label`. Keeps locale-sensitive formatting (e.g. weight decimal separator) at label render time so the source of truth stays typed. Used by `ProfileView.BodyMetricsWheelRow` (Weight `Double` / Height `Int` / Age `Int`). `ExerciseWheelPickerRow` predates this and still uses String-tagged Pickers. |
-| `OverlaySheetContainer` | `Packages/FitnessUI/Sources/FitnessUI/ExercisePickerSheetChrome.swift` | Reusable overlay sheet with backdrop, grabber, swipe-dismiss, appear animation. Separates content (scrollable), actions (fixed bottom), and overlay (e.g. numpad). All picker sheets use this. Optional `backgroundColor` parameter (default `AppStyle.Color.sheetBackground`) overrides the sheet body fill — used by `FeedbackSheetView` to switch to `AppStyle.Color.black` for stronger contrast with the glass-effect tiles. |
-| `ExercisePickerActionButtons` / `exercisePickerSheet` | `Packages/FitnessUI/Sources/FitnessUI/ExercisePickerSheetChrome.swift` | Shared picker sheet chrome (inner styling + action buttons) |
-| `MuscleIconBackdrop` | `Packages/FitnessUI/Sources/FitnessUI/MuscleIconBackdrop.swift` | Decorative dotted concentric-ring backdrop behind a body-icon preview (edge-fading mask). Shared by `BodyIconGallery`. |
-| `BodyIconGallery` | `Packages/FitnessUI/Sources/FitnessUI/BodyIconGallery.swift` | Swipeable paged gallery of body-image asset names over `MuscleIconBackdrop` (native page dots; static when one image). Used by the exercise picker header (`ExerciseIconHeader`). |
-| `CardTextField` | `Packages/FitnessUI/Sources/FitnessUI/CardTextField.swift` | Single-line text input styled like the wheel-picker cards (label + placeholder + dark rounded card + hairline border). Used by `ExerciseNameBar` (exercise name) and `CreateWorkoutView` (workout name). |
-| `.hidesBottomBarWhilePresented(_:)` | `Packages/FitnessUI/Sources/FitnessUI/EditingSheetPresentation.swift` | `View` modifier that sets `UIOverlayState.isEditingSheetVisible` true while the modified view is mounted (false on disappear), so the app's glass bottom bar hides under any editing/picker overlay. Takes `UIOverlayState` explicitly (no `@Environment` coupling → previews/tests safe). Applied at every overlay sheet mount (`MuscleCategoryView`, `MuscleCategorySelectionView`, `TrainingSheetView`, `TrainingPickerComponent`, `WorkoutsScreen`); replaces the old per-site `Color.clear.onAppear/.onDisappear` boilerplate. `FeedbackSheetComponent` keeps its own coordinator-driven toggle (native `.sheet`, not an overlay). |
-| `RefreshActionButton` | `Packages/FitnessUI/Sources/FitnessUI/RefreshActionButton.swift` | Solid-green pill action button (140×40, `AppStyle.CornerRadius.editPickerViewButton`) used to manually refresh remote data. Mirrors the Save button in `ExercisePickerActionButtons` so the action-bar visual language stays consistent. Default title `"Refresh"`, swaps icon for `ProgressView` while `isLoading`. Used by `TramDeparturesCardView` and the BMI section in `ProfileView`. |
-| `MetricChipView` | `Features/Exercise/ExerciseCard/MetricChipView.swift` | Generic chip container with background/stroke |
-| `WeightPhaseTileView` | `Features/Exercise/ExerciseCard/WeightPhaseTileView.swift` | Weight/reps phase tile for analytics display |
-| `.appGlassEffect(in:)` / `.appDarkSurface(backgroundColor:in:)` | `Packages/FitnessUI/Sources/FitnessUI/AdaptiveGlassEffect.swift` | Shared cross-version surface policy. `.appGlassEffect` applies `.clear` Liquid Glass on iOS/macOS 27, `.regular` on 26, and material on older supported platforms. `.appDarkSurface` is for app-owned cards and controls that must not acquire iOS 27's raised 3D Glass bezel: it preserves the caller-provided color under native Glass on 26 and uses a deterministic dark fill plus one neutral outline on 27. Both use material on visionOS, where SwiftUI's `Glass` API is unavailable. |
-| `CardBackground` | `Packages/FitnessUI/Sources/FitnessUI/CardBackground.swift` | Card wrapper with `CardSurfaceStyle` enum (`.glass(Color)`, `.gradient(Color)`, `.idle`). `.glass(Color)` delegates to the shared `.appDarkSurface`, so all cards retain a controlled, flat dark hierarchy on iOS/macOS 27 while iOS 26 retains native Glass. The `.idle` case renders the idle card's 3-layer premium surface: gradient background, radial inner glow, and gradient stroke border. `CardBackground.Style` is a typealias for `CardSurfaceStyle`. |
-| `CategoryTileArtworkStage` | `Packages/FitnessUI/Sources/FitnessUI/CategoryTileArtworkStage.swift` | Shared centered 80-point artwork stage with 100-point clipped artwork, caller-provided top/bottom alignment, and glow. Used by `CategoryTileModelView`, `WorkoutTileView`, and `CreateWorkoutView`; the stage's top/bottom crop behavior has synthetic snapshot baselines. |
-| `WorkoutType+UI` | `Packages/FitnessUI/Sources/FitnessUI/WorkoutType+UI.swift` | UI-layer mapping from the persisted `WorkoutType` domain enum to its user-facing English label and generic artwork alignment (`leg` bottom, all others top). |
-| `CardTheme` | `Packages/FitnessUI/Sources/FitnessUI/CardTheme.swift` | Bundles `CardSurfaceStyle` + title/subtitle colors + title font. Static presets: `.idle` (idle surface + idle title/label colors), `.completed` (glass surface, white text), `.inactiveOnIdle` (idle surface + same headline/secondary colors as `.idle` — used by `InactiveCardModelView` with `EdgeIndicator.completed`). |
-| `CardShell` | `Packages/FitnessUI/Sources/FitnessUI/CardShell.swift` | Structural card wrapper standardizing header layout across 5 generic slots: `leading` (category icon / selection control), `titleContent` (title + metric row; carries `.frame(maxWidth: .infinity)` so it claims the slack and pins `trailing` to the right edge — no competing `Spacer`), `trailing` (play button / checkmark; defaults to `EmptyView`), `expandedContent` (below header), `contentBackground` (overlay). The coaching tip is no longer a dedicated slot — `IdleActiveCardModelView` renders its badge and action in the expanded last-run trailing rail. Also supports optional `edgeIndicator`, shadow, and padding. Built on `CardBackground` + `CardTheme`. Used by `IdleActiveCardModelView` and `InactiveCardModelView`. Cards that don't fit the slot pattern (e.g. `ActiveCardModelView`) use `CardBackground` directly. |
-| `EdgeIndicator` | `Packages/FitnessUI/Sources/FitnessUI/CardShell.swift` | Colored strip at the leading edge of a card. Static preset: `.completed` (green bar, `completedBarWidth`). Used by `InactiveCardModelView` via `CardShell`. |
-| `SetTilesRow` | `Packages/FitnessUI/Sources/FitnessUI/SetTilesRow.swift` | Horizontal scroller of `SetTileView`s for a completed run's per-set breakdown. Defaults to 3 tiles plus a scroll chevron when >3, while `visibleTileCount` and `showsOverflowChevron` let callers use a fractional next-tile peek instead. Retains its original single generic for the optional inline trailing accessory; a generic initializer type-erases the optional centered/stacked trailing-rail accessory internally, preserving explicitly typed callers. Callers declare reserved widths for exact tile sizing. Shared by `IdleActiveCardModelView` (3.4 visible tiles, no chevron, reset-sized coaching button in the rail) and `InactiveCardModelView` (default sizing plus inline reset button when `isResetEnabled`). |
-| `MetricColumnView` | `Packages/FitnessUI/Sources/FitnessUI/MetricColumnView.swift` | Labeled metric column for card metric rows — label aligned to `.metricLabel` above caller-provided value content, with an optional footer row and optional tap gesture. Used by `IdleActiveCardModelView` for Weight and Seat columns so the idle card can keep the 4-row title/label/value/footer rhythm. |
-| `MetricAlignment` | `Packages/FitnessUI/Sources/FitnessUI/MetricAlignment.swift` | Public `VerticalAlignment.metricLabel` for aligning metric column headers across varying content heights. |
-| `Haptics` | `Packages/FitnessUI/Sources/FitnessUI/Haptics.swift` | Platform-guarded impact-haptic wrapper (`Haptics.impact(.light/.medium/.heavy)`) so call sites don't repeat the `#if canImport(UIKit)` dance. Used by the long-press selection start and the Cancel/Deactivate bar. |
-| `ExerciseSelectionRules` | `Packages/FitnessUI/Sources/FitnessUI/ExerciseSelectionRules.swift` | Pure, unit-tested rule (`isSelectable(mode:isActive:isCompleted:isInProgress:)`) shared by both host views' per-card radio gating and their "Deactivate Exercise" menu-item gating. Idle → selectable for deactivate; deactivated → selectable for activate. |
-| `selectedMilkyAppearance(isSelected:cornerRadius:horizontalInset:)` | `Packages/FitnessUI/Sources/FitnessUI/SelectedMilkyAppearance.swift` | View modifier for the translucent "milky" selection tint (white `selectionTintFill` + `selectionTintStroke`), `horizontalInset` aligns it to a `CardShell`-inset card background. |
-| `DefaultIconColorScheme` | `Packages/FitnessUI/Sources/FitnessUI/DefaultIconColorScheme.swift` | User-selectable color scheme (`green`/`grey`) for the *default* category icons. `iconName(for:)` maps a `defaultXxxIcon` asset to its `grey_`-prefixed variant when `.grey` is selected; non-default icons pass through unchanged. Persisted under the shared `storageKey` (`@AppStorage`); the Profile picker writes it and `ActiveCardModelView` / `IdleActiveCardModelView` / `InactiveCardModelView` / `CategoryTileModelView` read it. The `progressFillColor` (`.green` → `greenGlow`, `.grey` → `progressOrange`) and `progressTrackColor` (`.green` → `progressTrack`, `.grey` → `progressTrackGrey`) computed properties additionally map the scheme to the category progress-bar fill and track; `ProgressBar` reads the same `@AppStorage` key so both re-tint live with the icon scheme (the "X of Y" text stays scheme-independent). **App-wide accent theming:** `DefaultIconColorScheme.current` (reads `UserDefaults` for `storageKey`) and `.palette: AccentPalette` extend this into a full green→orange theme — in `.grey` mode every green-family `AppStyle.Color` token resolves to a warm orange (dark structurals neutralised); `.green` mode is byte-identical to the original hexes (so snapshots are unaffected). See `AccentPalette` below. The file imports `SwiftUI` for this (acceptable — it is a FitnessUI/UI-layer enum, not a `FitnessCore` domain type). |
-| `SetTileView` | `Features/Exercise/ExerciseCard/SetTileView.swift` | Completed set display tile (weight/reps) |
-| `SetRowChipStyle` | `Features/Exercise/ActiveSet/SimpleActiveSetView.swift` | ViewModifier for set row chips — use `.setRowChipStyle(minWidth:)` |
-| `FeedbackSheetComponent` | `Packages/FitnessTraining/.../Feedback/FeedbackSheetComponent.swift` | Zero-size (`Color.clear`) mount point that presents `FeedbackSheetView` via native `.sheet(...)` with **two progressive `.presentationDetents`** — a content-fitted `.height(smallDetentHeight)` and `.large` — plus `.presentationDragIndicator(.visible)` and `.presentationBackground(AppStyle.Color.black)`. **Progressive-disclosure detent**: opens at the small detent (Title + 4 Symptom-Tiles + Hide/Save action bar only); auto-expands to `.large` (animated `.easeInOut(0.25)`) as soon as `viewModel.symptoms` becomes non-empty, and animates back down when all symptoms are deselected. Re-edit case (existing draft / committed entry) opens directly at `.large`. The small detent height is measured at runtime: `FeedbackSheetView` reports the natural pixel height of its initial content via `onInitialContentHeightChange`; the component adds the action-bar height (~84pt) and stores the result in `smallDetentHeight`. A 380pt initial estimate covers the very first frame before measurement settles. **Same presentation pattern as `AnalyticsView`** for the grabber / system look (the exercise-card siblings are now `InactiveCardModelView` / `ActiveCardModelView` / `IdleActiveCardModelView` in `FitnessPersistenceUI`). System-rendered grabber, status bar, and pull-to-dismiss gesture come for free. Instantiates `FeedbackViewModel` lazily per presentation, scoped to the current exercise + the active **`sessionId`** (resolved via `coordinator.currentSessionId(for:)`, falling back to a fresh UUID if no session is active). Pre-selects the body category from the exercise's `MuscleCategoryGroup`. Wires the coordinator's `draftStore` and a `currentFocusedExerciseId` closure into the view model so autosave (in-memory draft) is exercise-scoped and resilient to the user switching exercises while the sheet is closing. Sets `UIOverlayState.isEditingSheetVisible` while visible so the bottom action bar hides — matching `TrainingPickerComponent` and `MuscleCategoryView`. |
-| `FeedbackSheetView` | `Packages/FitnessTraining/.../Feedback/FeedbackSheetView.swift` | Post-exercise feedback form rendered as a native `.sheet` with **two progressive detents** (small content-fitted + `.large`, managed by `FeedbackSheetComponent`). Reports its own initial content height via `onInitialContentHeightChange` (measured with a `PreferenceKey` + named coordinate space on the `SymptomChipsView` block) so the small detent always exactly fits Title + 2x2 Symptom-Tiles + bottom breathing room. **Same presentation pattern as `AnalyticsView`** (system grabber + status bar + pull-to-dismiss come for free). Black background via `.presentationBackground` on the sheet. **Progressive disclosure** layout: `ScrollView + LazyVStack` { centered title `"Exercise Feedback"`, **Physical Symptoms** (`SymptomChipsView`, always visible), **Pain** (`PainRegionGrid` — multi-select, only when `.pain` symptom is selected), **Energy level** (`EnergyLevelSlider`, only when ≥1 symptom is selected), **Notes** (single-line `TextField` with `.submitLabel(.done)` + `.onSubmit { isFocused = false }` — same blue-checkmark Return-key dismissal as `ExerciseNamePickerView` ("Edit Title"). The wrapper reserves a 64pt min-height so existing notes still display nicely; only when ≥1 symptom is selected) } + sticky `ExercisePickerActionButtons` (**Hide**/Save) at the safe-area bottom on a flat black background. The left button is labelled **Hide** (not Cancel) because closing the sheet does **not** discard unsaved changes — they remain in the in-memory draft store and reappear on next open. Save is the only action that commits to storage (per-session upsert via `FeedbackStorageService`). The action bar is **hidden while the Notes keyboard is focused** (animated fade, driven by `@FocusState`) so the iOS blue "Done" submit key is the only confirmation affordance during typing; on dismiss-keyboard the bar fades back in for the sheet decision. Mutations to `energyLevel`, `painRegions`, `symptoms` and `note` trigger `viewModel.autosaveDraft()`, which writes the current form state into the coordinator's `ExerciseFeedbackDraftStore` (or clears it when empty). On open, `FeedbackViewModel.prepopulate()` resolves form state in this order: 1) committed record for the **active session** (re-edit case), 2) in-memory draft for this exercise, 3) blank form. **No** fallback to "latest committed feedback for this exercise" — every fresh session starts blank, analytics-style. All English copy. |
-| `ExerciseFeedbackDraftStore` | `Packages/FitnessTraining/.../Feedback/ExerciseFeedbackDraftStore.swift` | See *Services* table — included here as a reminder that the feedback sheet, the bottom-bar icon, and the coordinator all observe the same single-slot draft store. |
-| `FeedbackEntryIconState` / `FeedbackEntryIconResolver` | `Packages/FitnessTraining/.../Feedback/FeedbackEntryIconState.swift` | Three-state enum (`entry`, `draft`, `done`) used by `BottomActionBarView` to pick how the feedback FAB renders. **Bitmap assets per state** (`feedback_entry`, `feedback_entry_draft`, `feedback_entry_done` shipped in `FitnessApp/Assets.xcassets/` — square 1024×1024, content luminance-bbox centered, **`template-rendering-intent: original`**, two-color hardcoded into the PNG using `AppStyle.Color.painAccent` (`#FF6B3D`) for the plus-cross fill and `AppStyle.Color.greenGlow` (`#3CC8A6`) for the state-badge in the bottom-right). Rendered with `.renderingMode(.original)` in `BottomActionBarView.feedbackIconButton(state:)` so the baked colours come through unchanged, placed over the shared transparent `TrainingControlSurfaceStyle` circle with the timer-matched gray outline. All three states share the solid-orange filled plus-cross identity at **identical pixel coordinates** (bbox `x:233..789 y:234..788`, size 557×555, centered at `(511, 511)` — i.e. exactly on the 1024×1024 canvas centre, normalized `(0.499, 0.499)`, arm thickness 168 px, corner radius 30 px) so the plus does not visually shift when the icon changes state. This canvas-centred layout means `BottomActionBarView.feedbackIconButton(state:)` can render every state through a single uniform `glassCircleIconButton` helper with no per-state geometry compensation. The green badge attached to the bottom-right communicates progress: entry has no badge (and a clean unbroken plus, regenerated from scratch as a perfect rounded-rectangle cross at the matched coordinates), draft has a two-tone pencil inside a **system-yellow** outline circle (thick yellow body and outline ring both in `AppStyle.Color.yellow` `#FFCC00` — luminance-mapped from the original turquoise so the existing shading is preserved — with a prominent yellow-green wood cone tip in `symptomNausea` `#9CCC30` taking ~33% of the pencil length, body-aspect ~1:3 with only slightly rounded corners, oriented diagonally with the tip pointing lower-left — classic "edit" pose, anatomy modeled on a classic pencil silhouette so the cone tip reads clearly even at the 48pt symptom-tile icon size). The draft badge therefore reads as a **fully yellow** "in-progress / pending edit" indicator, while the `done` badge stays turquoise to mark completion — giving the two states an unmistakable hue contrast (yellow=draft, turquoise=done)., done has a green checkmark inside a green outline circle. The two-color split (orange = subject of feedback / pain, green = action / completion) keeps the palette consistent with the Pain symptom chip and the project's bmi-normal / completion accent. `FeedbackEntryIconResolver.state(for:sessionId:draftStore:storage:)` resolves the state with **`done` taking precedence over `draft`**: if a committed entry exists in `feedbackStorage.load(for:)` whose `sessionId` matches the active session, the icon is `done`; otherwise, if a non-empty draft exists for that exercise in `ExerciseFeedbackDraftStore`, the icon is `draft`; otherwise `entry`. Done is scoped per active session — re-starting the same exercise (= new `sessionId`) resets the icon back to `entry` even when a previous session's feedback is still in storage. |
-| `Symptom+UI` | `Packages/FitnessTraining/.../Feedback/Symptom+UI.swift` | UI-layer extension that maps `Symptom` (FitnessCore domain enum) to its display tint (`AppStyle.Color.symptomPain` / `symptomDizziness` / `symptomNausea` / `symptomWeakness`). Lives in `FitnessTraining` so the domain layer stays free of any SwiftUI/Color dependency. Consumed by `SymptomTile` (icon + title + selection outline). |
-| `EnergyLevelSlider` | `Packages/FitnessTraining/.../Feedback/EnergyLevelSlider.swift` | Custom horizontal 1...5 slider with a **thicker capsule track** (10pt) and a **light-green → dark-green `LinearGradient` fill** (`AppStyle.Color.greenLight` → `AppStyle.Color.green` over `AppStyle.Color.greenDark` background). Composed manually inside a `ZStack` because SwiftUI's stock `Slider` cannot be resized vertically — a `DragGesture(minimumDistance: 0)` snaps to whole integers 1...5. 24pt white circular thumb with a soft drop shadow rides on the gradient. The header row shows `Low` / `High` labels and, once the user has picked a value, an additional right-aligned **percent label** (`20%` / `40%` / `60%` / `80%` / `100%`) so the absolute level is readable at a glance. The numeric "X / 5" indicator and the tick-number row were removed (the thumb position + percent carry that information). Binds directly to `FeedbackViewModel.energyLevel`. Identifier `TrainingIDs.energyLevelSlider`; exposes `accessibilityAdjustableAction` for VoiceOver swipe up/down and `accessibilityValue` ("`<percent>%`"). |
-| `SymptomChipsView` | `Packages/FitnessTraining/.../Feedback/SymptomChipsView.swift` | 2-column `LazyVGrid` of **compact** `SymptomTile`s (Pain, Dizziness, Nausea, Weakness) in a 2x2 grid. Each tile shows a 48pt icon circle (with a 60pt glow on selection), an UPPERCASE title (`Symptom.displayName`), and a single-line subtitle (`Symptom.description`, e.g. "Acute or sharp discomfort", `.minimumScaleFactor(0.85)` for Dynamic Type). **Symptom-specific accent color** via `Symptom.iconColor` (`Symptom+UI`): Pain red/orange (`AppStyle.Color.symptomPain`), Dizziness blue (`symptomDizziness`), Nausea light green (`symptomNausea`), Weakness purple (`symptomWeakness`). This color is used for the icon, selection border, glow, and title — `AppStyle.Color.greenGlow` is no longer hardcoded. The tile background uses `TrainingGlassEffectCompat.rectCard`, which delegates to `.appGlassEffect(in:)` (`.clear` on 27, `.regular` on 26, material before 26); a light tint in the accent color is additionally laid over the glass. SF Symbol icons: `bolt.fill`, `tornado`, `face.dashed`, `dumbbell.fill`. |
-| `PainRegionGrid` | `Packages/FitnessTraining/.../Feedback/PainRegionGrid.swift` | 3-column `LazyVGrid` of `PainRegionTile`s, pre-scoped to the exercise's `BodyCategory`. **Multi-select**: `selectedRegions: Set<BodyRegion>` + `onToggle` — any number of regions can be active at the same time (e.g. Lower back + Obliques). Image-only tiles (120pt tall, `scaledToFit`) with `TrainingGlassEffectCompat.rectCard` as the tile background, delegated to `.appGlassEffect(in:)` (`.clear` on 27, `.regular` on 26, material before 26); no text label — the region name serves only as the `accessibilityLabel` for VoiceOver. Selection is shown by a green border + a soft glow circle; tapping an already-selected tile removes it from the selection (replacing the wheel picker's former "None" option). The asset name per region comes from `BodyRegion.iconAssetName`; missing assets → an empty box (border only, no content). |
-
+| Component family | Contract and owner |
+|---|---|
+| Card surfaces | `CardBackground`, `CardTheme`, `CardShell`, edge indicators, metric columns and set tiles define the reusable card composition in `FitnessUI`. Exercise model cards that bind live SwiftData state live in `FitnessPersistenceUI`. |
+| Exercise cards | `IdleActiveCardModelView` and `InactiveCardModelView` expose user intents for availability, latest-entry and coaching-history loading; they do not own storage. `ActiveCardModelView` renders coordinator-backed active state. |
+| Category/workout artwork | Shared stage and layout primitives in `FitnessUI` keep category and workout tiles structurally consistent without documenting their current dimensions here. |
+| Training session | `TrainingSessionComponent`, set rows, timer and picker components render coordinator state. The app root owns sheet presentation; the component does not own navigation or session lifetime. |
+| Editing sheets | `OverlaySheetContainer`, shared picker actions and editing-sheet visibility keep presentation chrome and bottom-bar suppression consistent. Feature packages own form state and validation. |
+| Feedback | `FeedbackSheetComponent` presents feature-owned feedback UI. `FeedbackViewModel` uses the coordinator-owned draft store and session-scoped persistence. |
+| Menus | `MiniActionMenuView` renders caller-provided actions. Every item has a stable semantic ID; localized labels are presentation data rather than identity. |
+| Workout selection | `WorkoutDropdownView` and `WorkoutPickerView` receive workout values and callbacks; they do not resolve persistence dependencies. |
+| Adaptive surfaces | Shared glass/dark-surface modifiers centralize platform-version behavior so feature views do not duplicate availability branches. |
+| Accessibility IDs | Cross-package identifiers live in `FitnessCore` or `FitnessUI` according to ownership and are reused by production UI and UI tests. |
+| Haptics and formatting | Platform guards and common display formatting are centralized in small utilities rather than repeated at feature call sites. |
 
 ## Utilities
 
-Located in `Shared/Utilities/`.
+Utilities are stateless, broadly reused helpers. Important ownership boundaries are:
 
-| Utility | File | Usage |
-|---------|------|-------|
-| `WeightFormatter` | `WeightFormatter.swift` | `displayWeight(_:)` — always use for weight display |
-| `AnalyticsDateHelper` | `AnalyticsDateHelper.swift` | Month names, unique days, days-in-month for analytics |
-| `DateFormatterUtility` | `DateFormatterUtility.swift` | Shared DateFormatter instances (`germanMedium`, `germanMonthYear`, etc.) |
-| `WeightOptionsGenerator` | `WeightOptionsGenerator.swift` | Generate weight option arrays for pickers. String variants (`exerciseWeightOptions`, `trainingWeightOptions`) for legacy Picker rows; typed `[Double]` variants (`bodyWeightOptionsKg` + `bodyWeightOptionsKgIntegerOnly`) for the Profile body-metrics wheel (locale-agnostic source of truth; formatting at label render time). Both typed arrays are cached `static let`s so the decimal-toggle in `BodyMetricsWheelRow` never re-allocates or re-filters the 341-element option list. |
-| `L10n` | `L10n.swift` | Static user-facing strings for exercises, muscles, analytics, etc. |
-| `SafeAreaInsetsKey` | `SafeAreaInsetsKey.swift` | `@Environment(\.safeAreaInsets)` — use instead of deprecated `UIApplication.shared.windows` |
-| `TimeFormatter` | `TimeFormatter.swift` | `Int.formattedAsTimer` — formats seconds as `MM:SS` |
+- Weight, date and timer formatting is centralized; feature views do not create
+  competing format rules.
+- Weight option generation returns typed values where possible; localization is
+  applied when labels render.
+- Safe-area access uses the shared environment key rather than global window APIs.
+- User-facing strings use the established localization boundary instead of being
+  promoted into architecture documentation.
 
 ## Extensions
 
-| Extension | File | Purpose |
-|-----------|------|---------|
-| `View+Toolbar` | `Extensions/View+Toolbar.swift` | `.standardToolbar(title:)` modifier for consistent screen headers |
-| `Color+Extension` | `Design/Color+Extension.swift` | `Color(hex:)` initializer |
-| `SwipeBackGestureModifier` | `Shared/Extensions/SwipeBackGestureModifier.swift` | `.enableSwipeBack()` modifier |
+Cross-feature extensions stay small and policy-oriented: standard toolbar
+presentation, hexadecimal color construction, and the shared swipe-back modifier.
+Feature-specific behavior belongs to the feature rather than a global extension.
 
 ## State & Navigation
 
-| Type | File | Purpose |
-|------|------|---------|
-| `AppRouter` | `Packages/FitnessExercise/Sources/FitnessExercise/AppRouter.swift` | Centralized navigation state (`NavigationPath` + `currentScene`) plus independent optional `TrainingPresentation`; `presentTraining`/`dismissTraining` never mutate the parent path, while every real path mutation dismisses the presentation without cancelling its coordinator session. |
-| `TrainingPresentation` | `Packages/FitnessExercise/Sources/FitnessExercise/AppRouter.swift` | Identifiable `(exerciseId, category)` value used by the app root to mount `TrainingSheetView` above the current Category/List screen. |
-| `AppCurrentScene` | `Packages/FitnessExercise/Sources/FitnessExercise/AppRouter.swift` | Enum: `workouts`, `home`, `profile`, `category`, `schedule`, `analytics` — derived automatically by `AppRouter`; training is presentation state, not a scene. |
-| `NavigationDestination` | `Packages/FitnessExercise/Sources/FitnessExercise/NavigationDestination.swift` | Enum with all navigation cases, shared across app and packages |
-| `MuscleCategorySelectionViewMode` | `Packages/FitnessExercise/Sources/FitnessExercise/MuscleCategorySelectionView.swift` | Presentation state for the Home screen's Overview/List toggle. `FitnessAppApp` owns the single `@State` source and injects it into `MuscleCategorySelectionView` via `Binding`, so rebuilding the `.home` navigation destination after a training or category flow does not reset List mode. |
-| `AppLaunchStrategy` | `Shared/Navigation/AppLaunchStrategy.swift` | Protocol for app launch configuration; `ProductionLaunchStrategy` (default) and `UITestLaunchStrategy` (`Shared/Navigation/UITestLaunchStrategy.swift`, `#if UITESTING`). Exercise-bearing Home/Category UI-test fixtures persist a matching `WorkoutModel` + `ExerciseModel` before navigation so `@Query`-driven cards render deterministically. |
-| `TrainingCoordinator` | `Packages/FitnessTraining/.../TrainingCoordinator.swift` | Thin state-holder + orchestrator; delegates business logic to directly instantiated Use Cases (`startTrainingUseCase`, `completeSetUseCase`, `finishExerciseUseCase`, `cancelTrainingUseCase`, `resetExerciseUseCase`). The source-compatible `startTraining(for:)` remains available; `startTraining(for:workoutId:)` additionally emits the private-init `onNewSessionStarted` callback exactly once for a newly inserted session and never for `.resumed`. The coordinator stays free of SwiftData models and storage dependencies. |
-| `UIOverlayState` | `Shared/State/UIOverlayState.swift` | Global overlay/menu visibility state |
+| Owner | State responsibility |
+|---|---|
+| `AppRouter` | Owns `NavigationPath`, derives the current app scene and owns an independent optional `TrainingPresentation`. Views request navigation through router intents rather than mutating the path. |
+| App root | Owns state that must survive destination reconstruction, including the Home Overview/List mode, shared overlay state, the router and the model container. |
+| `TrainingCoordinator` | Owns one training session's active exercise, execution progress, timer and feedback draft. It contains no SwiftData models. |
+| `TrainingCoordinatorCache` | Shares the category coordinator between screens and finds the coordinator for a particular exercise. |
+| `UIOverlayState` | Coordinates menus, editing-sheet visibility and exercise activate/deactivate selection across the current app surface. |
+| Feature view models | Own transient presentation and form state; persisted truth continues to come from models or service reads. |
+
+`TrainingPresentation` contains only the exercise ID and category. Dismissing the
+sheet does not imply cancelling the coordinator session. Real navigation-path
+mutations clear the presentation so it cannot outlive its Home or Category parent.
 
 ## Navigation
 
-All navigation destinations are in `FitnessAppApp.swift`:
+`NavigationDestination` is the shared typed destination enum. The app root maps its
+cases to Workouts, Home, Profile, Total Analytics, Schedule and Muscle Category
+screens. `AppRouter` provides push, pop, root replacement and training-presentation
+intents; views do not construct a parallel router.
 
-```swift
-enum NavigationDestination: Hashable {
-    case home              // -> MuscleCategorySelectionView
-    case profile           // -> ProfileView
-    case totalAnalytics    // -> TotalAnalyticsView
-    case schedule          // -> ScheduleView
-    case muscleCategory(MuscleCategoryGroup) // -> MuscleCategoryView
-}
-```
+The bottom bar has five semantic destinations: Workouts, Training, Analytics,
+Schedule and Profile. Workouts is the list root. Home and Category belong to the
+Training tab. Opening a workout from the list preserves the list beneath Home;
+launching the default workout from the Training tab replaces the path with Home.
+Only the former therefore exposes back navigation to the workout list.
 
-Navigation is managed by `AppRouter` (injected through the SwiftUI environment). Use `router.navigate(to:)` to push, `router.pop()` to go back, `router.popToRoot()` to reset, and `router.replaceAll(with:)` for tab switches or deep links. Use `presentTraining(exerciseId:category:)` / `dismissTraining()` for the active-training sheet; these must not manipulate `NavigationPath` or coordinator session state. Any actual path mutation clears `TrainingPresentation` first so the sheet cannot outlive its Category/List parent, while the coordinator session continues. `AppRouter` derives `currentScene` from the stack — do not set it or mutate `NavigationPath` directly in views.
-
-### Bottom bar tabs & workout navigation
-
-`BottomMenuBarView` (`Features/BottomBar/`) renders **5 icon-only tabs**: **Workouts** (list root, `popToRoot()`), **Training** (quick-launch, placeholder SF-symbol `dumbbell.fill` until a dedicated asset exists), **Analytics**, **Schedule**, **Profile**. The bar width is fixed (`capsuleWidth - 2·cardHorizontalPadding`); items use `maxWidth: .infinity`, so adding a tab shrinks each column rather than widening the bar. Tabs have **no text labels** (labels are passed as `accessibilityLabel` only) — five labels would crowd the fixed-width capsule, so the design is icon-only with a circular selection indicator (`selectionDiameter`) centred behind the active icon.
-
-- **Selected-tab mapping** (`BottomMenuBarView.selectedTab`): `.workouts` lights **Workouts**; the in-workout scenes (`.home`, `.category`) light **Training**. An open `TrainingPresentation` leaves that parent scene unchanged.
-- **Training tab action** (`onTrainingTab`, wired in `FitnessAppApp`): if `workoutStorageService.defaultWorkout` is set → `setCurrentWorkout` + `replaceAll([.home])`; else if workouts exist → `overlayState.showDefaultWorkoutPicker = true` (shows `DefaultWorkoutPickerOverlay`, which sets the chosen workout as default + current and launches it); else `popToRoot()` to the list to create one.
-- **Workout-list drill-down**: opening a workout tile selects it and pushes `.home` with `navigate(to:)`, preserving the Workouts list beneath it. `AppRouter.isHomePushedFromWorkoutList` records that origin, so only this category selection shows the bottom-bar back chevron and supports the swipe-back gesture; both return to the list. The Training tab and launch strategies use `replaceAll([.home])`, which remains a root without back-navigation.
+Training is not a navigation destination. The app presents it above the existing
+Home or Category hierarchy according to ADR-0014, allowing the parent query-backed
+screen and the coordinator session to keep their respective state.
 
 ## AppStyle Tokens
 
-All tokens in `Packages/FitnessUI/Sources/FitnessUI/AppStyle.swift`. When no token exists for a value, add one before using.
+`FitnessUI.AppStyle` is the single source of truth for spacing, typography, color,
+opacity, corner radius, shadows, animation and blur. This document deliberately
+does not mirror token names or values; source completion and the design-system
+tests are authoritative for that implementation surface.
 
-### Padding
+`DeviceLayout` owns semantic device-class and responsive-layout policy. Views use
+that policy and AppStyle tokens instead of introducing local screen-width
+breakpoints or raw design constants. Shared card/tile geometry belongs to its
+`FitnessUI` layout component rather than to feature views.
 
-`horizontal` (18), `screenHorizontal` (15), `card` (16), `titleTop` (8), `titleBottom` (17), `activeCardIconOverflow` (20), `sectionSpacing` (18), `cardVertical` (8), `idleExpandedContentHorizontal` (8)
-
-### Layout
-
-**Category/workout tile geometry (`ExerciseCardLayout.CategoryTile`):** both overview grids use the shared `gridHorizontalPadding` (15), two flexible columns, and `gridSpacing` (10) for rows and columns. Category and workout hero tiles share a 180-point height, 12-point vertical padding, 16-point card radius, and 15-point content padding. Category tiles retain their 80-point stage with 100×100-point clipped artwork and glow; workout hero tiles use their dedicated 170×121-point, bottom-trailing upper-body crop.
-
-`cardHorizontalPadding` (16), `cardHeaderSpacing` (10), `chipHeight` (32), `activeCardContentHeight` (80), `activeCardMaxWidth` (400), `categoryIconSize` (50), `idleCategoryIconSize` (64), `idleActiveCardIconSize` (78), `checkmarkSize` (36), `playButtonSize` (36), `playIconSize` (16), `idlePlayButtonSize` (40), `idlePlayIconSize` (16), `idlePlayIconOpticalOffset` (2 — optical centering for `play.fill` SF Symbol), `idlePlayRingWidth` (0.75 — hairline metallic ring stroke width on the idle play button), `idlePlayButtonGlowRadius` (6 — blur radius for the mint halo behind the idle play button), `idlePlayButtonGlowSize` (42 — diameter of the soft mint halo painted behind the idle play button), `idleCardBorderWidth` (1 — stroke width of the outer border around the idle exercise card), `idleCardContentMinWidth` (400 — content-driven minimum total width of the idle exercise card from its metric row; the completed/inactive card adopts this as `minWidth` so both cards render at an identical width on every device, overflowing slightly on narrow screens like iPhone 17 and filling within the standard margin on wide ones), `completedBarWidth` (8), `setRowBadgeSize` (26), `setRowChipHorizontalPadding` (8 — standard chip inset, also preferred by L/R whenever it fits), `bilateralSideHeaderSize` (42), `bilateralColumnSpacing` (4), `bilateralMetricSpacingTight` (2), `bilateralMetricSpacingCompact` (4), `bilateralMetricSpacingComfortable` (8), `bilateralPairSpacingTight` (4), `bilateralPairSpacingCompact` (8), `bilateralPairSpacingComfortable` (12), `bilateralMetricChipHorizontalPaddingTight` (2), `bilateralMetricChipHorizontalPadding` (4 — compact L/R-only fallback inset), `bilateralRepsChipContentMinWidth` (28 — minimum text-content width before compact fallback chip padding), `bilateralMetricMinimumScaleFactor` (0.65), `analyticsInputMinimumScaleFactor` (0.75), `bilateralAnalyticsMinimumScaleFactor` (0.7), `bilateralAnalyticsRowHeight` (122), `bilateralHeaderStrokeWidth` (2), `analyticsImageSize` (60), `seatIconSize` (26), `idleMetricGlyphHeight` (20), `idleMetricContentRowHeight` (20), `idleMetricFooterRowHeight` (20), `analyticsEntryIconWidth` (40), `idleLastRunExpandedTopSpacing` (12), `idleLastRunDetailsHeight` (72), `idleLastRunVisibleTileCount` (3.4), `minimumTapTargetSize` (44), `separatorHeight` (32), `idleMetricSeparatorHorizontalPadding` (8), `separatorWidth` (0.5 — hairline width of vertical column separators in metric rows), `profileCardMinHeight` (100), `profileCardCollapsedMinHeight` (72), `profileWheelHeight` (150), `profileAvatarSize` (80), `friendAvatarSize` (44 — friend-tile avatar in the Friends section), `friendUserAvatarSize` (36 — own-user-row avatar, smaller than a friend tile), `friendTileNameMaxWidth` (60 — friend-tile name truncation width), `numberPadKeySize` (60), `numberPadSpacing` (12), `scrollWheelItemHeight` (60), `scrollWheelVisibleItems` (5), `scrollWheelSnapTolerance` (18), `sheetContentBottomPad` (23), `workoutPickerWidth` (320), `workoutPickerHeight` (220), `workoutPickerWheelHeight` (150), `overlayConfirmButtonSize` (32), `grabberWidth` (36), `grabberHeight` (5), `capsuleToggleWidth` (44), `capsuleToggleHeight` (26), `capsuleToggleThumb` (22), `miniMenuMaxWidth` (320), `workoutTileCompactHeight` (120), `workoutTileCompactSettingsIconSize` (30), `workoutTileCompactCountOuterSize` (34), `workoutTileCompactCountInnerSize` (26), `workoutTileCompactCountInset` (20), `workoutTileCompactSettingsTopInset` (22), `workoutHeroSettingsIconSize` (24), `workoutHeroBorderWidth` (1), `workoutHeroStartChipHorizontalPadding` (12), `workoutHeroStartChipVerticalPadding` (5), `workoutHeroStartChipBorderWidth` (1)
-
-Training-sheet layout additionally uses `activeSetRowSpacing` (16) and `activeSetVerticalPadding` (12), three-row set viewport heights for standard/bilateral sessions (`trainingSheetStandardSetViewportHeight` 152 / `trainingSheetBilateralSetViewportHeight` 218), bounded session heights (`trainingSheetStandardSessionHeight` 212 / `trainingSheetBilateralSessionHeight` 270), a responsive standard right rail (`trainingSheetRailMinimumWidth` 88 / `trainingSheetRailMaximumWidth` 120), and a narrower 72–88-point bilateral rail with 4-point outer/column spacing so both L/R value columns remain readable at compact widths. Standard session insets adapt up to `trainingSheetContentHorizontalPadding` (20; minimum 8). A 6-point set-viewport optical offset, standard/bilateral timer heights (70 / 88), `trainingSheetHeaderSpacing` (16), `trainingSheetActionBarTopSpacing` (14), `trainingSheetBottomBarClearance` (76), and `trainingSheetMinimumBackdropHeight` (120) complete the geometry. The sheet is content-sized and bottom-anchored instead of reserving percentage-based vertical space. The title/set viewport and muscle-icon/timer rail are structurally top-aligned, with the set rows optically lowered to the timer baseline; only the bounded set viewport scrolls.
-
-Idle last-run spacing additionally uses `idleLastRunFooterTopSpacing` (5) between the analytics icon and the "Last run" trigger.
-
-Inactive-card trailing alignment uses `inactiveTrailingSeparatorSpacing` (22) between the rightmost separator and the anchored checkmark so the separator matches the idle card without moving either trailing action.
-
-Workout-tile-specific layout tokens: `workoutGridBottomPadding` (20), `workoutTileCompactHeight` (120), `workoutTileCompactSettingsIconSize` (30), `workoutTileCompactCountOuterSize` (34), `workoutTileCompactCountInnerSize` (26), `workoutTileCompactCountOuterStroke` (3), `workoutTileCompactCountInnerStroke` (1), `workoutTileCompactCountInset` (20), `workoutTileCompactSettingsTopInset` (22), `workoutTileCompactBorderWidth` (2), `workoutHeroSettingsIconSize` (24), `workoutHeroBorderWidth` (1), `workoutHeroMetricsTopSpacing` (30), `workoutHeroArtworkWidth` (170), `workoutHeroArtworkHeight` (121), `workoutHeroArtworkTrailingOverflow` (38), `workoutHeroStartChipHorizontalPadding` (12), `workoutHeroStartChipVerticalPadding` (5), `workoutHeroStartChipIconSpacing` (8), `workoutHeroStartChipBorderWidth` (1).
-
-### CornerRadius
-
-`card` (16), `bottomBarButton` (12), `editPickerViewButton` (12), `defaultButton` (12), `sheet` (22), `tile` (10), `timerCard` (12), `numberPadKey` (12), `pill` (20), `overlay` (20), `capsuleToggle` (12), `workoutHeroStartChip` (8)
-
-### Font
-
-| Token | Size | Weight |
-|-------|------|--------|
-| `navigationHeadline` | 28 | bold |
-| `cardHeadline` | 18 | bold |
-| `idleCardTitle` | 16 | semibold |
-| `regularChip` | 16 | semibold |
-| `largeChip` | 24 | semibold |
-| `bilateralSideHeader` | 22 | medium |
-| `trainingTimer` | 16 | bold |
-| `trainingTimerLarge` | 26 | bold |
-| `trainingTimerCancel` | 13 | medium |
-| `defaultFont` | 12 | semibold |
-| `bottomBarButtons` | 16 | semibold |
-| `analyticsExerciseTitle` | 20 | semibold |
-| `analyticsExerciseData` | 16 | semibold |
-| `analyticsHeadline` | 22 | bold |
-| `analyticsBigNumber` | 26 | bold |
-| `analyticsAxis` | 9 | medium |
-| `workoutEntryTitle` | 36 | bold |
-| `categorySelectionNameFont` | 20 | semibold |
-| `categoryTileTitle` | 22 | bold |
-| `categoryTileCount` | 16 | black |
-| `categoryTileBadge` | 14 | heavy |
-| `categoryTileProgress` | 12 | heavy |
-| `workoutHeroExerciseCount` | 40 | black |
-| `workoutHeroExerciseLabel` | 12 | medium |
-| `tileLabel` | 14 | semibold |
-| `tileValue` | 16 | medium |
-| `sectionTitle` | 18 | medium |
-| `sectionHeadline` | 18 | semibold |
-| `numberPadKey` | 24 | medium |
-| `numberPadDisplay` | 32 | regular |
-| `numberPadSymbol` | 24 | regular |
-| `chartLabel` | 10 | regular |
-| `chartAxisSmall` | 10 | medium |
-| `pickerAction` | 14 | regular |
-| `cardBoldTitle` | 20 | bold |
-| `cardSmallBold` | 12 | bold |
-| `cardSmallLabel` | 10 | semibold |
-| `cardTinyLabel` | 9 | regular |
-| `cardValueBold` | 16 | bold |
-| `cardSmallMedium` | 11 | bold |
-| `metricLabel` | 11 | medium |
-| `idleWeightValue` | 24 | bold |
-| `idleWeightUnit` | 12 | bold |
-| `idleRepsSeparator` | 16 | bold |
-| `idleSeatValue` | 15 | bold |
-| `iconSymbol` | 20 | semibold |
-| `calendarHeader` | 16 | semibold |
-| `calendarSubheader` | 12 | medium |
-| `calendarDay` | 14 | regular |
-| `calendarDayBold` | 14 | bold |
-| `dayChipLabel` | 10 | semibold |
-| `dayChipNumber` | 13 | regular |
-| `dayChipNumberBold` | 13 | bold |
-| `detailCategory` | 15 | bold |
-| `detailExercise` | 14 | medium |
-| `detailBadge` | 14 | bold |
-| `detailCaption` | 12 | medium |
-| `streakLabel` | 11 | medium |
-| `streakValue` | 16 | bold |
-| `profileGreeting` | 26 | bold |
-| `profileSubtitle` | 15 | medium |
-| `profileCardTitle` | 13 | medium |
-| `profileCardValue` | 28 | bold |
-| `profileCardUnit` | 14 | semibold |
-| `profileBMICategory` | 14 | semibold |
-| `profileInputLabel` | 14 | semibold |
-| `sheetTitle` | 22 | bold |
-| `sheetSectionLabel` | 17 | semibold |
-| `sheetCaption` | 12 | regular |
-| `sheetControlGlyph` | 13 | bold |
-| `numberPadSelectedValue` | 48 | bold |
-
-### Color
-
-**Accent theming (`AccentPalette`, `Packages/FitnessUI/Sources/FitnessUI/AccentPalette.swift`).** The green-family tokens (`green`, `greenLight`, `greenMint`, `greenFrost`, `greenGlow`, `greenBlack`, `greenDark`, `trainingAccent`, `idleMetricValue`, `idleAccentFill`, `idlePlayRingBase`, `idlePlayRingGlow`, `progressTrack`, `symptomNausea`, and the aliases `primaryButton`/`bmiNormal`) are **computed `static var`** that resolve through `DefaultIconColorScheme.current.palette` — `AccentPalette.green` (the original byte-identical hexes; green mode is unchanged) or `AccentPalette.grey` (a warm orange ramp; dark structurals neutralised toward `#2C2F36`, `greenGlow→#F97316`). All other tokens stay `static let`. Reactivity: `FitnessAppApp` holds `@AppStorage(DefaultIconColorScheme.storageKey)` and applies `.id(iconColorScheme)` to the content `ZStack` (below the App's `@State`, inside `.environment`/`.modelContainer`), so toggling the Profile picker rebuilds the visual tree to re-read the palette while `router`/nav/SwiftData survive. Source of truth stays `@AppStorage` (no new mutable global). To change a grey-mode color, edit `AccentPalette.grey`; never edit the `.green` values (snapshots depend on them).
-
-`backgroundColor`, `primaryButton`, `exerciseCardBackground`, `idleCardBackground` (#0E0F13 — dedicated dark base surface for the idle exercise card; do **not** swap with `exerciseCardBackground` which stays #232227 for all other cards/tiles), `idleCardSoft` (#101116 — upper-left stop in the idle card surface gradient, slightly lighter than the base for a barely-perceptible sheen), `idleCardDark` (#0C0D11 — lower-right stop in the idle card surface gradient, slightly darker than the base so the card subtly recedes towards its bottom edge), `idleCardBorder` (#2F3033 — visible-but-unobtrusive stroke around the idle card), `chipsBackground`, `white`, `black`, `yellow`, `gray`, `grayDark`, `greenBlack`, `greenDark`, `green`, `greenLight`, `greenMint` (#80C2B4), `greenFrost` (#AACDC6), `greenGlow`, `idleTitle` (#F2F2F2 — soft off-white title text on the idle card), `idleMetricLabel` (#9A9A9A — secondary metric labels: "Weight"/"Seat"/"Data", expand chevron), `idleMetricValue` (#4FBEA6 — primary metric values + accent **glyph/text/stroke** elements on the idle card: weight number, `kg` unit suffix, seat arrows, progress icon, coaching badge, play triangle. For solid filled shapes use `idleAccentFill` instead — area-effect compensation. Retuned from the original pastel mint #8CC7A8 toward a brightened version of the brand teal `green` (#088177) so the idle card's accent matches the New-Workout selection chrome; idle-card snapshot baselines were re-recorded for this), `idleAccentFill` (#45AE97 — perceptually-matched solid-fill variant of `idleMetricValue`, ~one step denser; consumed by inactive-card checkmark disc and completion edge-indicator bar), `idleDivider` (#3A3D3F — vertical divider line between metric columns and the trailing action on the idle card), `idlePlayRingBase` (#4FBEA6 — hairline border around the idle play button ring; intentionally set to the same value as `idleMetricValue` for a uniform single-accent across stroke/glyph elements), `idlePlayRingGlow` (alias to `#97DBCE.opacity(0.10)` — soft teal outer halo around the idle play button; low alpha so the halo reads as a softer hint behind the glyph tone). The play-button **center is filled with `idleCardBackground`** so it reads as a hole punched into the card surface, `sheetBackground`, `sheetInputBackground`, `metricChipBackground`, `progressTrack`, `progressOrange` (#F97316 — alternate category progress-bar fill used when `DefaultIconColorScheme == .grey`; solid fill only), `progressTrackGrey` (#2C2F36 — alternate progress-bar track/empty portion for the `.grey` scheme; `.green` keeps the teal `progressTrack`), `numberPadGray`, `trainingAccent`, `inProgressGold`, `profileCardBackground` (= `white.opacity(subtleBackground)` — neutral translucent grey shared with the Analytics & Schedule cards so all top-level tab pages match; was the bluish solid `#1A1920`), `bmiUnderweight`, `bmiNormal`, `bmiOverweight`, `bmiObese`, `painAccent` (red/orange — also used as the alias for `symptomPain`), `error` (#E85A5A — inline error text: form validation + load-failure messages, e.g. Friends section/AddFriendSheet), `symptomPain`, `symptomDizziness` (blue), `symptomNausea` (light green), `symptomWeakness` (purple) — the symptom colors are the canonical tints for each `Symptom` case in the feedback sheet (`SymptomTile` consumes them via `Symptom.iconColor` in `Symptom+UI`)
-
-### Opacity
-
-`overlayBackdrop` (0.55), `subtleBackground` (0.06), `subtleStroke` (0.15), `grabberHandle` (0.35), `disabledElement` (0.3), `fadedOverlay` (0.4), `idleIconGlow` (0.3), `categoryTileIconGlow` (0.5), `categoryTileCompletionOverlay` (0.3), `idlePlayButtonGlow` (0.25), `idleExpandedOverlay` (0.6), `separatorLine` (0.3), `secondaryLabel` (0.6), `numberPadInactive` (0.5), `numberPadFade` (0.2), `placeholderText` (0.35), `hairlineDivider` (0.08), `accentStroke` (0.6), `accentGlyph` (0.7), `accentDashedStroke` (0.5), `workoutTileCompactDefaultFill` (0.2), `workoutHeroBorder` (0.72)
-
-### Shadow
-
-`cardColor` (black 0.2), `cardRadius` (5), `cardY` (2), `overlayRadius` (20), `overlayY` (10)
-
-### DeviceLayout
-
-Centralized responsive layout tokens replacing scattered `UIScreen.main.bounds.width` breakpoints.
-
-| Token | compact (<=375) | regular (376–400) | large (401–429) | extraLarge (>=430) |
-|-------|-----------------|-------------------|-----------------|---------------------|
-| `cardSpacing` | 6 | 8 | 8 | 8 |
-| `cardPadding` | 4 | 6 | 8 | 8 |
-| `analyticsButtonWidth` | 62 | 65 | 70 | 80 |
-| `chipWidthVertical` | 63 | 63 | 63 | 71 |
-| `iconContainerWidth` | 72 | 72 | 72 | 82 |
-| `exerciseIconSize` | 98 | 98 | 98 | 108 |
-| `analyticsToIconSpacing` | 4 | 6 | 8 | 12 |
-| `setRowWeightMinWidth` | 50 | 60 | 60 | 60 |
-| `setRowRepsMinWidth` | 110 | 120 | 120 | 120 |
-| `trainingSessionSpacing` | 8 | 10 | 12 | 16 |
-
-### Animation
-
-`keyboardSpring` (response 0.32, damping 0.88), `snapSpring` (response 0.3, damping 0.8)
-
-### Blur
-
-`iconGlow` (12)
-
-## Domain Models — State Structs
-
-`ActiveSetViewModel` uses internal state structs for organization:
-
-| Struct | Properties |
-|--------|------------|
-| `SetTrackingState` | `currentExercise`, flat `setProgress`, `currentSet`/`activeSetIndex` step cursor, `isSetInProgress`, `isLastSetCompleted`, `category`, `originalCategory`, standard and per-side Less/More adjustment memory |
-| `SetEditingState` | `isEditing`, `repsInput`, `weightInput`, `editMode`, `pendingEditIndex`, `didEditCompleteSet`, `didJustEditSet` |
-| `QuickDoneState` | `allCompleted` (the only supported Quick Done flow is the one-tap completion of all derived training steps) |
-
-These are accessed through bridged computed properties on `ActiveSetViewModel` for backward compatibility.
+`DefaultIconColorScheme` is the persisted user preference for the semantic accent
+palette. The palette maps semantic UI roles; domain values and feature logic do not
+depend on concrete colors. The app may rebuild its visual subtree after the
+preference changes while preserving router, persistence and session owners.
 
 ## Live Activity
 
-Located in `Shared/LiveActivity/`.
-
-| File | Purpose |
-|------|---------|
-| `TrainingActivityAttributes.swift` | Live Activity data model |
-| `TrainingActivityManager.swift` | Start/update/end Live Activities |
-| `TrainingLiveActions.swift` | Live Activity action handling |
-| `Widget/TrainingActivityWidget.swift` | Widget UI |
-| `Widget/Intents/` | `DoneIntent`, `LessIntent`, `MoreIntent` |
+The app target owns the ActivityKit bridge that starts, updates and ends an active
+training activity from coordinator events. Shared activity attributes and actions
+form the contract with the widget extension. The widget renders those values and
+does not become a second owner of training-session state.
