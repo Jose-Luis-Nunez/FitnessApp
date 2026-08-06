@@ -200,6 +200,7 @@ public struct FloatingActionButtonsView: View {
                     )
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: capsuleHeight)
         }
         .frame(maxWidth: .infinity, maxHeight: capsuleHeight)
         .clipShape(RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous))
@@ -249,6 +250,7 @@ public struct FloatingActionButtonsView: View {
                         }
                     }
                 }
+                .contentShape(Rectangle())
         }
         // The visible active-set surface is 44pt high, while the surrounding
         // Button retains a full 48pt minimum touch target.
