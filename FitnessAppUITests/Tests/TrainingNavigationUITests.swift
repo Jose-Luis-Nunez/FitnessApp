@@ -3,6 +3,29 @@ import XCTest
 final class TrainingNavigationUITests: BaseTest {
 
     @MainActor
+    func testListCompletedCardLoadsSeededLatestRunWhenExpanded() throws {
+        var config = UITestLaunchConfig.exerciseList(
+            .defaultArmsExercise.with(completed: true)
+        )
+        config.seedAnalyticsHistory = true
+        app.launchEnvironment["UITEST_CONFIG"] = try config.jsonString()
+        app.launch()
+
+        tapOn(HomeIDs.listViewToggle)
+        expandCompletedCardAndVerifyLatestRun(reps: 10)
+    }
+
+    @MainActor
+    func testCategoryCompletedCardLoadsSeededLatestRunWhenExpanded() throws {
+        try launch(
+            exerciseCategory: .defaultArmsExercise.with(completed: true),
+            seedAnalyticsHistory: true
+        )
+
+        expandCompletedCardAndVerifyLatestRun(reps: 10)
+    }
+
+    @MainActor
     func testListMenuOffersResetAll() throws {
         try launch(exerciseList: .defaultArmsExercise)
         tapOn(HomeIDs.listViewToggle)
@@ -45,7 +68,7 @@ final class TrainingNavigationUITests: BaseTest {
     }
 
     @MainActor
-    func testListStartedTrainingFinishReturnsToList() throws {
+    func testListStartedTrainingFinishReturnsToListAndLoadsLatestRunWhenExpanded() throws {
         try launch(exerciseList: .defaultArmsExercise)
         openListAndStartTraining()
 
@@ -53,6 +76,7 @@ final class TrainingNavigationUITests: BaseTest {
 
         verifyListParent()
         verifyExistsWithPrefix(ExerciseCardIDs.completedCardPrefix)
+        expandCompletedCardAndVerifyLatestRun(reps: 10)
     }
 
     @MainActor
@@ -172,6 +196,12 @@ final class TrainingNavigationUITests: BaseTest {
     private func verifyCategoryParent() {
         verifyExists(MuscleCategoryIDs.screen)
         verifyNotExists(HomeIDs.listViewToggle)
+    }
+
+    @MainActor
+    private func expandCompletedCardAndVerifyLatestRun(reps: Int) {
+        tapOnWithPrefix(ExerciseCardIDs.completedCardPrefix)
+        verifyExists(label: "\(reps) reps", elementType: .staticText)
     }
 
     @MainActor

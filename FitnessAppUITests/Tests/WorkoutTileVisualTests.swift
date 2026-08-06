@@ -24,8 +24,10 @@ final class WorkoutTileVisualTests: BaseTest {
     func testWorkoutTilesMatchCategoryTileGeometry() throws {
         try launchCategorySelection()
 
+        // The category overview is alphabetically ordered. These identifiers
+        // represent its first two complete rows on the two-column grid.
         let categoryTileFrames = sortFramesInReadingOrder(
-            ["arms", "chest", "back", "legs"].map {
+            ["abs", "arms", "back", "chest"].map {
                 frameOf(HomeIDs.categoryTile(for: $0), elementType: .button)
             }
         )
