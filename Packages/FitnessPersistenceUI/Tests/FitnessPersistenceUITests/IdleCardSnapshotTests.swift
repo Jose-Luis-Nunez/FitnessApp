@@ -85,6 +85,39 @@ private func makeIdleCardContainer() throws -> (ExerciseModel, ModelContainer) {
 @MainActor
 struct IdleCardSnapshotTests {
 
+    @Test func latestLoadFailureKeepsLastRunAvailableForRetry() {
+        var state = LastRunCardPresentationState()
+        state.updateAvailability(true)
+
+        let didExpand = state.apply(.failed) { _ in "unused" }
+
+        #expect(!didExpand)
+        #expect(state.hasHistory)
+        #expect(state.setProgress.isEmpty)
+        #expect(state.dateText == nil)
+    }
+
+    @Test func availabilityFailurePreservesExistingLastRunAffordance() {
+        var state = LastRunCardPresentationState()
+        state.applyAvailability(.loaded(true))
+
+        state.applyAvailability(.failed)
+
+        #expect(state.hasHistory)
+    }
+
+    @Test func successfulEmptyLatestLoadRemovesLastRunAffordance() {
+        var state = LastRunCardPresentationState()
+        state.updateAvailability(true)
+
+        let didExpand = state.apply(.loaded(nil)) { _ in "unused" }
+
+        #expect(!didExpand)
+        #expect(!state.hasHistory)
+        #expect(state.setProgress.isEmpty)
+        #expect(state.dateText == nil)
+    }
+
     @Test func coachingTipAppAsset() throws {
         let coachingTipImage = try appAssetImage(named: "tip_coaching_2")
         let view = CardActionCircleButtonVisual(
@@ -258,7 +291,7 @@ struct IdleCardSnapshotTests {
             exerciseStorage: MockExerciseStorage(),
             workoutStorage: MockWorkoutStorage()
         )
-
+        storage.resetLoadTracking()
         let view = IdleActiveCardModelView(
             model: model,
             analyticsViewModel: analyticsVM,
@@ -269,6 +302,9 @@ struct IdleCardSnapshotTests {
         .modelContainer(container)
 
         assertSnapshot(of: view, named: "with-history", size: CGSize(width: 393, height: 220))
+        #expect(storage.availabilityCallCount == 1)
+        #expect(storage.latestLoadCallCount == 0)
+        #expect(storage.loadCallCount == 0)
     }
 
     @Test func expandedLastRunWithOverflow() throws {
@@ -292,7 +328,7 @@ struct IdleCardSnapshotTests {
             exerciseStorage: MockExerciseStorage(),
             workoutStorage: MockWorkoutStorage()
         )
-
+        storage.resetLoadTracking()
         let view = IdleActiveCardModelView(
             model: model,
             analyticsViewModel: analyticsVM,
@@ -305,6 +341,9 @@ struct IdleCardSnapshotTests {
         .modelContainer(container)
 
         assertSnapshot(of: view, named: "expanded-last-run-overflow", size: CGSize(width: 393, height: 360))
+        #expect(storage.availabilityCallCount == 1)
+        #expect(storage.latestLoadCallCount == 1)
+        #expect(storage.loadCallCount == 0)
     }
 
     @Test func selectionMode() throws {
@@ -336,13 +375,44 @@ struct IdleCardSnapshotTests {
 @MainActor
 struct InactiveCardSnapshotTests {
 
+    @Test func failedInitialLatestReadDoesNotExpandEmptyDetails() {
+        var state = LatestSetProgressCardState()
+
+        let shouldExpand = state.apply(.failed)
+
+        #expect(!shouldExpand)
+        #expect(state.setProgress.isEmpty)
+    }
+
+    @Test func failedRefreshPreservesPreviouslyLoadedSetDetails() {
+        let existing = SetProgress(
+            status: .completedDone,
+            currentReps: 10,
+            weight: 20
+        )
+        var state = LatestSetProgressCardState()
+        let entry = AnalyticsEntry(
+            exerciseId: UUID(),
+            date: Date(timeIntervalSince1970: 1_735_689_600),
+            setProgress: [existing]
+        )
+        let shouldExpand = state.apply(.loaded(entry))
+
+        let shouldRemainExpanded = state.apply(.failed)
+
+        #expect(shouldExpand)
+        #expect(shouldRemainExpanded)
+        #expect(state.setProgress == [existing])
+    }
+
     @Test func inactiveCollapsed() throws {
         let (model, container) = try makeIdleCardContainer()
         model.isCompleted = true
         try container.mainContext.save()
 
+        let storage = MockAnalyticsStorage()
         let analyticsVM = AnalyticsViewModel(
-            storageService: StubAnalyticsStorage(),
+            storageService: storage,
             exerciseStorage: MockExerciseStorage(),
             workoutStorage: MockWorkoutStorage()
         )
@@ -358,5 +428,8 @@ struct InactiveCardSnapshotTests {
         .modelContainer(container)
 
         assertSnapshot(of: view, named: "collapsed", size: CGSize(width: 393, height: 120))
+        #expect(storage.availabilityCallCount == 0)
+        #expect(storage.latestLoadCallCount == 0)
+        #expect(storage.loadCallCount == 0)
     }
 }

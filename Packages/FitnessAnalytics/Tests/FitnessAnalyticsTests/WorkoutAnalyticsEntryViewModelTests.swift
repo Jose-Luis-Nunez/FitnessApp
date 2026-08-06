@@ -283,6 +283,47 @@ struct WorkoutAnalyticsEntryViewModelTests {
         #expect(analytics.load(for: exercise.id).count == 1)
     }
 
+    @Test func successfulSavePublishesSelectedCardAvailabilityWithoutReloadingHistories() {
+        let workout = Workout(name: "Pull")
+        let first = makeExercise(name: "Curl", category: .arms)
+        let second = makeExercise(name: "Row", category: .back)
+        let exerciseStorage = MockExerciseStorage()
+        exerciseStorage.exercisesByCategory = [.arms: [first], .back: [second]]
+        let analytics = MockAnalyticsStorage()
+        let cardViewModel = AnalyticsViewModel(storageService: analytics)
+        #expect(availability(from: cardViewModel.loadAnalyticsHistoryAvailability(for: first.id)) == false)
+        #expect(availability(from: cardViewModel.loadAnalyticsHistoryAvailability(for: second.id)) == false)
+        analytics.resetLoadTracking()
+        let firstRevision = cardViewModel.revisionSource(for: first.id)
+        let secondRevision = cardViewModel.revisionSource(for: second.id)
+        let firstRevisionValue = firstRevision.value
+        let secondRevisionValue = secondRevision.value
+        let sut = WorkoutAnalyticsEntryViewModel(
+            workout: workout,
+            exerciseStorage: exerciseStorage,
+            saveUseCase: SaveWorkoutAnalyticsUseCase(batchStorage: analytics),
+            analyticsViewModel: cardViewModel
+        )
+
+        #expect(sut.save())
+
+        #expect(availability(from: cardViewModel.loadAnalyticsHistoryAvailability(for: first.id)) == true)
+        #expect(availability(from: cardViewModel.loadAnalyticsHistoryAvailability(for: second.id)) == true)
+        guard case let .loaded(firstEntry?) = cardViewModel.loadLatestEntry(for: first.id),
+              case let .loaded(secondEntry?) = cardViewModel.loadLatestEntry(for: second.id) else {
+            Issue.record("Confirmed entries must be available to their cards")
+            return
+        }
+        #expect(firstEntry.setProgress.count == first.trainingSteps.count)
+        #expect(secondEntry.setProgress.count == second.trainingSteps.count)
+        #expect(firstRevision.value != firstRevisionValue)
+        #expect(secondRevision.value != secondRevisionValue)
+        #expect(analytics.availabilityCallCount == 0)
+        #expect(analytics.latestLoadCallCount == 0)
+        #expect(analytics.loadCallCount == 0)
+        #expect(analytics.batchLoadCallCount == 0)
+    }
+
     @Test func storageFailureDoesNotDismissOrEnterSavedState() {
         let workout = Workout(name: "Pull")
         let exercise = makeExercise()
@@ -313,7 +354,8 @@ struct WorkoutAnalyticsEntryViewModelTests {
             workout: workout,
             selectedDate: selectedDate,
             exerciseStorage: exerciseStorage,
-            saveUseCase: saveUseCase
+            saveUseCase: saveUseCase,
+            analyticsViewModel: AnalyticsViewModel(storageService: analytics)
         )
         return (sut, analytics)
     }
@@ -334,5 +376,12 @@ struct WorkoutAnalyticsEntryViewModelTests {
                 ),
             ]
         )
+    }
+
+    private func availability(
+        from outcome: AnalyticsHistoryAvailabilityOutcome
+    ) -> Bool? {
+        guard case let .loaded(hasHistory) = outcome else { return nil }
+        return hasHistory
     }
 }

@@ -1,6 +1,9 @@
 import Factory
 
 public extension Container {
+    var analyticsViewModel: Factory<AnalyticsViewModel> {
+        self { MainActor.assumeIsolated { AnalyticsViewModel() } }.singleton
+    }
     var saveAnalyticsUseCase: Factory<SaveAnalyticsUseCase> {
         self { MainActor.assumeIsolated { SaveAnalyticsUseCase() } }
     }

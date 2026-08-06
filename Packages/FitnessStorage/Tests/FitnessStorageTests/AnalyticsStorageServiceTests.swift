@@ -173,6 +173,41 @@ struct AnalyticsStorageServiceTests {
         #expect(sut.load(for: id3).count == 0)
     }
 
+    @Test func existenceReadIsExerciseScoped() throws {
+        let sut = makeSUT()
+        let populatedID = UUID()
+        let emptyID = UUID()
+        sut.save([TestHelpers.makeAnalyticsEntry(exerciseId: populatedID)], for: populatedID)
+
+        #expect(try sut.hasEntries(for: populatedID))
+        #expect(try !sut.hasEntries(for: emptyID))
+    }
+
+    @Test func latestEntryReadReturnsOnlyNewestExerciseEntry() throws {
+        let sut = makeSUT()
+        let exerciseID = UUID()
+        let foreignID = UUID()
+        let oldest = TestHelpers.makeAnalyticsEntry(
+            exerciseId: exerciseID,
+            date: Date(timeIntervalSince1970: 100)
+        )
+        let newest = TestHelpers.makeAnalyticsEntry(
+            exerciseId: exerciseID,
+            date: Date(timeIntervalSince1970: 300)
+        )
+        sut.appendWorkoutAnalytics([
+            newest,
+            TestHelpers.makeAnalyticsEntry(
+                exerciseId: foreignID,
+                date: Date(timeIntervalSince1970: 400)
+            ),
+            oldest,
+        ])
+
+        #expect(try sut.loadLatestEntry(for: exerciseID)?.id == newest.id)
+        #expect(try sut.loadLatestEntry(for: UUID()) == nil)
+    }
+
     @Test func savingForOneExerciseDoesNotAffectAnother() {
         let sut = makeSUT()
         let id1 = UUID()
@@ -236,6 +271,17 @@ struct AnalyticsStorageServiceTests {
 
         #expect(throws: FailureAwareLoadError.injected) {
             try sut.loadBatch(for: [UUID()])
+        }
+    }
+
+    @Test func drillDownDefaultsPropagateFailureAwareHistoryError() {
+        let sut = FailureAwareAnalyticsStorage()
+
+        #expect(throws: FailureAwareLoadError.injected) {
+            try sut.hasEntries(for: UUID())
+        }
+        #expect(throws: FailureAwareLoadError.injected) {
+            try sut.loadLatestEntry(for: UUID())
         }
     }
 

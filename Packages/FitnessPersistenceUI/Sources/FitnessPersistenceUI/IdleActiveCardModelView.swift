@@ -4,12 +4,50 @@ import FitnessCore
 import FitnessUI
 @_spi(PersistenceUI) import FitnessStorage
 
+struct LastRunCardPresentationState {
+    private(set) var hasHistory = false
+    private(set) var setProgress: [SetProgress] = []
+    private(set) var dateText: String?
+
+    mutating func updateAvailability(_ hasHistory: Bool) {
+        self.hasHistory = hasHistory
+        if !hasHistory {
+            setProgress = []
+            dateText = nil
+        }
+    }
+
+    mutating func applyAvailability(_ outcome: AnalyticsHistoryAvailabilityOutcome) {
+        guard case let .loaded(hasHistory) = outcome else { return }
+        updateAvailability(hasHistory)
+    }
+
+    /// Applies only completed reads. A failed read deliberately preserves the
+    /// current affordance and payload so the next user tap can retry.
+    mutating func apply(
+        _ outcome: LatestAnalyticsEntryLoadOutcome,
+        formatDate: (Date) -> String
+    ) -> Bool {
+        switch outcome {
+        case .failed:
+            return false
+        case .loaded(nil):
+            updateAvailability(false)
+            return false
+        case let .loaded(entry?):
+            hasHistory = true
+            setProgress = entry.setProgress
+            dateText = formatDate(entry.date)
+            return !setProgress.isEmpty
+        }
+    }
+}
+
 /// Idle/Active card variant rendered against a live `@Bindable ExerciseModel`.
 ///
 /// The data source is the SwiftData `@Model` instance — all edits propagate
-/// automatically without snapshot sync (ADR-0001). Still keeps the
-/// `analyticsViewModel.changeCount` polling pattern; that will be resolved in a later
-/// step in favor of direct `@Observable` tracking.
+/// automatically without snapshot sync (ADR-0001). Analytics refreshes carry
+/// an Exercise id, so unrelated cards keep their staged analytics state.
 ///
 /// SPI marker: see `ExerciseCardModelView`.
 @_spi(PersistenceUI)
@@ -30,9 +68,9 @@ public struct IdleActiveCardModelView: View {
     @State private var analyticsSheetDate: AnalyticsSheetDate?
     @State private var isExpanded = false
     @State private var isLastRunExpanded = false
+    @State private var lastRunPresentation = LastRunCardPresentationState()
     @State private var weightPhases: [WeightPhase] = []
-    @State private var lastRunSetProgress: [SetProgress] = []
-    @State private var lastTrainingDateFormatted: String?
+    @State private var analyticsRevision: ExerciseAnalyticsCacheRevision
     @AppStorage(DefaultIconColorScheme.storageKey) private var iconColorScheme: DefaultIconColorScheme = .green
 
     public init(
@@ -81,6 +119,9 @@ public struct IdleActiveCardModelView: View {
         self.isSelected = isSelected
         self._isExpanded = State(initialValue: initiallyExpanded)
         self._isLastRunExpanded = State(initialValue: initiallyLastRunExpanded)
+        self._analyticsRevision = State(
+            initialValue: analyticsViewModel.revisionSource(for: model.id)
+        )
     }
 
     private struct AnalyticsSheetDate: Identifiable {
@@ -101,21 +142,45 @@ public struct IdleActiveCardModelView: View {
         return f
     }()
 
-    private func refreshPhaseData() {
-        if model.hasWeight {
-            weightPhases = analyticsViewModel.weightPhases(for: model.id)
-        } else {
-            weightPhases = analyticsViewModel.repsPhases(for: model.id)
+    private func refreshAvailability() {
+        lastRunPresentation.applyAvailability(
+            analyticsViewModel.loadAnalyticsHistoryAvailability(for: model.id)
+        )
+    }
+
+    private func loadLastRun() -> Bool {
+        lastRunPresentation.apply(
+            analyticsViewModel.loadLatestEntry(for: model.id),
+            formatDate: { date in
+                Self.lastTrainingFormatter.string(from: date)
+            }
+        )
+    }
+
+    private func handleAppear() {
+        refreshAvailability()
+        if isLastRunExpanded {
+            _ = loadLastRun()
         }
-        if let date = analyticsViewModel.lastTrainingDate(for: model.id) {
-            lastTrainingDateFormatted = Self.lastTrainingFormatter.string(from: date)
-        } else {
-            lastTrainingDateFormatted = nil
+        if isExpanded {
+            weightPhases = analyticsViewModel.loadCardPhases(
+                for: model.id,
+                hasWeight: model.hasWeight
+            )
         }
-        let latestEntry = analyticsViewModel
-            .loadAnalytics(for: model.id)
-            .max(by: { $0.date < $1.date })
-        lastRunSetProgress = latestEntry?.setProgress ?? []
+    }
+
+    private func refreshVisibleAnalytics() {
+        refreshAvailability()
+        if isLastRunExpanded {
+            _ = loadLastRun()
+        }
+        if isExpanded {
+            weightPhases = analyticsViewModel.loadCardPhases(
+                for: model.id,
+                hasWeight: model.hasWeight
+            )
+        }
     }
 
     private let theme: CardTheme = .idle
@@ -129,7 +194,7 @@ public struct IdleActiveCardModelView: View {
             titleSection
         }, expandedContent: {
             VStack(alignment: .leading, spacing: 8) {
-                if isLastRunExpanded, !lastRunSetProgress.isEmpty {
+                if isLastRunExpanded, !lastRunPresentation.setProgress.isEmpty {
                     lastRunTilesRow
                         .frame(height: AppStyle.Layout.idleLastRunDetailsHeight)
                         .padding(.horizontal, AppStyle.Padding.card)
@@ -149,9 +214,9 @@ public struct IdleActiveCardModelView: View {
         .sheet(item: $analyticsSheetDate) { sheetDate in
             AnalyticsView(exercise: model.toDomain(), viewModel: analyticsViewModel, initialDate: sheetDate.date)
         }
-        .onAppear { refreshPhaseData() }
-        .onChange(of: analyticsViewModel.changeCount) { _, _ in
-            refreshPhaseData()
+        .onAppear { handleAppear() }
+        .onChange(of: analyticsRevision.value) {
+            refreshVisibleAnalytics()
         }
     }
 }
@@ -367,7 +432,7 @@ private extension IdleActiveCardModelView {
 
             // "Last run" only appears once the exercise has a completed run;
             // before that the footer is omitted.
-            if !isSelectionMode, !lastRunSetProgress.isEmpty {
+            if !isSelectionMode, lastRunPresentation.hasHistory {
                 lastRunFooter
                     .padding(.top, AppStyle.Layout.idleLastRunFooterTopSpacing)
             }
@@ -420,12 +485,15 @@ private extension IdleActiveCardModelView {
     func toggleLastRunDetails() {
         if isLastRunExpanded {
             isExpanded = false
+            isLastRunExpanded = false
+            return
         }
-        isLastRunExpanded.toggle()
+        guard loadLastRun() else { return }
+        isLastRunExpanded = true
     }
 
     var coachingTipButton: some View {
-        Button(action: { isExpanded.toggle() }) {
+        Button(action: toggleCoachingTips) {
             coachingTipBadge
                 .frame(
                     minWidth: AppStyle.Layout.minimumTapTargetSize,
@@ -437,6 +505,19 @@ private extension IdleActiveCardModelView {
         .accessibilityLabel("Coaching tips")
         .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
         .accessibilityHint(isExpanded ? "Collapses coaching tips" : "Expands coaching tips")
+    }
+
+    func toggleCoachingTips() {
+        if isExpanded {
+            isExpanded = false
+            return
+        }
+        weightPhases = analyticsViewModel.loadCardPhases(
+            for: model.id,
+            hasWeight: model.hasWeight
+        )
+        guard !weightPhases.isEmpty else { return }
+        isExpanded = true
     }
 
     /// Circular coaching glyph matching the completed card's reset-button size.
@@ -489,7 +570,7 @@ private extension IdleActiveCardModelView {
 
     var expandedContent: some View {
         VStack(alignment: .leading, spacing: 6) {
-            if let dateString = lastTrainingDateFormatted {
+            if let dateString = lastRunPresentation.dateText {
                 Text("Last training: \(dateString)")
                     .font(AppStyle.Font.dayChipNumber)
                     .foregroundColor(.white.opacity(AppStyle.Opacity.secondaryLabel))
@@ -524,9 +605,9 @@ private extension IdleActiveCardModelView {
     /// no reset accessory. The idle layout reveals part of the next tile as its
     /// overflow affordance, so the coaching rail never needs a chevron.
     var lastRunTilesRow: some View {
-        let showsCoaching = !weightPhases.isEmpty
+        let showsCoaching = !lastRunPresentation.setProgress.isEmpty
         return SetTilesRow(
-            setProgress: lastRunSetProgress,
+            setProgress: lastRunPresentation.setProgress,
             hasWeight: model.hasWeight,
             chevronColor: AppStyle.Color.idleMetricLabel.opacity(AppStyle.Opacity.separatorLine),
             reservedTrailingRailWidth: showsCoaching ? AppStyle.Layout.minimumTapTargetSize : 0,

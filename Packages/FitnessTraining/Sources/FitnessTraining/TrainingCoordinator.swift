@@ -131,10 +131,10 @@ public final class TrainingCoordinator {
         onNewSessionStarted: @escaping @MainActor (UUID, Exercise.ID) -> Void = { _, _ in },
         onAddExercise: @escaping @MainActor () -> Void = {},
         onResetAllExercises: @escaping @MainActor () -> Void = {},
-        analyticsViewModel: AnalyticsViewModel = AnalyticsViewModel(),
+        analyticsViewModel: AnalyticsViewModel? = nil,
         sessionFactory: @escaping @MainActor () -> ActiveSetViewModel = { ActiveSetViewModel() }
     ) {
-        self.analyticsViewModel = analyticsViewModel
+        self.analyticsViewModel = analyticsViewModel ?? AnalyticsViewModel()
         self.findCategory = findCategory
         self.onExerciseUpdate = onExerciseUpdate
         self.onExerciseReset = onExerciseReset

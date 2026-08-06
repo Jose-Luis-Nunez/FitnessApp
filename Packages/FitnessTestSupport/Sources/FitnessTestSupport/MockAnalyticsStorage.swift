@@ -10,10 +10,16 @@ public final class MockAnalyticsStorage: AnalyticsStoring, WorkoutAnalyticsBatch
     public private(set) var savedEntries: [UUID: [AnalyticsEntry]] = [:]
     public private(set) var loadCallCount = 0
     public private(set) var loadedExerciseIDs: [UUID] = []
+    public private(set) var availabilityCallCount = 0
+    public private(set) var availabilityExerciseIDs: [UUID] = []
+    public private(set) var latestLoadCallCount = 0
+    public private(set) var latestLoadedExerciseIDs: [UUID] = []
     public private(set) var batchLoadCallCount = 0
     public private(set) var lastBatchExerciseIDs: [UUID] = []
     public var saveSucceeds = true
     public var singleLoadFails = false
+    public var availabilityLoadFails = false
+    public var latestLoadFails = false
     public var batchLoadFails = false
 
     public init() {}
@@ -45,6 +51,20 @@ public final class MockAnalyticsStorage: AnalyticsStoring, WorkoutAnalyticsBatch
         return savedEntries[exerciseId] ?? []
     }
 
+    public func hasEntries(for exerciseId: UUID) throws -> Bool {
+        availabilityCallCount += 1
+        availabilityExerciseIDs.append(exerciseId)
+        if availabilityLoadFails { throw LoadError.injected }
+        return !(savedEntries[exerciseId] ?? []).isEmpty
+    }
+
+    public func loadLatestEntry(for exerciseId: UUID) throws -> AnalyticsEntry? {
+        latestLoadCallCount += 1
+        latestLoadedExerciseIDs.append(exerciseId)
+        if latestLoadFails { throw LoadError.injected }
+        return savedEntries[exerciseId]?.max { $0.date < $1.date }
+    }
+
     private func trackedSingleLoad(for exerciseId: UUID) -> [AnalyticsEntry] {
         loadCallCount += 1
         loadedExerciseIDs.append(exerciseId)
@@ -68,6 +88,10 @@ public final class MockAnalyticsStorage: AnalyticsStoring, WorkoutAnalyticsBatch
     public func resetLoadTracking() {
         loadCallCount = 0
         loadedExerciseIDs = []
+        availabilityCallCount = 0
+        availabilityExerciseIDs = []
+        latestLoadCallCount = 0
+        latestLoadedExerciseIDs = []
         batchLoadCallCount = 0
         lastBatchExerciseIDs = []
     }

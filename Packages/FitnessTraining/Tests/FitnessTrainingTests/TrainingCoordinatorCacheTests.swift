@@ -3,6 +3,7 @@ import Foundation
 @testable import FitnessTraining
 import FitnessCore
 import FitnessStorage
+import FitnessAnalytics
 import FitnessTestSupport
 
 @Suite("TrainingCoordinatorCache", .tags(.fast))
@@ -27,6 +28,20 @@ struct TrainingCoordinatorCacheTests {
         let arms = cache.coordinator(for: .arms)
         let chest = cache.coordinator(for: .chest)
         #expect(arms !== chest)
+    }
+
+    @Test func everyCategoryCoordinatorUsesInjectedSharedAnalyticsViewModel() {
+        let analyticsViewModel = AnalyticsViewModel(
+            storageService: StubAnalyticsStorage()
+        )
+        let cache = TrainingCoordinatorCache(
+            exerciseManagement: MockExerciseManagement(),
+            exerciseOrderStorage: WorkoutExerciseOrderStorageSpy(),
+            analyticsViewModel: analyticsViewModel
+        )
+
+        #expect(cache.coordinator(for: .arms).analyticsViewModel === analyticsViewModel)
+        #expect(cache.coordinator(for: .chest).analyticsViewModel === analyticsViewModel)
     }
 
     @Test func findCoordinatorForExerciseReturnsMatch() {

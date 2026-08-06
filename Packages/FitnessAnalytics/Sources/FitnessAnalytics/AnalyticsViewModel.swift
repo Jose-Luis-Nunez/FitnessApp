@@ -4,14 +4,57 @@ import FitnessCore
 import FitnessStorage
 import FitnessUI
 import Factory
+import os
+
+private let logger = Logger(subsystem: "FitnessAnalytics", category: "AnalyticsViewModel")
 
 public typealias DailyProgression = (date: Date, value: Double)
+
+public enum AnalyticsLoadOutcome<Value: Sendable>: Sendable {
+    /// The read completed, including a valid empty optional or collection.
+    case loaded(Value)
+    /// The read failed. Callers must preserve their current presentation so a
+    /// later user intent can retry instead of treating the failure as no data.
+    case failed
+}
+
+public typealias AnalyticsHistoryAvailabilityOutcome = AnalyticsLoadOutcome<Bool>
+public typealias LatestAnalyticsEntryLoadOutcome = AnalyticsLoadOutcome<AnalyticsEntry?>
+
+@Observable
+@MainActor
+public final class ExerciseAnalyticsCacheRevision {
+    public private(set) var value: UInt64 = 0
+
+    fileprivate func advance() {
+        value &+= 1
+    }
+}
+
+private final class WeakCacheRevision {
+    weak var value: ExerciseAnalyticsCacheRevision?
+
+    init(_ value: ExerciseAnalyticsCacheRevision) {
+        self.value = value
+    }
+}
 
 @Observable
 @MainActor
 public final class AnalyticsViewModel {
-    public private(set) var entries: [AnalyticsEntry] = []
-    public private(set) var changeCount: Int = 0
+    private static let cacheLimit = 128
+
+    private enum LatestEntryState {
+        case notLoaded
+        case loaded(AnalyticsEntry?)
+    }
+
+    private struct CachedExerciseAnalytics {
+        var hasEntries: Bool?
+        var latestEntry: LatestEntryState
+        var history: [AnalyticsEntry]?
+        let revision: ExerciseAnalyticsCacheRevision
+    }
 
     @ObservationIgnored private let storageService: AnalyticsStoring
     @ObservationIgnored private let exerciseStorageService: ExerciseStoring
@@ -19,8 +62,12 @@ public final class AnalyticsViewModel {
     @ObservationIgnored private let saveAnalyticsUseCase: SaveAnalyticsUseCase
     @ObservationIgnored private let deleteAnalyticsSetUseCase: DeleteAnalyticsSetUseCase
     @ObservationIgnored private let saveOrReplaceAnalyticsUseCase: SaveOrReplaceAnalyticsUseCase
+    @ObservationIgnored private var cacheByExerciseId: [UUID: CachedExerciseAnalytics] = [:]
+    @ObservationIgnored private var cacheOrder: [UUID] = []
+    @ObservationIgnored private var weakRevisionsByExerciseId: [UUID: WeakCacheRevision] = [:]
+    @ObservationIgnored private var dirtyHistoryExerciseIds: Set<UUID> = []
 
-    nonisolated public init(
+    public init(
         storageService: AnalyticsStoring? = nil,
         exerciseStorage: ExerciseStoring? = nil,
         workoutStorage: WorkoutStoring? = nil,
@@ -36,9 +83,104 @@ public final class AnalyticsViewModel {
         self.saveOrReplaceAnalyticsUseCase = saveOrReplaceAnalyticsUseCase ?? Container.shared.saveOrReplaceAnalyticsUseCase()
     }
 
-    public func reloadEntries(for exerciseId: UUID) {
-        entries = storageService.load(for: exerciseId)
-        changeCount += 1
+    @discardableResult
+    public func reloadEntries(for exerciseId: UUID) -> Bool {
+        do {
+            let loaded = try storageService.loadHistory(for: exerciseId)
+            storeHistory(loaded, for: exerciseId)
+            return true
+        } catch {
+            markHistoryDirty(exerciseId)
+            if var record = cacheByExerciseId[exerciseId] {
+                record.latestEntry = .notLoaded
+                cacheByExerciseId[exerciseId] = record
+            }
+            logger.error("Failed to reload analytics for exercise \(exerciseId): \(error)")
+            return false
+        }
+    }
+
+    /// Answers only whether the card may offer its Last run drill-down.
+    /// Production storage performs an identifier-only query for this intent.
+    public func loadAnalyticsHistoryAvailability(
+        for exerciseId: UUID
+    ) -> AnalyticsHistoryAvailabilityOutcome {
+        if let cached = cachedAvailability(for: exerciseId) {
+            touchCache(exerciseId)
+            return .loaded(cached)
+        }
+        do {
+            let hasEntries = try storageService.hasEntries(for: exerciseId)
+            storeAvailability(hasEntries, for: exerciseId)
+            return .loaded(hasEntries)
+        } catch {
+            logger.error("Failed to check analytics availability for exercise \(exerciseId): \(error)")
+            return .failed
+        }
+    }
+
+    /// Loads the payload for the Last run drill-down. A successful empty result
+    /// is cached; a failure is not, so the next tap can retry.
+    public func loadLatestEntry(for exerciseId: UUID) -> LatestAnalyticsEntryLoadOutcome {
+        if let record = cacheByExerciseId[exerciseId] {
+            if let history = record.history,
+               !dirtyHistoryExerciseIds.contains(exerciseId) {
+                touchCache(exerciseId)
+                return .loaded(history.max { $0.date < $1.date })
+            }
+            if case let .loaded(entry) = record.latestEntry {
+                touchCache(exerciseId)
+                return .loaded(entry)
+            }
+        }
+        do {
+            let entry = try storageService.loadLatestEntry(for: exerciseId)
+            storeLatestEntry(entry, for: exerciseId)
+            return .loaded(entry)
+        } catch {
+            logger.error("Failed to load latest analytics for exercise \(exerciseId): \(error)")
+            return .failed
+        }
+    }
+
+    /// The full history is loaded only after the coaching-tip drill-down.
+    public func loadCardPhases(
+        for exerciseId: UUID,
+        hasWeight: Bool
+    ) -> [WeightPhase] {
+        let history = loadAnalytics(for: exerciseId)
+        return hasWeight
+            ? weightPhases(from: history)
+            : repsPhases(from: history)
+    }
+
+    /// Publishes confirmed workout-log writes without eagerly reading their
+    /// latest entries or complete histories. Historical back-dates are allowed,
+    /// so an unknown latest entry deliberately remains unknown.
+    func publishPersistedEntries(_ entries: [AnalyticsEntry]) {
+        for (exerciseId, newEntries) in Dictionary(grouping: entries, by: \.exerciseId) {
+            var record = cacheRecord(for: exerciseId)
+            record.hasEntries = true
+            if record.history != nil {
+                dirtyHistoryExerciseIds.insert(exerciseId)
+            }
+
+            if let newestPersisted = newEntries.max(by: { $0.date < $1.date }) {
+                switch record.latestEntry {
+                case .loaded(nil):
+                    record.latestEntry = .loaded(newestPersisted)
+                case let .loaded(existing?) where newestPersisted.date >= existing.date:
+                    record.latestEntry = .loaded(newestPersisted)
+                case .loaded, .notLoaded:
+                    break
+                }
+            }
+
+            record.revision.advance()
+            cacheByExerciseId[exerciseId] = record
+            touchCache(exerciseId)
+        }
+        evictCacheIfNeeded()
     }
     
     public func resolveLatestExercise(_ exercise: Exercise) -> Exercise {
@@ -50,15 +192,43 @@ public final class AnalyticsViewModel {
     public func saveAnalytics(exerciseId: UUID, setProgress: [SetProgress], date: Date = Date()) {
         guard !setProgress.isEmpty else { return }
         saveAnalyticsUseCase.execute(exerciseId: exerciseId, setProgress: setProgress, date: date)
-        reloadEntries(for: exerciseId)
+        refreshAvailabilityAfterUnconfirmedWrite(for: exerciseId)
     }
     
     public func loadAnalytics(for exerciseId: UUID) -> [AnalyticsEntry] {
-        storageService.load(for: exerciseId)
+        if let cached = cacheByExerciseId[exerciseId]?.history,
+           !dirtyHistoryExerciseIds.contains(exerciseId) {
+            touchCache(exerciseId)
+            return cached
+        }
+        do {
+            let loaded = try storageService.loadHistory(for: exerciseId)
+            storeHistory(loaded, for: exerciseId)
+            return loaded
+        } catch {
+            markHistoryDirty(exerciseId)
+            logger.error("Failed to load analytics for exercise \(exerciseId): \(error)")
+            return cacheByExerciseId[exerciseId]?.history ?? []
+        }
     }
-    
-    public func loadAnalyticsDates(for exerciseId: UUID) -> [Date] {
-        storageService.load(for: exerciseId).map { $0.date }
+
+    /// Render-safe cache lookup. It never falls back to storage.
+    public func cachedEntries(for exerciseId: UUID) -> [AnalyticsEntry]? {
+        cacheByExerciseId[exerciseId]?.history
+    }
+
+    /// Stable, per-exercise observable. Cards retain this lightweight token so
+    /// a write for another exercise cannot invalidate their SwiftUI subtree.
+    public func revisionSource(for exerciseId: UUID) -> ExerciseAnalyticsCacheRevision {
+        if let cached = cacheByExerciseId[exerciseId]?.revision {
+            return cached
+        }
+        if let existing = weakRevisionsByExerciseId[exerciseId]?.value {
+            return existing
+        }
+        let revision = ExerciseAnalyticsCacheRevision()
+        weakRevisionsByExerciseId[exerciseId] = WeakCacheRevision(revision)
+        return revision
     }
     
     public func saveOrReplaceAnalyticsEntry(
@@ -102,13 +272,118 @@ public final class AnalyticsViewModel {
         
         exerciseStorageService.updateExercise(exercise)
     }
-    
+
+    private func cachedAvailability(for exerciseId: UUID) -> Bool? {
+        guard let record = cacheByExerciseId[exerciseId] else { return nil }
+        if let hasEntries = record.hasEntries {
+            return hasEntries
+        }
+        if case let .loaded(entry) = record.latestEntry {
+            return entry != nil
+        }
+        if let history = record.history,
+           !dirtyHistoryExerciseIds.contains(exerciseId) {
+            return !history.isEmpty
+        }
+        return nil
+    }
+
+    private func cacheRecord(for exerciseId: UUID) -> CachedExerciseAnalytics {
+        cacheByExerciseId[exerciseId] ?? CachedExerciseAnalytics(
+            hasEntries: nil,
+            latestEntry: .notLoaded,
+            history: nil,
+            revision: revisionSource(for: exerciseId)
+        )
+    }
+
+    private func storeAvailability(_ hasEntries: Bool, for exerciseId: UUID) {
+        var record = cacheRecord(for: exerciseId)
+        let changed = record.hasEntries != hasEntries
+        record.hasEntries = hasEntries
+        if !hasEntries {
+            record.latestEntry = .loaded(nil)
+        }
+        if changed {
+            record.revision.advance()
+        }
+        cacheByExerciseId[exerciseId] = record
+        touchCache(exerciseId)
+        evictCacheIfNeeded()
+    }
+
+    private func storeLatestEntry(_ entry: AnalyticsEntry?, for exerciseId: UUID) {
+        var record = cacheRecord(for: exerciseId)
+        record.hasEntries = entry != nil
+        record.latestEntry = .loaded(entry)
+        record.revision.advance()
+        cacheByExerciseId[exerciseId] = record
+        touchCache(exerciseId)
+        evictCacheIfNeeded()
+    }
+
+    private func storeHistory(_ history: [AnalyticsEntry], for exerciseId: UUID) {
+        var record = cacheRecord(for: exerciseId)
+        record.hasEntries = !history.isEmpty
+        record.latestEntry = .loaded(history.max { $0.date < $1.date })
+        record.history = history
+        record.revision.advance()
+        cacheByExerciseId[exerciseId] = record
+        dirtyHistoryExerciseIds.remove(exerciseId)
+        touchCache(exerciseId)
+        evictCacheIfNeeded()
+    }
+
+    private func refreshAvailabilityAfterUnconfirmedWrite(for exerciseId: UUID) {
+        var record = cacheRecord(for: exerciseId)
+        record.latestEntry = .notLoaded
+        if record.history != nil {
+            dirtyHistoryExerciseIds.insert(exerciseId)
+        }
+        record.revision.advance()
+        cacheByExerciseId[exerciseId] = record
+        touchCache(exerciseId)
+        evictCacheIfNeeded()
+
+        do {
+            storeAvailability(try storageService.hasEntries(for: exerciseId), for: exerciseId)
+        } catch {
+            logger.error("Failed to refresh analytics availability for exercise \(exerciseId): \(error)")
+        }
+    }
+
+    private func markHistoryDirty(_ exerciseId: UUID) {
+        if cacheByExerciseId[exerciseId]?.history != nil {
+            dirtyHistoryExerciseIds.insert(exerciseId)
+        }
+    }
+
+    private func touchCache(_ exerciseId: UUID) {
+        guard cacheByExerciseId[exerciseId] != nil else { return }
+        cacheOrder.removeAll { $0 == exerciseId }
+        cacheOrder.append(exerciseId)
+    }
+
+    private func evictCacheIfNeeded() {
+        while cacheOrder.count > Self.cacheLimit {
+            let evicted = cacheOrder.removeFirst()
+            cacheByExerciseId.removeValue(forKey: evicted)
+            dirtyHistoryExerciseIds.remove(evicted)
+        }
+        weakRevisionsByExerciseId = weakRevisionsByExerciseId.filter {
+            $0.value.value != nil
+        }
+    }
 }
 
 extension AnalyticsViewModel {
     
     public func trainingDaysInCurrentMonth(for exerciseId: UUID) -> Int {
-        AnalyticsDateHelper.daysInCurrentMonth(from: loadAnalyticsDates(for: exerciseId))
+        trainingDaysInCurrentMonth(from: loadAnalytics(for: exerciseId))
+    }
+
+    func trainingDaysInCurrentMonth(from history: [AnalyticsEntry]) -> Int {
+        AnalyticsDateHelper.daysInCurrentMonth(from: history.map(\.date))
     }
 
     public func currentMonthName() -> String {
@@ -116,8 +391,12 @@ extension AnalyticsViewModel {
     }
     
     public func totalWeightIncreases(for exerciseId: UUID) -> Int {
+        totalWeightIncreases(from: loadAnalytics(for: exerciseId))
+    }
+
+    func totalWeightIncreases(from history: [AnalyticsEntry]) -> Int {
         let calendar = Calendar.current
-        let entries = loadAnalytics(for: exerciseId)
+        let entries = history
             .sorted(by: { $0.date < $1.date })
         
         let maxWeightPerDay: [(date: Date, weight: Double)] = Dictionary(grouping: entries, by: { calendar.startOfDay(for: $0.date) })
@@ -144,7 +423,11 @@ extension AnalyticsViewModel {
     
     
     public func trainingSessionsUntilWeightIncrease(for exerciseId: UUID) -> Int {
-        let entries = loadAnalytics(for: exerciseId)
+        trainingSessionsUntilWeightIncrease(from: loadAnalytics(for: exerciseId))
+    }
+
+    func trainingSessionsUntilWeightIncrease(from history: [AnalyticsEntry]) -> Int {
+        let entries = history
         let calendar = Calendar.current
         
         // Sort all entries chronologically
@@ -193,8 +476,12 @@ extension AnalyticsViewModel {
     }
     
     public func getDailyWeightProgression(for exerciseId: UUID) -> [DailyProgression] {
+        getDailyWeightProgression(from: loadAnalytics(for: exerciseId))
+    }
+
+    func getDailyWeightProgression(from history: [AnalyticsEntry]) -> [DailyProgression] {
         let calendar = Calendar.current
-        let entries = loadAnalytics(for: exerciseId)
+        let entries = history
         
         let maxWeightPerDay: [DailyProgression] = Dictionary(grouping: entries, by: { calendar.startOfDay(for: $0.date) })
             .compactMap { (date, dayEntries) in
@@ -206,15 +493,13 @@ extension AnalyticsViewModel {
         return maxWeightPerDay
     }
     
-    public func lastTrainingDate(for exerciseId: UUID) -> Date? {
-        loadAnalytics(for: exerciseId)
-            .max(by: { $0.date < $1.date })?
-            .date
-    }
-    
     public func weightPhases(for exerciseId: UUID, limit: Int = 3) -> [WeightPhase] {
+        weightPhases(from: loadAnalytics(for: exerciseId), limit: limit)
+    }
+
+    func weightPhases(from history: [AnalyticsEntry], limit: Int = 3) -> [WeightPhase] {
         let calendar = Calendar.current
-        let entries = loadAnalytics(for: exerciseId).sorted(by: { $0.date < $1.date })
+        let entries = history.sorted(by: { $0.date < $1.date })
         guard !entries.isEmpty else { return [] }
         
         struct DaySession {

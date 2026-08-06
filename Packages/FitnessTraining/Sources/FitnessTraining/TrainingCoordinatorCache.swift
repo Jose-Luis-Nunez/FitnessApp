@@ -2,6 +2,7 @@ import Foundation
 import Observation
 import FitnessCore
 import FitnessStorage
+import FitnessAnalytics
 import Factory
 
 // MARK: - Protocol
@@ -21,14 +22,18 @@ public final class TrainingCoordinatorCache: TrainingCoordinatorCaching {
 
     @ObservationIgnored private var exerciseManagementService: ExerciseManaging
     @ObservationIgnored private var exerciseOrderStorage: WorkoutExerciseOrderStoring
+    @ObservationIgnored private let analyticsViewModel: AnalyticsViewModel
 
     public init(
         exerciseManagement: ExerciseManaging? = nil,
-        exerciseOrderStorage: WorkoutExerciseOrderStoring? = nil
+        exerciseOrderStorage: WorkoutExerciseOrderStoring? = nil,
+        analyticsViewModel: AnalyticsViewModel? = nil
     ) {
         self.exerciseManagementService = exerciseManagement ?? Container.shared.exerciseManagement()
         self.exerciseOrderStorage = exerciseOrderStorage
             ?? Container.shared.workoutExerciseOrderStorage()
+        self.analyticsViewModel = analyticsViewModel
+            ?? Container.shared.analyticsViewModel()
     }
 
     public func coordinator(for group: MuscleCategoryGroup) -> TrainingCoordinator {
@@ -48,7 +53,8 @@ public final class TrainingCoordinatorCache: TrainingCoordinatorCaching {
                     workoutId: workoutId,
                     exerciseId: exerciseId
                 )
-            }
+            },
+            analyticsViewModel: analyticsViewModel
         )
         coordinators[group] = coordinator
         return coordinator

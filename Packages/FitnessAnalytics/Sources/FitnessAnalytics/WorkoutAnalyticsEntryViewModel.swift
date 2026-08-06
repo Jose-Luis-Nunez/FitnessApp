@@ -42,12 +42,14 @@ final class WorkoutAnalyticsEntryViewModel {
 
     @ObservationIgnored private let exerciseStorage: ExerciseStoring
     @ObservationIgnored private let saveUseCase: SaveWorkoutAnalyticsUseCase
+    @ObservationIgnored private let analyticsViewModel: AnalyticsViewModel
 
     init(
         workout: Workout,
         selectedDate: Date = Date(),
         exerciseStorage: ExerciseStoring? = nil,
-        saveUseCase: SaveWorkoutAnalyticsUseCase? = nil
+        saveUseCase: SaveWorkoutAnalyticsUseCase? = nil,
+        analyticsViewModel: AnalyticsViewModel? = nil
     ) {
         self.workout = workout
         self.selectedDate = selectedDate
@@ -55,6 +57,8 @@ final class WorkoutAnalyticsEntryViewModel {
             ?? Container.shared.exerciseStorage()
         self.saveUseCase = saveUseCase
             ?? Container.shared.saveWorkoutAnalyticsUseCase()
+        self.analyticsViewModel = analyticsViewModel
+            ?? Container.shared.analyticsViewModel()
         loadDrafts()
     }
 
@@ -113,6 +117,7 @@ final class WorkoutAnalyticsEntryViewModel {
             saveErrorMessage = "The workout could not be saved. Please try again."
             return false
         }
+        analyticsViewModel.publishPersistedEntries(entries)
         saveState = .saved
         return true
     }

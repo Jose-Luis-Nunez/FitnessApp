@@ -72,7 +72,7 @@ public struct MuscleCategorySelectionView: View {
     @State private var filterPillBounce: Bool = false
     @State private var filterBounceMode: MuscleCategorySelectionViewMode? = nil
     @Namespace private var filterNamespace
-    @State private var analyticsViewModel = AnalyticsViewModel()
+    @State private var analyticsViewModel: AnalyticsViewModel
     @State private var isShowingExercisePicker = false
     @State private var editingExercise: Exercise?
     @State private var editingCategory: MuscleCategoryGroup?
@@ -89,6 +89,9 @@ public struct MuscleCategorySelectionView: View {
         self._currentViewMode = viewMode
         self.coordinatorCache = Container.shared.trainingCoordinatorCache()
         self.workoutStorage = Container.shared.workoutStorage()
+        self._analyticsViewModel = State(
+            initialValue: Container.shared.analyticsViewModel()
+        )
     }
 
     private var adaptiveColumns: [GridItem] {

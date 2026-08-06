@@ -96,8 +96,12 @@ extension AnalyticsViewModel {
     }
 
     public func repsPhases(for exerciseId: UUID, limit: Int = 3) -> [WeightPhase] {
+        repsPhases(from: loadAnalytics(for: exerciseId), limit: limit)
+    }
+
+    func repsPhases(from history: [AnalyticsEntry], limit: Int = 3) -> [WeightPhase] {
         let calendar = Calendar.current
-        let entries = loadAnalytics(for: exerciseId).sorted(by: { $0.date < $1.date })
+        let entries = history.sorted(by: { $0.date < $1.date })
         guard !entries.isEmpty else { return [] }
 
         struct DaySession {

@@ -5,6 +5,7 @@ import SwiftUI
 public struct AnalyticsView: View {
     @State private var exercise: Exercise
     public var viewModel: AnalyticsViewModel
+    @State private var analyticsRevision: ExerciseAnalyticsCacheRevision
     private let initialReps: Int
     @State private var selectedDate: Date
     @State private var showCalendarDialog: Bool = false
@@ -18,6 +19,9 @@ public struct AnalyticsView: View {
         let latestExercise = viewModel.resolveLatestExercise(exercise)
         self._exercise = State(initialValue: latestExercise)
         self.viewModel = viewModel
+        self._analyticsRevision = State(
+            initialValue: viewModel.revisionSource(for: exercise.id)
+        )
         self.initialReps = latestExercise.reps
         self._selectedDate = State(initialValue: initialDate)
     }
@@ -29,7 +33,7 @@ public struct AnalyticsView: View {
                 CalendarDialogView(
                     isPresented: $showCalendarDialog,
                     selectedDate: $selectedDate,
-                    highlightedDates: viewModel.loadAnalyticsDates(for: exercise.id),
+                    highlightedDates: cachedEntries.map(\.date),
                     title: "Monthly training"
                 )
                 addDataOverlay
@@ -231,9 +235,17 @@ public struct AnalyticsView: View {
 
     private var entriesForSelectedDate: [AnalyticsEntry] {
         let calendar = Calendar.current
-        return viewModel.entries.filter { entry in
+        return cachedEntries.filter { entry in
             calendar.isDate(entry.date, inSameDayAs: selectedDate)
         }
+    }
+
+    private var cachedEntries: [AnalyticsEntry] {
+        // Register only this Exercise's cache token with SwiftUI. The cache
+        // payload itself is intentionally ObservationIgnored so unrelated
+        // histories cannot invalidate this detail screen.
+        _ = analyticsRevision.value
+        return viewModel.cachedEntries(for: exercise.id) ?? []
     }
 
     @ViewBuilder

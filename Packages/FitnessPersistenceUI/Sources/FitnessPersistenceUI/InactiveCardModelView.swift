@@ -4,11 +4,26 @@ import FitnessCore
 import FitnessUI
 @_spi(PersistenceUI) import FitnessStorage
 
+struct LatestSetProgressCardState {
+    private(set) var setProgress: [SetProgress] = []
+
+    /// A failed read may reveal previously loaded data, but it must never make
+    /// an empty details area look like a successful expansion.
+    mutating func apply(_ outcome: LatestAnalyticsEntryLoadOutcome) -> Bool {
+        switch outcome {
+        case let .loaded(entry):
+            setProgress = entry?.setProgress ?? []
+        case .failed:
+            break
+        }
+        return !setProgress.isEmpty
+    }
+}
+
 /// Completed (inactive) card variant rendered against a live
 /// `@Bindable ExerciseModel`. The data source is the SwiftData `@Model` instance —
-/// all edits propagate automatically without snapshot sync (ADR-0001). Still keeps
-/// the `analyticsViewModel.changeCount` polling pattern; that will be resolved in
-/// a later step in favor of direct `@Observable` tracking.
+/// all edits propagate automatically without snapshot sync (ADR-0001). Analytics
+/// refreshes carry an Exercise id, so unrelated cards keep their staged analytics state.
 ///
 /// SPI marker: see `ExerciseCardModelView`.
 @_spi(PersistenceUI)
@@ -22,7 +37,8 @@ public struct InactiveCardModelView: View {
 
     @State private var isShowingAnalytics = false
     @State private var isExpanded = false
-    @State private var cachedSetProgress: [SetProgress] = []
+    @State private var latestSetPresentation = LatestSetProgressCardState()
+    @State private var analyticsRevision: ExerciseAnalyticsCacheRevision
     @AppStorage(DefaultIconColorScheme.storageKey) private var iconColorScheme: DefaultIconColorScheme = .green
 
     public init(
@@ -39,13 +55,24 @@ public struct InactiveCardModelView: View {
         self.analyticsViewModel = analyticsViewModel
         self.onReset = onReset
         self.isResetEnabled = isResetEnabled
+        self._analyticsRevision = State(
+            initialValue: analyticsViewModel.revisionSource(for: model.id)
+        )
     }
 
-    private func refreshSetProgress() {
-        let latestEntry = analyticsViewModel
-            .loadAnalytics(for: model.id)
-            .max(by: { $0.date < $1.date })
-        cachedSetProgress = latestEntry?.setProgress ?? []
+    private func loadLatestSetProgress() -> Bool {
+        latestSetPresentation.apply(
+            analyticsViewModel.loadLatestEntry(for: model.id)
+        )
+    }
+
+    private func toggleExpansion() {
+        if isExpanded {
+            isExpanded = false
+            return
+        }
+        guard loadLatestSetProgress() else { return }
+        isExpanded = true
     }
 
     private let theme = CardTheme.inactiveOnIdle
@@ -78,13 +105,14 @@ public struct InactiveCardModelView: View {
         // on wide) instead of using a device-dependent fixed inset.
         .frame(minWidth: AppStyle.Layout.idleCardContentMinWidth, maxWidth: .infinity)
         .contentShape(Rectangle())
-        .onTapGesture { isExpanded.toggle() }
+        .onTapGesture { toggleExpansion() }
         .sheet(isPresented: $isShowingAnalytics) {
             AnalyticsView(exercise: model.toDomain(), viewModel: analyticsViewModel)
         }
-        .onAppear { refreshSetProgress() }
-        .onChange(of: analyticsViewModel.changeCount) { _, _ in
-            refreshSetProgress()
+        .onChange(of: analyticsRevision.value) {
+            if isExpanded {
+                isExpanded = loadLatestSetProgress()
+            }
         }
     }
 }
@@ -111,7 +139,7 @@ private extension InactiveCardModelView {
                 if isEditable && model.allowsSeatEditing {
                     onEdit(model.toDomain(), .seat)
                 } else {
-                    isExpanded.toggle()
+                    toggleExpansion()
                 }
             }
             .accessibilityIdentifier(ExerciseCardIDs.seatEditIcon(model.id))
@@ -129,7 +157,7 @@ private extension InactiveCardModelView {
                 .frame(width: 14, height: 11)
                 .frame(width: AppStyle.Layout.idlePlayButtonSize, height: AppStyle.Layout.idlePlayButtonSize)
         }
-        .onTapGesture { isExpanded.toggle() }
+        .onTapGesture { toggleExpansion() }
     }
 
     var titleSection: some View {
@@ -155,7 +183,7 @@ private extension InactiveCardModelView {
                     .rotationEffect(.degrees(isExpanded ? 180 : 0))
             }
             .contentShape(Rectangle())
-            .onTapGesture { isExpanded.toggle() }
+            .onTapGesture { toggleExpansion() }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -168,7 +196,7 @@ private extension InactiveCardModelView {
 
     var setTilesRow: some View {
         SetTilesRow(
-            setProgress: cachedSetProgress,
+            setProgress: latestSetPresentation.setProgress,
             hasWeight: model.hasWeight,
             chevronColor: theme.subtitleColor.opacity(AppStyle.Opacity.separatorLine),
             reservedTrailingWidth: isResetEnabled ? ExerciseCardLayout.ResetButton.size : 0,

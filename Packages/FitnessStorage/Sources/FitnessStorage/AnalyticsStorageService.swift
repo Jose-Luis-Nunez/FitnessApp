@@ -77,6 +77,23 @@ public final class AnalyticsStorageService: AnalyticsStoring, WorkoutAnalyticsBa
         return models.map { $0.toDomain() }
     }
 
+    public func hasEntries(for exerciseId: UUID) throws -> Bool {
+        var descriptor = FetchDescriptor<AnalyticsEntryModel>(
+            predicate: #Predicate<AnalyticsEntryModel> { $0.exerciseId == exerciseId }
+        )
+        descriptor.fetchLimit = 1
+        return try !context.fetchIdentifiers(descriptor).isEmpty
+    }
+
+    public func loadLatestEntry(for exerciseId: UUID) throws -> AnalyticsEntry? {
+        var descriptor = FetchDescriptor<AnalyticsEntryModel>(
+            predicate: #Predicate<AnalyticsEntryModel> { $0.exerciseId == exerciseId },
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        descriptor.fetchLimit = 1
+        return try context.fetch(descriptor).first?.toDomain()
+    }
+
     public func loadBatch(for exerciseIds: [UUID]) throws -> [UUID: [AnalyticsEntry]] {
         var seen: Set<UUID> = []
         let ids = exerciseIds.filter { seen.insert($0).inserted }

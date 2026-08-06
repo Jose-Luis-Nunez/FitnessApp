@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import os
 @testable import FitnessAnalytics
 import FitnessCore
 import FitnessTestSupport
@@ -741,14 +742,14 @@ struct EntriesReactiveUpdateTests {
         )
         vm.reloadEntries(for: id)
 
-        #expect(vm.entries.count == 1)
-        #expect(vm.entries[0].setProgress.count == 2)
+        #expect(vm.cachedEntries(for: id)?.count == 1)
+        #expect(vm.cachedEntries(for: id)?[0].setProgress.count == 2)
 
         vm.deleteSetFromEntry(exerciseId: id, entryId: entry.id, setIndex: 0)
 
-        #expect(vm.entries.count == 1)
-        #expect(vm.entries[0].setProgress.count == 1)
-        #expect(vm.entries[0].setProgress[0].weight == 65)
+        #expect(vm.cachedEntries(for: id)?.count == 1)
+        #expect(vm.cachedEntries(for: id)?[0].setProgress.count == 1)
+        #expect(vm.cachedEntries(for: id)?[0].setProgress[0].weight == 65)
     }
 
     @Test func entriesEmptyAfterDeletingAllSets() {
@@ -763,30 +764,11 @@ struct EntriesReactiveUpdateTests {
         )
         vm.reloadEntries(for: id)
 
-        #expect(vm.entries.count == 1)
+        #expect(vm.cachedEntries(for: id)?.count == 1)
 
         vm.deleteSetFromEntry(exerciseId: id, entryId: entry.id, setIndex: 0)
 
-        #expect(vm.entries.isEmpty)
-    }
-
-    @Test func changeCountIncrementsOnEachMutation() {
-        let storage = MockAnalyticsStorage()
-        let id = UUID()
-        let entry = makeEntry(exerciseId: id, date: date(0), sets: [(60, 10), (65, 8)])
-        storage.save([entry], for: id)
-
-        let vm = AnalyticsViewModel(
-            storageService: storage,
-            deleteAnalyticsSetUseCase: DeleteAnalyticsSetUseCase(analyticsStorage: storage)
-        )
-        let initial = vm.changeCount
-
-        vm.reloadEntries(for: id)
-        #expect(vm.changeCount == initial + 1)
-
-        vm.deleteSetFromEntry(exerciseId: id, entryId: entry.id, setIndex: 0)
-        #expect(vm.changeCount == initial + 2)
+        #expect(vm.cachedEntries(for: id)?.isEmpty == true)
     }
 
     @Test func deleteTriggersObservationOnEntries() {
@@ -801,15 +783,19 @@ struct EntriesReactiveUpdateTests {
         )
         vm.reloadEntries(for: id)
 
-        var observationFired = false
+        let revision = vm.revisionSource(for: id)
+        let observationFired = OSAllocatedUnfairLock(initialState: false)
         withObservationTracking {
-            _ = vm.entries
+            _ = revision.value
         } onChange: {
-            observationFired = true
+            observationFired.withLock { $0 = true }
         }
 
         vm.deleteSetFromEntry(exerciseId: id, entryId: entry.id, setIndex: 0)
 
-        #expect(observationFired, "Deleting a set must trigger @Observable notification on entries")
+        #expect(
+            observationFired.withLock { $0 },
+            "Deleting a set must publish the affected exercise revision"
+        )
     }
 }
