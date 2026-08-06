@@ -4,8 +4,12 @@ import FitnessCore
 extension AnalyticsViewModel {
 
     public func getDailyRepsProgression(for exerciseId: UUID) -> [DailyProgression] {
+        getDailyRepsProgression(from: loadAnalytics(for: exerciseId))
+    }
+
+    func getDailyRepsProgression(from history: [AnalyticsEntry]) -> [DailyProgression] {
         let calendar = Calendar.current
-        let sortedEntries = loadAnalytics(for: exerciseId)
+        let sortedEntries = history
             .sorted(by: { $0.date < $1.date })
 
         let dailyReps: [(date: Date, reps: Int)] = sortedEntries.compactMap { entry in
@@ -26,8 +30,12 @@ extension AnalyticsViewModel {
     }
 
     public func totalRepsIncreases(for exerciseId: UUID) -> Int {
+        totalRepsIncreases(from: loadAnalytics(for: exerciseId))
+    }
+
+    func totalRepsIncreases(from history: [AnalyticsEntry]) -> Int {
         let calendar = Calendar.current
-        let entries = loadAnalytics(for: exerciseId)
+        let entries = history
             .sorted(by: { $0.date < $1.date })
 
         let dailyReps: [(date: Date, reps: Int)] = entries.compactMap { entry in
@@ -58,7 +66,11 @@ extension AnalyticsViewModel {
     }
 
     public func trainingSessionsUntilRepsIncrease(for exerciseId: UUID) -> Int {
-        let entries = loadAnalytics(for: exerciseId)
+        trainingSessionsUntilRepsIncrease(from: loadAnalytics(for: exerciseId))
+    }
+
+    func trainingSessionsUntilRepsIncrease(from history: [AnalyticsEntry]) -> Int {
+        let entries = history
         let calendar = Calendar.current
 
         let sortedEntries = entries.sorted(by: { $0.date < $1.date })

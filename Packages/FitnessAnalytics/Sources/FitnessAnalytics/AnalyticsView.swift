@@ -90,11 +90,12 @@ public struct AnalyticsView: View {
                 Spacer()
             }
             GeometryReader { geometry in
+                let points = chartPoints(geometry: geometry)
                 ZStack {
                     chartGridLines(geometry: geometry)
-                    hillShapeView(geometry: geometry)
-                    hillOutlineView(geometry: geometry)
-                    milestonesView(geometry: geometry)
+                    hillShapeView(points: points, geometry: geometry)
+                    hillOutlineView(points: points, geometry: geometry)
+                    milestonesView(points: points, geometry: geometry)
                 }
             }
             .frame(height: 105)
@@ -117,17 +118,20 @@ public struct AnalyticsView: View {
     }
 
     private func chartPoints(geometry: GeometryProxy) -> [ProgressChartCalculator.ChartPoint] {
+        let entries = cachedEntries
         let milestones = exercise.hasWeight
-            ? viewModel.getDailyWeightProgression(for: exercise.id)
-            : viewModel.getDailyRepsProgression(for: exercise.id)
+            ? viewModel.getDailyWeightProgression(from: entries)
+            : viewModel.getDailyRepsProgression(from: entries)
         return ProgressChartCalculator.calculateDynamicMilestones(
             milestones: milestones,
             geometry: geometry
         )
     }
 
-    private func hillShapeView(geometry: GeometryProxy) -> some View {
-        let points = chartPoints(geometry: geometry)
+    private func hillShapeView(
+        points: [ProgressChartCalculator.ChartPoint],
+        geometry: GeometryProxy
+    ) -> some View {
         return ProgressChartCalculator.generateCurvePathForFill(
             chartPoints: points,
             geometry: geometry
@@ -144,8 +148,10 @@ public struct AnalyticsView: View {
         )
     }
 
-    private func hillOutlineView(geometry: GeometryProxy) -> some View {
-        let points = chartPoints(geometry: geometry)
+    private func hillOutlineView(
+        points: [ProgressChartCalculator.ChartPoint],
+        geometry: GeometryProxy
+    ) -> some View {
         return ProgressChartCalculator.generateCurvePath(
             chartPoints: points,
             geometry: geometry
@@ -154,8 +160,10 @@ public struct AnalyticsView: View {
         .shadow(color: AppStyle.Color.greenGlow.opacity(0.4), radius: 3, x: 0, y: 0)
     }
 
-    private func milestonesView(geometry: GeometryProxy) -> some View {
-        let points = chartPoints(geometry: geometry)
+    private func milestonesView(
+        points: [ProgressChartCalculator.ChartPoint],
+        geometry: GeometryProxy
+    ) -> some View {
         return ForEach(points) { point in
             dynamicMilestonePointView(point: point, geometry: geometry)
         }
@@ -676,7 +684,9 @@ public struct AnalyticsView: View {
     }
 
     private var weightMilestoneView: some View {
-        VStack(spacing: 8) {
+        let entries = cachedEntries
+
+        return VStack(spacing: 8) {
             HStack(alignment: .top, spacing: 8) {
                 Button(action: {
                     tempGoal = exercise.goal.map(formatGoalForInput) ?? ""
@@ -714,25 +724,25 @@ public struct AnalyticsView: View {
             HStack(alignment: .top, spacing: 8) {
                 AnalyticsTileNumberView(
                     number: exercise.hasWeight
-                        ? "\(viewModel.totalWeightIncreases(for: exercise.id))"
-                        : "\(viewModel.totalRepsIncreases(for: exercise.id))",
+                        ? "\(viewModel.totalWeightIncreases(from: entries))"
+                        : "\(viewModel.totalRepsIncreases(from: entries))",
                     label: exercise.hasWeight ? "Weight increase" : "Reps increase"
                 )
 
                 AnalyticsTileNumberView(
-                    number: "\(viewModel.trainingDaysInCurrentMonth(for: exercise.id))",
+                    number: "\(viewModel.trainingDaysInCurrentMonth(from: entries))",
                     label: "Training \(viewModel.currentMonthName())"
                 )
 
                 AnalyticsTileNumberView(
                     number: exercise.hasWeight
-                        ? "\(viewModel.trainingSessionsUntilWeightIncrease(for: exercise.id))"
-                        : "\(viewModel.trainingSessionsUntilRepsIncrease(for: exercise.id))",
+                        ? "\(viewModel.trainingSessionsUntilWeightIncrease(from: entries))"
+                        : "\(viewModel.trainingSessionsUntilRepsIncrease(from: entries))",
                     label: exercise.hasWeight ? "Training to increase kg" : "Training to increase Reps"
                 )
 
                 AnalyticsTileNumberView(
-                    number: "\(viewModel.loadAnalytics(for: exercise.id).count)",
+                    number: "\(entries.count)",
                     label: "Total training"
                 )
             }
