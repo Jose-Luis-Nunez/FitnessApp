@@ -9,6 +9,7 @@ struct ExportWorkoutPickerSheet: View {
     let onSelect: (Workout) -> Void
     let exerciseCount: (Workout) -> Int
     @Binding var workoutToShare: WorkoutShareItem?
+    @Environment(\.profileColorTheme) private var profileColors
 
     private let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -20,14 +21,14 @@ struct ExportWorkoutPickerSheet: View {
             LazyVStack(alignment: .leading, spacing: AppStyle.Padding.sectionSpacing) {
                 Text("Export Workout")
                     .font(AppStyle.Font.sheetTitle)
-                    .foregroundColor(AppStyle.Color.white)
+                    .foregroundColor(profileColors.title)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.bottom, AppStyle.Padding.sectionSpacing)
 
                 if workouts.isEmpty {
                     Text("No workouts available.")
                         .font(AppStyle.Font.profileCardTitle)
-                        .foregroundColor(AppStyle.Color.greenLight)
+                        .foregroundColor(profileColors.secondary)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.top, 8)
                 } else {
@@ -54,12 +55,12 @@ struct ExportWorkoutPickerSheet: View {
                 Spacer()
                 Spacer()
                 Button("Cancel") { isPresented = false }
-                    .foregroundColor(AppStyle.Color.white)
+                    .foregroundColor(profileColors.onAccent)
                     .font(AppStyle.Font.pickerAction)
                     .padding(5)
                     .frame(height: 40)
                     .frame(maxWidth: .infinity)
-                    .background(AppStyle.Color.green)
+                    .background(profileColors.accentFill)
                     .cornerRadius(AppStyle.CornerRadius.editPickerViewButton)
                     .accessibilityIdentifier("id_friends_export_cancel")
                 Spacer()

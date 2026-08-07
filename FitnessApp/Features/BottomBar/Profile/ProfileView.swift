@@ -8,6 +8,7 @@ struct ProfileView: View {
     @State private var isBodyExpanded = false
     @State private var isBMIExpanded = false
     @AppStorage(DefaultIconColorScheme.storageKey) private var iconColorScheme: DefaultIconColorScheme = .green
+    @Environment(\.profileColorTheme) private var profileColors
     @FocusState private var focusedField: ProfileField?
 
     enum ProfileField: Hashable {
@@ -56,15 +57,15 @@ struct ProfileView: View {
     // MARK: - Icon Color
 
     /// Lets the user switch the *default* category icons between the original
-    /// (`green`) and the new `grey` variants. Writes straight to `@AppStorage`,
-    /// which every card / tile observes via the shared `DefaultIconColorScheme`
-    /// key — no ViewModel plumbing needed.
+    /// (`green`) and the new `grey` variants. The app root maps this persisted
+    /// preference into `ProfileColorTheme` and injects it through the SwiftUI
+    /// environment, so profile components update without feature-model plumbing.
     private var iconColorSection: some View {
-        ProfileCard {
+        ProfileCardContainer {
             VStack(alignment: .leading, spacing: AppStyle.DeviceLayout.cardSpacing) {
                 Text("Default Icon Color")
                     .font(AppStyle.Font.profileCardTitle)
-                    .foregroundColor(AppStyle.Color.greenLight)
+                    .foregroundColor(profileColors.secondary)
 
                 Picker("Default Icon Color", selection: $iconColorScheme) {
                     ForEach(DefaultIconColorScheme.allCases) { scheme in
@@ -83,27 +84,34 @@ struct ProfileView: View {
         VStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
             ZStack {
                 Circle()
-                    .fill(AppStyle.Color.greenDark)
+                    .fill(profileColors.innerBackground)
                     .frame(
                         width: AppStyle.Layout.profileAvatarSize,
                         height: AppStyle.Layout.profileAvatarSize
                     )
+                    .overlay {
+                        Circle()
+                            .stroke(
+                                profileColors.innerStroke,
+                                lineWidth: AppStyle.Layout.profileSurfaceBorderWidth
+                            )
+                    }
 
                 Image(systemName: "person.fill")
                     .font(AppStyle.Font.profileAvatarIcon)
-                    .foregroundColor(AppStyle.Color.greenGlow)
+                    .foregroundColor(profileColors.accent)
             }
             .accessibilityIdentifier("id_profile_avatar")
 
             if viewModel.hasProfile {
                 Text("Hey \(viewModel.nickname)")
                     .font(AppStyle.Font.profileGreeting)
-                    .foregroundColor(AppStyle.Color.white)
+                    .foregroundColor(profileColors.title)
                     .accessibilityIdentifier("id_profile_greeting")
             } else {
                 Text("Profile")
                     .font(AppStyle.Font.profileGreeting)
-                    .foregroundColor(AppStyle.Color.white)
+                    .foregroundColor(profileColors.title)
             }
         }
         .padding(.top, AppStyle.Padding.titleTop)
@@ -112,20 +120,20 @@ struct ProfileView: View {
     // MARK: - Nickname
 
     private var nicknameSection: some View {
-        ProfileCard {
+        ProfileCardContainer {
             if viewModel.isEditingNickname || !viewModel.hasProfile {
                 VStack(spacing: AppStyle.CornerRadius.defaultButton) {
                     Text("Nickname")
                         .font(AppStyle.Font.profileInputLabel)
-                        .foregroundColor(AppStyle.Color.greenLight)
+                        .foregroundColor(profileColors.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .fixedSize()
 
                     TextField("Your nickname", text: $viewModel.inputNickname)
-                        .foregroundColor(AppStyle.Color.white)
+                        .foregroundColor(profileColors.title)
                         .font(AppStyle.Font.tileValue)
                         .padding(AppStyle.Layout.profileInputPadding)
-                        .background(AppStyle.Color.sheetInputBackground)
+                        .background(profileColors.inputBackground)
                         .cornerRadius(AppStyle.CornerRadius.tile)
                         .focused($focusedField, equals: .nickname)
                         .submitLabel(.done)
@@ -141,7 +149,7 @@ struct ProfileView: View {
                             } label: {
                                 Text("Cancel")
                                     .font(AppStyle.Font.pickerAction)
-                                    .foregroundColor(AppStyle.Color.white)
+                                    .foregroundColor(profileColors.title)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, AppStyle.Layout.profileButtonPadding)
                             }
@@ -154,13 +162,13 @@ struct ProfileView: View {
                         } label: {
                             Text("Save")
                                 .font(AppStyle.Font.pickerAction)
-                                .foregroundColor(AppStyle.Color.white)
+                                .foregroundColor(profileColors.onAccent)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, AppStyle.Layout.profileButtonPadding)
                                 .background(
                                     viewModel.isNicknameInputEmpty
-                                    ? AppStyle.Color.green.opacity(AppStyle.Opacity.subtleStroke)
-                                    : AppStyle.Color.green
+                                    ? profileColors.accentFill.opacity(AppStyle.Opacity.disabledElement)
+                                    : profileColors.accentFill
                                 )
                                 .cornerRadius(AppStyle.CornerRadius.defaultButton)
                         }
@@ -179,11 +187,11 @@ struct ProfileView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Nickname")
                             .font(AppStyle.Font.profileCardTitle)
-                            .foregroundColor(AppStyle.Color.greenLight)
+                            .foregroundColor(profileColors.secondary)
                             .fixedSize()
                         Text(viewModel.nickname)
                             .font(AppStyle.Font.sectionHeadline)
-                            .foregroundColor(AppStyle.Color.white)
+                            .foregroundColor(profileColors.title)
                     }
 
                     Spacer()
@@ -193,7 +201,7 @@ struct ProfileView: View {
                     } label: {
                         Image(systemName: "pencil.circle.fill")
                             .font(AppStyle.Font.profileEditIcon)
-                            .foregroundColor(AppStyle.Color.green)
+                            .foregroundColor(profileColors.accent)
                     }
                     .contentShape(Rectangle())
                     .accessibilityIdentifier("id_profile_nickname_edit")
@@ -205,7 +213,7 @@ struct ProfileView: View {
     // MARK: - Body Data
 
     private var bodyDataSection: some View {
-        ProfileCard {
+        ProfileCardContainer {
             VStack(spacing: AppStyle.Padding.card) {
                 Button {
                     isBodyExpanded.toggle()
@@ -213,7 +221,7 @@ struct ProfileView: View {
                     HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
                         Text("Body Details")
                             .font(AppStyle.Font.sectionHeadline)
-                            .foregroundColor(AppStyle.Color.white)
+                            .foregroundColor(profileColors.title)
                             .fixedSize()
 
                         Spacer()
@@ -224,7 +232,7 @@ struct ProfileView: View {
                             } label: {
                                 Image(systemName: "pencil.circle.fill")
                                     .font(AppStyle.Font.profileEditIcon)
-                                    .foregroundColor(AppStyle.Color.green)
+                                    .foregroundColor(profileColors.accent)
                             }
                             .buttonStyle(.plain)
                             .accessibilityIdentifier("id_profile_body_edit")
@@ -232,7 +240,7 @@ struct ProfileView: View {
 
                         Image(systemName: "chevron.down")
                             .font(AppStyle.Font.profileSmallIcon)
-                            .foregroundColor(AppStyle.Color.greenLight)
+                            .foregroundColor(profileColors.accent)
                             .rotationEffect(.degrees(isBodyExpanded ? 180 : 0))
                     }
                     .contentShape(Rectangle())
@@ -264,7 +272,7 @@ struct ProfileView: View {
                 } label: {
                     Text("Cancel")
                         .font(AppStyle.Font.pickerAction)
-                        .foregroundColor(AppStyle.Color.white)
+                        .foregroundColor(profileColors.title)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, AppStyle.Layout.profileButtonPadding)
                 }
@@ -275,10 +283,10 @@ struct ProfileView: View {
                 } label: {
                     Text("Save")
                         .font(AppStyle.Font.pickerAction)
-                        .foregroundColor(AppStyle.Color.white)
+                        .foregroundColor(profileColors.onAccent)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, AppStyle.Layout.profileButtonPadding)
-                        .background(AppStyle.Color.green)
+                        .background(profileColors.accentFill)
                         .cornerRadius(AppStyle.CornerRadius.defaultButton)
                 }
                 .accessibilityIdentifier("id_profile_body_save")
@@ -319,7 +327,7 @@ struct ProfileView: View {
     @ViewBuilder
     private var bmiSection: some View {
         if viewModel.hasBodyData || viewModel.bmiResult != nil {
-            ProfileCard {
+            ProfileCardContainer {
                 VStack(spacing: AppStyle.CornerRadius.defaultButton) {
                     Button {
                         isBMIExpanded.toggle()
@@ -331,12 +339,12 @@ struct ProfileView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("BMI")
                                     .font(AppStyle.Font.sectionHeadline)
-                                    .foregroundColor(AppStyle.Color.white)
+                                    .foregroundColor(profileColors.title)
                                     .fixedSize()
 
                                 Text("Your body mass index")
                                     .font(AppStyle.Font.profileCardTitle)
-                                    .foregroundColor(AppStyle.Color.greenLight)
+                                    .foregroundColor(profileColors.secondary)
                                     .lineLimit(1)
                             }
 
@@ -349,7 +357,7 @@ struct ProfileView: View {
 
                             Image(systemName: "chevron.down")
                                 .font(AppStyle.Font.profileSmallIcon)
-                                .foregroundColor(AppStyle.Color.greenLight)
+                                .foregroundColor(profileColors.accent)
                                 .rotationEffect(.degrees(isBMIExpanded ? 180 : 0))
                         }
                         .contentShape(Rectangle())
@@ -377,7 +385,7 @@ struct ProfileView: View {
                         } else if !viewModel.hasBodyData {
                             Text("Enter your weight and height to calculate your BMI.")
                                 .font(AppStyle.Font.profileCardTitle)
-                                .foregroundColor(AppStyle.Color.gray)
+                                .foregroundColor(profileColors.secondary)
                         }
 
                         if let error = viewModel.bmiError {
@@ -423,7 +431,7 @@ struct ProfileView: View {
                 .cornerRadius(AppStyle.Layout.profileBMIBarHeight / 2)
 
                 Circle()
-                    .fill(AppStyle.Color.white)
+                    .fill(profileColors.title)
                     .frame(
                         width: AppStyle.Layout.profileBMIThumbSize,
                         height: AppStyle.Layout.profileBMIThumbSize
@@ -449,26 +457,6 @@ struct ProfileView: View {
     }
 }
 
-// MARK: - Profile Card Container
-
-private struct ProfileCard<Content: View>: View {
-    @ViewBuilder let content: () -> Content
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            content()
-        }
-        .padding(AppStyle.Padding.card)
-        .frame(
-            maxWidth: .infinity,
-            minHeight: AppStyle.Layout.profileCardCollapsedMinHeight,
-            alignment: .leading
-        )
-        .background(AppStyle.Color.profileCardBackground)
-        .cornerRadius(AppStyle.CornerRadius.card)
-    }
-}
-
 // MARK: - Metric Tile
 
 private struct MetricTile: View {
@@ -477,6 +465,7 @@ private struct MetricTile: View {
     let unit: String
     let accessibilityID: String
     var action: (() -> Void)? = nil
+    @Environment(\.profileColorTheme) private var profileColors
 
     var body: some View {
         Button {
@@ -485,21 +474,20 @@ private struct MetricTile: View {
             VStack(spacing: 4) {
                 Text(label)
                     .font(AppStyle.Font.profileCardTitle)
-                    .foregroundColor(AppStyle.Color.greenLight)
+                    .foregroundColor(profileColors.secondary)
                     .fixedSize()
 
                 Text(value)
                     .font(AppStyle.Font.profileCardValue)
-                    .foregroundColor(AppStyle.Color.white)
+                    .foregroundColor(profileColors.title)
 
                 Text(unit)
                     .font(AppStyle.Font.profileCardUnit)
-                    .foregroundColor(AppStyle.Color.gray)
+                    .foregroundColor(profileColors.secondary)
                     .fixedSize()
             }
             .frame(maxWidth: .infinity, minHeight: AppStyle.Layout.profileCardMinHeight)
-            .background(AppStyle.Color.sheetInputBackground)
-            .cornerRadius(AppStyle.CornerRadius.tile)
+            .profileReadOnlyTileSurface()
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -518,6 +506,7 @@ private struct MetricTile: View {
 private struct BodyMetricsWheelRow: View {
     @Bindable var viewModel: ProfileViewModel
     @State private var showWeightDecimal: Bool = false
+    @Environment(\.profileColorTheme) private var profileColors
 
     private static let heightOptions: [Int] = Array(100...230)
     private static let ageOptions: [Int] = Array(10...100)
@@ -538,13 +527,13 @@ private struct BodyMetricsWheelRow: View {
                 HStack(spacing: 6) {
                     Text("Decimal")
                         .font(AppStyle.Font.defaultFont)
-                        .foregroundColor(AppStyle.Color.white.opacity(0.85))
+                        .foregroundColor(profileColors.title.opacity(0.85))
                     Toggle("", isOn: $showWeightDecimal)
                         .labelsHidden()
                         .toggleStyle(
                             CapsuleToggleStyle(
-                                onColor: AppStyle.Color.greenGlow,
-                                offColor: AppStyle.Color.gray
+                                onColor: profileColors.accent,
+                                offColor: profileColors.divider
                                     .opacity(AppStyle.Opacity.fadedOverlay)
                             )
                         )

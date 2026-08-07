@@ -12,6 +12,10 @@ if [ "${BASH_SOURCE[0]}" = "$0" ]; then
   set -euo pipefail
 fi
 
+VALIDATION_EVIDENCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=test-domain-risk.sh
+source "$VALIDATION_EVIDENCE_DIR/test-domain-risk.sh"
+
 validation_paths() {
   local mode="${1:-worktree}"
   local tracked=""
@@ -129,13 +133,30 @@ test_execution_stamp_has_success_contract() {
     validation_stamp_has_field_value "$stamp" exit_code 0
 }
 
-test_execution_stamp_has_required_fields() {
+test_execution_stamp_has_domain_contract() {
   local stamp="$1"
+  local expected_domain="${2:-low}"
+  local actual_domain=""
+  local actual_rank=0
+  local expected_rank=0
+
+  actual_domain=$(sed -n 's/^[[:space:]]*domain_risk:[[:space:]]*//p' "$stamp" 2>/dev/null | head -1)
+  actual_rank=$(test_domain_risk_rank "$actual_domain" 2>/dev/null || echo -1)
+  expected_rank=$(test_domain_risk_rank "$expected_domain" 2>/dev/null || echo 99)
 
   test_execution_stamp_has_success_contract "$stamp" &&
-    validation_stamp_has_field_value "$stamp" verified_by tester-subagent &&
+    validation_stamp_has_field_value "$stamp" domain_risk '(low|medium|high|blocker)' &&
+    [ "$actual_rank" -ge "$expected_rank" ] &&
     validation_stamp_has_field_value "$stamp" mode '(run|verify)' &&
     validation_stamp_has_field_value "$stamp" source_fingerprint '[[:xdigit:]]{64}'
+}
+
+test_execution_stamp_has_required_fields() {
+  local stamp="$1"
+  local expected_domain="${2:-low}"
+
+  test_execution_stamp_has_domain_contract "$stamp" "$expected_domain" &&
+    validation_stamp_has_field_value "$stamp" verified_by tester-subagent
 }
 
 validation_stamp_matches_manifest() {

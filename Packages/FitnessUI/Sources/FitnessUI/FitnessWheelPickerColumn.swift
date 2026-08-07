@@ -16,6 +16,7 @@ public struct FitnessWheelPickerColumn<Value: Hashable, Label: View>: View {
     public let values: [Value]
     public let accessibilityID: String?
     private let label: (Value) -> Label
+    @Environment(\.profileColorTheme) private var profileColors
 
     public init(
         title: String,
@@ -35,14 +36,14 @@ public struct FitnessWheelPickerColumn<Value: Hashable, Label: View>: View {
         VStack(spacing: 4) {
             Text(title)
                 .font(AppStyle.Font.profileCardTitle)
-                .foregroundColor(AppStyle.Color.greenLight)
+                .foregroundColor(profileColors.secondary)
                 .frame(maxWidth: .infinity)
 
             Picker(title, selection: $selection) {
                 ForEach(values, id: \.self) { value in
                     label(value)
                         .tag(value)
-                        .foregroundColor(AppStyle.Color.greenLight)
+                        .foregroundColor(profileColors.accent)
                 }
             }
 #if os(iOS)

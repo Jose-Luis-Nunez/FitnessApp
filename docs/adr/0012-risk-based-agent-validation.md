@@ -39,6 +39,19 @@ Choose **C**.
   those contents remain unchanged.
 - Product references do not trigger agent-infrastructure verification.
 - `.claude` is canonical; Codex adapters are generated and drift-checked.
+- Test creation and retention use the same risk principle: select the lowest
+  deterministic layer whose regression detection justifies its maintenance
+  cost. Public visibility or a matching production filename never mandates a
+  test by itself.
+- Test selection starts with a product-domain baseline: Training/Exercise is
+  blocker; Workouts and Analytics are high; Profile and Feedback are low;
+  unmapped areas default to medium. Mixed changes take the highest tier and
+  technical risk can only raise it.
+- Snapshot tests are reserved for stable reusable visual contracts. Low-value
+  feature snapshots are removed with their baselines and snapshot-only
+  dependencies instead of being mechanically re-recorded.
+- The development hook surfaces a deduplicated test-selection hint whenever
+  tests change or new ViewModel/Service logic needs a coverage decision.
 
 ## Consequences
 
@@ -49,6 +62,9 @@ Choose **C**.
 - A same-path edit invalidates evidence immediately.
 - Reviewer independence improves because implementation conversation is absent.
 - Runtime-adapter drift becomes deterministic.
+- Test suites accumulate less low-signal snapshot and UI-test maintenance.
+- Agents must make the test-layer decision explicitly before writing or
+  updating tests.
 
 **Negative**
 
@@ -68,3 +84,6 @@ Choose **C**.
 - `.claude/references/agent-system-overview.md`
 - `.claude/hooks/lib/change-risk.sh`
 - `.claude/hooks/lib/validation-evidence.sh`
+- `.claude/hooks/checks/test-selection.sh`
+- `.claude/hooks/lib/test-domain-risk.sh`
+- `.claude/references/test-selection-policy.md`

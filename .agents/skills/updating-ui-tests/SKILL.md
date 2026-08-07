@@ -14,6 +14,21 @@ For shared conventions (DSL, constraints, template, naming) see `.claude/referen
 
 ## Workflow
 
+### Step 0 — Re-evaluate Test Value
+
+Read `.claude/references/test-selection-policy.md` and apply its Selection Gate
+before repairing or re-recording an affected test. Retain the test only when its
+expected risk reduction still exceeds its runtime, flakiness, fixture, and
+baseline-maintenance cost.
+
+Run `bash .claude/hooks/lib/test-domain-risk.sh classify worktree` and use its
+domain baseline for the retention decision. Mixed changes use the highest tier;
+technical risk may raise but never lower it.
+
+If a low-value legacy test does not pass the gate, remove the test and any
+fixtures, baselines, or dependencies used only by it. Do not update a test only
+to keep the suite green.
+
 ### Step 1 — Review Test and Check Production Code
 
 Perform two analyses on the existing test:
@@ -43,7 +58,7 @@ Based on both agent reports, apply fixes:
 
 ### Step 3 — Review the Result
 
-Review the updated test file against the **Review Checklist** in `.claude/references/ui-test-conventions.md`. Fix any remaining violations before considering the update done.
+Review the updated test file against the **Review Checklist** in `.claude/references/ui-test-conventions.md`. Reconfirm the retention decision with the actual maintenance cost exposed by the update, then fix any remaining violations before considering the update done.
 
 ## Documentation Sync
 

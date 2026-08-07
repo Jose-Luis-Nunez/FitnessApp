@@ -25,7 +25,7 @@ fi
 #
 # Checks (each in its own script under checks/):
 #   1. architecture-sync.sh — structural/public documentation hint
-#   2. test-coverage.sh     — new ViewModel/Service without a test hint
+#   2. test-selection.sh    — risk-based gate for test additions and retention
 #   3. ui-state-sync.sh     — Int-counter + polling-loop anti-pattern hint
 #   4. duplicate-state.sh   — duplicate state-owner hint
 #   5. predicate-smell.sh   — SwiftData predicate anti-pattern hint
@@ -106,7 +106,7 @@ all_reasons=""
 
 for check in \
   "$CHECKS_DIR/architecture-sync.sh" \
-  "$CHECKS_DIR/test-coverage.sh" \
+  "$CHECKS_DIR/test-selection.sh" \
   "$CHECKS_DIR/ui-state-sync.sh" \
   "$CHECKS_DIR/duplicate-state.sh" \
   "$CHECKS_DIR/predicate-smell.sh" \

@@ -5,6 +5,7 @@ public struct TramDeparturesCardView: View {
 
     @Bindable private var viewModel: TramDeparturesViewModel
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.profileColorTheme) private var profileColors
 
     public init(viewModel: TramDeparturesViewModel) {
         self.viewModel = viewModel
@@ -24,14 +25,7 @@ public struct TramDeparturesCardView: View {
                 .padding(.top, AppStyle.Padding.card)
             }
         }
-        .padding(AppStyle.Padding.card)
-        .frame(
-            maxWidth: .infinity,
-            minHeight: AppStyle.Layout.profileCardCollapsedMinHeight,
-            alignment: .leading
-        )
-        .background(AppStyle.Color.profileCardBackground)
-        .cornerRadius(AppStyle.CornerRadius.card)
+        .profileCardSurface()
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 viewModel.onBecameActive()
@@ -48,17 +42,17 @@ public struct TramDeparturesCardView: View {
             HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
                 Image(systemName: "tram.fill")
                     .font(AppStyle.Font.profileEditIcon)
-                    .foregroundColor(AppStyle.Color.green)
+                    .foregroundColor(profileColors.accent)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Tram \(viewModel.lineName)")
                         .font(AppStyle.Font.sectionHeadline)
-                        .foregroundColor(AppStyle.Color.white)
+                        .foregroundColor(profileColors.title)
                         .fixedSize()
 
                     Text("\(viewModel.fromLabel) → \(viewModel.toLabel)")
                         .font(AppStyle.Font.profileCardTitle)
-                        .foregroundColor(AppStyle.Color.greenLight)
+                        .foregroundColor(profileColors.secondary)
                         .lineLimit(1)
                 }
 
@@ -66,7 +60,7 @@ public struct TramDeparturesCardView: View {
 
                 Image(systemName: "chevron.down")
                     .font(AppStyle.Font.profileSmallIcon)
-                    .foregroundColor(AppStyle.Color.greenLight)
+                    .foregroundColor(profileColors.accent)
                     .rotationEffect(.degrees(viewModel.isExpanded ? 180 : 0))
             }
             .contentShape(Rectangle())
@@ -86,10 +80,9 @@ public struct TramDeparturesCardView: View {
             } label: {
                 Image(systemName: "arrow.left.arrow.right")
                     .font(AppStyle.Font.profileEditIcon)
-                    .foregroundColor(AppStyle.Color.green)
+                    .foregroundColor(profileColors.accent)
                     .frame(width: AppStyle.Layout.checkmarkSize, height: AppStyle.Layout.checkmarkSize)
-                    .background(AppStyle.Color.sheetInputBackground)
-                    .cornerRadius(AppStyle.CornerRadius.defaultButton)
+                    .profileReadOnlyTileSurface(cornerRadius: AppStyle.CornerRadius.defaultButton)
             }
             .accessibilityIdentifier("id_profile_tram_swap")
 
@@ -101,18 +94,17 @@ public struct TramDeparturesCardView: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(caption)
                 .font(AppStyle.Font.profileCardTitle)
-                .foregroundColor(AppStyle.Color.greenLight)
+                .foregroundColor(profileColors.secondary)
             Text(text)
                 .font(AppStyle.Font.tileValue)
-                .foregroundColor(AppStyle.Color.white)
+                .foregroundColor(profileColors.title)
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
         }
         .padding(.horizontal, AppStyle.Padding.card)
         .padding(.vertical, AppStyle.Layout.profileInputPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppStyle.Color.sheetInputBackground)
-        .cornerRadius(AppStyle.CornerRadius.tile)
+        .profileReadOnlyTileSurface()
     }
 
     // MARK: - Content Body
@@ -135,7 +127,7 @@ public struct TramDeparturesCardView: View {
     private var loadingRow: some View {
         HStack {
             ProgressView()
-                .tint(AppStyle.Color.green)
+                .tint(profileColors.accent)
             Spacer()
         }
         .frame(maxWidth: .infinity)
@@ -145,7 +137,7 @@ public struct TramDeparturesCardView: View {
     private var emptyRow: some View {
         Text("No departures in the next 60 minutes.")
             .font(AppStyle.Font.detailCaption)
-            .foregroundColor(AppStyle.Color.gray)
+            .foregroundColor(profileColors.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -161,14 +153,14 @@ public struct TramDeparturesCardView: View {
         HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
             Text(dep.line)
                 .font(AppStyle.Font.cardSmallBold)
-                .foregroundColor(AppStyle.Color.white)
+                .foregroundColor(profileColors.onAccent)
                 .frame(minWidth: AppStyle.Layout.setRowBadgeSize, minHeight: AppStyle.Layout.setRowBadgeSize)
-                .background(AppStyle.Color.green)
+                .background(profileColors.accentFill)
                 .cornerRadius(AppStyle.CornerRadius.pill)
 
             Text(viewModel.formattedTime(for: dep.plannedWhen))
                 .font(AppStyle.Font.tileValue)
-                .foregroundColor(AppStyle.Color.white)
+                .foregroundColor(profileColors.title)
                 .fixedSize()
 
             delayBadge(for: dep.delayMinutes)
@@ -177,15 +169,14 @@ public struct TramDeparturesCardView: View {
 
             Text(dep.direction)
                 .font(AppStyle.Font.detailCaption)
-                .foregroundColor(AppStyle.Color.greenLight)
+                .foregroundColor(profileColors.secondary)
                 .lineLimit(1)
                 .truncationMode(.tail)
         }
         .padding(.horizontal, AppStyle.Padding.card)
         .padding(.vertical, AppStyle.Layout.profileButtonPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppStyle.Color.sheetInputBackground)
-        .cornerRadius(AppStyle.CornerRadius.tile)
+        .profileReadOnlyTileSurface()
         .accessibilityIdentifier("id_profile_tram_row_\(index)")
     }
 
@@ -243,7 +234,7 @@ public struct TramDeparturesCardView: View {
             } else {
                 Text("Updated \(lastUpdated)")
                     .font(AppStyle.Font.sheetCaption)
-                    .foregroundColor(AppStyle.Color.gray)
+                    .foregroundColor(profileColors.secondary)
             }
         }
     }

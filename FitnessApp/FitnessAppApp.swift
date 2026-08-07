@@ -199,8 +199,10 @@ struct FitnessAppApp: App {
             // Re-tint the whole UI when the scheme flips (green ↔ grey). Applied
             // BELOW the App's @State (router/overlayState/storage), so those
             // survive — only the visual subtree rebuilds and re-reads the accent
-            // palette. NavigationStack rebinds to the preserved router.path.
+            // palette. Profile colors update through the environment below;
+            // the rebuild remains for legacy accent consumers elsewhere.
             .id(iconColorScheme)
+            .profileColorTheme(ProfileColorTheme(colorScheme: iconColorScheme))
             .environment(\.safeAreaInsets, geo.safeAreaInsets)
             .environment(overlayState)
             .environment(router)

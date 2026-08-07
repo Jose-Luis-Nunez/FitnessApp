@@ -2,6 +2,17 @@
 
 Shared conventions for writing and updating UI tests.
 
+Before using these implementation conventions, apply
+`.claude/references/test-selection-policy.md`. UI coverage is selected only when
+a critical journey or platform integration cannot be protected more cheaply at
+a deterministic lower layer. Existing UI tests must pass the same retention
+gate before repair or expansion.
+
+Run `bash .claude/hooks/lib/test-domain-risk.sh classify worktree` first.
+Training/Exercise paths are blocker, Workouts/Analytics are high, and
+Profile/Feedback are low. The highest affected domain wins; technical risk may
+raise but never lower the result.
+
 ## Project Structure
 
 ```
@@ -290,6 +301,15 @@ Supported screens: `.home` (category-selection overview), `.category`, `.schedul
 ## Review Checklist
 
 After writing or updating a UI test, verify the result against these rules. Flag violations per category.
+
+### 0. Risk-Based Selection
+
+Confirm the test passes `.claude/references/test-selection-policy.md`:
+
+- It protects a named critical user journey or platform integration.
+- A unit or integration test cannot provide equivalent detection value.
+- Its regression impact and likelihood justify runtime, fixture, and flake cost.
+- An affected legacy test that fails this gate is removed, not mechanically repaired.
 
 ### 1. No Raw XCUITest API in Test Files
 

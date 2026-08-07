@@ -34,13 +34,9 @@ lighter "commit ready" review and then add a second senior review afterward.
 
 ## 1. Classify
 
-Run:
-
-```bash
-bash .claude/hooks/lib/change-risk.sh classify worktree
-```
-
-The conservative result is `green`, `yellow`, or `red`.
+Run `change-risk.sh classify worktree` for review routing and
+`test-domain-risk.sh classify worktree` for test depth via
+`.claude/references/test-selection-policy.md`.
 
 - **Green:** at most two local presentation files, no state/API/persistence
   signals. Self-review plus one relevant final test or snapshot. No subagents.
@@ -90,8 +86,12 @@ this phase; those artifacts are intentionally produced after the code review.
 
 ## 4. Test Once
 
-Development may use focused tests. Completion requires one final result bound
+Development may use focused tests. Completion requires one result bound
 to the current contents.
+
+Select the final test set from the domain tier with
+`.claude/references/test-selection-policy.md`, not from file count. Technical
+risk may raise but never lower the baseline; mixed changes use the highest tier.
 
 Start the final tester only after the reviewer reports no Bug findings and the
 working-tree product/test contents are stable. This prevents an otherwise successful
@@ -136,8 +136,11 @@ After the final test or verification, create
 date: <ISO timestamp>
 result: PASS
 verified_by: <main-agent|tester-subagent>
+mode: <run|verify>
+domain_risk: <low|medium|high|blocker>
 command: <final command>
 tests: <passed/total>
+exit_code: 0
 xcresult: <path or n/a>
 source_fingerprint: <manifest fingerprint>
 ```

@@ -187,7 +187,7 @@ composition remains in the owning feature package.
 
 | Component family | Contract and owner |
 |---|---|
-| Card surfaces | `CardBackground`, `CardTheme`, `CardShell`, edge indicators, metric columns and set tiles define the reusable card composition in `FitnessUI`. Exercise model cards that bind live SwiftData state live in `FitnessPersistenceUI`. |
+| Card surfaces | `CardBackground`, `CardTheme`, `CardShell`, `ProfileCardContainer`, profile tile surfaces, edge indicators, metric columns and set tiles define reusable card composition in `FitnessUI`. Exercise model cards that bind live SwiftData state live in `FitnessPersistenceUI`. |
 | Exercise cards | `IdleActiveCardModelView` and `InactiveCardModelView` expose user intents for availability, latest-entry and coaching-history loading; they do not own storage. `ActiveCardModelView` renders coordinator-backed active state. |
 | Category/workout artwork | Shared stage and layout primitives in `FitnessUI` keep category and workout tiles structurally consistent without documenting their current dimensions here. |
 | Training session | `TrainingSessionComponent`, set rows, timer and picker components render coordinator state. The app root owns sheet presentation; the component does not own navigation or session lifetime. |
@@ -265,6 +265,13 @@ breakpoints or raw design constants. Shared card/tile geometry belongs to its
 palette. The palette maps semantic UI roles; domain values and feature logic do not
 depend on concrete colors. The app may rebuild its visual subtree after the
 preference changes while preserving router, persistence and session owners.
+
+`ProfileColorTheme` maps the selected accent palette into semantic profile roles
+and is injected at the app root through SwiftUI's environment. Profile feature
+views consume those roles and shared card/tile components instead of reading
+concrete colors or `UserDefaults`; previews and snapshots inject deterministic
+themes directly. The roles derive from the same idle-card palette as training,
+while semantic status colors remain independent. ADR-0017 records this boundary.
 
 ## Live Activity
 

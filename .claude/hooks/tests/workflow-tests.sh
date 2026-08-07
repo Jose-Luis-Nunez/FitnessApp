@@ -7,6 +7,8 @@ REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || exit 1
 RISK="$REPO_ROOT/.claude/hooks/lib/change-risk.sh"
 EVIDENCE="$REPO_ROOT/.claude/hooks/lib/validation-evidence.sh"
 INFRA_CHECK="$REPO_ROOT/.claude/hooks/checks/agent-infrastructure.sh"
+TEST_SELECTION_CHECK="$REPO_ROOT/.claude/hooks/checks/test-selection.sh"
+TEST_DOMAIN_RISK="$REPO_ROOT/.claude/hooks/lib/test-domain-risk.sh"
 PRE_COMMIT="$REPO_ROOT/.githooks/pre-commit"
 TEMP_ROOT=$(mktemp -d)
 trap 'rm -rf "$TEMP_ROOT"' EXIT
@@ -68,14 +70,15 @@ write_fixture_evidence() {
 
   (
     cd "$repo"
+    domain_risk=$(bash "$TEST_DOMAIN_RISK" classify worktree)
     bash "$EVIDENCE" write .claude/hooks/state/code-changes.manifest.tsv worktree
     code_fingerprint=$(bash "$EVIDENCE" fingerprint .claude/hooks/state/code-changes.manifest.tsv)
     printf 'result: PASS\nrisk: %s\nverified_by: %s\nsource_fingerprint: %s\n' \
       "$risk" "$reviewer" "$code_fingerprint" > .claude/hooks/state/code-changes.stamp.md
     bash "$EVIDENCE" write .claude/hooks/state/test-execution.manifest.tsv worktree
     test_fingerprint=$(bash "$EVIDENCE" fingerprint .claude/hooks/state/test-execution.manifest.tsv)
-    printf 'result: PASS\nverified_by: %s\nmode: verify\ncommand: focused fixture\ntests: 1/1\nexit_code: 0\nsource_fingerprint: %s\n' \
-      "$tester" "$test_fingerprint" > .claude/hooks/state/test-execution.stamp.md
+    printf 'result: PASS\nverified_by: %s\nmode: verify\ndomain_risk: %s\ncommand: focused fixture\ntests: 1/1\nexit_code: 0\nsource_fingerprint: %s\n' \
+      "$tester" "$domain_risk" "$test_fingerprint" > .claude/hooks/state/test-execution.stamp.md
   )
 }
 
@@ -101,6 +104,7 @@ new_repo() {
     printf '%s\n' '---' 'alwaysApply: true' '---' > .claude/rules/example.mdc
     cp "$REPO_ROOT/.claude/hooks/lib/validation-evidence.sh" .claude/hooks/lib/
     cp "$REPO_ROOT/.claude/hooks/lib/change-risk.sh" .claude/hooks/lib/
+    cp "$REPO_ROOT/.claude/hooks/lib/test-domain-risk.sh" .claude/hooks/lib/
     cp "$REPO_ROOT/.claude/hooks/lib/agent-infrastructure-evidence.sh" .claude/hooks/lib/
     cp "$REPO_ROOT/.claude/hooks/lib/adr-triggers.sh" .claude/hooks/lib/
     git add .
@@ -120,6 +124,44 @@ expect_equal "yellow" "$(cd "$yellow_repo" && bash "$RISK" classify)" "yellow lo
 red_repo=$(new_repo red)
 printf 'final class WorkoutStorage { func save() {} }\n' > "$red_repo/Packages/FitnessStorage/Sources/FitnessStorage/WorkoutStorage.swift"
 expect_equal "red" "$(cd "$red_repo" && bash "$RISK" classify)" "red storage classification"
+
+expect_equal "blocker" "$(bash "$TEST_DOMAIN_RISK" classify-path Packages/FitnessTraining/Sources/FitnessTraining/TrainingSessionComponent.swift)" "training test domain is blocker"
+expect_equal "blocker" "$(bash "$TEST_DOMAIN_RISK" classify-path Packages/FitnessExercise/Sources/FitnessExercise/MuscleCategoryView.swift)" "exercise category test domain is blocker"
+expect_equal "blocker" "$(bash "$TEST_DOMAIN_RISK" classify-path Packages/FitnessPersistenceUI/Sources/FitnessPersistenceUI/InactiveCardModelView.swift)" "training card test domain is blocker"
+expect_equal "high" "$(bash "$TEST_DOMAIN_RISK" classify-path Packages/FitnessWorkouts/Sources/FitnessWorkouts/WorkoutsScreen.swift)" "workout test domain is high"
+expect_equal "high" "$(bash "$TEST_DOMAIN_RISK" classify-path Packages/FitnessAnalytics/Sources/FitnessAnalytics/AnalyticsView.swift)" "analytics test domain is high"
+expect_equal "low" "$(bash "$TEST_DOMAIN_RISK" classify-path FitnessApp/Features/BottomBar/Profile/ProfileView.swift)" "profile test domain is low"
+expect_equal "low" "$(bash "$TEST_DOMAIN_RISK" classify-path Packages/FitnessTraining/Sources/FitnessTraining/Feedback/FeedbackSheetView.swift)" "feedback overrides training domain to low"
+expect_equal "high" "$(printf '%s\n' Packages/FitnessProfile/Sources/FitnessProfile/ProfileViewModel.swift Packages/FitnessWorkouts/Sources/FitnessWorkouts/WorkoutsViewModel.swift | bash "$TEST_DOMAIN_RISK" classify-paths)" "mixed test domains use highest tier"
+expect_equal "medium" "$(bash "$TEST_DOMAIN_RISK" classify-path Packages/FitnessSchedule/Sources/FitnessSchedule/ScheduleView.swift)" "unmapped test domain is medium"
+
+deleted_training_repo=$(new_repo deleted-training-domain)
+rm "$deleted_training_repo/Packages/FitnessTraining/Sources/FitnessTraining/TrainingCoordinator.swift"
+expect_equal "blocker" "$(cd "$deleted_training_repo" && bash "$TEST_DOMAIN_RISK" classify worktree)" "deleted training path remains blocker"
+
+selection_repo=$(new_repo test-selection)
+mkdir -p "$selection_repo/Packages/FitnessUI/Tests/FitnessUITests"
+printf '@Test func visualContract() {}\n' > "$selection_repo/Packages/FitnessUI/Tests/FitnessUITests/CardTests.swift"
+mkdir -p "$TEMP_ROOT/test-selection-state"
+selection_output=$(
+  cd "$selection_repo"
+  STATE_DIR="$TEMP_ROOT/test-selection-state" bash "$TEST_SELECTION_CHECK"
+)
+if ! printf '%s\n' "$selection_output" | grep -q "Risk-Based Test Selection"; then
+  echo "FAIL: new test does not trigger risk-based selection hint" >&2
+  exit 1
+fi
+pass_count=$((pass_count + 1))
+if ! printf '%s\n' "$selection_output" | grep -q "domain: blocker"; then
+  echo "FAIL: test-selection hint does not include the classified domain tier" >&2
+  exit 1
+fi
+pass_count=$((pass_count + 1))
+selection_repeat_output=$(
+  cd "$selection_repo"
+  STATE_DIR="$TEMP_ROOT/test-selection-state" bash "$TEST_SELECTION_CHECK"
+)
+expect_equal "" "$selection_repeat_output" "test-selection hint is content-deduplicated"
 
 whitespace_repo=$(new_repo staged-whitespace)
 printf 'struct CardView { } \n' > "$whitespace_repo/Packages/FitnessUI/Sources/FitnessUI/CardView.swift"
@@ -168,11 +210,13 @@ valid_test_stamp="$TEMP_ROOT/test-execution-valid.stamp.md"
 failed_test_stamp="$TEMP_ROOT/test-execution-failed.stamp.md"
 misspelled_exit_stamp="$TEMP_ROOT/test-execution-misspelled-exit.stamp.md"
 misspelled_metadata_stamp="$TEMP_ROOT/test-execution-misspelled-metadata.stamp.md"
+wrong_domain_stamp="$TEMP_ROOT/test-execution-wrong-domain.stamp.md"
 fixture_fingerprint=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-printf 'result: PASS\nverified_by: tester-subagent\nmode: verify\nexit_code: 0\nsource_fingerprint: %s\n' "$fixture_fingerprint" > "$valid_test_stamp"
-printf 'result: FAIL # expected result: PASS\nverified_by: tester-subagent\nmode: verify\nexit_code: 0\nsource_fingerprint: %s\n' "$fixture_fingerprint" > "$failed_test_stamp"
-printf 'result: PASS\nverified_by: tester-subagent\nmode: verify\nbad_exit_code: 0\nsource_fingerprint: %s\n' "$fixture_fingerprint" > "$misspelled_exit_stamp"
+printf 'result: PASS\nverified_by: tester-subagent\nmode: verify\ndomain_risk: medium\nexit_code: 0\nsource_fingerprint: %s\n' "$fixture_fingerprint" > "$valid_test_stamp"
+printf 'result: FAIL # expected result: PASS\nverified_by: tester-subagent\nmode: verify\ndomain_risk: medium\nexit_code: 0\nsource_fingerprint: %s\n' "$fixture_fingerprint" > "$failed_test_stamp"
+printf 'result: PASS\nverified_by: tester-subagent\nmode: verify\ndomain_risk: medium\nbad_exit_code: 0\nsource_fingerprint: %s\n' "$fixture_fingerprint" > "$misspelled_exit_stamp"
 printf 'result: PASS\nbad_verified_by: tester-subagent\nbad_mode: verify\nexit_code: 0\nbad_source_fingerprint: %s\n' "$fixture_fingerprint" > "$misspelled_metadata_stamp"
+printf 'result: PASS\nverified_by: tester-subagent\nmode: verify\ndomain_risk: low\nexit_code: 0\nsource_fingerprint: %s\n' "$fixture_fingerprint" > "$wrong_domain_stamp"
 expect_success "tester success contract accepts canonical PASS stamp" \
   bash -c "source '$EVIDENCE'; test_execution_stamp_has_required_fields '$valid_test_stamp'"
 expect_failure "tester success contract rejects embedded PASS comment" \
@@ -181,6 +225,10 @@ expect_failure "tester success contract rejects misspelled exit field" \
   bash -c "source '$EVIDENCE'; test_execution_stamp_has_required_fields '$misspelled_exit_stamp'"
 expect_failure "tester success contract rejects misspelled metadata fields" \
   bash -c "source '$EVIDENCE'; test_execution_stamp_has_required_fields '$misspelled_metadata_stamp'"
+expect_failure "tester domain contract rejects stale domain tier" \
+  bash -c "source '$EVIDENCE'; test_execution_stamp_has_required_fields '$wrong_domain_stamp' high"
+expect_success "tester domain contract accepts a justified higher tier" \
+  bash -c "source '$EVIDENCE'; test_execution_stamp_has_required_fields '$valid_test_stamp' low"
 
 infra_repo=$(new_repo infra)
 printf '# Architecture updated\n' > "$infra_repo/.claude/references/architecture-documentation.md"
@@ -322,6 +370,8 @@ expect_success "private coordinator behavior does not require architecture docum
   bash -c "cd '$coordinator_behavior_repo' && bash '$PRE_COMMIT' >/dev/null"
 
 expect_success "runtime adapters are synchronized" "$REPO_ROOT/scripts/sync-agent-runtime.sh" --check
+expect_success "public Views alone do not mandate snapshots" \
+  grep -q 'A `public View` alone does not require a snapshot' "$REPO_ROOT/.claude/skills/create-feature/SKILL.md"
 expect_success "review workflow checks staged and unstaged whitespace" \
   grep -q 'git diff HEAD --check' "$REPO_ROOT/.claude/skills/reviewing-code-changes/SKILL.md"
 expect_success "validate command checks staged and unstaged whitespace" \

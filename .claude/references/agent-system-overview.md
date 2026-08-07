@@ -36,6 +36,26 @@ the reviewed/tested one.
 
 Classification is conservative. Agents may raise but never lower risk.
 
+## Test Domain Policy
+
+Review risk and test-domain risk are separate. `test-domain-risk.sh` sets the
+minimum test tier from product impact; technical signals may raise it and mixed
+changes use the highest affected tier.
+
+| Test domain | Tier |
+|---|---|
+| Training/Exercise, including active/idle/inactive cards, lists and categories | Blocker |
+| Workouts | High |
+| Analytics | High |
+| Profile/Friends/transit presentation | Low |
+| Feedback | Low |
+| Unmapped product area | Medium |
+
+The exact layer selection lives in
+`.claude/references/test-selection-policy.md`. Final test stamps record the
+resolved `domain_risk`, and pre-commit verifies that it is at least the staged
+path baseline.
+
 ## Rules
 
 | File | Purpose |
@@ -56,9 +76,9 @@ Classification is conservative. Agents may raise but never lower risk.
 | `reviewing-agent-effectiveness` | Explicit workflow/cost audit; never file-count-triggered |
 | `reviewing-agent-infrastructure` | Validate agent runtime and spawn verifier |
 | `reviewing-code-changes` | Risk classifier, routed review, test-once evidence |
-| `reviewing-test-quality` | Explicit unit/integration test-quality review |
-| `updating-ui-tests` | Modernize existing UI tests |
-| `writing-ui-tests` | Add new UI tests |
+| `reviewing-test-quality` | Risk-based test selection plus explicit unit/integration/snapshot quality review |
+| `updating-ui-tests` | Re-evaluate and modernize existing UI tests |
+| `writing-ui-tests` | Risk-gate and add new UI tests |
 
 `reviewing-code-changes/references/` holds conditional checklists for base,
 SwiftUI, SwiftData, state/services, tests, and architecture routing. Only
@@ -85,7 +105,7 @@ deduplicated hint only when it detects a likely issue in the working tree:
 | Check | Type | Purpose |
 |---|---|---|
 | `architecture-sync.sh` | Hint | Structural/public change has current-state documentation |
-| `test-coverage.sh` | Hint | New ViewModel/Service has a test file |
+| `test-selection.sh` | Hint | New or affected tests pass the risk-based selection gate |
 | `ui-state-sync.sh` | Hint | Generic counter + polling smell |
 | `duplicate-state.sh` | Hint | New View-owned VM conflicts with keyed cache |
 | `predicate-smell.sh` | Hint | SwiftData predicate/query hazards |
@@ -108,6 +128,10 @@ fixtures, and pre-commit enforcement:
 Shared libraries:
 
 - `change-risk.sh` — conservative risk classifier.
+- `test-domain-risk.sh` — classifies the test baseline as low, medium, high, or
+  blocker from the affected product domains.
+- `test-selection.sh` — deduplicated development hint that routes test changes
+  through `.claude/references/test-selection-policy.md`.
 - `validation-evidence.sh` — complete-candidate manifests, hashes, and exact
   worktree/staged verification; evidence-state files are excluded to avoid a
   self-referential fingerprint.
@@ -172,7 +196,7 @@ All files below are local and ignored:
 | `code-changes.manifest.tsv` | Hash per file in the complete validated candidate |
 | `code-changes.stamp.md` | Risk, reviewer, result, manifest fingerprint |
 | `test-execution.manifest.tsv` | Hash per file in the complete tested candidate |
-| `test-execution.stamp.md` | Run/verify mode, command, result, fingerprint |
+| `test-execution.stamp.md` | Domain risk, run/verify mode, command, result, fingerprint |
 | `agent-infrastructure.manifest.tsv` | Hash per verified infrastructure file |
 | `agent-infrastructure.stamp.md` | Independent verifier result bound to exact infrastructure contents |
 | `*.scratchpad.json` / `*.hint-hash.txt` | Bounded hook state |

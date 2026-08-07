@@ -5,6 +5,7 @@ struct AddFriendSheet: View {
     @Binding var isPresented: Bool
     @State private var viewModel: AddFriendViewModel
     @FocusState private var nameFieldFocused: Bool
+    @Environment(\.profileColorTheme) private var profileColors
 
     init(isPresented: Binding<Bool>, initialJSON: String? = nil, fileName: String? = nil, onAdded: @escaping () -> Void) {
         _isPresented = isPresented
@@ -28,15 +29,15 @@ struct AddFriendSheet: View {
             LazyVStack(alignment: .leading, spacing: AppStyle.Padding.sectionSpacing) {
                 Text("Add Friend")
                     .font(AppStyle.Font.sheetTitle)
-                    .foregroundColor(AppStyle.Color.white)
+                    .foregroundColor(profileColors.title)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.bottom, AppStyle.Padding.sectionSpacing)
 
                 TextField("Name", text: $viewModel.friendName)
                     .font(AppStyle.Font.tileValue)
-                    .foregroundColor(AppStyle.Color.white)
+                    .foregroundColor(profileColors.title)
                     .padding(AppStyle.Layout.profileInputPadding)
-                    .background(AppStyle.Color.sheetInputBackground)
+                    .background(profileColors.inputBackground)
                     .cornerRadius(AppStyle.CornerRadius.card)
                     .focused($nameFieldFocused)
                     .submitLabel(.done)
@@ -64,6 +65,9 @@ struct AddFriendSheet: View {
                 ExercisePickerActionButtons(
                     cancelLabel: "Cancel",
                     saveLabel: "Save",
+                    cancelColor: profileColors.title,
+                    saveColor: profileColors.accentFill,
+                    saveForegroundColor: profileColors.onAccent,
                     saveDisabled: viewModel.isSaveDisabled,
                     onCancel: { isPresented = false },
                     onSave: { viewModel.saveTapped() }
@@ -90,11 +94,11 @@ struct AddFriendSheet: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(viewModel.fileName ?? "Training data")
                     .font(AppStyle.Font.cardSmallBold)
-                    .foregroundColor(AppStyle.Color.white)
+                    .foregroundColor(profileColors.title)
                     .lineLimit(1)
                 Text("Training data received")
                     .font(AppStyle.Font.detailCaption)
-                    .foregroundColor(AppStyle.Color.white.opacity(AppStyle.Opacity.overlayBackdrop))
+                    .foregroundColor(profileColors.secondary)
             }
 
             Spacer()
@@ -104,10 +108,13 @@ struct AddFriendSheet: View {
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: AppStyle.CornerRadius.defaultButton)
-                .fill(AppStyle.Color.green.opacity(0.2))
+                .fill(profileColors.innerBackground)
                 .overlay(
                     RoundedRectangle(cornerRadius: AppStyle.CornerRadius.defaultButton)
-                        .stroke(AppStyle.Color.green, lineWidth: 2)
+                        .stroke(
+                            profileColors.accent,
+                            lineWidth: AppStyle.Layout.profileSurfaceBorderWidth
+                        )
                 )
         )
     }

@@ -12,8 +12,11 @@ Load when changed production files contain SwiftUI Views or AppStyle.
 - Preserve minimum tap targets and accessibility identifiers.
 - Custom interactive rows expose a useful VoiceOver label, value, traits, and
   actions. Identifiers alone are not accessibility coverage.
-- Public shared Views need snapshot coverage. Existing snapshots must pass
-  unchanged for claimed visual-preserving refactors.
+- Apply `.claude/references/test-selection-policy.md`; public visibility alone
+  does not require a snapshot. Prefer snapshots for stable reusable visual
+  contracts with broad impact, and remove low-value feature snapshots.
+- Retained snapshots must pass unchanged for claimed visual-preserving
+  refactors.
 - A changed visual baseline must be inspected; re-recording is not proof that
   the new rendering is correct.
 - Snapshot inspection confirms referenced app artwork actually renders; an

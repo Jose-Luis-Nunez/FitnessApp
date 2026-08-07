@@ -1,12 +1,11 @@
 import SwiftUI
 
-/// Solid-green pill button used to manually refresh remote data (Tram, BMI, …).
-/// Mirrors the Save button in `ExercisePickerActionButtons` so the action-bar
-/// language stays consistent across the app.
+/// Profile-accent pill button used to manually refresh remote data (Tram, BMI, …).
 public struct RefreshActionButton: View {
     private let title: String
     private let isLoading: Bool
     private let action: () -> Void
+    @Environment(\.profileColorTheme) private var profileColors
 
     public init(
         title: String = "Refresh",
@@ -23,7 +22,7 @@ public struct RefreshActionButton: View {
             HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
                 if isLoading {
                     ProgressView()
-                        .tint(AppStyle.Color.white)
+                        .tint(profileColors.onAccent)
                 } else {
                     Image(systemName: "arrow.clockwise")
                         .font(AppStyle.Font.profileSmallIcon)
@@ -32,14 +31,23 @@ public struct RefreshActionButton: View {
                     .font(AppStyle.Font.pickerAction)
                     .fixedSize()
             }
-            .foregroundColor(AppStyle.Color.white)
+            .foregroundColor(profileColors.onAccent)
             // 140×40 mirrors the Save button in `ExercisePickerActionButtons` —
             // intentionally kept literal so both stay byte-identical when one is updated.
             .frame(width: 140, height: 40)
-            .background(isLoading ? AppStyle.Color.green.opacity(0.6) : AppStyle.Color.green)
+            .background(profileColors.accentFill)
             .cornerRadius(AppStyle.CornerRadius.editPickerViewButton)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ProfileAccentButtonStyle())
         .disabled(isLoading)
+    }
+}
+
+/// Keeps the semantic disabled state without applying the system's additional
+/// disabled alpha, which would reduce contrast on the dark accent button.
+private struct ProfileAccentButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(configuration.isPressed ? 0.85 : 1)
     }
 }

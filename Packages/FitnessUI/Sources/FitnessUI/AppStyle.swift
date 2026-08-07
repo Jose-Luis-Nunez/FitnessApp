@@ -42,6 +42,7 @@ public enum AppStyle {
         public static let idlePlayIconOpticalOffset: CGFloat = 2.0
         /// Stroke width of the outer border around the idle exercise card.
         public static let idleCardBorderWidth: CGFloat = 1
+        public static let profileSurfaceBorderWidth: CGFloat = 1.5
         /// Stroke width of the metallic ring around the idle play button.
         /// Hairline (0.75) so the ring reads as a fine accent, not a heavy
         /// border. On @2x/@3x this resolves to a clean 1.5px / 2.25px line
@@ -430,11 +431,10 @@ public enum AppStyle {
         public static var trainingAccent: SwiftUI.Color { palette.trainingAccent }
         public static let inProgressGold = SwiftUI.Color(hex: "#D4A843")
 
-        /// Profile-family card fill. Matches the Analytics & Schedule cards
-        /// (`Color.white.opacity(Opacity.subtleBackground)`) so every top-level
-        /// tab page shares one neutral translucent grey, instead of the old
-        /// bluish solid `#1A1920` that made Profile look different.
-        public static let profileCardBackground = SwiftUI.Color.white.opacity(Opacity.subtleBackground)
+        /// Compatibility alias for clients that require the flat base color.
+        /// Profile feature views use the environment-injected
+        /// `ProfileColorTheme` and `ProfileCardContainer` instead.
+        public static let profileCardBackground = idleCardBackground
         public static let bmiUnderweight = SwiftUI.Color(hex: "#5BA4CF")
         public static var bmiNormal: SwiftUI.Color { palette.glow }
         public static let bmiOverweight = SwiftUI.Color(hex: "#E8A838")

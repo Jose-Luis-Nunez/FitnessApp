@@ -8,6 +8,7 @@ public struct FriendCategoryDetailView: View {
     public let categoryComparison: FriendCategoryComparison
     public let myName: String
     public let friendName: String
+    @Environment(\.profileColorTheme) private var profileColors
 
     public init(
         categoryComparison: FriendCategoryComparison,
@@ -52,20 +53,18 @@ public struct FriendCategoryDetailView: View {
         HStack {
             Text(myName)
                 .font(AppStyle.Font.profileCardTitle)
-                .foregroundColor(AppStyle.Color.greenLight)
+                .foregroundColor(profileColors.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Text("Exercise")
                 .font(AppStyle.Font.profileCardTitle)
-                .foregroundColor(AppStyle.Color.greenLight)
+                .foregroundColor(profileColors.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
             Text(friendName)
                 .font(AppStyle.Font.profileCardTitle)
-                .foregroundColor(AppStyle.Color.greenLight)
+                .foregroundColor(profileColors.secondary)
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(AppStyle.Padding.card)
-        .background(AppStyle.Color.profileCardBackground)
-        .cornerRadius(AppStyle.CornerRadius.card)
+        .profileCardSurface()
     }
 
     private func exercisePairRow(_ pair: ExercisePair) -> some View {
@@ -73,16 +72,16 @@ public struct FriendCategoryDetailView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(WeightFormatter.displayWeight(pair.myWeight))
                     .font(AppStyle.Font.tileValue)
-                    .foregroundColor(AppStyle.Color.white)
+                    .foregroundColor(profileColors.title)
                 Text("\(pair.myReps) reps")
                     .font(AppStyle.Font.profileCardTitle)
-                    .foregroundColor(AppStyle.Color.greenLight)
+                    .foregroundColor(profileColors.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
             Text(pair.name)
                 .font(AppStyle.Font.defaultFont)
-                .foregroundColor(AppStyle.Color.white)
+                .foregroundColor(profileColors.title)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -90,23 +89,21 @@ public struct FriendCategoryDetailView: View {
             VStack(alignment: .trailing, spacing: 2) {
                 Text(WeightFormatter.displayWeight(pair.friendWeight))
                     .font(AppStyle.Font.tileValue)
-                    .foregroundColor(AppStyle.Color.white)
+                    .foregroundColor(profileColors.title)
                 Text("\(pair.friendReps) reps")
                     .font(AppStyle.Font.profileCardTitle)
-                    .foregroundColor(AppStyle.Color.greenLight)
+                    .foregroundColor(profileColors.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(AppStyle.Padding.card)
-        .background(AppStyle.Color.profileCardBackground)
-        .cornerRadius(AppStyle.CornerRadius.card)
+        .profileCardSurface()
         .accessibilityIdentifier("id_friends_detail_pair_\(pair.name)")
     }
 
     private var emptyState: some View {
         Text("No shared exercises in this category.")
             .font(AppStyle.Font.profileCardTitle)
-            .foregroundColor(AppStyle.Color.greenLight)
+            .foregroundColor(profileColors.secondary)
             .multilineTextAlignment(.center)
             .padding(.top, 32)
     }
@@ -114,7 +111,7 @@ public struct FriendCategoryDetailView: View {
     private var exclusiveFooter: some View {
         Text("+ \(categoryComparison.friendExclusiveCount) exclusive to \(friendName)")
             .font(AppStyle.Font.profileCardTitle)
-            .foregroundColor(AppStyle.Color.greenLight.opacity(0.7))
+            .foregroundColor(profileColors.secondary.opacity(0.7))
             .frame(maxWidth: .infinity, alignment: .center)
             .padding(.top, 8)
     }

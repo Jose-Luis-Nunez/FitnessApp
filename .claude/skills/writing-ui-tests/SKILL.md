@@ -12,6 +12,21 @@ For shared conventions (DSL, constraints, template, naming) see `.claude/referen
 
 ## Workflow
 
+### Step 0 — Pass the Test Selection Gate
+
+Read `.claude/references/test-selection-policy.md` and evaluate impact,
+likelihood, detection advantage, and maintenance cost before creating a UI
+test. A UI test is justified only for a critical user journey or platform
+integration that cannot be proven reliably at a lower layer.
+
+Run `bash .claude/hooks/lib/test-domain-risk.sh classify worktree` and apply the
+domain baseline. Training/Exercise is blocker; Workouts and Analytics are high;
+Profile and Feedback are low. Technical risk may raise, never lower, that tier.
+
+If the gate does not pass, do not create the UI test. Prefer a focused unit or
+integration test when one has better detection value, or explicitly report that
+no new test is justified for a low-impact, low-likelihood scenario.
+
 ### Step 1 — Identify the User Flow
 
 Read the **Navigation** and **Feature Map** sections in `.claude/references/architecture-documentation.md` to understand the route between screens. Map each step to a `NavigationDestination` case.
@@ -65,7 +80,7 @@ Use the test template from `.claude/references/ui-test-conventions.md`. Key rule
 
 ### Step 4 — Review the Result
 
-Review the finished test file against the **Review Checklist** in `.claude/references/ui-test-conventions.md`. Fix any violations before considering the test done.
+Review the finished test file against the **Review Checklist** in `.claude/references/ui-test-conventions.md`. Confirm that the test still passes the Selection Gate after its real fixture and flow cost are known, then fix any remaining violations before considering the test done.
 
 ## Documentation Sync
 

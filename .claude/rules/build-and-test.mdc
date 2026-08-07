@@ -16,6 +16,10 @@ alwaysApply: true
   configuration is active.
 - Test final contents once. Reuse matching content-bound evidence instead of
   repeating the same successful command.
+- Select test depth with
+  `bash .claude/hooks/lib/test-domain-risk.sh classify worktree` and
+  `.claude/references/test-selection-policy.md`; do not infer test value from
+  production file count or public visibility alone.
 
 Commands:
 

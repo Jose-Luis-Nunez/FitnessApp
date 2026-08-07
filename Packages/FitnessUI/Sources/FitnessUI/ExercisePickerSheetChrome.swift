@@ -268,6 +268,8 @@ public struct ExercisePickerActionButtons: View {
     let cancelLabel: String
     let saveLabel: String
     let cancelColor: Color
+    let saveColor: Color
+    let saveForegroundColor: Color
     let saveDisabled: Bool
     let onCancel: () -> Void
     let onSave: () -> Void
@@ -277,6 +279,8 @@ public struct ExercisePickerActionButtons: View {
         cancelLabel: String = "Cancel",
         saveLabel: String = "Save",
         cancelColor: Color = AppStyle.Color.white,
+        saveColor: Color = AppStyle.Color.green,
+        saveForegroundColor: Color = AppStyle.Color.white,
         saveDisabled: Bool,
         onCancel: @escaping () -> Void,
         onSave: @escaping () -> Void,
@@ -285,6 +289,8 @@ public struct ExercisePickerActionButtons: View {
         self.cancelLabel = cancelLabel
         self.saveLabel = saveLabel
         self.cancelColor = cancelColor
+        self.saveColor = saveColor
+        self.saveForegroundColor = saveForegroundColor
         self.saveDisabled = saveDisabled
         self.onCancel = onCancel
         self.onSave = onSave
@@ -315,11 +321,11 @@ public struct ExercisePickerActionButtons: View {
     @ViewBuilder
     private var saveButton: some View {
         let button = Button(saveLabel) { onSave() }
-            .foregroundColor(AppStyle.Color.white)
+            .foregroundColor(saveForegroundColor)
             .font(AppStyle.Font.pickerAction)
             .padding(5)
             .frame(width: 140, height: 40)
-            .background(saveDisabled ? AppStyle.Color.green.opacity(0.15) : AppStyle.Color.green)
+            .background(saveDisabled ? saveColor.opacity(AppStyle.Opacity.disabledElement) : saveColor)
             .cornerRadius(AppStyle.CornerRadius.editPickerViewButton)
             .disabled(saveDisabled)
             .frame(maxWidth: .infinity, alignment: .center)

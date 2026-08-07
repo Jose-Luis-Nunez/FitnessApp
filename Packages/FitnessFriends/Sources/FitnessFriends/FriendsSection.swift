@@ -12,12 +12,13 @@ import Factory
 /// - A comparison area (left = my metrics, right = selected friend's metrics)
 public struct FriendsSection: View {
     @State private var viewModel = FriendsViewModel()
+    @Environment(\.profileColorTheme) private var profileColors
     private let friendImportCoordinator = Container.shared.friendImportCoordinator()
 
     public init() {}
 
     public var body: some View {
-        profileCard {
+        ProfileCardContainer {
             VStack(spacing: AppStyle.Padding.card) {
                 headerRow
 
@@ -85,12 +86,12 @@ public struct FriendsSection: View {
             HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
                 Text("Friends")
                     .font(AppStyle.Font.sectionHeadline)
-                    .foregroundColor(AppStyle.Color.white)
+                    .foregroundColor(profileColors.title)
                     .fixedSize()
                 Spacer()
                 Image(systemName: "chevron.down")
                     .font(AppStyle.Font.profileSmallIcon)
-                    .foregroundColor(AppStyle.Color.greenLight)
+                    .foregroundColor(profileColors.accent)
                     .rotationEffect(.degrees(viewModel.isExpanded ? 180 : 0))
             }
             .contentShape(Rectangle())
@@ -106,28 +107,34 @@ public struct FriendsSection: View {
             HStack(spacing: 12) {
                 ZStack {
                     Circle()
-                        .fill(AppStyle.Color.greenDark)
+                        .fill(profileColors.innerBackground)
                         .frame(width: AppStyle.Layout.friendUserAvatarSize, height: AppStyle.Layout.friendUserAvatarSize)
+                        .overlay {
+                            Circle()
+                                .stroke(
+                                    profileColors.innerStroke,
+                                    lineWidth: AppStyle.Layout.profileSurfaceBorderWidth
+                                )
+                        }
                     Text(viewModel.myNickname.prefix(1).uppercased())
                         .font(AppStyle.Font.defaultFont)
-                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .foregroundColor(profileColors.accent)
                 }
 
                 Text(viewModel.myNickname)
                     .font(AppStyle.Font.tileValue)
-                    .foregroundColor(AppStyle.Color.white)
+                    .foregroundColor(profileColors.title)
                     .lineLimit(1)
 
                 Spacer()
 
                 Image(systemName: "square.and.arrow.up")
                     .font(AppStyle.Font.profileSmallIcon)
-                    .foregroundColor(AppStyle.Color.green)
+                    .foregroundColor(profileColors.accent)
             }
             .padding(.vertical, AppStyle.Padding.cardVertical)
             .padding(.horizontal, AppStyle.Padding.card)
-            .background(AppStyle.Color.greenDark.opacity(AppStyle.Opacity.fadedOverlay))
-            .cornerRadius(AppStyle.CornerRadius.card)
+            .profileReadOnlyTileSurface(cornerRadius: AppStyle.CornerRadius.card)
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("id_friends_user_row")
@@ -152,16 +159,27 @@ public struct FriendsSection: View {
                 ZStack {
                     Circle()
                         .fill(viewModel.selectedFriendId == friend.id
-                              ? AppStyle.Color.green
-                              : AppStyle.Color.greenDark)
+                              ? profileColors.accentFill
+                              : profileColors.innerBackground)
                         .frame(width: AppStyle.Layout.friendAvatarSize, height: AppStyle.Layout.friendAvatarSize)
+                        .overlay {
+                            Circle()
+                                .stroke(
+                                    profileColors.innerStroke,
+                                    lineWidth: AppStyle.Layout.profileSurfaceBorderWidth
+                                )
+                        }
                     Text(friend.name.prefix(1).uppercased())
                         .font(AppStyle.Font.tileValue)
-                        .foregroundColor(AppStyle.Color.white)
+                        .foregroundColor(
+                            viewModel.selectedFriendId == friend.id
+                            ? profileColors.onAccent
+                            : profileColors.accent
+                        )
                 }
                 Text(friend.name)
                     .font(AppStyle.Font.profileCardTitle)
-                    .foregroundColor(AppStyle.Color.white)
+                    .foregroundColor(profileColors.title)
                     .lineLimit(1)
                     .frame(maxWidth: AppStyle.Layout.friendTileNameMaxWidth)
             }
@@ -184,15 +202,18 @@ public struct FriendsSection: View {
             VStack(spacing: 6) {
                 ZStack {
                     Circle()
-                        .stroke(AppStyle.Color.greenLight.opacity(AppStyle.Opacity.fadedOverlay), lineWidth: 1.5)
+                        .stroke(
+                            profileColors.innerStroke,
+                            lineWidth: AppStyle.Layout.profileSurfaceBorderWidth
+                        )
                         .frame(width: AppStyle.Layout.friendAvatarSize, height: AppStyle.Layout.friendAvatarSize)
                     Image(systemName: "plus")
                         .font(AppStyle.Font.tileValue)
-                        .foregroundColor(AppStyle.Color.greenLight)
+                        .foregroundColor(profileColors.accent)
                 }
                 Text("Add")
                     .font(AppStyle.Font.profileCardTitle)
-                    .foregroundColor(AppStyle.Color.greenLight)
+                    .foregroundColor(profileColors.secondary)
                     .lineLimit(1)
             }
         }
@@ -217,26 +238,10 @@ public struct FriendsSection: View {
         } else if !viewModel.friends.isEmpty {
             Text("Select a friend")
                 .font(AppStyle.Font.profileCardTitle)
-                .foregroundColor(AppStyle.Color.greenLight)
+                .foregroundColor(profileColors.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 8)
         }
     }
 
-    // MARK: - Card container (mirrors ProfileCard from ProfileView)
-
-    @ViewBuilder
-    private func profileCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            content()
-        }
-        .padding(AppStyle.Padding.card)
-        .frame(
-            maxWidth: .infinity,
-            minHeight: AppStyle.Layout.profileCardCollapsedMinHeight,
-            alignment: .leading
-        )
-        .background(AppStyle.Color.profileCardBackground)
-        .cornerRadius(AppStyle.CornerRadius.card)
-    }
 }

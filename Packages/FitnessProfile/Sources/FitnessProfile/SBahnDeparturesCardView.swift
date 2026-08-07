@@ -4,6 +4,7 @@ import FitnessUI
 public struct SBahnDeparturesCardView: View {
 
     @Bindable private var viewModel: SBahnDeparturesViewModel
+    @Environment(\.profileColorTheme) private var profileColors
 
     public init(viewModel: SBahnDeparturesViewModel) {
         self.viewModel = viewModel
@@ -23,14 +24,7 @@ public struct SBahnDeparturesCardView: View {
                 .padding(.top, AppStyle.Padding.card)
             }
         }
-        .padding(AppStyle.Padding.card)
-        .frame(
-            maxWidth: .infinity,
-            minHeight: AppStyle.Layout.profileCardCollapsedMinHeight,
-            alignment: .leading
-        )
-        .background(AppStyle.Color.profileCardBackground)
-        .cornerRadius(AppStyle.CornerRadius.card)
+        .profileCardSurface()
     }
 
     // MARK: - Header
@@ -42,17 +36,17 @@ public struct SBahnDeparturesCardView: View {
             HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
                 Image(systemName: "tram.tunnel.fill")
                     .font(AppStyle.Font.profileEditIcon)
-                    .foregroundColor(AppStyle.Color.green)
+                    .foregroundColor(profileColors.accent)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("S-Bahn")
                         .font(AppStyle.Font.sectionHeadline)
-                        .foregroundColor(AppStyle.Color.white)
+                        .foregroundColor(profileColors.title)
                         .fixedSize()
 
                     Text("\(viewModel.fromLabel) → \(viewModel.toLabel)")
                         .font(AppStyle.Font.profileCardTitle)
-                        .foregroundColor(AppStyle.Color.greenLight)
+                        .foregroundColor(profileColors.secondary)
                         .lineLimit(1)
                 }
 
@@ -60,7 +54,7 @@ public struct SBahnDeparturesCardView: View {
 
                 Image(systemName: "chevron.down")
                     .font(AppStyle.Font.profileSmallIcon)
-                    .foregroundColor(AppStyle.Color.greenLight)
+                    .foregroundColor(profileColors.accent)
                     .rotationEffect(.degrees(viewModel.isExpanded ? 180 : 0))
             }
             .contentShape(Rectangle())
@@ -80,10 +74,9 @@ public struct SBahnDeparturesCardView: View {
             } label: {
                 Image(systemName: "arrow.left.arrow.right")
                     .font(AppStyle.Font.profileEditIcon)
-                    .foregroundColor(AppStyle.Color.green)
+                    .foregroundColor(profileColors.accent)
                     .frame(width: AppStyle.Layout.checkmarkSize, height: AppStyle.Layout.checkmarkSize)
-                    .background(AppStyle.Color.sheetInputBackground)
-                    .cornerRadius(AppStyle.CornerRadius.defaultButton)
+                    .profileReadOnlyTileSurface(cornerRadius: AppStyle.CornerRadius.defaultButton)
             }
             .accessibilityIdentifier("id_profile_sbahn_swap")
             .disabled(viewModel.isLoading)
@@ -96,18 +89,17 @@ public struct SBahnDeparturesCardView: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(caption)
                 .font(AppStyle.Font.profileCardTitle)
-                .foregroundColor(AppStyle.Color.greenLight)
+                .foregroundColor(profileColors.secondary)
             Text(text)
                 .font(AppStyle.Font.tileValue)
-                .foregroundColor(AppStyle.Color.white)
+                .foregroundColor(profileColors.title)
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
         }
         .padding(.horizontal, AppStyle.Padding.card)
         .padding(.vertical, AppStyle.Layout.profileInputPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppStyle.Color.sheetInputBackground)
-        .cornerRadius(AppStyle.CornerRadius.tile)
+        .profileReadOnlyTileSurface()
     }
 
     // MARK: - Content Body
@@ -134,7 +126,7 @@ public struct SBahnDeparturesCardView: View {
     private var loadingRow: some View {
         HStack {
             ProgressView()
-                .tint(AppStyle.Color.green)
+                .tint(profileColors.accent)
             Spacer()
         }
         .frame(maxWidth: .infinity)
@@ -144,14 +136,14 @@ public struct SBahnDeparturesCardView: View {
     private var emptyRow: some View {
         Text("No trains in the next 60 minutes.")
             .font(AppStyle.Font.detailCaption)
-            .foregroundColor(AppStyle.Color.gray)
+            .foregroundColor(profileColors.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var requestPromptRow: some View {
         Text("Tap Refresh to load departures.")
             .font(AppStyle.Font.detailCaption)
-            .foregroundColor(AppStyle.Color.gray)
+            .foregroundColor(profileColors.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -171,14 +163,14 @@ public struct SBahnDeparturesCardView: View {
                 HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
                     Text(dep.line)
                         .font(AppStyle.Font.cardSmallBold)
-                        .foregroundColor(AppStyle.Color.white)
+                        .foregroundColor(profileColors.onAccent)
                         .frame(minWidth: AppStyle.Layout.setRowBadgeSize, minHeight: AppStyle.Layout.setRowBadgeSize)
-                        .background(AppStyle.Color.green)
+                        .background(profileColors.accentFill)
                         .cornerRadius(AppStyle.CornerRadius.pill)
 
                     Text(viewModel.formattedTime(for: dep.plannedWhen))
                         .font(AppStyle.Font.tileValue)
-                        .foregroundColor(AppStyle.Color.white)
+                        .foregroundColor(profileColors.title)
                         .fixedSize()
 
                     delayBadge(for: dep.delayMinutes)
@@ -187,7 +179,7 @@ public struct SBahnDeparturesCardView: View {
 
                     Text(dep.direction)
                         .font(AppStyle.Font.detailCaption)
-                        .foregroundColor(AppStyle.Color.greenLight)
+                        .foregroundColor(profileColors.secondary)
                         .lineLimit(1)
                         .truncationMode(.tail)
 
@@ -215,8 +207,7 @@ public struct SBahnDeparturesCardView: View {
         .padding(.horizontal, AppStyle.Padding.card)
         .padding(.vertical, AppStyle.Layout.profileButtonPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppStyle.Color.sheetInputBackground)
-        .cornerRadius(AppStyle.CornerRadius.tile)
+        .profileReadOnlyTileSurface()
     }
 
     /// Caption rendered for east-direct trips (no transfer needed).
@@ -226,7 +217,7 @@ public struct SBahnDeparturesCardView: View {
         let arrivalStr = viewModel.formattedTime(for: arrival)
         return Text("→ \(viewModel.toLabel) · \(arrivalStr)")
             .font(AppStyle.Font.detailCaption)
-            .foregroundColor(AppStyle.Color.gray)
+            .foregroundColor(profileColors.secondary)
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -242,7 +233,7 @@ public struct SBahnDeparturesCardView: View {
         }
         return Text(caption)
             .font(AppStyle.Font.detailCaption)
-            .foregroundColor(AppStyle.Color.gray)
+            .foregroundColor(profileColors.secondary)
             .lineLimit(2)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -269,7 +260,7 @@ public struct SBahnDeparturesCardView: View {
     @ViewBuilder
     private func detailPanel(for dep: SBahnDeparture) -> some View {
         Divider()
-            .background(AppStyle.Color.gray.opacity(AppStyle.Opacity.subtleStroke))
+            .background(profileColors.divider)
 
         VStack(alignment: .leading, spacing: 6) {
             detailRow(label: "Scheduled departure", value: viewModel.formattedTime(for: dep.plannedWhen))
@@ -279,12 +270,12 @@ public struct SBahnDeparturesCardView: View {
 
             if let bridge = dep.bridge {
                 Divider()
-                    .background(AppStyle.Color.gray.opacity(AppStyle.Opacity.subtleStroke))
+                    .background(profileColors.divider)
                     .padding(.top, 4)
 
                 Text("Transfer")
                     .font(AppStyle.Font.profileCardTitle)
-                    .foregroundColor(AppStyle.Color.greenLight)
+                    .foregroundColor(profileColors.secondary)
 
                 detailRow(label: "Get off at", value: bridge.transferStation)
                 detailRow(
@@ -313,11 +304,11 @@ public struct SBahnDeparturesCardView: View {
         HStack(alignment: .top, spacing: AppStyle.DeviceLayout.cardSpacing) {
             Text(label)
                 .font(AppStyle.Font.detailCaption)
-                .foregroundColor(AppStyle.Color.gray)
+                .foregroundColor(profileColors.secondary)
                 .frame(width: 130, alignment: .leading)
             Text(value)
                 .font(AppStyle.Font.detailCaption)
-                .foregroundColor(AppStyle.Color.white)
+                .foregroundColor(profileColors.title)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -365,7 +356,7 @@ public struct SBahnDeparturesCardView: View {
             } else {
                 Text("Updated \(lastUpdated)")
                     .font(AppStyle.Font.sheetCaption)
-                    .foregroundColor(AppStyle.Color.gray)
+                    .foregroundColor(profileColors.secondary)
             }
         }
     }

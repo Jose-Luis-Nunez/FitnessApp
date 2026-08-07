@@ -179,14 +179,17 @@ gate_reviewer() {
 gate_tester() {
   local stamp="$STATE_DIR/test-execution.stamp.md"
   local manifest="$STATE_DIR/test-execution.manifest.tsv"
+  local domain_risk=""
 
   if [ ! -f "$stamp" ]; then
     emit_block "[tester] Gate failed: test-execution stamp missing. Run xcodebuild test and write results to .claude/hooks/state/test-execution.stamp.md."
   fi
 
   source ".claude/hooks/lib/validation-evidence.sh"
-  if ! test_execution_stamp_has_required_fields "$stamp"; then
-    emit_block "[tester] Gate failed: stamp must contain exact result: PASS, exit_code: 0, verified_by: tester-subagent, mode: run|verify, and source_fingerprint fields."
+  source ".claude/hooks/lib/test-domain-risk.sh"
+  domain_risk=$(test_domain_changed_paths worktree | classify_test_domain_paths)
+  if ! test_execution_stamp_has_required_fields "$stamp" "$domain_risk"; then
+    emit_block "[tester] Gate failed: stamp must contain exact result: PASS, exit_code: 0, domain_risk: $domain_risk, verified_by: tester-subagent, mode: run|verify, and source_fingerprint fields."
   fi
 
   if ! validation_manifest_matches_worktree "$manifest" ||

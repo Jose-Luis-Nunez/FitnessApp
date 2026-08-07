@@ -31,6 +31,7 @@ fi
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 EVIDENCE_LIB="$REPO_ROOT/.claude/hooks/lib/validation-evidence.sh"
 RISK_LIB="$REPO_ROOT/.claude/hooks/lib/change-risk.sh"
+TEST_DOMAIN_RISK_LIB="$REPO_ROOT/.claude/hooks/lib/test-domain-risk.sh"
 
 if [ -f "$EVIDENCE_LIB" ]; then
   # shellcheck disable=SC1090
@@ -39,6 +40,10 @@ fi
 if [ -f "$RISK_LIB" ]; then
   # shellcheck disable=SC1090
   source "$RISK_LIB"
+fi
+if [ -f "$TEST_DOMAIN_RISK_LIB" ]; then
+  # shellcheck disable=SC1090
+  source "$TEST_DOMAIN_RISK_LIB"
 fi
 
 # --- Check 1: Content-bound code validation ---
@@ -85,12 +90,14 @@ if [ "$STAGED_SWIFT_COUNT" -ge 1 ]; then
   TEST_REPORT=".claude/hooks/state/test-execution.stamp.md"
   TEST_MANIFEST=".claude/hooks/state/test-execution.manifest.tsv"
   STAGED_RISK=${STAGED_RISK:-$(classify_change_risk staged)}
+  STAGED_TEST_DOMAIN=$(test_domain_changed_paths staged | classify_test_domain_paths)
   TEST_VALID=false
 
   if validation_manifest_matches_staged "$TEST_MANIFEST" &&
-     validation_stamp_matches_manifest "$TEST_REPORT" "$TEST_MANIFEST"; then
+     validation_stamp_matches_manifest "$TEST_REPORT" "$TEST_MANIFEST" &&
+     test_execution_stamp_has_domain_contract "$TEST_REPORT" "$STAGED_TEST_DOMAIN"; then
     if [ "$STAGED_RISK" = "green" ] ||
-       test_execution_stamp_has_required_fields "$TEST_REPORT"; then
+       test_execution_stamp_has_required_fields "$TEST_REPORT" "$STAGED_TEST_DOMAIN"; then
       TEST_VALID=true
     fi
   fi
@@ -98,12 +105,12 @@ if [ "$STAGED_SWIFT_COUNT" -ge 1 ]; then
   if [ "$TEST_VALID" = false ]; then
     ERRORS="${ERRORS}
 ═══════════════════════════════════════════════════════════════
-RULE: Final tests must match the exact staged Swift contents.
-VIOLATION: No reusable PASS evidence covers this ${STAGED_RISK} change.
+RULE: Final tests must match the exact staged Swift contents and product-domain tier.
+VIOLATION: No reusable PASS evidence covers this ${STAGED_RISK} change at test domain ${STAGED_TEST_DOMAIN}.
 FIX:
   - Run the required affected tests once, or let the tester verify an existing
     matching result without re-running it.
-  - Record test-execution.manifest.tsv and a PASS test stamp with
+  - Record test-execution.manifest.tsv and a PASS test stamp with domain_risk,
     verified_by, command, result, and source_fingerprint.
 ═══════════════════════════════════════════════════════════════"
     EXIT_CODE=1

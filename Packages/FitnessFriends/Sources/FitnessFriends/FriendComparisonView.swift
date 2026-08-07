@@ -12,6 +12,7 @@ struct FriendComparisonView: View {
     // Snapshot captured at tap-time so the sheet stays stable if comparison changes while open.
     @State private var detailComparison: FriendCategoryComparison?
     @State private var showingDetail = false
+    @Environment(\.profileColorTheme) private var profileColors
 
     var body: some View {
         VStack(spacing: 8) {
@@ -36,16 +37,16 @@ struct FriendComparisonView: View {
         HStack {
             Text(myName)
                 .font(AppStyle.Font.profileCardTitle)
-                .foregroundColor(AppStyle.Color.greenLight)
+                .foregroundColor(profileColors.secondary)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Text("Category")
                 .font(AppStyle.Font.profileCardTitle)
-                .foregroundColor(AppStyle.Color.greenLight)
+                .foregroundColor(profileColors.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
             Text(friendName)
                 .font(AppStyle.Font.profileCardTitle)
-                .foregroundColor(AppStyle.Color.greenLight)
+                .foregroundColor(profileColors.secondary)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
@@ -68,22 +69,22 @@ struct FriendComparisonView: View {
                 HStack {
                     Text("\(myCount)")
                         .font(AppStyle.Font.tileValue)
-                        .foregroundColor(AppStyle.Color.white)
+                        .foregroundColor(profileColors.title)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     HStack(spacing: 4) {
                         Text(category.displayName)
                             .font(AppStyle.Font.defaultFont)
-                            .foregroundColor(AppStyle.Color.greenLight)
+                            .foregroundColor(profileColors.secondary)
                         if hasPairs {
                             Image(systemName: "chevron.right")
                                 .font(AppStyle.Font.cardSmallLabel)
-                                .foregroundColor(AppStyle.Color.greenLight.opacity(AppStyle.Opacity.secondaryLabel))
+                                .foregroundColor(profileColors.accent.opacity(AppStyle.Opacity.secondaryLabel))
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
                     Text("\(friendCount)")
                         .font(AppStyle.Font.tileValue)
-                        .foregroundColor(AppStyle.Color.white)
+                        .foregroundColor(profileColors.title)
                         .frame(maxWidth: .infinity, alignment: .trailing)
                 }
                 .padding(.vertical, 10)
@@ -97,7 +98,7 @@ struct FriendComparisonView: View {
     private var summaryRows: some View {
         VStack(spacing: 8) {
             Divider()
-                .background(AppStyle.Color.greenLight.opacity(0.2))
+                .background(profileColors.divider)
                 .padding(.vertical, 4)
 
             comparisonRow(
@@ -117,15 +118,15 @@ struct FriendComparisonView: View {
         HStack {
             Text(myValue)
                 .font(AppStyle.Font.tileValue)
-                .foregroundColor(AppStyle.Color.white)
+                .foregroundColor(profileColors.title)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Text(label)
                 .font(AppStyle.Font.defaultFont)
-                .foregroundColor(AppStyle.Color.greenLight)
+                .foregroundColor(profileColors.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
             Text(friendValue)
                 .font(AppStyle.Font.tileValue)
-                .foregroundColor(AppStyle.Color.white)
+                .foregroundColor(profileColors.title)
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding(.horizontal, 4)

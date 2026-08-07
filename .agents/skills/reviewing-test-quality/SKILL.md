@@ -9,6 +9,11 @@ description: >-
 
 # Reviewing Test Quality
 
+Before reviewing coverage or test mechanics, run
+`bash .claude/hooks/lib/test-domain-risk.sh classify worktree` and apply
+`.claude/references/test-selection-policy.md`. The domain tier is the baseline;
+technical risk may raise but never lower it.
+
 ## Context
 
 - **Test framework:** Swift Testing (`@Test`, `@Suite`, `#expect`, `Issue.record`)
@@ -301,7 +306,9 @@ Ratio interpretation:
 
 ### H: Snapshot Tests
 
-Snapshot tests guard the visual contract of `public` Views in `FitnessUI` and `FitnessPersistenceUI`. They live in:
+Snapshot tests guard selected reusable visual contracts in `FitnessUI` and
+`FitnessPersistenceUI`. Before adding, retaining, or re-recording one, apply
+`.claude/references/test-selection-policy.md`. They live in:
 
 - `Packages/FitnessUI/Tests/FitnessUITests/SnapshotTests.swift`
 - `Packages/FitnessPersistenceUI/Tests/FitnessPersistenceUITests/IdleCardSnapshotTests.swift`
@@ -330,17 +337,26 @@ struct <ViewName>SnapshotTests {
 
 #### H.2 — Where snapshot tests are required vs optional
 
-| View kind | Snapshot required? |
+No View requires a snapshot solely because it is `public` or lives in a shared
+package. Select coverage by risk:
+
+| View kind | Snapshot decision |
 |---|---|
-| New `public struct …: View` in `FitnessUI/Sources/` | **Yes** — at least one default-state snapshot. |
-| New `public struct …: View` in `FitnessPersistenceUI/Sources/` | **Yes** — typically a full-card snapshot via the existing `IdleCardSnapshotTests.swift` patterns. |
-| Thin wrapper (1:1 delegation to a covered View) | Optional. Note exception in the diff. |
-| `internal` / `fileprivate` Views | Optional — covered transitively by the public View that embeds them. |
-| Pure non-View types (modifiers, helpers, data) | No. |
+| Stable shared primitive/component with broad consumers and meaningful visual semantics | Usually justified when a pixel-level regression would affect several screens. |
+| Shared stateful component with distinct meaningful visual states | Consider a small set of representative variants after lower-level behavior tests. |
+| Feature screen/composition that changes rarely | Usually no snapshot; test risky logic below the UI and inspect intentional design changes directly. |
+| Thin wrapper around a covered component | No snapshot. |
+| `internal` / `fileprivate` View | Usually covered through the selected public component, if any. |
+| Pure non-View type | No snapshot; use a unit test only when behavior risk warrants it. |
 
-#### H.3 — When to re-record a baseline
+The reviewer must name the visual contract, regression impact, likelihood, and
+maintenance cost. If that case is weak, recommend no snapshot or removal of the
+legacy snapshot.
 
-Re-record when *and only when* the visual change is **intentional**:
+#### H.3 — When to re-record a retained baseline
+
+First re-run the Selection Gate. Re-record only when the snapshot remains worth
+maintaining and the visual change is **intentional**:
 
 - new color/gradient/font token
 - changed layout proportions (sizes, paddings, offsets)
@@ -365,6 +381,7 @@ Or, for a single suite, temporarily flip `record: true` on the failing `assertSn
 |---|---|---|
 | Snapshot test exists but no PNG checked in | First run records on the developer's machine and fails CI. | Run with `RECORD_SNAPSHOTS=1` once; commit the baseline PNG alongside the test. |
 | `@Test` per prop combination (12+ tests for one View) | Every visual tweak forces re-recording dozens of baselines. | Collapse to 3–5 meaningful variants; let unit tests cover prop logic. |
+| Feature-page snapshot retained only because it already exists | Intentional UI work creates recurring baseline churn without protecting a critical contract. | Apply the Selection Gate; remove the test, baselines, and snapshot-only dependency when value is low. |
 | Re-recorded baseline in a "no-visual-change" refactor PR | The refactor was not pixel-equivalent — a real regression hidden as a re-record. | Stop, diff the old/new PNG visually (`git diff -- '**/*.png'` or open both), explain in PR description, or revert. |
 | Snapshot of a View that owns dynamic data (date, random, animated) | Flaky baseline. | Inject the dynamic input as a parameter; pass a fixed value in the snapshot. |
 | Missing `@MainActor` → compiler / runtime error | n/a | Add `@MainActor` on the `struct`. |
