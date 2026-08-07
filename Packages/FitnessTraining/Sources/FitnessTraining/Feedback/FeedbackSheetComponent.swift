@@ -2,133 +2,258 @@ import SwiftUI
 import FitnessCore
 import FitnessUI
 
-/// Connects the `TrainingCoordinator`'s feedback presentation flag to the
-/// `FeedbackSheetView` via a native `.sheet(...)` with **two** progressive
-/// detents — the **same presentation pattern as `AnalyticsView`** (see
-/// `InactiveCardModelView` / `ActiveCardModelView` / `IdleActiveCardModelView`
-/// in `FitnessPersistenceUI`). The component itself is a zero-size
-/// `Color.clear` mount point inside the training flow's view tree — its only
-/// job is to own the presentation modifier and to lazily instantiate
-/// `FeedbackViewModel` per presentation.
+/// Presents post-exercise feedback as a separate, draggable sheet above the
+/// training flow. Its compact rest height comes directly from the currently
+/// rendered training sheet so both surfaces occupy the exact same frame.
 ///
-/// Why `.sheet` (and not `.fullScreenCover` or `OverlaySheetContainer`):
-/// - Native sheet renders the iOS-system **grabber** automatically, matching
-///   the look of `AnalyticsView` exactly (where the user expects to see a
-///   small horizontal handle at the top).
-/// - Two `.presentationDetents` (a content-fitted `.height(...)` and `.large`)
-///   create a progressive-disclosure UX: the sheet opens small showing only
-///   the title, the four Physical-Symptom tiles, and the Hide/Save action
-///   bar. As soon as the user selects any symptom, it auto-expands to
-///   `.large`; deselecting all symptoms collapses it back. The user can also
-///   drag manually between detents.
-/// - The small detent height is measured at runtime via a `PreferenceKey`
-///   inside `FeedbackSheetView` (`onInitialContentHeightChange`) and stored
-///   in `smallDetentHeight`, so the small state always exactly fits its
-///   content (Dynamic Type / locale-safe).
-/// - Native pull-to-dismiss is the system-standard gesture and routes through
-///   our `presentationBinding.set(false)` automatically, no custom gesture
-///   handling required.
-///
-/// The `UIOverlayState.isEditingSheetVisible` flag is set while the sheet is
-/// visible so the app-level bottom action bar hides, matching the behaviour
-/// of `TrainingPickerComponent` and `MuscleCategoryView`.
+/// A custom presentation surface is intentional here. Starting with iOS 26,
+/// native sheets add system-controlled Liquid Glass insets around small custom
+/// detents. Those insets make the content narrower and shorter than the
+/// requested detent and impose a different corner radius. Rendering the sheet
+/// inside the existing full-width presentation layer preserves the two rest
+/// states and drag interaction while allowing its compact geometry and surface
+/// to match the training sheet exactly.
 public struct FeedbackSheetComponent: View {
     @Bindable public var coordinator: TrainingCoordinator
     public let category: MuscleCategoryGroup?
+    public let initialDetentHeight: CGFloat
 
     @Environment(UIOverlayState.self) private var overlayState
     @State private var viewModel: FeedbackViewModel?
+    @State private var presentationState = FeedbackSheetPresentationState()
+    @GestureState private var dragTranslation: CGFloat = 0
 
-    /// Conservative initial estimate for the small/initial detent height while
-    /// the actual content height has not yet been measured. Replaced by the
-    /// `FeedbackSheetView` measurement on the first layout pass; the brief
-    /// snap is invisible because both happen in the same render cycle on
-    /// modern iOS.
-    private static let initialDetentEstimate: CGFloat = 380
-    /// Approximate height of the sticky bottom action bar (Hide/Save buttons
-    /// + the 24pt top-padding the sheet adds around it). Added to the
-    /// content-block height reported by `FeedbackSheetView` to compute the
-    /// final small detent height.
-    private static let actionBarHeight: CGFloat = 84
-
-    @State private var smallDetentHeight: CGFloat = initialDetentEstimate
-    @State private var selectedDetent: PresentationDetent = .height(initialDetentEstimate)
-
-    public init(coordinator: TrainingCoordinator, category: MuscleCategoryGroup? = nil) {
+    public init(
+        coordinator: TrainingCoordinator,
+        category: MuscleCategoryGroup? = nil,
+        initialDetentHeight: CGFloat = 380
+    ) {
         self.coordinator = coordinator
         self.category = category
+        self.initialDetentHeight = initialDetentHeight
+    }
+
+    private var compactHeight: CGFloat {
+        max(1, initialDetentHeight)
     }
 
     public var body: some View {
-        Color.clear
-            .frame(width: 0, height: 0)
-            .sheet(isPresented: presentationBinding) {
-                if let vm = viewModel {
-                    FeedbackSheetView(
-                        viewModel: vm,
-                        isPresented: presentationBinding,
-                        onInitialContentHeightChange: { contentHeight in
-                            let proposed = contentHeight + Self.actionBarHeight
-                            guard abs(proposed - smallDetentHeight) > 0.5 else { return }
-                            smallDetentHeight = proposed
-                            // If the small detent is currently selected, keep it
-                            // selected with the new height so the sheet snaps to
-                            // the freshly measured size on the next layout.
-                            if vm.symptoms.isEmpty {
-                                selectedDetent = .height(proposed)
-                            }
-                        }
-                    )
-                    .presentationDetents([.height(smallDetentHeight), .large], selection: $selectedDetent)
-                    .presentationDragIndicator(.visible)
-                    .presentationBackground(AppStyle.Color.backgroundColor)
-                    .onChange(of: vm.symptoms.isEmpty) { _, isEmpty in
-                        withAnimation(.easeInOut(duration: 0.25)) {
-                            selectedDetent = isEmpty ? .height(smallDetentHeight) : .large
-                        }
-                    }
+        GeometryReader { geometry in
+            if coordinator.isFeedbackSheetPresented, let vm = viewModel {
+                ZStack(alignment: .bottom) {
+                    Color.black.opacity(AppStyle.Opacity.overlayBackdrop)
+                        .ignoresSafeArea()
+                        .contentShape(Rectangle())
+                        .onTapGesture { dismissFeedback() }
+                        .accessibilityElement()
+                        .accessibilityLabel("Cancel feedback")
+                        .accessibilityAddTraits(.isButton)
+                        .accessibilityAction { dismissFeedback() }
+                        .accessibilityIdentifier(TrainingIDs.feedbackSheetBackdrop)
+
+                    feedbackSheet(viewModel: vm, geometry: geometry)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .ignoresSafeArea(edges: .bottom)
+                .zIndex(2)
             }
-            .onChange(of: coordinator.isFeedbackSheetPresented) { _, isPresented in
-                overlayState.isEditingSheetVisible = isPresented
-                if isPresented, let exercise = coordinator.currentExercise {
-                    // Bind the view model to the active session so save / re-save
-                    // operate on the per-session row in storage. If for some
-                    // reason there is no active session id (sheet opened outside
-                    // an active training, edge case), fall back to a fresh UUID
-                    // — the sheet still works, just without session linkage.
-                    let sessionId = coordinator.currentSessionId(for: exercise.id) ?? UUID()
-                    let vm = FeedbackViewModel(
-                        exerciseId: exercise.id,
-                        sessionId: sessionId,
-                        exerciseCategory: category,
-                        draftStore: coordinator.draftStore,
-                        currentFocusedExerciseId: { [weak coordinator] in
-                            coordinator?.focusedExerciseId
-                        }
-                    )
-                    viewModel = vm
-                    // Open small for a fresh sheet (no symptoms yet) and large
-                    // when re-editing an existing draft / saved entry so the
-                    // user immediately sees Pain / Energy / Notes.
-                    selectedDetent = vm.symptoms.isEmpty
-                        ? .height(smallDetentHeight)
-                        : .large
-                } else if !isPresented {
-                    viewModel = nil
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .allowsHitTesting(coordinator.isFeedbackSheetPresented)
+        .animation(
+            .easeInOut(duration: 0.25),
+            value: coordinator.isFeedbackSheetPresented
+        )
+        .onAppear {
+            if coordinator.isFeedbackSheetPresented {
+                handlePresentationChange(true)
+            }
+        }
+        .onChange(of: coordinator.isFeedbackSheetPresented) { _, isPresented in
+            handlePresentationChange(isPresented)
+        }
+    }
+
+    private func feedbackSheet(
+        viewModel: FeedbackViewModel,
+        geometry: GeometryProxy
+    ) -> some View {
+        let compactPresentationHeight = compactHeight + geometry.safeAreaInsets.bottom
+        let largeHeight = max(
+            compactPresentationHeight,
+            geometry.size.height
+                - geometry.safeAreaInsets.top
+                + geometry.safeAreaInsets.bottom
+        )
+        let visibleHeight = presentationState.height(
+            compactHeight: compactPresentationHeight,
+            largeHeight: largeHeight,
+            dragTranslation: dragTranslation
+        )
+
+        return FeedbackSheetView(
+            viewModel: viewModel,
+            isPresented: presentationBinding
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(height: visibleHeight, alignment: .top)
+        .background { feedbackSheetSurface }
+        .clipShape(feedbackSheetShape)
+        .overlay { feedbackSheetBorder }
+        .overlay(alignment: .top) { feedbackDragRegion }
+        .offset(y: presentationState.dismissOffset(dragTranslation: dragTranslation))
+        .simultaneousGesture(compactSheetDragGesture)
+        .animation(.interactiveSpring, value: presentationState.isExpanded)
+        .animation(.interactiveSpring, value: viewModel.symptoms.isEmpty)
+        .onChange(of: viewModel.symptoms.isEmpty) { _, isEmpty in
+            presentationState.synchronizeWithSymptoms(isEmpty: isEmpty)
+        }
+    }
+
+    private var feedbackDragGesture: some Gesture {
+        DragGesture(minimumDistance: 12, coordinateSpace: .global)
+            .updating($dragTranslation) { value, state, _ in
+                state = value.translation.height
+            }
+            .onEnded { value in
+                let result = presentationState.endDrag(
+                    translation: value.translation.height,
+                    source: .header
+                )
+                if result == .dismiss {
+                    dismissFeedback()
                 }
             }
     }
 
-    /// Two-way bridge between SwiftUI's presentation API and the coordinator's
-    /// state. Writing `false` closes the feedback flow via the coordinator so
-    /// any downstream consumers (e.g. overlay flags, analytics) react.
+    /// The compact form does not need to scroll, so an upward swipe from its
+    /// content can expand it even when the drag does not begin on the header.
+    /// Once expanded, the ScrollView keeps its normal behavior and the header
+    /// hit region controls collapse and dismissal.
+    private var compactSheetDragGesture: some Gesture {
+        DragGesture(minimumDistance: 12, coordinateSpace: .global)
+            .onEnded { value in
+                guard !presentationState.isExpanded,
+                      value.translation.height < -40 else { return }
+
+                _ = presentationState.endDrag(
+                    translation: value.translation.height,
+                    source: .compactSurface
+                )
+            }
+    }
+
+    private var feedbackDragRegion: some View {
+        Rectangle()
+            .fill(Color.white.opacity(0.001))
+            .frame(maxWidth: .infinity)
+            .frame(height: 100)
+            .contentShape(Rectangle())
+            .gesture(feedbackDragGesture)
+            .accessibilityHidden(true)
+    }
+
     private var presentationBinding: Binding<Bool> {
         Binding(
             get: { coordinator.isFeedbackSheetPresented },
             set: { newValue in
-                if !newValue { coordinator.closeFeedback() }
+                if !newValue { dismissFeedback() }
             }
         )
+    }
+
+    private func handlePresentationChange(_ isPresented: Bool) {
+        overlayState.isEditingSheetVisible = isPresented
+
+        guard isPresented, let exercise = coordinator.currentExercise else {
+            if !isPresented {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    viewModel = nil
+                }
+            }
+            return
+        }
+
+        let sessionId = coordinator.currentSessionId(for: exercise.id) ?? UUID()
+        let newViewModel = FeedbackViewModel(
+            exerciseId: exercise.id,
+            sessionId: sessionId,
+            exerciseCategory: category,
+            draftStore: coordinator.draftStore,
+            currentFocusedExerciseId: { [weak coordinator] in
+                coordinator?.focusedExerciseId
+            }
+        )
+        withAnimation(.easeInOut(duration: 0.25)) {
+            viewModel = newViewModel
+            presentationState.synchronizeWithSymptoms(
+                isEmpty: newViewModel.symptoms.isEmpty
+            )
+        }
+    }
+
+    private func dismissFeedback() {
+        withAnimation(.easeInOut(duration: 0.25)) {
+            coordinator.closeFeedback()
+        }
+    }
+
+    private var feedbackSheetShape: UnevenRoundedRectangle {
+        UnevenRoundedRectangle(
+            topLeadingRadius: AppStyle.CornerRadius.sheet,
+            bottomLeadingRadius: 0,
+            bottomTrailingRadius: 0,
+            topTrailingRadius: AppStyle.CornerRadius.sheet,
+            style: .continuous
+        )
+    }
+
+    private var feedbackSheetSurface: some View {
+        ZStack {
+            feedbackSheetShape
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            AppStyle.Color.idleCardSoft,
+                            AppStyle.Color.idleCardBackground,
+                            AppStyle.Color.idleCardDark,
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+
+            feedbackSheetShape
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            AppStyle.Color.idleCardInnerGlow,
+                            .clear,
+                        ],
+                        center: .topLeading,
+                        startRadius: 0,
+                        endRadius: 200
+                    )
+                )
+        }
+        .ignoresSafeArea(edges: .bottom)
+    }
+
+    private var feedbackSheetBorder: some View {
+        feedbackSheetShape
+            .strokeBorder(
+                LinearGradient(
+                    colors: [
+                        AppStyle.Color.idleCardBorderLight,
+                        AppStyle.Color.idleCardBorderDark,
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                lineWidth: AppStyle.Layout.idleCardBorderWidth
+            )
+            .ignoresSafeArea(edges: .bottom)
+            .allowsHitTesting(false)
     }
 }

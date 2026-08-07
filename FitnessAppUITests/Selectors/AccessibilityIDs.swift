@@ -14,6 +14,10 @@ enum TrainingIDs {
     static let startButton = "id_button_start"
     static let allDoneButton = "id_button_all_done"
     static let quickDoneButton = "id_button_quick_done"
+    static let feedbackButton = "id_button_feedback"
+    static let feedbackSheet = "id_feedback_sheet"
+    static let feedbackSheetBackdrop = "id_feedback_sheet_backdrop"
+    static let feedbackSheetGrabber = "id_feedback_sheet_grabber"
     static func controlButton(_ text: String) -> String { "id_button_\(text.lowercased())" }
     static func repsField(set index: Int) -> String { "id_reps_set_\(index)" }
     static func repsField(logicalSet index: Int, side: String) -> String {

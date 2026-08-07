@@ -2,28 +2,17 @@ import SwiftUI
 import FitnessCore
 import FitnessUI
 
-/// Post-exercise feedback **form** presented as a native iOS `.sheet` with
-/// **two progressive detents** (a content-fitted `.height(...)` and `.large`)
-/// — the **same presentation pattern as `AnalyticsView`** for the grabber /
-/// system look. The detents are managed by the presenting
-/// `FeedbackSheetComponent`; this view exposes the natural height of its
-/// initial content (Title + Symptom-Tiles) via `onInitialContentHeightChange`
-/// so the small detent always exactly fits its visible content.
-/// The system-rendered grabber handle, status bar, and pull-to-dismiss
-/// gesture all come for free; this view only renders the inner content.
-///
-/// Why a native `.sheet` and not `OverlaySheetContainer` or `.fullScreenCover`:
-/// - The user already knows this presentation from `AnalyticsView` — same
-///   grabber, same gesture, same look.
-/// - `OverlaySheetContainer` is a custom bottom sheet meant for shorter
-///   pickers; this form is far too tall for that layout.
-/// - `.fullScreenCover` would not render the grabber the user expects.
+/// Post-exercise feedback **form** presented by `FeedbackSheetComponent` with
+/// **two progressive rest heights** (the training sheet's measured height and
+/// a large state). The states are managed by the presenting component.
+/// The visible grabber matches the training sheet; the presenting component
+/// owns its drag-to-expand, drag-to-collapse, and drag-to-dismiss behavior.
 ///
 /// Layout:
-/// - App background (`AppStyle.Color.backgroundColor`, `#0A090E`) set on the
-///   sheet via `.presentationBackground`. Matches `MuscleCategoryView` and
-///   `AnalyticsView` so the sheet reads as a continuation of the app shell
-///   rather than a foreign black surface.
+/// - The presenting component supplies the same dark gradient, border, size,
+///   and corner shape as the training sheet. The sticky header is opaque and
+///   the action area uses the same fade pattern as `WorkoutAnalyticsEntryView`,
+///   tinted with the matching top and bottom colors of the sheet gradient.
 /// - Title "Exercise Feedback" centered at the top of the content area
 ///   (no NavigationStack, no toolbar — keep it lean and focussed).
 /// - `ScrollView` with progressive-disclosure sections:
@@ -33,11 +22,10 @@ import FitnessUI
 ///   4. **Notes** (only when at least one symptom is selected)
 ///   The form starts minimal and reveals follow-up questions only after the
 ///   user signals that something is worth elaborating on.
-/// - Sticky `ExercisePickerActionButtons` (Hide/Save) pinned to the safe-area
-///   bottom — same component used by `AddAnalyticsEntryView` /
-///   `ExercisePickerView` so the action-bar language stays consistent.
-///   The left button is labelled **Hide** (not Cancel) because closing the
-///   sheet does **not** discard unsaved changes — they remain in the
+/// - Sticky Cancel/Save action area pinned to the safe-area bottom, matching
+///   `WorkoutAnalyticsEntryView` in button sizing, spacing, and backdrop fade.
+///   The left button is labelled **Cancel**. Closing the sheet does **not**
+///   discard unsaved changes — they remain in the
 ///   in-memory draft store and re-appear on next open. Save is the only
 ///   button that commits to storage.
 ///
@@ -54,68 +42,57 @@ import FitnessUI
 /// the **same pattern as `ExerciseNamePickerView` ("Edit Title")**, which
 /// the user already knows.
 ///
-/// Action bar visibility: the Hide/Save bar is hidden while the Notes
+/// Action bar visibility: the Cancel/Save bar is hidden while the Notes
 /// keyboard is open. The blue "Done" submit key on the keyboard is the
 /// single, unambiguous "I'm finished typing" affordance — once the user
-/// confirms, the keyboard dismisses and the Hide/Save bar reappears for
+/// confirms, the keyboard dismisses and the Cancel/Save bar reappears for
 /// the actual sheet decision. This avoids the visual stack of "blue Done
 /// + green Save" competing for the user's attention while typing.
 ///
 /// Dismiss flow:
 /// - **Save** → `FeedbackViewModel.save()` upserts the per-session record in
 ///   storage (icon flips to `done`) → `onSaved` callback → parent closes.
-/// - **Hide / X / Swipe-down** → immediate dismiss, no commit. Draft remains
+/// - **Cancel / X / Swipe-down** → immediate dismiss, no commit. Draft remains
 ///   in memory; re-opening the sheet rehydrates it. Discard happens only on
 ///   exercise switch / Beenden / Cancel / Reset (handled by the coordinator).
 public struct FeedbackSheetView: View {
     @Bindable var viewModel: FeedbackViewModel
     @Binding var isPresented: Bool
     let onSaved: (ExerciseFeedback) -> Void
-    /// Reports the natural pixel height of the **initial** sheet content
-    /// (Title + Physical-Symptoms tiles + Hide/Save action bar) so the
-    /// presenting component can size the small/initial `.presentationDetents`
-    /// to exactly fit. Called every time the layout settles; the component
-    /// can debounce / take the latest value.
-    let onInitialContentHeightChange: (CGFloat) -> Void
-
+    let painRegionImageProvider: (BodyRegion) -> Image
     @State private var isProcessingSaveCancel = false
     @FocusState private var isNotesFocused: Bool
-
-    fileprivate static let contentCoordinateSpace = "FeedbackSheetContent"
 
     public init(
         viewModel: FeedbackViewModel,
         isPresented: Binding<Bool>,
-        onSaved: @escaping (ExerciseFeedback) -> Void = { _ in },
-        onInitialContentHeightChange: @escaping (CGFloat) -> Void = { _ in }
+        onSaved: @escaping (ExerciseFeedback) -> Void = { _ in }
     ) {
         self.viewModel = viewModel
         self._isPresented = isPresented
         self.onSaved = onSaved
-        self.onInitialContentHeightChange = onInitialContentHeightChange
+        self.painRegionImageProvider = { Image($0.iconAssetName) }
+    }
+
+    init(
+        viewModel: FeedbackViewModel,
+        isPresented: Binding<Bool>,
+        onSaved: @escaping (ExerciseFeedback) -> Void = { _ in },
+        painRegionImageProvider: @escaping (BodyRegion) -> Image
+    ) {
+        self.viewModel = viewModel
+        self._isPresented = isPresented
+        self.onSaved = onSaved
+        self.painRegionImageProvider = painRegionImageProvider
     }
 
     public var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: AppStyle.Padding.sectionSpacing) {
-                Text("Exercise Feedback")
-                    .font(AppStyle.Font.sheetTitle)
-                    .foregroundColor(AppStyle.Color.white)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.bottom, AppStyle.Padding.sectionSpacing)
-
                 sectionTitle("Physical Symptoms")
                 SymptomChipsView(
                     selected: viewModel.symptoms,
                     onToggle: { viewModel.toggleSymptom($0) }
-                )
-                .background(
-                    GeometryReader { proxy in
-                        Color.clear.preference(
-                            key: InitialContentHeightKey.self,
-                            value: proxy.frame(in: .named(Self.contentCoordinateSpace)).maxY
-                        )
-                    }
                 )
 
                 if viewModel.symptoms.contains(.pain) {
@@ -123,7 +100,8 @@ public struct FeedbackSheetView: View {
                     PainRegionGrid(
                         category: viewModel.painCategory,
                         selectedRegions: viewModel.painRegions,
-                        onToggle: { viewModel.togglePainRegion($0) }
+                        onToggle: { viewModel.togglePainRegion($0) },
+                        imageProvider: painRegionImageProvider
                     )
                 }
 
@@ -139,32 +117,17 @@ public struct FeedbackSheetView: View {
             .padding(.top, AppStyle.Padding.sectionSpacing)
             .padding(.bottom, AppStyle.Padding.sectionSpacing)
         }
-        .coordinateSpace(name: Self.contentCoordinateSpace)
         .scrollIndicators(.hidden)
+        .scrollDisabled(viewModel.symptoms.isEmpty)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppStyle.Color.backgroundColor)
-        .onPreferenceChange(InitialContentHeightKey.self) { initialBlockMaxY in
-            // initialBlockMaxY is the bottom edge of the SymptomChipsView measured
-            // from the top of the ScrollView content (i.e. the natural height of
-            // Title + Section label + 2x2 tiles incl. top padding). Add bottom
-            // section spacing so the small detent has visual breathing room
-            // before the sticky action bar; the action-bar height itself is
-            // added by the presenting component (it owns the safe-area inset).
-            onInitialContentHeightChange(initialBlockMaxY + AppStyle.Padding.sectionSpacing)
+        .background(Color.clear)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            feedbackSheetHeader
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if !isNotesFocused {
-                ExercisePickerActionButtons(
-                    cancelLabel: "Hide",
-                    saveLabel: "Save",
-                    saveDisabled: !viewModel.isSaveEnabled,
-                    onCancel: { dismiss() },
-                    onSave: { save() }
-                )
-                .padding(.horizontal, AppStyle.Padding.horizontal)
-                .padding(.top, 24)
-                .background(AppStyle.Color.backgroundColor)
-                .transition(.opacity)
+                feedbackActionArea
+                    .transition(.opacity)
             }
         }
         .animation(.easeInOut(duration: 0.15), value: isNotesFocused)
@@ -173,6 +136,8 @@ public struct FeedbackSheetView: View {
         .onChange(of: viewModel.painRegions) { _, _ in viewModel.autosaveDraft() }
         .onChange(of: viewModel.symptoms) { _, _ in viewModel.autosaveDraft() }
         .onChange(of: viewModel.note) { _, _ in viewModel.autosaveDraft() }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier(TrainingIDs.feedbackSheet)
     }
 
     @ViewBuilder
@@ -181,6 +146,52 @@ public struct FeedbackSheetView: View {
             .font(AppStyle.Font.sheetSectionLabel)
             .foregroundColor(AppStyle.Color.white.opacity(0.9))
             .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var feedbackSheetGrabber: some View {
+        Capsule()
+            .fill(Color.white.opacity(AppStyle.Opacity.grabberHandle))
+            .frame(
+                width: AppStyle.Layout.grabberWidth,
+                height: AppStyle.Layout.grabberHeight
+            )
+            .padding(.top, 8)
+            .padding(.bottom, 10)
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
+            .accessibilityElement()
+            .accessibilityLabel("Cancel feedback")
+            .accessibilityHint("Swipe down or activate to return to training")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { dismiss() }
+            .accessibilityIdentifier(TrainingIDs.feedbackSheetGrabber)
+    }
+
+    private var feedbackSheetHeader: some View {
+        VStack(spacing: 0) {
+            feedbackSheetGrabber
+
+            Text("Exercise Feedback")
+                .font(AppStyle.Font.sheetTitle)
+                .foregroundColor(AppStyle.Color.white)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.top, AppStyle.Padding.sectionSpacing)
+                .padding(.bottom, AppStyle.Padding.sectionSpacing)
+        }
+        .background(AppStyle.Color.idleCardSoft)
+    }
+
+    private var feedbackActionArea: some View {
+        SheetActionArea(
+            saveLabel: "Save",
+            isSaveEnabled: viewModel.isSaveEnabled,
+            backdropColor: AppStyle.Color.idleCardDark,
+            cancelAccessibilityIdentifier: TrainingIDs.feedbackCancelButton,
+            saveAccessibilityIdentifier: TrainingIDs.feedbackSaveButton,
+            onCancel: dismiss,
+            onSave: save
+        )
+        .zIndex(2)
     }
 
     private func dismiss() {
@@ -204,13 +215,6 @@ public struct FeedbackSheetView: View {
             try? await Task.sleep(for: .milliseconds(400))
             isProcessingSaveCancel = false
         }
-    }
-}
-
-private struct InitialContentHeightKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = max(value, nextValue())
     }
 }
 

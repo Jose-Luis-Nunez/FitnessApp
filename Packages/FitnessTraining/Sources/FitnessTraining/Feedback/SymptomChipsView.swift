@@ -7,12 +7,12 @@ struct SymptomChipsView: View {
     let onToggle: (Symptom) -> Void
 
     private let columns = [
-        GridItem(.flexible(), spacing: 12),
-        GridItem(.flexible(), spacing: 12)
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible(), spacing: 10)
     ]
 
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 12) {
+        LazyVGrid(columns: columns, spacing: 10) {
             ForEach(Symptom.allCases) { symptom in
                 SymptomTile(
                     symptom: symptom,
@@ -22,6 +22,7 @@ struct SymptomChipsView: View {
                 .accessibilityIdentifier(TrainingIDs.symptomChip(symptom.rawValue))
             }
         }
+        .padding(.horizontal, 18)
     }
 }
 
@@ -43,27 +44,13 @@ private struct SymptomTile: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
-                ZStack {
-                    if isSelected {
-                        Circle()
-                            .fill(accentColor.opacity(0.3))
-                            .frame(width: 60, height: 60)
-                            .blur(radius: AppStyle.Blur.iconGlow)
-                            .opacity(0.7)
-                    }
-                    Circle()
-                        .fill(isSelected
-                              ? accentColor.opacity(0.15)
-                              : AppStyle.Color.chipsBackground)
-                        .frame(width: 48, height: 48)
-                    Image(systemName: iconName)
-                        .font(AppStyle.Font.iconSymbol)
-                        .foregroundColor(isSelected
-                                         ? accentColor
-                                         : accentColor.opacity(0.7))
-                }
-                .padding(.top, 4)
+            VStack(spacing: 2) {
+                Image(systemName: iconName)
+                    .font(AppStyle.Font.iconSymbol)
+                    .foregroundColor(isSelected
+                                     ? accentColor
+                                     : accentColor.opacity(0.7))
+                    .frame(width: 32, height: 32)
 
                 Text(symptom.displayName.uppercased())
                     .font(AppStyle.Font.cardSmallBold)
@@ -79,28 +66,37 @@ private struct SymptomTile: View {
                     .multilineTextAlignment(.center)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
-                    .frame(minHeight: 16, alignment: .top)
+                    .frame(minHeight: 14, alignment: .top)
             }
-            .padding(.vertical, 10)
-            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .padding(.horizontal, 8)
             .frame(maxWidth: .infinity)
             .background {
                 ZStack {
-                    TrainingGlassEffectCompat.rectCard(cornerRadius: AppStyle.CornerRadius.tile)
+                    TrainingControlSurfaceStyle.surface(
+                        in: RoundedRectangle(
+                            cornerRadius: AppStyle.CornerRadius.tile,
+                            style: .continuous
+                        )
+                    )
+
                     if isSelected {
-                        RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile, style: .continuous)
-                            .fill(accentColor.opacity(0.10))
+                        RoundedRectangle(
+                            cornerRadius: AppStyle.CornerRadius.tile,
+                            style: .continuous
+                        )
+                        .fill(accentColor.opacity(0.10))
+                        .overlay {
+                            RoundedRectangle(
+                                cornerRadius: AppStyle.CornerRadius.tile,
+                                style: .continuous
+                            )
+                            .stroke(accentColor, lineWidth: 1.5)
+                        }
                     }
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile, style: .continuous)
-                    .stroke(isSelected
-                            ? accentColor
-                            : AppStyle.Color.white.opacity(0.10),
-                            lineWidth: isSelected ? 1.5 : 1)
-            )
         }
         .buttonStyle(.plain)
     }

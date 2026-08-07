@@ -8,7 +8,7 @@ import FitnessCore
 ///
 /// State transitions during a single training session for one exercise:
 /// - Sheet never opened, no content → `.entry`
-/// - User edited and closed (Hide / X / Swipe) without Save → `.draft`
+/// - User edited and closed (Cancel / X / Swipe) without Save → `.draft`
 /// - User tapped Save in the sheet → `.done`. Reopening the `.done` icon and
 ///   editing temporarily **does not** demote the icon to draft; only re-Save
 ///   updates the same DB record (upsert by `sessionId`).

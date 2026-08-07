@@ -21,18 +21,25 @@ public func appAssetImage(named name: String) throws -> Image {
         .deletingLastPathComponent()
         .deletingLastPathComponent()
         .deletingLastPathComponent()
-    let imageURL = repositoryRoot
+    let imageSetURL = repositoryRoot
         .appendingPathComponent("FitnessApp/Assets.xcassets")
         .appendingPathComponent("\(name).imageset")
-        .appendingPathComponent("\(name).png")
+    let imageURLs = [
+        imageSetURL.appendingPathComponent("\(name).png"),
+        imageSetURL.appendingPathComponent("\(name)@3x.png"),
+        imageSetURL.appendingPathComponent("\(name)@2x.png"),
+        imageSetURL.appendingPathComponent("\(name)@1x.png"),
+    ]
 
 #if canImport(UIKit)
-    guard let image = UIImage(contentsOfFile: imageURL.path) else {
+    guard let image = imageURLs.lazy.compactMap({
+        UIImage(contentsOfFile: $0.path)
+    }).first else {
         throw AppAssetImageError.missingAsset(name)
     }
     return Image(uiImage: image)
 #elseif canImport(AppKit)
-    guard let image = NSImage(contentsOf: imageURL) else {
+    guard let image = imageURLs.lazy.compactMap({ NSImage(contentsOf: $0) }).first else {
         throw AppAssetImageError.missingAsset(name)
     }
     return Image(nsImage: image)

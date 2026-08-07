@@ -26,6 +26,7 @@ struct TrainingSheetView: View {
     @Query private var models: [ExerciseModel]
     @State private var phase: Phase = .waitingForQuery
     @State private var formViewModel = ExerciseFormViewModel()
+    @State private var feedbackSheetDetentHeight: CGFloat = 380
 
     private enum Phase {
         case waitingForQuery
@@ -73,7 +74,8 @@ struct TrainingSheetView: View {
 
                     FeedbackSheetComponent(
                         coordinator: trainingCoordinator,
-                        category: category
+                        category: category,
+                        initialDetentHeight: feedbackSheetDetentHeight
                     )
                 }
 
@@ -134,6 +136,14 @@ struct TrainingSheetView: View {
                 .frame(height: AppStyle.Layout.trainingSheetBottomBarClearance)
         }
         .frame(maxWidth: .infinity)
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            proxy.size.height
+        } action: { visibleHeight in
+            // Measure the visible card itself, before the outer max-height
+            // constraint can contribute transparent layout space. Native
+            // fixed detents already resolve against the visible sheet height.
+            feedbackSheetDetentHeight = max(1, visibleHeight)
+        }
         .background {
             UnevenRoundedRectangle(
                 topLeadingRadius: AppStyle.CornerRadius.sheet,

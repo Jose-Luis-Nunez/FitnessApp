@@ -69,7 +69,7 @@ public final class FeedbackViewModel {
     ///    `feedbackId` ensures the next save updates the row instead of
     ///    inserting a duplicate.
     /// 2. In-memory draft for this exercise — the user closed the sheet via
-    ///    Hide/X/Swipe but never saved.
+    ///    Cancel/X/Swipe but never saved.
     /// 3. Blank form.
     /// **Not** in this list: "latest committed feedback for this exercise" —
     /// a fresh session must start blank, even when prior sessions of the same

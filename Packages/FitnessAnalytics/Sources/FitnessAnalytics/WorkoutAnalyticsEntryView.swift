@@ -243,7 +243,6 @@ public struct WorkoutAnalyticsEntryView: View {
     @State private var editingExerciseID: UUID?
     @AppStorage(DefaultIconColorScheme.storageKey)
     private var iconColorScheme: DefaultIconColorScheme = .green
-    @Environment(\.safeAreaInsets) private var safeAreaInsets
     private let headerDateFormatter: DateFormatter
     private let exerciseIconProvider: (Exercise, DefaultIconColorScheme) -> Image
 
@@ -322,91 +321,19 @@ public struct WorkoutAnalyticsEntryView: View {
                 .scrollIndicators(.hidden)
             }
 
-            actionArea
+            SheetActionArea(
+                saveLabel: "Save Workout",
+                isSaveEnabled: viewModel.canSave,
+                backdropColor: .black,
+                saveAccessibilityIdentifier: WorkoutAnalyticsIDs.saveButton,
+                onCancel: { isPresented = false },
+                onSave: saveAndDismiss
+            )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .ignoresSafeArea(edges: .bottom)
     }
 
-    private var actionButtons: some View {
-        HStack(spacing: AppStyle.Padding.card) {
-            Button("Cancel") {
-                isPresented = false
-            }
-            .font(AppStyle.Font.bottomBarButtons)
-            .foregroundColor(AppStyle.Color.white)
-            .frame(
-                width: Self.cancelButtonWidth,
-                height: Self.actionButtonHeight
-            )
-            .buttonStyle(.plain)
-
-            Button {
-                saveAndDismiss()
-            } label: {
-                Text("Save Workout")
-                    .font(AppStyle.Font.bottomBarButtons)
-                    .foregroundColor(AppStyle.Color.white)
-                    .frame(
-                        maxWidth: .infinity,
-                        minHeight: Self.actionButtonHeight,
-                        maxHeight: Self.actionButtonHeight
-                    )
-                    .background(
-                        viewModel.canSave
-                            ? AppStyle.Color.green
-                            : AppStyle.Color.green.opacity(0.15)
-                    )
-                    .clipShape(
-                        RoundedRectangle(
-                            cornerRadius: AppStyle.CornerRadius.editPickerViewButton,
-                            style: .continuous
-                        )
-                    )
-            }
-            .buttonStyle(.plain)
-            .frame(maxWidth: Self.saveButtonMaxWidth)
-            .disabled(!viewModel.canSave)
-            .accessibilityIdentifier(WorkoutAnalyticsIDs.saveButton)
-        }
-        .frame(maxWidth: .infinity, alignment: .trailing)
-    }
-
-    private var actionArea: some View {
-        ZStack(alignment: .bottom) {
-            actionAreaBackdrop
-
-            actionButtons
-                .padding(.horizontal, AppStyle.Padding.horizontal)
-                .padding(.bottom, actionButtonsBottomPadding)
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private var actionButtonsBottomPadding: CGFloat {
-        max(0, safeAreaInsets.bottom + Self.homeMenuBarBottomOffset)
-    }
-
-    private var actionAreaBackdrop: some View {
-        VStack(spacing: 0) {
-            LinearGradient(
-                colors: [
-                    Color.clear,
-                    Color.black.opacity(Self.actionBackdropOpacity),
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: Self.actionBackdropFadeHeight)
-
-            Color.black
-                .opacity(Self.actionBackdropOpacity)
-                .frame(
-                    height: Self.actionButtonHeight + actionButtonsBottomPadding
-                )
-        }
-        .allowsHitTesting(false)
-    }
 
     private var stickyHeader: some View {
         VStack(alignment: .leading, spacing: AppStyle.Padding.card) {
@@ -806,12 +733,6 @@ public struct WorkoutAnalyticsEntryView: View {
     private static let dateIconContainerSize: CGFloat = 44
     private static let dateCardVerticalPadding: CGFloat = 16
     private static let dateDividerHeight: CGFloat = 0.5
-    private static let cancelButtonWidth: CGFloat = 120
-    private static let saveButtonMaxWidth: CGFloat = 225
-    private static let actionButtonHeight: CGFloat = 52
-    private static let homeMenuBarBottomOffset: CGFloat = -8
-    private static let actionBackdropFadeHeight: CGFloat = 28
-    private static let actionBackdropOpacity: Double = 0.94
     private static let actionOverlayClearance: CGFloat = 84
     private static let exerciseIconSize: CGFloat = 44
     private static let exerciseWeightMetricWidth: CGFloat = 52

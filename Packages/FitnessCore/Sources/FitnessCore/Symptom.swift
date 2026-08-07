@@ -19,8 +19,8 @@ public enum Symptom: String, CaseIterable, Identifiable, Codable, Sendable {
 
     public var description: String {
         switch self {
-        case .pain:            return "Acute or sharp discomfort"
-        case .dizziness:       return "Lightheaded or spinning"
+        case .pain:            return "Acute or sharp"
+        case .dizziness:       return "Lightheaded / spinning"
         case .nausea:          return "Upset stomach / Fatigue"
         case .muscleWeakness:  return "Inability to hold form"
         }

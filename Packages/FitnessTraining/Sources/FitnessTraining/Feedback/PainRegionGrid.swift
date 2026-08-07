@@ -3,17 +3,31 @@ import FitnessCore
 import FitnessUI
 
 /// Grid-based **multi-select** picker for pain regions, pre-scoped to the
-/// exercise's `BodyCategory`. Image-only tiles with `TrainingGlassEffectCompat`
-/// background (clear Liquid Glass on iOS 27, regular glass on iOS 26,
-/// `ultraThinMaterial` fallback on older supported platforms). Tapping
-/// a tile toggles it in `selectedRegions` — any combination of regions in the
-/// category can be active at once (e.g. lower back + obliques). Tapping an
-/// already-selected tile removes it from the selection (replaces the former
-/// "None" option of the wheel picker).
+/// exercise's `BodyCategory`. Image-only tiles use the same transparent dark
+/// surface and outline as the training timer, so the sheet gradient remains
+/// visible instead of gaining a separate grey glass layer. Tapping a tile
+/// toggles it in `selectedRegions` — any combination of regions in the category
+/// can be active at once (e.g. lower back + obliques). Tapping an already-
+/// selected tile removes it from the selection.
 struct PainRegionGrid: View {
     let category: BodyCategory
     let selectedRegions: Set<BodyRegion>
     let onToggle: (BodyRegion) -> Void
+    let imageProvider: (BodyRegion) -> Image
+
+    init(
+        category: BodyCategory,
+        selectedRegions: Set<BodyRegion>,
+        onToggle: @escaping (BodyRegion) -> Void,
+        imageProvider: @escaping (BodyRegion) -> Image = {
+            Image($0.iconAssetName)
+        }
+    ) {
+        self.category = category
+        self.selectedRegions = selectedRegions
+        self.onToggle = onToggle
+        self.imageProvider = imageProvider
+    }
 
     private let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -27,6 +41,7 @@ struct PainRegionGrid: View {
                 PainRegionTile(
                     region: r,
                     isSelected: selectedRegions.contains(r),
+                    image: imageProvider(r),
                     onTap: { onToggle(r) }
                 )
             }
@@ -37,6 +52,7 @@ struct PainRegionGrid: View {
 struct PainRegionTile: View {
     let region: BodyRegion
     let isSelected: Bool
+    let image: Image
     let onTap: () -> Void
 
     var body: some View {
@@ -50,7 +66,7 @@ struct PainRegionTile: View {
                         .opacity(0.7)
                 }
 
-                Image(region.iconAssetName)
+                image
                     .resizable()
                     .scaledToFit()
                     .padding(6)
@@ -62,21 +78,30 @@ struct PainRegionTile: View {
             .frame(height: 120)
             .background {
                 ZStack {
-                    TrainingGlassEffectCompat.rectCard(cornerRadius: AppStyle.CornerRadius.tile)
+                    TrainingControlSurfaceStyle.surface(
+                        in: RoundedRectangle(
+                            cornerRadius: AppStyle.CornerRadius.tile,
+                            style: .continuous
+                        )
+                    )
+
                     if isSelected {
-                        RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile, style: .continuous)
+                        RoundedRectangle(
+                            cornerRadius: AppStyle.CornerRadius.tile,
+                            style: .continuous
+                        )
                             .fill(AppStyle.Color.green.opacity(0.1))
+                            .overlay {
+                                RoundedRectangle(
+                                    cornerRadius: AppStyle.CornerRadius.tile,
+                                    style: .continuous
+                                )
+                                .stroke(AppStyle.Color.green, lineWidth: 1.5)
+                            }
                     }
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile, style: .continuous)
-                    .stroke(
-                        isSelected ? AppStyle.Color.green : AppStyle.Color.gray,
-                        lineWidth: 1
-                    )
-            )
             .accessibilityLabel(region.displayName)
             .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : [.isButton])
         }

@@ -38,6 +38,108 @@ final class TrainingUITests: BaseTest {
     }
 
     @MainActor
+    func testFeedbackSheetMatchesTrainingGeometryAndDismissesFromBackdrop() throws {
+        try launch(exerciseCategory: .defaultArmsExercise)
+        tapOn(MuscleCategoryIDs.startExercise)
+
+        for setIndex in 1...3 {
+            tapOn(TrainingIDs.doneButton)
+            waitForNonEmptyLabel(TrainingIDs.repsField(set: setIndex - 1))
+        }
+
+        let trainingFrame = frameOf(TrainingIDs.sheet)
+        let trainingGrabberFrame = frameOf(TrainingIDs.sheetGrabber)
+        attachDiagnosticScreenshot(named: "finished-training-sheet")
+
+        tapOn(TrainingIDs.feedbackButton)
+        verifyExists(TrainingIDs.feedbackSheet)
+
+        let feedbackFrame = frameOf(TrainingIDs.feedbackSheet)
+        let feedbackGrabberFrame = frameOf(TrainingIDs.feedbackSheetGrabber)
+        attachDiagnosticScreenshot(named: "feedback-sheet-initial-detent")
+
+        let sheetMatches = approximatelyEqual(feedbackFrame.minX, trainingFrame.minX)
+            && approximatelyEqual(feedbackFrame.maxX, trainingFrame.maxX)
+            && approximatelyEqual(feedbackFrame.minY, trainingFrame.minY)
+            && approximatelyEqual(feedbackFrame.maxY, trainingFrame.maxY)
+            && approximatelyEqual(feedbackFrame.width, trainingFrame.width)
+            && approximatelyEqual(feedbackFrame.height, trainingFrame.height)
+        let grabberMatches = approximatelyEqual(
+            feedbackGrabberFrame.width,
+            trainingGrabberFrame.width
+        )
+            && approximatelyEqual(feedbackGrabberFrame.height, trainingGrabberFrame.height)
+            && approximatelyEqual(feedbackGrabberFrame.midX, trainingGrabberFrame.midX)
+            && approximatelyEqual(
+                feedbackGrabberFrame.minY - feedbackFrame.minY,
+                trainingGrabberFrame.minY - trainingFrame.minY
+            )
+
+        XCTAssertTrue(
+            sheetMatches && grabberMatches,
+            """
+            Geometry mismatch.
+            Training sheet: \(trainingFrame)
+            Feedback sheet: \(feedbackFrame)
+            Training grabber: \(trainingGrabberFrame)
+            Feedback grabber: \(feedbackGrabberFrame)
+            """
+        )
+
+        dragUpOn(TrainingIDs.feedbackSheetGrabber)
+        let expandedFrame = waitForFeedbackSheetFrame {
+            $0.minY < feedbackFrame.minY - 100
+        }
+        XCTAssertLessThan(
+            expandedFrame.minY,
+            feedbackFrame.minY - 100,
+            "Upward grabber drag should expand the feedback sheet"
+        )
+
+        swipeDownOn(TrainingIDs.feedbackSheetGrabber)
+        let collapsedFrame = waitForFeedbackSheetFrame {
+            self.approximatelyEqual($0.minY, feedbackFrame.minY)
+        }
+        XCTAssertTrue(
+            approximatelyEqual(collapsedFrame.minY, feedbackFrame.minY),
+            "Downward grabber drag should restore the training-sheet height"
+        )
+
+        tapOn(TrainingIDs.feedbackSheetBackdrop)
+        verifyNotExists(TrainingIDs.feedbackSheet)
+    }
+
+    private func approximatelyEqual(
+        _ lhs: CGFloat,
+        _ rhs: CGFloat,
+        accuracy: CGFloat = 0.5
+    ) -> Bool {
+        abs(lhs - rhs) <= accuracy
+    }
+
+    @MainActor
+    private func waitForFeedbackSheetFrame(
+        matching predicate: @escaping (CGRect) -> Bool
+    ) -> CGRect {
+        let sheet = app.descendants(matching: .any)
+            .matching(identifier: TrainingIDs.feedbackSheet)
+            .firstMatch
+        let frameExpectation = XCTNSPredicateExpectation(
+            predicate: NSPredicate { object, _ in
+                guard let element = object as? XCUIElement else { return false }
+                return predicate(element.frame)
+            },
+            object: sheet
+        )
+        let result = XCTWaiter().wait(
+            for: [frameExpectation],
+            timeout: TestDefaults.timeout
+        )
+        XCTAssertEqual(result, .completed, "Feedback sheet did not reach its expected frame")
+        return sheet.frame
+    }
+
+    @MainActor
     func testEditableMuscleArtworkOpensAndCancelsSeatPicker() throws {
         try launch(
             exerciseCategory: .defaultArmsExercise.with(noSeats: false)

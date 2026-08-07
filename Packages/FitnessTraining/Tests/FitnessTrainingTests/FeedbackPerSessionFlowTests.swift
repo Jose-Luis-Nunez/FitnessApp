@@ -9,7 +9,7 @@ import FitnessTestSupport
 /// End-to-end flow tests for the **per-session feedback model**.
 ///
 /// Phases under test:
-/// 1. Active session, no save -> draft state (Hide preserves it).
+/// 1. Active session, no save -> draft state (feedback Cancel preserves it).
 /// 2. Active session, explicit save -> done state, upsert by sessionId.
 /// 3. Re-open same session after save -> form rehydrates from committed.
 /// 4. Re-open same session, edit, save -> single record updated, no dup.
@@ -49,10 +49,12 @@ struct FeedbackPerSessionFlowTests {
         )
     }
 
-    @Test func draftSurvivesHideAndRehydratesWithoutSaving() {
+    @Test func feedbackCancelClosesWithoutSavingAndRehydratesDraft() {
         let coordinator = makeCoordinator()
         let exercise = makeExercise()
         coordinator.startTraining(for: exercise)
+        coordinator.openFeedback()
+        #expect(coordinator.isFeedbackSheetPresented)
 
         let firstOpen = vm(coordinator: coordinator, exerciseId: exercise.id)
         firstOpen.energyLevel = 3
@@ -61,6 +63,7 @@ struct FeedbackPerSessionFlowTests {
 
         coordinator.closeFeedback()
 
+        #expect(!coordinator.isFeedbackSheetPresented)
         #expect(storage.load(for: exercise.id).isEmpty)
         #expect(coordinator.draftStore.current?.energyLevel == 3)
 
