@@ -28,7 +28,7 @@ public enum BVGTramError: LocalizedError, Equatable {
     case network
     case decoding
     case rateLimited
-    case serverError
+    case serverError(statusCode: Int)
 
     public var errorDescription: String? {
         switch self {
@@ -36,7 +36,8 @@ public enum BVGTramError: LocalizedError, Equatable {
         case .network: return "Network unreachable."
         case .decoding: return "Could not read the response."
         case .rateLimited: return "Too many requests. Please wait a moment."
-        case .serverError: return "BVG server unreachable."
+        case .serverError(let statusCode):
+            return "Transit service temporarily unavailable (\(statusCode)). Please try again later."
         }
     }
 }
@@ -56,12 +57,20 @@ public protocol BVGTramServicing: Sendable {
 
 public final class BVGTramService: BVGTramServicing, @unchecked Sendable {
     private let baseURL: String
-    private let session: URLSession
+    private let transport: BVGHTTPTransport
     private let decoder: JSONDecoder
 
     public init(baseURL: String = "https://v6.bvg.transport.rest", session: URLSession = .shared) {
         self.baseURL = baseURL
-        self.session = session
+        self.transport = BVGHTTPTransport(session: session)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        self.decoder = decoder
+    }
+
+    init(baseURL: String = "https://v6.bvg.transport.rest", transport: BVGHTTPTransport) {
+        self.baseURL = baseURL
+        self.transport = transport
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         self.decoder = decoder
@@ -93,20 +102,16 @@ public final class BVGTramService: BVGTramServicing, @unchecked Sendable {
         }
 
         let data: Data
-        let response: URLResponse
         do {
-            (data, response) = try await session.data(from: url)
+            data = try await transport.data(from: url)
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch BVGHTTPError.rateLimited {
+            throw BVGTramError.rateLimited
+        } catch BVGHTTPError.httpStatus(let statusCode) {
+            throw BVGTramError.serverError(statusCode: statusCode)
         } catch {
             throw BVGTramError.network
-        }
-
-        guard let http = response as? HTTPURLResponse else {
-            throw BVGTramError.network
-        }
-        switch http.statusCode {
-        case 200...299: break
-        case 429: throw BVGTramError.rateLimited
-        default: throw BVGTramError.serverError
         }
 
         let decoded: DeparturesEnvelope

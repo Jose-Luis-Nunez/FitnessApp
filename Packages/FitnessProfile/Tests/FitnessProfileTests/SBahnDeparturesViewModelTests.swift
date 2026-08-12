@@ -116,7 +116,7 @@ struct SBahnDeparturesViewModelTests {
 
     // MARK: - Refresh failure with cache fallback
 
-    @Test func refresh_networkError_keepsCacheVisibleAndSurfacesError() async {
+    @Test func refresh_networkError_usesCacheWithoutError() async {
         let service = MockService()
         service.error = .network
         let cache = MockCache()
@@ -131,7 +131,7 @@ struct SBahnDeparturesViewModelTests {
 
         #expect(vm.departures.map(\.id) == ["cached"])
         #expect(vm.isShowingCachedResult == true)
-        #expect(vm.errorMessage == BVGSBahnError.network.errorDescription)
+        #expect(vm.errorMessage == nil)
     }
 
     @Test func refresh_networkError_withoutCache_setsErrorMessage() async {
@@ -256,7 +256,7 @@ struct SBahnDeparturesViewModelTests {
         #expect(vm.departures.map(\.id) == ["reverse-live"])
     }
 
-    @Test func failedSwapKeepsReverseCacheVisibleAndSurfacesError() async {
+    @Test func failedSwapKeepsReverseCacheVisibleWithoutError() async {
         let service = MockService()
         service.error = .rateLimited
         let cache = MockCache()
@@ -272,7 +272,7 @@ struct SBahnDeparturesViewModelTests {
         #expect(vm.isReversed)
         #expect(vm.departures.map(\.id) == ["reverse-cached"])
         #expect(vm.isShowingCachedResult)
-        #expect(vm.errorMessage == BVGSBahnError.rateLimited.errorDescription)
+        #expect(vm.errorMessage == nil)
     }
 
     // MARK: - Toggle expanded is presentation-only

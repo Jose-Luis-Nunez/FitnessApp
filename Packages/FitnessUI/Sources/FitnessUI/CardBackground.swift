@@ -3,7 +3,7 @@ import SwiftUI
 public enum CardSurfaceStyle {
     case glass(Color)
     case gradient(Color)
-    case idle
+    case primary
 }
 
 public struct CardBackground<Content: View>: View {
@@ -71,7 +71,7 @@ public struct CardBackground<Content: View>: View {
                     endPoint: .topTrailing
                 )
             }
-        case .idle:
+        case .primary:
             LinearGradient(
                 gradient: Gradient(colors: [
                     AppStyle.Color.idleCardSoft,
@@ -93,7 +93,7 @@ public struct CardBackground<Content: View>: View {
             RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
                 .stroke(AppStyle.Color.exerciseCardBackground.opacity(0.03), lineWidth: 1.5)
                 .blur(radius: 0.6)
-        case .idle:
+        case .primary:
             ZStack {
                 RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
                     .fill(

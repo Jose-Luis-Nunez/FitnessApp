@@ -153,6 +153,8 @@ public final class SBahnDeparturesViewModel {
             departures = cached.departures
             lastUpdated = cached.savedAt
             isShowingCachedResult = true
+            errorMessage = nil
+            return
         }
         if let sbahnError = error as? BVGSBahnError {
             errorMessage = sbahnError.errorDescription ?? "Failed to load."

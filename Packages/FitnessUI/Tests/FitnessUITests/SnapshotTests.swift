@@ -100,13 +100,13 @@ struct CardBackgroundSnapshotTests {
         assertSnapshot(of: view, named: "no-padding", size: CGSize(width: 350, height: 80))
     }
 
-    @Test func idleStyle() {
-        let view = CardBackground(style: .idle) {
+    @Test func primaryStyle() {
+        let view = CardBackground(style: .primary) {
             Text("Idle Card")
                 .foregroundColor(AppStyle.Color.idleTitle)
                 .font(AppStyle.Font.cardHeadline)
         }
-        assertSnapshot(of: view, named: "idle", size: CGSize(width: 350, height: 100))
+        assertSnapshot(of: view, named: "primary", size: CGSize(width: 350, height: 100))
     }
 }
 

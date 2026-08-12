@@ -413,7 +413,7 @@ struct BVGSBahnServiceTests {
         #expect(client.fetchedTripIds == ["retry-trip", "retry-trip"])
     }
 
-    @Test func repeatedRefreshFetchesStopoversAgain() async throws {
+    @Test func repeatedRefreshReusesFreshStopovers() async throws {
         let client = MockClient()
         client.pools[Self.config.originStopId] = [
             Self.dep("06:00", line: "S3", direction: "S Erkner Bhf", tripId: "fresh-trip"),
@@ -431,7 +431,7 @@ struct BVGSBahnServiceTests {
             maxResults: 1
         )
 
-        #expect(client.fetchedTripIds == ["fresh-trip", "fresh-trip"])
+        #expect(client.fetchedTripIds == ["fresh-trip"])
     }
 
     // MARK: - Reverse direction (Ostkreuz → Alex) with bridge logic

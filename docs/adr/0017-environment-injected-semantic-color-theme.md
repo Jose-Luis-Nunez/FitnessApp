@@ -1,6 +1,6 @@
 # 0017 — Environment-injected semantic color theme
 
-* Status: accepted
+* Status: superseded by ADR-0018
 * Date: 2026-08-07
 * Deciders: jose.nunez
 

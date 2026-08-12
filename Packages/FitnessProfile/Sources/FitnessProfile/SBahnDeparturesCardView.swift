@@ -38,17 +38,10 @@ public struct SBahnDeparturesCardView: View {
                     .font(AppStyle.Font.profileEditIcon)
                     .foregroundColor(profileColors.accent)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("S-Bahn")
-                        .font(AppStyle.Font.sectionHeadline)
-                        .foregroundColor(profileColors.title)
-                        .fixedSize()
-
-                    Text("\(viewModel.fromLabel) → \(viewModel.toLabel)")
-                        .font(AppStyle.Font.profileCardTitle)
-                        .foregroundColor(profileColors.secondary)
-                        .lineLimit(1)
-                }
+                ProfileCardHeading(
+                    "S-Bahn",
+                    detail: "\(viewModel.fromLabel) → \(viewModel.toLabel)"
+                )
 
                 Spacer()
 

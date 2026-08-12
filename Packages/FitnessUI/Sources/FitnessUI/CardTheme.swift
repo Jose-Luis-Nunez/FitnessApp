@@ -24,7 +24,7 @@ public struct CardTheme {
 
 extension CardTheme {
     public static let idle = CardTheme(
-        surface: .idle,
+        surface: .primary,
         titleColor: AppStyle.Color.idleTitle,
         subtitleColor: AppStyle.Color.idleMetricLabel,
         titleFont: AppStyle.Font.idleCardTitle
@@ -36,11 +36,11 @@ extension CardTheme {
         subtitleColor: Color.white.opacity(0.7)
     )
 
-    /// Completed exercise card on the same premium `.idle` surface as
+    /// Completed exercise card on the same neutral `.primary` surface as
     /// `IdleActiveCardModelView`, with matching headline / secondary text colors.
     /// Use with `CardShell` + `EdgeIndicator.completed` for the green bar.
     public static let inactiveOnIdle = CardTheme(
-        surface: .idle,
+        surface: .primary,
         titleColor: AppStyle.Color.idleTitle,
         subtitleColor: AppStyle.Color.idleMetricLabel,
         titleFont: AppStyle.Font.idleCardTitle

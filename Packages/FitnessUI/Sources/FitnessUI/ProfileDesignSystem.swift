@@ -16,6 +16,8 @@ public struct ProfileColorTheme: Sendable {
     public let innerStroke: Color
     public let inputBackground: Color
     public let divider: Color
+    public let selectionBackground: Color
+    public let selectionStroke: Color
 
     public init(colorScheme: DefaultIconColorScheme) {
         let palette = colorScheme.palette
@@ -28,6 +30,8 @@ public struct ProfileColorTheme: Sendable {
         innerStroke = Color.white.opacity(AppStyle.Opacity.subtleStroke)
         inputBackground = AppStyle.Color.sheetInputBackground
         divider = AppStyle.Color.idleDivider
+        selectionBackground = Color.white.opacity(AppStyle.Opacity.selectionTintFill)
+        selectionStroke = Color.white.opacity(AppStyle.Opacity.selectionTintStroke)
     }
 
     public static let green = ProfileColorTheme(colorScheme: .green)
@@ -51,7 +55,7 @@ public extension View {
         environment(\.profileColorTheme, theme)
     }
 
-    /// Standard profile-card padding, minimum height, and idle-card surface.
+    /// Standard profile-card padding, minimum height, and primary card surface.
     func profileCardSurface(
         minHeight: CGFloat = AppStyle.Layout.profileCardCollapsedMinHeight
     ) -> some View {
@@ -66,8 +70,39 @@ public extension View {
     }
 }
 
-/// Standard profile card composition. Its visual surface is exactly the
-/// training idle-card surface while its content layout remains caller-owned.
+/// Enforces the text hierarchy shared by profile card headers.
+///
+/// Titles are primary; optional supporting details are secondary. Container
+/// layout, leading icons, actions, and disclosure indicators remain owned by
+/// the feature composing the header.
+public struct ProfileCardHeading: View {
+    private let title: String
+    private let detail: String?
+    @Environment(\.profileColorTheme) private var theme
+
+    public init(_ title: String, detail: String? = nil) {
+        self.title = title
+        self.detail = detail
+    }
+
+    public var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(AppStyle.Font.sectionHeadline)
+                .foregroundColor(theme.title)
+
+            if let detail {
+                Text(detail)
+                    .font(AppStyle.Font.profileCardTitle)
+                    .foregroundColor(theme.secondary)
+                    .lineLimit(1)
+            }
+        }
+    }
+}
+
+/// Standard profile card composition. It shares the neutral primary surface
+/// used by training idle cards while its content layout remains caller-owned.
 public struct ProfileCardContainer<Content: View>: View {
     private let minHeight: CGFloat
     private let content: Content
@@ -92,7 +127,7 @@ private struct ProfileCardSurfaceModifier: ViewModifier {
     let minHeight: CGFloat
 
     func body(content: Content) -> some View {
-        CardBackground(style: .idle, addPadding: false) {
+        CardBackground(style: .primary, addPadding: false) {
             content
                 .padding(AppStyle.Padding.card)
                 .frame(maxWidth: .infinity, minHeight: minHeight, alignment: .leading)

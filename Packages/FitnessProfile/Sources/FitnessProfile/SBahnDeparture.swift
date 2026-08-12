@@ -91,7 +91,7 @@ public enum BVGSBahnError: LocalizedError, Equatable {
     case network
     case decoding
     case rateLimited
-    case serverError
+    case serverError(statusCode: Int)
 
     public var errorDescription: String? {
         switch self {
@@ -99,7 +99,8 @@ public enum BVGSBahnError: LocalizedError, Equatable {
         case .network: return "Network unreachable."
         case .decoding: return "Could not read the response."
         case .rateLimited: return "Too many requests. Please wait a moment."
-        case .serverError: return "BVG server unreachable."
+        case .serverError(let statusCode):
+            return "Transit service temporarily unavailable (\(statusCode)). Please try again later."
         }
     }
 }

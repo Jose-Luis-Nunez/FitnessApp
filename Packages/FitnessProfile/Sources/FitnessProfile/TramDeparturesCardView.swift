@@ -44,17 +44,10 @@ public struct TramDeparturesCardView: View {
                     .font(AppStyle.Font.profileEditIcon)
                     .foregroundColor(profileColors.accent)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Tram \(viewModel.lineName)")
-                        .font(AppStyle.Font.sectionHeadline)
-                        .foregroundColor(profileColors.title)
-                        .fixedSize()
-
-                    Text("\(viewModel.fromLabel) → \(viewModel.toLabel)")
-                        .font(AppStyle.Font.profileCardTitle)
-                        .foregroundColor(profileColors.secondary)
-                        .lineLimit(1)
-                }
+                ProfileCardHeading(
+                    "Tram \(viewModel.lineName)",
+                    detail: "\(viewModel.fromLabel) → \(viewModel.toLabel)"
+                )
 
                 Spacer()
 

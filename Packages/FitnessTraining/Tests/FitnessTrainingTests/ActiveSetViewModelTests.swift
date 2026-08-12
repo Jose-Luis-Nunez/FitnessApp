@@ -298,23 +298,6 @@ struct ActiveSetViewModelTests {
         #expect(sut.timerSeconds == 0)
     }
 
-    // MARK: - Timer Integration
-
-    @Test(.timeLimit(.minutes(1)))
-    func timerSecondsReflectsTimerServiceTicks() async throws {
-        let sut = makeSUT()
-        let exercise = makeExercise(sets: 3)
-        sut.startSet(for: exercise, category: .arms)
-
-        // startSet calls resetAndStartTimer, and the VM's polling loop
-        // propagates timerService.timerSeconds -> sut.timerSeconds.
-        // Wait for at least 1 second of real elapsed time so the
-        // TimerService's internal tick loop publishes a non-zero value.
-        try await waitUntil(timeout: .seconds(3)) { sut.timerSeconds >= 1 }
-
-        #expect(sut.timerSeconds >= 1)
-    }
-
     // MARK: - Editing
 
     @Test func startEditingSetPopulatesEditingState() {

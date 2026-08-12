@@ -34,6 +34,8 @@ old one.
 | [0014](../../docs/adr/0014-training-session-sheet-presentation.md) | Training is an app-level presentation above its parent navigation flow. |
 | [0015](../../docs/adr/0015-batched-analytics-snapshots.md) | Workout-wide analytics screens consume batched snapshots. |
 | [0016](../../docs/adr/0016-demand-loaded-card-analytics.md) | Exercise cards load analytics progressively according to user intent. |
+| [0017](../../docs/adr/0017-environment-injected-semantic-color-theme.md) | Superseded by ADR-0018; introduced the environment-injected Profile color theme. |
+| [0018](../../docs/adr/0018-neutral-primary-card-surface.md) | Training semantics and Profile consume one feature-neutral primary card surface. |
 
 ## Feature Map
 
@@ -135,8 +137,10 @@ can retry without losing already visible data.
 | `WorkoutImportCoordinator` | `FitnessWorkouts` | Bridges app-level incoming files to the Workouts import flow, including cold launch before the screen mounts. |
 | `BMIService` | `FitnessProfile` | Fetches remote BMI classification and provides a deterministic local calculation fallback. |
 | `BVGTramService` / `TramDeparturesCache` | `FitnessProfile` | Loads live Tram departures and persists the latest route-scoped successful result. |
-| `BVGTransitClient` | `FitnessProfile` | Maps BVG HTTP responses and transport errors into transit domain values. |
-| `BVGSBahnService` | `FitnessProfile` | Orchestrates configured-route classification, bridge resolution and direction-filtered fallback. It limits each visible load to the requested candidates before making stopover detail requests. |
+| `BVGHTTPTransport` | `FitnessProfile` | Shared cancellation-preserving HTTP boundary for Tram and S-Bahn with bounded transient retries, jitter, `Retry-After` support and status-code preservation. |
+| `BVGTransitClient` | `FitnessProfile` | Builds documented BVG route/product queries and maps responses into transit domain values. |
+| `BVGSBahnService` | `FitnessProfile` | Orchestrates configured-route classification, bridge resolution and direction-filtered fallback. It limits each visible load to the requested candidates and reuses successful stopover details through a bounded, short-lived in-memory cache. |
+| `SBahnStopoverCache` | `FitnessProfile` | Keeps successful trip-stopover details in a capacity-bounded in-memory TTL cache; failed lookups remain retryable. |
 | `SBahnClassifier` / `SBahnBridgeResolver` | `FitnessProfile` | Pure, direction-neutral S-Bahn routing rules with no I/O or cache ownership. |
 | `SBahnRouteConfiguration` | `FitnessProfile` | Immutable route-specific vocabulary, stops, travel assumptions and bridge window. |
 | `SBahnDeparturesCache` | `FitnessProfile` | Persists the latest successful result per direction. A direction change displays that result immediately and then performs one explicit refresh. |
@@ -187,7 +191,7 @@ composition remains in the owning feature package.
 
 | Component family | Contract and owner |
 |---|---|
-| Card surfaces | `CardBackground`, `CardTheme`, `CardShell`, `ProfileCardContainer`, profile tile surfaces, edge indicators, metric columns and set tiles define reusable card composition in `FitnessUI`. Exercise model cards that bind live SwiftData state live in `FitnessPersistenceUI`. |
+| Card surfaces | `CardBackground` owns neutral visual primitives, including the shared `.primary` surface. `CardTheme` maps feature semantics such as training idle/inactive onto those primitives. `CardShell`, `ProfileCardContainer`, `ProfileCardHeading`, profile tile surfaces, edge indicators, metric columns and set tiles define reusable card composition in `FitnessUI`; Profile consumes `.primary` without depending on a training state. Exercise model cards that bind live SwiftData state live in `FitnessPersistenceUI`. |
 | Exercise cards | `IdleActiveCardModelView` and `InactiveCardModelView` expose user intents for availability, latest-entry and coaching-history loading; they do not own storage. `ActiveCardModelView` renders coordinator-backed active state. |
 | Category/workout artwork | Shared stage and layout primitives in `FitnessUI` keep category and workout tiles structurally consistent without documenting their current dimensions here. |
 | Training session | `TrainingSessionComponent`, set rows, timer and picker components render coordinator state. The app root owns sheet presentation; the component does not own navigation or session lifetime. |
@@ -266,12 +270,15 @@ palette. The palette maps semantic UI roles; domain values and feature logic do 
 depend on concrete colors. The app may rebuild its visual subtree after the
 preference changes while preserving router, persistence and session owners.
 
-`ProfileColorTheme` maps the selected accent palette into semantic profile roles
-and is injected at the app root through SwiftUI's environment. Profile feature
+`ProfileColorTheme` maps the selected accent palette into semantic profile roles,
+including neutral selection-state surfaces, and is injected at the app root
+through SwiftUI's environment. Profile feature
 views consume those roles and shared card/tile components instead of reading
 concrete colors or `UserDefaults`; previews and snapshots inject deterministic
 themes directly. The roles derive from the same idle-card palette as training,
-while semantic status colors remain independent. ADR-0017 records this boundary.
+and both features consume the neutral `.primary` card surface while feature
+state names remain independent. Semantic status colors remain separate.
+ADR-0018 records the current boundary and supersedes ADR-0017.
 
 ## Live Activity
 

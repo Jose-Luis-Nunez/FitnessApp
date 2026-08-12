@@ -63,19 +63,56 @@ struct ProfileView: View {
     private var iconColorSection: some View {
         ProfileCardContainer {
             VStack(alignment: .leading, spacing: AppStyle.DeviceLayout.cardSpacing) {
-                Text("Default Icon Color")
-                    .font(AppStyle.Font.profileCardTitle)
-                    .foregroundColor(profileColors.secondary)
+                ProfileCardHeading("Default Icon Color")
 
-                Picker("Default Icon Color", selection: $iconColorScheme) {
-                    ForEach(DefaultIconColorScheme.allCases) { scheme in
-                        Text(scheme.displayName).tag(scheme)
-                    }
+                HStack(spacing: 0) {
+                    iconColorButton(for: .green)
+
+                    Rectangle()
+                        .fill(profileColors.divider)
+                        .frame(width: AppStyle.Layout.separatorWidth, height: 24)
+
+                    iconColorButton(for: .grey)
                 }
-                .pickerStyle(.segmented)
+                .profileReadOnlyTileSurface()
                 .accessibilityIdentifier("id_profile_icon_color_picker")
             }
         }
+    }
+
+    private func iconColorButton(for scheme: DefaultIconColorScheme) -> some View {
+        let isSelected = iconColorScheme == scheme
+
+        return Button {
+            iconColorScheme = scheme
+        } label: {
+            Text(scheme.displayName)
+                .font(AppStyle.Font.profileCardTitle)
+                .foregroundColor(isSelected ? profileColors.title : profileColors.secondary)
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: AppStyle.Layout.minimumTapTargetSize)
+                .background {
+                    RoundedRectangle(
+                        cornerRadius: AppStyle.CornerRadius.tile,
+                        style: .continuous
+                    )
+                    .fill(isSelected ? profileColors.selectionBackground : .clear)
+                    .overlay {
+                        RoundedRectangle(
+                            cornerRadius: AppStyle.CornerRadius.tile,
+                            style: .continuous
+                        )
+                        .stroke(
+                            isSelected ? profileColors.selectionStroke : .clear,
+                            lineWidth: AppStyle.Layout.darkSurfaceOutlineWidth
+                        )
+                    }
+                }
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityValue(isSelected ? "Selected" : "Not selected")
+        .accessibilityIdentifier("id_profile_icon_color_\(scheme.rawValue)")
     }
 
     // MARK: - Header
@@ -119,15 +156,13 @@ struct ProfileView: View {
 
     // MARK: - Nickname
 
+    @ViewBuilder
     private var nicknameSection: some View {
-        ProfileCardContainer {
-            if viewModel.isEditingNickname || !viewModel.hasProfile {
+        if viewModel.isEditingNickname || !viewModel.hasProfile {
+            ProfileCardContainer {
                 VStack(spacing: AppStyle.CornerRadius.defaultButton) {
-                    Text("Nickname")
-                        .font(AppStyle.Font.profileInputLabel)
-                        .foregroundColor(profileColors.secondary)
+                    ProfileCardHeading("Nickname")
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .fixedSize()
 
                     TextField("Your nickname", text: $viewModel.inputNickname)
                         .foregroundColor(profileColors.title)
@@ -182,31 +217,20 @@ struct ProfileView: View {
                     }
                     focusedField = .nickname
                 }
-            } else {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Nickname")
-                            .font(AppStyle.Font.profileCardTitle)
-                            .foregroundColor(profileColors.secondary)
-                            .fixedSize()
-                        Text(viewModel.nickname)
-                            .font(AppStyle.Font.sectionHeadline)
-                            .foregroundColor(profileColors.title)
-                    }
-
-                    Spacer()
-
-                    Button {
-                        viewModel.startEditingNickname()
-                    } label: {
-                        Image(systemName: "pencil.circle.fill")
-                            .font(AppStyle.Font.profileEditIcon)
-                            .foregroundColor(profileColors.accent)
-                    }
-                    .contentShape(Rectangle())
-                    .accessibilityIdentifier("id_profile_nickname_edit")
+            }
+        } else {
+            Button {
+                viewModel.startEditingNickname()
+            } label: {
+                ProfileCardContainer {
+                    ProfileCardHeading("Nickname", detail: viewModel.nickname)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
                 }
             }
+            .buttonStyle(.plain)
+            .accessibilityHint("Edit nickname")
+            .accessibilityIdentifier("id_profile_nickname_edit")
         }
     }
 
@@ -219,24 +243,9 @@ struct ProfileView: View {
                     isBodyExpanded.toggle()
                 } label: {
                     HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
-                        Text("Body Details")
-                            .font(AppStyle.Font.sectionHeadline)
-                            .foregroundColor(profileColors.title)
-                            .fixedSize()
+                        ProfileCardHeading("Body Details")
 
                         Spacer()
-
-                        if isBodyExpanded && !viewModel.isEditingBody {
-                            Button {
-                                viewModel.startEditingBody()
-                            } label: {
-                                Image(systemName: "pencil.circle.fill")
-                                    .font(AppStyle.Font.profileEditIcon)
-                                    .foregroundColor(profileColors.accent)
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityIdentifier("id_profile_body_edit")
-                        }
 
                         Image(systemName: "chevron.down")
                             .font(AppStyle.Font.profileSmallIcon)
@@ -336,17 +345,7 @@ struct ProfileView: View {
                         }
                     } label: {
                         HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("BMI")
-                                    .font(AppStyle.Font.sectionHeadline)
-                                    .foregroundColor(profileColors.title)
-                                    .fixedSize()
-
-                                Text("Your body mass index")
-                                    .font(AppStyle.Font.profileCardTitle)
-                                    .foregroundColor(profileColors.secondary)
-                                    .lineLimit(1)
-                            }
+                            ProfileCardHeading("BMI", detail: "Your body mass index")
 
                             Spacer()
 

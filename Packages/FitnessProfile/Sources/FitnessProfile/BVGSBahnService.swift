@@ -20,12 +20,13 @@ public protocol BVGSBahnServicing: Sendable {
 
 /// Composes `BVGTransitClient`, `SBahnClassifier`, and `SBahnBridgeResolver`
 /// into the user-visible Alex → Ostkreuz routing. The class itself is
-/// almost stateless: it holds the injected dependencies and runs the
-/// 4-step orchestration on each `fetchSBahnRoute` call.
+/// almost stateless: it holds the injected dependencies, a short-lived
+/// stopover cache, and runs the 4-step orchestration on each request.
 public final class BVGSBahnService: BVGSBahnServicing, Sendable {
     private static let stopoverConcurrencyLimit = 4
     private let client: BVGTransitClienting
     private let routeConfigurations: [SBahnRouteConfiguration]
+    private let stopoverCache = SBahnStopoverCache()
 
     public init(
         client: BVGTransitClienting = BVGTransitClient(),
@@ -154,7 +155,7 @@ public final class BVGSBahnService: BVGSBahnServicing, Sendable {
             if let bridge = trip.bridge { return bridge.bridgeTripId }
             return trip.dep.tripId
         }.filter { seenTripIds.insert($0).inserted }
-        let stopoversByTripId = await fetchStopoversInParallel(tripIds: arrivalTripIds)
+        let stopoversByTripId = try await fetchStopoversInParallel(tripIds: arrivalTripIds)
 
         // Third-pass: build SBahnDepartures with API-derived arrival when
         // available, falling back to the configuration's static estimate.
@@ -175,32 +176,54 @@ public final class BVGSBahnService: BVGSBahnServicing, Sendable {
 
     private func fetchStopoversInParallel(
         tripIds: [String]
-    ) async -> [String: [TransitStopover]] {
+    ) async throws -> [String: [TransitStopover]] {
+        let lookup = await stopoverCache.lookup(tripIds: tripIds)
+        guard !lookup.missingTripIds.isEmpty else { return lookup.stopoversByTripId }
+
         // A failed detail lookup is deliberately local to that trip: the
-        // caller still has a configuration-based arrival estimate.
-        await withTaskGroup(of: (String, [TransitStopover]?).self) { group in
-            var iterator = tripIds.makeIterator()
-            for _ in 0..<min(Self.stopoverConcurrencyLimit, tripIds.count) {
+        // caller still has a configuration-based arrival estimate. Successful
+        // responses are cached, while cancellation is propagated immediately.
+        let fetched = try await withThrowingTaskGroup(
+            of: (String, [TransitStopover]?).self,
+            returning: [String: [TransitStopover]].self
+        ) { group in
+            var iterator = lookup.missingTripIds.makeIterator()
+            for _ in 0..<min(Self.stopoverConcurrencyLimit, lookup.missingTripIds.count) {
                 guard let tripId = iterator.next() else { break }
                 group.addTask { [client] in
-                    let stopovers = try? await client.fetchTripStopovers(tripId: tripId)
-                    return (tripId, stopovers)
+                    do {
+                        return (tripId, try await client.fetchTripStopovers(tripId: tripId))
+                    } catch is CancellationError {
+                        throw CancellationError()
+                    } catch {
+                        return (tripId, nil)
+                    }
                 }
             }
             var result: [String: [TransitStopover]] = [:]
-            while let (tripId, stopovers) = await group.next() {
+            while let (tripId, stopovers) = try await group.next() {
                 if let stopovers {
                     result[tripId] = stopovers
                 }
                 if let nextTripId = iterator.next() {
                     group.addTask { [client] in
-                        let nextStopovers = try? await client.fetchTripStopovers(tripId: nextTripId)
-                        return (nextTripId, nextStopovers)
+                        do {
+                            return (
+                                nextTripId,
+                                try await client.fetchTripStopovers(tripId: nextTripId)
+                            )
+                        } catch is CancellationError {
+                            throw CancellationError()
+                        } catch {
+                            return (nextTripId, nil)
+                        }
                     }
                 }
             }
             return result
         }
+        await stopoverCache.store(stopoversByTripId: fetched)
+        return lookup.stopoversByTripId.merging(fetched) { _, fresh in fresh }
     }
 
     private func arrivalAtDestination(

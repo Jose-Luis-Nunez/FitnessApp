@@ -84,10 +84,7 @@ public struct FriendsSection: View {
             }
         } label: {
             HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
-                Text("Friends")
-                    .font(AppStyle.Font.sectionHeadline)
-                    .foregroundColor(profileColors.title)
-                    .fixedSize()
+                ProfileCardHeading("Friends")
                 Spacer()
                 Image(systemName: "chevron.down")
                     .font(AppStyle.Font.profileSmallIcon)

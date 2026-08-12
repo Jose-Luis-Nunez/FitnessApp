@@ -93,12 +93,20 @@ public extension BVGTransitClienting {
 /// shapes. Error mapping mirrors `BVGTramService`.
 public final class BVGTransitClient: BVGTransitClienting, @unchecked Sendable {
     private let baseURL: String
-    private let session: URLSession
+    private let transport: BVGHTTPTransport
     private let decoder: JSONDecoder
 
     public init(baseURL: String = "https://v6.bvg.transport.rest", session: URLSession = .shared) {
         self.baseURL = baseURL
-        self.session = session
+        self.transport = BVGHTTPTransport(session: session)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        self.decoder = decoder
+    }
+
+    init(baseURL: String = "https://v6.bvg.transport.rest", transport: BVGHTTPTransport) {
+        self.baseURL = baseURL
+        self.transport = transport
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         self.decoder = decoder
@@ -128,17 +136,16 @@ public final class BVGTransitClient: BVGTransitClienting, @unchecked Sendable {
         guard let url = components?.url else { throw BVGSBahnError.invalidURL }
 
         let data: Data
-        let response: URLResponse
         do {
-            (data, response) = try await session.data(from: url)
+            data = try await transport.data(from: url)
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch BVGHTTPError.rateLimited {
+            throw BVGSBahnError.rateLimited
+        } catch BVGHTTPError.httpStatus(let statusCode) {
+            throw BVGSBahnError.serverError(statusCode: statusCode)
         } catch {
             throw BVGSBahnError.network
-        }
-        guard let http = response as? HTTPURLResponse else { throw BVGSBahnError.network }
-        switch http.statusCode {
-        case 200...299: break
-        case 429: throw BVGSBahnError.rateLimited
-        default: throw BVGSBahnError.serverError
         }
 
         do {
@@ -173,17 +180,16 @@ public final class BVGTransitClient: BVGTransitClienting, @unchecked Sendable {
         guard let url = components?.url else { throw BVGSBahnError.invalidURL }
 
         let data: Data
-        let response: URLResponse
         do {
-            (data, response) = try await session.data(from: url)
+            data = try await transport.data(from: url)
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch BVGHTTPError.rateLimited {
+            throw BVGSBahnError.rateLimited
+        } catch BVGHTTPError.httpStatus(let statusCode) {
+            throw BVGSBahnError.serverError(statusCode: statusCode)
         } catch {
             throw BVGSBahnError.network
-        }
-        guard let http = response as? HTTPURLResponse else { throw BVGSBahnError.network }
-        switch http.statusCode {
-        case 200...299: break
-        case 429: throw BVGSBahnError.rateLimited
-        default: throw BVGSBahnError.serverError
         }
 
         do {
