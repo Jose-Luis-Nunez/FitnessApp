@@ -152,6 +152,15 @@ public enum AppStyle {
         public static let profileAvatarSize: CGFloat = 80
         public static let profileInputPadding: CGFloat = 12
         public static let profileButtonPadding: CGFloat = 10
+        /// Prominent action geometry for workout-entry bottom sheets.
+        public static let sheetActionSecondaryButtonWidth: CGFloat = 120
+        public static let sheetActionPrimaryButtonMaxWidth: CGFloat = 225
+        public static let sheetActionButtonHeight: CGFloat = 52
+        /// Compact action geometry for Profile cards and Profile-owned flows.
+        public static let profileActionSecondaryButtonWidth: CGFloat = 110
+        public static let profileActionPrimaryButtonMaxWidth: CGFloat = 205
+        /// Width of the compact two-option picker in the Profile card header.
+        public static let profileColorPickerWidth: CGFloat = 136
         public static let profileBMIBarHeight: CGFloat = 8
         public static let profileBMIThumbSize: CGFloat = 14
         public static let profileBottomSpacer: CGFloat = 100

@@ -6,7 +6,6 @@ import FitnessFriends
 struct ProfileView: View {
     @State private var viewModel = ProfileViewModel()
     @State private var isBodyExpanded = false
-    @State private var isBMIExpanded = false
     @AppStorage(DefaultIconColorScheme.storageKey) private var iconColorScheme: DefaultIconColorScheme = .green
     @Environment(\.profileColorTheme) private var profileColors
     @FocusState private var focusedField: ProfileField?
@@ -25,7 +24,6 @@ struct ProfileView: View {
                         headerSection
                         nicknameSection
                         bodyDataSection
-                        bmiSection
                         iconColorSection
                         FriendsSection()
                         SBahnDeparturesCardView(viewModel: viewModel.sbahnVM)
@@ -44,9 +42,8 @@ struct ProfileView: View {
                 }
             }
         }
-        // BMI loading is lazy — triggered on first expand below, not on
-        // appear. This avoids the "loading spinner while collapsed" UX bug
-        // and saves a network call when the user never opens the BMI card.
+        // BMI is calculated locally on first expand. Server validation remains
+        // explicit through Refresh or follows a real weight/height change.
         .alert("Error", isPresented: $viewModel.showNicknameAlert) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -62,8 +59,11 @@ struct ProfileView: View {
     /// environment, so profile components update without feature-model plumbing.
     private var iconColorSection: some View {
         ProfileCardContainer {
-            VStack(alignment: .leading, spacing: AppStyle.DeviceLayout.cardSpacing) {
+            HStack(spacing: AppStyle.Padding.card) {
                 ProfileCardHeading("Default Icon Color")
+                    .layoutPriority(1)
+
+                Spacer(minLength: 0)
 
                 HStack(spacing: 0) {
                     iconColorButton(for: .green)
@@ -74,6 +74,7 @@ struct ProfileView: View {
 
                     iconColorButton(for: .grey)
                 }
+                .frame(width: AppStyle.Layout.profileColorPickerWidth)
                 .profileReadOnlyTileSurface()
                 .accessibilityIdentifier("id_profile_icon_color_picker")
             }
@@ -90,7 +91,7 @@ struct ProfileView: View {
                 .font(AppStyle.Font.profileCardTitle)
                 .foregroundColor(isSelected ? profileColors.title : profileColors.secondary)
                 .frame(maxWidth: .infinity)
-                .frame(minHeight: AppStyle.Layout.minimumTapTargetSize)
+                .frame(height: AppStyle.Layout.chipHeight)
                 .background {
                     RoundedRectangle(
                         cornerRadius: AppStyle.CornerRadius.tile,
@@ -108,8 +109,9 @@ struct ProfileView: View {
                         )
                     }
                 }
-                .contentShape(Rectangle())
         }
+        .frame(maxWidth: .infinity, minHeight: AppStyle.Layout.minimumTapTargetSize)
+        .contentShape(Rectangle())
         .buttonStyle(.plain)
         .accessibilityValue(isSelected ? "Selected" : "Not selected")
         .accessibilityIdentifier("id_profile_icon_color_\(scheme.rawValue)")
@@ -176,40 +178,21 @@ struct ProfileView: View {
                         .accessibilityIdentifier("id_profile_nickname_input")
                         .id(ProfileField.nickname)
 
-                    HStack(spacing: AppStyle.CornerRadius.defaultButton) {
-                        if viewModel.hasProfile {
-                            Button {
-                                focusedField = nil
-                                viewModel.cancelNicknameEdit()
-                            } label: {
-                                Text("Cancel")
-                                    .font(AppStyle.Font.pickerAction)
-                                    .foregroundColor(profileColors.title)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, AppStyle.Layout.profileButtonPadding)
-                            }
-                            .accessibilityIdentifier("id_profile_nickname_cancel")
-                        }
-
-                        Button {
+                    ProfileActionRow(
+                        secondaryLabel: viewModel.hasProfile ? "Cancel" : nil,
+                        primaryLabel: "Save",
+                        isPrimaryEnabled: !viewModel.isNicknameInputEmpty,
+                        secondaryAccessibilityIdentifier: "id_profile_nickname_cancel",
+                        primaryAccessibilityIdentifier: "id_profile_nickname_save",
+                        onSecondary: {
+                            focusedField = nil
+                            viewModel.cancelNicknameEdit()
+                        },
+                        onPrimary: {
                             focusedField = nil
                             viewModel.saveNickname()
-                        } label: {
-                            Text("Save")
-                                .font(AppStyle.Font.pickerAction)
-                                .foregroundColor(profileColors.onAccent)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, AppStyle.Layout.profileButtonPadding)
-                                .background(
-                                    viewModel.isNicknameInputEmpty
-                                    ? profileColors.accentFill.opacity(AppStyle.Opacity.disabledElement)
-                                    : profileColors.accentFill
-                                )
-                                .cornerRadius(AppStyle.CornerRadius.defaultButton)
                         }
-                        .disabled(viewModel.isNicknameInputEmpty)
-                        .accessibilityIdentifier("id_profile_nickname_save")
-                    }
+                    )
                 }
                 .onAppear {
                     if !viewModel.hasProfile {
@@ -240,7 +223,11 @@ struct ProfileView: View {
         ProfileCardContainer {
             VStack(spacing: AppStyle.Padding.card) {
                 Button {
-                    isBodyExpanded.toggle()
+                    var transaction = Transaction(animation: nil)
+                    transaction.disablesAnimations = true
+                    withTransaction(transaction) {
+                        isBodyExpanded.toggle()
+                    }
                 } label: {
                     HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
                         ProfileCardHeading("Body Details")
@@ -258,16 +245,28 @@ struct ProfileView: View {
                 .accessibilityIdentifier("id_profile_body_header")
 
                 if isBodyExpanded {
-                    if viewModel.isEditingBody {
-                        bodyEditForm
-                    } else {
-                        bodyDisplayGrid
+                    Group {
+                        if viewModel.isEditingBody {
+                            bodyEditForm
+                        } else {
+                            bodyReadOnlyContent
+                        }
                     }
                 }
             }
         }
         .onChange(of: viewModel.isEditingBody) { _, isEditing in
-            if isEditing { isBodyExpanded = true }
+            guard isEditing else { return }
+            var transaction = Transaction(animation: nil)
+            transaction.disablesAnimations = true
+            withTransaction(transaction) {
+                isBodyExpanded = true
+            }
+        }
+        .onChange(of: isBodyExpanded) { _, isExpanded in
+            if isExpanded {
+                viewModel.loadBMIIfNeeded()
+            }
         }
     }
 
@@ -275,31 +274,25 @@ struct ProfileView: View {
         VStack(spacing: AppStyle.CornerRadius.defaultButton) {
             BodyMetricsWheelRow(viewModel: viewModel)
 
-            HStack(spacing: AppStyle.CornerRadius.defaultButton) {
-                Button {
+            ProfileActionRow(
+                secondaryLabel: "Cancel",
+                primaryLabel: "Save",
+                secondaryAccessibilityIdentifier: "id_profile_body_cancel",
+                primaryAccessibilityIdentifier: "id_profile_body_save",
+                onSecondary: {
                     viewModel.cancelBodyEdit()
-                } label: {
-                    Text("Cancel")
-                        .font(AppStyle.Font.pickerAction)
-                        .foregroundColor(profileColors.title)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, AppStyle.Layout.profileButtonPadding)
-                }
-                .accessibilityIdentifier("id_profile_body_cancel")
-
-                Button {
+                },
+                onPrimary: {
                     viewModel.saveBodyData()
-                } label: {
-                    Text("Save")
-                        .font(AppStyle.Font.pickerAction)
-                        .foregroundColor(profileColors.onAccent)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, AppStyle.Layout.profileButtonPadding)
-                        .background(profileColors.accentFill)
-                        .cornerRadius(AppStyle.CornerRadius.defaultButton)
                 }
-                .accessibilityIdentifier("id_profile_body_save")
-            }
+            )
+        }
+    }
+
+    private var bodyReadOnlyContent: some View {
+        VStack(alignment: .leading, spacing: AppStyle.Padding.card) {
+            bodyDisplayGrid
+            bmiContent
         }
     }
 
@@ -331,82 +324,57 @@ struct ProfileView: View {
         }
     }
 
-    // MARK: - BMI
+    // MARK: - BMI (part of Body Details)
 
-    @ViewBuilder
-    private var bmiSection: some View {
-        if viewModel.hasBodyData || viewModel.bmiResult != nil {
-            ProfileCardContainer {
-                VStack(spacing: AppStyle.CornerRadius.defaultButton) {
-                    Button {
-                        isBMIExpanded.toggle()
-                        if isBMIExpanded {
-                            viewModel.loadBMIIfNeeded()
-                        }
-                    } label: {
-                        HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
-                            ProfileCardHeading("BMI", detail: "Your body mass index")
+    private var bmiContent: some View {
+        VStack(alignment: .leading, spacing: AppStyle.CornerRadius.defaultButton) {
+            Divider()
+                .background(profileColors.divider)
 
-                            Spacer()
+            ProfileCardHeading("BMI", detail: "Your body mass index")
 
-                            // No loading indicator in the header — would
-                            // otherwise be visible even when the card is
-                            // collapsed. Loading lives in the expanded
-                            // body, consistent with Tram/SBahn cards.
+            if let bmi = viewModel.bmiResult {
+                HStack(alignment: .firstTextBaseline, spacing: AppStyle.DeviceLayout.cardSpacing) {
+                    Text(viewModel.formattedBMI)
+                        .font(AppStyle.Font.profileCardValue)
+                        .foregroundColor(bmiColor(for: bmi.category))
+                        .accessibilityIdentifier("id_profile_bmi_value")
 
-                            Image(systemName: "chevron.down")
-                                .font(AppStyle.Font.profileSmallIcon)
-                                .foregroundColor(profileColors.accent)
-                                .rotationEffect(.degrees(isBMIExpanded ? 180 : 0))
-                        }
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("id_profile_bmi_header")
-
-                    if isBMIExpanded {
-                        if let bmi = viewModel.bmiResult {
-                            HStack(alignment: .firstTextBaseline, spacing: AppStyle.DeviceLayout.cardSpacing) {
-                                Text(viewModel.formattedBMI)
-                                    .font(AppStyle.Font.profileCardValue)
-                                    .foregroundColor(bmiColor(for: bmi.category))
-                                    .accessibilityIdentifier("id_profile_bmi_value")
-
-                                Text(bmi.category.displayName)
-                                    .font(AppStyle.Font.profileBMICategory)
-                                    .foregroundColor(bmiColor(for: bmi.category))
-                                    .fixedSize()
-                                    .accessibilityIdentifier("id_profile_bmi_category")
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-
-                            bmiBar(value: bmi.value)
-                        } else if !viewModel.hasBodyData {
-                            Text("Enter your weight and height to calculate your BMI.")
-                                .font(AppStyle.Font.profileCardTitle)
-                                .foregroundColor(profileColors.secondary)
-                        }
-
-                        if let error = viewModel.bmiError {
-                            HStack(spacing: 4) {
-                                Image(systemName: "wifi.slash")
-                                    .font(AppStyle.Font.profileSmallIcon)
-                                Text(error)
-                                    .font(AppStyle.Font.detailCaption)
-                            }
-                            .foregroundColor(AppStyle.Color.yellow)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-
-                        HStack {
-                            Spacer()
-                            RefreshActionButton(isLoading: viewModel.isLoadingBMI) {
-                                viewModel.fetchBMI()
-                            }
-                            .accessibilityIdentifier("id_profile_bmi_refresh")
-                        }
-                    }
+                    Text(bmi.category.displayName)
+                        .font(AppStyle.Font.profileBMICategory)
+                        .foregroundColor(bmiColor(for: bmi.category))
+                        .fixedSize()
+                        .accessibilityIdentifier("id_profile_bmi_category")
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                bmiBar(value: bmi.value)
+            } else if !viewModel.hasBodyData {
+                Text("Enter your weight and height to calculate your BMI.")
+                    .font(AppStyle.Font.profileCardTitle)
+                    .foregroundColor(profileColors.secondary)
+            }
+
+            if let error = viewModel.bmiError {
+                HStack(spacing: 4) {
+                    Image(systemName: "wifi.slash")
+                        .font(AppStyle.Font.profileSmallIcon)
+                    Text(error)
+                        .font(AppStyle.Font.detailCaption)
+                }
+                .foregroundColor(AppStyle.Color.yellow)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            HStack {
+                Spacer()
+                RefreshActionButton(
+                    isLoading: viewModel.isLoadingBMI,
+                    isEnabled: viewModel.hasBodyData
+                ) {
+                    viewModel.fetchBMI()
+                }
+                .accessibilityIdentifier("id_profile_bmi_refresh")
             }
         }
     }

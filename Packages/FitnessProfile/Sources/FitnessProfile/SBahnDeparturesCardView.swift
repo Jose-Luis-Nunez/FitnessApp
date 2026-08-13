@@ -327,16 +327,19 @@ public struct SBahnDeparturesCardView: View {
     }
 
     private var footer: some View {
-        HStack {
+        VStack(alignment: .leading, spacing: AppStyle.DeviceLayout.cardSpacing) {
             footerStatusText
 
-            Spacer()
+            HStack {
+                Spacer()
 
-            RefreshActionButton(isLoading: viewModel.isLoading) {
-                Task { await viewModel.refresh() }
+                RefreshActionButton(isLoading: viewModel.isLoading) {
+                    Task { await viewModel.refresh() }
+                }
+                .accessibilityIdentifier("id_profile_sbahn_refresh")
             }
-            .accessibilityIdentifier("id_profile_sbahn_refresh")
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder

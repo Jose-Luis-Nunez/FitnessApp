@@ -23,39 +23,18 @@ public struct FriendsSection: View {
                 headerRow
 
                 if viewModel.isExpanded {
-                    userRow
-                    friendTileRow
-                    comparisonArea
+                    Group {
+                        userRow
+                        friendTileRow
+                        comparisonArea
+                    }
                 }
             }
         }
-        .sheet(isPresented: $viewModel.showingAddFriend) {
-            AddFriendSheet(
-                isPresented: $viewModel.showingAddFriend,
-                initialJSON: viewModel.pendingFriendJSON,
-                fileName: viewModel.pendingFriendFileName,
-                onAdded: {
-                    viewModel.pendingFriendJSON = nil
-                    viewModel.pendingFriendFileName = nil
-                    viewModel.friendAdded()
-                }
-            )
-        }
-        .onAppear {
-            if let json = friendImportCoordinator.pendingImportJSON, !json.isEmpty {
-                viewModel.pendingFriendJSON = json
-                viewModel.pendingFriendFileName = friendImportCoordinator.pendingImportFileName
-                friendImportCoordinator.clearPending()
-                viewModel.showingAddFriend = true
-            }
-        }
-        .onChange(of: friendImportCoordinator.pendingImportJSON) { _, json in
-            guard let json, !json.isEmpty else { return }
-            viewModel.pendingFriendJSON = json
-            viewModel.pendingFriendFileName = friendImportCoordinator.pendingImportFileName
-            friendImportCoordinator.clearPending()
-            viewModel.showingAddFriend = true
-        }
+        .friendImportFlow(
+            viewModel: viewModel,
+            coordinator: friendImportCoordinator
+        )
         .sheet(isPresented: $viewModel.showingExportPicker) {
             ExportWorkoutPickerSheet(
                 isPresented: $viewModel.showingExportPicker,
@@ -79,7 +58,9 @@ public struct FriendsSection: View {
 
     private var headerRow: some View {
         Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
+            var transaction = Transaction(animation: nil)
+            transaction.disablesAnimations = true
+            withTransaction(transaction) {
                 viewModel.toggleExpanded()
             }
         } label: {
@@ -194,7 +175,7 @@ public struct FriendsSection: View {
 
     private var addFriendTile: some View {
         Button {
-            viewModel.showingAddFriend = true
+            viewModel.requestFriendImport()
         } label: {
             VStack(spacing: 6) {
                 ZStack {

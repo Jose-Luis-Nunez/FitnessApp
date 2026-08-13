@@ -17,9 +17,6 @@ public struct SheetActionArea: View {
 
     @Environment(\.safeAreaInsets) private var safeAreaInsets
 
-    private static let cancelButtonWidth: CGFloat = 120
-    private static let saveButtonMaxWidth: CGFloat = 225
-    private static let actionButtonHeight: CGFloat = 52
     private static let homeMenuBarBottomOffset: CGFloat = -8
     private static let backdropFadeHeight: CGFloat = 28
     private static let backdropOpacity: Double = 0.94
@@ -53,8 +50,8 @@ public struct SheetActionArea: View {
                     .font(AppStyle.Font.bottomBarButtons)
                     .foregroundColor(AppStyle.Color.white)
                     .frame(
-                        width: Self.cancelButtonWidth,
-                        height: Self.actionButtonHeight
+                        width: AppStyle.Layout.sheetActionSecondaryButtonWidth,
+                        height: AppStyle.Layout.sheetActionButtonHeight
                     )
                     .buttonStyle(.plain)
                     .accessibilityIdentifier(cancelAccessibilityIdentifier)
@@ -65,8 +62,8 @@ public struct SheetActionArea: View {
                         .foregroundColor(AppStyle.Color.white)
                         .frame(
                             maxWidth: .infinity,
-                            minHeight: Self.actionButtonHeight,
-                            maxHeight: Self.actionButtonHeight
+                            minHeight: AppStyle.Layout.sheetActionButtonHeight,
+                            maxHeight: AppStyle.Layout.sheetActionButtonHeight
                         )
                         .background(
                             isSaveEnabled
@@ -81,7 +78,7 @@ public struct SheetActionArea: View {
                         )
                 }
                 .buttonStyle(.plain)
-                .frame(maxWidth: Self.saveButtonMaxWidth)
+                .frame(maxWidth: AppStyle.Layout.sheetActionPrimaryButtonMaxWidth)
                 .disabled(!isSaveEnabled)
                 .accessibilityIdentifier(saveAccessibilityIdentifier)
             }
@@ -111,7 +108,7 @@ public struct SheetActionArea: View {
 
             backdropColor
                 .opacity(Self.backdropOpacity)
-                .frame(height: Self.actionButtonHeight + bottomPadding)
+                .frame(height: AppStyle.Layout.sheetActionButtonHeight + bottomPadding)
         }
         .allowsHitTesting(false)
     }

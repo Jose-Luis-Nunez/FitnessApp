@@ -207,6 +207,53 @@ struct ProfileViewModelTests {
         vm.weightKg = 0; vm.heightCm = 0; vm.age = 0
     }
 
+    @Test func saveBodyData_unchangedBMIInputs_doesNotFetch() {
+        let service = ControllableBMIService()
+        let vm = ProfileViewModel(bmiService: service)
+        vm.weightKg = 75
+        vm.heightCm = 175
+        vm.age = 30
+        vm.startEditingBody()
+
+        vm.saveBodyData()
+
+        #expect(vm.isLoadingBMI == false)
+        #expect(service.localCallCount == 0)
+        #expect(service.fetchCallCount == 0)
+        vm.weightKg = 0; vm.heightCm = 0; vm.age = 0
+    }
+
+    @Test func saveBodyData_changedBMIInputs_calculatesLocallyThenFetches() async throws {
+        let localResult = BMIResult(value: 24.7, category: .normal)
+        let remoteResult = BMIResult(value: 24.8, category: .normal)
+        let service = ControllableBMIService(localResult: localResult)
+        let vm = ProfileViewModel(bmiService: service)
+        vm.weightKg = 70
+        vm.heightCm = 175
+        vm.age = 30
+        vm.startEditingBody()
+        vm.draftWeightKg = 80
+        vm.draftHeightCm = 180
+
+        vm.saveBodyData()
+
+        #expect(vm.bmiResult?.value == localResult.value)
+        #expect(vm.isLoadingBMI)
+        defer { service.resume(returning: remoteResult) }
+        try await service.waitUntilRequested()
+        #expect(service.localCallCount == 1)
+        #expect(service.fetchCallCount == 1)
+        #expect(service.lastLocalWeightKg == 80)
+        #expect(service.lastLocalHeightM == 1.8)
+        #expect(service.lastFetchWeightKg == 80)
+        #expect(service.lastFetchHeightM == 1.8)
+
+        service.resume(returning: remoteResult)
+        try await waitUntil { vm.isLoadingBMI == false }
+        #expect(vm.bmiResult?.value == remoteResult.value)
+        vm.weightKg = 0; vm.heightCm = 0; vm.age = 0
+    }
+
     @Test func cancelBodyEdit_closesEditMode() {
         let vm = ProfileViewModel()
         vm.isEditingBody = true
@@ -232,7 +279,7 @@ struct ProfileViewModelTests {
         #expect(vm.isLoadingBMI == false)
     }
 
-    // MARK: - Lazy BMI Load
+    // MARK: - Local BMI Load
 
     @Test func loadBMIIfNeeded_noBodyData_doesNotFetch() {
         let vm = ProfileViewModel()
@@ -256,21 +303,92 @@ struct ProfileViewModelTests {
         vm.weightKg = 0; vm.heightCm = 0; vm.age = 0; vm.bmiResult = nil
     }
 
-    @Test func loadBMIIfNeeded_populatesLocalResultImmediately() {
-        // Local-First: bmiResult should be populated synchronously before
-        // the network call returns, so the user sees a value immediately
-        // on first card expand.
-        let vm = ProfileViewModel()
+    @Test func loadBMIIfNeeded_populatesLocalResultWithoutFetching() {
+        let service = ControllableBMIService()
+        let vm = ProfileViewModel(bmiService: service)
         vm.weightKg = 75
         vm.heightCm = 180
         vm.age = 28
         vm.bmiResult = nil
         vm.loadBMIIfNeeded()
-        // calculateBMILocally runs synchronously inside loadBMIIfNeeded,
-        // so by the time this line executes the result is set even though
-        // the API task is still in flight.
+
         #expect(vm.bmiResult != nil)
-        // Cleanup: cancel the in-flight task to prevent test pollution.
+        #expect(vm.isLoadingBMI == false)
+        #expect(service.localCallCount == 1)
+        #expect(service.fetchCallCount == 0)
         vm.weightKg = 0; vm.heightCm = 0; vm.age = 0; vm.bmiResult = nil
+    }
+
+    private final class ControllableBMIService: BMIServicing, @unchecked Sendable {
+        private let lock = NSLock()
+        private let localResult: BMIResult
+        private var continuation: CheckedContinuation<BMIResult, Error>?
+        private var storedLocalCallCount = 0
+        private var storedFetchCallCount = 0
+        private var storedLastLocalWeightKg: Double?
+        private var storedLastLocalHeightM: Double?
+        private var storedLastFetchWeightKg: Double?
+        private var storedLastFetchHeightM: Double?
+
+        init(localResult: BMIResult = BMIResult(value: 23.1, category: .normal)) {
+            self.localResult = localResult
+        }
+
+        var localCallCount: Int {
+            lock.withLock { storedLocalCallCount }
+        }
+
+        var fetchCallCount: Int {
+            lock.withLock { storedFetchCallCount }
+        }
+
+        var lastLocalWeightKg: Double? {
+            lock.withLock { storedLastLocalWeightKg }
+        }
+
+        var lastLocalHeightM: Double? {
+            lock.withLock { storedLastLocalHeightM }
+        }
+
+        var lastFetchWeightKg: Double? {
+            lock.withLock { storedLastFetchWeightKg }
+        }
+
+        var lastFetchHeightM: Double? {
+            lock.withLock { storedLastFetchHeightM }
+        }
+
+        func calculateBMILocally(weightKg: Double, heightM: Double) -> BMIResult? {
+            lock.withLock {
+                storedLocalCallCount += 1
+                storedLastLocalWeightKg = weightKg
+                storedLastLocalHeightM = heightM
+            }
+            return localResult
+        }
+
+        func fetchBMI(weightKg: Double, heightM: Double) async throws -> BMIResult {
+            try await withCheckedThrowingContinuation { continuation in
+                lock.withLock {
+                    storedFetchCallCount += 1
+                    storedLastFetchWeightKg = weightKg
+                    storedLastFetchHeightM = heightM
+                    self.continuation = continuation
+                }
+            }
+        }
+
+        func waitUntilRequested() async throws {
+            try await waitUntil { self.fetchCallCount == 1 }
+        }
+
+        func resume(returning result: BMIResult) {
+            let pending = lock.withLock {
+                let pending = continuation
+                continuation = nil
+                return pending
+            }
+            pending?.resume(returning: result)
+        }
     }
 }

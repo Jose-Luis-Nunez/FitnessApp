@@ -134,7 +134,7 @@ can retry without losing already visible data.
 | `TrainingCoordinatorCache` | `FitnessTraining` | Provides one coordinator per muscle category and connects new-session events to learned exercise order. |
 | `TimerService` | `FitnessTraining` | Rest timer over an injectable clock boundary. |
 | `ExerciseFeedbackDraftStore` | `TrainingCoordinator` | Keeps the current exercise's unsaved feedback in memory; drafts are discarded with the owning session/exercise lifecycle. |
-| `WorkoutImportCoordinator` | `FitnessWorkouts` | Bridges app-level incoming files to the Workouts import flow, including cold launch before the screen mounts. |
+| `WorkoutImportCoordinator` / `FriendImportCoordinator` | `FitnessWorkouts` / `FitnessFriends` | Bridge app-level incoming files to their feature import flows, including cold launch before the screen mounts. The Add Friend form reuses its coordinator for an in-form system document picker before saving the named friend. |
 | `BMIService` | `FitnessProfile` | Fetches remote BMI classification and provides a deterministic local calculation fallback. |
 | `BVGTramService` / `TramDeparturesCache` | `FitnessProfile` | Loads live Tram departures and persists the latest route-scoped successful result. |
 | `BVGHTTPTransport` | `FitnessProfile` | Shared cancellation-preserving HTTP boundary for Tram and S-Bahn with bounded transient retries, jitter, `Retry-After` support and status-code preservation. |
@@ -195,7 +195,7 @@ composition remains in the owning feature package.
 | Exercise cards | `IdleActiveCardModelView` and `InactiveCardModelView` expose user intents for availability, latest-entry and coaching-history loading; they do not own storage. `ActiveCardModelView` renders coordinator-backed active state. |
 | Category/workout artwork | Shared stage and layout primitives in `FitnessUI` keep category and workout tiles structurally consistent without documenting their current dimensions here. |
 | Training session | `TrainingSessionComponent`, set rows, timer and picker components render coordinator state. The app root owns sheet presentation; the component does not own navigation or session lifetime. |
-| Editing sheets | `OverlaySheetContainer`, `SheetActionArea`, shared picker actions and editing-sheet visibility keep presentation chrome, primary/secondary action sizing and bottom-bar suppression consistent. Feature packages own form state and validation. |
+| Editing sheets | `OverlaySheetContainer`, `SheetActionArea`, shared picker actions and editing-sheet visibility keep presentation chrome, prominent sheet-action sizing and bottom-bar suppression consistent. `ProfileActionRow` applies the same semantic secondary/primary composition with compact Profile-specific geometry; `RefreshActionButton` is its refresh-specific wrapper. Feature packages own form state and validation. |
 | Feedback | `FeedbackSheetComponent` presents feature-owned feedback UI. `FeedbackViewModel` uses the coordinator-owned draft store and session-scoped persistence. |
 | Menus | `MiniActionMenuView` renders caller-provided actions. Every item has a stable semantic ID; localized labels are presentation data rather than identity. |
 | Workout selection | `WorkoutDropdownView` and `WorkoutPickerView` receive workout values and callbacks; they do not resolve persistence dependencies. |

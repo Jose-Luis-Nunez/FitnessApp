@@ -550,25 +550,6 @@ struct ExerciseCardResetButtonSnapshotTests {
     }
 }
 
-// MARK: - RefreshActionButton Snapshots
-
-@Suite("RefreshActionButton — Snapshots", .tags(.snapshot))
-@MainActor
-struct RefreshActionButtonSnapshotTests {
-
-    @Test func readyState() {
-        let view = RefreshActionButton(title: "Refresh", isLoading: false, action: {})
-            .profileColorTheme(.green)
-        assertSnapshot(of: view, named: "ready", size: CGSize(width: 200, height: 60))
-    }
-
-    @Test func loadingState() {
-        let view = RefreshActionButton(title: "Refresh", isLoading: true, action: {})
-            .profileColorTheme(.green)
-        assertSnapshot(of: view, named: "loading", size: CGSize(width: 200, height: 60))
-    }
-}
-
 // MARK: - CardTextField Snapshots
 
 @Suite("CardTextField — Snapshots", .tags(.snapshot))

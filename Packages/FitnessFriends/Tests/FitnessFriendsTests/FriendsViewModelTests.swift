@@ -174,6 +174,63 @@ struct FriendsViewModelTests {
         #expect(vm.showingExportPicker)
     }
 
+    // MARK: - friend import
+
+    @Test("requestFriendImport presents the Add Friend form")
+    func requestFriendImportPresentsAddFriendForm() {
+        let (vm, _, _) = makeSUT()
+
+        #expect(!vm.showingAddFriend)
+        vm.requestFriendImport()
+
+        #expect(vm.showingAddFriend)
+        #expect(vm.pendingFriendJSON == nil)
+        #expect(vm.pendingFriendFileName == nil)
+    }
+
+    @Test("receiveFriendImport snapshots data and presents Add Friend")
+    func receiveFriendImportPresentsAddFriend() {
+        let (vm, _, _) = makeSUT()
+
+        vm.receiveFriendImport(json: "{\"version\":1}", fileName: "Alice")
+
+        #expect(vm.pendingFriendJSON == "{\"version\":1}")
+        #expect(vm.pendingFriendFileName == "Alice")
+        #expect(vm.showingAddFriend)
+    }
+
+    @Test("receiveFriendImport rejects an empty payload with an error")
+    func receiveFriendImportRejectsEmptyPayload() {
+        let (vm, _, _) = makeSUT()
+
+        vm.receiveFriendImport(json: "  \n  ", fileName: "Empty")
+
+        #expect(vm.pendingFriendJSON == nil)
+        #expect(vm.pendingFriendFileName == nil)
+        #expect(!vm.showingAddFriend)
+        #expect(vm.importErrorMessage == "The selected friend file could not be read.")
+    }
+
+    @Test("friendImportDidDismiss clears the presentation snapshot")
+    func friendImportDidDismissClearsSnapshot() {
+        let (vm, _, _) = makeSUT()
+        vm.receiveFriendImport(json: "{\"version\":1}", fileName: "Alice")
+
+        vm.friendImportDidDismiss()
+
+        #expect(vm.pendingFriendJSON == nil)
+        #expect(vm.pendingFriendFileName == nil)
+    }
+
+    @Test("friendImportFailed exposes an actionable error")
+    func friendImportFailedExposesError() {
+        let (vm, _, _) = makeSUT()
+
+        vm.friendImportFailed()
+
+        #expect(vm.importErrorMessage == "The selected friend file could not be read.")
+    }
+
     // MARK: - friends computed property
 
     @Test("friends reads from friendStorage")

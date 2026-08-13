@@ -28,6 +28,7 @@ public final class FriendsViewModel {
     public var showingExportPicker = false
     public var workoutToShare: WorkoutShareItem?
     public var exportErrorMessage: String?
+    public var importErrorMessage: String?
     public var pendingFriendJSON: String?
     public var pendingFriendFileName: String?
 
@@ -92,6 +93,38 @@ public final class FriendsViewModel {
     /// Called from UserRowView when the user taps their own row.
     public func requestExport() {
         showingExportPicker = true
+    }
+
+    /// Opens the Add Friend form. The form owns manual file selection while
+    /// externally opened files still arrive through `FriendImportCoordinator`.
+    public func requestFriendImport() {
+        pendingFriendJSON = nil
+        pendingFriendFileName = nil
+        importErrorMessage = nil
+        showingAddFriend = true
+    }
+
+    /// Snapshots coordinator-owned import data into feature presentation state.
+    /// Keeping this payload in the view model lets the coordinator clear its
+    /// singleton state immediately, so later imports cannot reuse stale data.
+    public func receiveFriendImport(json: String, fileName: String?) {
+        guard !json.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            friendImportFailed()
+            return
+        }
+        pendingFriendJSON = json
+        pendingFriendFileName = fileName
+        showingAddFriend = true
+    }
+
+    /// Clears the presentation snapshot after Save or Cancel.
+    public func friendImportDidDismiss() {
+        pendingFriendJSON = nil
+        pendingFriendFileName = nil
+    }
+
+    public func friendImportFailed() {
+        importErrorMessage = "The selected friend file could not be read."
     }
 
     /// Called from ExportWorkoutPickerSheet after the user selects a workout.

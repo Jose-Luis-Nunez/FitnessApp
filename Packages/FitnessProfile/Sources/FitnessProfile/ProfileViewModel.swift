@@ -110,6 +110,9 @@ public final class ProfileViewModel {
     }
 
     public func saveBodyData() {
+        let bmiInputsChanged = weightKg != draftWeightKg
+            || heightCm != Double(draftHeightCm)
+
         weightKg = draftWeightKg
         store.weightKg = draftWeightKg
 
@@ -120,7 +123,14 @@ public final class ProfileViewModel {
         store.age = draftAge
 
         isEditingBody = false
-        fetchBMI()
+
+        if bmiInputsChanged {
+            bmiResult = bmiService.calculateBMILocally(
+                weightKg: weightKg,
+                heightM: heightM
+            )
+            fetchBMI()
+        }
     }
 
     public func cancelBodyEdit() {
@@ -162,20 +172,11 @@ public final class ProfileViewModel {
         }
     }
 
-    /// Lazy BMI load: instant local calculation, then optional API refresh.
-    /// Called when the BMI card transitions to expanded state, NOT on app
-    /// appear — avoids the "loading-spinner-while-collapsed" UX bug.
-    ///
-    /// Local-First strategy: synchronously populate `bmiResult` with the
-    /// locally-computed value so the user sees a number immediately. Then
-    /// fire `fetchBMI()` in the background to optionally replace with the
-    /// API's category classification (which can differ from the local
-    /// formula's edge-case rounding).
+    /// Populates BMI locally the first time Body Details expands.
+    /// Expanding read-only content must not trigger a server request or put
+    /// the explicit Refresh action into a loading state.
     public func loadBMIIfNeeded() {
         guard hasBodyData, bmiResult == nil else { return }
-        if let local = bmiService.calculateBMILocally(weightKg: weightKg, heightM: heightM) {
-            bmiResult = local
-        }
-        fetchBMI()
+        bmiResult = bmiService.calculateBMILocally(weightKg: weightKg, heightM: heightM)
     }
 }

@@ -36,17 +36,20 @@ see `.claude/references/agent-system-overview.md`.
   validation evidence unless the user explicitly asks for final validation.
 - **Git authority boundary (canonical):** agents do not stage, create, amend,
   rewrite, or push commits by default. An agent may perform these Git actions
-  only when the user's instruction contains the exact phrase `my decision` and
-  directly, unambiguously names every requested action and its candidate. Only
-  the actions explicitly named in that instruction are authorized; for example,
-  `my decision: commit and push` authorizes both the commit and the push, while
-  `my decision: commit` does not authorize a push. "Ready to commit" without the
-  exact phrase `my decision` authorizes review and validation only, not staging
-  or committing. Final evidence is written from the complete tracked/untracked
-  working tree. Pre-commit requires the eventual staged candidate to match the
-  validated path/hash manifest exactly; a subset needs its own validation, and
-  any later candidate edit invalidates the evidence. Validation never stages,
-  commits, or pushes automatically.
+  only when the user's instruction begins with the exact quoted prefix
+  `"My decision"` and directly, unambiguously names every requested action. The
+  capitalization and both ASCII double-quote characters are part of the
+  required prefix. Only the actions explicitly named in that instruction are
+  authorized; for example, `"My decision" commit and push` authorizes both the
+  commit and the push, while `"My decision" commit` does not authorize a push.
+  Unless the instruction explicitly narrows the candidate, the candidate is
+  the complete current tracked/untracked working tree. "Ready to commit"
+  without the exact quoted prefix `"My decision"` authorizes review and
+  validation only, not staging or committing. Final evidence is written from
+  the complete tracked/untracked working tree. Pre-commit requires the eventual
+  staged candidate to match the validated path/hash manifest exactly; a subset
+  needs its own validation, and any later candidate edit invalidates the
+  evidence. Validation never stages, commits, or pushes automatically.
 
 ## What you do **not** have to do
 

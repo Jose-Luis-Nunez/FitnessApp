@@ -60,7 +60,8 @@ private func makeValidEnvelopeJSON(workoutName: String = "Push Day") -> String {
 struct AddFriendViewModelTests {
 
     private func makeSUT(
-        storageShouldThrow: WorkoutShareError? = nil
+        storageShouldThrow: WorkoutShareError? = nil,
+        importCoordinator: FriendImportCoordinator? = nil
     ) -> (AddFriendViewModel, MockFriendStorage, Bool, Bool) {
         let storage = MockFriendStorage()
         storage.upsertShouldThrow = storageShouldThrow
@@ -69,10 +70,16 @@ struct AddFriendViewModelTests {
         var dismissCalled = false
         let vm = AddFriendViewModel(
             importFriendUseCase: useCase,
+            importCoordinator: importCoordinator,
             onAdded: { addedCalled = true },
             onDismiss: { dismissCalled = true }
         )
         return (vm, storage, addedCalled, dismissCalled)
+    }
+
+    private func makeTemporaryFriendFile() -> URL {
+        FileManager.default.temporaryDirectory
+            .appendingPathComponent("friend-\(UUID().uuidString).fitnessfriend")
     }
 
     // MARK: - isSaveDisabled
@@ -111,6 +118,69 @@ struct AddFriendViewModelTests {
         vm.friendName = "   "
         vm.pastedText = "  \n  "
         #expect(vm.isSaveDisabled)
+    }
+
+    // MARK: - file selection
+
+    @Test("chooseFileTapped presents the document importer")
+    func chooseFileTappedPresentsImporter() {
+        let (vm, _, _, _) = makeSUT()
+
+        vm.chooseFileTapped()
+
+        #expect(vm.showingFileImporter)
+    }
+
+    @Test("Selecting a friend file populates its data and name")
+    func selectingFriendFilePopulatesData() throws {
+        let coordinator = FriendImportCoordinator()
+        let (vm, _, _, _) = makeSUT(importCoordinator: coordinator)
+        let url = makeTemporaryFriendFile()
+        let content = #"{"version":1}"#
+        try Data(content.utf8).write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        vm.friendFileSelected(url)
+
+        #expect(vm.pastedText == content)
+        #expect(vm.fileName == url.deletingPathExtension().lastPathComponent)
+        #expect(vm.hasData)
+        #expect(vm.errorMessage == nil)
+        #expect(coordinator.pendingImportJSON == nil)
+        #expect(coordinator.pendingImportFileName == nil)
+    }
+
+    @Test("Selecting another friend file replaces the previous data")
+    func selectingAnotherFriendFileReplacesData() throws {
+        let coordinator = FriendImportCoordinator()
+        let (vm, _, _, _) = makeSUT(importCoordinator: coordinator)
+        let firstURL = makeTemporaryFriendFile()
+        let secondURL = makeTemporaryFriendFile()
+        try Data("first".utf8).write(to: firstURL)
+        try Data("second".utf8).write(to: secondURL)
+        defer {
+            try? FileManager.default.removeItem(at: firstURL)
+            try? FileManager.default.removeItem(at: secondURL)
+        }
+
+        vm.friendFileSelected(firstURL)
+        vm.friendFileSelected(secondURL)
+
+        #expect(vm.pastedText == "second")
+        #expect(vm.fileName == secondURL.deletingPathExtension().lastPathComponent)
+    }
+
+    @Test("Selecting an unreadable friend file exposes an error")
+    func selectingUnreadableFriendFileExposesError() {
+        let coordinator = FriendImportCoordinator()
+        let (vm, _, _, _) = makeSUT(importCoordinator: coordinator)
+        let missingURL = makeTemporaryFriendFile()
+
+        vm.friendFileSelected(missingURL)
+
+        #expect(!vm.hasData)
+        #expect(vm.fileName == nil)
+        #expect(vm.errorMessage == "The selected friend file could not be read.")
     }
 
     // MARK: - saveTapped: success

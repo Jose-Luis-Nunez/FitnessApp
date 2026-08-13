@@ -205,16 +205,19 @@ public struct TramDeparturesCardView: View {
     // MARK: - Footer
 
     private var footer: some View {
-        HStack {
+        VStack(alignment: .leading, spacing: AppStyle.DeviceLayout.cardSpacing) {
             footerStatusText
 
-            Spacer()
+            HStack {
+                Spacer()
 
-            RefreshActionButton(isLoading: viewModel.isLoading) {
-                Task { await viewModel.refresh() }
+                RefreshActionButton(isLoading: viewModel.isLoading) {
+                    Task { await viewModel.refresh() }
+                }
+                .accessibilityIdentifier("id_profile_tram_refresh")
             }
-            .accessibilityIdentifier("id_profile_tram_refresh")
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
