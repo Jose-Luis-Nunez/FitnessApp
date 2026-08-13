@@ -4,7 +4,9 @@ import FitnessUI
 public struct SBahnDeparturesCardView: View {
 
     @Bindable private var viewModel: SBahnDeparturesViewModel
-    @Environment(\.profileColorTheme) private var profileColors
+    @Environment(\.appColorTheme) private var appColorTheme
+
+    private var profileColors: ProfileColorTheme { appColorTheme.profile }
 
     public init(viewModel: SBahnDeparturesViewModel) {
         self.viewModel = viewModel
@@ -240,11 +242,11 @@ public struct SBahnDeparturesCardView: View {
         } else if delay < 0 {
             Text("\(delay) min")
                 .font(AppStyle.Font.cardSmallBold)
-                .foregroundColor(AppStyle.Color.green)
+                .foregroundColor(profileColors.accent)
         } else {
             Text("on time")
                 .font(AppStyle.Font.cardSmallBold)
-                .foregroundColor(AppStyle.Color.green)
+                .foregroundColor(profileColors.accent)
         }
     }
 

@@ -38,7 +38,8 @@ extension CardTheme {
 
     /// Completed exercise card on the same neutral `.primary` surface as
     /// `IdleActiveCardModelView`, with matching headline / secondary text colors.
-    /// Use with `CardShell` + `EdgeIndicator.completed` for the green bar.
+    /// Callers resolve a completion `EdgeIndicator` from `AppColorTheme` at
+    /// render time so the value cannot retain an obsolete accent palette.
     public static let inactiveOnIdle = CardTheme(
         surface: .primary,
         titleColor: AppStyle.Color.idleTitle,

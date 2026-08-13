@@ -19,6 +19,7 @@ private func assertSnapshot<V: View>(
 ) {
     let shouldRecord = record || ProcessInfo.processInfo.environment["RECORD_SNAPSHOTS"] == "1"
     let hosted = view
+        .appColorTheme(.green)
         .frame(width: size.width, height: size.height)
         .background(AppStyle.Color.backgroundColor)
 
@@ -151,7 +152,7 @@ struct CardShellSnapshotTests {
                 .frame(width: 64, height: 64)
         }, trailing: {
             Circle()
-                .fill(AppStyle.Color.idleMetricValue)
+                .fill(AppColorTheme.green.accent.idleMetricValue)
                 .frame(width: 28, height: 28)
         }, titleContent: {
             VStack(alignment: .leading, spacing: 6) {
@@ -168,13 +169,19 @@ struct CardShellSnapshotTests {
 
     @Test func completedThemeWithEdgeIndicator() {
         let theme = CardTheme.completed
-        let view = CardShell(theme: theme, edgeIndicator: .completed, leading: {
+        let view = CardShell(
+            theme: theme,
+            edgeIndicator: EdgeIndicator(
+                color: AppColorTheme.green.accent.glow,
+                width: AppStyle.Layout.completedBarWidth
+            ),
+            leading: {
             RoundedRectangle(cornerRadius: 8)
                 .fill(Color.gray)
                 .frame(width: 50, height: 50)
         }, trailing: {
             Circle()
-                .fill(AppStyle.Color.greenGlow)
+                .fill(AppColorTheme.green.accent.glow)
                 .frame(width: 36, height: 36)
         }, titleContent: {
             VStack(alignment: .leading, spacing: 6) {
@@ -480,7 +487,7 @@ struct MetricChipViewSnapshotTests {
             VStack(spacing: 2) {
                 Text("62.5")
                     .font(AppStyle.Font.cardValueBold)
-                    .foregroundColor(AppStyle.Color.greenGlow)
+                    .foregroundColor(AppColorTheme.green.accent.glow)
                 Text("kg")
                     .font(AppStyle.Font.cardSmallLabel)
                     .foregroundColor(.white.opacity(0.7))
@@ -508,7 +515,7 @@ struct CapsuleToggleStyleSnapshotTests {
     @Test func toggleOn() {
         let view = Toggle("Decimal", isOn: .constant(true))
             .toggleStyle(CapsuleToggleStyle(
-                onColor: AppStyle.Color.green,
+                onColor: AppColorTheme.green.accent.primary,
                 offColor: AppStyle.Color.gray.opacity(0.4)
             ))
             .labelsHidden()
@@ -518,7 +525,7 @@ struct CapsuleToggleStyleSnapshotTests {
     @Test func toggleOff() {
         let view = Toggle("Decimal", isOn: .constant(false))
             .toggleStyle(CapsuleToggleStyle(
-                onColor: AppStyle.Color.green,
+                onColor: AppColorTheme.green.accent.primary,
                 offColor: AppStyle.Color.gray.opacity(0.4)
             ))
             .labelsHidden()

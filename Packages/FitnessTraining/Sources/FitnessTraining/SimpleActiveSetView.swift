@@ -249,6 +249,7 @@ enum SetRowHighlightResolver {
 }
 
 public struct SimpleActiveSetView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     public let exercise: Exercise
     @Binding public var setProgress: [SetProgress]
     public var viewModel: ActiveSetViewModel
@@ -329,14 +330,14 @@ public struct SimpleActiveSetView: View {
 
             Text(side == .left ? "L" : "R")
                 .font(AppStyle.Font.bilateralSideHeader)
-                .foregroundColor(AppStyle.Color.greenGlow)
+                .foregroundColor(appColorTheme.accent.glow)
                 .frame(
                     width: AppStyle.Layout.bilateralSideHeaderSize,
                     height: AppStyle.Layout.bilateralSideHeaderSize
                 )
                 .overlay {
                     Circle().stroke(
-                        AppStyle.Color.greenGlow,
+                        appColorTheme.accent.glow,
                         lineWidth: AppStyle.Layout.bilateralHeaderStrokeWidth
                     )
                 }
@@ -510,6 +511,7 @@ private enum SetRowMetricSizing: Equatable {
 }
 
 private struct SetRowView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     let index: Int
     let progress: SetProgress
     let exercise: Exercise
@@ -630,7 +632,7 @@ private struct SetRowView: View {
 
             if isActiveSetNumber && !viewModel.quickDoneAllCompleted {
                 Circle()
-                    .stroke(AppStyle.Color.greenGlow, lineWidth: 2)
+                    .stroke(appColorTheme.accent.glow, lineWidth: 2)
                     .frame(width: AppStyle.Layout.setRowBadgeSize, height: AppStyle.Layout.setRowBadgeSize)
             }
 

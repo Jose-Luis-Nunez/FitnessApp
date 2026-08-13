@@ -31,7 +31,7 @@ public struct CategoryTileModelView: View {
     public let onTap: () -> Void
 
     @Query private var exercises: [ExerciseModel]
-    @AppStorage(DefaultIconColorScheme.storageKey) private var iconColorScheme: DefaultIconColorScheme = .green
+    @Environment(\.appColorTheme) private var appColorTheme
 
     public init(
         group: MuscleCategoryGroup,
@@ -90,7 +90,7 @@ public struct CategoryTileModelView: View {
             .overlay(
                 info.isCompleted
                     ? RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card)
-                        .fill(AppStyle.Color.green.opacity(AppStyle.Opacity.categoryTileCompletionOverlay))
+                        .fill(appColorTheme.accent.primary.opacity(AppStyle.Opacity.categoryTileCompletionOverlay))
                     : nil
             )
         }
@@ -101,7 +101,7 @@ public struct CategoryTileModelView: View {
         HStack {
             Text(group.displayName)
                 .font(AppStyle.Font.categoryTileTitle)
-                .foregroundColor(info.isCompleted ? AppStyle.Color.greenGlow : AppStyle.Color.white)
+                .foregroundColor(info.isCompleted ? appColorTheme.accent.glow : AppStyle.Color.white)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             headerBadge(info: info)
@@ -114,7 +114,7 @@ public struct CategoryTileModelView: View {
         if info.isCompleted {
             ZStack {
                 Circle()
-                    .fill(AppStyle.Color.greenGlow)
+                    .fill(appColorTheme.accent.glow)
                     .frame(
                         width: ExerciseCardLayout.CategoryTile.headerBadgeSize,
                         height: ExerciseCardLayout.CategoryTile.headerBadgeSize
@@ -127,7 +127,7 @@ public struct CategoryTileModelView: View {
         } else if info.total == 0 {
             ZStack {
                 Circle()
-                    .fill(AppStyle.Color.greenGlow)
+                    .fill(appColorTheme.accent.glow)
                     .frame(
                         width: ExerciseCardLayout.CategoryTile.headerBadgeSize,
                         height: ExerciseCardLayout.CategoryTile.headerBadgeSize
@@ -135,7 +135,7 @@ public struct CategoryTileModelView: View {
 
                 Image(systemName: "plus")
                     .font(AppStyle.Font.categoryTileBadge)
-                    .foregroundColor(AppStyle.Color.greenBlack)
+                    .foregroundColor(appColorTheme.accent.black)
             }
         } else {
             Spacer().frame(
@@ -147,7 +147,7 @@ public struct CategoryTileModelView: View {
 
     private var iconView: some View {
         CategoryTileArtworkStage(alignment: group.iconAlignment) {
-            Image(iconColorScheme.iconName(for: group.defaultIconName))
+            Image(appColorTheme.scheme.iconName(for: group.defaultIconName))
                 .resizable()
                 .interpolation(.high)
                 .scaledToFill()
@@ -171,7 +171,7 @@ public struct CategoryTileModelView: View {
 
                 Text("\(info.completed) of \(info.total)")
                     .font(AppStyle.Font.categoryTileProgress)
-                    .foregroundColor(info.isCompleted ? AppStyle.Color.greenGlow : AppStyle.Color.white)
+                    .foregroundColor(info.isCompleted ? appColorTheme.accent.glow : AppStyle.Color.white)
                     .lineLimit(1)
                     .minimumScaleFactor(ExerciseCardLayout.CategoryTile.minimumTextScale)
             }

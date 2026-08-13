@@ -19,7 +19,7 @@ public struct ProfileColorTheme: Sendable {
     public let selectionBackground: Color
     public let selectionStroke: Color
 
-    public init(colorScheme: DefaultIconColorScheme) {
+    public init(colorScheme: AppAccentScheme) {
         let palette = colorScheme.palette
         title = AppStyle.Color.idleTitle
         secondary = AppStyle.Color.idleMetricLabel
@@ -33,28 +33,9 @@ public struct ProfileColorTheme: Sendable {
         selectionBackground = Color.white.opacity(AppStyle.Opacity.selectionTintFill)
         selectionStroke = Color.white.opacity(AppStyle.Opacity.selectionTintStroke)
     }
-
-    public static let green = ProfileColorTheme(colorScheme: .green)
-    public static let grey = ProfileColorTheme(colorScheme: .grey)
-}
-
-private struct ProfileColorThemeKey: EnvironmentKey {
-    static let defaultValue = ProfileColorTheme.green
-}
-
-public extension EnvironmentValues {
-    var profileColorTheme: ProfileColorTheme {
-        get { self[ProfileColorThemeKey.self] }
-        set { self[ProfileColorThemeKey.self] = newValue }
-    }
 }
 
 public extension View {
-    /// Injects a deterministic profile theme for an app subtree, preview, or test.
-    func profileColorTheme(_ theme: ProfileColorTheme) -> some View {
-        environment(\.profileColorTheme, theme)
-    }
-
     /// Standard profile-card padding, minimum height, and primary card surface.
     func profileCardSurface(
         minHeight: CGFloat = AppStyle.Layout.profileCardCollapsedMinHeight
@@ -78,7 +59,9 @@ public extension View {
 public struct ProfileCardHeading: View {
     private let title: String
     private let detail: String?
-    @Environment(\.profileColorTheme) private var theme
+    @Environment(\.appColorTheme) private var appColorTheme
+
+    private var theme: ProfileColorTheme { appColorTheme.profile }
 
     public init(_ title: String, detail: String? = nil) {
         self.title = title
@@ -136,8 +119,10 @@ private struct ProfileCardSurfaceModifier: ViewModifier {
 }
 
 private struct ProfileReadOnlyTileSurfaceModifier: ViewModifier {
-    @Environment(\.profileColorTheme) private var theme
+    @Environment(\.appColorTheme) private var appColorTheme
     let cornerRadius: CGFloat
+
+    private var theme: ProfileColorTheme { appColorTheme.profile }
 
     func body(content: Content) -> some View {
         content

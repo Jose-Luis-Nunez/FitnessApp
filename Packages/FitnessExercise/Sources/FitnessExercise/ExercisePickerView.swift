@@ -15,6 +15,7 @@ private enum ExercisePickerStep {
 }
 
 public struct ExercisePickerView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     @Bindable public var formViewModel: ExerciseFormViewModel
 
     @Binding public var isPresented: Bool
@@ -118,7 +119,7 @@ public struct ExercisePickerView: View {
             ExercisePickerActionButtons(
                 cancelLabel: L10n.cardCreationCancel,
                 saveLabel: L10n.cardCreationContinue,
-                cancelColor: AppStyle.Color.green,
+                cancelColor: appColorTheme.accent.primary,
                 saveDisabled: !formViewModel.isFormValid,
                 onCancel: {
                     onCancel()
@@ -137,7 +138,7 @@ public struct ExercisePickerView: View {
             ExercisePickerActionButtons(
                 cancelLabel: L10n.cardCreationBack,
                 saveLabel: L10n.cardCreationSave,
-                cancelColor: AppStyle.Color.green,
+                cancelColor: appColorTheme.accent.primary,
                 saveDisabled: !formViewModel.isFormValid,
                 onCancel: {
                     // Back: return to the details step — does NOT dismiss.
@@ -466,6 +467,7 @@ private struct ExerciseWeightModeCards: View {
 }
 
 private struct ExerciseOptionRow: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     let systemIcon: String
     let title: String
     let subtitle: String
@@ -480,7 +482,7 @@ private struct ExerciseOptionRow: View {
                     .frame(width: 40, height: 40)
                 Image(systemName: systemIcon)
                     .font(AppStyle.Font.iconSymbol)
-                    .foregroundColor(AppStyle.Color.green)
+                    .foregroundColor(appColorTheme.accent.primary)
             }
 
             VStack(alignment: .leading, spacing: 2) {
@@ -498,7 +500,7 @@ private struct ExerciseOptionRow: View {
             Toggle("", isOn: $isOn)
                 .labelsHidden()
                 .toggleStyle(CapsuleToggleStyle(
-                    onColor: AppStyle.Color.greenGlow,
+                    onColor: appColorTheme.accent.glow,
                     offColor: AppStyle.Color.gray.opacity(AppStyle.Opacity.fadedOverlay)
                 ))
                 .accessibilityIdentifier(accessibilityIdentifier)
@@ -512,6 +514,7 @@ private struct ExerciseOptionRow: View {
 /// Card-styled "Seat required" toggle row (same border/fill as the name bar).
 /// On → seat settings shown; off → hidden.
 private struct SeatRequiredBox: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     @Binding var isOn: Bool
 
     var body: some View {
@@ -522,7 +525,7 @@ private struct SeatRequiredBox: View {
                     .frame(width: 44, height: 44)
                 Image(systemName: "chair")
                     .font(AppStyle.Font.iconSymbol)
-                    .foregroundColor(AppStyle.Color.green)
+                    .foregroundColor(appColorTheme.accent.primary)
             }
 
             VStack(alignment: .leading, spacing: 2) {
@@ -540,7 +543,7 @@ private struct SeatRequiredBox: View {
             Toggle("", isOn: $isOn)
                 .labelsHidden()
                 .toggleStyle(CapsuleToggleStyle(
-                    onColor: AppStyle.Color.greenGlow,
+                    onColor: appColorTheme.accent.glow,
                     offColor: AppStyle.Color.gray.opacity(AppStyle.Opacity.fadedOverlay)
                 ))
         }
@@ -561,6 +564,7 @@ private struct SeatRequiredBox: View {
 /// own the reorder gesture), position label + editable value, and a remove (✕)
 /// button. Card style matches the name bar.
 private struct SeatSettingTile<Handle: View>: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     let position: Int
     @Binding var text: String
     let onRemove: () -> Void
@@ -598,10 +602,10 @@ private struct SeatSettingTile<Handle: View>: View {
             Button(action: onRemove) {
                 Image(systemName: "xmark")
                     .font(AppStyle.Font.cardSmallBold)
-                    .foregroundColor(AppStyle.Color.green)
+                    .foregroundColor(appColorTheme.accent.primary)
                     .frame(width: 28, height: 28)
                     .overlay(
-                        Circle().stroke(AppStyle.Color.green.opacity(AppStyle.Opacity.accentStroke), lineWidth: 1)
+                        Circle().stroke(appColorTheme.accent.primary.opacity(AppStyle.Opacity.accentStroke), lineWidth: 1)
                     )
             }
             .buttonStyle(PlainButtonStyle())
@@ -695,8 +699,10 @@ private struct ReorderableSeatList: View {
 
 /// Six-dot drag-handle glyph; the parent attaches the reorder gesture to it.
 private struct DragHandleDots: View {
+    @Environment(\.appColorTheme) private var appColorTheme
+
     var body: some View {
-        let dot = AppStyle.Color.green.opacity(AppStyle.Opacity.accentGlyph)
+        let dot = appColorTheme.accent.primary.opacity(AppStyle.Opacity.accentGlyph)
         HStack(spacing: 3) {
             ForEach(0..<2, id: \.self) { _ in
                 VStack(spacing: 3) {
@@ -711,6 +717,7 @@ private struct DragHandleDots: View {
 
 /// Dashed "Add another seat setting" button (hidden once the max is reached).
 private struct AddSeatSettingButton: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     let action: () -> Void
 
     var body: some View {
@@ -718,15 +725,15 @@ private struct AddSeatSettingButton: View {
             HStack(spacing: 10) {
                 ZStack {
                     Circle()
-                        .fill(AppStyle.Color.green)
+                        .fill(appColorTheme.accent.primary)
                         .frame(width: 24, height: 24)
                     Image(systemName: "plus")
                         .font(AppStyle.Font.sheetControlGlyph)
-                        .foregroundColor(AppStyle.Color.greenBlack)
+                        .foregroundColor(appColorTheme.accent.black)
                 }
                 Text(L10n.addSeatSetting)
                     .font(AppStyle.Font.sheetSectionLabel)
-                    .foregroundColor(AppStyle.Color.green)
+                    .foregroundColor(appColorTheme.accent.primary)
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 16)
@@ -735,7 +742,7 @@ private struct AddSeatSettingButton: View {
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .strokeBorder(
-                        AppStyle.Color.green.opacity(AppStyle.Opacity.accentDashedStroke),
+                        appColorTheme.accent.primary.opacity(AppStyle.Opacity.accentDashedStroke),
                         style: StrokeStyle(lineWidth: 1, dash: [6])
                     )
             )

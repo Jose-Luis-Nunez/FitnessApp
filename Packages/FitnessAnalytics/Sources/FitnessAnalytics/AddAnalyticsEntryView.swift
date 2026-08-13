@@ -3,6 +3,7 @@ import FitnessUI
 import SwiftUI
 
 public struct AddAnalyticsEntryView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     public let date: Date
     public let exercise: Exercise
     public let existingEntry: AnalyticsEntry?
@@ -22,7 +23,7 @@ public struct AddAnalyticsEntryView: View {
 
     private let repsRange = 1...99
     private let textColor: Color = AppStyle.Color.white
-    private let pickerColor: Color = AppStyle.Color.greenLight
+    private var pickerColor: Color { appColorTheme.accent.light }
 
     private var weightOptions: [String] {
         let all = WeightOptionsGenerator.exerciseWeightOptions
@@ -191,7 +192,7 @@ public struct AddAnalyticsEntryView: View {
                             Image(systemName: "plus.circle.fill")
                             Text("add more sets")
                         }
-                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .foregroundColor(appColorTheme.accent.glow)
                         .padding(.vertical, 6)
                     }
                     .accessibilityIdentifier(AnalyticsIDs.entryAddSetButton)
@@ -214,7 +215,7 @@ public struct AddAnalyticsEntryView: View {
                         formState.removeLogicalSet(at: logicalIndex)
                     } label: {
                         Image(systemName: "minus.circle.fill")
-                            .foregroundColor(AppStyle.Color.greenGlow)
+                            .foregroundColor(appColorTheme.accent.glow)
                             .font(AppStyle.Font.numberPadSymbol)
                     }
                     .buttonStyle(.plain)
@@ -242,7 +243,7 @@ public struct AddAnalyticsEntryView: View {
             if let side {
                 Text(side == .left ? "L" : "R")
                     .font(AppStyle.Font.sectionHeadline)
-                    .foregroundColor(AppStyle.Color.greenGlow)
+                    .foregroundColor(appColorTheme.accent.glow)
                     .frame(width: AppStyle.Layout.analyticsInputSideWidth)
             }
 
@@ -279,7 +280,7 @@ public struct AddAnalyticsEntryView: View {
                     formState.removePhysicalSet(at: index)
                 } label: {
                     Image(systemName: "minus.circle.fill")
-                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .foregroundColor(appColorTheme.accent.glow)
                         .font(AppStyle.Font.numberPadSymbol)
                 }
                 .buttonStyle(.plain)
@@ -328,7 +329,7 @@ public struct AddAnalyticsEntryView: View {
                         .foregroundColor(textColor.opacity(0.85))
                     Toggle("", isOn: $showDecimal)
                         .labelsHidden()
-                        .toggleStyle(CapsuleToggleStyle(onColor: AppStyle.Color.greenGlow, offColor: AppStyle.Color.gray.opacity(AppStyle.Opacity.fadedOverlay)))
+                        .toggleStyle(CapsuleToggleStyle(onColor: appColorTheme.accent.glow, offColor: AppStyle.Color.gray.opacity(AppStyle.Opacity.fadedOverlay)))
                 }
             }
             .opacity(field == .weight ? 1 : 0)

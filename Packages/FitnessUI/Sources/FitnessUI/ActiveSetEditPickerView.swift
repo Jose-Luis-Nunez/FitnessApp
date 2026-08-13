@@ -11,7 +11,9 @@ public struct ActiveSetEditPickerView: View {
     let saveDisabled: Bool
 
     let textColor: Color = AppStyle.Color.white
-    let pickerColor: Color = AppStyle.Color.greenLight
+    @Environment(\.appColorTheme) private var appColorTheme
+
+    private var pickerColor: Color { appColorTheme.accent.light }
 
     @State private var isShown: Bool = true
     @State private var showDecimal: Bool = false
@@ -70,7 +72,7 @@ public struct ActiveSetEditPickerView: View {
                                 .foregroundColor(textColor.opacity(0.85))
                             Toggle("", isOn: $showDecimal)
                                 .labelsHidden()
-                                .toggleStyle(CapsuleToggleStyle(onColor: AppStyle.Color.greenGlow, offColor: AppStyle.Color.gray.opacity(AppStyle.Opacity.fadedOverlay)))
+                                .toggleStyle(CapsuleToggleStyle(onColor: appColorTheme.accent.glow, offColor: AppStyle.Color.gray.opacity(AppStyle.Opacity.fadedOverlay)))
                         }
                     }
                 }

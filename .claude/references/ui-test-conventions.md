@@ -75,6 +75,7 @@ The production sources of truth are listed per enum in the "Defined in" column b
 | `WorkoutAnalyticsIDs` | `FitnessCore.AccessibilityIDs` | `WorkoutAnalyticsEntryView` | `screen`, `dateButton`, `saveButton`, `exerciseSelection(_:)`, `exerciseDetails(_:)` |
 | `WorkoutIDs` | `FitnessCore.AccessibilityIDs` | `WorkoutTileView`, `CreateWorkoutView` | `tilePrefix`, `settingsPrefix`, `tile(_:)`, `settings(_:)`, `createTitle`, `createNameField`, `createTypePicker`, `createSaveButton` |
 | `BottomBarIDs` | `FitnessCore.AccessibilityIDs` | `BottomMenuBarView` | `contextMenu`, `workoutsTab`, `trainingTab`, `analyticsTab`, `scheduleTab`, `profileTab` |
+| `ProfileIDs` | Profile and Friends view-local identifiers | `ProfileView`, `FriendsSection` | body/friends expansion evidence, BMI refresh, Friends user row and accent picker options |
 
 ## Test Fixtures
 
@@ -124,9 +125,10 @@ try launch(exerciseCategory: heavy)
 | Sort measured frames by visual reading order | `sortFramesInReadingOrder(_:)` |
 | Attach a diagnostic full-screen screenshot | `attachDiagnosticScreenshot(named:)` |
 | Assert element label content | `verifyLabel(_:equals:)` |
+| Assert element accessibility value | `verifyValue(_:equals:)` |
 | Assert prefixed element value content | `verifyValueContainsWithPrefix(_:expectedComponents:)` |
 | Wait for label to be populated | `waitForNonEmptyLabel(_:)` |
-| Scroll until element is visible | `swipeUpUntilVisible(_:)` |
+| Scroll until a later or earlier element is visible | `swipeUpUntilVisible(_:)` / `swipeDownUntilVisible(_:)` |
 
 If no function exists for the interaction, **add it to `ElementActions.swift`** following existing patterns (timeout, `findElement`, predicate-based waits).
 
@@ -164,7 +166,7 @@ final class <Feature>UITests: BaseTest {
 Rules:
 - Inherit from `BaseTest` (provides `app`, `setUp`, `tearDown`)
 - Mark test methods `@MainActor`
-- First line: `launch(exerciseList:)`, `launch(exerciseCategory:)`, `launch(category:)`, `launchCategorySelection()`, `launchSchedule()`, or `launchHome()`
+- First line: `launch(exerciseList:)`, `launch(exerciseCategory:)`, `launch(category:)`, `launchCategorySelection()`, `launchSchedule()`, `launchProfile()`, or `launchHome()`
 - One test method per user scenario; name it `test<WhatTheUserDoes>`
 - Only DSL functions and test ID constants -- no raw XCUITest API, no hardcoded strings
 - Always pass explicit fixture data -- no implicit defaults
@@ -281,6 +283,9 @@ try launchCategorySelection()
 // Schedule screen
 try launchSchedule()
 
+// Profile screen with deterministic body data and accent preference
+try launchProfile()
+
 // Home / Workouts screen (default)
 launchHome()
 ```
@@ -293,10 +298,10 @@ The app reads the `UITEST_CONFIG` environment variable and uses `AppRouter.repla
 |----------|--------------|
 | Testing the full user journey (home to finish) | `launchHome()` + navigate via DSL |
 | Testing training behavior | `launch(exerciseCategory:)` or `launch(exerciseList:)`, then tap Start |
-| Testing another specific screen | `launch(category:)` or `launchSchedule()` |
+| Testing another specific screen | `launch(category:)`, `launchSchedule()`, or `launchProfile()` |
 | Comparing Category/Workout overview geometry | `launchCategorySelection()` then tap the Workouts tab |
 
-Supported screens: `.home` (category-selection overview), `.category`, `.schedule`. Training is a presentation over `.home` list mode or `.category`, not a direct launch screen.
+Supported screens: `.home` (category-selection overview), `.category`, `.schedule`, `.profile`. Training is a presentation over `.home` list mode or `.category`, not a direct launch screen.
 
 ## Review Checklist
 
@@ -344,7 +349,7 @@ verifyExists(ExerciseIDs.nameLabel)
 Check each test file for:
 - Inherits from `BaseTest` (not `XCTestCase` directly)
 - Test methods marked `@MainActor`
-- First line: `launch(exerciseList:)`, `launch(exerciseCategory:)`, `launch(category:)`, `launchCategorySelection()`, `launchSchedule()`, or `launchHome()`
+- First line: `launch(exerciseList:)`, `launch(exerciseCategory:)`, `launch(category:)`, `launchCategorySelection()`, `launchSchedule()`, `launchProfile()`, or `launchHome()`
 - No business logic or complex setup in the test -- just DSL calls
 
 ### 4. Selector Completeness

@@ -2,6 +2,7 @@ import SwiftUI
 import FitnessUI
 
 public struct StreakBannerView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     public let streakData: StreakData
 
     public init(streakData: StreakData) {
@@ -34,7 +35,7 @@ public struct StreakBannerView: View {
         VStack(spacing: 6) {
             Image(systemName: icon)
                 .font(AppStyle.Font.detailExercise)
-                .foregroundColor(AppStyle.Color.greenGlow)
+                .foregroundColor(appColorTheme.accent.glow)
 
             Text(value)
                 .font(AppStyle.Font.streakValue)

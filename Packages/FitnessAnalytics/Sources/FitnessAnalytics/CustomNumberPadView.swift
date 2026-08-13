@@ -21,6 +21,7 @@ private enum InputMode: Equatable {
 // MARK: - Main View
 
 public struct CustomNumberPadView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     public let currentValue: Double
     public let isWeight: Bool
     public let valueType: NumberPadValueType
@@ -70,7 +71,7 @@ public struct CustomNumberPadView: View {
     }
 
     private var statusTextColor: Color {
-        inputValue >= 999.0 ? AppStyle.Color.green : AppStyle.Color.white
+        inputValue >= 999.0 ? appColorTheme.accent.primary : AppStyle.Color.white
     }
 
     public var body: some View {
@@ -444,6 +445,7 @@ private struct NumberScrollWheel: View {
 
 /// Pure digit input grid. Has no knowledge of scroll state.
 private struct NumberKeypad: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     let valueType: NumberPadValueType
     let onDigit: (String) -> Void
     let onComma: () -> Void
@@ -522,7 +524,7 @@ private struct NumberKeypad: View {
                 .foregroundColor(AppStyle.Color.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
-                .background(AppStyle.Color.green)
+                .background(appColorTheme.accent.primary)
                 .cornerRadius(AppStyle.CornerRadius.defaultButton)
         }
         .padding(.horizontal, 24)

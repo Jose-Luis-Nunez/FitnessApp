@@ -42,6 +42,7 @@ struct BottomActionBarViewSnapshotTests {
             onAddExercise: {},
             onResetAllExercises: {}
         )
+        .appColorTheme(.green)
         .frame(width: size.width, height: size.height)
         .background(AppStyle.Color.backgroundColor)
 
@@ -66,6 +67,7 @@ struct BottomActionBarViewSnapshotTests {
             viewModel: ActiveSetViewModel(),
             onCancel: {}
         )
+        .appColorTheme(.green)
         .frame(width: size.width, height: size.height)
         .background(AppStyle.Color.backgroundColor)
 

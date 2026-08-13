@@ -2,6 +2,7 @@ import FitnessUI
 import SwiftUI
 
 public struct AnalyticsTileNumberView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     public let number: String
     public let label: String
 
@@ -14,7 +15,7 @@ public struct AnalyticsTileNumberView: View {
         VStack(spacing: 4) {
             Text(number)
                 .font(AppStyle.Font.analyticsBigNumber)
-                .foregroundColor(AppStyle.Color.greenGlow)
+                .foregroundColor(appColorTheme.accent.glow)
 
             Text(label)
                 .font(AppStyle.Font.chartAxisSmall)
@@ -38,6 +39,7 @@ public struct AnalyticsTileNumberView: View {
 }
 
 public struct AnalyticsTileTextView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     public let text: String
     public let label: String
 
@@ -50,7 +52,7 @@ public struct AnalyticsTileTextView: View {
         VStack(spacing: 6) {
             Text(text)
                 .font(AppStyle.Font.cardHeadline)
-                .foregroundColor(AppStyle.Color.greenGlow)
+                .foregroundColor(appColorTheme.accent.glow)
                 .lineLimit(1)
 
             Text(label)

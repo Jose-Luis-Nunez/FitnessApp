@@ -2,6 +2,7 @@ import SwiftUI
 import FitnessUI
 
 public struct WeekSummaryView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     public let summary: WeekSummaryData
     public let selectedDate: Date
     public let onDayTap: (Date) -> Void
@@ -25,7 +26,7 @@ public struct WeekSummaryView: View {
 
                 Text("\(summary.trainingDayCount) Training\(summary.trainingDayCount == 1 ? "" : "s") · \(summary.totalExercises) Exercises")
                     .font(AppStyle.Font.detailCaption)
-                    .foregroundColor(AppStyle.Color.greenGlow.opacity(0.7))
+                    .foregroundColor(appColorTheme.accent.glow.opacity(0.7))
             }
 
             HStack(spacing: 6) {
@@ -60,7 +61,7 @@ public struct WeekSummaryView: View {
 
             if day.isTrainingDay {
                 Circle()
-                    .fill(AppStyle.Color.greenGlow)
+                    .fill(appColorTheme.accent.glow)
                     .frame(width: 4, height: 4)
             } else {
                 Circle()
@@ -85,26 +86,26 @@ public struct WeekSummaryView: View {
     // MARK: - Chip Styling
 
     private func chipLabelColor(trained: Bool, selected: Bool) -> Color {
-        if selected { return AppStyle.Color.greenGlow }
-        if trained { return AppStyle.Color.greenGlow.opacity(0.8) }
+        if selected { return appColorTheme.accent.glow }
+        if trained { return appColorTheme.accent.glow.opacity(0.8) }
         return Color.white.opacity(0.4)
     }
 
     private func chipNumberColor(trained: Bool, selected: Bool, today: Bool) -> Color {
         if selected { return AppStyle.Color.white }
-        if trained { return AppStyle.Color.greenGlow }
+        if trained { return appColorTheme.accent.glow }
         if today { return AppStyle.Color.white }
         return Color.white.opacity(0.6)
     }
 
     private func chipBackground(trained: Bool, selected: Bool, today: Bool) -> Color {
-        if selected { return AppStyle.Color.green.opacity(0.25) }
-        if trained { return AppStyle.Color.greenGlow.opacity(0.08) }
+        if selected { return appColorTheme.accent.primary.opacity(0.25) }
+        if trained { return appColorTheme.accent.glow.opacity(0.08) }
         return .clear
     }
 
     private func chipBorder(trained: Bool, selected: Bool, today: Bool) -> Color {
-        if selected { return AppStyle.Color.greenGlow.opacity(0.4) }
+        if selected { return appColorTheme.accent.glow.opacity(0.4) }
         if today { return Color.white.opacity(0.2) }
         return .clear
     }

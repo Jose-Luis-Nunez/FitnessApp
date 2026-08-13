@@ -41,6 +41,10 @@ struct UITestLaunchConfig: Codable {
         UITestLaunchConfig(screen: .schedule, category: "")
     }
 
+    static func profile() -> UITestLaunchConfig {
+        UITestLaunchConfig(screen: .profile, category: "")
+    }
+
     // MARK: - Encoding
 
     func jsonString() throws -> String {

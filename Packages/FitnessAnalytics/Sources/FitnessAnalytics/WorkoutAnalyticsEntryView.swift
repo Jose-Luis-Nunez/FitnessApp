@@ -237,14 +237,13 @@ private struct WorkoutAnalyticsDraftRowLayout: Layout {
 }
 
 public struct WorkoutAnalyticsEntryView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     @Binding private var isPresented: Bool
     @State private var viewModel: WorkoutAnalyticsEntryViewModel
     @State private var showCalendar = false
     @State private var editingExerciseID: UUID?
-    @AppStorage(DefaultIconColorScheme.storageKey)
-    private var iconColorScheme: DefaultIconColorScheme = .green
     private let headerDateFormatter: DateFormatter
-    private let exerciseIconProvider: (Exercise, DefaultIconColorScheme) -> Image
+    private let exerciseIconProvider: (Exercise, AppAccentScheme) -> Image
 
     public init(workout: Workout, isPresented: Binding<Bool>) {
         _isPresented = isPresented
@@ -263,7 +262,7 @@ public struct WorkoutAnalyticsEntryView: View {
         headerDateFormatter: DateFormatter,
         exerciseIconProvider: @escaping (
             Exercise,
-            DefaultIconColorScheme
+            AppAccentScheme
         ) -> Image
     ) {
         _isPresented = isPresented
@@ -401,7 +400,7 @@ public struct WorkoutAnalyticsEntryView: View {
 
                     Image(systemName: "calendar")
                         .font(AppStyle.Font.iconSymbol)
-                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .foregroundColor(appColorTheme.accent.glow)
                 }
                 .frame(
                     width: Self.dateIconContainerSize,
@@ -614,7 +613,7 @@ public struct WorkoutAnalyticsEntryView: View {
         HStack(alignment: .firstTextBaseline, spacing: Self.weightUnitSpacing) {
             Text(value)
                 .font(AppStyle.Font.sectionTitle)
-                .foregroundColor(AppStyle.Color.greenGlow)
+                .foregroundColor(appColorTheme.accent.glow)
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
 
@@ -672,7 +671,7 @@ public struct WorkoutAnalyticsEntryView: View {
     private func selectionIcon(
         for exercise: Exercise
     ) -> some View {
-        exerciseIconProvider(exercise, iconColorScheme)
+        exerciseIconProvider(exercise, appColorTheme.scheme)
             .resizable()
             .interpolation(.high)
             .scaledToFill()
@@ -703,7 +702,7 @@ public struct WorkoutAnalyticsEntryView: View {
 
             if isSelected {
                 Circle()
-                    .fill(AppStyle.Color.greenGlow)
+                    .fill(appColorTheme.accent.glow)
                     .frame(
                         width: AppStyle.Layout.selectionRadioDot,
                         height: AppStyle.Layout.selectionRadioDot

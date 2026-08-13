@@ -22,13 +22,13 @@ extension TotalAnalyticsView {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Last 5 training days")
                         .font(AppStyle.Font.cardHeadline)
-                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .foregroundColor(appColorTheme.accent.glow)
 
                     ForEach(rhythmDetail.trainingDates) { item in
                         HStack {
                             Text(DateFormatter.germanMedium.string(from: item.date))
                                 .font(AppStyle.Font.detailExercise)
-                                .foregroundColor(AppStyle.Color.greenGlow)
+                                .foregroundColor(appColorTheme.accent.glow)
 
                             Spacer()
 
@@ -37,15 +37,15 @@ extension TotalAnalyticsView {
                                 let dayText = gap == 1 ? "Day" : "Days"
                                 Text("\(gap) \(dayText)")
                                     .font(AppStyle.Font.detailCaption)
-                                    .foregroundColor(AppStyle.Color.greenGlow.opacity(0.7))
+                                    .foregroundColor(appColorTheme.accent.glow.opacity(0.7))
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 2)
                                     .background(
                                         RoundedRectangle(cornerRadius: 6)
-                                            .fill(AppStyle.Color.greenGlow.opacity(0.15))
+                                            .fill(appColorTheme.accent.glow.opacity(0.15))
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 6)
-                                                    .stroke(AppStyle.Color.greenGlow.opacity(0.3), lineWidth: 1)
+                                                    .stroke(appColorTheme.accent.glow.opacity(0.3), lineWidth: 1)
                                             )
                                     )
                             }
@@ -57,7 +57,7 @@ extension TotalAnalyticsView {
                         HStack {
                             Text("Today (\(DateFormatter.germanMedium.string(from: Date())))")
                                 .font(AppStyle.Font.detailExercise)
-                                .foregroundColor(AppStyle.Color.greenGlow)
+                                .foregroundColor(appColorTheme.accent.glow)
 
                             Spacer()
 
@@ -65,15 +65,15 @@ extension TotalAnalyticsView {
                             let dayText = daysSinceLastTraining == 1 ? "day" : "days"
                             Text("Last training \(daysSinceLastTraining) \(dayText) ago")
                                 .font(AppStyle.Font.detailCaption)
-                                .foregroundColor(daysSinceLastTraining > 7 ? AppStyle.Color.yellow : AppStyle.Color.greenGlow.opacity(0.7))
+                                .foregroundColor(daysSinceLastTraining > 7 ? AppStyle.Color.yellow : appColorTheme.accent.glow.opacity(0.7))
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 2)
                                 .background(
                                     RoundedRectangle(cornerRadius: 6)
-                                        .fill((daysSinceLastTraining > 7 ? AppStyle.Color.yellow : AppStyle.Color.greenGlow).opacity(0.15))
+                                        .fill((daysSinceLastTraining > 7 ? AppStyle.Color.yellow : appColorTheme.accent.glow).opacity(0.15))
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 6)
-                                                .stroke((daysSinceLastTraining > 7 ? AppStyle.Color.yellow : AppStyle.Color.greenGlow).opacity(0.3), lineWidth: 1)
+                                                .stroke((daysSinceLastTraining > 7 ? AppStyle.Color.yellow : appColorTheme.accent.glow).opacity(0.3), lineWidth: 1)
                                         )
                                 )
                         }
@@ -84,11 +84,11 @@ extension TotalAnalyticsView {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Calculation")
                         .font(AppStyle.Font.cardHeadline)
-                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .foregroundColor(appColorTheme.accent.glow)
 
                     Text(rhythmDetail.explanation)
                         .font(AppStyle.Font.detailExercise)
-                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .foregroundColor(appColorTheme.accent.glow)
                         .padding(.leading, 12)
                         .lineSpacing(4)
                 }
@@ -96,7 +96,7 @@ extension TotalAnalyticsView {
             } else {
                 Text("Not enough training data")
                     .font(AppStyle.Font.pickerAction)
-                    .foregroundColor(AppStyle.Color.greenGlow.opacity(0.6))
+                    .foregroundColor(appColorTheme.accent.glow.opacity(0.6))
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.top, 20)
             }

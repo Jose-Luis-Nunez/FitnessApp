@@ -31,6 +31,7 @@ struct BottomMenuBarView: View {
 
     @Environment(AppRouter.self) private var router
     @Environment(UIOverlayState.self) private var overlayState
+    @Environment(\.appColorTheme) private var appColorTheme
 
     @State private var pillBounce: Bool = false
     @State private var bounceTab: BottomTab? = nil
@@ -47,7 +48,7 @@ struct BottomMenuBarView: View {
     /// fills the tab-cell width and reads as a wide horizontal pill.
     private let selectionVerticalInset: CGFloat = 4
     private let tabForeground = AppStyle.Color.white.opacity(0.98)
-    private let tabSelectedForeground = AppStyle.Color.greenGlow
+    private var tabSelectedForeground: Color { appColorTheme.accent.glow }
     private let iconSize: CGFloat = 30
     private let bottomOffset: CGFloat = -33
     private let calendarIconScale: CGFloat = 1.18
@@ -142,7 +143,7 @@ struct BottomMenuBarView: View {
                 }) {
                     Text(actionLabel)
                         .font(AppStyle.Font.cardValueBold)
-                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .foregroundColor(appColorTheme.accent.glow)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .contentShape(Rectangle())
                 }

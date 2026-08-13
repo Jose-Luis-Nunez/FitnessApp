@@ -108,6 +108,7 @@ struct FeedbackSheetViewSnapshotTests {
                 lineWidth: AppStyle.Layout.idleCardBorderWidth
             )
         }
+        .appColorTheme(.green)
         .environment(
             \.safeAreaInsets,
             EdgeInsets(top: 0, leading: 0, bottom: 34, trailing: 0)

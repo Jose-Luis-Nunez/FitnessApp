@@ -22,6 +22,7 @@ private func assertSnapshot<V: View>(
     function: StaticString = #function
 ) {
     let hosted = view
+        .appColorTheme(.green)
         .frame(width: size.width, height: size.height)
         .background(AppStyle.Color.backgroundColor)
 

@@ -17,7 +17,9 @@ public struct ProfileActionRow: View {
     private let onSecondary: () -> Void
     private let onPrimary: () -> Void
 
-    @Environment(\.profileColorTheme) private var profileColors
+    @Environment(\.appColorTheme) private var appColorTheme
+
+    private var profileColors: ProfileColorTheme { appColorTheme.profile }
 
     public init(
         secondaryLabel: String? = nil,

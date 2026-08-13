@@ -265,10 +265,11 @@ public extension OverlaySheetContainer where Overlay == EmptyView {
 // MARK: - Shared Action Buttons
 
 public struct ExercisePickerActionButtons: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     let cancelLabel: String
     let saveLabel: String
     let cancelColor: Color
-    let saveColor: Color
+    let saveColorOverride: Color?
     let saveForegroundColor: Color
     let saveDisabled: Bool
     let onCancel: () -> Void
@@ -279,7 +280,7 @@ public struct ExercisePickerActionButtons: View {
         cancelLabel: String = "Cancel",
         saveLabel: String = "Save",
         cancelColor: Color = AppStyle.Color.white,
-        saveColor: Color = AppStyle.Color.green,
+        saveColor: Color? = nil,
         saveForegroundColor: Color = AppStyle.Color.white,
         saveDisabled: Bool,
         onCancel: @escaping () -> Void,
@@ -289,7 +290,7 @@ public struct ExercisePickerActionButtons: View {
         self.cancelLabel = cancelLabel
         self.saveLabel = saveLabel
         self.cancelColor = cancelColor
-        self.saveColor = saveColor
+        saveColorOverride = saveColor
         self.saveForegroundColor = saveForegroundColor
         self.saveDisabled = saveDisabled
         self.onCancel = onCancel
@@ -320,6 +321,7 @@ public struct ExercisePickerActionButtons: View {
 
     @ViewBuilder
     private var saveButton: some View {
+        let saveColor = saveColorOverride ?? appColorTheme.accent.primary
         let button = Button(saveLabel) { onSave() }
             .foregroundColor(saveForegroundColor)
             .font(AppStyle.Font.pickerAction)

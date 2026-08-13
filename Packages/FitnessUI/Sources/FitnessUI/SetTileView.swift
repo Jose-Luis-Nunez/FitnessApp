@@ -2,6 +2,7 @@ import SwiftUI
 import FitnessCore
 
 public struct SetTileView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     public let setNumber: Int
     public let weight: Double
     public let reps: Int
@@ -31,7 +32,7 @@ public struct SetTileView: View {
                     Text("kg")
                         .font(AppStyle.Font.chartAxisSmall)
                 }
-                .foregroundColor(AppStyle.Color.greenLight)
+                .foregroundColor(appColorTheme.accent.light)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
 
@@ -41,7 +42,7 @@ public struct SetTileView: View {
             } else {
                 Text("\(reps)")
                     .font(AppStyle.Font.cardValueBold)
-                    .foregroundColor(AppStyle.Color.greenLight)
+                    .foregroundColor(appColorTheme.accent.light)
 
                 Text("reps")
                     .font(AppStyle.Font.cardTinyLabel)

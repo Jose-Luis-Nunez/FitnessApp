@@ -12,7 +12,9 @@ import Factory
 /// - A comparison area (left = my metrics, right = selected friend's metrics)
 public struct FriendsSection: View {
     @State private var viewModel = FriendsViewModel()
-    @Environment(\.profileColorTheme) private var profileColors
+    @Environment(\.appColorTheme) private var appColorTheme
+
+    private var profileColors: ProfileColorTheme { appColorTheme.profile }
     private let friendImportCoordinator = Container.shared.friendImportCoordinator()
 
     public init() {}

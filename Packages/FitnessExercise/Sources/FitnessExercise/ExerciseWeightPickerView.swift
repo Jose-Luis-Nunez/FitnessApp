@@ -9,6 +9,7 @@ import FitnessUI
 /// intentionally omitted: this sheet edits an existing exercise's values, not
 /// its name.
 public struct ExerciseWeightPickerView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     @Bindable public var formViewModel: ExerciseFormViewModel
     @Binding public var isPresented: Bool
     public let onSave: () -> Void
@@ -45,7 +46,7 @@ public struct ExerciseWeightPickerView: View {
                 ExercisePickerActionButtons(
                     cancelLabel: L10n.cardCreationCancel,
                     saveLabel: L10n.cardCreationSave,
-                    cancelColor: AppStyle.Color.green,
+                    cancelColor: appColorTheme.accent.primary,
                     saveDisabled: false,
                     onCancel: {
                         onCancel()

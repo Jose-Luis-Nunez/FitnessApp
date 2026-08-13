@@ -137,4 +137,13 @@ enum WorkoutLabels {
     static let legFixture = "Leg Fixture"
 }
 
+enum ProfileIDs {
+    static let bodyHeader = "id_profile_body_header"
+    static let bmiRefresh = "id_profile_bmi_refresh"
+    static let friendsHeader = "id_friends_section_header"
+    static let friendsUserRow = "id_friends_user_row"
+    static let greenAccent = "id_profile_icon_color_green"
+    static let greyAccent = "id_profile_icon_color_grey"
+}
+
 typealias BottomBarIDs = FitnessCore.BottomBarIDs

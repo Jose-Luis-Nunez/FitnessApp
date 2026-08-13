@@ -3,6 +3,7 @@ import FitnessUI
 import SwiftUI
 
 public struct AnalyticsView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     @State private var exercise: Exercise
     public var viewModel: AnalyticsViewModel
     @State private var analyticsRevision: ExerciseAnalyticsCacheRevision
@@ -139,8 +140,8 @@ public struct AnalyticsView: View {
         .fill(
             LinearGradient(
                 gradient: Gradient(colors: [
-                    AppStyle.Color.greenGlow.opacity(0.15),
-                    AppStyle.Color.greenGlow.opacity(0.02)
+                    appColorTheme.accent.glow.opacity(0.15),
+                    appColorTheme.accent.glow.opacity(0.02)
                 ]),
                 startPoint: .top,
                 endPoint: .bottom
@@ -156,8 +157,8 @@ public struct AnalyticsView: View {
             chartPoints: points,
             geometry: geometry
         )
-        .stroke(AppStyle.Color.greenGlow, lineWidth: 2)
-        .shadow(color: AppStyle.Color.greenGlow.opacity(0.4), radius: 3, x: 0, y: 0)
+        .stroke(appColorTheme.accent.glow, lineWidth: 2)
+        .shadow(color: appColorTheme.accent.glow.opacity(0.4), radius: 3, x: 0, y: 0)
     }
 
     private func milestonesView(
@@ -183,18 +184,18 @@ public struct AnalyticsView: View {
                 path.move(to: CGPoint(x: point.xPosition, y: point.yPosition + 8))
                 path.addLine(to: CGPoint(x: point.xPosition, y: geometry.size.height - 12))
             }
-            .stroke(AppStyle.Color.greenGlow.opacity(point.isCurrentWeight ? 0.8 : 0.4),
+            .stroke(appColorTheme.accent.glow.opacity(point.isCurrentWeight ? 0.8 : 0.4),
                    style: StrokeStyle(lineWidth: point.isCurrentWeight ? 2 : 1, dash: [4, 4]))
 
             Circle()
-                .fill(AppStyle.Color.greenGlow)
+                .fill(appColorTheme.accent.glow)
                 .frame(width: point.isCurrentWeight ? 10 : 6, height: point.isCurrentWeight ? 10 : 6)
                 .position(x: point.xPosition, y: point.yPosition)
-                .shadow(color: AppStyle.Color.greenGlow.opacity(0.7), radius: point.isCurrentWeight ? 6 : 3, x: 0, y: 0)
+                .shadow(color: appColorTheme.accent.glow.opacity(0.7), radius: point.isCurrentWeight ? 6 : 3, x: 0, y: 0)
 
             Text(weightText)
                 .font(point.isCurrentWeight ? AppStyle.Font.cardValueBold : AppStyle.Font.cardSmallMedium)
-                .foregroundColor(AppStyle.Color.greenGlow)
+                .foregroundColor(appColorTheme.accent.glow)
                 .position(x: point.xPosition, y: point.yPosition - (point.isCurrentWeight ? 15 : 12))
 
             if let date = point.date {
@@ -224,7 +225,7 @@ public struct AnalyticsView: View {
                     Text(DateFormatter.germanShort.string(from: selectedDate))
                         .font(AppStyle.Font.detailExercise)
                 }
-                .foregroundColor(AppStyle.Color.greenGlow)
+                .foregroundColor(appColorTheme.accent.glow)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(Color.white.opacity(0.06))
@@ -281,7 +282,7 @@ public struct AnalyticsView: View {
                                     FitnessCore.AnalyticsIDs.addDataButton
                                 )
                         }
-                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .foregroundColor(appColorTheme.accent.glow)
                         .padding(.vertical, 12)
                         .padding(.horizontal, 16)
                         .frame(height: 75)
@@ -423,13 +424,13 @@ public struct AnalyticsView: View {
         VStack(alignment: .leading, spacing: AppStyle.Layout.bilateralColumnSpacing) {
             Text(side == .left ? "Left" : "Right")
                 .font(AppStyle.Font.defaultFont)
-                .foregroundColor(AppStyle.Color.greenGlow)
+                .foregroundColor(appColorTheme.accent.glow)
 
             HStack(spacing: AppStyle.Layout.bilateralColumnSpacing) {
                 if exercise.hasWeight {
                     Text("\(WeightFormatter.format(progress.weight)) kg")
                         .font(AppStyle.Font.sectionHeadline)
-                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .foregroundColor(appColorTheme.accent.glow)
                         .lineLimit(1)
                         .minimumScaleFactor(
                             AppStyle.Layout.bilateralAnalyticsMinimumScaleFactor
@@ -468,11 +469,11 @@ public struct AnalyticsView: View {
                 if exercise.hasWeight {
                     Text(WeightFormatter.format(progress.weight))
                         .font(AppStyle.Font.analyticsBigNumber)
-                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .foregroundColor(appColorTheme.accent.glow)
 
                     Text("kg")
                         .font(AppStyle.Font.analyticsBigNumber)
-                        .foregroundColor(AppStyle.Color.green)
+                        .foregroundColor(appColorTheme.accent.primary)
                 }
 
                 Text("\(progress.currentReps) / \(initialReps)")
@@ -663,7 +664,7 @@ public struct AnalyticsView: View {
         .foregroundColor(AppStyle.Color.white)
         .padding(.vertical, 12)
         .padding(.horizontal, 24)
-        .background(AppStyle.Color.green)
+        .background(appColorTheme.accent.primary)
         .cornerRadius(12)
     }
 
@@ -695,7 +696,7 @@ public struct AnalyticsView: View {
                     VStack(spacing: 4) {
                         Text(goalTileNumber)
                             .font(AppStyle.Font.analyticsBigNumber)
-                            .foregroundColor(AppStyle.Color.greenGlow)
+                            .foregroundColor(appColorTheme.accent.glow)
 
                         Text(exercise.hasWeight ? "Goal kg" : "Goal Reps")
                             .font(AppStyle.Font.chartAxisSmall)

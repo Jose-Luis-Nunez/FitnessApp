@@ -27,6 +27,7 @@ struct SymptomChipsView: View {
 }
 
 private struct SymptomTile: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     let symptom: Symptom
     let isSelected: Bool
     let action: () -> Void
@@ -40,7 +41,7 @@ private struct SymptomTile: View {
         }
     }
 
-    private var accentColor: Color { symptom.iconColor }
+    private var accentColor: Color { symptom.iconColor(in: appColorTheme) }
 
     var body: some View {
         Button(action: action) {

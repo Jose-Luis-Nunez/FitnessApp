@@ -24,10 +24,9 @@ struct FitnessAppApp: App {
     /// Presentation state belongs to the scene-level owner so the selected
     /// List/Overview mode survives recreation of the `.home` destination.
     @State private var categorySelectionViewMode: MuscleCategorySelectionViewMode = .overview
-    /// Drives the app-wide accent re-tint (green ↔ grey). Toggling the Profile
-    /// picker writes this key; the `.id(iconColorScheme)` below rebuilds the
-    /// visual tree so every `AppStyle.Color` green token re-reads the palette.
-    @AppStorage(DefaultIconColorScheme.storageKey) private var iconColorScheme: DefaultIconColorScheme = .green
+    /// Sole persistence owner for the app-wide accent preference. The stored
+    /// key and raw values remain compatible with existing installations.
+    @AppStorage(AppAccentScheme.storageKey) private var accentScheme: AppAccentScheme = .green
 
     init() {
         let textFieldAppearance = UITextField.appearance()
@@ -94,7 +93,7 @@ struct FitnessAppApp: App {
                                     )
                                         .navigationBarBackButtonHidden(true)
                                 case .profile:
-                                    ProfileView()
+                                    ProfileView(accentScheme: $accentScheme)
                                         .navigationBarBackButtonHidden(true)
                                 case .totalAnalytics:
                                     TotalAnalyticsView()
@@ -196,13 +195,9 @@ struct FitnessAppApp: App {
                     .zIndex(3)
                 }
             }
-            // Re-tint the whole UI when the scheme flips (green ↔ grey). Applied
-            // BELOW the App's @State (router/overlayState/storage), so those
-            // survive — only the visual subtree rebuilds and re-reads the accent
-            // palette. Profile colors update through the environment below;
-            // the rebuild remains for legacy accent consumers elsewhere.
-            .id(iconColorScheme)
-            .profileColorTheme(ProfileColorTheme(colorScheme: iconColorScheme))
+            // Environment propagation re-renders color consumers without
+            // replacing view identity or resetting feature-owned state.
+            .appColorTheme(accentScheme)
             .environment(\.safeAreaInsets, geo.safeAreaInsets)
             .environment(overlayState)
             .environment(router)

@@ -16,7 +16,9 @@ public struct FitnessWheelPickerColumn<Value: Hashable, Label: View>: View {
     public let values: [Value]
     public let accessibilityID: String?
     private let label: (Value) -> Label
-    @Environment(\.profileColorTheme) private var profileColors
+    @Environment(\.appColorTheme) private var appColorTheme
+
+    private var profileColors: ProfileColorTheme { appColorTheme.profile }
 
     public init(
         title: String,

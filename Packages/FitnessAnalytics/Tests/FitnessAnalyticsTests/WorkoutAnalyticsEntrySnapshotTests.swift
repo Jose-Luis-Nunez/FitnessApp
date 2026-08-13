@@ -89,6 +89,7 @@ struct WorkoutAnalyticsEntrySnapshotTests {
                 iconsByCategory[exercise.category] ?? armsIcon
             }
         )
+        .appColorTheme(.green)
         .environment(
             \.safeAreaInsets,
             EdgeInsets(top: 0, leading: 0, bottom: 34, trailing: 0)

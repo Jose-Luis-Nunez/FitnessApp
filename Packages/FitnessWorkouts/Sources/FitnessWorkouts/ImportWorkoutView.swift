@@ -3,6 +3,7 @@ import FitnessCore
 import FitnessUI
 
 struct ImportWorkoutView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     @Binding var isPresented: Bool
     @State private var viewModel: ImportWorkoutViewModel
 
@@ -62,12 +63,12 @@ struct ImportWorkoutView: View {
                 Text("Paste from clipboard")
                     .font(AppStyle.Font.defaultFont)
             }
-            .foregroundColor(AppStyle.Color.green)
+            .foregroundColor(appColorTheme.accent.primary)
             .padding(.vertical, 10)
             .padding(.horizontal, 14)
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(AppStyle.Color.green, lineWidth: 1)
+                    .stroke(appColorTheme.accent.primary, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)

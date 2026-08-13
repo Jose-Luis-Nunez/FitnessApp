@@ -10,10 +10,11 @@ import FitnessUI
 /// - `Low` / `High` labels above the track (no numeric "X / 5" indicator and
 ///   no tick-number row — the slider's position carries that information on
 ///   its own).
-/// - 10pt-tall track in `AppStyle.Color.greenDark` overlaid by a fill capsule
-///   filled with a `LinearGradient` from `greenLight` → `green`.
+/// - 10pt-tall themed track overlaid by a fill capsule using the current
+///   app accent gradient.
 /// - 24pt white circular thumb centered on the current value.
 struct EnergyLevelSlider: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     @Binding var selectedLevel: Int?
 
     private let minValue = 1
@@ -60,13 +61,13 @@ struct EnergyLevelSlider: View {
 
                 ZStack(alignment: .leading) {
                     Capsule()
-                        .fill(AppStyle.Color.greenDark)
+                        .fill(appColorTheme.accent.dark)
                         .frame(height: trackHeight)
 
                     Capsule()
                         .fill(
                             LinearGradient(
-                                colors: [AppStyle.Color.greenLight, AppStyle.Color.green],
+                                colors: [appColorTheme.accent.light, appColorTheme.accent.primary],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )

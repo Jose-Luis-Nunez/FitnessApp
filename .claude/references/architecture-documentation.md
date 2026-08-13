@@ -36,6 +36,7 @@ old one.
 | [0016](../../docs/adr/0016-demand-loaded-card-analytics.md) | Exercise cards load analytics progressively according to user intent. |
 | [0017](../../docs/adr/0017-environment-injected-semantic-color-theme.md) | Superseded by ADR-0018; introduced the environment-injected Profile color theme. |
 | [0018](../../docs/adr/0018-neutral-primary-card-surface.md) | Training semantics and Profile consume one feature-neutral primary card surface. |
+| [0019](../../docs/adr/0019-value-propagated-app-color-theme.md) | One root-owned, value-propagated app color theme updates consumers without replacing view identity. |
 
 ## Feature Map
 
@@ -265,20 +266,27 @@ that policy and AppStyle tokens instead of introducing local screen-width
 breakpoints or raw design constants. Shared card/tile geometry belongs to its
 `FitnessUI` layout component rather than to feature views.
 
-`DefaultIconColorScheme` is the persisted user preference for the semantic accent
-palette. The palette maps semantic UI roles; domain values and feature logic do not
-depend on concrete colors. The app may rebuild its visual subtree after the
-preference changes while preserving router, persistence and session owners.
+`AppAccentScheme` is the persisted user preference for the semantic accent
+palette; `FitnessAppApp` is its only `@AppStorage` owner. The root derives and
+injects one immutable `AppColorTheme`. SwiftUI then invalidates environment
+consumers without replacing view identity, so feature state, navigation and
+in-flight work survive a palette change. Dynamic accent colors and default-icon
+resolution come from that value rather than global `AppStyle.Color` or feature-
+owned persistence. Fixed color primitives remain in `AppStyle.Color`.
 
-`ProfileColorTheme` maps the selected accent palette into semantic profile roles,
-including neutral selection-state surfaces, and is injected at the app root
-through SwiftUI's environment. Profile feature
-views consume those roles and shared card/tile components instead of reading
-concrete colors or `UserDefaults`; previews and snapshots inject deterministic
-themes directly. The roles derive from the same idle-card palette as training,
-and both features consume the neutral `.primary` card surface while feature
-state names remain independent. Semantic status colors remain separate.
-ADR-0018 records the current boundary and supersedes ADR-0017.
+`ProfileColorTheme` is the semantic Profile subset carried by `AppColorTheme`,
+including neutral selection-state surfaces. Profile, Friends and transit views
+consume these roles and shared card/tile components. Previews and snapshots
+inject a deterministic app theme directly. The roles derive from the same accent
+palette as Training, and both features consume the neutral `.primary` card
+surface while feature state names remain independent. Semantic status colors
+remain separate. ADR-0018 records the surface boundary; ADR-0019 records theme
+ownership and state-preserving propagation.
+
+Language selection is a separate future environment dependency: String Catalogs
+and typed `LocalizedStringResource` symbols belong in `FitnessResources`, while
+`Locale` or a language preference is injected independently. It is not part of
+`AppColorTheme`, a global settings store, or an identity-reset mechanism.
 
 ## Live Activity
 

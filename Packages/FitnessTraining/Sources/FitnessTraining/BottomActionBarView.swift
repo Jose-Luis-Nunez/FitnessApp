@@ -72,6 +72,7 @@ public struct BottomActionBarView: View {
 }
 
 public struct FloatingActionButtonsView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     public let viewModel: BottomActionBarViewModel
     public let onStart: () -> Void
     public let onCompleteSet: () -> Void
@@ -230,13 +231,13 @@ public struct FloatingActionButtonsView: View {
                                 cornerRadius: setControlCornerRadius,
                                 style: .continuous
                             )
-                            .fill(AppStyle.Color.greenBlack)
+                            .fill(appColorTheme.accent.black)
                             .overlay(
                                 RoundedRectangle(
                                     cornerRadius: setControlCornerRadius,
                                     style: .continuous
                                 )
-                                .stroke(AppStyle.Color.greenGlow, lineWidth: 1.5)
+                                .stroke(appColorTheme.accent.glow, lineWidth: 1.5)
                             )
                             .padding(.horizontal, setControlSurfaceHorizontalInset)
                         } else {

@@ -34,6 +34,7 @@ struct AnalyticsEntryFormSnapshotTests {
             onSave: { _ in },
             onCancel: {}
         )
+        .appColorTheme(.green)
         .frame(width: size.width, height: size.height)
         .background(AppStyle.Color.backgroundColor)
 

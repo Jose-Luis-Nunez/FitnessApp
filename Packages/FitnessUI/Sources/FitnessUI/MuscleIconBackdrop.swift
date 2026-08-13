@@ -4,7 +4,9 @@ import SwiftUI
 /// dots inside a thin ring, fading toward the edges. Purely cosmetic. Shared by
 /// the exercise picker header and the new-workout gallery.
 public struct MuscleIconBackdrop: View {
-    private let tint = AppStyle.Color.greenLight
+    @Environment(\.appColorTheme) private var appColorTheme
+
+    private var tint: Color { appColorTheme.accent.light }
 
     public init() {}
 

@@ -50,6 +50,7 @@ struct PainRegionGrid: View {
 }
 
 struct PainRegionTile: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     let region: BodyRegion
     let isSelected: Bool
     let image: Image
@@ -60,7 +61,7 @@ struct PainRegionTile: View {
             ZStack {
                 if isSelected {
                     Circle()
-                        .fill(AppStyle.Color.green.opacity(0.3))
+                        .fill(appColorTheme.accent.primary.opacity(0.3))
                         .frame(width: 70, height: 70)
                         .blur(radius: 12)
                         .opacity(0.7)
@@ -72,7 +73,7 @@ struct PainRegionTile: View {
                     .padding(6)
                     .saturation(1.07)
                     .brightness(0.03)
-                    .colorMultiply(AppStyle.Color.greenLight)
+                    .colorMultiply(appColorTheme.accent.light)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 120)
@@ -90,13 +91,13 @@ struct PainRegionTile: View {
                             cornerRadius: AppStyle.CornerRadius.tile,
                             style: .continuous
                         )
-                            .fill(AppStyle.Color.green.opacity(0.1))
+                            .fill(appColorTheme.accent.primary.opacity(0.1))
                             .overlay {
                                 RoundedRectangle(
                                     cornerRadius: AppStyle.CornerRadius.tile,
                                     style: .continuous
                                 )
-                                .stroke(AppStyle.Color.green, lineWidth: 1.5)
+                                .stroke(appColorTheme.accent.primary, lineWidth: 1.5)
                             }
                     }
                 }

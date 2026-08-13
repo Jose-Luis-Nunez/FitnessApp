@@ -431,6 +431,7 @@ struct BilateralTrainingTests {
             coordinator: coordinator,
             muscleArtwork: try appAssetImage(named: "defaultAbsIcon")
         )
+            .appColorTheme(.green)
             .frame(width: width, height: height)
             .background(AppStyle.Color.backgroundColor)
         let controller = UIHostingController(rootView: view)
@@ -631,6 +632,7 @@ private func assertSetCardSnapshot(
             .frame(width: size.width, alignment: .top)
         Spacer(minLength: 0)
     }
+    .appColorTheme(.green)
     .frame(width: size.width, height: size.height, alignment: .top)
     .clipped()
     .background(AppStyle.Color.backgroundColor)

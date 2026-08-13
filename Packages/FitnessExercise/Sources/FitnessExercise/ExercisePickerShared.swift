@@ -5,6 +5,7 @@ import FitnessUI
 // Sheet chrome (`ExercisePickerActionButtons`, `exercisePickerSheet`) lives in `FitnessUI`.
 
 public struct ExerciseWheelPickerRow: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     @Binding public var sets: Int
     @Binding public var reps: Int
     @Binding public var weight: String
@@ -32,7 +33,7 @@ public struct ExerciseWheelPickerRow: View {
     }
 
     private let textColor: Color = AppStyle.Color.white
-    private let pickerColor: Color = AppStyle.Color.greenLight
+    private var pickerColor: Color { appColorTheme.accent.light }
 
     public var body: some View {
         HStack(alignment: .top, spacing: 10) {

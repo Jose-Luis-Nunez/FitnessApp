@@ -9,6 +9,7 @@ import FitnessUI
 /// the actual saved seat count, and the "Edit Seat" title instead of the
 /// category name.
 public struct ExerciseSeatPickerView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     @Bindable public var formViewModel: ExerciseFormViewModel
     @Binding public var isPresented: Bool
     public let onSave: () -> Void
@@ -36,7 +37,7 @@ public struct ExerciseSeatPickerView: View {
                 ExercisePickerActionButtons(
                     cancelLabel: L10n.cardCreationCancel,
                     saveLabel: L10n.cardCreationSave,
-                    cancelColor: AppStyle.Color.green,
+                    cancelColor: appColorTheme.accent.primary,
                     saveDisabled: false,
                     onCancel: {
                         onCancel()

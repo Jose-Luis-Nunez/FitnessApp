@@ -5,6 +5,7 @@ import SwiftUI
 /// This is presentational-only and does not attach gestures. Callers wrap it in
 /// `Button` and provide the action behavior.
 public struct CardActionCircleButtonVisual<Glyph: View>: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     let iconSize: CGFloat
     let discSize: CGFloat
     let glowSize: CGFloat
@@ -31,7 +32,7 @@ public struct CardActionCircleButtonVisual<Glyph: View>: View {
     public var body: some View {
         ZStack {
             Circle()
-                .fill(AppStyle.Color.idlePlayRingGlow)
+                .fill(appColorTheme.accent.ringGlowBase.opacity(0.10))
                 .frame(width: glowSize, height: glowSize)
                 .blur(radius: glowRadius)
 
@@ -40,7 +41,7 @@ public struct CardActionCircleButtonVisual<Glyph: View>: View {
                 .overlay(
                     Circle()
                         .strokeBorder(
-                            AppStyle.Color.idlePlayRingBase,
+                            appColorTheme.accent.idleMetricValue,
                             lineWidth: AppStyle.Layout.idlePlayRingWidth
                         )
                 )
@@ -48,7 +49,7 @@ public struct CardActionCircleButtonVisual<Glyph: View>: View {
 
             glyph
                 .frame(width: iconSize, height: iconSize)
-                .foregroundColor(AppStyle.Color.idleMetricValue)
+                .foregroundColor(appColorTheme.accent.idleMetricValue)
                 .offset(x: iconOffsetX)
         }
         .frame(width: glowSize, height: glowSize)

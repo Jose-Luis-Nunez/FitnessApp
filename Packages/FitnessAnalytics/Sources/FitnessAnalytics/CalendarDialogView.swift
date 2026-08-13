@@ -3,6 +3,7 @@ import Foundation
 import SwiftUI
 
 public struct CalendarDialogView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     @Binding public var isPresented: Bool
     @Binding public var selectedDate: Date
     @State private var tempDate: Date
@@ -58,7 +59,7 @@ public struct CalendarDialogView: View {
 
                                 actionButtons
                             }
-                            .background(AppStyle.Color.greenBlack)
+                            .background(appColorTheme.accent.black)
                             .cornerRadius(AppStyle.CornerRadius.defaultButton)
                             .padding(16)
                         }
@@ -91,7 +92,7 @@ public struct CalendarDialogView: View {
             .foregroundColor(AppStyle.Color.white)
             .padding(.vertical, 8)
             .padding(.horizontal, 16)
-            .background(AppStyle.Color.green)
+            .background(appColorTheme.accent.primary)
             .cornerRadius(AppStyle.CornerRadius.defaultButton)
         }
         .padding(.horizontal)

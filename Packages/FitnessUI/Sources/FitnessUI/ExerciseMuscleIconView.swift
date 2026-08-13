@@ -13,8 +13,7 @@ public struct ExerciseMuscleIconView: View {
     public let showsGlow: Bool
     public let artwork: Image?
 
-    @AppStorage(DefaultIconColorScheme.storageKey)
-    private var iconColorScheme: DefaultIconColorScheme = .green
+    @Environment(\.appColorTheme) private var appColorTheme
 
     public init(
         iconName: String,
@@ -41,7 +40,7 @@ public struct ExerciseMuscleIconView: View {
     }
 
     private var resolvedArtwork: Image {
-        artwork ?? Image(iconColorScheme.iconName(for: iconName))
+        artwork ?? Image(appColorTheme.scheme.iconName(for: iconName))
     }
 
     public var body: some View {
@@ -49,7 +48,7 @@ public struct ExerciseMuscleIconView: View {
             ZStack {
                 if showsGlow {
                     Circle()
-                        .fill(AppStyle.Color.greenBlack)
+                        .fill(appColorTheme.accent.black)
                         .frame(
                             width: resolvedSize * 0.9,
                             height: resolvedSize * 0.9

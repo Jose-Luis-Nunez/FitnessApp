@@ -38,7 +38,7 @@ extension TotalAnalyticsView {
         VStack(alignment: .leading, spacing: 6) {
             Text(categoryDetail.category.displayName)
                 .font(AppStyle.Font.cardHeadline)
-                .foregroundColor(AppStyle.Color.greenGlow)
+                .foregroundColor(appColorTheme.accent.glow)
 
             ForEach(categoryDetail.exercises, id: \.exercise.id) { exerciseDetail in
                 exerciseDetailRow(exerciseDetail: exerciseDetail)
@@ -51,21 +51,21 @@ extension TotalAnalyticsView {
         HStack {
             Text(exerciseDetail.exercise.name)
                 .font(AppStyle.Font.detailExercise)
-                .foregroundColor(AppStyle.Color.greenGlow)
+                .foregroundColor(appColorTheme.accent.glow)
 
             Spacer()
 
             Text(exerciseDetail.isCompleted ? "Done" : "Not Started")
                 .font(AppStyle.Font.detailCaption)
-                .foregroundColor(exerciseDetail.isCompleted ? AppStyle.Color.greenGlow : AppStyle.Color.greenGlow.opacity(0.6))
+                .foregroundColor(exerciseDetail.isCompleted ? appColorTheme.accent.glow : appColorTheme.accent.glow.opacity(0.6))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
                 .background(
                     RoundedRectangle(cornerRadius: 6)
-                        .fill(exerciseDetail.isCompleted ? AppStyle.Color.greenGlow.opacity(0.2) : AppStyle.Color.greenGlow.opacity(0.1))
+                        .fill(exerciseDetail.isCompleted ? appColorTheme.accent.glow.opacity(0.2) : appColorTheme.accent.glow.opacity(0.1))
                         .overlay(
                             RoundedRectangle(cornerRadius: 6)
-                                .stroke(AppStyle.Color.greenGlow.opacity(0.3), lineWidth: 1)
+                                .stroke(appColorTheme.accent.glow.opacity(0.3), lineWidth: 1)
                         )
                 )
         }

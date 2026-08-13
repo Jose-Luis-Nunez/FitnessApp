@@ -6,9 +6,15 @@ import FitnessFriends
 struct ProfileView: View {
     @State private var viewModel = ProfileViewModel()
     @State private var isBodyExpanded = false
-    @AppStorage(DefaultIconColorScheme.storageKey) private var iconColorScheme: DefaultIconColorScheme = .green
-    @Environment(\.profileColorTheme) private var profileColors
+    @Binding private var accentScheme: AppAccentScheme
+    @Environment(\.appColorTheme) private var appColorTheme
     @FocusState private var focusedField: ProfileField?
+
+    private var profileColors: ProfileColorTheme { appColorTheme.profile }
+
+    init(accentScheme: Binding<AppAccentScheme>) {
+        _accentScheme = accentScheme
+    }
 
     enum ProfileField: Hashable {
         case nickname
@@ -51,16 +57,14 @@ struct ProfileView: View {
         }
     }
 
-    // MARK: - Icon Color
+    // MARK: - Accent Color
 
-    /// Lets the user switch the *default* category icons between the original
-    /// (`green`) and the new `grey` variants. The app root maps this persisted
-    /// preference into `ProfileColorTheme` and injects it through the SwiftUI
-    /// environment, so profile components update without feature-model plumbing.
+    /// The app root persists this binding and injects the resulting app theme.
+    /// Changing it invalidates color consumers while keeping feature identity.
     private var iconColorSection: some View {
         ProfileCardContainer {
             HStack(spacing: AppStyle.Padding.card) {
-                ProfileCardHeading("Default Icon Color")
+                ProfileCardHeading("Accent Color")
                     .layoutPriority(1)
 
                 Spacer(minLength: 0)
@@ -76,22 +80,21 @@ struct ProfileView: View {
                 }
                 .frame(width: AppStyle.Layout.profileColorPickerWidth)
                 .profileReadOnlyTileSurface()
-                .accessibilityIdentifier("id_profile_icon_color_picker")
             }
         }
     }
 
-    private func iconColorButton(for scheme: DefaultIconColorScheme) -> some View {
-        let isSelected = iconColorScheme == scheme
+    private func iconColorButton(for scheme: AppAccentScheme) -> some View {
+        let isSelected = accentScheme == scheme
 
         return Button {
-            iconColorScheme = scheme
+            accentScheme = scheme
         } label: {
             Text(scheme.displayName)
                 .font(AppStyle.Font.profileCardTitle)
                 .foregroundColor(isSelected ? profileColors.title : profileColors.secondary)
                 .frame(maxWidth: .infinity)
-                .frame(height: AppStyle.Layout.chipHeight)
+                .frame(height: AppStyle.Layout.minimumTapTargetSize)
                 .background {
                     RoundedRectangle(
                         cornerRadius: AppStyle.CornerRadius.tile,
@@ -110,7 +113,7 @@ struct ProfileView: View {
                     }
                 }
         }
-        .frame(maxWidth: .infinity, minHeight: AppStyle.Layout.minimumTapTargetSize)
+        .frame(maxWidth: .infinity)
         .contentShape(Rectangle())
         .buttonStyle(.plain)
         .accessibilityValue(isSelected ? "Selected" : "Not selected")
@@ -390,7 +393,7 @@ struct ProfileView: View {
             ZStack(alignment: .leading) {
                 HStack(spacing: 0) {
                     Rectangle().fill(AppStyle.Color.bmiUnderweight)
-                    Rectangle().fill(AppStyle.Color.bmiNormal)
+                    Rectangle().fill(appColorTheme.accent.glow)
                     Rectangle().fill(AppStyle.Color.bmiOverweight)
                     Rectangle().fill(AppStyle.Color.bmiObese)
                 }
@@ -416,7 +419,7 @@ struct ProfileView: View {
     private func bmiColor(for category: BMICategory) -> Color {
         switch category {
         case .underweight: return AppStyle.Color.bmiUnderweight
-        case .normal: return AppStyle.Color.bmiNormal
+        case .normal: return appColorTheme.accent.glow
         case .overweight: return AppStyle.Color.bmiOverweight
         case .obese: return AppStyle.Color.bmiObese
         case .unknown: return AppStyle.Color.gray
@@ -432,7 +435,9 @@ private struct MetricTile: View {
     let unit: String
     let accessibilityID: String
     var action: (() -> Void)? = nil
-    @Environment(\.profileColorTheme) private var profileColors
+    @Environment(\.appColorTheme) private var appColorTheme
+
+    private var profileColors: ProfileColorTheme { appColorTheme.profile }
 
     var body: some View {
         Button {
@@ -473,7 +478,9 @@ private struct MetricTile: View {
 private struct BodyMetricsWheelRow: View {
     @Bindable var viewModel: ProfileViewModel
     @State private var showWeightDecimal: Bool = false
-    @Environment(\.profileColorTheme) private var profileColors
+    @Environment(\.appColorTheme) private var appColorTheme
+
+    private var profileColors: ProfileColorTheme { appColorTheme.profile }
 
     private static let heightOptions: [Int] = Array(100...230)
     private static let ageOptions: [Int] = Array(10...100)

@@ -16,6 +16,7 @@ public struct SheetActionArea: View {
     private let onSave: () -> Void
 
     @Environment(\.safeAreaInsets) private var safeAreaInsets
+    @Environment(\.appColorTheme) private var appColorTheme
 
     private static let homeMenuBarBottomOffset: CGFloat = -8
     private static let backdropFadeHeight: CGFloat = 28
@@ -67,8 +68,8 @@ public struct SheetActionArea: View {
                         )
                         .background(
                             isSaveEnabled
-                                ? AppStyle.Color.green
-                                : AppStyle.Color.green.opacity(0.15)
+                                ? appColorTheme.accent.primary
+                                : appColorTheme.accent.primary.opacity(0.15)
                         )
                         .clipShape(
                             RoundedRectangle(

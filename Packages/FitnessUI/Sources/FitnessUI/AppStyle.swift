@@ -340,18 +340,10 @@ public enum AppStyle {
     }
 
     public enum Color {
-        /// Accent ("green") family for the active `DefaultIconColorScheme`.
-        /// Green scheme = original hexes (unchanged); grey scheme = warm orange.
-        /// The green-family tokens below are computed from this so the whole app
-        /// re-tints in grey mode without touching ~215 call sites.
-        private static var palette: AccentPalette { DefaultIconColorScheme.current.palette }
-
         public static let backgroundColor = SwiftUI.Color(hex: "#0A090E")
         //Screen Background: #0A090E
         //Card Background:   #121417
 
-        public static var primaryButton: SwiftUI.Color { green }
-        //public static let exerciseCardBackground = SwiftUI.Color(hex: "#1B1D1F")
         public static let exerciseCardBackground = SwiftUI.Color(hex: "#232227")
         /// Base surface color for the Idle exercise card. Dedicated to the
         /// idle card so other cards/tiles app-wide stay on
@@ -373,15 +365,6 @@ public enum AppStyle {
         public static let gray = SwiftUI.Color(hex: "#4D4E53")
         public static let grayDark = SwiftUI.Color(hex: "#383838")
 
-        public static var greenBlack: SwiftUI.Color { palette.black }
-        public static var greenDark: SwiftUI.Color { palette.dark }
-
-        public static var green: SwiftUI.Color { palette.primary }
-        public static var greenLight: SwiftUI.Color { palette.light }
-        public static var greenMint: SwiftUI.Color { palette.mint }
-        public static var greenFrost: SwiftUI.Color { palette.frost }
-        public static var greenGlow: SwiftUI.Color { palette.glow }
-
         // MARK: Idle Card — Text Hierarchy
         /// Title text on the idle card (e.g. exercise name "Loop"). Slightly
         /// off-white so it reads soft against `idleCardBackground` instead of
@@ -391,53 +374,22 @@ public enum AppStyle {
         /// "Data", expand/collapse chevron). Neutral grey so the eye
         /// anchors on the mint values, not the labels.
         public static let idleMetricLabel = SwiftUI.Color(hex: "#9A9A9A")
-        /// Primary metric values + accent glyphs on the idle card (e.g. "20",
-        /// "kg" weight unit suffix, seat arrows, progress icon, tip icon +
-        /// label, play triangle). One shared mint token so all accent-tier
-        /// **glyph/text/stroke** elements stay perfectly in sync.
-        ///
-        /// For large **solid filled shapes** (e.g. inactive-card checkmark
-        /// disc, completion edge-indicator bar) use `idleAccentFill`
-        /// instead — same hue, slightly darker, to compensate for the
-        /// area-effect that makes solid blocks of the same hex read as
-        /// more saturated than thin glyphs.
-        public static var idleMetricValue: SwiftUI.Color { palette.idleMetricValue }
-        /// Solid-fill variant of `idleMetricValue`, perceptually matched.
-        /// Use for shapes that fill an area larger than a glyph or stroke
-        /// (e.g. inactive-card checkmark disc, completion edge-indicator
-        /// bar). Same mint family as `idleMetricValue`, ~7% darker per
-        /// channel so the solid block doesn't visually outshine the
-        /// glyph-tier accent elements.
-        public static var idleAccentFill: SwiftUI.Color { palette.idleAccentFill }
+        // Accent-tier idle values, fills and play-ring colors are dynamic and
+        // therefore live in `AppColorTheme.accent`, not this fixed token set.
         /// Vertical divider line between metric columns and the trailing action
         /// on the idle card. Dark neutral grey — sits
         /// quietly between the columns without competing with values or
         /// labels.
         public static let idleDivider = SwiftUI.Color(hex: "#3A3D3F")
 
-        // MARK: Idle Card — Play Button Material
-        /// Stroke color of the hairline border around the idle play button.
-        /// Aligned with `idleMetricValue` so the teal accents read as one
-        /// unified tone — matching the design-mockup's flat-accent look.
-        public static var idlePlayRingBase: SwiftUI.Color { palette.idleMetricValue }
-        /// Soft mint glow rendered around the outside of the play-button ring.
-        /// Same family as `idleMetricValue` but heavily desaturated via low
-        /// alpha so the halo reads as a hint, not as neon.
-        public static var idlePlayRingGlow: SwiftUI.Color { palette.ringGlowBase.opacity(0.10) }
-
         public static let sheetBackground = SwiftUI.Color(hex: "#222025")
         public static let sheetInputBackground = SwiftUI.Color(hex: "#141518")
         public static let metricChipBackground = SwiftUI.Color(hex: "#100F15")
-        public static var progressTrack: SwiftUI.Color { palette.progressTrack }
-        /// Alternate progress-bar fill used when `DefaultIconColorScheme == .grey`
-        /// (the default `.green` scheme keeps `greenGlow`). Solid fill only.
+        /// Grey-scheme progress fill. Kept as a fixed primitive for the palette.
         public static let progressOrange = SwiftUI.Color(hex: "#F97316")
-        /// Alternate progress-bar TRACK (empty portion) used when
-        /// `DefaultIconColorScheme == .grey` (the `.green` scheme keeps the
-        /// teal `progressTrack`).
+        /// Grey-scheme progress track. Kept as a fixed primitive for the palette.
         public static let progressTrackGrey = SwiftUI.Color(hex: "#2C2F36")
         public static let numberPadGray = SwiftUI.Color(hex: "#555555")
-        public static var trainingAccent: SwiftUI.Color { palette.trainingAccent }
         public static let inProgressGold = SwiftUI.Color(hex: "#D4A843")
 
         /// Compatibility alias for clients that require the flat base color.
@@ -445,7 +397,6 @@ public enum AppStyle {
         /// `ProfileColorTheme` and `ProfileCardContainer` instead.
         public static let profileCardBackground = idleCardBackground
         public static let bmiUnderweight = SwiftUI.Color(hex: "#5BA4CF")
-        public static var bmiNormal: SwiftUI.Color { palette.glow }
         public static let bmiOverweight = SwiftUI.Color(hex: "#E8A838")
         public static let bmiObese = SwiftUI.Color(hex: "#E85A5A")
 
@@ -468,9 +419,7 @@ public enum AppStyle {
         public static let symptomPain = painAccent
         /// Dizziness — bright cyan-blue, reads as "lightheaded".
         public static let symptomDizziness = SwiftUI.Color(hex: "#3FA9FF")
-        /// Nausea — lime green, deliberately distinct from the
-        /// forest-toned `green` used for energy/save accents.
-        public static var symptomNausea: SwiftUI.Color { palette.nausea }
+        // Nausea is palette-dependent and lives in `AppColorTheme.accent`.
         /// Muscle weakness — dusty lavender, low-energy palette match.
         public static let symptomWeakness = SwiftUI.Color(hex: "#A89BC9")
     }

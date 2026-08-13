@@ -13,6 +13,7 @@ import FitnessUI
 /// to delete the exercise; the separate "Select icon" grid is gone (icons are
 /// reachable by swiping the header gallery).
 public struct ExerciseNamePickerView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     @Bindable public var formViewModel: ExerciseFormViewModel
     @Binding public var isPresented: Bool
     public let onSave: () -> Void
@@ -60,7 +61,7 @@ public struct ExerciseNamePickerView: View {
                     ExercisePickerActionButtons(
                         cancelLabel: L10n.cardCreationCancel,
                         saveLabel: L10n.cardCreationSave,
-                        cancelColor: AppStyle.Color.green,
+                        cancelColor: appColorTheme.accent.primary,
                         saveDisabled: formViewModel.name.isEmpty,
                         onCancel: {
                             onCancel()

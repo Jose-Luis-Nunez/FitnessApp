@@ -2,6 +2,7 @@
 import UIKit
 import FitnessCore
 import FitnessExercise
+import FitnessUI
 import Factory
 import SwiftData
 @_spi(PersistenceUI) import FitnessStorage
@@ -113,10 +114,27 @@ struct UITestLaunchStrategy: AppLaunchStrategy {
 
         case .schedule:
             return [.schedule]
+
+        case .profile:
+            return [.profile]
         }
     }
 
     func configureEnvironment() {
+        // Every UI test starts from the original palette, independent of the
+        // preference left behind by a previous runner invocation.
+        UserDefaults.standard.set(
+            AppAccentScheme.green.rawValue,
+            forKey: AppAccentScheme.storageKey
+        )
+
+        if config.screen == .profile {
+            UserDefaults.standard.set("Profile Fixture", forKey: "userNickname")
+            UserDefaults.standard.set(80.0, forKey: "userWeight")
+            UserDefaults.standard.set(180.0, forKey: "userHeight")
+            UserDefaults.standard.set(30, forKey: "userAge")
+        }
+
         UIApplication.shared.connectedScenes
             .compactMap { $0 as? UIWindowScene }
             .flatMap(\.windows)

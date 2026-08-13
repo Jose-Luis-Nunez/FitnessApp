@@ -14,6 +14,7 @@ import FitnessUI
 /// SPI marker: see `ExerciseCardModelView`.
 @_spi(PersistenceUI)
 public struct ActiveCardModelView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     @Bindable public var model: ExerciseModel
     public let onEdit: (Exercise, ExerciseEditMode) -> Void
     /// Unused by the active variant — the seat stays editable mid-set (gated only
@@ -109,7 +110,7 @@ public struct ActiveCardModelView: View {
                 MetricChipView(width: AppStyle.DeviceLayout.analyticsButtonWidth) {
                     HStack(spacing: 6) {
                         Image(systemName: "arrow.triangle.2.circlepath")
-                            .foregroundColor(AppStyle.Color.green)
+                            .foregroundColor(appColorTheme.accent.primary)
                             .font(AppStyle.Font.iconSymbol)
                         Text("\(model.reps)")
                             .font(AppStyle.Font.cardHeadline)
@@ -141,7 +142,7 @@ public struct ActiveCardModelView: View {
         MetricChipView(width: AppStyle.DeviceLayout.chipWidthVertical, height: AppStyle.Layout.chipHeight) {
             HStack(spacing: 4) {
                 Image(systemName: "arrow.triangle.2.circlepath")
-                    .foregroundColor(AppStyle.Color.green)
+                    .foregroundColor(appColorTheme.accent.primary)
                     .font(AppStyle.Font.tileLabel)
                 Text("\(model.reps)")
                     .font(AppStyle.Font.regularChip)
@@ -174,7 +175,7 @@ public struct ActiveCardModelView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: AppStyle.Layout.analyticsImageSize, height: AppStyle.Layout.analyticsImageSize)
-                    .foregroundStyle(AppStyle.Color.trainingAccent)
+                    .foregroundStyle(appColorTheme.accent.trainingAccent)
             }
         }
         .buttonStyle(.plain)

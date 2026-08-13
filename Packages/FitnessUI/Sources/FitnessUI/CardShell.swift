@@ -95,8 +95,4 @@ public struct EdgeIndicator {
         self.width = width
     }
 
-    public static let completed = EdgeIndicator(
-        color: AppStyle.Color.greenGlow,
-        width: AppStyle.Layout.completedBarWidth
-    )
 }

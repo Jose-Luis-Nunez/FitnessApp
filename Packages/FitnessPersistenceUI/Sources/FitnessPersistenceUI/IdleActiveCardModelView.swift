@@ -71,7 +71,7 @@ public struct IdleActiveCardModelView: View {
     @State private var lastRunPresentation = LastRunCardPresentationState()
     @State private var weightPhases: [WeightPhase] = []
     @State private var analyticsRevision: ExerciseAnalyticsCacheRevision
-    @AppStorage(DefaultIconColorScheme.storageKey) private var iconColorScheme: DefaultIconColorScheme = .green
+    @Environment(\.appColorTheme) private var appColorTheme
 
     public init(
         model: ExerciseModel,
@@ -247,7 +247,7 @@ private extension IdleActiveCardModelView {
                 .frame(width: AppStyle.Layout.selectionRadioSize, height: AppStyle.Layout.selectionRadioSize)
             if isSelected {
                 Circle()
-                    .fill(AppStyle.Color.greenGlow)
+                    .fill(appColorTheme.accent.glow)
                     .frame(width: AppStyle.Layout.selectionRadioDot, height: AppStyle.Layout.selectionRadioDot)
             }
         }
@@ -267,7 +267,7 @@ private extension IdleActiveCardModelView {
     }
 
     var categoryIconView: some View {
-        Image(iconColorScheme.iconName(for: model.categoryGroup.defaultIconName))
+        Image(appColorTheme.scheme.iconName(for: model.categoryGroup.defaultIconName))
             .resizable()
             .interpolation(.high)
             .scaledToFill()
@@ -340,10 +340,10 @@ private extension IdleActiveCardModelView {
                 HStack(alignment: .firstTextBaseline, spacing: 0) {
                     Text(weightNumber)
                         .font(AppStyle.Font.idleWeightValue)
-                        .foregroundColor(AppStyle.Color.idleMetricValue)
+                        .foregroundColor(appColorTheme.accent.idleMetricValue)
                     Text("kg")
                         .font(AppStyle.Font.idleWeightUnit)
-                        .foregroundColor(AppStyle.Color.idleMetricValue)
+                        .foregroundColor(appColorTheme.accent.idleMetricValue)
                 }
                 .fixedSize()
             } else {
@@ -355,7 +355,7 @@ private extension IdleActiveCardModelView {
                         + Text("x").font(AppStyle.Font.idleRepsSeparator)
                         + Text("\(model.reps)").font(AppStyle.Font.idleWeightValue)
                 )
-                .foregroundColor(AppStyle.Color.idleMetricValue)
+                .foregroundColor(appColorTheme.accent.idleMetricValue)
                 .lineLimit(1)
                 .fixedSize()
             }
@@ -380,7 +380,7 @@ private extension IdleActiveCardModelView {
                 Text(right)
             }
             .font(AppStyle.Font.idleSeatValue)
-            .foregroundColor(AppStyle.Color.idleMetricValue)
+            .foregroundColor(appColorTheme.accent.idleMetricValue)
             .lineLimit(1)
             .fixedSize()
             .frame(height: AppStyle.Layout.idleMetricContentRowHeight)
@@ -395,7 +395,7 @@ private extension IdleActiveCardModelView {
             .resizable()
             .scaledToFit()
             .frame(width: AppStyle.Layout.seatIconSize, height: AppStyle.Layout.idleMetricGlyphHeight)
-            .foregroundColor(AppStyle.Color.idleMetricValue)
+            .foregroundColor(appColorTheme.accent.idleMetricValue)
             .frame(height: AppStyle.Layout.idleMetricFooterRowHeight)
     }
 
@@ -408,7 +408,7 @@ private extension IdleActiveCardModelView {
                 .resizable()
                 .scaledToFit()
                 .frame(width: AppStyle.Layout.analyticsEntryIconWidth, height: AppStyle.Layout.idleMetricGlyphHeight)
-                .foregroundColor(AppStyle.Color.idleMetricValue)
+                .foregroundColor(appColorTheme.accent.idleMetricValue)
                 .frame(height: AppStyle.Layout.idleMetricContentRowHeight)
                 .accessibilityHidden(true)
                 // Grow the interaction surface upward so the visual position and
@@ -455,7 +455,7 @@ private extension IdleActiveCardModelView {
         HStack(spacing: 6) {
             Text("Last run")
                 .font(AppStyle.Font.metricLabel)
-                .foregroundColor(AppStyle.Color.idleMetricValue)
+                .foregroundColor(appColorTheme.accent.idleMetricValue)
 
             Image(systemName: "chevron.right")
                 .font(AppStyle.Font.cardSmallLabel)

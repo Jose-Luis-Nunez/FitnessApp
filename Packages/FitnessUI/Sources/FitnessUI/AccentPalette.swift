@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// The accent ("green") color family, resolved per `DefaultIconColorScheme`.
+/// Primitive accent ramp selected by ``AppAccentScheme`` and exposed to views
+/// through ``AppColorTheme``.
 ///
 /// - `green` reproduces the app's **original, byte-identical** hexes — selecting
 ///   the green scheme changes nothing, so existing snapshots stay pixel-stable.
@@ -9,8 +10,9 @@ import SwiftUI
 ///   the grey design has no leftover green accents.
 ///
 /// Values are baked as explicit hex (reviewable, snapshot-stable) rather than a
-/// runtime hue rotation. Consumed only through `AppStyle.Color` — call sites keep
-/// using `AppStyle.Color.greenGlow` etc. unchanged.
+/// runtime hue rotation. Dynamic colors intentionally do not live in
+/// `AppStyle.Color`, because a static global lookup is invisible to SwiftUI's
+/// dependency tracking.
 public struct AccentPalette: Sendable {
     public let primary: Color           // green
     public let light: Color             // greenLight

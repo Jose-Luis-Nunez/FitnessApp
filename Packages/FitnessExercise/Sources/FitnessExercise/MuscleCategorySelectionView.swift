@@ -65,6 +65,7 @@ struct WorkoutScopedExerciseQueryView<Content: View>: View {
 }
 
 public struct MuscleCategorySelectionView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     @State private var viewModel = MuscleCategorySelectionViewModel()
     @Environment(AppRouter.self) private var router
     @Environment(UIOverlayState.self) private var overlayState
@@ -558,7 +559,7 @@ public struct MuscleCategorySelectionView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: filterIconSize, height: filterIconSize)
-                    .foregroundColor(currentViewMode == .overview ? AppStyle.Color.greenGlow : .white)
+                    .foregroundColor(currentViewMode == .overview ? appColorTheme.accent.glow : .white)
                     .scaleEffect(filterBounceMode == .overview ? 1.3 : (currentViewMode == .overview ? 1.15 : 1.0))
                     .frame(width: filterSelectionWidth, height: filterSelectionHeight)
                     .background {
@@ -576,7 +577,7 @@ public struct MuscleCategorySelectionView: View {
             Button(action: { selectViewMode(.list) }) {
                 Image(systemName: "list.bullet")
                     .font(.system(size: filterIconSize - 4, weight: .medium))
-                    .foregroundColor(currentViewMode == .list ? AppStyle.Color.greenGlow : .white)
+                    .foregroundColor(currentViewMode == .list ? appColorTheme.accent.glow : .white)
                     .scaleEffect(filterBounceMode == .list ? 1.3 : (currentViewMode == .list ? 1.15 : 1.0))
                     .frame(width: filterSelectionWidth, height: filterSelectionHeight)
                     .background {

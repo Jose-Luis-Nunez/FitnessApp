@@ -5,6 +5,7 @@ import FitnessUI
 /// "New Workout" sheet. Mirrors the Create-Exercise header and shared form chrome,
 /// but only collects the required workout name and type.
 struct CreateWorkoutView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     @Binding var workoutName: String
     @Binding var workoutType: WorkoutType?
     @Binding var isPresented: Bool
@@ -25,7 +26,7 @@ struct CreateWorkoutView: View {
             onCancel: {},
             actions: {
                 ExercisePickerActionButtons(
-                    cancelColor: AppStyle.Color.green,
+                    cancelColor: appColorTheme.accent.primary,
                     saveDisabled: isSaveDisabled,
                     onCancel: { isPresented = false },
                     onSave: {

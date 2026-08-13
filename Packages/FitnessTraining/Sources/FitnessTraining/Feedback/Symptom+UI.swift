@@ -7,11 +7,11 @@ import FitnessUI
 /// domain enum to `Color` would force the domain layer to depend on `SwiftUI`
 /// — a one-way coupling we deliberately avoid.
 extension Symptom {
-    public var iconColor: Color {
+    public func iconColor(in theme: AppColorTheme) -> Color {
         switch self {
         case .pain:           return AppStyle.Color.symptomPain
         case .dizziness:      return AppStyle.Color.symptomDizziness
-        case .nausea:         return AppStyle.Color.symptomNausea
+        case .nausea:         return theme.accent.nausea
         case .muscleWeakness: return AppStyle.Color.symptomWeakness
         }
     }

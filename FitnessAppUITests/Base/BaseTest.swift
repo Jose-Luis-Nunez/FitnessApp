@@ -67,6 +67,13 @@ class BaseTest: XCTestCase {
     }
 
     @MainActor
+    func launchProfile() throws {
+        let config = UITestLaunchConfig.profile()
+        app.launchEnvironment["UITEST_CONFIG"] = try config.jsonString()
+        app.launch()
+    }
+
+    @MainActor
     func launchHome() {
         app.launch()
     }

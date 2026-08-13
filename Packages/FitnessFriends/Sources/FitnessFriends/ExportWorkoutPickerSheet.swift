@@ -9,7 +9,9 @@ struct ExportWorkoutPickerSheet: View {
     let onSelect: (Workout) -> Void
     let exerciseCount: (Workout) -> Int
     @Binding var workoutToShare: WorkoutShareItem?
-    @Environment(\.profileColorTheme) private var profileColors
+    @Environment(\.appColorTheme) private var appColorTheme
+
+    private var profileColors: ProfileColorTheme { appColorTheme.profile }
 
     private let columns = [
         GridItem(.flexible(), spacing: 12),

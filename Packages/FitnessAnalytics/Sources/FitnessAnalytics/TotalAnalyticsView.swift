@@ -37,6 +37,7 @@ public struct AnalyticsTileData: Identifiable {
 }
 
 public struct TotalAnalyticsView: View {
+    @Environment(\.appColorTheme) var appColorTheme
     @State private var viewModel: TotalAnalyticsViewModel
     @State private var selectedDate: Date = Date()
     @State private var showCalendarDialog: Bool = false
@@ -127,7 +128,7 @@ public struct TotalAnalyticsView: View {
                     if let currentWorkout = workoutStorageService.currentWorkout {
                         Text("Workout: \(currentWorkout.name)")
                             .font(AppStyle.Font.detailCaption)
-                            .foregroundColor(AppStyle.Color.greenGlow.opacity(0.8))
+                            .foregroundColor(appColorTheme.accent.glow.opacity(0.8))
                     }
                 }
 
@@ -142,14 +143,14 @@ public struct TotalAnalyticsView: View {
                         Text(DateFormatter.germanShort.string(from: selectedDate))
                             .font(AppStyle.Font.detailCaption)
                     }
-                    .foregroundColor(AppStyle.Color.greenGlow)
+                    .foregroundColor(appColorTheme.accent.glow)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(AppStyle.Color.greenBlack.opacity(0.3))
+                    .background(appColorTheme.accent.black.opacity(0.3))
                     .cornerRadius(8)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(AppStyle.Color.greenGlow.opacity(0.2), lineWidth: 1)
+                            .stroke(appColorTheme.accent.glow.opacity(0.2), lineWidth: 1)
                     )
                 }
                 .buttonStyle(PlainButtonStyle())

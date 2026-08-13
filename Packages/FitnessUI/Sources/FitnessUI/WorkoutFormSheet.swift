@@ -1,6 +1,7 @@
 import SwiftUI
 
 public struct WorkoutFormSheet<Content: View>: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     let title: String
     let isSaveDisabled: Bool
     let onSave: () -> Void
@@ -98,7 +99,7 @@ public struct WorkoutFormSheet<Content: View>: View {
                     .font(AppStyle.Font.defaultFont)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity, minHeight: 50)
-                    .background(isSaveDisabled ? AppStyle.Color.gray : AppStyle.Color.green)
+                    .background(isSaveDisabled ? AppStyle.Color.gray : appColorTheme.accent.primary)
                     .cornerRadius(AppStyle.CornerRadius.defaultButton)
             }
             .disabled(isSaveDisabled)

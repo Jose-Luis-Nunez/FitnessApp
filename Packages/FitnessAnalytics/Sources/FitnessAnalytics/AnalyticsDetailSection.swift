@@ -2,6 +2,7 @@ import FitnessUI
 import SwiftUI
 
 public struct AnalyticsDetailSection<Header: View, Content: View>: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     public let shouldShowIndicator: Bool
     private let headerBuilder: () -> Header
     private let contentBuilder: () -> Content
@@ -34,7 +35,7 @@ public struct AnalyticsDetailSection<Header: View, Content: View>: View {
                             Spacer()
                             Image(systemName: "chevron.down")
                                 .font(AppStyle.Font.chartAxisSmall)
-                                .foregroundColor(AppStyle.Color.greenGlow.opacity(0.6))
+                                .foregroundColor(appColorTheme.accent.glow.opacity(0.6))
                                 .padding(.bottom, 8)
                             Spacer()
                         }
@@ -46,10 +47,10 @@ public struct AnalyticsDetailSection<Header: View, Content: View>: View {
         .frame(height: 271)
         .background(
             RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card)
-                .fill(AppStyle.Color.greenBlack.opacity(0.3))
+                .fill(appColorTheme.accent.black.opacity(0.3))
                 .overlay(
                     RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card)
-                        .stroke(AppStyle.Color.greenGlow.opacity(0.2), lineWidth: 1)
+                        .stroke(appColorTheme.accent.glow.opacity(0.2), lineWidth: 1)
                 )
         )
         .transition(.opacity.combined(with: .scale))
@@ -58,6 +59,7 @@ public struct AnalyticsDetailSection<Header: View, Content: View>: View {
 }
 
 public struct AnalyticsDetailHeader: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     public let title: String
     public let subtitle: String?
     public let onBack: () -> Void
@@ -81,7 +83,7 @@ public struct AnalyticsDetailHeader: View {
                     Text("Back")
                         .font(AppStyle.Font.tileLabel)
                 }
-                .foregroundColor(AppStyle.Color.greenGlow)
+                .foregroundColor(appColorTheme.accent.glow)
             }
 
             Spacer()
@@ -89,12 +91,12 @@ public struct AnalyticsDetailHeader: View {
             VStack(spacing: 2) {
                 Text(title)
                     .font(AppStyle.Font.cardValueBold)
-                    .foregroundColor(AppStyle.Color.greenGlow)
+                    .foregroundColor(appColorTheme.accent.glow)
 
                 if let subtitle = subtitle {
                     Text(subtitle)
                         .font(AppStyle.Font.streakLabel)
-                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .foregroundColor(appColorTheme.accent.glow)
                 }
             }
 

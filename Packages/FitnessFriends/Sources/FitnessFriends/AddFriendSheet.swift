@@ -19,7 +19,9 @@ struct AddFriendSheet: View {
     @Binding var isPresented: Bool
     @State private var viewModel: AddFriendViewModel
     @FocusState private var nameFieldFocused: Bool
-    @Environment(\.profileColorTheme) private var profileColors
+    @Environment(\.appColorTheme) private var appColorTheme
+
+    private var profileColors: ProfileColorTheme { appColorTheme.profile }
     @GestureState private var dragTranslation: CGFloat = 0
 
     private static let friendShareType = UTType(exportedAs: "com.fitnesspro.friend-share")

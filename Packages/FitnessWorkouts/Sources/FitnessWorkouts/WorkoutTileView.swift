@@ -20,6 +20,7 @@ enum WorkoutTileArtwork {
 }
 
 public struct WorkoutTileView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     let workout: Workout
     let isDefault: Bool
     let exerciseCount: Int
@@ -82,7 +83,7 @@ public struct WorkoutTileView: View {
                 .frame(height: AppStyle.Layout.workoutTileCompactHeight)
                 .appDarkSurface(
                     backgroundColor: isDefault
-                        ? AppStyle.Color.green.opacity(AppStyle.Opacity.workoutTileCompactDefaultFill)
+                        ? appColorTheme.accent.primary.opacity(AppStyle.Opacity.workoutTileCompactDefaultFill)
                         : AppStyle.Color.exerciseCardBackground,
                     in: RoundedRectangle(cornerRadius: AppStyle.CornerRadius.defaultButton, style: .continuous)
                 )
@@ -90,7 +91,7 @@ public struct WorkoutTileView: View {
                     if isDefault {
                         RoundedRectangle(cornerRadius: AppStyle.CornerRadius.defaultButton, style: .continuous)
                             .stroke(
-                                AppStyle.Color.green,
+                                appColorTheme.accent.primary,
                                 lineWidth: AppStyle.Layout.workoutTileCompactBorderWidth
                             )
                     }
@@ -122,7 +123,7 @@ public struct WorkoutTileView: View {
                     if isDefault {
                         RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
                             .stroke(
-                                AppStyle.Color.green.opacity(AppStyle.Opacity.workoutHeroBorder),
+                                appColorTheme.accent.primary.opacity(AppStyle.Opacity.workoutHeroBorder),
                                 lineWidth: AppStyle.Layout.workoutHeroBorderWidth
                             )
                     }
@@ -207,7 +208,7 @@ public struct WorkoutTileView: View {
         VStack(alignment: .leading, spacing: 0) {
             Text("\(exerciseCount)")
                 .font(AppStyle.Font.workoutHeroExerciseCount)
-                .foregroundColor(AppStyle.Color.green)
+                .foregroundColor(appColorTheme.accent.primary)
                 .lineLimit(1)
 
             Text("Exercises")
@@ -226,7 +227,7 @@ public struct WorkoutTileView: View {
             Image(systemName: "chevron.right")
                 .font(AppStyle.Font.categoryTileProgress)
         }
-        .foregroundColor(AppStyle.Color.green)
+        .foregroundColor(appColorTheme.accent.primary)
         .padding(.horizontal, AppStyle.Layout.workoutHeroStartChipHorizontalPadding)
         .padding(.vertical, AppStyle.Layout.workoutHeroStartChipVerticalPadding)
         .overlay {
@@ -235,7 +236,7 @@ public struct WorkoutTileView: View {
                 style: .continuous
             )
             .stroke(
-                AppStyle.Color.green,
+                appColorTheme.accent.primary,
                 lineWidth: AppStyle.Layout.workoutHeroStartChipBorderWidth
             )
         }
@@ -257,14 +258,14 @@ public struct WorkoutTileView: View {
     private var compactCountBadge: some View {
         ZStack {
             Circle()
-                .stroke(isDefault ? AppStyle.Color.green : AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel), lineWidth: AppStyle.Layout.workoutTileCompactCountOuterStroke)
+                .stroke(isDefault ? appColorTheme.accent.primary : AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel), lineWidth: AppStyle.Layout.workoutTileCompactCountOuterStroke)
                 .frame(width: AppStyle.Layout.workoutTileCompactCountOuterSize, height: AppStyle.Layout.workoutTileCompactCountOuterSize)
             Circle()
-                .stroke(isDefault ? AppStyle.Color.green.opacity(AppStyle.Opacity.fadedOverlay) : AppStyle.Color.white.opacity(AppStyle.Opacity.disabledElement), lineWidth: AppStyle.Layout.workoutTileCompactCountInnerStroke)
+                .stroke(isDefault ? appColorTheme.accent.primary.opacity(AppStyle.Opacity.fadedOverlay) : AppStyle.Color.white.opacity(AppStyle.Opacity.disabledElement), lineWidth: AppStyle.Layout.workoutTileCompactCountInnerStroke)
                 .frame(width: AppStyle.Layout.workoutTileCompactCountInnerSize, height: AppStyle.Layout.workoutTileCompactCountInnerSize)
             Text("\(exerciseCount)")
                 .font(AppStyle.Font.detailBadge)
-                .foregroundColor(isDefault ? AppStyle.Color.green : AppStyle.Color.white)
+                .foregroundColor(isDefault ? appColorTheme.accent.primary : AppStyle.Color.white)
         }
     }
 

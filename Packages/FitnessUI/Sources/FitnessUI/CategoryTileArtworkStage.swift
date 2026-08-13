@@ -3,6 +3,7 @@ import SwiftUI
 /// The shared, centered artwork stage used by category tiles.
 /// Callers provide the image so asset lookup remains in the feature's bundle.
 public struct CategoryTileArtworkStage<Artwork: View>: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     private let alignment: Alignment
     private let artwork: Artwork
 
@@ -17,7 +18,7 @@ public struct CategoryTileArtworkStage<Artwork: View>: View {
     public var body: some View {
         ZStack {
             Circle()
-                .fill(AppStyle.Color.greenBlack)
+                .fill(appColorTheme.accent.black)
                 .frame(
                     width: ExerciseCardLayout.CategoryTile.iconGlowSize,
                     height: ExerciseCardLayout.CategoryTile.iconGlowSize

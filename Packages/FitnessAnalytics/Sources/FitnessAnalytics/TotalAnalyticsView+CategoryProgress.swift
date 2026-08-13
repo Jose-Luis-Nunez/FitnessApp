@@ -43,7 +43,7 @@ extension TotalAnalyticsView {
 
                 Text("\(data.exerciseCount) exercise\(data.exerciseCount == 1 ? "" : "s")")
                     .font(AppStyle.Font.calendarSubheader)
-                    .foregroundColor(AppStyle.Color.greenGlow)
+                    .foregroundColor(appColorTheme.accent.glow)
             }
             .frame(height: 30)
 
@@ -127,7 +127,7 @@ extension TotalAnalyticsView {
                         .foregroundColor(AppStyle.Color.white.opacity(0.6))
                     Text("\(formatWeight(data.currentWeight)) kg")
                         .font(AppStyle.Font.detailCaption)
-                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .foregroundColor(appColorTheme.accent.glow)
                 }
 
                 Spacer()
@@ -146,10 +146,10 @@ extension TotalAnalyticsView {
                             if difference > 0 {
                                 Text("+\(formatWeight(difference)) kg")
                                     .font(AppStyle.Font.cardSmallMedium)
-                                    .foregroundColor(AppStyle.Color.green)
+                                    .foregroundColor(appColorTheme.accent.primary)
                                 Text("(\(String(format: "%.1f", frequency)))")
                                     .font(AppStyle.Font.analyticsAxis)
-                                    .foregroundColor(AppStyle.Color.green.opacity(0.7))
+                                    .foregroundColor(appColorTheme.accent.primary.opacity(0.7))
                             } else if difference < 0 {
                                 Text("\(formatWeight(difference)) kg")
                                     .font(AppStyle.Font.cardSmallMedium)
@@ -170,7 +170,7 @@ extension TotalAnalyticsView {
                         if percentage != 0 {
                             Text(percentage > 0 ? "+\(Int(percentage))%" : "\(Int(percentage))%")
                                 .font(AppStyle.Font.analyticsAxis)
-                                .foregroundColor(percentage > 0 ? AppStyle.Color.green.opacity(0.8) : .red.opacity(0.8))
+                                .foregroundColor(percentage > 0 ? appColorTheme.accent.primary.opacity(0.8) : .red.opacity(0.8))
                         }
                     }
                 }

@@ -2,6 +2,7 @@ import SwiftUI
 import FitnessUI
 
 public struct ScheduleCalendarView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     @Binding public var selectedDate: Date
     public let trainingDays: Set<Date>
     public let datesWithData: Set<Date>
@@ -79,7 +80,7 @@ public struct ScheduleCalendarView: View {
                     .font(AppStyle.Font.calendarHeader)
                 Text(kwLabel)
                     .font(AppStyle.Font.calendarSubheader)
-                    .foregroundColor(AppStyle.Color.greenGlow.opacity(0.7))
+                    .foregroundColor(appColorTheme.accent.glow.opacity(0.7))
             }
 
             Spacer()
@@ -164,14 +165,14 @@ public struct ScheduleCalendarView: View {
     // MARK: - Styling Helpers
 
     private func circleFill(selected: Bool, today: Bool, training: Bool) -> Color {
-        if selected { return AppStyle.Color.green }
+        if selected { return appColorTheme.accent.primary }
         if today { return Color.white.opacity(0.15) }
         return .clear
     }
 
     private func circleStroke(hasData: Bool, training: Bool, selected: Bool, today: Bool) -> Color {
         if selected || today { return .clear }
-        if training { return AppStyle.Color.greenGlow.opacity(0.5) }
+        if training { return appColorTheme.accent.glow.opacity(0.5) }
         if hasData { return Color.white.opacity(0.15) }
         return .clear
     }
@@ -179,14 +180,14 @@ public struct ScheduleCalendarView: View {
     private func textColor(selected: Bool, today: Bool, training: Bool, future: Bool) -> Color {
         if selected { return .black }
         if today { return AppStyle.Color.white }
-        if training { return AppStyle.Color.greenGlow }
+        if training { return appColorTheme.accent.glow }
         if future { return Color.white.opacity(0.3) }
         return Color.white.opacity(0.8)
     }
 
     private func dotColor(training: Bool, hasData: Bool) -> Color {
-        if training { return AppStyle.Color.greenGlow }
-        if hasData { return AppStyle.Color.greenGlow.opacity(0.35) }
+        if training { return appColorTheme.accent.glow }
+        if hasData { return appColorTheme.accent.glow.opacity(0.35) }
         return .clear
     }
 

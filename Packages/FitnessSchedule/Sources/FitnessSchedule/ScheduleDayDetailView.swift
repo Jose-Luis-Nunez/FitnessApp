@@ -4,6 +4,7 @@ import FitnessCore
 import FitnessUI
 
 public struct ScheduleDayDetailView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     public let date: Date
     public let workoutDetail: WorkoutDetailData?
     public let exerciseCount: Int
@@ -53,7 +54,7 @@ public struct ScheduleDayDetailView: View {
                     let total = detail.categories.flatMap(\.exercises).count
                     Text("\(completed)/\(total) Exercises")
                         .font(AppStyle.Font.detailCaption)
-                        .foregroundColor(AppStyle.Color.greenGlow.opacity(0.7))
+                        .foregroundColor(appColorTheme.accent.glow.opacity(0.7))
                 }
             }
 
@@ -73,15 +74,15 @@ public struct ScheduleDayDetailView: View {
 
         Text("\(pct)%")
             .font(AppStyle.Font.detailBadge)
-            .foregroundColor(pct == 100 ? AppStyle.Color.greenGlow : AppStyle.Color.white)
+            .foregroundColor(pct == 100 ? appColorTheme.accent.glow : AppStyle.Color.white)
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(pct == 100 ? AppStyle.Color.greenGlow.opacity(0.2) : Color.white.opacity(0.08))
+                    .fill(pct == 100 ? appColorTheme.accent.glow.opacity(0.2) : Color.white.opacity(0.08))
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(pct == 100 ? AppStyle.Color.greenGlow.opacity(0.3) : Color.white.opacity(0.15), lineWidth: 1)
+                            .stroke(pct == 100 ? appColorTheme.accent.glow.opacity(0.3) : Color.white.opacity(0.15), lineWidth: 1)
                     )
             )
     }
@@ -92,7 +93,7 @@ public struct ScheduleDayDetailView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(category.category.displayName)
                 .font(AppStyle.Font.detailCategory)
-                .foregroundColor(AppStyle.Color.greenGlow)
+                .foregroundColor(appColorTheme.accent.glow)
 
             ForEach(category.exercises, id: \.exercise.id) { exerciseDetail in
                 exerciseRow(exerciseDetail)
@@ -110,12 +111,12 @@ public struct ScheduleDayDetailView: View {
 
             Text(detail.isCompleted ? "Done" : "—")
                 .font(AppStyle.Font.detailCaption)
-                .foregroundColor(detail.isCompleted ? AppStyle.Color.greenGlow : Color.white.opacity(0.3))
+                .foregroundColor(detail.isCompleted ? appColorTheme.accent.glow : Color.white.opacity(0.3))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
                 .background(
                     RoundedRectangle(cornerRadius: 6)
-                        .fill(detail.isCompleted ? AppStyle.Color.greenGlow.opacity(0.15) : Color.white.opacity(0.04))
+                        .fill(detail.isCompleted ? appColorTheme.accent.glow.opacity(0.15) : Color.white.opacity(0.04))
                 )
         }
         .padding(.leading, 12)
@@ -126,7 +127,7 @@ public struct ScheduleDayDetailView: View {
     private var partialDataView: some View {
         HStack(spacing: 8) {
             Image(systemName: "figure.strengthtraining.traditional")
-                .foregroundColor(AppStyle.Color.greenGlow.opacity(0.6))
+                .foregroundColor(appColorTheme.accent.glow.opacity(0.6))
             Text("\(exerciseCount) exercise\(exerciseCount == 1 ? "" : "s") logged")
                 .font(AppStyle.Font.detailExercise)
                 .foregroundColor(AppStyle.Color.white.opacity(0.6))

@@ -8,7 +8,9 @@ public struct FriendCategoryDetailView: View {
     public let categoryComparison: FriendCategoryComparison
     public let myName: String
     public let friendName: String
-    @Environment(\.profileColorTheme) private var profileColors
+    @Environment(\.appColorTheme) private var appColorTheme
+
+    private var profileColors: ProfileColorTheme { appColorTheme.profile }
 
     public init(
         categoryComparison: FriendCategoryComparison,

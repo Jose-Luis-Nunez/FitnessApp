@@ -39,7 +39,7 @@ public struct InactiveCardModelView: View {
     @State private var isExpanded = false
     @State private var latestSetPresentation = LatestSetProgressCardState()
     @State private var analyticsRevision: ExerciseAnalyticsCacheRevision
-    @AppStorage(DefaultIconColorScheme.storageKey) private var iconColorScheme: DefaultIconColorScheme = .green
+    @Environment(\.appColorTheme) private var appColorTheme
 
     public init(
         model: ExerciseModel,
@@ -122,7 +122,7 @@ public struct InactiveCardModelView: View {
 private extension InactiveCardModelView {
 
     var categoryIconView: some View {
-        Image(iconColorScheme.iconName(for: model.displayIconName))
+        Image(appColorTheme.scheme.iconName(for: model.displayIconName))
             .resizable()
             .interpolation(.high)
             .scaledToFill()
@@ -153,7 +153,7 @@ private extension InactiveCardModelView {
                 .fill(AppStyle.Color.idleDivider)
                 .frame(width: 0.75, height: 28)
             SharpCheckmark()
-                .stroke(AppStyle.Color.idleAccentFill, style: StrokeStyle(lineWidth: 2, lineCap: .square, lineJoin: .miter))
+                .stroke(appColorTheme.accent.idleAccentFill, style: StrokeStyle(lineWidth: 2, lineCap: .square, lineJoin: .miter))
                 .frame(width: 14, height: 11)
                 .frame(width: AppStyle.Layout.idlePlayButtonSize, height: AppStyle.Layout.idlePlayButtonSize)
         }

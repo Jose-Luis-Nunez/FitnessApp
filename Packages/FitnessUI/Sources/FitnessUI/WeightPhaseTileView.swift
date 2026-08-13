@@ -2,6 +2,7 @@ import SwiftUI
 import FitnessCore
 
 public struct WeightPhaseTileView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     public let phase: WeightPhase
     public let hasWeight: Bool
 
@@ -30,19 +31,19 @@ public struct WeightPhaseTileView: View {
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
                     Text(weightNumber)
                         .font(AppStyle.Font.cardBoldTitle)
-                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .foregroundColor(appColorTheme.accent.glow)
                     Text("KG")
                         .font(AppStyle.Font.cardSmallBold)
-                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .foregroundColor(appColorTheme.accent.glow)
                 }
             } else {
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
                     Text("\(phase.maxReps ?? 0)")
                         .font(AppStyle.Font.cardBoldTitle)
-                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .foregroundColor(appColorTheme.accent.glow)
                     Text("Reps")
                         .font(AppStyle.Font.cardSmallBold)
-                        .foregroundColor(AppStyle.Color.greenGlow)
+                        .foregroundColor(appColorTheme.accent.glow)
                 }
             }
 
@@ -59,7 +60,7 @@ public struct WeightPhaseTileView: View {
                     .foregroundColor(.white)
                 Image(systemName: "arrow.up.right")
                     .font(AppStyle.Font.cardSmallBold)
-                    .foregroundColor(AppStyle.Color.greenGlow)
+                    .foregroundColor(appColorTheme.accent.glow)
             }
 
             Spacer(minLength: 2)
@@ -81,11 +82,11 @@ public struct WeightPhaseTileView: View {
         HStack(spacing: 4) {
             Image(systemName: icon)
                 .font(AppStyle.Font.chartAxisSmall)
-                .foregroundColor(highlight ? AppStyle.Color.greenGlow : .white.opacity(0.5))
+                .foregroundColor(highlight ? appColorTheme.accent.glow : .white.opacity(0.5))
                 .frame(width: 14, alignment: .center)
             Text(setsReps)
                 .font(AppStyle.Font.detailCaption)
-                .foregroundColor(highlight ? AppStyle.Color.greenGlow : .white.opacity(0.7))
+                .foregroundColor(highlight ? appColorTheme.accent.glow : .white.opacity(0.7))
             Text("(\(Self.tileDate.string(from: date)))")
                 .font(AppStyle.Font.chartAxisSmall)
                 .foregroundColor(.white.opacity(0.4))

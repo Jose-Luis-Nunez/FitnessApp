@@ -12,7 +12,9 @@ struct FriendComparisonView: View {
     // Snapshot captured at tap-time so the sheet stays stable if comparison changes while open.
     @State private var detailComparison: FriendCategoryComparison?
     @State private var showingDetail = false
-    @Environment(\.profileColorTheme) private var profileColors
+    @Environment(\.appColorTheme) private var appColorTheme
+
+    private var profileColors: ProfileColorTheme { appColorTheme.profile }
 
     var body: some View {
         VStack(spacing: 8) {

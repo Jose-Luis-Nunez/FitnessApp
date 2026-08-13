@@ -3,6 +3,7 @@ import Foundation
 import SwiftUI
 
 public struct CalendarGridView: View {
+    @Environment(\.appColorTheme) private var appColorTheme
     @Binding public var selectedDate: Date
     public let highlightedDates: [Date]
     public let locale: Locale
@@ -114,7 +115,7 @@ public struct CalendarGridView: View {
         } else if isSameDay(date, Date()) {
             return .white
         } else if isHighlighted(date) {
-            return AppStyle.Color.greenDark
+            return appColorTheme.accent.dark
         } else {
             return .white
         }
@@ -122,11 +123,11 @@ public struct CalendarGridView: View {
 
     private func circleColor(for date: Date) -> Color {
         if isSameDay(date, selectedDate) {
-            return AppStyle.Color.green
+            return appColorTheme.accent.primary
         } else if isSameDay(date, Date()) {
             return .white.opacity(0.2)
         } else if isHighlighted(date) {
-            return AppStyle.Color.greenGlow
+            return appColorTheme.accent.glow
         } else {
             return .clear
         }

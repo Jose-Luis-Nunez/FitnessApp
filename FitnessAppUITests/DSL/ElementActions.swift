@@ -346,6 +346,27 @@ extension BaseTest {
     }
 
     @MainActor
+    func verifyValue(
+        _ identifier: String,
+        equals expected: String,
+        elementType: XCUIElement.ElementType = .any,
+        timeout: TimeInterval = TestDefaults.timeout
+    ) {
+        let element = app
+            .descendants(matching: elementType)
+            .matching(identifier: identifier)
+            .firstMatch
+        let predicate = NSPredicate(format: "value == %@", expected)
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
+        let result = XCTWaiter().wait(for: [expectation], timeout: timeout)
+        XCTAssertEqual(
+            result,
+            .completed,
+            "Expected '\(identifier)' value to equal '\(expected)', got '\(String(describing: element.value))'"
+        )
+    }
+
+    @MainActor
     func verifyValueContainsWithPrefix(
         _ prefix: String,
         expectedComponents: [String],
@@ -496,6 +517,24 @@ extension BaseTest {
 
         XCTAssertTrue(element.exists && element.isHittable,
                       "'\(identifier)' not visible after \(maxSwipes) swipes")
+    }
+
+    @MainActor
+    func swipeDownUntilVisible(
+        _ identifier: String,
+        elementType: XCUIElement.ElementType = .any,
+        maxSwipes: Int = 5
+    ) {
+        let element = app.descendants(matching: elementType)
+            .matching(identifier: identifier).firstMatch
+
+        for _ in 0..<maxSwipes {
+            if element.exists && element.isHittable { return }
+            app.swipeDown()
+        }
+
+        XCTAssertTrue(element.exists && element.isHittable,
+                      "'\(identifier)' not visible after \(maxSwipes) downward swipes")
     }
 
     // MARK: - Find (internal)
