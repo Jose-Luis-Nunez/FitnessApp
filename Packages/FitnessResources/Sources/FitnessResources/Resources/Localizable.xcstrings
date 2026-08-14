@@ -2934,7 +2934,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Eigengewichtsübung"
+            "value" : "Eigenes Gewicht"
           }
         },
         "en" : {
@@ -3101,7 +3101,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "0,5-kg-Schritte verwenden"
+            "value" : "0,5 KG Schritte verwenden"
           }
         },
         "en" : {
@@ -3118,7 +3118,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ermöglicht die Gewichtsauswahl in 0,5-kg-Schritten."
+            "value" : "Ermöglicht die Gewichtsauswahl in 0,5 KG Schritten."
           }
         },
         "en" : {
@@ -3186,7 +3186,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Übungsname"
+            "value" : "Name der Übung"
           }
         },
         "en" : {
@@ -3414,7 +3414,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "z. B. Banksitz"
+            "value" : "z. B. Sitz"
           }
         },
         "en" : {
@@ -3465,13 +3465,13 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aktiviere dies, um eine oder zwei Sitzpositionen für diese Übung hinzuzufügen."
+            "value" : "Aktivieren, wenn diese Übung eine Sitzeinstellung benötigt."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Enable to add one or two seat settings for this exercise."
+            "value" : "Enable when this exercise requires a seat setting."
           }
         }
       }
@@ -3499,13 +3499,13 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Füge eine oder zwei Sitzpositionen für diese Übung hinzu."
+            "value" : "Lege bis zu vier Sitzpositionen für diese Übung fest."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Add one or two seat settings for this exercise."
+            "value" : "Set up to four seat positions for this exercise."
           }
         }
       }
@@ -4121,7 +4121,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Gib einen Namen ein und wähle anschließend die geteilte .fitnessfriend-Datei aus."
+            "value" : "Gib einen Namen ein und wähle die geteilte .fitnessfriend-Datei aus."
           }
         },
         "en" : {
@@ -4580,7 +4580,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Offline – lokale Berechnung wird verwendet."
+            "value" : "Offline – lokale Berechnung verwendet."
           }
         },
         "en" : {
@@ -4614,7 +4614,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Gib dein Gewicht und deine Größe ein, um deinen BMI zu berechnen."
+            "value" : "Größe & Gewicht eingeben für BMI Berechnung"
           }
         },
         "en" : {

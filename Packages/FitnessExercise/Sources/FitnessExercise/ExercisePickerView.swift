@@ -91,12 +91,11 @@ public struct ExercisePickerView: View {
             }
         )
         .onAppear {
-            // New exercise: seat settings start hidden until the user enables
-            // "Seat required" (handled in SeatSettingsEditor); seed sensible
-            // set/reps/weight defaults. The decimal / bodyweight state is owned
-            // by ExerciseDetailsEditor.
+            // New exercise: seat settings are selected by default; seed
+            // sensible set/reps/weight defaults. The decimal / bodyweight
+            // state is owned by ExerciseDetailsEditor.
             if editingExercise == nil {
-                formViewModel.noSeats = true
+                formViewModel.noSeats = false
                 formViewModel.executionMode = .standard
                 formViewModel.sets = max(setsRange.lowerBound, min(setsRange.upperBound, 3))
                 formViewModel.reps = max(repsRange.lowerBound, min(repsRange.upperBound, 12))
@@ -176,6 +175,20 @@ public struct ExercisePickerView: View {
 
     private var machineStep: some View {
         VStack(spacing: AppStyle.Padding.sectionSpacing) {
+            SeatSettingsEditor(formViewModel: formViewModel)
+            executionModeSection
+        }
+    }
+
+    private var executionModeSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(AppText.exerciseAdditionalOptions)
+                .font(AppStyle.Font.defaultFont)
+                .foregroundColor(AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel))
+                .padding(.bottom, 10)
+
+            machineOptionDivider
+
             ExerciseOptionRow(
                 systemIcon: "figure.strengthtraining.traditional",
                 title: AppText.exerciseBilateral,
@@ -187,8 +200,14 @@ public struct ExercisePickerView: View {
                 )
             )
 
-            SeatSettingsEditor(formViewModel: formViewModel)
+            machineOptionDivider
         }
+    }
+
+    private var machineOptionDivider: some View {
+        Rectangle()
+            .fill(AppStyle.Color.white.opacity(AppStyle.Opacity.hairlineDivider))
+            .frame(height: AppStyle.Layout.separatorWidth)
     }
 }
 
@@ -271,34 +290,51 @@ struct SeatSettingsEditor: View {
     @State private var seatValues: [SeatEntry] = []
 
     var body: some View {
-        VStack(spacing: 20) {
-            SeatRequiredBox(isOn: seatRequiredBinding)
+        seatSettingsSection
+            .onAppear { loadSeatValues() }
+    }
+
+    private var seatSettingsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(AppText.exerciseSeatSettings)
+                    .font(AppStyle.Font.sheetSectionLabel)
+                    .foregroundColor(AppStyle.Color.white)
+                Text(AppText.exerciseSeatSettingsDetail)
+                    .font(AppStyle.Font.sheetCaption)
+                    .foregroundColor(AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            sectionDivider
+
+            ExerciseOptionRow(
+                systemIcon: "chair",
+                title: AppText.exerciseSeatRequired,
+                subtitle: AppText.exerciseSeatRequiredDetail,
+                isOn: seatRequiredBinding
+            )
+
+            sectionDivider
 
             if !formViewModel.noSeats {
-                VStack(alignment: .leading, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(AppText.exerciseSeatSettings)
-                            .font(AppStyle.Font.sheetSectionLabel)
-                            .foregroundColor(AppStyle.Color.white)
-                        Text(AppText.exerciseSeatSettingsDetail)
-                            .font(AppStyle.Font.sheetCaption)
-                            .foregroundColor(AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel))
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                ReorderableSeatList(
+                    entries: $seatValues,
+                    onValueChange: updateSeat,
+                    onRemove: { id in removeSeat(id: id) }
+                )
 
-                    ReorderableSeatList(
-                        entries: $seatValues,
-                        onValueChange: updateSeat,
-                        onRemove: { id in removeSeat(id: id) }
-                    )
-
-                    if seatValues.count < maxSeatSettings {
-                        AddSeatSettingButton { addSeat() }
-                    }
+                if seatValues.count < maxSeatSettings {
+                    AddSeatSettingButton { addSeat() }
                 }
             }
         }
-        .onAppear { loadSeatValues() }
+    }
+
+    private var sectionDivider: some View {
+        Rectangle()
+            .fill(AppStyle.Color.white.opacity(AppStyle.Opacity.hairlineDivider))
+            .frame(height: AppStyle.Layout.separatorWidth)
     }
 
     /// Toggle reflects "seat required" = the inverse of the model's `noSeats`.
@@ -478,7 +514,7 @@ private struct ExerciseOptionRow: View {
     let systemIcon: String
     let title: LocalizedStringResource
     let subtitle: LocalizedStringResource
-    let accessibilityIdentifier: String
+    var accessibilityIdentifier: String? = nil
     @Binding var isOn: Bool
 
     var body: some View {
@@ -506,66 +542,31 @@ private struct ExerciseOptionRow: View {
 
             Toggle("", isOn: $isOn)
                 .labelsHidden()
+                .accessibilityLabel(Text(title))
                 .toggleStyle(CapsuleToggleStyle(
                     onColor: appColorTheme.accent.glow,
                     offColor: AppStyle.Color.gray.opacity(AppStyle.Opacity.fadedOverlay)
                 ))
-                .accessibilityIdentifier(accessibilityIdentifier)
+                .modifier(OptionalAccessibilityIdentifier(identifier: accessibilityIdentifier))
         }
         .padding(.vertical, 14)
+    }
+}
+
+private struct OptionalAccessibilityIdentifier: ViewModifier {
+    let identifier: String?
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if let identifier {
+            content.accessibilityIdentifier(identifier)
+        } else {
+            content
+        }
     }
 }
 
 // MARK: - Seat Settings (step 2)
-
-/// Card-styled "Seat required" toggle row (same border/fill as the name bar).
-/// On → seat settings shown; off → hidden.
-private struct SeatRequiredBox: View {
-    @Environment(\.appColorTheme) private var appColorTheme
-    @Binding var isOn: Bool
-
-    var body: some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .stroke(AppStyle.Color.white.opacity(AppStyle.Opacity.subtleStroke), lineWidth: 1)
-                    .frame(width: 44, height: 44)
-                Image(systemName: "chair")
-                    .font(AppStyle.Font.iconSymbol)
-                    .foregroundColor(appColorTheme.accent.primary)
-            }
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(AppText.exerciseSeatRequired)
-                    .font(AppStyle.Font.sheetSectionLabel)
-                    .foregroundColor(AppStyle.Color.white)
-                Text(AppText.exerciseSeatRequiredDetail)
-                    .font(AppStyle.Font.sheetCaption)
-                    .foregroundColor(AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Spacer(minLength: 8)
-
-            Toggle("", isOn: $isOn)
-                .labelsHidden()
-                .toggleStyle(CapsuleToggleStyle(
-                    onColor: appColorTheme.accent.glow,
-                    offColor: AppStyle.Color.gray.opacity(AppStyle.Opacity.fadedOverlay)
-                ))
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(AppStyle.Color.idleCardBackground)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(AppStyle.Color.white.opacity(AppStyle.Opacity.subtleStroke), lineWidth: 1)
-                )
-        )
-    }
-}
 
 /// A single seat-position row: drag handle (supplied by the parent so it can
 /// own the reorder gesture), position label + editable value, and a remove (✕)
