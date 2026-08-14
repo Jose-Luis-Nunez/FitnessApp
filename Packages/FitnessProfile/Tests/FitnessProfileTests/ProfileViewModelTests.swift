@@ -9,53 +9,30 @@ struct ProfileViewModelTests {
 
     // MARK: - Computed Properties
 
-    @Test func hasProfile_emptyNickname_returnsFalse() {
+    @Test func hasProfileTracksNicknamePresence() {
         let vm = ProfileViewModel()
         vm.nickname = ""
         #expect(vm.hasProfile == false)
-    }
-
-    @Test func hasProfile_nonEmptyNickname_returnsTrue() {
-        let vm = ProfileViewModel()
         vm.nickname = "Max"
         #expect(vm.hasProfile == true)
         vm.nickname = ""
     }
 
-    @Test func hasBodyData_allPositive_returnsTrue() {
-        let vm = ProfileViewModel()
-        vm.weightKg = 75
-        vm.heightCm = 180
-        vm.age = 28
-        #expect(vm.hasBodyData == true)
-        vm.weightKg = 0; vm.heightCm = 0; vm.age = 0
-    }
+    @Test func hasBodyDataRequiresEveryPositiveValue() {
+        let cases: [(weight: Double, height: Double, age: Int, expected: Bool)] = [
+            (75, 180, 28, true),
+            (0, 180, 28, false),
+            (75, 0, 28, false),
+            (75, 180, 0, false),
+        ]
 
-    @Test func hasBodyData_zeroWeight_returnsFalse() {
-        let vm = ProfileViewModel()
-        vm.weightKg = 0
-        vm.heightCm = 180
-        vm.age = 28
-        #expect(vm.hasBodyData == false)
-        vm.heightCm = 0; vm.age = 0
-    }
-
-    @Test func hasBodyData_zeroHeight_returnsFalse() {
-        let vm = ProfileViewModel()
-        vm.weightKg = 75
-        vm.heightCm = 0
-        vm.age = 28
-        #expect(vm.hasBodyData == false)
-        vm.weightKg = 0; vm.age = 0
-    }
-
-    @Test func hasBodyData_zeroAge_returnsFalse() {
-        let vm = ProfileViewModel()
-        vm.weightKg = 75
-        vm.heightCm = 180
-        vm.age = 0
-        #expect(vm.hasBodyData == false)
-        vm.weightKg = 0; vm.heightCm = 0
+        for testCase in cases {
+            let vm = ProfileViewModel()
+            vm.weightKg = testCase.weight
+            vm.heightCm = testCase.height
+            vm.age = testCase.age
+            #expect(vm.hasBodyData == testCase.expected)
+        }
     }
 
     @Test func heightM_convertsCorrectly() {
@@ -65,16 +42,12 @@ struct ProfileViewModelTests {
         vm.heightCm = 0
     }
 
-    @Test func formattedBMI_nilResult_returnsDash() {
+    @Test func formattedBMIHandlesMissingAndRoundedValues() {
         let vm = ProfileViewModel()
         vm.bmiResult = nil
-        #expect(vm.formattedBMI == "–")
-    }
-
-    @Test func formattedBMI_withResult_returnsOneDecimal() {
-        let vm = ProfileViewModel()
+        #expect(vm.formattedBMI(locale: Locale(identifier: "en_US")) == "–")
         vm.bmiResult = BMIResult(value: 22.857, category: .normal)
-        #expect(vm.formattedBMI == "22.9")
+        #expect(vm.formattedBMI(locale: Locale(identifier: "en_US")) == "22.9")
         vm.bmiResult = nil
     }
 
@@ -117,14 +90,10 @@ struct ProfileViewModelTests {
         vm.nickname = ""
     }
 
-    @Test func isNicknameInputEmpty_whitespaceOnly_returnsTrue() {
+    @Test func nicknameInputEmptinessUsesTrimmedText() {
         let vm = ProfileViewModel()
         vm.inputNickname = "   "
         #expect(vm.isNicknameInputEmpty == true)
-    }
-
-    @Test func isNicknameInputEmpty_withText_returnsFalse() {
-        let vm = ProfileViewModel()
         vm.inputNickname = "Max"
         #expect(vm.isNicknameInputEmpty == false)
     }
@@ -263,20 +232,16 @@ struct ProfileViewModelTests {
 
     // MARK: - Fetch BMI Guards
 
-    @Test func fetchBMI_zeroWeight_doesNotLoad() {
-        let vm = ProfileViewModel()
-        vm.weightKg = 0
-        vm.heightCm = 180
-        vm.fetchBMI()
-        #expect(vm.isLoadingBMI == false)
-    }
+    @Test func fetchBMIRejectsMissingWeightOrHeight() {
+        for testCase in [(weight: 0.0, height: 180.0), (weight: 75.0, height: 0.0)] {
+            let vm = ProfileViewModel()
+            vm.weightKg = testCase.weight
+            vm.heightCm = testCase.height
 
-    @Test func fetchBMI_zeroHeight_doesNotLoad() {
-        let vm = ProfileViewModel()
-        vm.weightKg = 75
-        vm.heightCm = 0
-        vm.fetchBMI()
-        #expect(vm.isLoadingBMI == false)
+            vm.fetchBMI()
+
+            #expect(vm.isLoadingBMI == false)
+        }
     }
 
     // MARK: - Local BMI Load

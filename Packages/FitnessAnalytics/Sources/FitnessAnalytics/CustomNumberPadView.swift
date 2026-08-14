@@ -3,6 +3,7 @@ import UIKit
 #endif
 import FitnessUI
 import SwiftUI
+import FitnessResources
 
 public enum NumberPadValueType {
     case integer, decimal
@@ -22,6 +23,7 @@ private enum InputMode: Equatable {
 
 public struct CustomNumberPadView: View {
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var locale
     public let currentValue: Double
     public let isWeight: Bool
     public let valueType: NumberPadValueType
@@ -49,7 +51,9 @@ public struct CustomNumberPadView: View {
 
         _inputValue = State(wrappedValue: currentValue)
         _showComma = State(wrappedValue: currentValue != floor(currentValue))
-        _displayText = State(wrappedValue: WeightFormatter.format(currentValue))
+        // The environment locale is unavailable during initialization. This
+        // neutral seed is replaced with locale-aware text in `onAppear`.
+        _displayText = State(wrappedValue: String(currentValue))
     }
 
     private var displayString: String {
@@ -59,15 +63,20 @@ public struct CustomNumberPadView: View {
             if inputValue == floor(inputValue) && !showComma {
                 return String(Int(inputValue))
             } else if inputValue == floor(inputValue) && showComma {
-                return String(Int(inputValue)) + ","
+                return String(Int(inputValue)) + decimalSeparator
             } else {
-                return WeightFormatter.format(inputValue)
+                return WeightFormatter.format(inputValue, locale: locale)
             }
         }
     }
 
+    private var decimalSeparator: String { locale.decimalSeparator ?? "." }
+
     private var statusText: String {
-        inputValue >= 999.0 ? "Maximum reached" : (isWeight ? "kg" : "Repetitions")
+        guard inputValue >= 999.0 else {
+            return isWeight ? "kg" : AppText.resolve(AppText.exerciseRepetitions, locale: locale)
+        }
+        return AppText.resolve(AppText.commonMaximumReached, locale: locale)
     }
 
     private var statusTextColor: Color {
@@ -84,11 +93,13 @@ public struct CustomNumberPadView: View {
                 valueType: valueType,
                 statusText: statusText,
                 statusTextColor: statusTextColor,
+                locale: locale,
                 onAdjust: { delta in adjustValue(delta) }
             )
 
             NumberKeypad(
                 valueType: valueType,
+                decimalSeparator: decimalSeparator,
                 onDigit: { appendDigit($0) },
                 onComma: { appendComma() },
                 onClear: { clearValue() },
@@ -118,6 +129,9 @@ public struct CustomNumberPadView: View {
             showComma = currentValue != floor(currentValue)
             syncDisplayText()
             inputMode = .idle
+        }
+        .onChange(of: locale.identifier) { _, _ in
+            syncDisplayText()
         }
     }
 
@@ -149,7 +163,7 @@ public struct CustomNumberPadView: View {
                 triggerMaximumFeedback()
             }
         } else {
-            let parts = currentString.components(separatedBy: ",")
+            let parts = currentString.components(separatedBy: decimalSeparator)
             if parts.count == 1 {
                 if parts[0].count < 3 {
                     let newString = currentString == "0" ? digit : currentString + digit
@@ -177,7 +191,7 @@ public struct CustomNumberPadView: View {
         inputMode = .typing
         if valueType == .decimal {
             let currentString = displayText
-            if !currentString.contains(",") && currentString != "0" {
+            if !currentString.contains(decimalSeparator) && currentString != "0" {
                 showComma = true
                 syncDisplayText()
             }
@@ -189,12 +203,12 @@ public struct CustomNumberPadView: View {
         let currentString = displayText
         if currentString.count > 1 {
             var newString = String(currentString.dropLast())
-            if newString.hasSuffix(",") {
+            if newString.hasSuffix(decimalSeparator) {
                 newString = String(newString.dropLast())
                 showComma = false
             }
-            inputValue = Double(newString.replacingOccurrences(of: ",", with: ".")) ?? 0.0
-            showComma = newString.contains(",") || showComma
+            inputValue = WeightFormatter.parse(newString) ?? 0.0
+            showComma = newString.contains(decimalSeparator) || showComma
         } else {
             inputValue = 0.0
             showComma = false
@@ -262,6 +276,7 @@ private struct NumberScrollWheel: View {
     let valueType: NumberPadValueType
     let statusText: String
     let statusTextColor: Color
+    let locale: Locale
     let onAdjust: (Int) -> Void
 
     private let pickerHeight: CGFloat = 120
@@ -368,11 +383,12 @@ private struct NumberScrollWheel: View {
     }
 
     private func selectOption(_ option: String, proxy: ScrollViewProxy) {
-        guard let value = Double(option.replacingOccurrences(of: ",", with: ".")) else { return }
+        guard let value = WeightFormatter.parse(option) else { return }
         inputMode = .idle
         inputValue = value
-        showComma = option.contains(",") && option.hasSuffix(",")
-        displayText = WeightFormatter.format(value)
+        let decimalSeparator = locale.decimalSeparator ?? "."
+        showComma = option.contains(decimalSeparator) && option.hasSuffix(decimalSeparator)
+        displayText = WeightFormatter.format(value, locale: locale)
 
         withAnimation(.easeInOut(duration: 0.3)) {
             proxy.scrollTo(option, anchor: .center)
@@ -396,11 +412,12 @@ private struct NumberScrollWheel: View {
         let center = pickerHeight / 2 + centerOffset
 
         guard abs(frame.midY - center) < AppStyle.Layout.scrollWheelSnapTolerance, option != displayText else { return }
-        guard let value = Double(option.replacingOccurrences(of: ",", with: ".")) else { return }
+        guard let value = WeightFormatter.parse(option) else { return }
 
         inputValue = value
-        showComma = option.contains(",") && option.hasSuffix(",")
-        displayText = WeightFormatter.format(value)
+        let decimalSeparator = locale.decimalSeparator ?? "."
+        showComma = option.contains(decimalSeparator) && option.hasSuffix(decimalSeparator)
+        displayText = WeightFormatter.format(value, locale: locale)
 
         #if canImport(UIKit)
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -420,7 +437,7 @@ private struct NumberScrollWheel: View {
             if valueType == .decimal {
                 options.append(String(i))
                 if i < 999 {
-                    options.append("\(i),5")
+                    options.append(WeightFormatter.format(Double(i) + 0.5, locale: locale))
                 }
             } else {
                 options.append(String(i))
@@ -432,8 +449,8 @@ private struct NumberScrollWheel: View {
         }
 
         options.sort { a, b in
-            let aVal = Double(a.replacingOccurrences(of: ",", with: ".")) ?? 0
-            let bVal = Double(b.replacingOccurrences(of: ",", with: ".")) ?? 0
+            let aVal = WeightFormatter.parse(a) ?? 0
+            let bVal = WeightFormatter.parse(b) ?? 0
             return aVal < bVal
         }
 
@@ -447,6 +464,7 @@ private struct NumberScrollWheel: View {
 private struct NumberKeypad: View {
     @Environment(\.appColorTheme) private var appColorTheme
     let valueType: NumberPadValueType
+    let decimalSeparator: String
     let onDigit: (String) -> Void
     let onComma: () -> Void
     let onClear: () -> Void
@@ -482,7 +500,7 @@ private struct NumberKeypad: View {
     }
 
     private func digitButton(_ digit: String) -> some View {
-        Text(digit)
+        Text(verbatim: digit)
             .font(AppStyle.Font.numberPadDisplay)
             .foregroundColor(AppStyle.Color.white)
             .frame(maxWidth: .infinity, minHeight: AppStyle.Layout.numberPadKeySize)
@@ -490,7 +508,7 @@ private struct NumberKeypad: View {
     }
 
     private var specialButton: some View {
-        Text(valueType == .decimal ? "," : "C")
+        Text(verbatim: valueType == .decimal ? decimalSeparator : "C")
             .font(AppStyle.Font.navigationHeadline)
             .foregroundColor(AppStyle.Color.white)
             .frame(maxWidth: .infinity, minHeight: AppStyle.Layout.numberPadKeySize)
@@ -513,13 +531,13 @@ private struct NumberKeypad: View {
 
     private var actionRow: some View {
         HStack(spacing: AppStyle.Padding.card) {
-            Button("Cancel") { onCancel() }
+            Button(AppText.actionCancel) { onCancel() }
                 .font(AppStyle.Font.sectionTitle)
                 .foregroundColor(AppStyle.Color.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
 
-            Button("Apply") { onConfirm() }
+            Button(AppText.actionApply) { onConfirm() }
                 .font(AppStyle.Font.sectionHeadline)
                 .foregroundColor(AppStyle.Color.white)
                 .frame(maxWidth: .infinity)

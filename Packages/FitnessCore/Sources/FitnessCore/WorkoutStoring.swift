@@ -1,10 +1,7 @@
-import Mockable
-
 public enum WorkoutStorageError: Error {
     case persistenceFailed
 }
 
-@Mockable
 @MainActor
 public protocol WorkoutStoring: AnyObject {
     var workouts: [Workout] { get set }

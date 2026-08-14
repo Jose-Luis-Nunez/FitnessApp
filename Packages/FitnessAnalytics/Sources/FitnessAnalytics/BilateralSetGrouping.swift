@@ -41,10 +41,6 @@ enum BilateralSetGrouping {
         return groups.count == grouped.count ? groups : nil
     }
 
-    static func setRepsLabel(for progress: [SetProgress], reps: Int) -> String {
-        setRepsLabel(forEntries: [progress], reps: reps)
-    }
-
     /// Builds a daily label without flattening separate sessions. Flattening
     /// would merge equal logical indices from multiple bilateral sessions and
     /// incorrectly fall back to six physical steps per session.

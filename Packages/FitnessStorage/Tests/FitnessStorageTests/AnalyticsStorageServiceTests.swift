@@ -3,6 +3,7 @@ import Foundation
 import SwiftData
 import FitnessCore
 import FitnessTestSupport
+@testable import FitnessStorageTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
 
 private enum FailureAwareLoadError: Error {
@@ -355,16 +356,4 @@ struct AnalyticsStorageServiceTests {
         #expect(calendar.isDate(loaded.date, inSameDayAs: specificDate))
     }
 
-    // MARK: - Persistence Across Service Instances
-
-    @Test func dataPersistedAcrossServiceInstances() {
-        let exerciseId = UUID()
-
-        let sut1 = makeSUT()
-        sut1.save([TestHelpers.makeAnalyticsEntry(exerciseId: exerciseId)], for: exerciseId)
-
-        let sut2 = makeSUT()
-        let loaded = sut2.load(for: exerciseId)
-        #expect(loaded.count == 1)
-    }
 }

@@ -1,7 +1,4 @@
 import Foundation
-import Mockable
-
-@Mockable
 @MainActor
 public protocol ExerciseManaging: AnyObject {
     func updateExercise(_ updatedExercise: Exercise, category: MuscleCategoryGroup)

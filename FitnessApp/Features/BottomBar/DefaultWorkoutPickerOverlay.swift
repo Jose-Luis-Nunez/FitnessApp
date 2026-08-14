@@ -1,5 +1,6 @@
 import SwiftUI
 import FitnessCore
+import FitnessResources
 import FitnessUI
 
 /// Floating picker shown when the bottom-bar "Training" tab is tapped while no
@@ -26,12 +27,12 @@ struct DefaultWorkoutPickerOverlay: View {
                 HStack {
                     Spacer()
                     MiniActionMenuView(
-                        title: "Choose default workout",
+                        title: AppText.workoutChooseDefault,
                         items: workouts.map { workout in
                             MiniActionMenuItem(
                                 id: "default-workout-\(workout.id.uuidString)",
                                 icon: nil,
-                                title: workout.name,
+                                verbatimTitle: workout.name,
                                 isDestructive: false
                             ) {
                                 onPick(workout)

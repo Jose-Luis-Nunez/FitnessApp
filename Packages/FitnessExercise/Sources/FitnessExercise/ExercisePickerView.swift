@@ -22,7 +22,7 @@ public struct ExercisePickerView: View {
     public let onSave: () -> Void
     public let onCancel: () -> Void
     public let repsRange: ClosedRange<Int>
-    public let weightOptions: [String]
+    public let weightOptions: [Double]
     public let setsRange: ClosedRange<Int>
     public var viewModel: MuscleCategoryViewModel
     public let editingExercise: Exercise?
@@ -47,7 +47,7 @@ public struct ExercisePickerView: View {
         onSave: @escaping () -> Void,
         onCancel: @escaping () -> Void,
         repsRange: ClosedRange<Int>,
-        weightOptions: [String],
+        weightOptions: [Double],
         setsRange: ClosedRange<Int>,
         viewModel: MuscleCategoryViewModel,
         editingExercise: Exercise?
@@ -79,7 +79,7 @@ public struct ExercisePickerView: View {
                 // preview stays at exactly the same height when paging.
                 ExerciseIconHeader(
                     formViewModel: formViewModel,
-                    title: formViewModel.selectedCategory.displayName
+                    title: formViewModel.selectedCategory.localizedName
                 )
 
                 switch step {
@@ -100,7 +100,7 @@ public struct ExercisePickerView: View {
                 formViewModel.executionMode = .standard
                 formViewModel.sets = max(setsRange.lowerBound, min(setsRange.upperBound, 3))
                 formViewModel.reps = max(repsRange.lowerBound, min(repsRange.upperBound, 12))
-                if weightOptions.contains("20") || weightOptions.contains("20,0") || weightOptions.contains("20.0") {
+                if weightOptions.contains(20) {
                     formViewModel.weight = 20
                 }
             }
@@ -117,8 +117,8 @@ public struct ExercisePickerView: View {
         switch step {
         case .details:
             ExercisePickerActionButtons(
-                cancelLabel: L10n.cardCreationCancel,
-                saveLabel: L10n.cardCreationContinue,
+                cancelLabel: AppText.actionCancel,
+                saveLabel: AppText.actionContinue,
                 cancelColor: appColorTheme.accent.primary,
                 saveDisabled: !formViewModel.isFormValid,
                 onCancel: {
@@ -136,8 +136,8 @@ public struct ExercisePickerView: View {
             )
         case .machine:
             ExercisePickerActionButtons(
-                cancelLabel: L10n.cardCreationBack,
-                saveLabel: L10n.cardCreationSave,
+                cancelLabel: AppText.actionBack,
+                saveLabel: AppText.actionSave,
                 cancelColor: appColorTheme.accent.primary,
                 saveDisabled: !formViewModel.isFormValid,
                 onCancel: {
@@ -178,8 +178,8 @@ public struct ExercisePickerView: View {
         VStack(spacing: AppStyle.Padding.sectionSpacing) {
             ExerciseOptionRow(
                 systemIcon: "figure.strengthtraining.traditional",
-                title: L10n.bilateralExerciseTitle,
-                subtitle: L10n.bilateralExerciseSubtitle,
+                title: AppText.exerciseBilateral,
+                subtitle: AppText.exerciseBilateralDetail,
                 accessibilityIdentifier: ExerciseIDs.bilateralToggle,
                 isOn: Binding(
                     get: { formViewModel.executionMode == .bilateral },
@@ -205,7 +205,17 @@ struct SeatEntry: Identifiable, Equatable {
 /// over a dotted ring, with a title below (category name, or "Edit Seat").
 struct ExerciseIconHeader: View {
     @Bindable var formViewModel: ExerciseFormViewModel
-    let title: String
+    let title: Text
+
+    init(formViewModel: ExerciseFormViewModel, title: LocalizedStringResource) {
+        self.formViewModel = formViewModel
+        self.title = Text(title)
+    }
+
+    init(formViewModel: ExerciseFormViewModel, verbatimTitle: String) {
+        self.formViewModel = formViewModel
+        self.title = Text(verbatim: verbatimTitle)
+    }
 
     private let previewHeight: CGFloat = 260
     @State private var validIconOptions: [String] = []
@@ -218,7 +228,7 @@ struct ExerciseIconHeader: View {
                 height: previewHeight
             )
 
-            Text(title)
+            title
                 .font(AppStyle.Font.navigationHeadline)
                 .foregroundColor(AppStyle.Color.white)
         }
@@ -267,10 +277,10 @@ struct SeatSettingsEditor: View {
             if !formViewModel.noSeats {
                 VStack(alignment: .leading, spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(L10n.seatSettingsTitle)
+                        Text(AppText.exerciseSeatSettings)
                             .font(AppStyle.Font.sheetSectionLabel)
                             .foregroundColor(AppStyle.Color.white)
-                        Text(L10n.seatSettingsSubtitle)
+                        Text(AppText.exerciseSeatSettingsDetail)
                             .font(AppStyle.Font.sheetCaption)
                             .foregroundColor(AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel))
                     }
@@ -342,7 +352,7 @@ struct SeatSettingsEditor: View {
 struct ExerciseDetailsEditor: View {
     @Bindable var formViewModel: ExerciseFormViewModel
     let repsRange: ClosedRange<Int>
-    let weightOptions: [String]
+    let weightOptions: [Double]
     let setsRange: ClosedRange<Int>
     /// True when editing an existing exercise: a stored weight of 0 then means
     /// "bodyweight" (start with the weight wheel hidden). A brand-new exercise
@@ -352,8 +362,8 @@ struct ExerciseDetailsEditor: View {
     @State private var showDecimal = false
     @State private var noWeight = false
 
-    private var filteredWeightOptions: [String] {
-        showDecimal ? weightOptions : weightOptions.filter { !$0.contains(",") && !$0.contains(".") }
+    private var filteredWeightOptions: [Double] {
+        showDecimal ? weightOptions : weightOptions.filter { $0 == floor($0) }
     }
 
     var body: some View {
@@ -361,10 +371,7 @@ struct ExerciseDetailsEditor: View {
             ExerciseWheelPickerRow(
                 sets: $formViewModel.sets,
                 reps: $formViewModel.reps,
-                weight: Binding<String>(
-                    get: { WeightFormatter.format(formViewModel.weight) },
-                    set: { if let w = WeightFormatter.parse($0) { formViewModel.weight = w } }
-                ),
+                weight: $formViewModel.weight,
                 setsRange: setsRange,
                 repsRange: repsRange,
                 weightOptions: filteredWeightOptions,
@@ -404,8 +411,8 @@ struct ExerciseNameBar: View {
 
     var body: some View {
         CardTextField(
-            label: L10n.exerciseNameLabel,
-            placeholder: L10n.exerciseNamePlaceholder,
+            label: AppText.exerciseName,
+            placeholder: AppText.exerciseNameExample,
             text: $text,
             isFocused: isFocused,
             accessibilityIdentifier: ExerciseIDs.nameField
@@ -427,7 +434,7 @@ private struct ExerciseWeightModeCards: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(L10n.additionalOptionsTitle)
+            Text(AppText.exerciseAdditionalOptions)
                 .font(AppStyle.Font.defaultFont)
                 .foregroundColor(AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel))
                 .padding(.bottom, 10)
@@ -436,8 +443,8 @@ private struct ExerciseWeightModeCards: View {
 
             ExerciseOptionRow(
                 systemIcon: "figure.stand",
-                title: L10n.weightModeBodyweightTitle,
-                subtitle: L10n.weightModeBodyweightSubtitle,
+                title: AppText.exerciseBodyweight,
+                subtitle: AppText.exerciseBodyweightDetail,
                 accessibilityIdentifier: ExerciseIDs.bodyweightToggle,
                 isOn: Binding(get: { bodyweightOn }, set: { _ in onToggleBodyweight() })
             )
@@ -446,8 +453,8 @@ private struct ExerciseWeightModeCards: View {
 
             ExerciseOptionRow(
                 systemIcon: "circle.lefthalf.filled",
-                title: L10n.weightModeDecimalTitle,
-                subtitle: L10n.weightModeDecimalSubtitle,
+                title: AppText.exerciseDecimalWeight,
+                subtitle: AppText.exerciseDecimalWeightDetail,
                 accessibilityIdentifier: ExerciseIDs.decimalWeightToggle,
                 isOn: Binding(get: { decimalOn }, set: { _ in onToggleDecimal() })
             )
@@ -469,8 +476,8 @@ private struct ExerciseWeightModeCards: View {
 private struct ExerciseOptionRow: View {
     @Environment(\.appColorTheme) private var appColorTheme
     let systemIcon: String
-    let title: String
-    let subtitle: String
+    let title: LocalizedStringResource
+    let subtitle: LocalizedStringResource
     let accessibilityIdentifier: String
     @Binding var isOn: Bool
 
@@ -529,10 +536,10 @@ private struct SeatRequiredBox: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(L10n.seatRequiredTitle)
+                Text(AppText.exerciseSeatRequired)
                     .font(AppStyle.Font.sheetSectionLabel)
                     .foregroundColor(AppStyle.Color.white)
-                Text(L10n.seatRequiredSubtitle)
+                Text(AppText.exerciseSeatRequiredDetail)
                     .font(AppStyle.Font.sheetCaption)
                     .foregroundColor(AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel))
                     .fixedSize(horizontal: false, vertical: true)
@@ -576,13 +583,13 @@ private struct SeatSettingTile<Handle: View>: View {
             handle()
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("\(L10n.seatPositionLabel) \(position)")
+                Text(AppText.exerciseSeatPositionNumber(position: position))
                     .font(AppStyle.Font.defaultFont)
                     .foregroundColor(AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel))
 
                 ZStack(alignment: .leading) {
                     if text.isEmpty {
-                        Text(L10n.seatPositionPlaceholder)
+                        Text(AppText.exerciseSeatPositionExample)
                             .font(AppStyle.Font.sheetSectionLabel)
                             .foregroundColor(AppStyle.Color.white.opacity(AppStyle.Opacity.placeholderText))
                     }
@@ -731,7 +738,7 @@ private struct AddSeatSettingButton: View {
                         .font(AppStyle.Font.sheetControlGlyph)
                         .foregroundColor(appColorTheme.accent.black)
                 }
-                Text(L10n.addSeatSetting)
+                Text(AppText.exerciseAddSeatSetting)
                     .font(AppStyle.Font.sheetSectionLabel)
                     .foregroundColor(appColorTheme.accent.primary)
                 Spacer(minLength: 0)

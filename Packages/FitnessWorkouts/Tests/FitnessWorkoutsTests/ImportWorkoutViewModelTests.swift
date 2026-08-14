@@ -50,47 +50,33 @@ struct ImportWorkoutViewModelTests {
 
     // MARK: - Initial state / disabled-rules
 
-    @Test func emptyTextDisablesImport() {
-        let (sut, _, _) = makeSUT()
-        #expect(sut.pastedText.isEmpty)
-        #expect(sut.isImportDisabled)
-    }
+    @Test func importAvailabilityUsesTrimmedText() {
+        let cases: [(text: String, disabled: Bool)] = [
+            ("", true),
+            ("   \n  \t ", true),
+            ("{some text}", false),
+        ]
 
-    @Test func whitespaceOnlyTextDisablesImport() {
-        let (sut, _, _) = makeSUT()
-        sut.pastedText = "   \n  \t "
-        #expect(sut.isImportDisabled)
-    }
-
-    @Test func nonEmptyTextEnablesImport() {
-        let (sut, _, _) = makeSUT()
-        sut.pastedText = "{some text}"
-        #expect(!sut.isImportDisabled)
+        for testCase in cases {
+            let (sut, _, _) = makeSUT()
+            sut.pastedText = testCase.text
+            #expect(sut.isImportDisabled == testCase.disabled)
+        }
     }
 
     // MARK: - Successful import path
 
     @Test func validJsonImportTriggersCallbacksAndAddsWorkout() throws {
         let (sut, storage, spy) = makeSUT()
-        sut.pastedText = try makeValidEnvelopeJSON(name: "FromTest")
+        let json = try makeValidEnvelopeJSON(name: "FromTest")
+        sut.pastedText = "\n\t  \(json)  \n"
 
         sut.importTapped()
 
         #expect(spy.importedWorkouts.count == 1)
         #expect(spy.dismissCount == 1)
-        #expect(sut.errorMessage == nil)
+        #expect(sut.error == nil)
         #expect(storage.workouts.contains(where: { $0.name == "FromTest" }))
-    }
-
-    @Test func importTapped_trimsLeadingTrailingWhitespace() throws {
-        let (sut, _, spy) = makeSUT()
-        let json = try makeValidEnvelopeJSON()
-        sut.pastedText = "\n\t  \(json)  \n"
-
-        sut.importTapped()
-
-        #expect(spy.importedWorkouts.count == 1, "Leading/trailing whitespace must not break JSON parsing.")
-        #expect(spy.dismissCount == 1)
     }
 
     // MARK: - Failure paths
@@ -103,8 +89,7 @@ struct ImportWorkoutViewModelTests {
 
         #expect(spy.importedWorkouts.isEmpty)
         #expect(spy.dismissCount == 0)
-        #expect(sut.errorMessage != nil)
-        #expect(sut.errorMessage == WorkoutShareError.invalidJSON.errorDescription)
+        #expect(sut.error == .invalidJSON)
     }
 
     @Test func unsupportedVersionSetsErrorAndSheetStaysOpen() throws {
@@ -124,7 +109,7 @@ struct ImportWorkoutViewModelTests {
 
         #expect(spy.importedWorkouts.isEmpty)
         #expect(spy.dismissCount == 0)
-        #expect(sut.errorMessage == WorkoutShareError.unsupportedVersion(99).errorDescription)
+        #expect(sut.error == .newerVersion)
     }
 
     @Test func errorClearsOnNextImportAttempt() throws {
@@ -132,25 +117,25 @@ struct ImportWorkoutViewModelTests {
         // First attempt: invalid → error pill appears
         sut.pastedText = "garbage"
         sut.importTapped()
-        #expect(sut.errorMessage != nil)
+        #expect(sut.error != nil)
 
         // Second attempt: replace with valid JSON → error cleared by `importTapped` itself
         sut.pastedText = try makeValidEnvelopeJSON()
         sut.importTapped()
 
-        #expect(sut.errorMessage == nil)
+        #expect(sut.error == nil)
     }
 
     @Test func importTapped_disabledGuard_doesNotCallCallbacksOrSetError() {
         // When `isImportDisabled` is true (here: empty text), `importTapped()`
         // must short-circuit silently: no callbacks fire, no error is set.
-        // Complements `emptyTextDisablesImport` which tests the property in
+        // Complements `importAvailabilityUsesTrimmedText` which tests the property in
         // isolation — this test verifies the method-side-effect of the guard.
         let (sut, _, spy) = makeSUT()
         sut.pastedText = ""
         sut.importTapped()
         #expect(spy.importedWorkouts.isEmpty)
         #expect(spy.dismissCount == 0)
-        #expect(sut.errorMessage == nil, "Disabled guard must not produce an error message.")
+        #expect(sut.error == nil, "Disabled guard must not produce an error message.")
     }
 }

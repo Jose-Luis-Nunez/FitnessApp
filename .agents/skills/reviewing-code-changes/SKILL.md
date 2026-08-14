@@ -15,9 +15,8 @@ finding or product decision remains open. It is not an exploratory review loop.
 
 - The candidate is every tracked modification and untracked file currently in
   the working tree; `/validate` never stages it.
-- Code and test manifests fingerprint every candidate file except generated
-  evidence state. Pre-commit requires the eventual staged candidate to match
-  that manifest exactly; a subset needs its own explicit validation.
+- Manifests fingerprint every candidate file except generated evidence state;
+  pre-commit requires the eventual staged candidate to match exactly.
 - Inventory the combined candidate from `git diff HEAD --name-only` plus
   untracked files. Partial staging does not narrow the review scope.
 - Run `git diff HEAD --check` before any expensive test command so staged and
@@ -25,12 +24,9 @@ finding or product decision remains open. It is not an exploratory review loop.
 - Resolve applicable ADR triggers before the reviewer/tester phase. An existing
   ADR may justify a one-line exception; do not wait for pre-commit to discover
   the missing coverage.
-- When product and executable agent-infrastructure files change together,
-  keep their evidence tracks separate: code reviewer/tester for product files,
-  infrastructure verifier for agent-system files.
+- Keep product and agent-infrastructure evidence tracks separate.
 
-The yellow/red reviewer below is the senior-quality review. Do not run a
-lighter "commit ready" review and then add a second senior review afterward.
+The yellow/red reviewer below is the only senior-quality review.
 
 ## 1. Classify
 
@@ -44,8 +40,9 @@ Run `change-risk.sh classify worktree` for review routing and
   reviewer and one final affected test run.
 - **Red:** schema, storage, DI, coordinator, navigation, concurrency, package
   boundary, public domain API, multiple packages, or 10+ production Swift
-  files. Reviewer, tester, affected package tests, app build, relevant UI tests,
-  and ADR when the change makes an architectural decision.
+  files. Reviewer, tester, affected package tests, app build, and ADR when the
+  change makes an architectural decision. Add UI tests only when the Selection
+  Gate identifies a critical journey that lower layers cannot prove.
 
 If the classification looks too low, raise it. Never lower it manually.
 
@@ -81,8 +78,8 @@ For yellow/red changes, spawn the reviewer with fresh context:
 The reviewer uses `.codex/agents/reviewer.toml` in Codex or
 `.claude/agents/reviewer.md` in Claude Code. Fix Bug findings and re-review the
 final contents. Report residual duplication only when one actually remains.
-Missing or stale test/infrastructure evidence is not a code finding during
-this phase; those artifacts are intentionally produced after the code review.
+Test/infrastructure evidence is produced after code review, not reported as a
+code finding.
 
 ## 4. Test Once
 
@@ -96,6 +93,9 @@ risk may raise but never lower the baseline; mixed changes use the highest tier.
 Start the final tester only after the reviewer reports no Bug findings and the
 working-tree product/test contents are stable. This prevents an otherwise successful
 test run from becoming stale during senior-quality cleanup.
+
+Reviewer, tester, and verifier are final gates, not background watchers. Start
+them only on stable contents; if contents change, stop, batch fixes, then retry.
 
 - If no matching result exists, the tester uses `run`.
 - If the main agent already ran the complete required command on the final

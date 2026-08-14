@@ -79,21 +79,6 @@ struct DeleteAnalyticsSetUseCaseTests {
         #expect(saved.first?.setProgress.first?.currentReps == 12)
     }
 
-    @Test func deleteLastSetRemovesEntireEntry() {
-        let (sut, storage, _, _) = makeSUT()
-        let exerciseId = UUID()
-        let entry = AnalyticsEntry(
-            exerciseId: exerciseId,
-            date: Date(),
-            setProgress: [SetProgress(status: .completedDone, currentReps: 10, weight: 60)]
-        )
-        storage.save([entry], for: exerciseId)
-
-        sut.execute(exerciseId: exerciseId, entryId: entry.id, setIndex: 0)
-
-        #expect(storage.load(for: exerciseId).isEmpty)
-    }
-
     @Test func deleteAllEntriesUpdatesExerciseCompletion() {
         let (sut, analyticsStorage, exerciseStorage, workoutStorage) = makeSUT()
         let exerciseId = UUID()
@@ -113,6 +98,7 @@ struct DeleteAnalyticsSetUseCaseTests {
 
         sut.execute(exerciseId: exerciseId, entryId: entry.id, setIndex: 0)
 
+        #expect(analyticsStorage.load(for: exerciseId).isEmpty)
         let exercises = exerciseStorage.loadForWorkout(workoutId: workout.id, category: .arms)
         #expect(exercises.first?.isCompleted == false)
         #expect(exerciseStorage.updatedExercises.map(\.id) == [exerciseId])
@@ -147,5 +133,32 @@ struct DeleteAnalyticsSetUseCaseTests {
         sut.execute(exerciseId: exerciseId, entryId: entry.id, setIndex: 5)
 
         #expect(storage.load(for: exerciseId).first?.setProgress.count == 1)
+    }
+
+    @Test func deleteDoesNothingForInvalidLogicalSetIndex() {
+        let (sut, storage, _, _) = makeSUT()
+        let exerciseId = UUID()
+        let entry = AnalyticsEntry(
+            exerciseId: exerciseId,
+            date: Date(),
+            setProgress: [
+                SetProgress(
+                    status: .completedDone,
+                    currentReps: 10,
+                    weight: 60,
+                    side: .left,
+                    logicalSetIndex: 0
+                ),
+            ]
+        )
+        storage.save([entry], for: exerciseId)
+
+        sut.execute(exerciseId: exerciseId, entryId: entry.id, logicalSetIndex: 4)
+
+        let saved = storage.load(for: exerciseId)
+        #expect(saved.count == 1)
+        #expect(saved.first?.id == entry.id)
+        #expect(saved.first?.setProgress.count == 1)
+        #expect(saved.first?.setProgress.first?.logicalSetIndex == 0)
     }
 }

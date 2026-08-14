@@ -1,4 +1,5 @@
 import SwiftUI
+import FitnessResources
 import FitnessUI
 
 /// Custom horizontal 1...5 energy slider with a thicker capsule track and a
@@ -39,15 +40,15 @@ struct EnergyLevelSlider: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Low")
+                Text(AppText.feedbackLow)
                     .font(AppStyle.Font.tileLabel)
                     .foregroundColor(AppStyle.Color.white.opacity(0.55))
                 Spacer()
-                Text("High")
+                Text(AppText.feedbackHigh)
                     .font(AppStyle.Font.tileLabel)
                     .foregroundColor(AppStyle.Color.white.opacity(0.55))
                 if selectedLevel != nil {
-                    Text("\(percent)%")
+                    Text(verbatim: "\(percent)%")
                         .font(AppStyle.Font.tileValue)
                         .foregroundColor(AppStyle.Color.white)
                         .padding(.leading, 8)
@@ -92,7 +93,7 @@ struct EnergyLevelSlider: View {
             .frame(height: thumbSize)
             .accessibilityElement()
             .accessibilityIdentifier(TrainingIDs.energyLevelSlider)
-            .accessibilityLabel("Energy level")
+            .accessibilityLabel(AppText.feedbackEnergyLevel)
             .accessibilityValue("\(percent)%")
             .accessibilityAdjustableAction { direction in
                 switch direction {

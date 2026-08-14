@@ -65,6 +65,8 @@ Report:
 - final test commands and duplicate count;
 - verifier usage and trigger;
 - avoidable agent runs;
+- wall-clock duration per executed command plus uninstrumented gaps; never
+  label a residual subtraction as fingerprint/evidence runtime;
 - approximate prompt savings using actual file/context sizes when available.
 
 ## Output

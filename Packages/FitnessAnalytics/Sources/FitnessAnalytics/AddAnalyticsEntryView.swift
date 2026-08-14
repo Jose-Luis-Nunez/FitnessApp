@@ -1,16 +1,18 @@
 import FitnessCore
+import FitnessResources
 import FitnessUI
 import SwiftUI
 
 public struct AddAnalyticsEntryView: View {
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var locale
     public let date: Date
     public let exercise: Exercise
     public let existingEntry: AnalyticsEntry?
     @Binding public var isPresented: Bool
     public var onSave: (AnalyticsEntry) -> Void
     public var onCancel: () -> Void
-    public let dateFormatter: DateFormatter
+    public let dateFormatter: DateFormatter?
 
     @State private var formState: AnalyticsEntryFormState
     @State private var editingSetIndex: Int?
@@ -25,9 +27,9 @@ public struct AddAnalyticsEntryView: View {
     private let textColor: Color = AppStyle.Color.white
     private var pickerColor: Color { appColorTheme.accent.light }
 
-    private var weightOptions: [String] {
+    private var weightOptions: [Double] {
         let all = WeightOptionsGenerator.exerciseWeightOptions
-        return showDecimal ? all : all.filter { !$0.contains(",") && !$0.contains(".") }
+        return showDecimal ? all : all.filter { $0 == floor($0) }
     }
 
     public init(
@@ -35,7 +37,7 @@ public struct AddAnalyticsEntryView: View {
         exercise: Exercise,
         existingEntry: AnalyticsEntry? = nil,
         isPresented: Binding<Bool>,
-        dateFormatter: DateFormatter = .germanMedium,
+        dateFormatter: DateFormatter? = nil,
         onSave: @escaping (AnalyticsEntry) -> Void,
         onCancel: @escaping () -> Void
     ) {
@@ -93,7 +95,7 @@ public struct AddAnalyticsEntryView: View {
             actions: {
                 if isEditing {
                     ExercisePickerActionButtons(
-                        saveLabel: "Select",
+                        saveLabel: AppText.actionSelect,
                         saveDisabled: false,
                         onCancel: { dismissPicker() },
                         onSave: { dismissPicker() }
@@ -127,8 +129,8 @@ public struct AddAnalyticsEntryView: View {
     private var dataEntryContent: some View {
         VStack(spacing: 16) {
             Text(existingEntry != nil
-                 ? "Edit data for \(dateFormatter.string(from: date))"
-                 : "Data for \(dateFormatter.string(from: date))")
+                 ? AppText.analyticsEditDataFor(date: formattedDate)
+                 : AppText.analyticsDataFor(date: formattedDate))
                 .font(AppStyle.Font.sheetTitle)
                 .foregroundColor(textColor)
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -141,13 +143,13 @@ public struct AddAnalyticsEntryView: View {
                 }
 
                 if exercise.hasWeight {
-                    Text("Weight")
+                    Text(AppText.profileWeight)
                         .font(AppStyle.Font.sheetSectionLabel)
                         .foregroundColor(textColor)
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
 
-                Text("Reps")
+                Text(AppText.exerciseReps)
                     .font(AppStyle.Font.sheetSectionLabel)
                     .foregroundColor(textColor)
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -190,7 +192,7 @@ public struct AddAnalyticsEntryView: View {
                     }) {
                         HStack {
                             Image(systemName: "plus.circle.fill")
-                            Text("add more sets")
+                            Text(AppText.trainingAddMoreSets)
                         }
                         .foregroundColor(appColorTheme.accent.glow)
                         .padding(.vertical, 6)
@@ -206,7 +208,7 @@ public struct AddAnalyticsEntryView: View {
     private func bilateralInputGroup(logicalIndex: Int) -> some View {
         VStack(alignment: .leading, spacing: AppStyle.Layout.bilateralColumnSpacing) {
             HStack {
-                Text("Set \(logicalIndex + 1)")
+                Text(AppText.exerciseSetNumber(number: logicalIndex + 1))
                     .font(AppStyle.Font.sectionHeadline)
                     .foregroundColor(textColor)
                 Spacer()
@@ -241,7 +243,7 @@ public struct AddAnalyticsEntryView: View {
     ) -> some View {
         HStack(spacing: AppStyle.Layout.analyticsInputSpacing) {
             if let side {
-                Text(side == .left ? "L" : "R")
+                Text(verbatim: side == .left ? "L" : "R")
                     .font(AppStyle.Font.sectionHeadline)
                     .foregroundColor(appColorTheme.accent.glow)
                     .frame(width: AppStyle.Layout.analyticsInputSideWidth)
@@ -252,7 +254,7 @@ public struct AddAnalyticsEntryView: View {
                     editingSetIndex = index
                     editingField = .weight
                 } label: {
-                    inputTile(WeightFormatter.displayWeight(formState.sets[index].weight))
+                    inputTile(WeightFormatter.displayWeight(formState.sets[index].weight, locale: locale))
                 }
                 .accessibilityIdentifier(
                     FitnessCore.AnalyticsIDs.entryWeightField(
@@ -266,7 +268,7 @@ public struct AddAnalyticsEntryView: View {
                 editingSetIndex = index
                 editingField = .reps
             } label: {
-                inputTile("\(formState.sets[index].reps)")
+                inputTile(formState.sets[index].reps.formatted(.number.locale(locale)))
             }
             .accessibilityIdentifier(
                 FitnessCore.AnalyticsIDs.entryRepsField(
@@ -294,7 +296,7 @@ public struct AddAnalyticsEntryView: View {
     }
 
     private func inputTile(_ value: String) -> some View {
-        Text(value)
+        Text(verbatim: value)
             .font(AppStyle.Font.sectionTitle)
             .foregroundColor(textColor)
             .lineLimit(1)
@@ -316,7 +318,7 @@ public struct AddAnalyticsEntryView: View {
     @ViewBuilder
     private func wheelPickerContent(index: Int, field: EditingField) -> some View {
         VStack(spacing: 8) {
-            Text(field == .reps ? "Reps" : "Weight")
+            Text(field == .reps ? AppText.exerciseReps : AppText.profileWeight)
                 .font(AppStyle.Font.sheetTitle)
                 .foregroundColor(textColor)
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -324,7 +326,7 @@ public struct AddAnalyticsEntryView: View {
             HStack {
                 Spacer()
                 HStack(spacing: 6) {
-                    Text("Decimal")
+                    Text(AppText.commonDecimal)
                         .font(AppStyle.Font.defaultFont)
                         .foregroundColor(textColor.opacity(0.85))
                     Toggle("", isOn: $showDecimal)
@@ -338,12 +340,12 @@ public struct AddAnalyticsEntryView: View {
 
         switch field {
         case .reps:
-            Picker("Reps", selection: Binding(
+            Picker(AppText.exerciseReps, selection: Binding(
                 get: { formState.sets[index].reps },
                 set: { formState.sets[index].reps = $0 }
             )) {
                 ForEach(repsRange, id: \.self) { value in
-                    Text("\(value)").tag(value).foregroundColor(pickerColor)
+                    Text(verbatim: value.formatted(.number.locale(locale))).tag(value).foregroundColor(pickerColor)
                 }
             }
             #if os(iOS)
@@ -356,16 +358,14 @@ public struct AddAnalyticsEntryView: View {
             .frame(height: 150)
 
         case .weight:
-            Picker("Weight", selection: Binding(
-                get: { WeightFormatter.format(formState.sets[index].weight) },
-                set: {
-                    if let weight = WeightFormatter.parse($0) {
-                        formState.sets[index].weight = weight
-                    }
-                }
+            Picker(AppText.profileWeight, selection: Binding(
+                get: { formState.sets[index].weight },
+                set: { formState.sets[index].weight = $0 }
             )) {
                 ForEach(weightOptions, id: \.self) { value in
-                    Text("\(value) kg").tag(value).foregroundColor(pickerColor)
+                    Text(verbatim: WeightFormatter.displayWeight(value, locale: locale))
+                        .tag(value)
+                        .foregroundColor(pickerColor)
                 }
             }
             #if os(iOS)
@@ -377,5 +377,10 @@ public struct AddAnalyticsEntryView: View {
             .clipped()
             .frame(height: 150)
         }
+    }
+
+    private var formattedDate: String {
+        if let dateFormatter { return dateFormatter.string(from: date) }
+        return date.formatted(.dateTime.day().month(.wide).year().locale(locale))
     }
 }

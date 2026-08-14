@@ -1,29 +1,31 @@
+import FitnessResources
 import FitnessUI
 import Foundation
 import SwiftUI
 
 public struct CalendarDialogView: View {
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var environmentLocale
     @Binding public var isPresented: Bool
     @Binding public var selectedDate: Date
     @State private var tempDate: Date
     public let highlightedDates: [Date]
-    public let title: String
-    public let locale: Locale
+    public let title: LocalizedStringResource
+    public let explicitLocale: Locale?
 
     public init(
         isPresented: Binding<Bool>,
         selectedDate: Binding<Date>,
         highlightedDates: [Date] = [],
-        title: String = "Training Calendar",
-        locale: Locale = Locale(identifier: "de_DE")
+        title: LocalizedStringResource = AppText.analyticsTrainingCalendar,
+        locale: Locale? = nil
     ) {
         self._isPresented = isPresented
         self._selectedDate = selectedDate
         self._tempDate = State(wrappedValue: selectedDate.wrappedValue)
         self.highlightedDates = highlightedDates
         self.title = title
-        self.locale = locale
+        self.explicitLocale = locale
     }
 
     public var body: some View {
@@ -52,7 +54,7 @@ public struct CalendarDialogView: View {
                                 CalendarGridView(
                                     selectedDate: $tempDate,
                                     highlightedDates: highlightedDates,
-                                    locale: locale
+                                    locale: explicitLocale ?? environmentLocale
                                 )
                                 .frame(maxWidth: .infinity)
                                 .padding(.horizontal)
@@ -75,7 +77,7 @@ public struct CalendarDialogView: View {
 
     private var actionButtons: some View {
         HStack(spacing: 16) {
-            Button("Cancel") {
+            Button(AppText.actionCancel) {
                 isPresented = false
             }
             .font(.body)
@@ -84,7 +86,7 @@ public struct CalendarDialogView: View {
             .padding(.horizontal, 16)
             .cornerRadius(AppStyle.CornerRadius.defaultButton)
 
-            Button("Select") {
+            Button(AppText.actionSelect) {
                 selectedDate = tempDate
                 isPresented = false
             }

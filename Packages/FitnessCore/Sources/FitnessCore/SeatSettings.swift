@@ -9,10 +9,6 @@ import Foundation
 public struct SeatSettings: Equatable, Sendable {
     /// Maximum number of seat positions a user can store for one exercise.
     public static let editableLimit = 4
-    /// How many positions are shown on the collapsed idle card; positions
-    /// beyond this are stored but hidden there.
-    public static let idleCardVisibleLimit = 2
-
     /// Trimmed, non-empty seat positions in display order.
     public private(set) var positions: [String]
 
@@ -33,12 +29,6 @@ public struct SeatSettings: Equatable, Sendable {
     /// nothing to store (so callers can keep `seatSetting` optional).
     public var encoded: String? {
         positions.isEmpty ? nil : positions.joined(separator: Self.joinSeparator)
-    }
-
-    /// The first `limit` positions joined for display (e.g. the idle card shows
-    /// only `idleCardVisibleLimit`).
-    public func display(limit: Int) -> String {
-        positions.prefix(limit).joined(separator: Self.joinSeparator)
     }
 
     // MARK: - Packing format (single source of truth)

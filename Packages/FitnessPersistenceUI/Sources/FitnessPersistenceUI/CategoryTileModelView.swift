@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import FitnessCore
+import FitnessResources
 import FitnessUI
 @_spi(PersistenceUI) import FitnessStorage
 
@@ -47,12 +48,11 @@ public struct CategoryTileModelView: View {
         // Anti-pattern §14a (optional chain on the relationship) avoided via the
         // denormalized workoutId from T3. Local constants so the #Predicate can capture
         // the values without referring to 'self'.
-        let raw = group.rawValue
-        let wid = workoutId
         _exercises = Query(
-            filter: #Predicate<ExerciseModel> { exercise in
-                exercise.workoutId == wid && exercise.category == raw
-            }
+            filter: CategoryTileExerciseQuery.predicate(
+                workoutId: workoutId,
+                category: group
+            )
         )
     }
 
@@ -60,10 +60,8 @@ public struct CategoryTileModelView: View {
         // Deactivated exercises keep their data but drop out of the progress
         // counts: a 4/5 category becomes 4/4 when its open 5th exercise is
         // deactivated. `isActive == nil` (pre-migration rows) counts as active.
-        let activeExercises = exercises.filter { $0.isActive ?? true }
-        let info = ExerciseInfo(
-            total: activeExercises.count,
-            active: activeExercises.lazy.filter { !$0.isCompleted }.count,
+        let info = CategoryTileProgressInfo(
+            exercises: exercises,
             hasActiveSet: hasActiveSetForCategory
         )
 
@@ -74,7 +72,7 @@ public struct CategoryTileModelView: View {
     }
 
     @ViewBuilder
-    private func tileContent(info: ExerciseInfo) -> some View {
+    private func tileContent(info: CategoryTileProgressInfo) -> some View {
         CardBackground(
             backgroundColor: AppStyle.Color.exerciseCardBackground,
             useGlassEffect: true,
@@ -97,9 +95,9 @@ public struct CategoryTileModelView: View {
         .frame(height: ExerciseCardLayout.CategoryTile.height)
     }
 
-    private func headerRow(info: ExerciseInfo) -> some View {
+    private func headerRow(info: CategoryTileProgressInfo) -> some View {
         HStack {
-            Text(group.displayName)
+            Text(group.localizedName)
                 .font(AppStyle.Font.categoryTileTitle)
                 .foregroundColor(info.isCompleted ? appColorTheme.accent.glow : AppStyle.Color.white)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -110,7 +108,7 @@ public struct CategoryTileModelView: View {
     }
 
     @ViewBuilder
-    private func headerBadge(info: ExerciseInfo) -> some View {
+    private func headerBadge(info: CategoryTileProgressInfo) -> some View {
         if info.isCompleted {
             ZStack {
                 Circle()
@@ -156,7 +154,7 @@ public struct CategoryTileModelView: View {
     }
 
     @ViewBuilder
-    private func progressRow(info: ExerciseInfo) -> some View {
+    private func progressRow(info: CategoryTileProgressInfo) -> some View {
         if info.total > 0 {
             HStack(spacing: ExerciseCardLayout.CategoryTile.contentSpacing) {
                 if !info.isCompleted {
@@ -169,7 +167,7 @@ public struct CategoryTileModelView: View {
 
                 Spacer()
 
-                Text("\(info.completed) of \(info.total)")
+                Text(AppText.commonCompletedOfTotal(completed: info.completed, total: info.total))
                     .font(AppStyle.Font.categoryTileProgress)
                     .foregroundColor(info.isCompleted ? appColorTheme.accent.glow : AppStyle.Color.white)
                     .lineLimit(1)
@@ -180,7 +178,7 @@ public struct CategoryTileModelView: View {
             HStack(spacing: ExerciseCardLayout.CategoryTile.contentSpacing) {
                 Spacer()
 
-                Text(" ")
+                Text(verbatim: " ")
                     .font(AppStyle.Font.categoryTileProgress)
                     .foregroundColor(.clear)
             }
@@ -190,13 +188,29 @@ public struct CategoryTileModelView: View {
 }
 
 /// View-local aggregation for category progress and completion state.
-private struct ExerciseInfo {
+enum CategoryTileExerciseQuery {
+    static func predicate(
+        workoutId: UUID,
+        category: MuscleCategoryGroup
+    ) -> Predicate<ExerciseModel> {
+        let selectedWorkoutId = workoutId
+        let rawCategory = category.rawValue
+        return #Predicate<ExerciseModel> { exercise in
+            exercise.workoutId == selectedWorkoutId && exercise.category == rawCategory
+        }
+    }
+}
+
+struct CategoryTileProgressInfo: Equatable {
     let total: Int
     let completed: Int
     let isCompleted: Bool
     let progress: Double
 
-    init(total: Int, active: Int, hasActiveSet: Bool) {
+    init(exercises: [ExerciseModel], hasActiveSet: Bool) {
+        let visibleExercises = exercises.filter { $0.isActive ?? true }
+        let total = visibleExercises.count
+        let active = visibleExercises.lazy.filter { !$0.isCompleted }.count
         self.total = total
         self.completed = max(0, total - active)
         self.isCompleted = (active == 0 && total > 0 && !hasActiveSet)

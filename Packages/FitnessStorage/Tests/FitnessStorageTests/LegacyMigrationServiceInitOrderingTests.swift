@@ -3,7 +3,7 @@ import Foundation
 import SwiftData
 import FitnessCore
 import FitnessTestSupport
-import Mockable
+@testable import FitnessStorageTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
 
 /// Pins the ordering contract between the legacy JSON → SwiftData import

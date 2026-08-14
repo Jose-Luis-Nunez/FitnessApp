@@ -84,14 +84,6 @@ public final class MuscleCategoryViewModel {
     public var showStartTraining: Bool { !isTrainingInProgress && hasActiveExercise }
     public var showReset: Bool { !isTrainingInProgress && hasCompletedExercises }
 
-    public var totalExercises: Int {
-        exercises.count
-    }
-
-    public var activeExercises: Int {
-        exercises.filter { !$0.isCompleted }.count
-    }
-
     public func add(_ exercise: Exercise, atTop: Bool) {
         if atTop {
             exercises.insert(exercise, at: 0)

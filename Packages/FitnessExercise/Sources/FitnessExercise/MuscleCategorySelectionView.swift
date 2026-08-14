@@ -161,14 +161,14 @@ public struct MuscleCategorySelectionView: View {
 
             VStack(spacing: 0) {
                 HStack(alignment: .firstTextBaseline) {
-                    WorkoutDropdownView(workoutName: workoutStorage.currentWorkout?.name ?? L10n.workoutFallbackName)
+                    WorkoutDropdownView(workoutName: workoutStorage.currentWorkout?.name)
 
                     Spacer(minLength: 8)
 
                     // List view only: show workout-wide completed/total count on
                     // the right, at the height of the title.
                     if currentViewMode == .list, progress.total > 0 {
-                        Text("\(progress.completed) of \(progress.total)")
+                        Text(AppText.commonCompletedOfTotal(completed: progress.completed, total: progress.total))
                             .font(AppStyle.Font.tileValue)
                             .foregroundColor(AppStyle.Color.idleMetricLabel)
                             .fixedSize()
@@ -291,7 +291,7 @@ public struct MuscleCategorySelectionView: View {
                     HStack {
                         Spacer()
                         MiniActionMenuView(
-                            title: currentViewMode == .list && showCategorySelection ? L10n.newExercise : nil,
+                            title: currentViewMode == .list && showCategorySelection ? AppText.exerciseNew : nil,
                             items: currentViewMode == .list
                                 ? (
                                     showCategorySelection
@@ -356,7 +356,7 @@ public struct MuscleCategorySelectionView: View {
         items.append(MiniActionMenuItem(
             id: "new-exercise",
             icon: "plus",
-            title: L10n.newExercise,
+            title: AppText.exerciseNew,
             isDestructive: false
         ) {
             var transaction = Transaction()
@@ -367,7 +367,7 @@ public struct MuscleCategorySelectionView: View {
         })
 
         if hasDeactivatedExercises(in: allWorkoutModels) {
-            items.append(MiniActionMenuItem(id: "activate-exercises", icon: "checkmark", title: L10n.exerciseActivate, isDestructive: false) {
+            items.append(MiniActionMenuItem(id: "activate-exercises", icon: "checkmark", title: AppText.exerciseActivate, isDestructive: false) {
                 overlayState.showSelectionMiniMenu = false
                 overlayState.selectedExerciseIds = []
                 overlayState.exerciseSelectionMode = .activate
@@ -375,7 +375,7 @@ public struct MuscleCategorySelectionView: View {
         }
 
         if hasDeactivatableExercises(in: allWorkoutModels) {
-            items.append(MiniActionMenuItem(id: "deactivate-exercises", icon: "xmark", title: L10n.exerciseDeactivate, isDestructive: false) {
+            items.append(MiniActionMenuItem(id: "deactivate-exercises", icon: "xmark", title: AppText.exerciseDeactivate, isDestructive: false) {
                 overlayState.showSelectionMiniMenu = false
                 overlayState.selectedExerciseIds = []
                 overlayState.exerciseSelectionMode = .deactivate
@@ -392,7 +392,7 @@ public struct MuscleCategorySelectionView: View {
             MiniActionMenuItem(
                 id: "category-\(category.id)",
                 icon: category.defaultIconName,
-                title: category.displayName,
+                title: category.localizedName,
                 isDestructive: false
             ) {
                 var transaction = Transaction()
@@ -414,7 +414,7 @@ public struct MuscleCategorySelectionView: View {
         MiniActionMenuItem(
             id: "reset-all-exercises",
             icon: "xmark",
-            title: L10n.exerciseResetAll,
+            title: AppText.actionResetAll,
             isDestructive: false,
             action: {
                 overlayState.showSelectionMiniMenu = false
@@ -590,7 +590,7 @@ public struct MuscleCategorySelectionView: View {
                     }
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Exercise list")
+            .accessibilityLabel(AppText.exerciseList)
             .accessibilityIdentifier(HomeIDs.listViewToggle)
         }
         .padding(filterBarPadding)

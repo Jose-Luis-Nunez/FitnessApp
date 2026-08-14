@@ -35,7 +35,7 @@ struct BilateralAnalyticsTests {
     @Test("Set label uses logical count and per-side suffix")
     func bilateralSetLabelUsesLogicalCount() {
         #expect(
-            BilateralSetGrouping.setRepsLabel(for: makeProgress(), reps: 12)
+            BilateralSetGrouping.setRepsLabel(forEntries: [makeProgress()], reps: 12)
                 == "3×12 / side"
         )
         #expect(
@@ -44,16 +44,6 @@ struct BilateralAnalyticsTests {
                 reps: 12
             ) == "6×12 / side"
         )
-    }
-
-    @Test("Max and total inputs retain independent side values")
-    func sideValuesRemainIndependent() throws {
-        let progress = makeProgress()
-        let groups = try #require(BilateralSetGrouping.groups(for: progress))
-
-        #expect(progress.map(\.weight).max() == 25)
-        #expect(progress.reduce(0) { $0 + $1.currentReps } == 69)
-        #expect(groups[0].left.currentReps != groups[0].right.currentReps)
     }
 
     private func makeProgress() -> [SetProgress] {

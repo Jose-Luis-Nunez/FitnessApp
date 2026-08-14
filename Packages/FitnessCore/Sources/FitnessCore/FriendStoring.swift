@@ -1,7 +1,4 @@
 import Foundation
-import Mockable
-
-@Mockable
 @MainActor
 public protocol FriendStoring: AnyObject {
     /// All currently stored friends, ordered by `addedAt` ascending.

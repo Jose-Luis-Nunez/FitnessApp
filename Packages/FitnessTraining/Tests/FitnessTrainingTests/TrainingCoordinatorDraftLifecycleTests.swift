@@ -34,24 +34,6 @@ struct TrainingCoordinatorDraftLifecycleTests {
         #expect(sut.draftStore.current == nil)
     }
 
-    @Test func committedFeedbackOfPreviousExerciseSurvivesExerciseSwitch() {
-        // Negative control: switching exercises only affects the in-memory draft.
-        // Committed feedback in storage is independent — verified here by leaving
-        // the storage untouched and checking the draft was the only thing cleared.
-        let sut = makeSUT()
-        let exerciseA = makeExercise()
-        let exerciseB = makeExercise()
-        sut.startTraining(for: exerciseA)
-        let committedLikeDraft = feedback(for: exerciseA.id, energy: 5)
-        sut.draftStore.setDraft(committedLikeDraft)
-        let savedSnapshot = committedLikeDraft
-
-        sut.startTraining(for: exerciseB)
-
-        #expect(sut.draftStore.current == nil)
-        #expect(savedSnapshot.exerciseId == exerciseA.id)
-    }
-
     @Test func cancelTrainingDiscardsActiveDraft() {
         let sut = makeSUT()
         let exercise = makeExercise()

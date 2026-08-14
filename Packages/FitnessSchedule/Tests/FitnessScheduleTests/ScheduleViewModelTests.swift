@@ -7,9 +7,15 @@ import FitnessTestSupport
 
 // MARK: - Helpers
 
+private let referenceDate = Date(timeIntervalSince1970: 1_735_732_800)
+
 @MainActor
 private func date(_ offset: Int) -> Date {
-    Calendar.current.date(byAdding: .day, value: offset, to: Calendar.current.startOfDay(for: Date()))!
+    Calendar.current.date(
+        byAdding: .day,
+        value: offset,
+        to: Calendar.current.startOfDay(for: referenceDate)
+    )!
 }
 
 @MainActor
@@ -99,19 +105,10 @@ private func setupTrainingDays(
 @MainActor
 struct ReloadDataTests {
 
-    @Test func populatesTrainingDaySetAndDatesWithData() {
-        let (_, analyticsVM, _) = setupTrainingDays(offsets: [-2, 0])
-        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
-        vm.reloadData()
-
-        #expect(!vm.trainingDaySet.isEmpty)
-        #expect(!vm.datesWithData.isEmpty)
-    }
-
     @Test func emptyWhenNoData() {
         let (analyticsVM, _, _, _) = setupMocks()
         let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
-        vm.reloadData()
+        vm.reloadData(selectionDate: referenceDate, streakReferenceDate: referenceDate)
 
         #expect(vm.trainingDaySet.isEmpty)
         #expect(vm.datesWithData.isEmpty)
@@ -127,7 +124,7 @@ struct ReloadDataTests {
         let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
         let today = date(0)
 
-        vm.reloadData(referenceDate: today)
+        vm.reloadData(selectionDate: today, streakReferenceDate: today)
 
         #expect(vm.materializedStreakData.current == 1)
         #expect(vm.materializedStreakData.longest == 1)
@@ -168,7 +165,7 @@ struct ReloadDataTests {
         let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
         analyticsStorage.batchLoadFails = true
 
-        vm.reloadData(referenceDate: today)
+        vm.reloadData(selectionDate: today, streakReferenceDate: today)
 
         #expect(vm.trainingDaySet.isEmpty)
         #expect(vm.datesWithData.isEmpty)
@@ -185,12 +182,26 @@ struct ReloadDataTests {
         #expect(analyticsStorage.batchLoadCallCount == 1)
 
         analyticsStorage.batchLoadFails = false
-        vm.reloadData(referenceDate: today)
+        vm.reloadData(selectionDate: today, streakReferenceDate: today)
 
         #expect(vm.trainingDaySet.count == 1)
         #expect(vm.datesWithData.count == 1)
         #expect(vm.selectedDayExerciseCount == 3)
         #expect(analyticsStorage.batchLoadCallCount == 2)
+    }
+
+    @Test func keepsCurrentStreakIndependentFromSelectedDate() {
+        let (_, analyticsVM, _) = setupTrainingDays(offsets: [0])
+        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
+
+        vm.reloadData(
+            selectionDate: date(-14),
+            streakReferenceDate: date(0)
+        )
+
+        #expect(vm.materializedStreakData.current == 1)
+        #expect(vm.selectedWeekSummary.trainingDayCount == 0)
+        #expect(vm.selectedDayExerciseCount == 0)
     }
 }
 
@@ -200,19 +211,10 @@ struct ReloadDataTests {
 @MainActor
 struct StreakDataTests {
 
-    @Test func returnsZeroStreakWhenNoData() {
-        let (analyticsVM, _, _, _) = setupMocks()
-        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
-        let streak = vm.streakData()
-
-        #expect(streak.current == 0)
-        #expect(streak.longest == 0)
-    }
-
     @Test func detectsConsecutiveDayStreak() {
         let (_, analyticsVM, _) = setupTrainingDays(offsets: [-2, -1, 0])
         let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
-        let streak = vm.streakData()
+        let streak = vm.streakData(referenceDate: referenceDate)
 
         #expect(streak.current == 3)
         #expect(streak.longest == 3)
@@ -221,10 +223,19 @@ struct StreakDataTests {
     @Test func breaksStreakOnGap() {
         let (_, analyticsVM, _) = setupTrainingDays(offsets: [-5, -4, -1, 0])
         let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
-        let streak = vm.streakData()
+        let streak = vm.streakData(referenceDate: referenceDate)
 
         #expect(streak.current == 2)
         #expect(streak.longest == 2)
+    }
+
+    @Test func currentStreakIgnoresFutureTrainingDays() {
+        let (_, analyticsVM, _) = setupTrainingDays(offsets: [-1, 0, 1])
+        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
+
+        let streak = vm.streakData(referenceDate: referenceDate)
+
+        #expect(streak.current == 2)
     }
 }
 
@@ -234,21 +245,14 @@ struct StreakDataTests {
 @MainActor
 struct WeekSummaryTests {
 
-    @Test func returnsSevenDays() {
+    @Test func returnsSevenMondayFirstDaysWithoutPresentationLabels() {
         let (analyticsVM, _, _, _) = setupMocks()
         let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
-        let summary = vm.weekSummary(for: Date())
+        let summary = vm.weekSummary(for: referenceDate)
+        let calendar = Calendar(identifier: .iso8601)
 
         #expect(summary.days.count == 7)
-    }
-
-    @Test func usesGermanWeekdayLabels() {
-        let (analyticsVM, _, _, _) = setupMocks()
-        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
-        let summary = vm.weekSummary(for: Date())
-        let labels = summary.days.map(\.label)
-
-        #expect(labels == ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"])
+        #expect(calendar.component(.weekday, from: summary.days[0].date) == 2)
     }
 
     @Test func countsTrainingDaysInWeek() {
@@ -261,48 +265,11 @@ struct WeekSummaryTests {
     }
 }
 
-// MARK: - dayDetail
-
-@Suite("dayDetail", .tags(.fast))
-@MainActor
-struct DayDetailTests {
-
-    @Test func returnsNilWhenNoWorkout() {
-        let (analyticsVM, workoutStorage, _, _) = setupMocks()
-        workoutStorage.currentWorkout = nil
-
-        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
-        #expect(vm.dayDetail(for: date(0)) == nil)
-    }
-
-    @Test func returnsDetailForDayWithData() {
-        let ex = makeExercise(name: "Curl", category: .arms)
-        let today = date(0)
-        let (analyticsVM, _, _, _) = setupMocks(
-            exercises: [ex],
-            entries: [ex.id: [makeEntry(exerciseId: ex.id, date: today, sets: [(20, 10)])]]
-        )
-
-        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
-        let detail = vm.dayDetail(for: today)
-
-        #expect(detail != nil)
-        #expect(detail!.categories.contains { $0.category == .arms })
-    }
-}
-
 // MARK: - exerciseCountForDay
 
 @Suite("exerciseCountForDay", .tags(.fast))
 @MainActor
 struct ExerciseCountForDayTests {
-
-    @Test func returnsZeroForDayWithoutData() {
-        let (analyticsVM, _, _, _) = setupMocks()
-        let vm = ScheduleViewModel(totalAnalyticsVM: analyticsVM)
-
-        #expect(vm.exerciseCountForDay(date(0)) == 0)
-    }
 
     @Test func countsDistinctExercises() {
         let ex1 = makeExercise(name: "Curl", category: .arms)

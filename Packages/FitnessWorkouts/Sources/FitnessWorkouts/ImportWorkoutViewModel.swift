@@ -5,11 +5,18 @@ import FitnessCore
 import FitnessStorage
 import Factory
 
+public enum WorkoutImportFailure: Equatable, Sendable {
+    case invalidJSON
+    case newerVersion
+    case incompleteData
+    case savingFailed
+}
+
 @Observable
 @MainActor
 public final class ImportWorkoutViewModel {
     public var pastedText: String = ""
-    public var errorMessage: String?
+    public var error: WorkoutImportFailure?
 
     @ObservationIgnored private let importWorkoutUseCase: ImportWorkoutUseCase
     @ObservationIgnored private let onImported: (Workout) -> Void
@@ -31,7 +38,7 @@ public final class ImportWorkoutViewModel {
 
     /// Disabled when there's nothing to import. Import itself is synchronous,
     /// so there is no in-flight state to track here — the work either succeeds
-    /// (sheet dismisses via `onDismiss`) or fails (`errorMessage` populated,
+    /// (sheet dismisses via `onDismiss`) or fails (`error` populated,
     /// sheet stays open) within a single run-loop tick.
     public var isImportDisabled: Bool {
         pastedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -41,7 +48,7 @@ public final class ImportWorkoutViewModel {
     /// privacy banner when this fires — acceptable because the user just
     /// tapped a button. Never call this on `onAppear` / autoload.
     public func pasteFromClipboard() {
-        errorMessage = nil
+        error = nil
         if let clipboard = UIPasteboard.general.string, !clipboard.isEmpty {
             pastedText = clipboard
         }
@@ -49,20 +56,29 @@ public final class ImportWorkoutViewModel {
 
     /// Drives the import. On success the parent is notified via `onImported`
     /// and the sheet is dismissed via `onDismiss`. On failure the sheet stays
-    /// open with `errorMessage` populated so the user can correct the input.
+    /// open with `error` populated so the user can correct the input.
     public func importTapped() {
         guard !isImportDisabled else { return }
-        errorMessage = nil
+        error = nil
 
         do {
             let trimmed = pastedText.trimmingCharacters(in: .whitespacesAndNewlines)
             let workout = try importWorkoutUseCase.execute(jsonString: trimmed)
             onImported(workout)
             onDismiss()
-        } catch let error as WorkoutShareError {
-            errorMessage = error.errorDescription
+        } catch let shareError as WorkoutShareError {
+            switch shareError {
+            case .invalidJSON:
+                error = .invalidJSON
+            case .unsupportedVersion:
+                error = .newerVersion
+            case .schemaMismatch:
+                error = .incompleteData
+            case .persistenceFailed, .exportFailed:
+                error = .savingFailed
+            }
         } catch {
-            errorMessage = WorkoutShareError.persistenceFailed.errorDescription
+            self.error = .savingFailed
         }
     }
 }

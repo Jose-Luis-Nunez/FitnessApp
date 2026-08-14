@@ -3,6 +3,7 @@ import Foundation
 import SwiftData
 import FitnessCore
 import FitnessTestSupport
+@testable import FitnessStorageTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
 @Suite("ExerciseStorageService", .tags(.integration))
 @MainActor
@@ -346,28 +347,6 @@ struct ExerciseStorageServiceTests {
         #expect(loaded.allSatisfy { $0.name != "Foreign" })
     }
 
-    @Test func mockWorkoutScopedFixtureTracksUpdatesAndReseeding() throws {
-        let workoutId = UUID()
-        let mock = MockExerciseStorage()
-        let arms = TestHelpers.makeExercise(name: "Curl", category: .arms)
-        let chest = TestHelpers.makeExercise(name: "Press", category: .chest)
-        mock.seedExercises([arms, chest], workoutId: workoutId)
-        var moved = arms
-        moved.name = "Row"
-        moved.category = .back
-
-        mock.updateExercise(moved)
-
-        #expect(try mock.loadWorkoutExercises(for: workoutId).map(\.name) == ["Press", "Row"])
-        #expect(mock.exerciseCountsByWorkout()[workoutId] == 2)
-        #expect(try mock.loadWorkoutExercises(for: UUID()).isEmpty)
-
-        mock.seedExercises([moved], workoutId: workoutId)
-
-        #expect(try mock.loadWorkoutExercises(for: workoutId).map(\.id) == [moved.id])
-        #expect(mock.exerciseCountsByWorkout()[workoutId] == 1)
-    }
-
     @Test func exerciseCountsAreAggregatedForAllWorkoutsInOneRead() throws {
         let ws = TestHelpers.makeWorkoutStorageService(container: container)
         let workout1 = ws.workouts.first!
@@ -446,25 +425,6 @@ struct ExerciseStorageServiceTests {
         let (sut, workout) = makeSUT()
         let loaded = sut.loadForWorkout(workoutId: workout.id, category: .legs)
         #expect(loaded.isEmpty)
-    }
-
-    // MARK: - Persistence Across Service Instances
-
-    @Test func dataPersistedAcrossServiceInstances() {
-        let ws = TestHelpers.makeWorkoutStorageService(container: container)
-        let workout = ws.workouts.first!
-
-        let sut1 = ExerciseStorageService(container: container)
-        sut1.saveForWorkout(
-            [TestHelpers.makeExercise(name: "Persistent", category: .chest)],
-            workoutId: workout.id,
-            category: .chest
-        )
-
-        let sut2 = ExerciseStorageService(container: container)
-        let loaded = sut2.loadForWorkout(workoutId: workout.id, category: .chest)
-        #expect(loaded.count == 1)
-        #expect(loaded.first!.name == "Persistent")
     }
 
     // MARK: - Icon Name

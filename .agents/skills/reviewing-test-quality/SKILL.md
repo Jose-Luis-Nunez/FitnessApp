@@ -265,7 +265,15 @@ try await waitUntil { vm.exercises.count == 2 }
 
 #### G.2 — Clock abstraction for time-dependent code
 
-When production code reads `Date()` or drives a loop with `Task.sleep`, introduce a protocol (see `TimerService` / `TimerClock`). Tests inject a `FakeClock` that advances synchronously. Never test a 1 s `Task.sleep` with a 1 s real-time wait — that measures Foundation, not your code.
+When production code derives state from `Date()`, introduce a clock protocol
+(see `TimerService` / `TimerClock`) and test the state transition synchronously.
+Never test a 1 s `Task.sleep` with a 1 s real-time wait — that measures the
+scheduler, not the domain contract.
+
+Do not add a separately injectable ticker merely to exercise a simple internal
+publish loop. Test that loop only when its cadence is itself a critical product
+contract. Otherwise cover start, stop, reset, and elapsed-time calculation via
+the fake clock and leave scheduler behavior to the platform.
 
 Pattern:
 
@@ -277,13 +285,13 @@ public struct SystemTimerClock: TimerClock {
 }
 
 // Production
-public init(clock: any TimerClock = SystemTimerClock(), tickInterval: Duration = .seconds(1)) { … }
+public init(clock: any TimerClock = SystemTimerClock()) { … }
 
 // Test
 let clock = FakeClock()
-let sut = Service(clock: clock, tickInterval: .milliseconds(5))
+let sut = Service(clock: clock)
 clock.advance(by: 1)
-try await waitUntil { sut.publishedValue == 1 }
+#expect(sut.elapsedSeconds() == 1)
 ```
 
 This gives **deterministic** coverage of the same production path, orders of magnitude faster than real-time sleeps.
@@ -368,18 +376,21 @@ Do **not** re-record to "make a failing test pass" without auditing the diff. A 
 Re-record flow:
 
 ```bash
-# Re-record by setting the env on the package test command
-DEVELOPER_DIR=… RECORD_SNAPSHOTS=1 xcodebuild test -scheme FitnessUI -destination '…' …
-git add Packages/FitnessUI/Tests/FitnessUITests/__Snapshots__/
+# Re-record through the shared snapshot plan, then inspect every changed image.
+RECORD_SNAPSHOTS=1 scripts/test-affected-packages.sh --snapshots FitnessUI
+git diff -- Packages/FitnessUI/Tests/FitnessUITests/__Snapshots__/
 ```
 
-Or, for a single suite, temporarily flip `record: true` on the failing `assertSnapshot(...)` call, run, commit the new png, revert the `record:` change.
+Or, for a single suite, temporarily flip `record: true` on the failing
+`assertSnapshot(...)` call, run it, inspect the new PNG, and revert the
+`record:` change. Git actions remain subject to the authority boundary in
+`AGENTS.md`.
 
 #### H.4 — Smells
 
 | Smell | Why it hurts | Fix |
 |---|---|---|
-| Snapshot test exists but no PNG checked in | First run records on the developer's machine and fails CI. | Run with `RECORD_SNAPSHOTS=1` once; commit the baseline PNG alongside the test. |
+| Snapshot test exists but no baseline PNG | CI has no stable reference image. | Run once with `RECORD_SNAPSHOTS=1`, inspect the PNG, and retain it in the working-tree candidate. |
 | `@Test` per prop combination (12+ tests for one View) | Every visual tweak forces re-recording dozens of baselines. | Collapse to 3–5 meaningful variants; let unit tests cover prop logic. |
 | Feature-page snapshot retained only because it already exists | Intentional UI work creates recurring baseline churn without protecting a critical contract. | Apply the Selection Gate; remove the test, baselines, and snapshot-only dependency when value is low. |
 | Re-recorded baseline in a "no-visual-change" refactor PR | The refactor was not pixel-equivalent — a real regression hidden as a re-record. | Stop, diff the old/new PNG visually (`git diff -- '**/*.png'` or open both), explain in PR description, or revert. |
@@ -416,15 +427,12 @@ Overall: PASS / NEEDS WORK / CRITICAL ISSUES
 After fixing test issues, run the affected package tests to verify:
 
 ```bash
-cd ~/Documents/repo/FitnessApp/Packages/<Package> && \
-DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode-beta.app/Contents/Developer \
-PATH="/Users/jose.nunez/Downloads/Xcode-beta.app/Contents/Developer/usr/bin:$PATH" \
-xcodebuild test -scheme <Package> -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max,OS=26.0' \
--skipMacroValidation 2>&1 | tail -30
+scripts/test-affected-packages.sh <Package>
 ```
 
-Use the generated `FitnessTraining-Package` scheme when `<Package>` is
-`FitnessTraining`; that package exposes multiple products and its product
-scheme has no test action.
+The runner selects native-fast, pinned-iOS integration, and snapshot phases
+from one shared SwiftPM graph. Xcode owns global build-job and test-worker
+coordination. Use `--jobs 1` only when diagnosing contention; do not start
+parallel package-level `xcodebuild` processes.
 
 Write a test stamp to `.claude/hooks/state/test-execution.stamp.md` after successful execution.

@@ -3,6 +3,7 @@ import UIKit
 import FitnessCore
 import FitnessExercise
 import FitnessUI
+import FitnessResources
 import Factory
 import SwiftData
 @_spi(PersistenceUI) import FitnessStorage
@@ -126,6 +127,10 @@ struct UITestLaunchStrategy: AppLaunchStrategy {
         UserDefaults.standard.set(
             AppAccentScheme.green.rawValue,
             forKey: AppAccentScheme.storageKey
+        )
+        UserDefaults.standard.set(
+            AppLanguage.english.rawValue,
+            forKey: AppLanguage.storageKey
         )
 
         if config.screen == .profile {

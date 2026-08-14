@@ -1,5 +1,6 @@
 import SwiftUI
 import FitnessCore
+import FitnessResources
 import FitnessUI
 
 struct SymptomChipsView: View {
@@ -53,7 +54,7 @@ private struct SymptomTile: View {
                                      : accentColor.opacity(0.7))
                     .frame(width: 32, height: 32)
 
-                Text(symptom.displayName.uppercased())
+                Text(symptom.localizedName)
                     .font(AppStyle.Font.cardSmallBold)
                     .foregroundColor(isSelected
                                      ? accentColor
@@ -61,7 +62,7 @@ private struct SymptomTile: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
 
-                Text(symptom.description)
+                Text(symptom.localizedDescription)
                     .font(AppStyle.Font.detailCaption)
                     .foregroundColor(AppStyle.Color.white.opacity(0.55))
                     .multilineTextAlignment(.center)

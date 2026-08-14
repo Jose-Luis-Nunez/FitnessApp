@@ -3,7 +3,7 @@ import Foundation
 import SwiftData
 import FitnessCore
 import FitnessTestSupport
-import Mockable
+@testable import FitnessStorageTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
 
 /// Regression coverage for the self-healing path in `WorkoutStorageService.init`

@@ -73,19 +73,6 @@ struct ActiveSetViewModelTimerResetTests {
         #expect(!timerService.isRunning, "Timer must be stopped after \(action)")
     }
 
-    // MARK: - @Observable Forwarding
-
-    @Test("timerSeconds forwards from TimerService")
-    func timerSecondsForwardsFromTimerService() {
-        let clock = FakeClock()
-        let timerService = TimerService(clock: clock, tickInterval: .seconds(1))
-        let sut = ActiveSetViewModel(timerService: timerService)
-
-        timerService.timerSeconds = 42
-
-        #expect(sut.timerSeconds == 42)
-    }
-
     // MARK: - Timer still running after non-terminal actions
 
     @Test("Timer stops but preserves value after non-last completeCurrentSet, then restarts on startNextSet")

@@ -1,4 +1,5 @@
 import SwiftUI
+import FitnessResources
 
 /// Reusable wheel-picker column with a title and a typed selection binding.
 ///
@@ -11,7 +12,7 @@ import SwiftUI
 /// `HStack` to build multi-column wheels and apply
 /// `AppStyle.Layout.profileWheelHeight` on the parent container.
 public struct FitnessWheelPickerColumn<Value: Hashable, Label: View>: View {
-    public let title: String
+    public let title: LocalizedStringResource
     @Binding public var selection: Value
     public let values: [Value]
     public let accessibilityID: String?
@@ -21,7 +22,7 @@ public struct FitnessWheelPickerColumn<Value: Hashable, Label: View>: View {
     private var profileColors: ProfileColorTheme { appColorTheme.profile }
 
     public init(
-        title: String,
+        title: LocalizedStringResource,
         selection: Binding<Value>,
         values: [Value],
         accessibilityID: String? = nil,

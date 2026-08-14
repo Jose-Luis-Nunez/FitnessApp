@@ -1,6 +1,7 @@
 import SwiftUI
 import FitnessCore
 import FitnessUI
+import FitnessResources
 
 /// "New Workout" sheet. Mirrors the Create-Exercise header and shared form chrome,
 /// but only collects the required workout name and type.
@@ -53,7 +54,7 @@ struct CreateWorkoutView: View {
                 selection: $selectedIconName
             )
 
-            Text("New Workout")
+            Text(AppText.workoutNew)
                 .font(AppStyle.Font.navigationHeadline)
                 .foregroundColor(AppStyle.Color.white)
                 .accessibilityIdentifier(WorkoutIDs.createTitle)
@@ -63,8 +64,8 @@ struct CreateWorkoutView: View {
 
     private var workoutNameField: some View {
         CardTextField(
-            label: "Workout Name",
-            placeholder: "e.g. Pull, Push",
+            label: AppText.workoutName,
+            placeholder: AppText.workoutNameExample,
             text: $workoutName,
             isFocused: $isNameFocused,
             accessibilityIdentifier: WorkoutIDs.createNameField
@@ -73,14 +74,14 @@ struct CreateWorkoutView: View {
 
     private var workoutTypePicker: some View {
         VStack(alignment: .leading, spacing: ExerciseCardLayout.CategoryTile.verticalSpacing) {
-            Text("Workout Type")
+            Text(AppText.workoutType)
                 .font(AppStyle.Font.defaultFont)
                 .foregroundColor(AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel))
 
-            Picker("Workout Type", selection: $workoutType) {
-                Text("Select Workout Type").tag(WorkoutType?.none)
+            Picker(AppText.workoutType, selection: $workoutType) {
+                Text(AppText.workoutSelectType).tag(WorkoutType?.none)
                 ForEach(WorkoutType.allCases) { type in
-                    Text(type.displayName).tag(type as WorkoutType?)
+                    Text(type.localizedName).tag(type as WorkoutType?)
                 }
             }
             .pickerStyle(.menu)

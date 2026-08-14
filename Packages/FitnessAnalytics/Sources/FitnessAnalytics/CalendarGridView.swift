@@ -4,21 +4,24 @@ import SwiftUI
 
 public struct CalendarGridView: View {
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var environmentLocale
     @Binding public var selectedDate: Date
     public let highlightedDates: [Date]
-    public let locale: Locale
+    public let explicitLocale: Locale?
 
     @State private var currentMonth: Date = Date()
 
     public init(
         selectedDate: Binding<Date>,
         highlightedDates: [Date],
-        locale: Locale = Locale(identifier: "de_DE")
+        locale: Locale? = nil
     ) {
         self._selectedDate = selectedDate
         self.highlightedDates = highlightedDates
-        self.locale = locale
+        self.explicitLocale = locale
     }
+
+    private var locale: Locale { explicitLocale ?? environmentLocale }
 
     private var calendar: Calendar {
         var cal = Calendar(identifier: .gregorian)
@@ -54,7 +57,7 @@ public struct CalendarGridView: View {
 
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7)) {
                 ForEach(weekdaySymbols, id: \.self) { day in
-                    Text(day.prefix(2))
+                    Text(verbatim: String(day.prefix(2)))
                         .foregroundColor(.gray)
                         .font(.subheadline)
                 }
@@ -66,7 +69,7 @@ public struct CalendarGridView: View {
                         ZStack {
                             Circle()
                                 .fill(circleColor(for: date))
-                            Text("\(calendar.component(.day, from: date))")
+                            Text(verbatim: calendar.component(.day, from: date).formatted(.number.locale(locale)))
                                 .foregroundColor(textColor(for: date))
                         }
                         .frame(width: 36, height: 36)
@@ -81,7 +84,7 @@ public struct CalendarGridView: View {
 
     private var header: some View {
         HStack {
-            Text(formattedMonthYear(currentMonth))
+            Text(verbatim: formattedMonthYear(currentMonth))
                 .foregroundColor(.white)
                 .font(.headline)
 
@@ -134,10 +137,7 @@ public struct CalendarGridView: View {
     }
 
     private func formattedMonthYear(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = locale
-        formatter.dateFormat = "LLLL yyyy"
-        return formatter.string(from: date).capitalized
+        date.formatted(.dateTime.month(.wide).year().locale(locale)).capitalized(with: locale)
     }
 
     private func changeMonth(by offset: Int) {

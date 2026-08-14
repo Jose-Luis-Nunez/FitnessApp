@@ -57,10 +57,6 @@ public extension Container {
     var saveFeedbackUseCase: Factory<SaveFeedbackUseCase> {
         self { MainActor.assumeIsolated { SaveFeedbackUseCase() } }
     }
-    var loadLatestFeedbackUseCase: Factory<LoadLatestFeedbackUseCase> {
-        self { MainActor.assumeIsolated { LoadLatestFeedbackUseCase() } }
-    }
-
     var friendStorage: Factory<FriendStoring> {
         self { MainActor.assumeIsolated { FriendStorageService() } }.singleton
     }

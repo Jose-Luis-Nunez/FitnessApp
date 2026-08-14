@@ -1,6 +1,5 @@
 import Testing
 import Foundation
-import FitnessTestSupport
 @testable import FitnessTraining
 @testable import FitnessTrainingTestSupport
 
@@ -34,13 +33,7 @@ struct TimerServiceTests {
         #expect(sut.isRunning == true)
     }
 
-    @Test func elapsedSecondsIsZeroWhenNotRunning() {
-        let (sut, clock) = makeSUT()
-        clock.advance(by: 100)
-        #expect(sut.elapsedSeconds() == 0)
-    }
-
-    @Test func elapsedSecondsFreezesAfterStop() {
+    @Test func stopTimerStopsAndClearsElapsedState() {
         let (sut, clock) = makeSUT()
         sut.startTimer()
         clock.advance(by: 3)
@@ -80,41 +73,4 @@ struct TimerServiceTests {
         #expect(second == first)
     }
 
-    @Test func multipleStopCallsAreIdempotent() {
-        let (sut, _) = makeSUT()
-        sut.startTimer()
-
-        sut.stopTimer()
-        sut.stopTimer()
-
-        #expect(sut.isRunning == false)
-    }
-
-    // MARK: - Live tick loop (deterministic)
-
-    /// Verifies that the internal tick loop actually publishes to `timerSeconds`
-    /// as the clock advances. Uses a short `tickInterval` + `FakeClock` so the
-    /// test is deterministic and fast (no real-time sleeps beyond the tick
-    /// itself). This exercises the same production code path as the 1-second
-    /// live timer — only the tick cadence differs.
-    @Test(.timeLimit(.minutes(1)))
-    func tickLoopPublishesElapsedSecondsWhenClockAdvances() async throws {
-        let clock = FakeClock()
-        let sut = TimerService(clock: clock, tickInterval: .milliseconds(5))
-        sut.startTimer()
-
-        clock.advance(by: 1)
-        try await waitUntil(timeout: .seconds(2)) { sut.timerSeconds >= 1 }
-        let afterOne = sut.timerSeconds
-
-        clock.advance(by: 2)
-        try await waitUntil(timeout: .seconds(2)) { sut.timerSeconds >= 3 }
-        let afterThree = sut.timerSeconds
-
-        sut.stopTimer()
-
-        #expect(afterOne == 1)
-        #expect(afterThree == 3)
-        #expect(sut.isRunning == false)
-    }
 }

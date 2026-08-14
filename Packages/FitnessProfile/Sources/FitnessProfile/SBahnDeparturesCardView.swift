@@ -1,10 +1,12 @@
 import SwiftUI
 import FitnessUI
+import FitnessResources
 
 public struct SBahnDeparturesCardView: View {
 
     @Bindable private var viewModel: SBahnDeparturesViewModel
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var locale
 
     private var profileColors: ProfileColorTheme { appColorTheme.profile }
 
@@ -41,7 +43,7 @@ public struct SBahnDeparturesCardView: View {
                     .foregroundColor(profileColors.accent)
 
                 ProfileCardHeading(
-                    "S-Bahn",
+                    verbatim: "S-Bahn",
                     detail: "\(viewModel.fromLabel) → \(viewModel.toLabel)"
                 )
 
@@ -62,7 +64,7 @@ public struct SBahnDeparturesCardView: View {
 
     private var swapRow: some View {
         HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
-            endpointPill(text: viewModel.fromLabel, caption: "Start")
+            endpointPill(text: viewModel.fromLabel, caption: AppText.transitStart)
 
             Button {
                 Task { await viewModel.swap() }
@@ -76,16 +78,16 @@ public struct SBahnDeparturesCardView: View {
             .accessibilityIdentifier("id_profile_sbahn_swap")
             .disabled(viewModel.isLoading)
 
-            endpointPill(text: viewModel.toLabel, caption: "Destination")
+            endpointPill(text: viewModel.toLabel, caption: AppText.transitDestination)
         }
     }
 
-    private func endpointPill(text: String, caption: String) -> some View {
+    private func endpointPill(text: String, caption: LocalizedStringResource) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(caption)
                 .font(AppStyle.Font.profileCardTitle)
                 .foregroundColor(profileColors.secondary)
-            Text(text)
+            Text(verbatim: text)
                 .font(AppStyle.Font.tileValue)
                 .foregroundColor(profileColors.title)
                 .lineLimit(1)
@@ -105,7 +107,7 @@ public struct SBahnDeparturesCardView: View {
             loadingRow
         } else if !viewModel.departures.isEmpty {
             departuresList
-        } else if viewModel.errorMessage == nil {
+        } else if viewModel.error == nil {
             if viewModel.lastUpdated == nil {
                 requestPromptRow
             } else {
@@ -113,7 +115,7 @@ public struct SBahnDeparturesCardView: View {
             }
         }
 
-        if let error = viewModel.errorMessage {
+        if let error = viewModel.error {
             errorRow(error)
         }
     }
@@ -129,14 +131,14 @@ public struct SBahnDeparturesCardView: View {
     }
 
     private var emptyRow: some View {
-        Text("No trains in the next 60 minutes.")
+        Text(AppText.transitNoTrains)
             .font(AppStyle.Font.detailCaption)
             .foregroundColor(profileColors.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var requestPromptRow: some View {
-        Text("Tap Refresh to load departures.")
+        Text(AppText.transitLoadPrompt)
             .font(AppStyle.Font.detailCaption)
             .foregroundColor(profileColors.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -156,14 +158,14 @@ public struct SBahnDeparturesCardView: View {
                 viewModel.toggleDetailExpansion(rowID: dep.id)
             } label: {
                 HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
-                    Text(dep.line)
+                    Text(verbatim: dep.line)
                         .font(AppStyle.Font.cardSmallBold)
                         .foregroundColor(profileColors.onAccent)
                         .frame(minWidth: AppStyle.Layout.setRowBadgeSize, minHeight: AppStyle.Layout.setRowBadgeSize)
                         .background(profileColors.accentFill)
                         .cornerRadius(AppStyle.CornerRadius.pill)
 
-                    Text(viewModel.formattedTime(for: dep.plannedWhen))
+                    Text(verbatim: viewModel.formattedTime(for: dep.plannedWhen, locale: locale))
                         .font(AppStyle.Font.tileValue)
                         .foregroundColor(profileColors.title)
                         .fixedSize()
@@ -172,7 +174,7 @@ public struct SBahnDeparturesCardView: View {
 
                     Spacer(minLength: 0)
 
-                    Text(dep.direction)
+                    Text(verbatim: dep.direction)
                         .font(AppStyle.Font.detailCaption)
                         .foregroundColor(profileColors.secondary)
                         .lineLimit(1)
@@ -209,8 +211,8 @@ public struct SBahnDeparturesCardView: View {
     /// Shows the estimated arrival at the configured destination so the
     /// user can answer "wann bin ich da?" at a glance.
     private func arrivalCaption(arrival: Date) -> some View {
-        let arrivalStr = viewModel.formattedTime(for: arrival)
-        return Text("→ \(viewModel.toLabel) · \(arrivalStr)")
+        let arrivalStr = viewModel.formattedTime(for: arrival, locale: locale)
+        return Text(AppText.transitArrival(destination: viewModel.toLabel, time: arrivalStr))
             .font(AppStyle.Font.detailCaption)
             .foregroundColor(profileColors.secondary)
             .lineLimit(1)
@@ -221,10 +223,22 @@ public struct SBahnDeparturesCardView: View {
     /// Shows the transfer hint and the estimated arrival at destination
     /// after the bridge train.
     private func bridgeCaption(bridge: BridgeHint, arrival: Date?) -> some View {
-        let bridgeTimeStr = viewModel.formattedTime(for: bridge.bridgeDeparture)
-        var caption = "⤷ Transfer at \(bridge.transferStation) via \(bridge.bridgeLine) · \(bridgeTimeStr)"
+        let bridgeTimeStr = viewModel.formattedTime(for: bridge.bridgeDeparture, locale: locale)
+        let caption: LocalizedStringResource
         if let arrival {
-            caption += " → \(viewModel.toLabel) · \(viewModel.formattedTime(for: arrival))"
+            caption = AppText.transitTransferCaptionArrival(
+                station: bridge.transferStation,
+                line: bridge.bridgeLine,
+                time: bridgeTimeStr,
+                destination: viewModel.toLabel,
+                arrival: viewModel.formattedTime(for: arrival, locale: locale)
+            )
+        } else {
+            caption = AppText.transitTransferCaption(
+                station: bridge.transferStation,
+                line: bridge.bridgeLine,
+                time: bridgeTimeStr
+            )
         }
         return Text(caption)
             .font(AppStyle.Font.detailCaption)
@@ -236,15 +250,15 @@ public struct SBahnDeparturesCardView: View {
     @ViewBuilder
     private func delayBadge(for delay: Int) -> some View {
         if delay > 0 {
-            Text("+\(delay) min")
+            Text(verbatim: "+\(delay) min")
                 .font(AppStyle.Font.cardSmallBold)
                 .foregroundColor(AppStyle.Color.yellow)
         } else if delay < 0 {
-            Text("\(delay) min")
+            Text(verbatim: "\(delay) min")
                 .font(AppStyle.Font.cardSmallBold)
                 .foregroundColor(profileColors.accent)
         } else {
-            Text("on time")
+            Text(AppText.transitOnTime)
                 .font(AppStyle.Font.cardSmallBold)
                 .foregroundColor(profileColors.accent)
         }
@@ -258,69 +272,69 @@ public struct SBahnDeparturesCardView: View {
             .background(profileColors.divider)
 
         VStack(alignment: .leading, spacing: 6) {
-            detailRow(label: "Scheduled departure", value: viewModel.formattedTime(for: dep.plannedWhen))
-            detailRow(label: "Current departure", value: viewModel.formattedTime(for: dep.when))
-            detailRow(label: "Delay", value: detailDelayString(dep.delayMinutes))
-            detailRow(label: "Final stop", value: dep.direction)
+            detailRow(label: AppText.transitScheduledDeparture, value: Text(verbatim: viewModel.formattedTime(for: dep.plannedWhen, locale: locale)))
+            detailRow(label: AppText.transitCurrentDeparture, value: Text(verbatim: viewModel.formattedTime(for: dep.when, locale: locale)))
+            detailRow(label: AppText.transitDelay, value: detailDelayText(dep.delayMinutes))
+            detailRow(label: AppText.transitFinalStop, value: Text(verbatim: dep.direction))
 
             if let bridge = dep.bridge {
                 Divider()
                     .background(profileColors.divider)
                     .padding(.top, 4)
 
-                Text("Transfer")
+                Text(AppText.transitTransfer)
                     .font(AppStyle.Font.profileCardTitle)
                     .foregroundColor(profileColors.secondary)
 
-                detailRow(label: "Get off at", value: bridge.transferStation)
+                detailRow(label: AppText.transitGetOffAt, value: Text(verbatim: bridge.transferStation))
                 detailRow(
-                    label: "Connection",
-                    value: "\(bridge.bridgeLine) → \(bridge.bridgeDirection)"
+                    label: AppText.transitConnection,
+                    value: Text(verbatim: "\(bridge.bridgeLine) → \(bridge.bridgeDirection)")
                 )
                 detailRow(
-                    label: "Connection departure",
-                    value: viewModel.formattedTime(for: bridge.bridgeDeparture)
+                    label: AppText.transitConnectionDeparture,
+                    value: Text(verbatim: viewModel.formattedTime(for: bridge.bridgeDeparture, locale: locale))
                 )
             } else {
-                detailRow(label: "Connection", value: "Direct to \(viewModel.toLabel)")
+                detailRow(label: AppText.transitConnection, value: Text(AppText.transitDirectTo(destination: viewModel.toLabel)))
             }
 
             if let arrival = dep.arrivalAtDestination {
                 detailRow(
-                    label: "Ankunft \(viewModel.toLabel)",
-                    value: viewModel.formattedTime(for: arrival)
+                    label: AppText.transitArrivalLabel(destination: viewModel.toLabel),
+                    value: Text(verbatim: viewModel.formattedTime(for: arrival, locale: locale))
                 )
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func detailRow(label: String, value: String) -> some View {
+    private func detailRow(label: LocalizedStringResource, value: Text) -> some View {
         HStack(alignment: .top, spacing: AppStyle.DeviceLayout.cardSpacing) {
             Text(label)
                 .font(AppStyle.Font.detailCaption)
                 .foregroundColor(profileColors.secondary)
                 .frame(width: 130, alignment: .leading)
-            Text(value)
+            value
                 .font(AppStyle.Font.detailCaption)
                 .foregroundColor(profileColors.title)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
-    private func detailDelayString(_ delay: Int) -> String {
-        if delay > 0 { return "+\(delay) min" }
-        if delay < 0 { return "\(delay) min" }
-        return "on time"
+    private func detailDelayText(_ delay: Int) -> Text {
+        if delay > 0 { return Text(verbatim: "+\(delay) min") }
+        if delay < 0 { return Text(verbatim: "\(delay) min") }
+        return Text(AppText.transitOnTime)
     }
 
     // MARK: - Error / Footer
 
-    private func errorRow(_ message: String) -> some View {
+    private func errorRow(_ failure: TransitPresentationFailure) -> some View {
         HStack(spacing: 4) {
             Image(systemName: "wifi.slash")
                 .font(AppStyle.Font.profileSmallIcon)
-            Text(message)
+            Text(failure.localizedResource)
                 .font(AppStyle.Font.detailCaption)
                 .lineLimit(2)
         }
@@ -346,16 +360,17 @@ public struct SBahnDeparturesCardView: View {
 
     @ViewBuilder
     private var footerStatusText: some View {
-        if let lastUpdated = viewModel.formattedLastUpdated {
+        if let lastUpdated = viewModel.formattedLastUpdated(locale: locale) {
             if viewModel.isShowingCachedResult {
-                Text("Last request \(lastUpdated)")
+                Text(AppText.transitLastRequest(time: lastUpdated))
                     .font(AppStyle.Font.sheetCaption)
                     .foregroundColor(AppStyle.Color.yellow)
             } else {
-                Text("Updated \(lastUpdated)")
+                Text(AppText.transitUpdated(time: lastUpdated))
                     .font(AppStyle.Font.sheetCaption)
                     .foregroundColor(profileColors.secondary)
             }
         }
     }
+
 }

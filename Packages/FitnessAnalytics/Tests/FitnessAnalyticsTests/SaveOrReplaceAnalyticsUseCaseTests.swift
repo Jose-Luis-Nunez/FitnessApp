@@ -13,17 +13,6 @@ struct SaveOrReplaceAnalyticsUseCaseTests {
         return (sut, mockStorage)
     }
 
-    @Test func executeAppendsNewEntryWhenNoExistingForDate() {
-        let (sut, storage) = makeSUT()
-        let exerciseId = UUID()
-        let progress = [SetProgress(status: .completedDone, currentReps: 10, weight: 60)]
-
-        sut.execute(exerciseId: exerciseId, setProgress: progress, date: Date())
-
-        let saved = storage.load(for: exerciseId)
-        #expect(saved.count == 1)
-    }
-
     @Test func executeReplacesExistingEntryForSameDay() {
         let (sut, storage) = makeSUT()
         let exerciseId = UUID()
@@ -62,6 +51,7 @@ struct SaveOrReplaceAnalyticsUseCaseTests {
 
         let saved = storage.load(for: exerciseId)
         #expect(saved.count == 2)
+        #expect(saved.map { $0.setProgress[0].currentReps } == [8, 10])
     }
 
     @Test func executeDoesNothingForEmptyProgress() {

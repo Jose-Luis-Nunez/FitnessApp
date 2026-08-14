@@ -27,14 +27,14 @@ public final class FriendsViewModel {
     public var showingAddFriend = false
     public var showingExportPicker = false
     public var workoutToShare: WorkoutShareItem?
-    public var exportErrorMessage: String?
-    public var importErrorMessage: String?
+    public var exportFailed = false
+    public var importFailed = false
     public var pendingFriendJSON: String?
     public var pendingFriendFileName: String?
 
     // MARK: - Comparison
     public private(set) var comparison: FriendComparison?
-    public private(set) var comparisonError: String?
+    public private(set) var comparisonFailed = false
 
     // MARK: - Dependencies
     @ObservationIgnored private let friendStorage: FriendStoring
@@ -85,7 +85,7 @@ public final class FriendsViewModel {
         if selectedFriendId == friend.id {
             selectedFriendId = nil
             comparison = nil
-            comparisonError = nil
+            comparisonFailed = false
             autoSelectFriendIfNeeded()
         }
     }
@@ -100,7 +100,7 @@ public final class FriendsViewModel {
     public func requestFriendImport() {
         pendingFriendJSON = nil
         pendingFriendFileName = nil
-        importErrorMessage = nil
+        importFailed = false
         showingAddFriend = true
     }
 
@@ -124,7 +124,7 @@ public final class FriendsViewModel {
     }
 
     public func friendImportFailed() {
-        importErrorMessage = "The selected friend file could not be read."
+        importFailed = true
     }
 
     /// Called from ExportWorkoutPickerSheet after the user selects a workout.
@@ -134,7 +134,7 @@ public final class FriendsViewModel {
             let fileURL = WorkoutShareFileWriter.write(json: json, name: workout.name, fileExtension: "fitnessfriend")
             workoutToShare = WorkoutShareItem(workout: workout, json: json, fileURL: fileURL)
         } catch {
-            exportErrorMessage = WorkoutShareError.exportFailed.errorDescription
+            exportFailed = true
         }
     }
 
@@ -146,10 +146,10 @@ public final class FriendsViewModel {
     // MARK: - Computed
 
     public var allWorkouts: [Workout] { workoutStorage.workouts }
-    public var myNickname: String {
+    public var myNickname: String? {
         // ProfileStore reads from UserDefaults; access via UserDefaults directly
         // to avoid a FitnessProfile dependency in this package.
-        UserDefaults.standard.string(forKey: "userNickname") ?? "Me"
+        UserDefaults.standard.string(forKey: "userNickname")
     }
 
     // MARK: - Private
@@ -167,7 +167,7 @@ public final class FriendsViewModel {
         // selected friend never shows while the new load is in flight.
         comparisonTask?.cancel()
         comparison = nil
-        comparisonError = nil
+        comparisonFailed = false
         guard let friend = selectedFriend,
               let workout = workoutStorage.currentWorkout else {
             return
@@ -178,11 +178,11 @@ public final class FriendsViewModel {
                 // Drop the result if the selection moved on while we loaded.
                 guard !Task.isCancelled, selectedFriendId == friend.id else { return }
                 comparison = result
-                comparisonError = nil
+                comparisonFailed = false
             } catch {
                 guard !Task.isCancelled, selectedFriendId == friend.id else { return }
                 comparison = nil
-                comparisonError = "Comparison data could not be loaded."
+                comparisonFailed = true
             }
         }
     }

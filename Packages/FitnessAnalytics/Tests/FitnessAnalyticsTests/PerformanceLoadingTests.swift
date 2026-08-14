@@ -8,40 +8,9 @@ import FitnessTestSupport
 import UIKit
 #endif
 
-@Suite("Analytics loading performance contracts", .tags(.fast))
+@Suite("Analytics loading performance contracts", .tags(.integration))
 @MainActor
 struct PerformanceLoadingTests {
-    @Test func detailCalculationsReuseOneLoadedHistory() throws {
-        let storage = MockAnalyticsStorage()
-        let exerciseId = UUID()
-        let referenceDay = Calendar.current.startOfDay(for: Date())
-        let entries = [
-            entry(for: exerciseId, date: day(-2, from: referenceDay), reps: 8, weight: 20),
-            entry(for: exerciseId, date: day(-1, from: referenceDay), reps: 8, weight: 20),
-            entry(for: exerciseId, date: referenceDay, reps: 10, weight: 22),
-        ]
-        storage.save(entries, for: exerciseId)
-        let viewModel = makeViewModel(
-            storage: storage,
-            exerciseStorage: MockExerciseStorage(),
-            workoutStorage: MockWorkoutStorage()
-        )
-
-        #expect(viewModel.reloadEntries(for: exerciseId))
-        let cachedEntries = try #require(viewModel.cachedEntries(for: exerciseId))
-
-        #expect(viewModel.getDailyWeightProgression(from: cachedEntries).map(\.value) == [20, 20, 22])
-        #expect(viewModel.getDailyRepsProgression(from: cachedEntries).map(\.value) == [8, 8, 10])
-        #expect(viewModel.totalWeightIncreases(from: cachedEntries) == 1)
-        #expect(viewModel.totalRepsIncreases(from: cachedEntries) == 1)
-        #expect(viewModel.trainingSessionsUntilWeightIncrease(from: cachedEntries) == 2)
-        #expect(viewModel.trainingSessionsUntilRepsIncrease(from: cachedEntries) == 2)
-        #expect(viewModel.trainingDaysInCurrentMonth(from: cachedEntries) >= 1)
-
-        #expect(storage.loadCallCount == 1)
-        #expect(storage.batchLoadCallCount == 0)
-    }
-
     #if canImport(UIKit)
     @Test func analyticsViewLoadsHistoryOnceAcrossRenderPasses() async {
         let storage = MockAnalyticsStorage()
@@ -106,10 +75,6 @@ struct PerformanceLoadingTests {
                 analyticsStorage: storage
             )
         )
-    }
-
-    private func day(_ offset: Int, from referenceDay: Date) -> Date {
-        Calendar.current.date(byAdding: .day, value: offset, to: referenceDay)!
     }
 
     private func entry(

@@ -15,7 +15,7 @@ public struct ExerciseWeightPickerView: View {
     public let onSave: () -> Void
     public let onCancel: () -> Void
     public let repsRange: ClosedRange<Int>
-    public let weightOptions: [String]
+    public let weightOptions: [Double]
     public let setsRange: ClosedRange<Int>
 
     public init(
@@ -24,7 +24,7 @@ public struct ExerciseWeightPickerView: View {
         onSave: @escaping () -> Void,
         onCancel: @escaping () -> Void,
         repsRange: ClosedRange<Int>,
-        weightOptions: [String],
+        weightOptions: [Double],
         setsRange: ClosedRange<Int>
     ) {
         self.formViewModel = formViewModel
@@ -44,8 +44,8 @@ public struct ExerciseWeightPickerView: View {
             onCancel: onCancel,
             actions: {
                 ExercisePickerActionButtons(
-                    cancelLabel: L10n.cardCreationCancel,
-                    saveLabel: L10n.cardCreationSave,
+                    cancelLabel: AppText.actionCancel,
+                    saveLabel: AppText.actionSave,
                     cancelColor: appColorTheme.accent.primary,
                     saveDisabled: false,
                     onCancel: {
@@ -59,7 +59,7 @@ public struct ExerciseWeightPickerView: View {
                 )
             },
             content: {
-                ExerciseIconHeader(formViewModel: formViewModel, title: formViewModel.name)
+                ExerciseIconHeader(formViewModel: formViewModel, verbatimTitle: formViewModel.name)
                 ExerciseDetailsEditor(
                     formViewModel: formViewModel,
                     repsRange: repsRange,

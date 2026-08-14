@@ -2,6 +2,7 @@ import SwiftUI
 import FitnessCore
 import FitnessUI
 import FitnessWorkouts
+import FitnessResources
 
 struct ExportWorkoutPickerSheet: View {
     @Binding var isPresented: Bool
@@ -21,14 +22,14 @@ struct ExportWorkoutPickerSheet: View {
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: AppStyle.Padding.sectionSpacing) {
-                Text("Export Workout")
+                Text(AppText.workoutExport)
                     .font(AppStyle.Font.sheetTitle)
                     .foregroundColor(profileColors.title)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.bottom, AppStyle.Padding.sectionSpacing)
 
                 if workouts.isEmpty {
-                    Text("No workouts available.")
+                    Text(AppText.workoutNoWorkouts)
                         .font(AppStyle.Font.profileCardTitle)
                         .foregroundColor(profileColors.secondary)
                         .frame(maxWidth: .infinity, alignment: .center)
@@ -56,7 +57,7 @@ struct ExportWorkoutPickerSheet: View {
             HStack {
                 Spacer()
                 Spacer()
-                Button("Cancel") { isPresented = false }
+                Button(AppText.actionCancel) { isPresented = false }
                     .foregroundColor(profileColors.onAccent)
                     .font(AppStyle.Font.pickerAction)
                     .padding(5)

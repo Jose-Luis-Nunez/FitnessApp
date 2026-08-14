@@ -1,4 +1,5 @@
 import SwiftUI
+import FitnessResources
 
 /// Shared bottom action treatment for full-page and overlay sheets.
 ///
@@ -6,8 +7,8 @@ import SwiftUI
 /// receives the remaining space. A fading backdrop separates the actions from
 /// scrolling content without introducing a hard horizontal color boundary.
 public struct SheetActionArea: View {
-    private let cancelLabel: String
-    private let saveLabel: String
+    private let cancelLabel: LocalizedStringResource
+    private let saveLabel: LocalizedStringResource
     private let isSaveEnabled: Bool
     private let backdropColor: Color
     private let cancelAccessibilityIdentifier: String
@@ -23,8 +24,8 @@ public struct SheetActionArea: View {
     private static let backdropOpacity: Double = 0.94
 
     public init(
-        cancelLabel: String = "Cancel",
-        saveLabel: String,
+        cancelLabel: LocalizedStringResource = AppText.actionCancel,
+        saveLabel: LocalizedStringResource,
         isSaveEnabled: Bool,
         backdropColor: Color,
         cancelAccessibilityIdentifier: String = "",

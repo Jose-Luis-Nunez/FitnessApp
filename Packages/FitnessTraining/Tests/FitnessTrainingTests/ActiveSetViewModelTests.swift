@@ -328,7 +328,7 @@ struct ActiveSetViewModelTests {
         #expect(sut.pendingEditIndex == 0)
         #expect(sut.editMode == .achievement)
         #expect(sut.repsInput == "10")
-        #expect(sut.weightInput == WeightFormatter.format(60))
+        #expect(sut.weightInput == "60")
     }
 
     @Test func achievementAtTargetCompletesDoneAndAdvances() {
@@ -428,7 +428,7 @@ struct ActiveSetViewModelTests {
         sut.startEditingSet(index: 1, mode: .less)
 
         #expect(sut.repsInput == "8")
-        #expect(sut.weightInput == WeightFormatter.format(50))
+        #expect(sut.weightInput == "50")
     }
 
     @Test func lessWithWeightOnlyReductionPreFillsNextSet() {
@@ -446,7 +446,7 @@ struct ActiveSetViewModelTests {
         sut.startEditingSet(index: 1, mode: .less)
 
         #expect(sut.repsInput == "10")
-        #expect(sut.weightInput == WeightFormatter.format(50))
+        #expect(sut.weightInput == "50")
     }
 
     @Test func morePreFillsNextSetWithPreviousMoreAdjustment() {
@@ -460,7 +460,7 @@ struct ActiveSetViewModelTests {
         sut.startEditingSet(index: 1, mode: .more)
 
         #expect(sut.repsInput == "12")
-        #expect(sut.weightInput == WeightFormatter.format(70))
+        #expect(sut.weightInput == "70")
     }
 
     @Test func lessAndMoreMemoryAreSeparate() {
@@ -476,7 +476,7 @@ struct ActiveSetViewModelTests {
         sut.startEditingSet(index: 1, mode: .more)
 
         #expect(sut.repsInput == "10")
-        #expect(sut.weightInput == WeightFormatter.format(60))
+        #expect(sut.weightInput == "60")
     }
 
     @Test func editingCompletedSetIgnoresAdjustmentMemory() {
@@ -495,7 +495,7 @@ struct ActiveSetViewModelTests {
         sut.startEditingSet(index: 0, mode: .less)
 
         #expect(sut.repsInput == "8")
-        #expect(sut.weightInput == WeightFormatter.format(50))
+        #expect(sut.weightInput == "50")
     }
 
     @Test func startSetClearsAdjustmentMemory() {
@@ -510,7 +510,7 @@ struct ActiveSetViewModelTests {
         sut.startEditingSet(index: 0, mode: .less)
 
         #expect(sut.repsInput == "10")
-        #expect(sut.weightInput == WeightFormatter.format(60))
+        #expect(sut.weightInput == "60")
     }
 
     // MARK: - formatTime

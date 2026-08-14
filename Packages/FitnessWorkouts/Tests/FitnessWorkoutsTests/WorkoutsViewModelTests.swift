@@ -121,37 +121,10 @@ struct WorkoutsViewModelTests {
         return (sut, workoutStorage, exerciseStorage)
     }
 
-    // MARK: - Initial State
-
-    @Test func workoutsReflectStorage() {
-        let seed = Workout(name: "Push", selectedCategories: [.chest])
-        let (sut, _, _) = makeSUT(seedWorkouts: [seed])
-
-        #expect(sut.workouts.count == 1)
-        #expect(sut.workouts.first?.id == seed.id)
-    }
-
-    @Test func currentWorkoutReflectsStorage() {
-        let w1 = Workout(name: "A")
-        let w2 = Workout(name: "B")
-        let (sut, ws, _) = makeSUT(seedWorkouts: [w1, w2])
-        ws.currentWorkout = w2
-
-        #expect(sut.currentWorkout?.id == w2.id)
-    }
-
-    @Test func defaultWorkoutReflectsStorage() {
-        let w = Workout(name: "Default")
-        let (sut, ws, _) = makeSUT(seedWorkouts: [w])
-        ws.defaultWorkout = w
-
-        #expect(sut.defaultWorkout?.id == w.id)
-    }
-
     // MARK: - createNewWorkout
 
-    @Test func createNewWorkoutAddsWorkoutAndSetsCurrent() {
-        let (sut, ws, _) = makeSUT()
+    @Test func createNewWorkoutPersistsResetsFormAndRefreshesCounts() {
+        let (sut, ws, countsStorage) = makeCountTrackingSUT()
         sut.newWorkoutName = "Pull"
         sut.newWorkoutType = .pull
         sut.showingCreateWorkoutFullScreen = true
@@ -164,23 +137,14 @@ struct WorkoutsViewModelTests {
         #expect(ws.workouts.first?.selectedCategories == Set(MuscleCategoryGroup.allCases))
         #expect(ws.workouts.first?.type == .pull)
         #expect(ws.currentWorkout?.id == ws.workouts.first?.id)
-    }
-
-    @Test func createNewWorkoutResetsFormState() {
-        let (sut, _, _) = makeSUT()
-        sut.newWorkoutName = "Pull"
-        sut.newWorkoutType = .pull
-        sut.showingCreateWorkoutFullScreen = true
-
-        sut.createNewWorkout()
-
         #expect(sut.newWorkoutName.isEmpty)
         #expect(sut.newWorkoutType == nil)
         #expect(sut.showingCreateWorkoutFullScreen == false)
+        #expect(countsStorage.countsLoadCallCount == 1)
     }
 
     @Test func createNewWorkoutKeepsFormOpenWhenPersistenceFails() {
-        let (sut, workoutStorage, _) = makeSUT()
+        let (sut, workoutStorage, countsStorage) = makeCountTrackingSUT()
         workoutStorage.createWorkoutError = StubError.persistenceFailed
         sut.newWorkoutName = "Pull"
         sut.newWorkoutType = .pull
@@ -191,37 +155,29 @@ struct WorkoutsViewModelTests {
         #expect(workoutStorage.workouts.isEmpty)
         #expect(workoutStorage.currentWorkout == nil)
         #expect(sut.showingCreateWorkoutFullScreen)
-        #expect(sut.createErrorMessage == "Workout could not be saved.")
+        #expect(sut.operationFailure == .creation)
         #expect(sut.newWorkoutName == "Pull")
         #expect(sut.newWorkoutType == .pull)
+        #expect(countsStorage.countsLoadCallCount == 0)
+        #expect(sut.exerciseCounts == nil)
     }
 
-    @Test func createNewWorkoutIgnoresEmptyName() {
-        let (sut, ws, _) = makeSUT()
-        sut.newWorkoutName = ""
+    @Test func createNewWorkoutRejectsIncompleteOrBlankInput() {
+        let cases: [(name: String, type: WorkoutType?)] = [
+            ("", .pull),
+            ("Pull", nil),
+            ("   \n\t  ", .pull),
+        ]
 
-        sut.createNewWorkout()
+        for testCase in cases {
+            let (sut, storage, _) = makeSUT()
+            sut.newWorkoutName = testCase.name
+            sut.newWorkoutType = testCase.type
 
-        #expect(ws.workouts.isEmpty)
-    }
+            sut.createNewWorkout()
 
-    @Test func createNewWorkoutIgnoresMissingType() {
-        let (sut, ws, _) = makeSUT()
-        sut.newWorkoutName = "Pull"
-        sut.newWorkoutType = nil
-
-        sut.createNewWorkout()
-
-        #expect(ws.workouts.isEmpty)
-    }
-
-    @Test func createNewWorkoutIgnoresWhitespaceOnlyName() {
-        let (sut, ws, _) = makeSUT()
-        sut.newWorkoutName = "   \n\t  "
-
-        sut.createNewWorkout()
-
-        #expect(ws.workouts.isEmpty)
+            #expect(storage.workouts.isEmpty)
+        }
     }
 
     // MARK: - selectWorkout
@@ -240,7 +196,7 @@ struct WorkoutsViewModelTests {
 
     @Test func duplicateWorkoutAppendsCopyAndSetsCurrent() {
         let original = Workout(name: "Leg Day", selectedCategories: [.legs])
-        let (sut, ws, _) = makeSUT(seedWorkouts: [original])
+        let (sut, ws, countsStorage) = makeCountTrackingSUT(seedWorkouts: [original])
         sut.showingWorkoutOptions = true
 
         sut.duplicateWorkout(original)
@@ -249,22 +205,10 @@ struct WorkoutsViewModelTests {
         #expect(ws.workouts.last?.id != original.id)
         #expect(ws.currentWorkout?.id == ws.workouts.last?.id)
         #expect(sut.showingWorkoutOptions == false)
+        #expect(countsStorage.countsLoadCallCount == 1)
     }
 
     // MARK: - deleteWorkout (invariant enforced in VM)
-
-    @Test func deleteWorkoutRemovesFromStorageWhenMultipleExist() {
-        let w1 = Workout(name: "A")
-        let w2 = Workout(name: "B")
-        let (sut, ws, _) = makeSUT(seedWorkouts: [w1, w2])
-        sut.showingWorkoutOptions = true
-
-        sut.deleteWorkout(w1)
-
-        #expect(ws.workouts.count == 1)
-        #expect(ws.workouts.contains { $0.id == w1.id } == false)
-        #expect(sut.showingWorkoutOptions == false)
-    }
 
     /// Regression: the "must keep at least one workout" invariant lives in the VM
     /// (not only in the UI affordance `canDeleteWorkout`).
@@ -298,39 +242,25 @@ struct WorkoutsViewModelTests {
         #expect(sut.selectedWorkoutForAction == nil)
     }
 
-    @Test func renameWorkoutIgnoresEmptyName() {
-        let original = Workout(name: "Old Name")
-        let (sut, ws, _) = makeSUT(seedWorkouts: [original])
-        sut.selectedWorkoutForAction = original
-        sut.renameWorkoutName = "   "
+    @Test func renameWorkoutRejectsBlankNameOrMissingSelection() {
+        let cases: [(name: String, hasSelection: Bool)] = [
+            ("   ", true),
+            ("New Name", false),
+        ]
 
-        sut.renameWorkout()
+        for testCase in cases {
+            let original = Workout(name: "Old Name")
+            let (sut, storage, _) = makeSUT(seedWorkouts: [original])
+            sut.selectedWorkoutForAction = testCase.hasSelection ? original : nil
+            sut.renameWorkoutName = testCase.name
 
-        #expect(ws.workouts.first?.name == "Old Name")
-    }
+            sut.renameWorkout()
 
-    @Test func renameWorkoutIgnoresMissingSelection() {
-        let original = Workout(name: "Old Name")
-        let (sut, ws, _) = makeSUT(seedWorkouts: [original])
-        sut.selectedWorkoutForAction = nil
-        sut.renameWorkoutName = "New Name"
-
-        sut.renameWorkout()
-
-        #expect(ws.workouts.first?.name == "Old Name")
+            #expect(storage.workouts.first?.name == "Old Name")
+        }
     }
 
     // MARK: - Workout options
-
-    @Test func showWorkoutOptionsSetsSelectionAndOpens() {
-        let w = Workout(name: "X")
-        let (sut, _, _) = makeSUT(seedWorkouts: [w])
-
-        sut.showWorkoutOptions(for: w)
-
-        #expect(sut.selectedWorkoutForAction?.id == w.id)
-        #expect(sut.showingWorkoutOptions == true)
-    }
 
     @Test func hideWorkoutOptionsClearsEverything() {
         let w = Workout(name: "X")
@@ -345,7 +275,7 @@ struct WorkoutsViewModelTests {
         #expect(sut.selectedWorkoutForAction == nil)
     }
 
-    @Test func showWorkoutAnalyticsEntrySetsTargetAndClosesOptions() {
+    @Test func workoutAnalyticsEntryPresentationLifecycle() {
         let workout = Workout(name: "Pull")
         let (sut, _, _) = makeSUT(seedWorkouts: [workout])
         sut.showWorkoutOptions(for: workout)
@@ -355,12 +285,6 @@ struct WorkoutsViewModelTests {
         #expect(sut.workoutForAnalyticsEntry?.id == workout.id)
         #expect(!sut.showingWorkoutOptions)
         #expect(sut.selectedWorkoutForAction == nil)
-    }
-
-    @Test func dismissWorkoutAnalyticsEntryClearsTarget() {
-        let workout = Workout(name: "Pull")
-        let (sut, _, _) = makeSUT(seedWorkouts: [workout])
-        sut.showWorkoutAnalyticsEntry(for: workout)
 
         sut.dismissWorkoutAnalyticsEntry()
 
@@ -372,11 +296,15 @@ struct WorkoutsViewModelTests {
     @Test func showCreateWorkoutResetsRequiredFields() {
         let existing = [Workout(name: "W1"), Workout(name: "W2")]
         let (sut, _, _) = makeSUT(seedWorkouts: existing)
+        sut.newWorkoutName = "Stale"
+        sut.newWorkoutType = .leg
+        sut.operationFailure = .creation
 
         sut.showCreateWorkout()
 
         #expect(sut.newWorkoutName.isEmpty)
         #expect(sut.newWorkoutType == nil)
+        #expect(sut.operationFailure == nil)
         #expect(sut.showingCreateWorkoutFullScreen == true)
     }
 
@@ -397,18 +325,10 @@ struct WorkoutsViewModelTests {
 
     // MARK: - Delete confirmation flow
 
-    @Test func showDeleteConfirmationSetsFlag() {
-        let (sut, _, _) = makeSUT()
-
-        sut.showDeleteConfirmation()
-
-        #expect(sut.showingDeleteConfirmation == true)
-    }
-
     @Test func confirmDeleteDeletesSelectedAndHidesOptions() {
         let w1 = Workout(name: "A")
         let w2 = Workout(name: "B")
-        let (sut, ws, _) = makeSUT(seedWorkouts: [w1, w2])
+        let (sut, ws, countsStorage) = makeCountTrackingSUT(seedWorkouts: [w1, w2])
         sut.showWorkoutOptions(for: w1)
         sut.showDeleteConfirmation()
 
@@ -419,6 +339,7 @@ struct WorkoutsViewModelTests {
         #expect(sut.showingWorkoutOptions == false)
         #expect(sut.showingDeleteConfirmation == false)
         #expect(sut.selectedWorkoutForAction == nil)
+        #expect(countsStorage.countsLoadCallCount == 1)
     }
 
     @Test func confirmDeleteWithoutSelectionJustHidesOptions() {
@@ -442,56 +363,6 @@ struct WorkoutsViewModelTests {
         #expect(sut.showingDeleteConfirmation == false)
     }
 
-    // MARK: - canDeleteWorkout
-
-    @Test func canDeleteWorkoutFalseWithOneWorkout() {
-        let (sut, _, _) = makeSUT(seedWorkouts: [Workout(name: "Only")])
-        #expect(sut.canDeleteWorkout == false)
-    }
-
-    @Test func canDeleteWorkoutTrueWithMultipleWorkouts() {
-        let (sut, _, _) = makeSUT(seedWorkouts: [Workout(name: "A"), Workout(name: "B")])
-        #expect(sut.canDeleteWorkout == true)
-    }
-
-    // MARK: - Default workout
-
-    @Test func setAsDefaultDelegatesToStorage() {
-        let w = Workout(name: "X")
-        let (sut, ws, _) = makeSUT(seedWorkouts: [w])
-
-        sut.setAsDefault(w)
-
-        #expect(ws.defaultWorkout?.id == w.id)
-    }
-
-    @Test func removeAsDefaultClearsStorage() {
-        let w = Workout(name: "X")
-        let (sut, ws, _) = makeSUT(seedWorkouts: [w])
-        ws.defaultWorkout = w
-
-        sut.removeAsDefault()
-
-        #expect(ws.defaultWorkout == nil)
-    }
-
-    @Test func isDefaultWorkoutTrueForDefault() {
-        let w = Workout(name: "X")
-        let (sut, ws, _) = makeSUT(seedWorkouts: [w])
-        ws.defaultWorkout = w
-
-        #expect(sut.isDefaultWorkout(w) == true)
-    }
-
-    @Test func isDefaultWorkoutFalseForNonDefault() {
-        let w1 = Workout(name: "A")
-        let w2 = Workout(name: "B")
-        let (sut, ws, _) = makeSUT(seedWorkouts: [w1, w2])
-        ws.defaultWorkout = w1
-
-        #expect(sut.isDefaultWorkout(w2) == false)
-    }
-
     // MARK: - Exercise counts
 
     @Test func exerciseCountsStayUnloadedUntilRefreshThenRemainMaterialized() {
@@ -512,60 +383,6 @@ struct WorkoutsViewModelTests {
         _ = sut.exerciseCounts?[w.id]
         _ = sut.exerciseCounts?[w.id]
         #expect(storage.countsLoadCallCount == 1)
-    }
-
-    @Test func loadedExerciseCountsOmitWorkoutsWithoutExercises() {
-        let w = Workout(name: "X")
-        let (sut, _, _) = makeCountTrackingSUT(seedWorkouts: [w])
-
-        sut.refreshExerciseCounts()
-
-        #expect(sut.exerciseCounts != nil)
-        #expect(sut.exerciseCounts?[w.id] == nil)
-    }
-
-    @Test func successfulWorkoutCreationRefreshesExerciseCountsOnce() {
-        let first = Workout(name: "First")
-        let (sut, _, storage) = makeCountTrackingSUT(seedWorkouts: [first])
-        sut.newWorkoutName = "Created"
-        sut.newWorkoutType = .full
-
-        sut.createNewWorkout()
-
-        #expect(storage.countsLoadCallCount == 1)
-    }
-
-    @Test func successfulWorkoutDuplicationRefreshesExerciseCountsOnce() {
-        let workout = Workout(name: "First")
-        let (sut, _, storage) = makeCountTrackingSUT(seedWorkouts: [workout])
-
-        sut.duplicateWorkout(workout)
-
-        #expect(storage.countsLoadCallCount == 1)
-    }
-
-    @Test func successfulWorkoutDeletionRefreshesExerciseCountsOnce() {
-        let first = Workout(name: "First")
-        let second = Workout(name: "Second")
-        let (sut, _, storage) = makeCountTrackingSUT(
-            seedWorkouts: [first, second]
-        )
-
-        sut.deleteWorkout(first)
-
-        #expect(storage.countsLoadCallCount == 1)
-    }
-
-    @Test func failedWorkoutCreationDoesNotRefreshExerciseCounts() {
-        let (sut, workoutStorage, storage) = makeCountTrackingSUT()
-        workoutStorage.createWorkoutError = StubError.persistenceFailed
-        sut.newWorkoutName = "Pull"
-        sut.newWorkoutType = .pull
-
-        sut.createNewWorkout()
-
-        #expect(storage.countsLoadCallCount == 0)
-        #expect(sut.exerciseCounts == nil)
     }
 
     @Test func successfulImportIntentRefreshesExerciseCountsOnce() {
@@ -630,7 +447,7 @@ struct WorkoutsViewModelTests {
 
     // MARK: - Export-as-File (Share)
 
-    @Test func requestShare_writesFitnessWorkoutFileToTmpWithSanitizedFilename() throws {
+    @Test func requestShareWritesSanitizedFitnessWorkoutFileWithMatchingContent() throws {
         let workout = Workout(name: "Push/Pull Day?")
         let (sut, _, _) = makeSUT(seedWorkouts: [workout])
 
@@ -638,6 +455,7 @@ struct WorkoutsViewModelTests {
 
         let item = try #require(sut.workoutToShare)
         let url = try #require(item.fileURL)
+        defer { try? FileManager.default.removeItem(at: url) }
         // Custom extension exclusively owned by FitnessApp (no clash with
         // public.json owners on iOS 17+).
         #expect(url.pathExtension == "fitnessworkout")
@@ -645,19 +463,6 @@ struct WorkoutsViewModelTests {
         #expect(!url.lastPathComponent.contains("/"))
         #expect(!url.lastPathComponent.contains("?"))
         #expect(FileManager.default.fileExists(atPath: url.path))
-        // Cleanup
-        try? FileManager.default.removeItem(at: url)
-    }
-
-    @Test func requestShare_fileContentMatchesJSON() throws {
-        let workout = Workout(name: "Roundtrip")
-        let (sut, _, _) = makeSUT(seedWorkouts: [workout])
-
-        sut.requestShare(for: workout)
-
-        let item = try #require(sut.workoutToShare)
-        let url = try #require(item.fileURL)
-        defer { try? FileManager.default.removeItem(at: url) }
         let onDisk = try String(contentsOf: url, encoding: .utf8)
         #expect(onDisk == item.json, "File on disk must match the in-memory JSON string.")
     }

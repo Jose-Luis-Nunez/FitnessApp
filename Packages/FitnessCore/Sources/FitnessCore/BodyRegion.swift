@@ -64,42 +64,6 @@ public enum BodyRegion: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
-    public var displayName: String {
-        switch self {
-        case .neckLeft:      return "Neck left"
-        case .neckRight:     return "Neck right"
-        case .shoulderLeft:  return "Shoulder left"
-        case .shoulderRight: return "Shoulder right"
-        case .upperBack:     return "Upper back"
-        case .middleBack:    return "Middle back"
-        case .lowerBack:     return "Lower back"
-        case .abs:           return "Abs"
-        case .obliquesLeft:  return "Obliques left"
-        case .obliquesRight: return "Obliques right"
-        case .chestLeft:     return "Chest left"
-        case .chestRight:    return "Chest right"
-        case .bicepsLeft:    return "Biceps left"
-        case .bicepsRight:   return "Biceps right"
-        case .tricepsLeft:   return "Triceps left"
-        case .tricepsRight:  return "Triceps right"
-        case .forearmLeft:   return "Forearm left"
-        case .forearmRight:  return "Forearm right"
-        case .handLeft:      return "Hand left"
-        case .handRight:     return "Hand right"
-        case .wristLeft:     return "Wrist left"
-        case .wristRight:    return "Wrist right"
-        case .thighFront:    return "Thigh front"
-        case .thighBack:     return "Thigh back"
-        case .thighInner:    return "Thigh inner"
-        case .thighOuter:    return "Thigh outer"
-        case .kneeLeft:      return "Knee left"
-        case .kneeRight:     return "Knee right"
-        case .calf:          return "Calf"
-        case .foot:          return "Foot"
-        case .ankle:         return "Ankle"
-        }
-    }
-
     /// Asset name for the body-region icon. If no asset exists under this name
     /// in the asset catalog, `Image(iconAssetName)` renders an empty
     /// space (the tile border and the label remain visible).

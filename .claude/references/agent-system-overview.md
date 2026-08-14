@@ -32,7 +32,7 @@ the reviewed/tested one.
 |---|---|---|
 | Green | ≤2 local presentation files; no state/API/data signal | Main-agent base review + one relevant final test/snapshot |
 | Yellow | Logic, ViewModel/use case, public UI | Fresh reviewer + one final test run or tester verification |
-| Red | Schema, storage, DI, coordinator, navigation, concurrency, package/public domain boundary, multi-package, or 10+ production files | Reviewer + tester + affected tests + app build + relevant UI tests; ADR when architectural |
+| Red | Schema, storage, DI, coordinator, navigation, concurrency, package/public domain boundary, multi-package, or 10+ production files | Reviewer + tester + affected tests + app build; UI only for a critical journey not provable below UI; ADR when architectural |
 
 Classification is conservative. Agents may raise but never lower risk.
 
@@ -92,7 +92,7 @@ Codex-only source-command adapters live under `.agents/skills/source-command-*`.
 |---|---|
 | `.claude/commands/validate.md` | Review and validate every current working-tree change before staging; Git authority is canonical in `AGENTS.md` |
 | `.claude/commands/buildApp.md` | Build/install/launch command |
-| `scripts/test-affected-packages.sh` | Run each requested package test action once |
+| `scripts/test-affected-packages.sh` | Route requested modules through one shared SwiftPM graph and native-fast, pinned-iOS integration, snapshot, or pre-merge test plans; Xcode owns global build/test-worker coordination, while compilation caching and reusable test products are explicit modes |
 | `scripts/sync-agent-runtime.sh` | Generate/check Codex skills, hooks, and roles |
 | `scripts/generate-codex-agent.py` | Generate TOML role from canonical Markdown |
 | `scripts/install-hooks.sh` | Configure `.githooks` as Git hooks path |

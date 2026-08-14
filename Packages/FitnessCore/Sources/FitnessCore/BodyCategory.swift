@@ -9,15 +9,6 @@ public enum BodyCategory: String, CaseIterable, Identifiable, Codable, Sendable 
 
     public var id: String { rawValue }
 
-    public var displayName: String {
-        switch self {
-        case .back:  return "Back"
-        case .abs:   return "Abs"
-        case .chest: return "Chest"
-        case .arm:   return "Arm"
-        case .legs:  return "Legs"
-        }
-    }
 }
 
 public extension BodyCategory {

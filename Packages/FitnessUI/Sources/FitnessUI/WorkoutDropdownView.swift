@@ -1,13 +1,14 @@
 import SwiftUI
+import FitnessResources
 
 public struct WorkoutDropdownView: View {
     @Environment(UIOverlayState.self) private var overlayState
 
-    private let workoutName: String
+    private let workoutName: String?
     private let titleFont: Font
 
     public init(
-        workoutName: String,
+        workoutName: String?,
         titleFont: Font = AppStyle.Font.navigationHeadline
     ) {
         self.workoutName = workoutName
@@ -21,7 +22,13 @@ public struct WorkoutDropdownView: View {
             }
         }) {
             HStack(spacing: 8) {
-                Text(workoutName)
+                Group {
+                    if let workoutName {
+                        Text(verbatim: workoutName)
+                    } else {
+                        Text(AppText.workoutFallbackName)
+                    }
+                }
                     .font(titleFont)
                     .foregroundColor(AppStyle.Color.white)
                     .lineLimit(1)

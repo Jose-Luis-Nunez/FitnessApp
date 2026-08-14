@@ -32,10 +32,17 @@ Any code change after a test run invalidates that evidence.
 
 ## Commands
 
-Use `scripts/test-affected-packages.sh` with the affected package names.
-It supplies the pinned Xcode, PATH, simulator, scheme mapping, and
-`-skipMacroValidation`. UI tests use the dedicated `FitnessApp UITests` scheme.
-Never use `swift test` or `swift build`.
+Use `scripts/test-affected-packages.sh` with the affected package names. It
+runs all modules through one shared SwiftPM graph and supplies the pinned Xcode,
+PATH, native/simulator destinations, test-plan selection, and
+`-skipMacroValidation`. Xcode coordinates the global build-job and test-worker
+limits inside each phase; do not launch concurrent package-level `xcodebuild`
+processes. Use `--jobs 1` only to diagnose ordering or resource contention.
+
+Run hosted app-target unit tests only when affected app behavior cannot be
+proven in a package and the additional full-app build/install cost is justified
+by the Selection Gate. UI tests use `FitnessApp UITests` and are selected only
+by the same gate. Never use `swift test` or `swift build`.
 
 - **Blocker:** relevant affected-package tests must pass; add the critical UI
   flow when lower layers cannot prove the changed path. A snapshot alone is not
@@ -71,6 +78,7 @@ command: <command or verified commands>
 tests: <passed/total>
 exit_code: 0
 xcresult: <path or n/a>
+duration_seconds: <wall-clock seconds for the final command set>
 source_fingerprint: <fingerprint>
 ```
 

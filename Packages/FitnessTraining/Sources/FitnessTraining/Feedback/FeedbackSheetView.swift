@@ -1,5 +1,6 @@
 import SwiftUI
 import FitnessCore
+import FitnessResources
 import FitnessUI
 
 /// Post-exercise feedback **form** presented by `FeedbackSheetComponent` with
@@ -89,14 +90,14 @@ public struct FeedbackSheetView: View {
     public var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: AppStyle.Padding.sectionSpacing) {
-                sectionTitle("Physical Symptoms")
+                sectionTitle(AppText.feedbackPhysicalSymptoms)
                 SymptomChipsView(
                     selected: viewModel.symptoms,
                     onToggle: { viewModel.toggleSymptom($0) }
                 )
 
                 if viewModel.symptoms.contains(.pain) {
-                    sectionTitle("Pain")
+                    sectionTitle(AppText.feedbackPain)
                     PainRegionGrid(
                         category: viewModel.painCategory,
                         selectedRegions: viewModel.painRegions,
@@ -106,10 +107,10 @@ public struct FeedbackSheetView: View {
                 }
 
                 if !viewModel.symptoms.isEmpty {
-                    sectionTitle("Energy level")
+                    sectionTitle(AppText.feedbackEnergyLevel)
                     EnergyLevelSlider(selectedLevel: $viewModel.energyLevel)
 
-                    sectionTitle("Notes")
+                    sectionTitle(AppText.feedbackNotes)
                     NoteField(text: $viewModel.note, isFocused: $isNotesFocused)
                 }
             }
@@ -141,7 +142,7 @@ public struct FeedbackSheetView: View {
     }
 
     @ViewBuilder
-    private func sectionTitle(_ text: String) -> some View {
+    private func sectionTitle(_ text: LocalizedStringResource) -> some View {
         Text(text)
             .font(AppStyle.Font.sheetSectionLabel)
             .foregroundColor(AppStyle.Color.white.opacity(0.9))
@@ -160,8 +161,8 @@ public struct FeedbackSheetView: View {
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
             .accessibilityElement()
-            .accessibilityLabel("Cancel feedback")
-            .accessibilityHint("Swipe down or activate to return to training")
+            .accessibilityLabel(AppText.feedbackCancel)
+            .accessibilityHint(AppText.feedbackCancelHint)
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { dismiss() }
             .accessibilityIdentifier(TrainingIDs.feedbackSheetGrabber)
@@ -171,7 +172,7 @@ public struct FeedbackSheetView: View {
         VStack(spacing: 0) {
             feedbackSheetGrabber
 
-            Text("Exercise Feedback")
+            Text(AppText.feedbackTitle)
                 .font(AppStyle.Font.sheetTitle)
                 .foregroundColor(AppStyle.Color.white)
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -183,7 +184,7 @@ public struct FeedbackSheetView: View {
 
     private var feedbackActionArea: some View {
         SheetActionArea(
-            saveLabel: "Save",
+            saveLabel: AppText.actionSave,
             isSaveEnabled: viewModel.isSaveEnabled,
             backdropColor: AppStyle.Color.idleCardDark,
             cancelAccessibilityIdentifier: TrainingIDs.feedbackCancelButton,
@@ -232,7 +233,7 @@ private struct NoteField: View {
                 )
 
             if text.isEmpty {
-                Text("e.g. shoulder hurt during last set")
+                Text(AppText.feedbackNoteExample)
                     .font(AppStyle.Font.tileLabel)
                     .foregroundColor(AppStyle.Color.white.opacity(0.35))
                     .padding(.horizontal, 14)

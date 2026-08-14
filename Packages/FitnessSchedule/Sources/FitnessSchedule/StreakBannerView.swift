@@ -1,8 +1,11 @@
 import SwiftUI
+import FitnessAnalytics
+import FitnessResources
 import FitnessUI
 
 public struct StreakBannerView: View {
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var locale
     public let streakData: StreakData
 
     public init(streakData: StreakData) {
@@ -13,31 +16,31 @@ public struct StreakBannerView: View {
         HStack(spacing: 8) {
             streakTile(
                 icon: "flame.fill",
-                value: "\(streakData.current)",
-                label: "Streak"
+                value: streakData.current.formatted(.number.locale(locale)),
+                label: AppText.scheduleStreak
             )
 
             streakTile(
                 icon: "trophy.fill",
-                value: "\(streakData.longest)",
-                label: "Best"
+                value: streakData.longest.formatted(.number.locale(locale)),
+                label: AppText.scheduleBest
             )
 
             streakTile(
                 icon: "metronome.fill",
-                value: streakData.rhythmLabel,
-                label: "Rhythm"
+                value: localizedRhythm,
+                label: AppText.scheduleRhythm
             )
         }
     }
 
-    private func streakTile(icon: String, value: String, label: String) -> some View {
+    private func streakTile(icon: String, value: String, label: LocalizedStringResource) -> some View {
         VStack(spacing: 6) {
             Image(systemName: icon)
                 .font(AppStyle.Font.detailExercise)
                 .foregroundColor(appColorTheme.accent.glow)
 
-            Text(value)
+            Text(verbatim: value)
                 .font(AppStyle.Font.streakValue)
                 .foregroundColor(AppStyle.Color.white)
                 .lineLimit(1)
@@ -58,5 +61,9 @@ public struct StreakBannerView: View {
                         .stroke(Color.white.opacity(AppStyle.Opacity.subtleStroke), lineWidth: 1)
                 )
         )
+    }
+
+    private var localizedRhythm: String {
+        AppText.resolve(streakData.rhythm.localizedResource, locale: locale)
     }
 }

@@ -14,16 +14,6 @@ public enum BMICategory: String {
     case obese = "Obese"
     case unknown = "Unknown"
 
-    public var displayName: String {
-        switch self {
-        case .underweight: return "Underweight"
-        case .normal: return "Normal weight"
-        case .overweight: return "Overweight"
-        case .obese: return "Obese"
-        case .unknown: return "Unknown"
-        }
-    }
-
     public init(from apiCategory: String) {
         switch apiCategory.lowercased() {
         case let s where s.contains("underweight"):

@@ -3,13 +3,23 @@ import FitnessCore
 import FitnessResources
 
 extension MuscleCategoryGroup {
-    public var displayName: String {
+    public var localizedName: LocalizedStringResource {
         switch self {
-        case .arms: return L10n.muscleCategoryOptionArms
-        case .chest: return L10n.muscleCategoryOptionChest
-        case .back: return L10n.muscleCategoryOptionBack
-        case .legs: return L10n.muscleCategoryOptionLegs
-        case .abs: return L10n.muscleCategoryOptionAbs
+        case .arms: return AppText.muscleArm
+        case .chest: return AppText.muscleChest
+        case .back: return AppText.muscleBack
+        case .legs: return AppText.muscleLegs
+        case .abs: return AppText.muscleAbs
+        }
+    }
+
+    public var localizedGroupName: LocalizedStringResource {
+        switch self {
+        case .arms: return AppText.muscleArms
+        case .chest: return AppText.muscleChest
+        case .back: return AppText.muscleBack
+        case .legs: return AppText.muscleLegs
+        case .abs: return AppText.muscleAbs
         }
     }
 

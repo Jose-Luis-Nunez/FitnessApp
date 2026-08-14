@@ -1,4 +1,5 @@
 import FitnessCore
+import FitnessResources
 import FitnessStorage
 import FitnessUI
 import SwiftUI
@@ -10,8 +11,8 @@ public struct AnalyticsTileData: Identifiable {
     public var id: Kind { kind }
     public let kind: Kind
     public let type: TileType
-    public let value: String
-    public let label: String
+    public let value: AnalyticsTileValue
+    public let label: AnalyticsTileLabel
 
     public enum TileType {
         case number
@@ -28,7 +29,7 @@ public struct AnalyticsTileData: Identifiable {
         case mostImprovedCategory
     }
 
-    public init(kind: Kind, type: TileType, value: String, label: String) {
+    public init(kind: Kind, type: TileType, value: AnalyticsTileValue, label: AnalyticsTileLabel) {
         self.kind = kind
         self.type = type
         self.value = value
@@ -36,8 +37,26 @@ public struct AnalyticsTileData: Identifiable {
     }
 }
 
+public enum AnalyticsTileValue: Equatable, Sendable {
+    case number(Int)
+    case percentage(Int)
+    case rhythm(TrainingRhythm)
+    case category(MuscleCategoryGroup)
+}
+
+public enum AnalyticsTileLabel: Equatable, Sendable {
+    case trainingMonth(Date)
+    case trainingYear(Int)
+    case lastWorkoutCompletion
+    case trainingRhythm
+    case mostTrainedCategory
+    case leastTrainedCategory
+    case mostImprovedCategory
+}
+
 public struct TotalAnalyticsView: View {
     @Environment(\.appColorTheme) var appColorTheme
+    @Environment(\.locale) var locale
     @State private var viewModel: TotalAnalyticsViewModel
     @State private var selectedDate: Date = Date()
     @State private var showCalendarDialog: Bool = false
@@ -64,12 +83,12 @@ public struct TotalAnalyticsView: View {
                     isPresented: $showCalendarDialog,
                     selectedDate: $selectedDate,
                     highlightedDates: Array(viewModel.displayState.datesWithData),
-                    title: "Training Calendar"
+                    title: AppText.analyticsTrainingCalendar
                 )
             }
         }
         .background(AppStyle.Color.backgroundColor)
-        .standardToolbar(title: "Total Analytics")
+        .standardToolbar(title: AppText.analyticsTotalAnalytics)
         .onAppear {
             viewModel.materializeDisplayState()
         }
@@ -120,13 +139,13 @@ public struct TotalAnalyticsView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Total Overview")
+                    Text(AppText.analyticsTotalOverview)
                         .font(AppStyle.Font.analyticsExerciseTitle)
                         .foregroundColor(AppStyle.Color.white)
                         .fixedSize()
 
                     if let currentWorkout = workoutStorageService.currentWorkout {
-                        Text("Workout: \(currentWorkout.name)")
+                        Text(AppText.workoutTitleWithName(name: currentWorkout.name))
                             .font(AppStyle.Font.detailCaption)
                             .foregroundColor(appColorTheme.accent.glow.opacity(0.8))
                     }
@@ -140,7 +159,7 @@ public struct TotalAnalyticsView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "calendar")
                             .font(AppStyle.Font.detailCaption)
-                        Text(DateFormatter.germanShort.string(from: selectedDate))
+                        Text(verbatim: selectedDate.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year(.twoDigits).locale(locale)))
                             .font(AppStyle.Font.detailCaption)
                     }
                     .foregroundColor(appColorTheme.accent.glow)
@@ -182,13 +201,13 @@ public struct TotalAnalyticsView: View {
             switch tile.type {
             case .number:
                 AnalyticsTileNumberView(
-                    number: tile.value,
-                    label: tile.label
+                    number: tileValue(tile.value),
+                    label: tileLabel(tile.label)
                 )
             case .text:
                 AnalyticsTileTextView(
-                    text: tile.value,
-                    label: tile.label
+                    text: tileValue(tile.value),
+                    label: tileLabel(tile.label)
                 )
             }
         }
@@ -220,4 +239,29 @@ public struct TotalAnalyticsView: View {
             tileView
         }
     }
+
+    private func tileValue(_ value: AnalyticsTileValue) -> String {
+        switch value {
+        case .number(let number): number.formatted(.number.locale(locale))
+        case .percentage(let number): "\(number.formatted(.number.locale(locale)))%"
+        case .rhythm(let rhythm): AppText.resolve(rhythm.localizedResource, locale: locale)
+        case .category(let category): AppText.resolve(category.localizedName, locale: locale)
+        }
+    }
+
+    private func tileLabel(_ label: AnalyticsTileLabel) -> String {
+        let resource: LocalizedStringResource
+        switch label {
+        case .trainingMonth(let date):
+            resource = AppText.analyticsTrainingMonth(month: date.formatted(.dateTime.month(.wide).locale(locale)))
+        case .trainingYear(let year): resource = AppText.analyticsTrainingYear(year: year)
+        case .lastWorkoutCompletion: resource = AppText.analyticsLastWorkoutCompletion
+        case .trainingRhythm: resource = AppText.analyticsTrainingRhythm
+        case .mostTrainedCategory: resource = AppText.analyticsMostTrainedCategory
+        case .leastTrainedCategory: resource = AppText.analyticsLeastTrainedCategory
+        case .mostImprovedCategory: resource = AppText.analyticsMostImprovedCategory
+        }
+        return AppText.resolve(resource, locale: locale)
+    }
+
 }

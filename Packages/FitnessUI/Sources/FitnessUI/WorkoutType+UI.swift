@@ -1,13 +1,15 @@
+import Foundation
 import FitnessCore
+import FitnessResources
 
 extension WorkoutType {
-    public var displayName: String {
+    public var localizedName: LocalizedStringResource {
         switch self {
-        case .pull: "Pull"
-        case .push: "Push"
-        case .leg: "Leg"
-        case .individual: "Individual"
-        case .full: "Full"
+        case .pull: AppText.workoutTypePull
+        case .push: AppText.workoutTypePush
+        case .leg: AppText.workoutTypeLeg
+        case .individual: AppText.workoutTypeIndividual
+        case .full: AppText.workoutTypeFull
         }
     }
 }

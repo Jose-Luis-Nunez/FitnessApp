@@ -1,7 +1,4 @@
 import Foundation
-import Mockable
-
-@Mockable
 @MainActor
 public protocol TotalAnalyticsStoring {
     /// Loads one coherent workout-wide analytics value. Storage failures stay

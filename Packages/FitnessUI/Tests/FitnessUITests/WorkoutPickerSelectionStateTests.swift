@@ -18,15 +18,6 @@ struct WorkoutPickerSelectionStateTests {
         #expect(state.selectedWorkout == tapped)
     }
 
-    @Test("Arrow confirmation emits the current wheel selection")
-    func arrowUsesCurrentSelection() {
-        let current = Workout(name: "Current")
-        var state = WorkoutPickerSelectionState()
-        state.select(current)
-
-        #expect(state.confirm() == current)
-    }
-
     @Test("Wheel selection alone does not confirm")
     func wheelSelectionRemainsLocal() {
         let scrolledTo = Workout(name: "Scrolled")

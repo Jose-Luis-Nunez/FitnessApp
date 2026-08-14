@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import FitnessCore
+import FitnessResources
 import FitnessUI
 import FitnessExercise
 import FitnessTraining
@@ -56,7 +57,7 @@ struct TrainingSheetView: View {
                 }
                 .buttonStyle(.plain)
                 .ignoresSafeArea()
-                .accessibilityLabel("Close training")
+                .accessibilityLabel(AppText.accessibilityCloseTraining)
                 .accessibilityIdentifier(TrainingIDs.sheetBackdrop)
 
                 if let model = models.first, trainingCoordinator.isTrainingActive {
@@ -224,8 +225,8 @@ struct TrainingSheetView: View {
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
             .accessibilityElement()
-            .accessibilityLabel("Close training")
-            .accessibilityHint("Swipe down or activate to return to the workout")
+            .accessibilityLabel(AppText.accessibilityCloseTraining)
+            .accessibilityHint(AppText.accessibilityCloseTrainingHint)
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { dismissTrainingSheet() }
             .accessibilityIdentifier(TrainingIDs.sheetGrabber)
@@ -268,7 +269,7 @@ struct TrainingSheetView: View {
                             MiniActionMenuItem(
                                 id: "cancel-training",
                                 icon: "xmark",
-                                title: "Cancel",
+                                title: AppText.actionCancel,
                                 isDestructive: true
                             ) {
                                 cancelTraining()

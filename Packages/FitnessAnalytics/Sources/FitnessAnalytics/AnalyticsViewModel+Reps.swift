@@ -3,10 +3,6 @@ import FitnessCore
 
 extension AnalyticsViewModel {
 
-    public func getDailyRepsProgression(for exerciseId: UUID) -> [DailyProgression] {
-        getDailyRepsProgression(from: loadAnalytics(for: exerciseId))
-    }
-
     func getDailyRepsProgression(from history: [AnalyticsEntry]) -> [DailyProgression] {
         let calendar = Calendar.current
         let sortedEntries = history
@@ -27,10 +23,6 @@ extension AnalyticsViewModel {
             .sorted(by: { $0.date < $1.date })
 
         return maxRepsPerDay
-    }
-
-    public func totalRepsIncreases(for exerciseId: UUID) -> Int {
-        totalRepsIncreases(from: loadAnalytics(for: exerciseId))
     }
 
     func totalRepsIncreases(from history: [AnalyticsEntry]) -> Int {
@@ -63,10 +55,6 @@ extension AnalyticsViewModel {
         }
 
         return increases
-    }
-
-    public func trainingSessionsUntilRepsIncrease(for exerciseId: UUID) -> Int {
-        trainingSessionsUntilRepsIncrease(from: loadAnalytics(for: exerciseId))
     }
 
     func trainingSessionsUntilRepsIncrease(from history: [AnalyticsEntry]) -> Int {
@@ -105,10 +93,6 @@ extension AnalyticsViewModel {
             .mapValues { $0.count }
 
         return patternFrequency.max(by: { $0.value < $1.value })?.key ?? 0
-    }
-
-    public func repsPhases(for exerciseId: UUID, limit: Int = 3) -> [WeightPhase] {
-        repsPhases(from: loadAnalytics(for: exerciseId), limit: limit)
     }
 
     func repsPhases(from history: [AnalyticsEntry], limit: Int = 3) -> [WeightPhase] {

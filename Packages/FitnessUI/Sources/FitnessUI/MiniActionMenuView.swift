@@ -1,37 +1,63 @@
 import SwiftUI
+import FitnessResources
 
 public struct MiniActionMenuItem: Identifiable {
     /// Stable semantic identity, unique among the items in one menu.
     public let id: String
     public let icon: String?
-    public let title: String
+    public let title: MiniActionMenuView.MenuTitle
     public let isDestructive: Bool
     public let action: () -> Void
 
     public init(
         id: String,
         icon: String?,
-        title: String,
+        title: LocalizedStringResource,
         isDestructive: Bool = false,
         action: @escaping () -> Void
     ) {
         self.id = id
         self.icon = icon
-        self.title = title
+        self.title = .localized(title)
+        self.isDestructive = isDestructive
+        self.action = action
+    }
+
+    public init(
+        id: String,
+        icon: String?,
+        verbatimTitle title: String,
+        isDestructive: Bool = false,
+        action: @escaping () -> Void
+    ) {
+        self.id = id
+        self.icon = icon
+        self.title = .verbatim(title)
         self.isDestructive = isDestructive
         self.action = action
     }
 }
 
 public struct MiniActionMenuView: View {
-    let title: String?
+    private let title: MenuTitle?
     let items: [MiniActionMenuItem]
     var width: CGFloat
     var minHeight: CGFloat
     private let rowHeight: CGFloat = 52
 
-    public init(title: String?, items: [MiniActionMenuItem], width: CGFloat? = nil, minHeight: CGFloat = 140) {
-        self.title = title
+    public init(title: LocalizedStringResource?, items: [MiniActionMenuItem], width: CGFloat? = nil, minHeight: CGFloat = 140) {
+        self.title = title.map(MenuTitle.localized)
+        self.items = items
+        #if canImport(UIKit)
+        self.width = width ?? min(UIScreen.main.bounds.width * 0.55, AppStyle.Layout.miniMenuMaxWidth)
+        #else
+        self.width = width ?? 280
+        #endif
+        self.minHeight = minHeight
+    }
+
+    public init(verbatimTitle title: String?, items: [MiniActionMenuItem], width: CGFloat? = nil, minHeight: CGFloat = 140) {
+        self.title = title.map(MenuTitle.verbatim)
         self.items = items
         #if canImport(UIKit)
         self.width = width ?? min(UIScreen.main.bounds.width * 0.55, AppStyle.Layout.miniMenuMaxWidth)
@@ -42,7 +68,7 @@ public struct MiniActionMenuView: View {
     }
 
     private var visibleItemCount: Int {
-        items.filter { !($0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && $0.icon == nil) }.count
+        items.count
     }
 
     private var effectiveMinHeight: CGFloat {
@@ -83,7 +109,7 @@ public struct MiniActionMenuView: View {
     private var headerView: some View {
         if let title = title {
             VStack(spacing: 8) {
-                Text(title)
+                title.text
                     .font(AppStyle.Font.navigationHeadline)
                     .foregroundColor(AppStyle.Color.white)
                 Rectangle()
@@ -106,26 +132,34 @@ public struct MiniActionMenuView: View {
 
     @ViewBuilder
     private func itemRow(item: MiniActionMenuItem) -> some View {
-        if (item.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) && item.icon == nil {
-            EmptyView()
-        } else {
-            Button(action: item.action) {
-                HStack(spacing: 12) {
-                    if let icon = item.icon {
-                        Image(systemName: icon)
-                            .font(AppStyle.Font.regularChip)
-                            .frame(width: 24, height: 24)
-                            .foregroundColor(.white)
-                    }
-                    Text(item.title)
+        Button(action: item.action) {
+            HStack(spacing: 12) {
+                if let icon = item.icon {
+                    Image(systemName: icon)
                         .font(AppStyle.Font.regularChip)
+                        .frame(width: 24, height: 24)
                         .foregroundColor(.white)
-                    Spacer(minLength: 0)
                 }
-                .padding(.horizontal, 8)
-                .frame(height: rowHeight)
+                item.title.text
+                    .font(AppStyle.Font.regularChip)
+                    .foregroundColor(.white)
+                Spacer(minLength: 0)
             }
-            .buttonStyle(.plain)
+            .padding(.horizontal, 8)
+            .frame(height: rowHeight)
+        }
+        .buttonStyle(.plain)
+    }
+
+    public enum MenuTitle {
+        case localized(LocalizedStringResource)
+        case verbatim(String)
+
+        var text: Text {
+            switch self {
+            case .localized(let resource): Text(resource)
+            case .verbatim(let value): Text(verbatim: value)
+            }
         }
     }
 }

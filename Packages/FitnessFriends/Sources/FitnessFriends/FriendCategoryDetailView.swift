@@ -1,6 +1,7 @@
 import SwiftUI
 import FitnessCore
 import FitnessUI
+import FitnessResources
 
 /// Drill-down view showing only exercises whose names appear in both the user's
 /// and the friend's workout for the selected category.
@@ -9,6 +10,7 @@ public struct FriendCategoryDetailView: View {
     public let myName: String
     public let friendName: String
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var locale
 
     private var profileColors: ProfileColorTheme { appColorTheme.profile }
 
@@ -47,21 +49,21 @@ public struct FriendCategoryDetailView: View {
                 .padding(.bottom, 32)
             }
         }
-        .navigationTitle(categoryComparison.category.displayName)
+        .navigationTitle(Text(categoryComparison.category.localizedName))
         .navigationBarTitleDisplayMode(.inline)
     }
 
     private var headerRow: some View {
         HStack {
-            Text(myName)
+            Text(verbatim: myName)
                 .font(AppStyle.Font.profileCardTitle)
                 .foregroundColor(profileColors.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Text("Exercise")
+            Text(AppText.exerciseSingular)
                 .font(AppStyle.Font.profileCardTitle)
                 .foregroundColor(profileColors.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
-            Text(friendName)
+            Text(verbatim: friendName)
                 .font(AppStyle.Font.profileCardTitle)
                 .foregroundColor(profileColors.secondary)
                 .frame(maxWidth: .infinity, alignment: .trailing)
@@ -72,16 +74,16 @@ public struct FriendCategoryDetailView: View {
     private func exercisePairRow(_ pair: ExercisePair) -> some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(WeightFormatter.displayWeight(pair.myWeight))
+                Text(verbatim: WeightFormatter.displayWeight(pair.myWeight, locale: locale))
                     .font(AppStyle.Font.tileValue)
                     .foregroundColor(profileColors.title)
-                Text("\(pair.myReps) reps")
+                Text(AppText.exerciseRepetitionsCount(count: pair.myReps))
                     .font(AppStyle.Font.profileCardTitle)
                     .foregroundColor(profileColors.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text(pair.name)
+            Text(verbatim: pair.name)
                 .font(AppStyle.Font.defaultFont)
                 .foregroundColor(profileColors.title)
                 .lineLimit(2)
@@ -89,10 +91,10 @@ public struct FriendCategoryDetailView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
 
             VStack(alignment: .trailing, spacing: 2) {
-                Text(WeightFormatter.displayWeight(pair.friendWeight))
+                Text(verbatim: WeightFormatter.displayWeight(pair.friendWeight, locale: locale))
                     .font(AppStyle.Font.tileValue)
                     .foregroundColor(profileColors.title)
-                Text("\(pair.friendReps) reps")
+                Text(AppText.exerciseRepetitionsCount(count: pair.friendReps))
                     .font(AppStyle.Font.profileCardTitle)
                     .foregroundColor(profileColors.secondary)
             }
@@ -103,7 +105,7 @@ public struct FriendCategoryDetailView: View {
     }
 
     private var emptyState: some View {
-        Text("No shared exercises in this category.")
+        Text(AppText.friendNoSharedExercises)
             .font(AppStyle.Font.profileCardTitle)
             .foregroundColor(profileColors.secondary)
             .multilineTextAlignment(.center)
@@ -111,7 +113,7 @@ public struct FriendCategoryDetailView: View {
     }
 
     private var exclusiveFooter: some View {
-        Text("+ \(categoryComparison.friendExclusiveCount) exclusive to \(friendName)")
+        Text(AppText.friendExclusiveCount(count: categoryComparison.friendExclusiveCount, name: friendName))
             .font(AppStyle.Font.profileCardTitle)
             .foregroundColor(profileColors.secondary.opacity(0.7))
             .frame(maxWidth: .infinity, alignment: .center)

@@ -1,0 +1,23 @@
+{
+  "configurations" : [
+    {
+      "id" : "9EFB52AA-2A6B-4C30-8CE5-5E27F613A102",
+      "name" : "Pinned iOS Integration",
+      "options" : {
+        "codeCoverage" : false
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testTimeoutsEnabled" : true
+  },
+  "testTargets" : [
+    { "parallelizable" : false, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessStorageMigrationTests", "name" : "FitnessStorageMigrationTests" } },
+    { "parallelizable" : false, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessWorkoutsTests", "name" : "FitnessWorkoutsTests" } },
+    { "parallelizable" : false, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessFriendsTests", "name" : "FitnessFriendsTests" } },
+    { "parallelizable" : false, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessAnalyticsIntegrationTests", "name" : "FitnessAnalyticsIntegrationTests" } },
+    { "parallelizable" : false, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessExerciseIntegrationTests", "name" : "FitnessExerciseIntegrationTests" } },
+    { "parallelizable" : false, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessPersistenceUIIntegrationTests", "name" : "FitnessPersistenceUIIntegrationTests" } }
+  ],
+  "version" : 1
+}

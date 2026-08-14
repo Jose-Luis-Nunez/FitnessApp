@@ -1,4 +1,5 @@
 import SwiftUI
+import FitnessResources
 
 /// Owns the full-screen host for the edge-to-edge Add Friend overlay and
 /// app-level `.fitnessfriend` delivery.
@@ -30,13 +31,10 @@ struct FriendImportFlowModifier: ViewModifier {
                     viewModel.friendImportDidDismiss()
                 }
             }
-            .alert("Import failed", isPresented: Binding(
-                get: { viewModel.importErrorMessage != nil },
-                set: { if !$0 { viewModel.importErrorMessage = nil } }
-            )) {
-                Button("OK") { viewModel.importErrorMessage = nil }
+            .alert(AppText.workoutImportFailedTitle, isPresented: $viewModel.importFailed) {
+                Button(AppText.actionOk) { viewModel.importFailed = false }
             } message: {
-                Text(viewModel.importErrorMessage ?? "")
+                Text(AppText.friendFileUnreadable)
             }
     }
 

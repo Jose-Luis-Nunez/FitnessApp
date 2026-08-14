@@ -11,9 +11,11 @@ private final class MockFriendStorage: FriendStoring {
     var friends: [Friend] = []
     var upsertShouldThrow: WorkoutShareError?
     var capturedUpsertName: String?
+    var capturedEnvelopeJSON: String?
 
     func upsertFriend(name: String, envelopeJSON: String, workoutName: String) throws -> Friend {
         capturedUpsertName = name
+        capturedEnvelopeJSON = envelopeJSON
         if let error = upsertShouldThrow { throw error }
         let f = Friend(id: UUID(), name: name, addedAt: Date(), workoutName: workoutName)
         friends.append(f)
@@ -59,22 +61,26 @@ private func makeValidEnvelopeJSON(workoutName: String = "Push Day") -> String {
 @MainActor
 struct AddFriendViewModelTests {
 
+    private final class CallbackSpy {
+        var addedCount = 0
+        var dismissCount = 0
+    }
+
     private func makeSUT(
         storageShouldThrow: WorkoutShareError? = nil,
         importCoordinator: FriendImportCoordinator? = nil
-    ) -> (AddFriendViewModel, MockFriendStorage, Bool, Bool) {
+    ) -> (sut: AddFriendViewModel, storage: MockFriendStorage, callbacks: CallbackSpy) {
         let storage = MockFriendStorage()
         storage.upsertShouldThrow = storageShouldThrow
         let useCase = ImportFriendUseCase(friendStorage: storage)
-        var addedCalled = false
-        var dismissCalled = false
+        let callbacks = CallbackSpy()
         let vm = AddFriendViewModel(
             importFriendUseCase: useCase,
             importCoordinator: importCoordinator,
-            onAdded: { addedCalled = true },
-            onDismiss: { dismissCalled = true }
+            onAdded: { callbacks.addedCount += 1 },
+            onDismiss: { callbacks.dismissCount += 1 }
         )
-        return (vm, storage, addedCalled, dismissCalled)
+        return (vm, storage, callbacks)
     }
 
     private func makeTemporaryFriendFile() -> URL {
@@ -84,47 +90,29 @@ struct AddFriendViewModelTests {
 
     // MARK: - isSaveDisabled
 
-    @Test("Save is disabled when both fields are empty")
-    func saveDisabledWhenBothEmpty() {
-        let (vm, _, _, _) = makeSUT()
-        #expect(vm.isSaveDisabled)
-    }
+    @Test("Save availability follows trimmed name and JSON")
+    func saveAvailabilityUsesTrimmedFields() {
+        let cases: [(name: String, json: String, disabled: Bool)] = [
+            ("", "", true),
+            ("Alice", "", true),
+            ("", "{}", true),
+            ("Alice", makeValidEnvelopeJSON(), false),
+            ("   ", "  \n  ", true),
+        ]
 
-    @Test("Save is disabled when only name is filled")
-    func saveDisabledWhenOnlyNameFilled() {
-        let (vm, _, _, _) = makeSUT()
-        vm.friendName = "Alice"
-        #expect(vm.isSaveDisabled)
-    }
-
-    @Test("Save is disabled when only JSON is filled")
-    func saveDisabledWhenOnlyJSONFilled() {
-        let (vm, _, _, _) = makeSUT()
-        vm.pastedText = "{}"
-        #expect(vm.isSaveDisabled)
-    }
-
-    @Test("Save is enabled when both fields are filled")
-    func saveEnabledWhenBothFilled() {
-        let (vm, _, _, _) = makeSUT()
-        vm.friendName = "Alice"
-        vm.pastedText = makeValidEnvelopeJSON()
-        #expect(!vm.isSaveDisabled)
-    }
-
-    @Test("Save is disabled when fields contain only whitespace")
-    func saveDisabledForWhitespaceOnly() {
-        let (vm, _, _, _) = makeSUT()
-        vm.friendName = "   "
-        vm.pastedText = "  \n  "
-        #expect(vm.isSaveDisabled)
+        for testCase in cases {
+            let (vm, _, _) = makeSUT()
+            vm.friendName = testCase.name
+            vm.pastedText = testCase.json
+            #expect(vm.isSaveDisabled == testCase.disabled)
+        }
     }
 
     // MARK: - file selection
 
     @Test("chooseFileTapped presents the document importer")
     func chooseFileTappedPresentsImporter() {
-        let (vm, _, _, _) = makeSUT()
+        let (vm, _, _) = makeSUT()
 
         vm.chooseFileTapped()
 
@@ -134,7 +122,7 @@ struct AddFriendViewModelTests {
     @Test("Selecting a friend file populates its data and name")
     func selectingFriendFilePopulatesData() throws {
         let coordinator = FriendImportCoordinator()
-        let (vm, _, _, _) = makeSUT(importCoordinator: coordinator)
+        let (vm, _, _) = makeSUT(importCoordinator: coordinator)
         let url = makeTemporaryFriendFile()
         let content = #"{"version":1}"#
         try Data(content.utf8).write(to: url)
@@ -150,69 +138,55 @@ struct AddFriendViewModelTests {
         #expect(coordinator.pendingImportFileName == nil)
     }
 
-    @Test("Selecting another friend file replaces the previous data")
-    func selectingAnotherFriendFileReplacesData() throws {
-        let coordinator = FriendImportCoordinator()
-        let (vm, _, _, _) = makeSUT(importCoordinator: coordinator)
-        let firstURL = makeTemporaryFriendFile()
-        let secondURL = makeTemporaryFriendFile()
-        try Data("first".utf8).write(to: firstURL)
-        try Data("second".utf8).write(to: secondURL)
-        defer {
-            try? FileManager.default.removeItem(at: firstURL)
-            try? FileManager.default.removeItem(at: secondURL)
-        }
-
-        vm.friendFileSelected(firstURL)
-        vm.friendFileSelected(secondURL)
-
-        #expect(vm.pastedText == "second")
-        #expect(vm.fileName == secondURL.deletingPathExtension().lastPathComponent)
-    }
-
     @Test("Selecting an unreadable friend file exposes an error")
     func selectingUnreadableFriendFileExposesError() {
         let coordinator = FriendImportCoordinator()
-        let (vm, _, _, _) = makeSUT(importCoordinator: coordinator)
+        let (vm, _, _) = makeSUT(importCoordinator: coordinator)
         let missingURL = makeTemporaryFriendFile()
 
         vm.friendFileSelected(missingURL)
 
         #expect(!vm.hasData)
         #expect(vm.fileName == nil)
-        #expect(vm.errorMessage == "The selected friend file could not be read.")
+        #expect(vm.errorMessage == .unreadableFile)
     }
 
     // MARK: - saveTapped: success
 
-    @Test("saveTapped with valid JSON clears error")
-    func saveTappedSuccessNoError() {
-        let (vm, _, _, _) = makeSUT()
-        vm.errorMessage = "Previous error"
+    @Test("saveTapped trims valid JSON, persists, and completes the flow")
+    func saveTappedSuccessPersistsAndCallsCallbacks() throws {
+        let (vm, storage, callbacks) = makeSUT()
+        vm.errorMessage = .savingFailed
         vm.friendName = "Alice"
-        vm.pastedText = makeValidEnvelopeJSON()
+        vm.pastedText = "   \(makeValidEnvelopeJSON())   "
 
         vm.saveTapped()
 
         #expect(vm.errorMessage == nil)
+        #expect(storage.capturedUpsertName == "Alice")
+        let persistedJSON = try #require(storage.capturedEnvelopeJSON)
+        #expect(!persistedJSON.hasPrefix(" "))
+        #expect(!persistedJSON.hasSuffix(" "))
+        #expect(callbacks.addedCount == 1)
+        #expect(callbacks.dismissCount == 1)
     }
 
     // MARK: - saveTapped: validation errors
 
     @Test("saveTapped with invalid JSON sets invalidJSON error message")
     func saveTappedInvalidJSONSetsError() {
-        let (vm, _, _, _) = makeSUT()
+        let (vm, _, _) = makeSUT()
         vm.friendName = "Alice"
         vm.pastedText = "not json"
 
         vm.saveTapped()
 
-        #expect(vm.errorMessage == WorkoutShareError.invalidJSON.errorDescription)
+        #expect(vm.errorMessage == .invalidJSON)
     }
 
     @Test("saveTapped does nothing when save is disabled")
     func saveTappedNoopWhenDisabled() {
-        let (vm, storage, _, _) = makeSUT()
+        let (vm, storage, callbacks) = makeSUT()
         vm.friendName = ""
         vm.pastedText = ""
 
@@ -220,16 +194,7 @@ struct AddFriendViewModelTests {
 
         #expect(storage.capturedUpsertName == nil)
         #expect(vm.errorMessage == nil)
-    }
-
-    @Test("saveTapped trims whitespace from pastedText before import")
-    func saveTappedTrimsJSON() {
-        let (vm, _, _, _) = makeSUT()
-        vm.friendName = "Alice"
-        vm.pastedText = "   \(makeValidEnvelopeJSON())   "
-
-        vm.saveTapped() // should succeed, not throw invalidJSON
-
-        #expect(vm.errorMessage == nil)
+        #expect(callbacks.addedCount == 0)
+        #expect(callbacks.dismissCount == 0)
     }
 }

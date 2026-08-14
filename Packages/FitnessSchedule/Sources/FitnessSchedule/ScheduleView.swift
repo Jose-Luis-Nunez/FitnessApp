@@ -68,13 +68,13 @@ public struct ScheduleView: View {
             }
         }
         .background(AppStyle.Color.backgroundColor)
-        .standardToolbar(title: "Schedule")
-        .onAppear { viewModel.reloadData(referenceDate: selectedDate) }
+        .standardToolbar(title: AppText.scheduleTitle)
+        .onAppear { viewModel.reloadData(selectionDate: selectedDate) }
         .onChange(of: selectedDate) { _, date in
             viewModel.materializeSelection(for: date)
         }
         .onChange(of: workoutStorage.currentWorkout) { _, _ in
-            viewModel.reloadData(referenceDate: selectedDate)
+            viewModel.reloadData(selectionDate: selectedDate)
         }
     }
 
@@ -88,7 +88,7 @@ public struct ScheduleView: View {
     // MARK: - Header
 
     private var headerView: some View {
-        WorkoutDropdownView(workoutName: workoutStorage.currentWorkout?.name ?? L10n.workoutFallbackName, titleFont: AppStyle.Font.analyticsExerciseTitle)
+        WorkoutDropdownView(workoutName: workoutStorage.currentWorkout?.name, titleFont: AppStyle.Font.analyticsExerciseTitle)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, AppStyle.Padding.horizontal)
             .padding(.top, AppStyle.Padding.titleTop)
@@ -99,7 +99,7 @@ public struct ScheduleView: View {
     @ViewBuilder
     private var dayDetailSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Training Details")
+            Text(AppText.trainingDetails)
                 .font(AppStyle.Font.sectionTitle)
                 .foregroundColor(AppStyle.Color.white)
 

@@ -1,5 +1,6 @@
 import Foundation
 import FitnessCore
+import FitnessResources
 
 /// Visual state of the feedback entry-point icon shown in `BottomActionBarView`.
 /// Resolved per **active training session** from in-memory draft + committed
@@ -37,11 +38,11 @@ public enum FeedbackEntryIconState: Equatable {
     }
 
     /// Voice-Over label for the entry-point button.
-    public var accessibilityLabel: String {
+    public var accessibilityLabel: LocalizedStringResource {
         switch self {
-        case .entry: return "Add feedback"
-        case .draft: return "Feedback draft in progress"
-        case .done:  return "Feedback saved"
+        case .entry: AppText.feedbackAdd
+        case .draft: AppText.feedbackDraft
+        case .done: AppText.feedbackSaved
         }
     }
 }

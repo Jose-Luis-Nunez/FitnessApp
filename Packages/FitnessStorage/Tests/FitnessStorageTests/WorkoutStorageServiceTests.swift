@@ -3,7 +3,7 @@ import Foundation
 import SwiftData
 import FitnessCore
 import FitnessTestSupport
-import Mockable
+@testable import FitnessStorageTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
 @Suite("WorkoutStorageService CRUD", .tags(.integration))
 @MainActor
@@ -11,7 +11,7 @@ struct WorkoutStorageServiceTests {
 
     private let container: ModelContainer
     private let defaults: UserDefaults
-    private let exerciseStorage: MockExerciseStoring
+    private let exerciseStorage: MockExerciseStorage
 
     init() {
         container = TestHelpers.makeInMemoryContainer()
@@ -189,13 +189,17 @@ struct WorkoutStorageServiceTests {
     }
 
     @Test func duplicateWorkoutCopiesExercisesPerCategory() throws {
-        let spy = MockExerciseStoring(policy: .relaxedVoid)
+        let spy = MockExerciseStorage()
         let armExercise = TestHelpers.makeExercise(name: "Curl", category: .arms)
         let chestExercise = TestHelpers.makeExercise(name: "Bench", category: .chest)
 
-        given(spy).loadForWorkout(workoutId: .any, category: .value(.arms)).willReturn([armExercise])
-        given(spy).loadForWorkout(workoutId: .any, category: .value(.chest)).willReturn([chestExercise])
-        given(spy).loadForWorkout(workoutId: .any, category: .any).willReturn([])
+        spy.loadForWorkoutHandler = { _, category in
+            switch category {
+            case .arms: [armExercise]
+            case .chest: [chestExercise]
+            default: []
+            }
+        }
 
         let sut = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: spy, analyticsStorage: TestHelpers.makeNoOpAnalyticsStoring())
         let original = try sut.createWorkout(
@@ -205,23 +209,26 @@ struct WorkoutStorageServiceTests {
 
         let duplicate = sut.duplicateWorkout(original)
 
-        verify(spy)
-            .saveForWorkout(.any, workoutId: .any, category: .any)
-            .called(.atLeastOnce)
-        verify(spy)
-            .saveForWorkout(.any, workoutId: .value(duplicate.id), category: .value(.arms))
-            .called(.atLeastOnce)
-        verify(spy)
-            .saveForWorkout(.any, workoutId: .value(duplicate.id), category: .value(.chest))
-            .called(.atLeastOnce)
+        #expect(!spy.saveForWorkoutCalls.isEmpty)
+        #expect(spy.saveForWorkoutCalls.contains {
+            $0.workoutId == duplicate.id && $0.category == .arms
+        })
+        #expect(spy.saveForWorkoutCalls.contains {
+            $0.workoutId == duplicate.id && $0.category == .chest
+        })
     }
 
     @Test func duplicateWorkoutCopiesExerciseOutsideSelectedCategories() throws {
-        let spy = MockExerciseStoring(policy: .relaxedVoid)
-        let backExercise = TestHelpers.makeExercise(name: "Row", category: .back)
+        let spy = MockExerciseStorage()
+        let backExercise = TestHelpers.makeExercise(
+            name: "Row",
+            category: .back,
+            executionMode: .bilateral
+        )
 
-        given(spy).loadForWorkout(workoutId: .any, category: .value(.back)).willReturn([backExercise])
-        given(spy).loadForWorkout(workoutId: .any, category: .any).willReturn([])
+        spy.loadForWorkoutHandler = { _, category in
+            category == .back ? [backExercise] : []
+        }
 
         let sut = WorkoutStorageService(
             container: container,
@@ -236,25 +243,24 @@ struct WorkoutStorageServiceTests {
 
         let duplicate = sut.duplicateWorkout(original)
 
-        verify(spy)
-            .saveForWorkout(
-                .matching {
-                    $0.count == 1
-                        && $0[0].name == backExercise.name
-                        && $0[0].id != backExercise.id
-                },
-                workoutId: .value(duplicate.id),
-                category: .value(.back)
-            )
-            .called(.once)
+        let matchingCalls = spy.saveForWorkoutCalls.filter {
+            $0.workoutId == duplicate.id
+                && $0.category == .back
+                && $0.exercises.count == 1
+                && $0.exercises[0].name == backExercise.name
+                && $0.exercises[0].id != backExercise.id
+                && $0.exercises[0].executionMode == .bilateral
+        }
+        #expect(matchingCalls.count == 1)
     }
 
     @Test func duplicateWorkoutSkipsEmptyCategories() throws {
-        let spy = MockExerciseStoring(policy: .relaxedVoid)
+        let spy = MockExerciseStorage()
         let armExercise = TestHelpers.makeExercise(name: "Curl", category: .arms)
 
-        given(spy).loadForWorkout(workoutId: .any, category: .value(.arms)).willReturn([armExercise])
-        given(spy).loadForWorkout(workoutId: .any, category: .any).willReturn([])
+        spy.loadForWorkoutHandler = { _, category in
+            category == .arms ? [armExercise] : []
+        }
 
         let sut = WorkoutStorageService(container: container, defaults: defaults, exerciseStorage: spy, analyticsStorage: TestHelpers.makeNoOpAnalyticsStoring())
         let original = try sut.createWorkout(
@@ -264,11 +270,7 @@ struct WorkoutStorageServiceTests {
 
         _ = sut.duplicateWorkout(original)
 
-        verify(spy)
-            .saveForWorkout(.any, workoutId: .any, category: .value(.arms))
-            .called(.atLeastOnce)
-        verify(spy)
-            .saveForWorkout(.any, workoutId: .any, category: .value(.legs))
-            .called(.never)
+        #expect(spy.saveForWorkoutCalls.contains { $0.category == .arms })
+        #expect(!spy.saveForWorkoutCalls.contains { $0.category == .legs })
     }
 }

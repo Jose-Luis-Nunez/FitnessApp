@@ -1,8 +1,9 @@
 import SwiftUI
+import FitnessResources
 
 public struct WorkoutFormSheet<Content: View>: View {
     @Environment(\.appColorTheme) private var appColorTheme
-    let title: String
+    let title: LocalizedStringResource
     let isSaveDisabled: Bool
     let onSave: () -> Void
     /// Whether tapping the Save button auto-dismisses the sheet. Default `true`
@@ -16,7 +17,7 @@ public struct WorkoutFormSheet<Content: View>: View {
     @Binding var isPresented: Bool
     @ViewBuilder let content: () -> Content
 
-    public init(title: String, isSaveDisabled: Bool, onSave: @escaping () -> Void, isPresented: Binding<Bool>, dismissOnSave: Bool = true, @ViewBuilder content: @escaping () -> Content) {
+    public init(title: LocalizedStringResource, isSaveDisabled: Bool, onSave: @escaping () -> Void, isPresented: Binding<Bool>, dismissOnSave: Bool = true, @ViewBuilder content: @escaping () -> Content) {
         self.title = title
         self.isSaveDisabled = isSaveDisabled
         self.onSave = onSave
@@ -95,7 +96,7 @@ public struct WorkoutFormSheet<Content: View>: View {
                     isPresented = false
                 }
             }) {
-                Text("Save")
+                Text(AppText.actionSave)
                     .font(AppStyle.Font.defaultFont)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity, minHeight: 50)

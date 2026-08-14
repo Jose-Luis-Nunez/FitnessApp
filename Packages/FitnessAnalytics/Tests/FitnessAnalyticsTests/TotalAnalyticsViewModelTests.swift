@@ -65,12 +65,23 @@ private func setupMocks(
 @MainActor
 struct GetCategoryProgressDataTests {
 
-    @Test func returnsEmptyCategoriesWhenNoExercises() {
+    @Test func emptySnapshotReturnsConsistentAnalyticsDefaults() {
         let (vm, _, _, _) = setupMocks()
         let result = vm.getCategoryProgressData()
 
         #expect(result.count == 5)
         #expect(result.allSatisfy { $0.exercises.isEmpty })
+        #expect(vm.getMostTrainedCategory().count == 0)
+        #expect(vm.getLeastTrainedCategory().count == 0)
+        #expect(vm.getTrainingDays().isEmpty)
+        #expect(vm.allDatesWithData().isEmpty)
+        #expect(vm.getTrainingRhythm() == .notEnoughData)
+        #expect(vm.totalWorkoutDaysInCurrentMonth() == 0)
+        #expect(vm.totalWorkoutDaysInYear() == 0)
+        let completion = vm.getLastTrainingDayCompletionRate()
+        #expect(completion.completed == 0)
+        #expect(completion.total == 0)
+        #expect(completion.percentage == 0)
     }
 
     @Test func returnsProgressForExerciseWithEntries() {
@@ -125,14 +136,7 @@ struct GetCategoryProgressDataTests {
 @MainActor
 struct GetMostTrainedCategoryTests {
 
-    @Test func returnsDefaultWhenNoData() {
-        let (vm, _, _, _) = setupMocks()
-        let result = vm.getMostTrainedCategory()
-
-        #expect(result.count == 0)
-    }
-
-    @Test func returnsCategoryWithMostExercises() {
+    @Test func returnsMostAndLeastCategoriesFromOneRanking() {
         let armEx1 = makeExercise(name: "Curl", category: .arms)
         let armEx2 = makeExercise(name: "Hammer Curl", category: .arms)
         let chestEx = makeExercise(name: "Bench", category: .chest)
@@ -145,36 +149,13 @@ struct GetMostTrainedCategoryTests {
                 chestEx.id: [makeEntry(exerciseId: chestEx.id, date: date(0), sets: [(60, 10)])],
             ]
         )
-        let result = vm.getMostTrainedCategory()
+        let most = vm.getMostTrainedCategory()
+        let least = vm.getLeastTrainedCategory()
 
-        #expect(result.category == .arms)
-        #expect(result.count == 2)
-    }
-}
-
-// MARK: - getLeastTrainedCategory
-
-@Suite("getLeastTrainedCategory", .tags(.fast))
-@MainActor
-struct GetLeastTrainedCategoryTests {
-
-    @Test func returnsCategoryWithFewestExercises() {
-        let armEx1 = makeExercise(name: "Curl", category: .arms)
-        let armEx2 = makeExercise(name: "Hammer Curl", category: .arms)
-        let chestEx = makeExercise(name: "Bench", category: .chest)
-
-        let (vm, _, _, _) = setupMocks(
-            exercises: [armEx1, armEx2, chestEx],
-            entries: [
-                armEx1.id: [makeEntry(exerciseId: armEx1.id, date: date(0), sets: [(20, 10)])],
-                armEx2.id: [makeEntry(exerciseId: armEx2.id, date: date(0), sets: [(15, 10)])],
-                chestEx.id: [makeEntry(exerciseId: chestEx.id, date: date(0), sets: [(60, 10)])],
-            ]
-        )
-        let result = vm.getLeastTrainedCategory()
-
-        #expect(result.category == .chest)
-        #expect(result.count == 1)
+        #expect(most.category == .arms)
+        #expect(most.count == 2)
+        #expect(least.category == .chest)
+        #expect(least.count == 1)
     }
 }
 
@@ -183,12 +164,6 @@ struct GetLeastTrainedCategoryTests {
 @Suite("getTrainingDays", .tags(.fast))
 @MainActor
 struct GetTrainingDaysTests {
-
-    @Test func returnsEmptyWhenNoData() {
-        let (vm, _, _, _) = setupMocks()
-
-        #expect(vm.getTrainingDays().isEmpty)
-    }
 
     @Test func requiresAtLeast3ExercisesPerDay() {
         let ex1 = makeExercise(name: "Ex1", category: .arms)
@@ -203,25 +178,6 @@ struct GetTrainingDaysTests {
             ]
         )
         #expect(vm.getTrainingDays().isEmpty)
-    }
-
-    @Test func countsTrainingDayWith3OrMoreExercises() {
-        let ex1 = makeExercise(name: "Ex1", category: .arms)
-        let ex2 = makeExercise(name: "Ex2", category: .chest)
-        let ex3 = makeExercise(name: "Ex3", category: .back)
-        let today = date(0)
-
-        let (vm, _, _, _) = setupMocks(
-            exercises: [ex1, ex2, ex3],
-            entries: [
-                ex1.id: [makeEntry(exerciseId: ex1.id, date: today, sets: [(20, 10)])],
-                ex2.id: [makeEntry(exerciseId: ex2.id, date: today, sets: [(40, 10)])],
-                ex3.id: [makeEntry(exerciseId: ex3.id, date: today, sets: [(30, 10)])],
-            ]
-        )
-        let days = vm.getTrainingDays()
-
-        #expect(days.count == 1)
     }
 
     @Test func returnsSortedDates() {
@@ -250,8 +206,7 @@ struct GetTrainingDaysTests {
         )
         let days = vm.getTrainingDays()
 
-        #expect(days.count == 2)
-        #expect(days[0] < days[1])
+        #expect(days == [day1, day2])
     }
 }
 
@@ -261,17 +216,15 @@ struct GetTrainingDaysTests {
 @MainActor
 struct AllDatesWithDataTests {
 
-    @Test func returnsEmptyWhenNoEntries() {
-        let (vm, _, _, _) = setupMocks()
-
-        #expect(vm.allDatesWithData().isEmpty)
-    }
-
-    @Test func returnsUniqueDaysAcrossExercises() {
+    @Test func dateAggregatesDeduplicateAndRespectMonthAndYearBoundaries() throws {
         let ex1 = makeExercise(name: "Curl", category: .arms)
         let ex2 = makeExercise(name: "Bench", category: .chest)
-        let day1 = date(-1)
-        let day2 = date(0)
+        let calendar = Calendar.current
+        let now = Date()
+        let interval = try #require(calendar.dateInterval(of: .month, for: now))
+        let day1 = interval.start
+        let day2 = try #require(calendar.date(byAdding: .day, value: 1, to: day1))
+        let previousYear = try #require(calendar.date(byAdding: .year, value: -1, to: day1))
 
         let (vm, _, _, _) = setupMocks(
             exercises: [ex1, ex2],
@@ -282,12 +235,15 @@ struct AllDatesWithDataTests {
                 ],
                 ex2.id: [
                     makeEntry(exerciseId: ex2.id, date: day1, sets: [(60, 10)]),
+                    makeEntry(exerciseId: ex2.id, date: previousYear, sets: [(60, 10)]),
                 ],
             ]
         )
         let dates = vm.allDatesWithData()
 
-        #expect(dates.count == 2)
+        #expect(dates == Set([day1, day2, previousYear]))
+        #expect(vm.totalWorkoutDaysInCurrentMonth() == 2)
+        #expect(vm.totalWorkoutDaysInYear() == 2)
     }
 }
 
@@ -297,63 +253,36 @@ struct AllDatesWithDataTests {
 @MainActor
 struct GetTrainingRhythmTests {
 
-    @Test func returnsNotEnoughDataForFewDays() {
-        let (vm, _, _, _) = setupMocks()
+    @Test func mapsAverageGapsToEveryRhythmCategory() {
+        let cases: [(offsets: [Int], expected: TrainingRhythm)] = [
+            ([0], .notEnoughData),
+            ([-7, 0], .weekly),
+            ([-14, 0], .biweekly),
+            ([-21, 0], .weeks(3)),
+        ]
 
-        #expect(vm.getTrainingRhythm() == "Not enough data")
-    }
-
-    @Test func returnsWeeklyForDailyTraining() {
-        let ex1 = makeExercise(name: "Ex1", category: .arms)
-        let ex2 = makeExercise(name: "Ex2", category: .chest)
-        let ex3 = makeExercise(name: "Ex3", category: .back)
-
-        var entries1: [AnalyticsEntry] = []
-        var entries2: [AnalyticsEntry] = []
-        var entries3: [AnalyticsEntry] = []
-
-        for offset in stride(from: -6, through: 0, by: 2) {
-            let d = date(offset)
-            entries1.append(makeEntry(exerciseId: ex1.id, date: d, sets: [(20, 10)]))
-            entries2.append(makeEntry(exerciseId: ex2.id, date: d, sets: [(40, 10)]))
-            entries3.append(makeEntry(exerciseId: ex3.id, date: d, sets: [(30, 10)]))
-        }
-
-        let (vm, _, _, _) = setupMocks(
-            exercises: [ex1, ex2, ex3],
-            entries: [
-                ex1.id: entries1,
-                ex2.id: entries2,
-                ex3.id: entries3,
+        for testCase in cases {
+            let exercises = [
+                makeExercise(name: "Ex1", category: .arms),
+                makeExercise(name: "Ex2", category: .chest),
+                makeExercise(name: "Ex3", category: .back),
             ]
-        )
-        #expect(vm.getTrainingRhythm() == "Weekly")
-    }
-}
+            let entries = Dictionary(uniqueKeysWithValues: exercises.map { exercise in
+                (
+                    exercise.id,
+                    testCase.offsets.map {
+                        makeEntry(
+                            exerciseId: exercise.id,
+                            date: date($0),
+                            sets: [(20, 10)]
+                        )
+                    }
+                )
+            })
+            let (vm, _, _, _) = setupMocks(exercises: exercises, entries: entries)
 
-// MARK: - totalWorkoutDaysInCurrentMonth
-
-@Suite("totalWorkoutDaysInCurrentMonth", .tags(.fast))
-@MainActor
-struct TotalWorkoutDaysInCurrentMonthTests {
-
-    @Test func returnsZeroWhenNoData() {
-        let (vm, _, _, _) = setupMocks()
-
-        #expect(vm.totalWorkoutDaysInCurrentMonth() == 0)
-    }
-
-    @Test func countsDistinctDaysInCurrentMonth() {
-        let ex = makeExercise(category: .arms)
-        let today = date(0)
-
-        let (vm, _, _, _) = setupMocks(
-            exercises: [ex],
-            entries: [ex.id: [
-                makeEntry(exerciseId: ex.id, date: today, sets: [(20, 10)]),
-            ]]
-        )
-        #expect(vm.totalWorkoutDaysInCurrentMonth() >= 1)
+            #expect(vm.getTrainingRhythm() == testCase.expected, "Offsets: \(testCase.offsets)")
+        }
     }
 }
 
@@ -393,13 +322,6 @@ struct GetCategoryWithMostImprovementsTests {
 @Suite("getLastTrainingDayCompletionRate", .tags(.fast))
 @MainActor
 struct GetLastTrainingDayCompletionRateTests {
-
-    @Test func returnsZeroWhenNoTrainingDays() {
-        let (vm, _, _, _) = setupMocks()
-        let result = vm.getLastTrainingDayCompletionRate()
-
-        #expect(result.percentage == 0)
-    }
 
     @Test func includesExercisesWithoutHistoryInCompletionDenominator() {
         let completed = [
@@ -475,9 +397,9 @@ struct SnapshotCacheInvalidationTests {
             .leastTrainedCategory,
             .mostImprovedCategory,
         ])
-        #expect(vm.displayState.tiles[2].value == "100%")
-        #expect(vm.displayState.tiles[3].value == "Weekly")
-        #expect(vm.displayState.tiles[1].label == "Training 2030")
+        #expect(vm.displayState.tiles[2].value == .percentage(100))
+        #expect(vm.displayState.tiles[3].value == .rhythm(.weekly))
+        #expect(vm.displayState.tiles[1].label == .trainingYear(2030))
     }
 
     @Test func refreshDataObservesNewBackingEntries() {

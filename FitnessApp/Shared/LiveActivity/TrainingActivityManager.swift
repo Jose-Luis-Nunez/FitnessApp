@@ -1,6 +1,7 @@
 import Foundation
 import UIKit
 import ActivityKit
+import FitnessResources
 
 final class TrainingActivityManager {
     static let shared = TrainingActivityManager()
@@ -8,7 +9,7 @@ final class TrainingActivityManager {
 
     private var activity: Activity<TrainingActivityAttributes>?
 
-    func start(exerciseName: String, totalSets: Int, reps: Int, weight: Double) {
+    func start(exerciseName: String, totalSets: Int, reps: Int, weight: Double, language: AppLanguage) {
         #if targetEnvironment(simulator)
         print("[LiveActivity] Skipped: Simulator does not support starting Live Activities. Test on a real iPhone.")
         return
@@ -28,7 +29,8 @@ final class TrainingActivityManager {
             totalSets: totalSets,
             reps: reps,
             weight: weight,
-            isFinished: false
+            isFinished: false,
+            languageCode: language.rawValue
         )
         do {
             activity = try Activity.request(attributes: attributes, contentState: content, pushType: nil)
@@ -37,7 +39,7 @@ final class TrainingActivityManager {
         }
     }
 
-    func update(exerciseName: String, currentSet: Int, totalSets: Int, reps: Int, weight: Double, isFinished: Bool) {
+    func update(exerciseName: String, currentSet: Int, totalSets: Int, reps: Int, weight: Double, isFinished: Bool, language: AppLanguage) {
         guard let activity else { return }
         let content = TrainingActivityAttributes.ContentState(
             exerciseName: exerciseName,
@@ -45,7 +47,8 @@ final class TrainingActivityManager {
             totalSets: totalSets,
             reps: reps,
             weight: weight,
-            isFinished: isFinished
+            isFinished: isFinished,
+            languageCode: language.rawValue
         )
         Task { await activity.update(using: content) }
     }
@@ -56,5 +59,4 @@ final class TrainingActivityManager {
         self.activity = nil
     }
 }
-
 

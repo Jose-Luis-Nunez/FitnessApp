@@ -1,3 +1,4 @@
+import FitnessResources
 import FitnessUI
 import SwiftUI
 
@@ -60,11 +61,11 @@ public struct AnalyticsDetailSection<Header: View, Content: View>: View {
 
 public struct AnalyticsDetailHeader: View {
     @Environment(\.appColorTheme) private var appColorTheme
-    public let title: String
+    public let title: LocalizedStringResource
     public let subtitle: String?
     public let onBack: () -> Void
 
-    public init(title: String, subtitle: String?, onBack: @escaping () -> Void) {
+    public init(title: LocalizedStringResource, subtitle: String?, onBack: @escaping () -> Void) {
         self.title = title
         self.subtitle = subtitle
         self.onBack = onBack
@@ -80,7 +81,7 @@ public struct AnalyticsDetailHeader: View {
                 HStack(spacing: 6) {
                     Image(systemName: "chevron.left")
                         .font(AppStyle.Font.tileLabel)
-                    Text("Back")
+                    Text(AppText.actionBack)
                         .font(AppStyle.Font.tileLabel)
                 }
                 .foregroundColor(appColorTheme.accent.glow)
@@ -94,7 +95,7 @@ public struct AnalyticsDetailHeader: View {
                     .foregroundColor(appColorTheme.accent.glow)
 
                 if let subtitle = subtitle {
-                    Text(subtitle)
+                    Text(verbatim: subtitle)
                         .font(AppStyle.Font.streakLabel)
                         .foregroundColor(appColorTheme.accent.glow)
                 }
@@ -105,7 +106,7 @@ public struct AnalyticsDetailHeader: View {
             HStack(spacing: 6) {
                 Image(systemName: "chevron.left")
                     .font(AppStyle.Font.tileLabel)
-                Text("Back")
+                Text(AppText.actionBack)
                     .font(AppStyle.Font.tileLabel)
             }
             .opacity(0)

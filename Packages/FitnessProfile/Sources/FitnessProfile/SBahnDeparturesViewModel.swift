@@ -31,7 +31,7 @@ public final class SBahnDeparturesViewModel {
     public private(set) var isExpanded: Bool = false
     public private(set) var departures: [SBahnDeparture] = []
     public private(set) var isLoading: Bool = false
-    public private(set) var errorMessage: String?
+    public private(set) var error: TransitPresentationFailure?
     public private(set) var lastUpdated: Date?
     public private(set) var isReversed: Bool = false
     /// True when the displayed departures are the last successful cached
@@ -82,7 +82,7 @@ public final class SBahnDeparturesViewModel {
         guard !isLoading else { return }
 
         isReversed.toggle()
-        errorMessage = nil
+        error = nil
         loadCachedSnapshot()
         await refresh()
     }
@@ -113,7 +113,7 @@ public final class SBahnDeparturesViewModel {
             guard requestedFromStopId == fromStopId,
                   requestedToStopId == toStopId else { return }
             departures = result
-            errorMessage = nil
+            self.error = nil
             lastUpdated = Date()
             isShowingCachedResult = false
         } catch is CancellationError {
@@ -153,32 +153,35 @@ public final class SBahnDeparturesViewModel {
             departures = cached.departures
             lastUpdated = cached.savedAt
             isShowingCachedResult = true
-            errorMessage = nil
+            self.error = nil
             return
         }
         if let sbahnError = error as? BVGSBahnError {
-            errorMessage = sbahnError.errorDescription ?? "Failed to load."
+            switch sbahnError {
+            case .invalidURL: self.error = .invalidURL
+            case .network: self.error = .network
+            case .decoding: self.error = .decoding
+            case .rateLimited: self.error = .rateLimited
+            case .serverError(let statusCode): self.error = .server(statusCode: statusCode)
+            }
         } else {
-            errorMessage = "Failed to load."
+            self.error = .unknown
         }
     }
 
     // MARK: - Formatting
 
-    private static let timeFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "de_DE")
-        f.timeZone = TimeZone(identifier: "Europe/Berlin")
-        f.dateFormat = "HH:mm"
-        return f
-    }()
-
-    public func formattedTime(for date: Date) -> String {
-        Self.timeFormatter.string(from: date)
+    public func formattedTime(for date: Date, locale: Locale) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.timeZone = TimeZone(identifier: "Europe/Berlin")
+        formatter.timeStyle = .short
+        formatter.dateStyle = .none
+        return formatter.string(from: date)
     }
 
-    public var formattedLastUpdated: String? {
+    public func formattedLastUpdated(locale: Locale) -> String? {
         guard let lastUpdated else { return nil }
-        return formattedTime(for: lastUpdated)
+        return formattedTime(for: lastUpdated, locale: locale)
     }
 }

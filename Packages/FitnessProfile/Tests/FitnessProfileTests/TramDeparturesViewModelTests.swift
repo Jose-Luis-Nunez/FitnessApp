@@ -91,7 +91,7 @@ struct TramDeparturesViewModelTests {
         #expect(vm.isExpanded == false)
         #expect(vm.departures.isEmpty)
         #expect(vm.isLoading == false)
-        #expect(vm.errorMessage == nil)
+        #expect(vm.error == nil)
         #expect(vm.isReversed == false)
         #expect(vm.isStale == false)
         #expect(vm.fromLabel == "Blockdammweg")
@@ -125,7 +125,7 @@ struct TramDeparturesViewModelTests {
         let vm = Self.makeVM(service: service, cache: cache)
         await vm.refresh()
         #expect(vm.departures.count == 2)
-        #expect(vm.errorMessage == nil)
+        #expect(vm.error == nil)
         #expect(vm.isLoading == false)
         #expect(vm.lastUpdated != nil)
         #expect(vm.isStale == false)
@@ -147,7 +147,7 @@ struct TramDeparturesViewModelTests {
         #expect(vm.departures.count == 1)
         #expect(vm.departures.first?.id == "cached-1")
         #expect(vm.isStale == true)
-        #expect(vm.errorMessage == nil, "On a cache hit we show no error message")
+        #expect(vm.error == nil, "On a cache hit we show no error message")
         #expect(vm.isLoading == false)
     }
 
@@ -157,7 +157,7 @@ struct TramDeparturesViewModelTests {
         let vm = Self.makeVM(service: service)
         await vm.refresh()
         #expect(vm.departures.isEmpty)
-        #expect(vm.errorMessage == BVGTramError.rateLimited.errorDescription)
+        #expect(vm.error == .rateLimited)
         #expect(vm.isLoading == false)
     }
 
@@ -217,7 +217,7 @@ struct TramDeparturesViewModelTests {
         let vm = Self.makeVM(service: service)
         vm.toggleExpanded()
         #expect(vm.isExpanded == true)
-        try? await Task.sleep(nanoseconds: 100_000_000)
+        try? await waitUntil { service.callCount == 1 }
         #expect(service.callCount == 1, "Expanding triggers exactly one refresh")
     }
 
@@ -226,7 +226,7 @@ struct TramDeparturesViewModelTests {
         service.results = [Self.makeDeparture(id: "a")]
         let vm = Self.makeVM(service: service)
         vm.toggleExpanded()
-        try? await Task.sleep(nanoseconds: 50_000_000)
+        try? await waitUntil { service.callCount == 1 }
         let countAfterExpand = service.callCount
         vm.toggleExpanded()
         #expect(vm.isExpanded == false)
@@ -250,11 +250,11 @@ struct TramDeparturesViewModelTests {
         service.results = [Self.makeDeparture(id: "a")]
         let vm = Self.makeVM(service: service)
         vm.toggleExpanded()
-        try? await Task.sleep(nanoseconds: 100_000_000)
+        try? await waitUntil { service.callCount == 1 }
         let countAfterExpand = service.callCount
         vm.lastUpdated = Date(timeIntervalSinceNow: -3600)
         vm.onBecameActive()
-        try? await Task.sleep(nanoseconds: 100_000_000)
+        try? await waitUntil { service.callCount > countAfterExpand }
         #expect(service.callCount > countAfterExpand, "Stale data triggers a refresh on foreground")
     }
 
@@ -263,7 +263,7 @@ struct TramDeparturesViewModelTests {
         service.results = [Self.makeDeparture(id: "a")]
         let vm = Self.makeVM(service: service)
         vm.toggleExpanded()
-        try? await Task.sleep(nanoseconds: 100_000_000)
+        try? await waitUntil { service.callCount == 1 }
         let countAfterExpand = service.callCount
         vm.onBecameActive()
         try? await Task.sleep(nanoseconds: 100_000_000)
@@ -279,9 +279,11 @@ struct TramDeparturesViewModelTests {
         components.hour = 19; components.minute = 21
         components.timeZone = TimeZone(identifier: "Europe/Berlin")
         let date = Calendar(identifier: .gregorian).date(from: components)!
-        let formatted = vm.formattedTime(for: date)
-        #expect(formatted.contains(":"))
-        #expect(formatted.count == 5)
+        let english = vm.formattedTime(for: date, locale: Locale(identifier: "en_US"))
+        let german = vm.formattedTime(for: date, locale: Locale(identifier: "de_DE"))
+        #expect(english.contains(":"))
+        #expect(english.contains("PM"))
+        #expect(german == "19:21")
     }
 
     // MARK: - Delay Computation
@@ -304,22 +306,6 @@ struct TramDeparturesViewModelTests {
     // MARK: - Cancellation-leak fix (defer { isLoading = false })
     // Mirror tests of SBahnDeparturesViewModelTests so the same bug class
     // is regression-guarded on both VMs.
-
-    @Test func refresh_whenSucceeding_clearsIsLoading() async {
-        let service = MockService()
-        service.results = [Self.makeDeparture()]
-        let vm = Self.makeVM(service: service)
-        await vm.refresh()
-        #expect(vm.isLoading == false)
-    }
-
-    @Test func refresh_whenFailing_clearsIsLoading() async {
-        let service = MockService()
-        service.error = .network
-        let vm = Self.makeVM(service: service)
-        await vm.refresh()
-        #expect(vm.isLoading == false)
-    }
 
     @Test func refresh_whenCancelled_clearsIsLoading() async {
         let service = BlockableMockService()
@@ -349,7 +335,7 @@ struct TramDeparturesViewModelTests {
         service.error = .network
         let vm = Self.makeVM(service: service)
         vm.toggleExpanded()
-        try? await Task.sleep(nanoseconds: 80_000_000)
+        try? await waitUntil { service.callCount == 1 }
         let countAfterFirst = service.callCount
 
         vm.onBecameActive()

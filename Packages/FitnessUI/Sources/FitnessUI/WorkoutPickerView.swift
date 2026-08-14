@@ -1,5 +1,6 @@
 import SwiftUI
 import FitnessCore
+import FitnessResources
 #if canImport(UIKit)
 import UIKit
 #endif
@@ -31,7 +32,7 @@ public struct WorkoutPickerView: View {
                 )
 
             VStack(spacing: 16) {
-                Text("Select Workout")
+                Text(AppText.workoutSelect)
                     .font(AppStyle.Font.sectionTitle)
                     .foregroundColor(AppStyle.Color.white)
                     .padding(.top, 20)
@@ -39,7 +40,7 @@ public struct WorkoutPickerView: View {
 
                 ZStack {
                     Picker(
-                        "Workout",
+                        AppText.workoutSingular,
                         selection: Binding(
                             get: { selectionState.selectedWorkout },
                             set: { selectionState.select($0) }

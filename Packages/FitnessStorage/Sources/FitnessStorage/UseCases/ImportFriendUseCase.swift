@@ -10,7 +10,7 @@ private let logger = Logger(subsystem: "FitnessStorage", category: "ImportFriend
 /// Accepts the same `WorkoutShareEnvelope` format produced by `ExportWorkoutUseCase`.
 /// On success, the friend's record is upserted by name (re-import replaces
 /// existing data). Throws `WorkoutShareError` on any validation or persistence
-/// failure — German error descriptions are already defined there.
+/// failure. Presentation layers map those semantic errors to localized copy.
 @MainActor
 public struct ImportFriendUseCase {
     private let friendStorage: FriendStoring

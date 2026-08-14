@@ -3,6 +3,7 @@ import FitnessCore
 import FitnessUI
 import FitnessWorkouts
 import Factory
+import FitnessResources
 
 /// Collapsible "Friends" card embedded in `ProfileView`.
 ///
@@ -13,8 +14,12 @@ import Factory
 public struct FriendsSection: View {
     @State private var viewModel = FriendsViewModel()
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var locale
 
     private var profileColors: ProfileColorTheme { appColorTheme.profile }
+    private var myNickname: String {
+        viewModel.myNickname ?? AppText.resolve(AppText.friendMe, locale: locale)
+    }
     private let friendImportCoordinator = Container.shared.friendImportCoordinator()
 
     public init() {}
@@ -46,13 +51,10 @@ public struct FriendsSection: View {
                 workoutToShare: $viewModel.workoutToShare
             )
         }
-        .alert("Export failed", isPresented: Binding(
-            get: { viewModel.exportErrorMessage != nil },
-            set: { if !$0 { viewModel.exportErrorMessage = nil } }
-        )) {
-            Button("OK") { viewModel.exportErrorMessage = nil }
+        .alert(AppText.workoutExportFailedTitle, isPresented: $viewModel.exportFailed) {
+            Button(AppText.actionOk) { viewModel.exportFailed = false }
         } message: {
-            Text(viewModel.exportErrorMessage ?? "")
+            Text(AppText.errorExportFailed)
         }
     }
 
@@ -67,7 +69,7 @@ public struct FriendsSection: View {
             }
         } label: {
             HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
-                ProfileCardHeading("Friends")
+                ProfileCardHeading(AppText.friendFriends)
                 Spacer()
                 Image(systemName: "chevron.down")
                     .font(AppStyle.Font.profileSmallIcon)
@@ -96,12 +98,12 @@ public struct FriendsSection: View {
                                     lineWidth: AppStyle.Layout.profileSurfaceBorderWidth
                                 )
                         }
-                    Text(viewModel.myNickname.prefix(1).uppercased())
+                    Text(verbatim: myNickname.prefix(1).uppercased())
                         .font(AppStyle.Font.defaultFont)
                         .foregroundColor(profileColors.accent)
                 }
 
-                Text(viewModel.myNickname)
+                Text(verbatim: myNickname)
                     .font(AppStyle.Font.tileValue)
                     .foregroundColor(profileColors.title)
                     .lineLimit(1)
@@ -169,7 +171,7 @@ public struct FriendsSection: View {
             Button(role: .destructive) {
                 viewModel.deleteFriend(friend)
             } label: {
-                Label("Delete", systemImage: "trash")
+                Label(AppText.actionDelete, systemImage: "trash")
             }
         }
         .accessibilityIdentifier("id_friends_tile_\(friend.id)")
@@ -191,7 +193,7 @@ public struct FriendsSection: View {
                         .font(AppStyle.Font.tileValue)
                         .foregroundColor(profileColors.accent)
                 }
-                Text("Add")
+                Text(AppText.actionAdd)
                     .font(AppStyle.Font.profileCardTitle)
                     .foregroundColor(profileColors.secondary)
                     .lineLimit(1)
@@ -206,17 +208,17 @@ public struct FriendsSection: View {
         if let comparison = viewModel.comparison, let friend = viewModel.selectedFriend {
             FriendComparisonView(
                 comparison: comparison,
-                myName: viewModel.myNickname,
+                myName: myNickname,
                 friendName: friend.name
             )
-        } else if viewModel.selectedFriendId != nil, let error = viewModel.comparisonError {
-            Text(error)
+        } else if viewModel.selectedFriendId != nil, viewModel.comparisonFailed {
+            Text(AppText.friendComparisonFailed)
                 .font(AppStyle.Font.profileCardTitle)
                 .foregroundColor(AppStyle.Color.error)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 8)
         } else if !viewModel.friends.isEmpty {
-            Text("Select a friend")
+            Text(AppText.friendSelect)
                 .font(AppStyle.Font.profileCardTitle)
                 .foregroundColor(profileColors.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)

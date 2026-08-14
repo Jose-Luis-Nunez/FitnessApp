@@ -1,6 +1,7 @@
 import SwiftUI
 import FitnessCore
 import FitnessUI
+import FitnessResources
 
 public enum WorkoutTileLayout {
     case compact
@@ -65,7 +66,7 @@ public struct WorkoutTileView: View {
                     VStack {
                         Spacer()
 
-                        Text(workout.name)
+                        Text(verbatim: workout.name)
                             .font(AppStyle.Font.categorySelectionNameFont)
                             .foregroundColor(AppStyle.Color.white)
                             .multilineTextAlignment(.center)
@@ -186,7 +187,7 @@ public struct WorkoutTileView: View {
 
     private var heroHeader: some View {
         HStack {
-            Text(workout.name)
+            Text(verbatim: workout.name)
                 .font(AppStyle.Font.categoryTileTitle)
                 .foregroundColor(AppStyle.Color.white)
                 .lineLimit(1)
@@ -206,12 +207,12 @@ public struct WorkoutTileView: View {
 
     private var heroExerciseCount: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("\(exerciseCount)")
+            Text(verbatim: "\(exerciseCount)")
                 .font(AppStyle.Font.workoutHeroExerciseCount)
                 .foregroundColor(appColorTheme.accent.primary)
                 .lineLimit(1)
 
-            Text("Exercises")
+            Text(exerciseCount == 1 ? AppText.exerciseSingular : AppText.exercisePlural)
                 .font(AppStyle.Font.workoutHeroExerciseLabel)
                 .foregroundColor(AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel))
         }
@@ -221,7 +222,7 @@ public struct WorkoutTileView: View {
 
     private var startChip: some View {
         HStack(spacing: AppStyle.Layout.workoutHeroStartChipIconSpacing) {
-            Text("Start")
+            Text(AppText.actionStart)
                 .font(AppStyle.Font.categoryTileProgress)
 
             Image(systemName: "chevron.right")
@@ -263,7 +264,7 @@ public struct WorkoutTileView: View {
             Circle()
                 .stroke(isDefault ? appColorTheme.accent.primary.opacity(AppStyle.Opacity.fadedOverlay) : AppStyle.Color.white.opacity(AppStyle.Opacity.disabledElement), lineWidth: AppStyle.Layout.workoutTileCompactCountInnerStroke)
                 .frame(width: AppStyle.Layout.workoutTileCompactCountInnerSize, height: AppStyle.Layout.workoutTileCompactCountInnerSize)
-            Text("\(exerciseCount)")
+            Text(verbatim: "\(exerciseCount)")
                 .font(AppStyle.Font.detailBadge)
                 .foregroundColor(isDefault ? appColorTheme.accent.primary : AppStyle.Color.white)
         }
@@ -289,13 +290,13 @@ public struct WorkoutTileView: View {
             }
             .buttonStyle(.plain)
             .zIndex(1)
-            .accessibilityLabel("Settings for \(workout.name)")
+            .accessibilityLabel(AppText.workoutSettingsAccessibility(name: workout.name))
             .accessibilityIdentifier(settingsAccessibilityIdentifier)
         }
     }
 
-    private var exerciseCountLabel: String {
-        "\(exerciseCount) \(exerciseCount == 1 ? "exercise" : "exercises")"
+    private var exerciseCountLabel: LocalizedStringResource {
+        AppText.exerciseCount(count: exerciseCount)
     }
 
     private var tileAccessibilityIdentifier: String {

@@ -1,7 +1,4 @@
 import Foundation
-import Mockable
-
-@Mockable
 @MainActor
 public protocol AnalyticsStoring {
     func save(_ entries: [AnalyticsEntry], for exerciseId: UUID)

@@ -6,7 +6,6 @@ import FitnessCore
 public struct WeekDay: Identifiable {
     public let id: Int
     public let date: Date
-    public let label: String
     public let isTrainingDay: Bool
 }
 
@@ -20,7 +19,7 @@ public struct WeekSummaryData {
 public struct StreakData {
     public let current: Int
     public let longest: Int
-    public let rhythmLabel: String
+    public let rhythm: TrainingRhythm
 }
 
 @Observable
@@ -31,7 +30,7 @@ public final class ScheduleViewModel {
     public private(set) var materializedStreakData = StreakData(
         current: 0,
         longest: 0,
-        rhythmLabel: ""
+        rhythm: .notEnoughData
     )
     public private(set) var selectedWeekSummary = WeekSummaryData(
         calendarWeek: 0,
@@ -45,6 +44,7 @@ public final class ScheduleViewModel {
     private let totalAnalyticsVM: TotalAnalyticsViewModel
 
     @ObservationIgnored private var cachedStreakData: StreakData?
+    @ObservationIgnored private var cachedStreakReferenceDay: Date?
     @ObservationIgnored private var cachedTrainingDays: [Date]?
     @ObservationIgnored private var cachedWeekSummaries: [Date: WeekSummaryData] = [:]
     @ObservationIgnored private var canMaterializeSelection = false
@@ -57,15 +57,19 @@ public final class ScheduleViewModel {
         self.totalAnalyticsVM = totalAnalyticsVM
     }
 
-    public func reloadData(referenceDate: Date = Date()) {
+    public func reloadData(
+        selectionDate: Date = Date(),
+        streakReferenceDate: Date = Date()
+    ) {
         cachedTrainingDays = nil
         cachedStreakData = nil
+        cachedStreakReferenceDay = nil
         cachedWeekSummaries = [:]
         guard totalAnalyticsVM.refreshData() else {
             canMaterializeSelection = false
             trainingDaySet = []
             datesWithData = []
-            materializedStreakData = StreakData(current: 0, longest: 0, rhythmLabel: "")
+            materializedStreakData = StreakData(current: 0, longest: 0, rhythm: .notEnoughData)
             selectedWeekSummary = WeekSummaryData(
                 calendarWeek: 0,
                 days: [],
@@ -79,8 +83,8 @@ public final class ScheduleViewModel {
         canMaterializeSelection = true
         trainingDaySet = Set(trainingDays())
         datesWithData = totalAnalyticsVM.allDatesWithData()
-        materializedStreakData = streakData()
-        materializeSelection(for: referenceDate)
+        materializedStreakData = streakData(referenceDate: streakReferenceDate)
+        materializeSelection(for: selectionDate)
     }
 
     public func materializeSelection(for date: Date) {
@@ -99,36 +103,40 @@ public final class ScheduleViewModel {
         return days
     }
 
-    public func allDatesWithData() -> Set<Date> {
-        totalAnalyticsVM.allDatesWithData()
-    }
-
     // MARK: - Streak Calculation
 
-    public func streakData() -> StreakData {
-        if let cached = cachedStreakData { return cached }
+    public func streakData(referenceDate: Date = Date()) -> StreakData {
+        let referenceDay = Calendar.current.startOfDay(for: referenceDate)
+        if let cached = cachedStreakData,
+           cachedStreakReferenceDay == referenceDay {
+            return cached
+        }
         let days = trainingDays()
-        let current = currentStreak(from: days)
+        let current = currentStreak(from: days, referenceDate: referenceDate)
         let longest = longestStreak(from: days)
         let rhythm = totalAnalyticsVM.getTrainingRhythm()
-        let result = StreakData(current: current, longest: longest, rhythmLabel: rhythm)
+        let result = StreakData(current: current, longest: longest, rhythm: rhythm)
         cachedStreakData = result
+        cachedStreakReferenceDay = referenceDay
         return result
     }
 
-    private func currentStreak(from sortedDays: [Date]) -> Int {
+    private func currentStreak(from sortedDays: [Date], referenceDate: Date) -> Int {
         guard !sortedDays.isEmpty else { return 0 }
         let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
+        let today = calendar.startOfDay(for: referenceDate)
+        let eligibleDays = sortedDays.filter {
+            calendar.startOfDay(for: $0) <= today
+        }
 
         // Allow streak to end today or yesterday
-        guard let last = sortedDays.last else { return 0 }
+        guard let last = eligibleDays.last else { return 0 }
         let diff = calendar.dateComponents([.day], from: last, to: today).day ?? 0
-        guard diff <= 1 else { return 0 }
+        guard (0...1).contains(diff) else { return 0 }
 
         var streak = 1
-        for i in stride(from: sortedDays.count - 2, through: 0, by: -1) {
-            let gap = calendar.dateComponents([.day], from: sortedDays[i], to: sortedDays[i + 1]).day ?? 0
+        for i in stride(from: eligibleDays.count - 2, through: 0, by: -1) {
+            let gap = calendar.dateComponents([.day], from: eligibleDays[i], to: eligibleDays[i + 1]).day ?? 0
             if gap == 1 {
                 streak += 1
             } else {
@@ -173,8 +181,6 @@ public final class ScheduleViewModel {
 
         let trainingDaySet = Set(trainingDays())
         let allEntries = totalAnalyticsVM.loadAllAnalytics()
-        let shortSymbols = germanWeekdaySymbols()
-
         var days: [WeekDay] = []
         var totalExercises = 0
         var trainingCount = 0
@@ -189,7 +195,6 @@ public final class ScheduleViewModel {
             days.append(WeekDay(
                 id: offset,
                 date: dayStart,
-                label: shortSymbols[offset],
                 isTrainingDay: isTrained
             ))
 
@@ -205,10 +210,6 @@ public final class ScheduleViewModel {
         )
         cachedWeekSummaries[weekStart] = result
         return result
-    }
-
-    private func germanWeekdaySymbols() -> [String] {
-        ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
     }
 
     // MARK: - Day Detail

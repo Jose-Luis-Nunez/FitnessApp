@@ -1,5 +1,6 @@
 import SwiftUI
 import FitnessCore
+import FitnessResources
 import FitnessUI
 #if canImport(UIKit)
 import UIKit
@@ -10,12 +11,9 @@ public struct BottomActionBarView: View {
     public let onStart: () -> Void
     public let onCompleteSet: () -> Void
     public let onQuickDone: () -> Void
-    public let onCategoryReset: () -> Void
     public let onEditLess: () -> Void
     public let onEditMore: () -> Void
     public let onFinish: () -> Void
-    public let onAddExercise: () -> Void
-    public let onResetAllExercises: () -> Void
     public let onOpenFeedback: () -> Void
     public let feedbackIconState: FeedbackEntryIconState
 
@@ -24,12 +22,9 @@ public struct BottomActionBarView: View {
         onStart: @escaping () -> Void,
         onCompleteSet: @escaping () -> Void,
         onQuickDone: @escaping () -> Void,
-        onCategoryReset: @escaping () -> Void,
         onEditLess: @escaping () -> Void,
         onEditMore: @escaping () -> Void,
         onFinish: @escaping () -> Void,
-        onAddExercise: @escaping () -> Void,
-        onResetAllExercises: @escaping () -> Void,
         onOpenFeedback: @escaping () -> Void = {},
         feedbackIconState: FeedbackEntryIconState = .entry
     ) {
@@ -37,12 +32,9 @@ public struct BottomActionBarView: View {
         self.onStart = onStart
         self.onCompleteSet = onCompleteSet
         self.onQuickDone = onQuickDone
-        self.onCategoryReset = onCategoryReset
         self.onEditLess = onEditLess
         self.onEditMore = onEditMore
         self.onFinish = onFinish
-        self.onAddExercise = onAddExercise
-        self.onResetAllExercises = onResetAllExercises
         self.onOpenFeedback = onOpenFeedback
         self.feedbackIconState = feedbackIconState
     }
@@ -55,12 +47,9 @@ public struct BottomActionBarView: View {
                     onStart: onStart,
                     onCompleteSet: onCompleteSet,
                     onQuickDone: onQuickDone,
-                    onCategoryReset: onCategoryReset,
                     onEditLess: onEditLess,
                     onEditMore: onEditMore,
                     onFinish: onFinish,
-                    onAddExercise: onAddExercise,
-                    onResetAllExercises: onResetAllExercises,
                     onOpenFeedback: onOpenFeedback,
                     feedbackIconState: feedbackIconState
                 )
@@ -77,12 +66,9 @@ public struct FloatingActionButtonsView: View {
     public let onStart: () -> Void
     public let onCompleteSet: () -> Void
     public let onQuickDone: () -> Void
-    public let onCategoryReset: () -> Void
     public let onEditLess: () -> Void
     public let onEditMore: () -> Void
     public let onFinish: () -> Void
-    public let onAddExercise: () -> Void
-    public let onResetAllExercises: () -> Void
     public let onOpenFeedback: () -> Void
     public let feedbackIconState: FeedbackEntryIconState
     private let capsuleHeight: CGFloat = 48
@@ -102,12 +88,9 @@ public struct FloatingActionButtonsView: View {
         onStart: @escaping () -> Void,
         onCompleteSet: @escaping () -> Void,
         onQuickDone: @escaping () -> Void,
-        onCategoryReset: @escaping () -> Void,
         onEditLess: @escaping () -> Void,
         onEditMore: @escaping () -> Void,
         onFinish: @escaping () -> Void,
-        onAddExercise: @escaping () -> Void,
-        onResetAllExercises: @escaping () -> Void,
         onOpenFeedback: @escaping () -> Void = {},
         feedbackIconState: FeedbackEntryIconState = .entry
     ) {
@@ -115,12 +98,9 @@ public struct FloatingActionButtonsView: View {
         self.onStart = onStart
         self.onCompleteSet = onCompleteSet
         self.onQuickDone = onQuickDone
-        self.onCategoryReset = onCategoryReset
         self.onEditLess = onEditLess
         self.onEditMore = onEditMore
         self.onFinish = onFinish
-        self.onAddExercise = onAddExercise
-        self.onResetAllExercises = onResetAllExercises
         self.onOpenFeedback = onOpenFeedback
         self.feedbackIconState = feedbackIconState
     }
@@ -160,9 +140,9 @@ public struct FloatingActionButtonsView: View {
     /// while "Less" and "More" remain secondary adjustments.
     private var setControlButtons: some View {
         HStack(spacing: 8) {
-            menuTextItem(text: "Less", action: onEditLess, style: .control)
-            menuTextItem(text: "Done", action: onCompleteSet, style: .done)
-            menuTextItem(text: "More", action: onEditMore, style: .control)
+            menuTextItem(text: AppText.actionLess, accessibilityToken: "Less", action: onEditLess, style: .control)
+            menuTextItem(text: AppText.actionDone, action: onCompleteSet, style: .done)
+            menuTextItem(text: AppText.actionMore, accessibilityToken: "More", action: onEditMore, style: .control)
         }
         .frame(maxWidth: .infinity, maxHeight: capsuleHeight)
     }
@@ -187,7 +167,7 @@ public struct FloatingActionButtonsView: View {
             HStack(spacing: 18) {
                 if viewModel.showStartButton && (viewModel.currentSet != 0 || viewModel.didJustEditSet) {
                     menuTextItem(
-                        text: viewModel.startButtonTitle,
+                        text: startButtonTitle,
                         action: onStart,
                         style: .start
                     )
@@ -195,7 +175,7 @@ public struct FloatingActionButtonsView: View {
 
                 if viewModel.showFinishButton {
                     menuTextItem(
-                        text: "Finish",
+                        text: AppText.trainingFinish,
                         action: onFinish,
                         style: .finish
                     )
@@ -209,7 +189,8 @@ public struct FloatingActionButtonsView: View {
 
     @ViewBuilder
     private func menuTextItem(
-        text: String,
+        text: LocalizedStringResource,
+        accessibilityToken: String = "",
         action: @escaping () -> Void,
         style: MenuItemStyle
     ) -> some View {
@@ -258,7 +239,7 @@ public struct FloatingActionButtonsView: View {
         .frame(maxWidth: .infinity, minHeight: capsuleHeight, maxHeight: capsuleHeight)
         .contentShape(Rectangle())
         .buttonStyle(PlainButtonStyle())
-        .accessibilityIdentifier(accessibilityID(for: style, text: text))
+        .accessibilityIdentifier(accessibilityID(for: style, text: accessibilityToken))
     }
 
     @ViewBuilder
@@ -348,6 +329,15 @@ public struct FloatingActionButtonsView: View {
         case .control:   return TrainingIDs.controlButton(text)
         case .quickDone: return TrainingIDs.quickDoneButton
         case .feedback:  return TrainingIDs.feedbackButton
+        }
+    }
+
+    private var startButtonTitle: LocalizedStringResource {
+        switch viewModel.startButtonLabel {
+        case .training: AppText.trainingStart
+        case .left(let number): AppText.trainingStartLeft(number: number)
+        case .right(let number): AppText.trainingStartRight(number: number)
+        case .set(let number): AppText.trainingStartSet(number: number)
         }
     }
 }

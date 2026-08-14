@@ -115,8 +115,8 @@ struct BottomMenuBarView: View {
     /// (or **Activate**). Same dimensions as the normal bar so the layout never jumps.
     private var selectionActionBar: some View {
         let actionLabel = overlayState.exerciseSelectionMode == .activate
-            ? L10n.selectionActivate
-            : L10n.selectionDeactivate
+            ? AppText.exerciseActivateSelection
+            : AppText.exerciseDeactivateSelection
         let hasSelection = !overlayState.selectedExerciseIds.isEmpty
 
         return HStack(spacing: 0) {
@@ -124,7 +124,7 @@ struct BottomMenuBarView: View {
                 Haptics.impact(.light)
                 overlayState.endExerciseSelection()
             }) {
-                Text(L10n.selectionCancel)
+                Text(AppText.actionCancel)
                     .font(AppStyle.Font.cardValueBold)
                     .foregroundColor(AppStyle.Color.white)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -159,24 +159,24 @@ struct BottomMenuBarView: View {
 
     private var tabBar: some View {
         HStack(spacing: 0) {
-            menuItemImage(imageName: "homeIcon", label: "Workouts", tab: .workouts) {
+            menuItemImage(imageName: "homeIcon", label: AppText.workoutTab, tab: .workouts) {
                 animateTabBounce(.workouts)
                 router.popToRoot()
             }
             // Placeholder icon until a dedicated "Training" asset exists.
-            menuItemImage(imageName: "dumbbell.fill", isSystemImage: true, label: "Training", tab: .training) {
+            menuItemImage(imageName: "dumbbell.fill", isSystemImage: true, label: AppText.trainingTitle, tab: .training) {
                 animateTabBounce(.training)
                 onTrainingTab()
             }
-            menuItemImage(imageName: "analyticsEntry", label: "Analytics", tab: .chart) {
+            menuItemImage(imageName: "analyticsEntry", label: AppText.analyticsTitle, tab: .chart) {
                 animateTabBounce(.chart)
                 router.switchToAnalytics()
             }
-            menuItemImage(imageName: "menuCalenderIcon", label: "Schedule", tab: .calendar) {
+            menuItemImage(imageName: "menuCalenderIcon", label: AppText.scheduleTitle, tab: .calendar) {
                 animateTabBounce(.calendar)
                 router.switchToSchedule()
             }
-            menuItemImage(imageName: "profileMenuIcon", label: "Profile", tab: .profile) {
+            menuItemImage(imageName: "profileMenuIcon", label: AppText.profileTitle, tab: .profile) {
                 animateTabBounce(.profile)
                 router.switchToProfile()
             }
@@ -262,7 +262,7 @@ struct BottomMenuBarView: View {
                     .contentShape(Circle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Actions")
+            .accessibilityLabel(AppText.commonActions)
             .accessibilityIdentifier(FitnessCore.BottomBarIDs.contextMenu)
         } else {
             Circle()
@@ -287,7 +287,7 @@ struct BottomMenuBarView: View {
     // MARK: - Tab Item
 
     @ViewBuilder
-    private func menuItemImage(imageName: String, isSystemImage: Bool = false, label: String, tab: BottomTab, action: @escaping () -> Void) -> some View {
+    private func menuItemImage(imageName: String, isSystemImage: Bool = false, label: LocalizedStringResource, tab: BottomTab, action: @escaping () -> Void) -> some View {
         let isSelected = selectedTab == tab
         let targetSize: CGFloat = imageName == "menuCalenderIcon"
             ? iconSize * calendarIconScale

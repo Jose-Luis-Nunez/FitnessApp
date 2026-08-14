@@ -31,36 +31,21 @@ struct ExerciseFormViewModelTests {
 
     // MARK: - isFormValid
 
-    @Test func formIsInvalidWhenNameIsEmpty() {
-        let sut = makeSUT()
-        sut.name = ""
-        sut.reps = 10
-        sut.sets = 3
-        #expect(sut.isFormValid == false)
-    }
+    @Test func formValidityRequiresNameAndPositiveRepsAndSets() {
+        let cases: [(name: String, reps: Int, sets: Int, expected: Bool)] = [
+            ("", 10, 3, false),
+            ("Curl", 0, 3, false),
+            ("Curl", 10, 0, false),
+            ("Curl", 10, 3, true),
+        ]
 
-    @Test func formIsInvalidWhenRepsIsZero() {
-        let sut = makeSUT()
-        sut.name = "Curl"
-        sut.reps = 0
-        sut.sets = 3
-        #expect(sut.isFormValid == false)
-    }
-
-    @Test func formIsInvalidWhenSetsIsZero() {
-        let sut = makeSUT()
-        sut.name = "Curl"
-        sut.reps = 10
-        sut.sets = 0
-        #expect(sut.isFormValid == false)
-    }
-
-    @Test func formIsValidWithNameAndPositiveRepsAndSets() {
-        let sut = makeSUT()
-        sut.name = "Curl"
-        sut.reps = 10
-        sut.sets = 3
-        #expect(sut.isFormValid == true)
+        for testCase in cases {
+            let sut = makeSUT()
+            sut.name = testCase.name
+            sut.reps = testCase.reps
+            sut.sets = testCase.sets
+            #expect(sut.isFormValid == testCase.expected)
+        }
     }
 
     // MARK: - clearForm
@@ -93,17 +78,12 @@ struct ExerciseFormViewModelTests {
 
     // MARK: - toggleForm
 
-    @Test func toggleFormOpensForm() {
+    @Test func toggleFormOpensThenClosesAndClearsForm() {
         let sut = makeSUT()
         sut.toggleForm()
         #expect(sut.showForm == true)
-    }
 
-    @Test func toggleFormClosesAndClearsForm() {
-        let sut = makeSUT()
-        sut.showForm = true
         sut.name = "Test"
-
         sut.toggleForm()
 
         #expect(sut.showForm == false)
@@ -118,14 +98,17 @@ struct ExerciseFormViewModelTests {
         #expect(sut.createOrUpdateExercise() == nil)
     }
 
-    @Test func createExerciseReturnsNewExercise() throws {
+    @Test func createExerciseUsesConfiguredFieldsAndSelectedIcon() throws {
         let sut = makeSUT()
         sut.name = "Bench Press"
         sut.weight = 80
         sut.reps = 8
         sut.sets = 4
         sut.seat = "3"
+        sut.noSeats = true
         sut.selectedCategory = .chest
+        sut.selectedIconName = "chestPressIcon"
+        sut.executionMode = .bilateral
 
         let exercise = try #require(sut.createOrUpdateExercise())
         #expect(exercise.name == "Bench Press")
@@ -133,53 +116,24 @@ struct ExerciseFormViewModelTests {
         #expect(exercise.reps == 8)
         #expect(exercise.sets == 4)
         #expect(exercise.seatSetting == "3")
+        #expect(exercise.noSeats)
+        #expect(exercise.iconName == "chestPressIcon")
         #expect(exercise.category == .chest)
+        #expect(exercise.executionMode == .bilateral)
     }
 
-    @Test func createExerciseUsesDefaultIconWhenNoneSelected() {
+    @Test func createExerciseUsesDefaultsForEmptyOptionalFields() throws {
         let sut = makeSUT()
         sut.name = "Curl"
         sut.selectedCategory = .arms
         sut.selectedIconName = ""
-
-        let exercise = sut.createOrUpdateExercise()
-        #expect(exercise?.iconName == MuscleCategoryGroup.arms.defaultIconName)
-    }
-
-    @Test func createExerciseUsesSelectedIcon() {
-        let sut = makeSUT()
-        sut.name = "Curl"
-        sut.selectedCategory = .arms
-        sut.selectedIconName = "bicepsIcon"
-
-        let exercise = sut.createOrUpdateExercise()
-        #expect(exercise?.iconName == "bicepsIcon")
-    }
-
-    @Test func createExerciseSetsSeatToNilWhenEmpty() {
-        let sut = makeSUT()
-        sut.name = "Curl"
         sut.seat = ""
 
-        let exercise = sut.createOrUpdateExercise()
-        #expect(exercise?.seatSetting == nil)
-    }
-
-    @Test func createExercisePreservesNoSeatsFlag() {
-        let sut = makeSUT()
-        sut.name = "Curl"
-        sut.noSeats = true
-
-        let exercise = sut.createOrUpdateExercise()
-        #expect(exercise?.noSeats == true)
-    }
-
-    @Test func createExercisePersistsBilateralMode() {
-        let sut = makeSUT()
-        sut.name = "Torso"
-        sut.executionMode = .bilateral
-
-        #expect(sut.createOrUpdateExercise()?.executionMode == .bilateral)
+        let exercise = try #require(sut.createOrUpdateExercise())
+        #expect(exercise.iconName == MuscleCategoryGroup.arms.defaultIconName)
+        #expect(exercise.seatSetting == nil)
+        #expect(!exercise.noSeats)
+        #expect(exercise.executionMode == .standard)
     }
 
     // MARK: - createOrUpdateExercise (edit existing)

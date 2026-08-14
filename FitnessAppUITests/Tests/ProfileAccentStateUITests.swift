@@ -23,4 +23,5 @@ final class ProfileAccentStateUITests: BaseTest {
         verifyExists(ProfileIDs.bmiRefresh)
         verifyExists(ProfileIDs.friendsUserRow)
     }
+
 }

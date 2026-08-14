@@ -1,8 +1,43 @@
 import Testing
 import Foundation
 import FitnessCore
-import Mockable
+import FitnessTestSupport
+@testable import FitnessStorageTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
+
+@MainActor
+private final class FriendStorageStub: FriendStoring {
+    var friends: [Friend] = []
+    var envelope: WorkoutShareEnvelope?
+    var loadError: Error?
+
+    func upsertFriend(name: String, envelopeJSON: String, workoutName: String) throws -> Friend {
+        Friend(id: UUID(), name: name, addedAt: .now, workoutName: workoutName)
+    }
+
+    func deleteFriend(id: UUID) {}
+
+    func loadEnvelope(for friendId: UUID) throws -> WorkoutShareEnvelope {
+        if let loadError { throw loadError }
+        return try #require(envelope)
+    }
+}
+
+@MainActor
+private final class TotalAnalyticsStorageStub: TotalAnalyticsStoring {
+    var entries: [AnalyticsEntry] = []
+
+    func loadSnapshot(for workoutId: UUID) throws -> WorkoutAnalyticsSnapshot {
+        WorkoutAnalyticsSnapshot(workoutId: workoutId, exercises: [], entriesByExerciseId: [:])
+    }
+
+    func loadAllAnalytics() -> [AnalyticsEntry] { entries }
+    func loadAllAnalytics(for workoutId: UUID?) -> [AnalyticsEntry] { entries }
+    func loadAllAnalytics(for date: Date) -> [AnalyticsEntry] { entries }
+    func getAllExercisesWithAnalytics() -> [Exercise] { [] }
+    func getAllExercisesWithAnalytics(for workoutId: UUID?) -> [Exercise] { [] }
+    func loadAnalytics(for exerciseId: UUID) -> [AnalyticsEntry] { [] }
+}
 
 @Suite("LoadFriendComparisonUseCase", .tags(.integration))
 @MainActor
@@ -24,24 +59,15 @@ struct LoadFriendComparisonUseCaseTests {
         myExercisesByCategory: [MuscleCategoryGroup: [Exercise]] = [:],
         myAnalytics: [AnalyticsEntry] = []
     ) -> LoadFriendComparisonUseCase {
-        let friendMock = MockFriendStoring()
-        if let loadEnvelopeError {
-            given(friendMock).loadEnvelope(for: .any).willThrow(loadEnvelopeError)
-        } else {
-            given(friendMock).loadEnvelope(for: .any).willReturn(envelope ?? makeEnvelope(exercises: []))
-        }
+        let friendMock = FriendStorageStub()
+        friendMock.envelope = envelope ?? makeEnvelope(exercises: [])
+        friendMock.loadError = loadEnvelopeError
 
-        let exerciseMock = MockExerciseStoring(policy: .relaxedVoid)
-        // Specific category matchers first; the `.any` catch-all must be
-        // registered LAST so it only acts as the fallback (Mockable precedence).
-        for (category, exercises) in myExercisesByCategory {
-            given(exerciseMock).loadForWorkout(workoutId: .any, category: .value(category)).willReturn(exercises)
-        }
-        given(exerciseMock).loadForWorkout(workoutId: .any, category: .any).willReturn([])
+        let exerciseMock = MockExerciseStorage()
+        exerciseMock.exercisesByCategory = myExercisesByCategory
 
-        let analyticsMock = MockTotalAnalyticsStoring(policy: .relaxedVoid)
-        // Disambiguate the `for:` overload (UUID? vs Date) with a typed matcher.
-        given(analyticsMock).loadAllAnalytics(for: Parameter<UUID?>.any).willReturn(myAnalytics)
+        let analyticsMock = TotalAnalyticsStorageStub()
+        analyticsMock.entries = myAnalytics
 
         return LoadFriendComparisonUseCase(
             friendStorage: friendMock,

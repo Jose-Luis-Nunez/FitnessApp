@@ -1,3 +1,4 @@
+import FitnessResources
 import SwiftUI
 
 public struct CapsuleToggleStyle: ToggleStyle {
@@ -25,6 +26,6 @@ public struct CapsuleToggleStyle: ToggleStyle {
                 )
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("DecimalSwitch")
+        .accessibilityLabel(AppText.accessibilityDecimalSwitch)
     }
 }

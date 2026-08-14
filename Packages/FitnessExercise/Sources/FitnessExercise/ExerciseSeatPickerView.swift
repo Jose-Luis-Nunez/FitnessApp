@@ -35,8 +35,8 @@ public struct ExerciseSeatPickerView: View {
             onCancel: onCancel,
             actions: {
                 ExercisePickerActionButtons(
-                    cancelLabel: L10n.cardCreationCancel,
-                    saveLabel: L10n.cardCreationSave,
+                    cancelLabel: AppText.actionCancel,
+                    saveLabel: AppText.actionSave,
                     cancelColor: appColorTheme.accent.primary,
                     saveDisabled: false,
                     onCancel: {
@@ -50,7 +50,7 @@ public struct ExerciseSeatPickerView: View {
                 )
             },
             content: {
-                ExerciseIconHeader(formViewModel: formViewModel, title: L10n.cardEditSeatTitle)
+                ExerciseIconHeader(formViewModel: formViewModel, title: AppText.exerciseEditSeat)
                 SeatSettingsEditor(formViewModel: formViewModel)
             }
         )

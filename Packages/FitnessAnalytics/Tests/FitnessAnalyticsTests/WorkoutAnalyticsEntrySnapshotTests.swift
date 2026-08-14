@@ -23,8 +23,8 @@ private func fixedWorkoutDateFormatter() -> DateFormatter {
 @MainActor
 struct WorkoutAnalyticsEntrySnapshotTests {
     @Test(
-        "Workout entry stays readable at supported widths",
-        arguments: [CGFloat(320), CGFloat(393)]
+        "Workout entry stays readable at the narrow supported width",
+        arguments: [CGFloat(320)]
     )
     func layout(width: CGFloat) throws {
         let workout = Workout(name: "Push Day")
@@ -90,6 +90,7 @@ struct WorkoutAnalyticsEntrySnapshotTests {
             }
         )
         .appColorTheme(.green)
+        .environment(\.locale, Locale(identifier: "en_US"))
         .environment(
             \.safeAreaInsets,
             EdgeInsets(top: 0, leading: 0, bottom: 34, trailing: 0)

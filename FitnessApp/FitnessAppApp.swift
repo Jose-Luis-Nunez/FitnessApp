@@ -10,6 +10,7 @@ import FitnessSchedule
 import FitnessTraining
 import FitnessWorkouts
 import FitnessFriends
+import FitnessResources
 import Factory
 
 @main
@@ -27,6 +28,7 @@ struct FitnessAppApp: App {
     /// Sole persistence owner for the app-wide accent preference. The stored
     /// key and raw values remain compatible with existing installations.
     @AppStorage(AppAccentScheme.storageKey) private var accentScheme: AppAccentScheme = .green
+    @AppStorage(AppLanguage.storageKey) private var appLanguage: AppLanguage = .english
 
     init() {
         let textFieldAppearance = UITextField.appearance()
@@ -93,7 +95,10 @@ struct FitnessAppApp: App {
                                     )
                                         .navigationBarBackButtonHidden(true)
                                 case .profile:
-                                    ProfileView(accentScheme: $accentScheme)
+                                    ProfileView(
+                                        accentScheme: $accentScheme,
+                                        appLanguage: $appLanguage
+                                    )
                                         .navigationBarBackButtonHidden(true)
                                 case .totalAnalytics:
                                     TotalAnalyticsView()
@@ -198,6 +203,7 @@ struct FitnessAppApp: App {
             // Environment propagation re-renders color consumers without
             // replacing view identity or resetting feature-owned state.
             .appColorTheme(accentScheme)
+            .environment(\.locale, appLanguage.locale)
             .environment(\.safeAreaInsets, geo.safeAreaInsets)
             .environment(overlayState)
             .environment(router)

@@ -4,6 +4,11 @@ import FitnessCore
 import FitnessStorage
 import Factory
 
+public enum WorkoutOperationFailure: Equatable, Sendable {
+    case export
+    case creation
+}
+
 /// Identifiable wrapper that drives `.sheet(item:)` for the iOS share sheet —
 /// carries the source workout's stable id and the precomputed JSON (so the
 /// export is done synchronously up-front, not inside the SwiftUI
@@ -43,8 +48,7 @@ public final class WorkoutsViewModel {
     /// `requestShare(for:)` after the workout JSON has been computed.
     public var workoutToShare: WorkoutShareItem?
     public var workoutForAnalyticsEntry: Workout?
-    public var exportErrorMessage: String?
-    public var createErrorMessage: String?
+    public var operationFailure: WorkoutOperationFailure?
     private(set) var exerciseCounts: [UUID: Int]?
 
     @ObservationIgnored private let storageService: WorkoutStoring
@@ -89,12 +93,12 @@ public final class WorkoutsViewModel {
                 type: selectedWorkoutType
             )
         } catch {
-            createErrorMessage = "Workout could not be saved."
+            operationFailure = .creation
             return
         }
         storageService.setCurrentWorkout(workout)
 
-        createErrorMessage = nil
+        operationFailure = nil
         newWorkoutName = ""
         newWorkoutType = nil
         showingCreateWorkoutFullScreen = false
@@ -151,7 +155,7 @@ public final class WorkoutsViewModel {
     public func showCreateWorkout() {
         newWorkoutName = ""
         newWorkoutType = nil
-        createErrorMessage = nil
+        operationFailure = nil
         showingCreateWorkoutFullScreen = true
     }
 
@@ -169,7 +173,7 @@ public final class WorkoutsViewModel {
     /// attachment in Mail/Messages/AirDrop/Files. If the file-write fails
     /// (extremely rare in iOS tmp), the share still works with the JSON
     /// string fallback. If JSON encoding itself fails, surface via
-    /// `exportErrorMessage` for the alert.
+    /// `operationFailure` for the alert.
     public func requestShare(for workout: Workout) {
         do {
             let json = try exportWorkoutUseCase.execute(workout: workout)
@@ -177,7 +181,7 @@ public final class WorkoutsViewModel {
             workoutToShare = WorkoutShareItem(workout: workout, json: json, fileURL: fileURL)
             hideWorkoutOptions()
         } catch {
-            exportErrorMessage = WorkoutShareError.exportFailed.errorDescription
+            operationFailure = .export
         }
     }
 

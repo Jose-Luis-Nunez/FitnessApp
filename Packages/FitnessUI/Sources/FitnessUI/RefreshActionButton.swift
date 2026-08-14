@@ -1,14 +1,15 @@
 import SwiftUI
+import FitnessResources
 
 /// Semantic wrapper for a primary Profile refresh action.
 public struct RefreshActionButton: View {
-    private let title: String
+    private let title: LocalizedStringResource
     private let isLoading: Bool
     private let isEnabled: Bool
     private let action: () -> Void
 
     public init(
-        title: String = "Refresh",
+        title: LocalizedStringResource = AppText.actionRefresh,
         isLoading: Bool = false,
         isEnabled: Bool = true,
         action: @escaping () -> Void

@@ -5,17 +5,14 @@ alwaysApply: true
 
 # Xcode Build and Test
 
-- Never use `swift test` or `swift build`; SwiftData and testing macros require
-  Xcode.
-- Prefix `xcodebuild` with
-  `DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode-beta.app/Contents/Developer`.
-- Package tests also require that Xcode developer `usr/bin` is first in PATH.
+- Never use `swift test` or `swift build`; use Xcode.
+- Use `DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode-beta.app/Contents/Developer`;
+  package tests also prepend its `usr/bin` to PATH.
 - Use `iPhone 17 Pro Max, OS=26.0` for stable package and snapshot tests.
 - Add `-skipMacroValidation` to package tests.
 - UI tests must use the `FitnessApp UITests` scheme so the `UITESTING` build
   configuration is active.
-- Test final contents once. Reuse matching content-bound evidence instead of
-  repeating the same successful command.
+- Test final contents once; reuse matching content-bound evidence.
 - Select test depth with
   `bash .claude/hooks/lib/test-domain-risk.sh classify worktree` and
   `.claude/references/test-selection-policy.md`; do not infer test value from
@@ -23,10 +20,23 @@ alwaysApply: true
 
 Commands:
 
-- Affected packages: `scripts/test-affected-packages.sh <Package> [...]`
+- Affected packages: `scripts/test-affected-packages.sh [--jobs N] <Package> [...]`.
+  One shared `Packages/Package.swift` graph is used. Xcode globally coordinates
+  six build jobs by default; do not start concurrent package-level
+  `xcodebuild` processes. The default routes each requested module through its
+  native-fast, pinned-iOS integration, and separated snapshot targets.
+  Simulator integration/snapshot phases use one simulator without test clones;
+  build jobs remain globally parallel.
+- Developer loops may select `--fast`, `--integration`, or `--snapshots`.
+  `--pre-merge` runs the complete pinned-iOS plan. Use `--diagnose` to include
+  Xcode's build timing summary and `--list` to inspect the resolved schedule.
+  `--compilation-cache` is opt-in and should be used only when a warm cache is
+  expected.
+- For unchanged sources/settings, reuse products with `--build-for-testing`
+  followed by `--test-without-building`.
 - App build/install/launch: `scripts/buildApp.sh`
 - Full command ownership and evidence format:
   `.claude/skills/reviewing-code-changes/SKILL.md`
 
-Snapshot baselines are runtime-specific. Confirm the pinned Xcode build before
-recording and inspect changed PNGs rather than accepting re-recording as proof.
+Snapshot baselines are runtime-specific. Confirm pinned Xcode and inspect
+changed PNGs; re-recording alone is not proof.

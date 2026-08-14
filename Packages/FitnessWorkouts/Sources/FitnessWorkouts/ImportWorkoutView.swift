@@ -1,6 +1,7 @@
 import SwiftUI
 import FitnessCore
 import FitnessUI
+import FitnessResources
 
 struct ImportWorkoutView: View {
     @Environment(\.appColorTheme) private var appColorTheme
@@ -24,7 +25,7 @@ struct ImportWorkoutView: View {
 
     var body: some View {
         WorkoutFormSheet(
-            title: "Import Workout",
+            title: AppText.workoutImport,
             isSaveDisabled: viewModel.isImportDisabled,
             onSave: { viewModel.importTapped() },
             isPresented: $isPresented,
@@ -34,8 +35,8 @@ struct ImportWorkoutView: View {
                 instructionSection
                 clipboardButton
                 editorSection
-                if let message = viewModel.errorMessage {
-                    errorPill(message: message)
+                if let error = viewModel.error {
+                    errorPill(error: error)
                 }
             }
             .padding(.top, 24)
@@ -45,10 +46,10 @@ struct ImportWorkoutView: View {
 
     private var instructionSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Paste JSON")
+            Text(AppText.workoutPasteJson)
                 .font(.headline)
                 .foregroundColor(textColor)
-            Text("Paste the exported workout JSON below. It will be created as a new workout — existing workouts will not be overwritten.")
+            Text(AppText.workoutPasteInstructions)
                 .font(.caption)
                 .foregroundColor(textColor.opacity(0.7))
                 .fixedSize(horizontal: false, vertical: true)
@@ -60,7 +61,7 @@ struct ImportWorkoutView: View {
         Button(action: { viewModel.pasteFromClipboard() }) {
             HStack(spacing: 8) {
                 Image(systemName: "doc.on.clipboard")
-                Text("Paste from clipboard")
+                Text(AppText.workoutPasteClipboard)
                     .font(AppStyle.Font.defaultFont)
             }
             .foregroundColor(appColorTheme.accent.primary)
@@ -90,11 +91,11 @@ struct ImportWorkoutView: View {
             )
     }
 
-    private func errorPill(message: String) -> some View {
+    private func errorPill(error: WorkoutImportFailure) -> some View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundColor(.red)
-            Text(message)
+            Text(error.localizedResource)
                 .font(.callout)
                 .foregroundColor(.red)
                 .fixedSize(horizontal: false, vertical: true)
@@ -107,5 +108,16 @@ struct ImportWorkoutView: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.red.opacity(0.5), lineWidth: 1)
         )
+    }
+}
+
+private extension WorkoutImportFailure {
+    var localizedResource: LocalizedStringResource {
+        switch self {
+        case .invalidJSON: AppText.errorInvalidWorkoutJson
+        case .newerVersion: AppText.errorNewerWorkoutVersion
+        case .incompleteData: AppText.errorIncompleteWorkout
+        case .savingFailed: AppText.errorSavingFailed
+        }
     }
 }

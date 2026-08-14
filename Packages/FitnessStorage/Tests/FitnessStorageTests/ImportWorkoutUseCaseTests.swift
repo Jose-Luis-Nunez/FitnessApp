@@ -3,6 +3,7 @@ import Foundation
 import SwiftData
 import FitnessCore
 import FitnessTestSupport
+@testable import FitnessStorageTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
 
 @Suite("ImportWorkoutUseCase", .tags(.integration))

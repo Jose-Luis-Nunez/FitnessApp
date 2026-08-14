@@ -1,7 +1,8 @@
 import SwiftUI
+import FitnessResources
 
 extension View {
-    public func standardToolbar(title: String) -> some View {
+    public func standardToolbar(title: LocalizedStringResource) -> some View {
 #if os(iOS)
         self
             .navigationTitle("")
@@ -15,7 +16,7 @@ extension View {
             }
 #else
         self
-            .navigationTitle(title)
+            .navigationTitle(Text(title))
 #endif
     }
 }

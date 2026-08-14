@@ -15,6 +15,7 @@ import FitnessUI
 @_spi(PersistenceUI)
 public struct ActiveCardModelView: View {
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var locale
     @Bindable public var model: ExerciseModel
     public let onEdit: (Exercise, ExerciseEditMode) -> Void
     /// Unused by the active variant — the seat stays editable mid-set (gated only
@@ -38,7 +39,7 @@ public struct ActiveCardModelView: View {
     }
 
     private var formattedWeight: String {
-        WeightFormatter.displayWeight(model.weight)
+        WeightFormatter.displayWeight(model.weight, locale: locale)
     }
 
     private var iconOverflow: CGFloat { AppStyle.Padding.activeCardIconOverflow }
@@ -101,7 +102,7 @@ public struct ActiveCardModelView: View {
                         Image(systemName: "bolt.fill")
                             .foregroundColor(AppStyle.Color.yellow)
                             .font(AppStyle.Font.iconSymbol)
-                        Text("\(model.sets)x")
+                        Text(verbatim: "\(model.sets)x")
                             .font(AppStyle.Font.cardHeadline)
                             .foregroundColor(AppStyle.Color.white)
                     }
@@ -112,7 +113,7 @@ public struct ActiveCardModelView: View {
                         Image(systemName: "arrow.triangle.2.circlepath")
                             .foregroundColor(appColorTheme.accent.primary)
                             .font(AppStyle.Font.iconSymbol)
-                        Text("\(model.reps)")
+                        Text(verbatim: "\(model.reps)")
                             .font(AppStyle.Font.cardHeadline)
                             .foregroundColor(AppStyle.Color.white)
                     }
@@ -129,7 +130,7 @@ public struct ActiveCardModelView: View {
                 Image(systemName: "bolt.fill")
                     .foregroundColor(AppStyle.Color.yellow)
                     .font(AppStyle.Font.tileLabel)
-                Text("\(model.sets)x")
+                Text(verbatim: "\(model.sets)x")
                     .font(AppStyle.Font.regularChip)
                     .foregroundColor(AppStyle.Color.white)
             }
@@ -144,7 +145,7 @@ public struct ActiveCardModelView: View {
                 Image(systemName: "arrow.triangle.2.circlepath")
                     .foregroundColor(appColorTheme.accent.primary)
                     .font(AppStyle.Font.tileLabel)
-                Text("\(model.reps)")
+                Text(verbatim: "\(model.reps)")
                     .font(AppStyle.Font.regularChip)
                     .foregroundColor(AppStyle.Color.white)
             }

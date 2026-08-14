@@ -6,10 +6,9 @@ import Testing
 
 @Suite("AnalyticsEntryFormState", .tags(.fast))
 struct AnalyticsEntryFormStateTests {
-    @Test func newBilateralEntryCreatesPairedLogicalSets() {
+    @Test func bilateralDraftCreatesAddsAndRemovesCompleteLogicalPairs() {
         let exercise = makeBilateralExercise(sets: 3)
-
-        let state = AnalyticsEntryFormState(
+        var state = AnalyticsEntryFormState(
             exercise: exercise,
             existingEntry: nil
         )
@@ -19,6 +18,16 @@ struct AnalyticsEntryFormStateTests {
         #expect(state.sets.map(\.side) == [
             .left, .right, .left, .right, .left, .right
         ])
+
+        state.appendSet(defaultWeight: 24, defaultReps: 8)
+        #expect(state.logicalSetIndices == [0, 1, 2, 3])
+        let added = state.sets.filter { $0.logicalSetIndex == 3 }
+        #expect(added.map(\.side) == [.left, .right])
+        #expect(added.allSatisfy { $0.weight == 24 && $0.reps == 8 })
+
+        state.removeLogicalSet(at: 0)
+        #expect(state.logicalSetIndices == [1, 2, 3])
+        #expect(state.sets.count == 6)
     }
 
     @Test func editingPreservesResultIdentityAndSideMetadata() {
@@ -47,10 +56,7 @@ struct AnalyticsEntryFormStateTests {
                 )
             ]
         )
-        var state = AnalyticsEntryFormState(
-            exercise: exercise,
-            existingEntry: entry
-        )
+        var state = AnalyticsEntryFormState(exercise: exercise, existingEntry: entry)
 
         state.sets[0].reps = 12
         let result = state.makeEntry(exerciseId: exercise.id, date: entry.date)
@@ -61,22 +67,31 @@ struct AnalyticsEntryFormStateTests {
         #expect(result.setProgress[1].weight == 22)
     }
 
-    @Test func addAndDeleteOperateOnCompleteLogicalPairs() {
-        let exercise = makeBilateralExercise(sets: 1)
-        var state = AnalyticsEntryFormState(
-            exercise: exercise,
-            existingEntry: nil
-        )
+    @Test func standardDraftMutationsAndValidationFollowWeightPolicy() {
+        let weighted = FitnessTestSupport.makeExercise(weight: 20, reps: 10, sets: 3)
+        var state = AnalyticsEntryFormState(exercise: weighted, existingEntry: nil)
 
-        state.appendSet(defaultWeight: 24, defaultReps: 8)
-        #expect(state.logicalSetIndices == [0, 1])
-        let added = state.sets.filter { $0.logicalSetIndex == 1 }
-        #expect(added.map(\.side) == [.left, .right])
-        #expect(added.allSatisfy { $0.weight == 24 && $0.reps == 8 })
+        #expect(!state.isBilateral)
+        #expect(!state.isSaveDisabled(hasWeight: true))
 
-        state.removeLogicalSet(at: 0)
-        #expect(state.logicalSetIndices == [1])
+        state.sets[0].weight = 0
+        #expect(state.isSaveDisabled(hasWeight: true))
+        #expect(!state.isSaveDisabled(hasWeight: false))
+
+        state.sets[0].weight = 20
+        state.sets[0].reps = 0
+        #expect(state.isSaveDisabled(hasWeight: true))
+        #expect(state.isSaveDisabled(hasWeight: false))
+
+        state.appendSet(defaultWeight: 25, defaultReps: 8)
         #expect(state.sets.count == 2)
+        #expect(state.sets[1].weight == 25)
+        #expect(state.sets[1].reps == 8)
+
+        state.removePhysicalSet(at: 99)
+        #expect(state.sets.count == 2)
+        state.removePhysicalSet(at: 0)
+        #expect(state.sets.count == 1)
     }
 
     private func makeBilateralExercise(sets: Int) -> Exercise {

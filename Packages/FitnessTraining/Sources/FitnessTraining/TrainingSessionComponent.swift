@@ -1,5 +1,6 @@
 import SwiftUI
 import FitnessCore
+import FitnessResources
 import FitnessStorage
 import FitnessUI
 import Factory
@@ -253,7 +254,7 @@ public struct CompactTimerComponent: View {
 
     public var body: some View {
         VStack(spacing: 2) {
-            Text(max(viewModel.timerSeconds, 0).formattedAsTimer)
+            Text(verbatim: max(viewModel.timerSeconds, 0).formattedAsTimer)
                 .font(
                     expanded
                         ? AppStyle.Font.trainingTimerLarge
@@ -270,7 +271,7 @@ public struct CompactTimerComponent: View {
                     viewModel.cancelActiveSet()
                 }
             }) {
-                Text("Cancel")
+                Text(AppText.trainingCancel)
                     .font(AppStyle.Font.trainingTimerCancel)
                     .foregroundColor(AppStyle.Color.idleMetricLabel)
                     .frame(maxWidth: .infinity, minHeight: 24)
@@ -299,14 +300,12 @@ public struct CompactTimerComponent: View {
 
 public struct TrainingActionBarComponent: View {
     public var coordinator: TrainingCoordinator
-    public let exercises: [Exercise]
     public let hasActiveExercise: Bool
 
     @Injected(\.feedbackStorage) private var feedbackStorage: FeedbackStoring
 
-    public init(coordinator: TrainingCoordinator, exercises: [Exercise], hasActiveExercise: Bool) {
+    public init(coordinator: TrainingCoordinator, exercises _: [Exercise], hasActiveExercise: Bool) {
         self.coordinator = coordinator
-        self.exercises = exercises
         self.hasActiveExercise = hasActiveExercise
     }
 
@@ -326,10 +325,7 @@ public struct TrainingActionBarComponent: View {
     }
 
     private var bottomActionBarViewModel: BottomActionBarViewModel {
-        coordinator.createBottomActionBarViewModel(
-            exercises: exercises,
-            hasActiveExercise: hasActiveExercise
-        )
+        coordinator.createBottomActionBarViewModel(hasActiveExercise: hasActiveExercise)
     }
 
     private var trainingCallbacks: TrainingCallbacks {
@@ -373,12 +369,9 @@ public struct TrainingActionBarComponent: View {
                 onStart: trainingCallbacks.onStart,
                 onCompleteSet: trainingCallbacks.onCompleteSet,
                 onQuickDone: trainingCallbacks.onQuickDone,
-                onCategoryReset: trainingCallbacks.onCategoryReset,
                 onEditLess: trainingCallbacks.onEditLess,
                 onEditMore: trainingCallbacks.onEditMore,
                 onFinish: trainingCallbacks.onFinish,
-                onAddExercise: trainingCallbacks.onAddExercise,
-                onResetAllExercises: trainingCallbacks.onResetAllExercises,
                 onOpenFeedback: trainingCallbacks.onOpenFeedback,
                 feedbackIconState: feedbackIconState
             )

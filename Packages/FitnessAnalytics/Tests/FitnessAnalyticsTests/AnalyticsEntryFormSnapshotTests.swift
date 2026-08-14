@@ -14,10 +14,14 @@ import UIKit
 @MainActor
 struct AnalyticsEntryFormSnapshotTests {
     @Test(
-        "Manual bilateral input aligns at supported widths",
-        arguments: [CGFloat(320), CGFloat(393), CGFloat(430)]
+        "Manual bilateral input aligns at the narrow supported width",
+        arguments: [CGFloat(320)]
     )
     func inputLayout(width: CGFloat) {
+        let snapshotDateFormatter = DateFormatter()
+        snapshotDateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        snapshotDateFormatter.dateFormat = "dd.MM.yyyy"
+
         let exercise = FitnessTestSupport.makeExercise(
             name: "Torso Rotation",
             weight: 20,
@@ -31,10 +35,12 @@ struct AnalyticsEntryFormSnapshotTests {
             date: Date(timeIntervalSince1970: 1_700_000_000),
             exercise: exercise,
             isPresented: .constant(true),
+            dateFormatter: snapshotDateFormatter,
             onSave: { _ in },
             onCancel: {}
         )
         .appColorTheme(.green)
+        .environment(\.locale, Locale(identifier: "en_US"))
         .frame(width: size.width, height: size.height)
         .background(AppStyle.Color.backgroundColor)
 

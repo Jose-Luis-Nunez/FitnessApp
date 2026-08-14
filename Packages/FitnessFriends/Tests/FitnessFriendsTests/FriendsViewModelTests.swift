@@ -1,6 +1,7 @@
 import Testing
 import Foundation
 import FitnessCore
+import FitnessStorage
 import FitnessTestSupport
 @testable import FitnessFriends
 
@@ -10,6 +11,8 @@ import FitnessTestSupport
 private final class MockFriendStorage: FriendStoring {
     var friends: [Friend] = []
     var deletedIds: [UUID] = []
+    var envelopeToLoad: WorkoutShareEnvelope?
+    var loadEnvelopeError: Error?
 
     func upsertFriend(name: String, envelopeJSON: String, workoutName: String) throws -> Friend {
         let f = Friend(id: UUID(), name: name, addedAt: Date(), workoutName: workoutName)
@@ -23,6 +26,8 @@ private final class MockFriendStorage: FriendStoring {
     }
 
     func loadEnvelope(for friendId: UUID) throws -> WorkoutShareEnvelope {
+        if let loadEnvelopeError { throw loadEnvelopeError }
+        if let envelopeToLoad { return envelopeToLoad }
         throw WorkoutShareError.persistenceFailed
     }
 }
@@ -39,15 +44,31 @@ struct FriendsViewModelTests {
 
     private func makeSUT(
         friends: [Friend] = [],
-        currentWorkout: Workout? = nil
+        currentWorkout: Workout? = nil,
+        envelope: WorkoutShareEnvelope? = nil,
+        loadEnvelopeError: Error? = nil
     ) -> (FriendsViewModel, MockFriendStorage, MockWorkoutStorage) {
         let friendStorage = MockFriendStorage()
         friendStorage.friends = friends
+        friendStorage.envelopeToLoad = envelope
+        friendStorage.loadEnvelopeError = loadEnvelopeError
         let workoutStorage = MockWorkoutStorage()
         workoutStorage.currentWorkout = currentWorkout
+        let exerciseStorage = MockExerciseStorage()
+        let totalAnalyticsStorage = MockTotalAnalyticsStorage(
+            analyticsStorage: MockAnalyticsStorage(),
+            exerciseStorage: exerciseStorage,
+            workoutStorage: workoutStorage
+        )
         let vm = FriendsViewModel(
             friendStorage: friendStorage,
-            workoutStorage: workoutStorage
+            workoutStorage: workoutStorage,
+            exerciseStorage: exerciseStorage,
+            loadFriendComparisonUseCase: LoadFriendComparisonUseCase(
+                friendStorage: friendStorage,
+                exerciseStorage: exerciseStorage,
+                totalAnalyticsStorage: totalAnalyticsStorage
+            )
         )
         return (vm, friendStorage, workoutStorage)
     }
@@ -74,32 +95,18 @@ struct FriendsViewModelTests {
         #expect(vm.selectedFriendId == friend.id)
     }
 
-    @Test("Does not auto-select when multiple friends exist")
-    func noAutoSelectWithMultipleFriends() {
-        let friends = [makeFriend(name: "Alice"), makeFriend(name: "Bob")]
-        let (vm, _, _) = makeSUT(friends: friends)
+    @Test("Does not auto-select unless exactly one friend exists")
+    func noAutoSelectWithoutExactlyOneFriend() {
+        for friends in [[], [makeFriend(name: "Alice"), makeFriend(name: "Bob")]] {
+            let (vm, _, _) = makeSUT(friends: friends)
 
-        vm.toggleExpanded()
-        #expect(vm.selectedFriendId == nil)
-    }
+            vm.toggleExpanded()
 
-    @Test("Does not auto-select when no friends exist")
-    func noAutoSelectWithNoFriends() {
-        let (vm, _, _) = makeSUT(friends: [])
-        vm.toggleExpanded()
-        #expect(vm.selectedFriendId == nil)
+            #expect(vm.selectedFriendId == nil)
+        }
     }
 
     // MARK: - selectFriend
-
-    @Test("selectFriend sets selectedFriendId")
-    func selectFriendSetsId() {
-        let friend = makeFriend()
-        let (vm, _, _) = makeSUT(friends: [friend])
-
-        vm.selectFriend(friend)
-        #expect(vm.selectedFriendId == friend.id)
-    }
 
     @Test("selectFriend switches selection between friends")
     func selectFriendSwitches() {
@@ -112,6 +119,44 @@ struct FriendsViewModelTests {
 
         vm.selectFriend(bob)
         #expect(vm.selectedFriendId == bob.id)
+    }
+
+    @Test("selectFriend publishes a comparison for the selected friend")
+    func selectFriendLoadsComparison() async throws {
+        let friend = makeFriend()
+        let workout = Workout(name: "Mine")
+        let envelope = WorkoutShareEnvelope(
+            workout: Workout(name: "Friend workout"),
+            exercises: [],
+            analytics: []
+        )
+        let (vm, _, _) = makeSUT(
+            friends: [friend],
+            currentWorkout: workout,
+            envelope: envelope
+        )
+
+        vm.selectFriend(friend)
+        try await waitUntil { vm.comparison != nil }
+
+        #expect(vm.selectedFriendId == friend.id)
+        #expect(vm.comparison?.friendMetrics.totalExercises == 0)
+        #expect(!vm.comparisonFailed)
+    }
+
+    @Test("selectFriend exposes comparison loading failures")
+    func selectFriendReportsComparisonFailure() async throws {
+        let friend = makeFriend()
+        let (vm, _, _) = makeSUT(
+            friends: [friend],
+            currentWorkout: Workout(name: "Mine"),
+            loadEnvelopeError: WorkoutShareError.invalidJSON
+        )
+
+        vm.selectFriend(friend)
+        try await waitUntil { vm.comparisonFailed }
+
+        #expect(vm.comparison == nil)
     }
 
     // MARK: - deleteFriend
@@ -176,27 +221,26 @@ struct FriendsViewModelTests {
 
     // MARK: - friend import
 
-    @Test("requestFriendImport presents the Add Friend form")
-    func requestFriendImportPresentsAddFriendForm() {
+    @Test("Friend import lifecycle snapshots and clears presentation data")
+    func friendImportLifecycle() {
         let (vm, _, _) = makeSUT()
 
-        #expect(!vm.showingAddFriend)
         vm.requestFriendImport()
 
         #expect(vm.showingAddFriend)
         #expect(vm.pendingFriendJSON == nil)
         #expect(vm.pendingFriendFileName == nil)
-    }
-
-    @Test("receiveFriendImport snapshots data and presents Add Friend")
-    func receiveFriendImportPresentsAddFriend() {
-        let (vm, _, _) = makeSUT()
 
         vm.receiveFriendImport(json: "{\"version\":1}", fileName: "Alice")
 
         #expect(vm.pendingFriendJSON == "{\"version\":1}")
         #expect(vm.pendingFriendFileName == "Alice")
         #expect(vm.showingAddFriend)
+
+        vm.friendImportDidDismiss()
+
+        #expect(vm.pendingFriendJSON == nil)
+        #expect(vm.pendingFriendFileName == nil)
     }
 
     @Test("receiveFriendImport rejects an empty payload with an error")
@@ -208,40 +252,7 @@ struct FriendsViewModelTests {
         #expect(vm.pendingFriendJSON == nil)
         #expect(vm.pendingFriendFileName == nil)
         #expect(!vm.showingAddFriend)
-        #expect(vm.importErrorMessage == "The selected friend file could not be read.")
+        #expect(vm.importFailed)
     }
 
-    @Test("friendImportDidDismiss clears the presentation snapshot")
-    func friendImportDidDismissClearsSnapshot() {
-        let (vm, _, _) = makeSUT()
-        vm.receiveFriendImport(json: "{\"version\":1}", fileName: "Alice")
-
-        vm.friendImportDidDismiss()
-
-        #expect(vm.pendingFriendJSON == nil)
-        #expect(vm.pendingFriendFileName == nil)
-    }
-
-    @Test("friendImportFailed exposes an actionable error")
-    func friendImportFailedExposesError() {
-        let (vm, _, _) = makeSUT()
-
-        vm.friendImportFailed()
-
-        #expect(vm.importErrorMessage == "The selected friend file could not be read.")
-    }
-
-    // MARK: - friends computed property
-
-    @Test("friends reads from friendStorage")
-    func friendsComputedProperty() {
-        let friend = makeFriend()
-        let (vm, storage, _) = makeSUT(friends: [friend])
-
-        #expect(vm.friends.count == 1)
-        #expect(vm.friends[0].id == friend.id)
-
-        storage.friends.append(makeFriend(name: "Bob"))
-        #expect(vm.friends.count == 2)
-    }
 }

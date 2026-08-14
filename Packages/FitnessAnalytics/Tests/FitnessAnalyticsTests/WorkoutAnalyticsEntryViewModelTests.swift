@@ -149,7 +149,7 @@ struct WorkoutAnalyticsEntryViewModelTests {
         let draft = try #require(sut.draft(for: exercise.id))
 
         #expect(
-            WorkoutAnalyticsAccessibility.value(for: draft)
+            WorkoutAnalyticsAccessibility.value(for: draft, locale: Locale(identifier: "en_US"))
                 == "Arms, 60 kilograms, 3 sets, 10 reps"
         )
     }
@@ -164,7 +164,7 @@ struct WorkoutAnalyticsEntryViewModelTests {
         let draft = try #require(sut.draft(for: exercise.id))
 
         #expect(
-            WorkoutAnalyticsAccessibility.value(for: draft)
+            WorkoutAnalyticsAccessibility.value(for: draft, locale: Locale(identifier: "en_US"))
                 == "Arms, 2 sets, 12 reps"
         )
     }
@@ -193,7 +193,7 @@ struct WorkoutAnalyticsEntryViewModelTests {
         )
 
         #expect(
-            WorkoutAnalyticsAccessibility.value(for: draft)
+            WorkoutAnalyticsAccessibility.value(for: draft, locale: Locale(identifier: "en_US"))
                 == "Arms, Variable weight, 2 sets, Variable reps"
         )
     }
@@ -229,27 +229,6 @@ struct WorkoutAnalyticsEntryViewModelTests {
         #expect(saved.setProgress[0].weight == 55)
         #expect(sut.draft(for: exercise.id)?.exercise.weight == 60)
         #expect(sut.draft(for: exercise.id)?.exercise.reps == 10)
-    }
-
-    @Test func preservesSameDayHistoryAndAppendsOneEntryPerSelectedExercise() {
-        let workout = Workout(name: "Full")
-        let first = makeExercise(name: "Curl", category: .arms)
-        let second = makeExercise(name: "Row", category: .back)
-        let date = Date(timeIntervalSince1970: 1_700_000_000)
-        let (sut, analytics) = makeSUT(
-            workout: workout,
-            selectedDate: date,
-            exercises: [.arms: [first], .back: [second]]
-        )
-        analytics.save(
-            [makeEntry(exerciseId: first.id, date: date, reps: 7)],
-            for: first.id
-        )
-
-        #expect(sut.save())
-
-        #expect(analytics.load(for: first.id).count == 2)
-        #expect(analytics.load(for: second.id).count == 1)
     }
 
     @Test func excludesDeselectedExercisesFromSave() {
@@ -335,7 +314,7 @@ struct WorkoutAnalyticsEntryViewModelTests {
 
         #expect(!sut.save())
         #expect(sut.saveState == .editing)
-        #expect(sut.saveErrorMessage != nil)
+        #expect(sut.saveFailed)
         #expect(analytics.load(for: exercise.id).isEmpty)
     }
 

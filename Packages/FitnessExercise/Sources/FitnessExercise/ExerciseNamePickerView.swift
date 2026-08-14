@@ -59,8 +59,8 @@ public struct ExerciseNamePickerView: View {
             actions: {
                 if !hideChrome {
                     ExercisePickerActionButtons(
-                        cancelLabel: L10n.cardCreationCancel,
-                        saveLabel: L10n.cardCreationSave,
+                        cancelLabel: AppText.actionCancel,
+                        saveLabel: AppText.actionSave,
                         cancelColor: appColorTheme.accent.primary,
                         saveDisabled: formViewModel.name.isEmpty,
                         onCancel: {
@@ -77,7 +77,7 @@ public struct ExerciseNamePickerView: View {
             content: {
                 ExerciseIconHeader(
                     formViewModel: formViewModel,
-                    title: formViewModel.selectedCategory.displayName
+                    title: formViewModel.selectedCategory.localizedName
                 )
                 .overlay(alignment: .topLeading) {
                     if let exercise = editingExercise {

@@ -3,9 +3,16 @@ import FitnessCore
 
 @MainActor
 public final class MockExerciseStorage: ExerciseStoring {
+    public struct SaveCall: Equatable {
+        public let exercises: [Exercise]
+        public let workoutId: UUID
+        public let category: MuscleCategoryGroup
+    }
+
     public var exercisesByCategory: [MuscleCategoryGroup: [Exercise]] = [:]
     public var loadForWorkoutHandler: ((UUID, MuscleCategoryGroup) -> [Exercise])?
     public private(set) var saveForWorkoutCallCount = 0
+    public private(set) var saveForWorkoutCalls: [SaveCall] = []
     public private(set) var workoutWideLoadCallCount = 0
     public private(set) var requestedWorkoutIDs: [UUID] = []
     public private(set) var updatedExercises: [Exercise] = []
@@ -48,6 +55,9 @@ public final class MockExerciseStorage: ExerciseStoring {
 
     public func saveForWorkout(_ exercises: [Exercise], workoutId: UUID, category: MuscleCategoryGroup) {
         saveForWorkoutCallCount += 1
+        saveForWorkoutCalls.append(
+            SaveCall(exercises: exercises, workoutId: workoutId, category: category)
+        )
         exercisesByCategory[category] = exercises
         exercisesByWorkout[workoutId, default: [:]][category] = exercises
         countsByWorkout[workoutId, default: [:]][category] = exercises.count

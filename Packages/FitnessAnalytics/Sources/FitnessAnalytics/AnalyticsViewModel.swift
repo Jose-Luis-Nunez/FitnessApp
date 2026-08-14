@@ -378,20 +378,8 @@ public final class AnalyticsViewModel {
 
 extension AnalyticsViewModel {
     
-    public func trainingDaysInCurrentMonth(for exerciseId: UUID) -> Int {
-        trainingDaysInCurrentMonth(from: loadAnalytics(for: exerciseId))
-    }
-
     func trainingDaysInCurrentMonth(from history: [AnalyticsEntry]) -> Int {
         AnalyticsDateHelper.daysInCurrentMonth(from: history.map(\.date))
-    }
-
-    public func currentMonthName() -> String {
-        AnalyticsDateHelper.currentMonthName()
-    }
-    
-    public func totalWeightIncreases(for exerciseId: UUID) -> Int {
-        totalWeightIncreases(from: loadAnalytics(for: exerciseId))
     }
 
     func totalWeightIncreases(from history: [AnalyticsEntry]) -> Int {
@@ -422,10 +410,6 @@ extension AnalyticsViewModel {
     }
     
     
-    public func trainingSessionsUntilWeightIncrease(for exerciseId: UUID) -> Int {
-        trainingSessionsUntilWeightIncrease(from: loadAnalytics(for: exerciseId))
-    }
-
     func trainingSessionsUntilWeightIncrease(from history: [AnalyticsEntry]) -> Int {
         let entries = history
         let calendar = Calendar.current
@@ -475,10 +459,6 @@ extension AnalyticsViewModel {
         return mostCommonPattern
     }
     
-    public func getDailyWeightProgression(for exerciseId: UUID) -> [DailyProgression] {
-        getDailyWeightProgression(from: loadAnalytics(for: exerciseId))
-    }
-
     func getDailyWeightProgression(from history: [AnalyticsEntry]) -> [DailyProgression] {
         let calendar = Calendar.current
         let entries = history
@@ -493,10 +473,6 @@ extension AnalyticsViewModel {
         return maxWeightPerDay
     }
     
-    public func weightPhases(for exerciseId: UUID, limit: Int = 3) -> [WeightPhase] {
-        weightPhases(from: loadAnalytics(for: exerciseId), limit: limit)
-    }
-
     func weightPhases(from history: [AnalyticsEntry], limit: Int = 3) -> [WeightPhase] {
         let calendar = Calendar.current
         let entries = history.sorted(by: { $0.date < $1.date })

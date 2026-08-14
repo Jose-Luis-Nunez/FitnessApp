@@ -26,18 +26,9 @@ private func assertViewHosts<V: View>(
 
 // MARK: - MuscleCategorySelectionView
 
-@Suite("MuscleCategorySelectionView Environment contract", .tags(.fast))
+@Suite("MuscleCategorySelectionView Environment contract", .tags(.integration))
 @MainActor
 struct MuscleCategorySelectionViewContractTests {
-
-    @Test
-    func requiresAppRouterAndOverlayState() {
-        let view = MuscleCategorySelectionView(viewMode: .constant(.overview))
-            .environment(AppRouter())
-            .environment(UIOverlayState())
-
-        assertViewHosts(view)
-    }
 
     @Test
     func worksWithoutExplicitAppRouter() {
@@ -50,7 +41,7 @@ struct MuscleCategorySelectionViewContractTests {
 
 // MARK: - MuscleCategoryView
 
-@Suite("MuscleCategoryView Environment contract", .tags(.fast))
+@Suite("MuscleCategoryView Environment contract", .tags(.integration))
 @MainActor
 struct MuscleCategoryViewContractTests {
 

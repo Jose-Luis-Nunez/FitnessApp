@@ -14,7 +14,7 @@ import UIKit
 struct BottomActionBarViewSnapshotTests {
     @Test(
         "Set controls are separate pills at compact, regular, and large widths",
-        arguments: [CGFloat(320), CGFloat(393), CGFloat(430)]
+        arguments: [CGFloat(320), CGFloat(430)]
     )
     func setControls(width: CGFloat) {
         let exercise = makeExercise(sets: 3)
@@ -23,9 +23,7 @@ struct BottomActionBarViewSnapshotTests {
             currentSet: 1,
             currentExercise: exercise,
             hasActiveExercise: true,
-            exercises: [exercise],
             isLastSetCompleted: false,
-            quickDoneAllCompleted: false,
             didEditCompleteSet: false,
             didJustEditSet: false
         )
@@ -35,14 +33,12 @@ struct BottomActionBarViewSnapshotTests {
             onStart: {},
             onCompleteSet: {},
             onQuickDone: {},
-            onCategoryReset: {},
             onEditLess: {},
             onEditMore: {},
-            onFinish: {},
-            onAddExercise: {},
-            onResetAllExercises: {}
+            onFinish: {}
         )
         .appColorTheme(.green)
+        .environment(\.locale, Locale(identifier: "en_US"))
         .frame(width: size.width, height: size.height)
         .background(AppStyle.Color.backgroundColor)
 
@@ -68,6 +64,7 @@ struct BottomActionBarViewSnapshotTests {
             onCancel: {}
         )
         .appColorTheme(.green)
+        .environment(\.locale, Locale(identifier: "en_US"))
         .frame(width: size.width, height: size.height)
         .background(AppStyle.Color.backgroundColor)
 

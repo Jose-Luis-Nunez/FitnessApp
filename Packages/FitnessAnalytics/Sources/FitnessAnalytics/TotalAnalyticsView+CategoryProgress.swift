@@ -1,4 +1,5 @@
 import FitnessCore
+import FitnessResources
 import FitnessUI
 import SwiftUI
 
@@ -6,7 +7,7 @@ extension TotalAnalyticsView {
 
     var categoryProgressView: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Categories")
+            Text(AppText.analyticsCategories)
                 .font(AppStyle.Font.analyticsExerciseData)
                 .foregroundColor(AppStyle.Color.white)
                 .padding(.horizontal, AppStyle.Padding.horizontal)
@@ -35,13 +36,13 @@ extension TotalAnalyticsView {
     func categoryCard(data: CategoryProgressData) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Category: \(data.category.displayName)")
+                Text(AppText.analyticsCategoryName(name: AppText.resolve(data.category.localizedName, locale: locale)))
                     .font(AppStyle.Font.cardHeadline)
                     .foregroundColor(AppStyle.Color.white)
 
                 Spacer()
 
-                Text("\(data.exerciseCount) exercise\(data.exerciseCount == 1 ? "" : "s")")
+                Text(AppText.exerciseCount(count: data.exerciseCount))
                     .font(AppStyle.Font.calendarSubheader)
                     .foregroundColor(appColorTheme.accent.glow)
             }
@@ -50,7 +51,7 @@ extension TotalAnalyticsView {
             if data.exercises.isEmpty {
                 VStack {
                     Spacer()
-                    Text("No training")
+                    Text(AppText.trainingNone)
                         .font(AppStyle.Font.pickerAction)
                         .foregroundColor(AppStyle.Color.white.opacity(0.6))
                     Spacer()
@@ -100,20 +101,20 @@ extension TotalAnalyticsView {
 
     func exerciseProgressRow(data: ExerciseProgressData) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(data.exercise.name)
+            Text(verbatim: data.exercise.name)
                 .font(AppStyle.Font.detailExercise)
                 .foregroundColor(AppStyle.Color.white)
 
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Start")
+                    Text(AppText.actionStart)
                         .font(AppStyle.Font.chartLabel)
                         .foregroundColor(AppStyle.Color.white.opacity(0.6))
                     HStack(spacing: 4) {
-                        Text("\(formatWeight(data.initialWeight)) kg")
+                        Text(verbatim: "\(formatWeight(data.initialWeight)) kg")
                             .font(AppStyle.Font.detailCaption)
                             .foregroundColor(AppStyle.Color.white)
-                        Text("(\(formatDateShort(data.startDate)))")
+                        Text(verbatim: "(\(formatDateShort(data.startDate)))")
                             .font(AppStyle.Font.chartAxisSmall)
                             .foregroundColor(AppStyle.Color.white.opacity(0.6))
                     }
@@ -122,10 +123,10 @@ extension TotalAnalyticsView {
                 Spacer()
 
                 VStack(alignment: .center, spacing: 2) {
-                    Text("Current")
+                    Text(AppText.commonCurrent)
                         .font(AppStyle.Font.chartLabel)
                         .foregroundColor(AppStyle.Color.white.opacity(0.6))
-                    Text("\(formatWeight(data.currentWeight)) kg")
+                    Text(verbatim: "\(formatWeight(data.currentWeight)) kg")
                         .font(AppStyle.Font.detailCaption)
                         .foregroundColor(appColorTheme.accent.glow)
                 }
@@ -133,7 +134,7 @@ extension TotalAnalyticsView {
                 Spacer()
 
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("Progress")
+                    Text(AppText.commonProgress)
                         .font(AppStyle.Font.chartLabel)
                         .foregroundColor(AppStyle.Color.white.opacity(0.6))
 
@@ -144,31 +145,31 @@ extension TotalAnalyticsView {
                     VStack(alignment: .trailing, spacing: 1) {
                         HStack(spacing: 2) {
                             if difference > 0 {
-                                Text("+\(formatWeight(difference)) kg")
+                                Text(verbatim: "+\(formatWeight(difference)) kg")
                                     .font(AppStyle.Font.cardSmallMedium)
                                     .foregroundColor(appColorTheme.accent.primary)
-                                Text("(\(String(format: "%.1f", frequency)))")
+                                Text(verbatim: "(\(frequency.formatted(.number.precision(.fractionLength(1)).locale(locale))))")
                                     .font(AppStyle.Font.analyticsAxis)
                                     .foregroundColor(appColorTheme.accent.primary.opacity(0.7))
                             } else if difference < 0 {
-                                Text("\(formatWeight(difference)) kg")
+                                Text(verbatim: "\(formatWeight(difference)) kg")
                                     .font(AppStyle.Font.cardSmallMedium)
                                     .foregroundColor(.red)
-                                Text("(\(String(format: "%.1f", frequency)))")
+                                Text(verbatim: "(\(frequency.formatted(.number.precision(.fractionLength(1)).locale(locale))))")
                                     .font(AppStyle.Font.analyticsAxis)
                                     .foregroundColor(.red.opacity(0.7))
                             } else {
-                                Text("0 kg")
+                                Text(verbatim: "0 kg")
                                     .font(AppStyle.Font.cardSmallMedium)
                                     .foregroundColor(AppStyle.Color.white.opacity(0.6))
-                                Text("(\(String(format: "%.1f", frequency)))")
+                                Text(verbatim: "(\(frequency.formatted(.number.precision(.fractionLength(1)).locale(locale))))")
                                     .font(AppStyle.Font.analyticsAxis)
                                     .foregroundColor(AppStyle.Color.white.opacity(0.4))
                             }
                         }
 
                         if percentage != 0 {
-                            Text(percentage > 0 ? "+\(Int(percentage))%" : "\(Int(percentage))%")
+                            Text(verbatim: percentage > 0 ? "+\(Int(percentage))%" : "\(Int(percentage))%")
                                 .font(AppStyle.Font.analyticsAxis)
                                 .foregroundColor(percentage > 0 ? appColorTheme.accent.primary.opacity(0.8) : .red.opacity(0.8))
                         }
@@ -180,10 +181,10 @@ extension TotalAnalyticsView {
     }
 
     func formatDateShort(_ date: Date) -> String {
-        DateFormatter.germanVeryShort.string(from: date)
+        date.formatted(.dateTime.day(.twoDigits).month(.twoDigits).locale(locale))
     }
 
     func formatWeight(_ weight: Double) -> String {
-        WeightFormatter.format(weight)
+        WeightFormatter.format(weight, locale: locale)
     }
 }

@@ -4,13 +4,21 @@ import FitnessCore
 import FitnessStorage
 import Factory
 
+public enum FriendImportFailure: Equatable, Sendable {
+    case unreadableFile
+    case invalidJSON
+    case newerVersion
+    case incompleteData
+    case savingFailed
+}
+
 @Observable
 @MainActor
 public final class AddFriendViewModel {
     public var friendName: String = ""
     public var pastedText: String = ""
     public var fileName: String?
-    public var errorMessage: String?
+    public var errorMessage: FriendImportFailure?
     public var showingFileImporter = false
 
     @ObservationIgnored private let importFriendUseCase: ImportFriendUseCase
@@ -66,7 +74,7 @@ public final class AddFriendViewModel {
     }
 
     public func fileSelectionFailed() {
-        errorMessage = "The selected friend file could not be read."
+        errorMessage = .unreadableFile
     }
 
     public func saveTapped() {
@@ -78,10 +86,19 @@ public final class AddFriendViewModel {
             try importFriendUseCase.execute(friendName: friendName, jsonString: trimmedJSON)
             onAdded()
             onDismiss()
-        } catch let error as WorkoutShareError {
-            errorMessage = error.errorDescription
+        } catch let shareError as WorkoutShareError {
+            switch shareError {
+            case .invalidJSON:
+                errorMessage = .invalidJSON
+            case .unsupportedVersion:
+                errorMessage = .newerVersion
+            case .schemaMismatch:
+                errorMessage = .incompleteData
+            case .persistenceFailed, .exportFailed:
+                errorMessage = .savingFailed
+            }
         } catch {
-            errorMessage = WorkoutShareError.persistenceFailed.errorDescription
+            errorMessage = .savingFailed
         }
     }
 }

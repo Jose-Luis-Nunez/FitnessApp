@@ -3,6 +3,7 @@ import FitnessCore
 import FitnessUI
 import FitnessExercise
 import FitnessAnalytics
+import FitnessResources
 import Factory
 
 private enum Constants {
@@ -36,11 +37,11 @@ public struct WorkoutsScreen: View {
                         MiniActionMenuView(
                             title: nil,
                             items: [
-                                MiniActionMenuItem(id: "new-workout", icon: "plus", title: "New workout", isDestructive: false) {
+                                MiniActionMenuItem(id: "new-workout", icon: "plus", title: AppText.workoutNewMenu, isDestructive: false) {
                                     overlayState.showWorkoutsMiniMenu = false
                                     viewModel.showCreateWorkout()
                                 },
-                                MiniActionMenuItem(id: "import-workout", icon: "square.and.arrow.down", title: "Import workout", isDestructive: false) {
+                                MiniActionMenuItem(id: "import-workout", icon: "square.and.arrow.down", title: AppText.workoutImportMenu, isDestructive: false) {
                                     overlayState.showWorkoutsMiniMenu = false
                                     viewModel.showImportWorkout()
                                 }
@@ -97,21 +98,21 @@ public struct WorkoutsScreen: View {
             // raw JSON string if file-write failed during `requestShare`.
             ShareSheet(items: [item.fileURL ?? item.json as Any], tempFileURL: item.fileURL)
         }
-        .alert("Export failed", isPresented: Binding(
-            get: { viewModel.exportErrorMessage != nil },
-            set: { if !$0 { viewModel.exportErrorMessage = nil } }
+        .alert(AppText.workoutExportFailedTitle, isPresented: Binding(
+            get: { viewModel.operationFailure == .export },
+            set: { if !$0 { viewModel.operationFailure = nil } }
         )) {
-            Button("OK", role: .cancel) { viewModel.exportErrorMessage = nil }
+            Button(AppText.actionOk, role: .cancel) { viewModel.operationFailure = nil }
         } message: {
-            Text(viewModel.exportErrorMessage ?? "")
+            Text(AppText.errorExportFailed)
         }
-        .alert("Workout creation failed", isPresented: Binding(
-            get: { viewModel.createErrorMessage != nil },
-            set: { if !$0 { viewModel.createErrorMessage = nil } }
+        .alert(AppText.workoutCreationFailed, isPresented: Binding(
+            get: { viewModel.operationFailure == .creation },
+            set: { if !$0 { viewModel.operationFailure = nil } }
         )) {
-            Button("OK", role: .cancel) { viewModel.createErrorMessage = nil }
+            Button(AppText.actionOk, role: .cancel) { viewModel.operationFailure = nil }
         } message: {
-            Text(viewModel.createErrorMessage ?? "")
+            Text(AppText.workoutCreationSaveFailed)
         }
         .overlay(
             settingsMiniMenu
@@ -133,7 +134,7 @@ public struct WorkoutsScreen: View {
     }
 
     private var headerView: some View {
-        Text("My Workouts")
+        Text(AppText.workoutMyWorkouts)
             .font(AppStyle.Font.navigationHeadline)
             .foregroundColor(AppStyle.Color.white)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -187,10 +188,10 @@ public struct WorkoutsScreen: View {
                             let items: [MiniActionMenuItem] = {
                                 if viewModel.showingDeleteConfirmation {
                                     return [
-                                        MiniActionMenuItem(id: "confirm-delete-workout", icon: nil, title: "Confirm deletion", isDestructive: true) {
+                                        MiniActionMenuItem(id: "confirm-delete-workout", icon: nil, title: AppText.workoutConfirmDeletion, isDestructive: true) {
                                             viewModel.confirmDelete()
                                         },
-                                        MiniActionMenuItem(id: "cancel-delete-workout", icon: nil, title: "Cancel", isDestructive: false) {
+                                        MiniActionMenuItem(id: "cancel-delete-workout", icon: nil, title: AppText.actionCancel, isDestructive: false) {
                                             viewModel.cancelDelete()
                                         }
                                     ]
@@ -202,44 +203,44 @@ public struct WorkoutsScreen: View {
                                             MiniActionMenuItem(
                                                 id: "log-workout",
                                                 icon: "calendar.badge.plus",
-                                                title: "Log Workout",
+                                                title: AppText.workoutLogMenu,
                                                 isDestructive: false
                                             ) {
                                                 viewModel.showWorkoutAnalyticsEntry(for: workout)
                                             }
                                         )
                                     }
-                                    list.append(MiniActionMenuItem(id: "duplicate-workout", icon: nil, title: "duplicate", isDestructive: false) {
+                                    list.append(MiniActionMenuItem(id: "duplicate-workout", icon: nil, title: AppText.workoutDuplicate, isDestructive: false) {
                                         if let workout = viewModel.selectedWorkoutForAction {
                                             viewModel.duplicateWorkout(workout)
                                             viewModel.hideWorkoutOptions()
                                         }
                                     })
-                                    list.append(MiniActionMenuItem(id: "export-workout", icon: nil, title: "Export workout", isDestructive: false) {
+                                    list.append(MiniActionMenuItem(id: "export-workout", icon: nil, title: AppText.workoutExportMenu, isDestructive: false) {
                                         if let workout = viewModel.selectedWorkoutForAction {
                                             viewModel.requestShare(for: workout)
                                         }
                                     })
-                                    list.append(MiniActionMenuItem(id: "rename-workout", icon: nil, title: "Rename", isDestructive: false) {
+                                    list.append(MiniActionMenuItem(id: "rename-workout", icon: nil, title: AppText.workoutRename, isDestructive: false) {
                                         if let workout = viewModel.selectedWorkoutForAction {
                                             viewModel.showRenameWorkout(for: workout)
                                         }
                                     })
                                     if let workout = viewModel.selectedWorkoutForAction {
                                         if viewModel.isDefaultWorkout(workout) {
-                                            list.append(MiniActionMenuItem(id: "remove-default-workout", icon: nil, title: "Remove as Default", isDestructive: false) {
+                                            list.append(MiniActionMenuItem(id: "remove-default-workout", icon: nil, title: AppText.workoutRemoveDefault, isDestructive: false) {
                                                 viewModel.removeAsDefault()
                                                 viewModel.hideWorkoutOptions()
                                             })
                                         } else {
-                                            list.append(MiniActionMenuItem(id: "set-default-workout", icon: nil, title: "Set as Default", isDestructive: false) {
+                                            list.append(MiniActionMenuItem(id: "set-default-workout", icon: nil, title: AppText.workoutSetDefault, isDestructive: false) {
                                                 viewModel.setAsDefault(workout)
                                                 viewModel.hideWorkoutOptions()
                                             })
                                         }
                                     }
                                     if viewModel.canDeleteWorkout {
-                                        list.append(MiniActionMenuItem(id: "delete-workout", icon: nil, title: "Delete", isDestructive: true) {
+                                        list.append(MiniActionMenuItem(id: "delete-workout", icon: nil, title: AppText.actionDelete, isDestructive: true) {
                                             viewModel.showDeleteConfirmation()
                                         })
                                     }
@@ -248,7 +249,7 @@ public struct WorkoutsScreen: View {
                             }()
 
                             MiniActionMenuView(
-                                title: viewModel.selectedWorkoutForAction?.name,
+                                verbatimTitle: viewModel.selectedWorkoutForAction?.name,
                                 items: items
                             )
                             .padding(.trailing, 16)

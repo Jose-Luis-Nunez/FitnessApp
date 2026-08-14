@@ -345,15 +345,13 @@ public final class TrainingCoordinator {
 
     // MARK: - BottomActionBar Integration
 
-    public func createBottomActionBarViewModel(exercises: [Exercise], hasActiveExercise: Bool) -> BottomActionBarViewModel {
+    public func createBottomActionBarViewModel(hasActiveExercise: Bool) -> BottomActionBarViewModel {
         BottomActionBarViewModel(
             isSetInProgress: activeSetViewModel.isSetInProgress,
             currentSet: activeSetViewModel.currentSet,
             currentExercise: activeSetViewModel.currentExercise,
             hasActiveExercise: hasActiveExercise,
-            exercises: exercises,
             isLastSetCompleted: activeSetViewModel.isLastSetCompleted,
-            quickDoneAllCompleted: activeSetViewModel.quickDoneAllCompleted,
             didEditCompleteSet: activeSetViewModel.didEditCompleteSet,
             didJustEditSet: activeSetViewModel.didJustEditSet
         )

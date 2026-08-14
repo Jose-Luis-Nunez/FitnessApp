@@ -38,7 +38,7 @@ final class WorkoutAnalyticsEntryViewModel {
     var selectedDate: Date
     private(set) var drafts: [WorkoutAnalyticsExerciseDraft] = []
     private(set) var saveState: WorkoutAnalyticsSaveState = .editing
-    private(set) var saveErrorMessage: String?
+    private(set) var saveFailed = false
 
     @ObservationIgnored private let exerciseStorage: ExerciseStoring
     @ObservationIgnored private let saveUseCase: SaveWorkoutAnalyticsUseCase
@@ -100,7 +100,7 @@ final class WorkoutAnalyticsEntryViewModel {
     func save() -> Bool {
         guard canSave else { return false }
         saveState = .saving
-        saveErrorMessage = nil
+        saveFailed = false
 
         let entries = drafts
             .filter(\.isSelected)
@@ -114,7 +114,7 @@ final class WorkoutAnalyticsEntryViewModel {
 
         guard saveUseCase.execute(entries: entries) == entries.count else {
             saveState = .editing
-            saveErrorMessage = "The workout could not be saved. Please try again."
+            saveFailed = true
             return false
         }
         analyticsViewModel.publishPersistedEntries(entries)

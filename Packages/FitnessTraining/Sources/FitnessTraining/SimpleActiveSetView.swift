@@ -1,5 +1,6 @@
 import SwiftUI
 import FitnessCore
+import FitnessResources
 import FitnessUI
 
 struct BilateralSetLayoutMetrics: Equatable {
@@ -328,7 +329,7 @@ public struct SimpleActiveSetView: View {
                     )
             }
 
-            Text(side == .left ? "L" : "R")
+            Text(verbatim: side == .left ? "L" : "R")
                 .font(AppStyle.Font.bilateralSideHeader)
                 .foregroundColor(appColorTheme.accent.glow)
                 .frame(
@@ -341,7 +342,7 @@ public struct SimpleActiveSetView: View {
                         lineWidth: AppStyle.Layout.bilateralHeaderStrokeWidth
                     )
                 }
-                .accessibilityLabel(side == .left ? "Left" : "Right")
+                .accessibilityLabel(side == .left ? AppText.accessibilityLeft : AppText.accessibilityRight)
                 .accessibilityIdentifier(TrainingIDs.sideHeader(side))
                 .frame(maxWidth: .infinity)
         }
@@ -512,6 +513,7 @@ private enum SetRowMetricSizing: Equatable {
 
 private struct SetRowView: View {
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var locale
     let index: Int
     let progress: SetProgress
     let exercise: Exercise
@@ -636,7 +638,7 @@ private struct SetRowView: View {
                     .frame(width: AppStyle.Layout.setRowBadgeSize, height: AppStyle.Layout.setRowBadgeSize)
             }
 
-            Text("\((progress.logicalSetIndex ?? index) + 1)")
+            Text(verbatim: "\((progress.logicalSetIndex ?? index) + 1)")
                 .font(AppStyle.Font.defaultFont)
                 .foregroundColor(AppStyle.Color.white)
         }
@@ -645,10 +647,10 @@ private struct SetRowView: View {
 
     private func weightChip(sizing: SetRowMetricSizing) -> some View {
         Button(action: handleMetricTap) {
-            Text(
+            Text(verbatim:
                 sizing == .bilateralTight
-                    ? WeightFormatter.format(progress.weight)
-                    : WeightFormatter.displayWeight(progress.weight)
+                    ? WeightFormatter.format(progress.weight, locale: locale)
+                    : WeightFormatter.displayWeight(progress.weight, locale: locale)
             )
                 .lineLimit(1)
                 .minimumScaleFactor(AppStyle.Layout.bilateralMetricMinimumScaleFactor)
@@ -668,17 +670,13 @@ private struct SetRowView: View {
         .buttonStyle(PlainButtonStyle())
         .disabled(!isMetricInteractionEnabled)
         .opacity(isHighlighted ? 1.0 : 0.3)
-        .accessibilityLabel(isPending ? "Record set result" : "Edit weight")
-        .accessibilityValue(
-            isPending
-                ? "Target \(WeightFormatter.displayWeight(exercise.weight))"
-                : WeightFormatter.displayWeight(progress.weight)
-        )
+        .accessibilityLabel(isPending ? AppText.accessibilityRecordSetResult : AppText.accessibilityEditWeight)
+        .accessibilityValue(weightAccessibilityValue)
     }
 
     private func repsChip(sizing: SetRowMetricSizing) -> some View {
         Button(action: handleMetricTap) {
-            Text(!isPending ? "\(progress.currentReps)" : "")
+            Text(verbatim: !isPending ? "\(progress.currentReps)" : "")
                 .frame(
                     minWidth: !sizing.isStandard
                         ? AppStyle.Layout.bilateralRepsChipContentMinWidth
@@ -703,9 +701,25 @@ private struct SetRowView: View {
         .buttonStyle(PlainButtonStyle())
         .disabled(!isMetricInteractionEnabled)
         .opacity(isHighlighted ? 1.0 : 0.3)
-        .accessibilityLabel(isPending ? "Record set result" : "Edit repetitions")
-        .accessibilityValue(isPending ? "Target \(exercise.reps)" : "\(progress.currentReps)")
+        .accessibilityLabel(isPending ? AppText.accessibilityRecordSetResult : AppText.accessibilityEditRepetitions)
+        .accessibilityValue(repsAccessibilityValue)
         .accessibilityIdentifier(repsAccessibilityIdentifier)
+    }
+
+    private var weightAccessibilityValue: Text {
+        if isPending {
+            Text(AppText.accessibilityTarget(value: WeightFormatter.displayWeight(exercise.weight, locale: locale)))
+        } else {
+            Text(verbatim: WeightFormatter.displayWeight(progress.weight, locale: locale))
+        }
+    }
+
+    private var repsAccessibilityValue: Text {
+        if isPending {
+            Text(AppText.accessibilityTarget(value: exercise.reps.formatted(.number.locale(locale))))
+        } else {
+            Text(verbatim: progress.currentReps.formatted(.number.locale(locale)))
+        }
     }
 
     private func handleMetricTap() {
@@ -717,11 +731,13 @@ private struct SetRowView: View {
     }
 
     private func repsLabel(sizing: SetRowMetricSizing) -> some View {
-        Text(
-            sizing == .bilateralTight
-                ? "/\(exercise.reps)"
-                : "of \(exercise.reps)"
-        )
+        Group {
+            if sizing == .bilateralTight {
+                Text(verbatim: "/\(exercise.reps)")
+            } else {
+                Text(AppText.exerciseOfCount(count: exercise.reps))
+            }
+        }
             .font(AppStyle.Font.detailExercise)
             .foregroundColor(AppStyle.Color.white)
             .lineLimit(1)

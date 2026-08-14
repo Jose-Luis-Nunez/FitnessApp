@@ -107,7 +107,7 @@ struct SBahnDeparturesViewModelTests {
         await vm.refresh()
 
         #expect(vm.departures.map(\.id) == ["a", "b"])
-        #expect(vm.errorMessage == nil)
+        #expect(vm.error == nil)
         #expect(vm.lastUpdated != nil)
         #expect(vm.isShowingCachedResult == false)
         #expect(vm.isLoading == false)
@@ -131,7 +131,8 @@ struct SBahnDeparturesViewModelTests {
 
         #expect(vm.departures.map(\.id) == ["cached"])
         #expect(vm.isShowingCachedResult == true)
-        #expect(vm.errorMessage == nil)
+        #expect(vm.error == nil)
+        #expect(vm.isLoading == false)
     }
 
     @Test func refresh_networkError_withoutCache_setsErrorMessage() async {
@@ -142,7 +143,8 @@ struct SBahnDeparturesViewModelTests {
         await vm.refresh()
 
         #expect(vm.departures.isEmpty)
-        #expect(vm.errorMessage != nil)
+        #expect(vm.error != nil)
+        #expect(vm.isLoading == false)
     }
 
     // MARK: - Cache preload on init
@@ -272,7 +274,7 @@ struct SBahnDeparturesViewModelTests {
         #expect(vm.isReversed)
         #expect(vm.departures.map(\.id) == ["reverse-cached"])
         #expect(vm.isShowingCachedResult)
-        #expect(vm.errorMessage == nil)
+        #expect(vm.error == nil)
     }
 
     // MARK: - Toggle expanded is presentation-only
@@ -288,22 +290,6 @@ struct SBahnDeparturesViewModelTests {
     }
 
     // MARK: - Cancellation-leak fix (defer { isLoading = false })
-
-    @Test func refresh_whenSucceeding_clearsIsLoading() async {
-        let service = MockService()
-        service.results = [Self.makeDeparture(id: "ok")]
-        let vm = Self.makeVM(service: service)
-        await vm.refresh()
-        #expect(vm.isLoading == false)
-    }
-
-    @Test func refresh_whenFailing_clearsIsLoading() async {
-        let service = MockService()
-        service.error = .network
-        let vm = Self.makeVM(service: service)
-        await vm.refresh()
-        #expect(vm.isLoading == false)
-    }
 
     @Test func refresh_whenCancelled_clearsIsLoading() async throws {
         // A caller may still cancel a manual refresh when the screen leaves.
@@ -405,7 +391,10 @@ struct SBahnDeparturesViewModelTests {
         }
 
         func waitUntilRequested() async throws {
-            try await waitUntil { self.callCount == 1 }
+            // Six package test hosts may compete for the MainActor during the
+            // parallel suite. The request itself is deterministic; only task
+            // scheduling is variable under that load.
+            try await waitUntil(timeout: .seconds(2)) { self.callCount == 1 }
         }
 
         func resumeWithCancellation() {

@@ -1,4 +1,5 @@
 import SwiftUI
+import FitnessResources
 
 /// Shared action composition for profile cards and profile-owned sheets.
 ///
@@ -7,8 +8,8 @@ import SwiftUI
 /// states live here so Save and Refresh controls cannot drift across Profile,
 /// Friends, and transit content.
 public struct ProfileActionRow: View {
-    private let secondaryLabel: String?
-    private let primaryLabel: String
+    private let secondaryLabel: LocalizedStringResource?
+    private let primaryLabel: LocalizedStringResource
     private let primarySystemImage: String?
     private let isPrimaryEnabled: Bool
     private let isPrimaryLoading: Bool
@@ -22,8 +23,8 @@ public struct ProfileActionRow: View {
     private var profileColors: ProfileColorTheme { appColorTheme.profile }
 
     public init(
-        secondaryLabel: String? = nil,
-        primaryLabel: String,
+        secondaryLabel: LocalizedStringResource? = nil,
+        primaryLabel: LocalizedStringResource,
         primarySystemImage: String? = nil,
         isPrimaryEnabled: Bool = true,
         isPrimaryLoading: Bool = false,

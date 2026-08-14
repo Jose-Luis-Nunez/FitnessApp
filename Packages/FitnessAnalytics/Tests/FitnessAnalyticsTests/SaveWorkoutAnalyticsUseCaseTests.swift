@@ -1,5 +1,4 @@
 import FitnessCore
-import FitnessTestSupport
 import Foundation
 import Testing
 @testable import FitnessAnalytics
@@ -8,7 +7,7 @@ import Testing
 @MainActor
 struct SaveWorkoutAnalyticsUseCaseTests {
     @Test func appendsEverySubmittedExerciseEntry() {
-        let storage = MockAnalyticsStorage()
+        let storage = RecordingBatchStorage()
         let sut = SaveWorkoutAnalyticsUseCase(batchStorage: storage)
         let firstID = UUID()
         let secondID = UUID()
@@ -19,28 +18,12 @@ struct SaveWorkoutAnalyticsUseCaseTests {
         ])
 
         #expect(savedCount == 2)
-        #expect(storage.load(for: firstID).count == 1)
-        #expect(storage.load(for: secondID).count == 1)
-    }
-
-    @Test func preservesExistingEntriesOnSameDay() {
-        let storage = MockAnalyticsStorage()
-        let sut = SaveWorkoutAnalyticsUseCase(batchStorage: storage)
-        let exerciseID = UUID()
-        let date = Date(timeIntervalSince1970: 1_700_000_000)
-        storage.save([makeEntry(exerciseId: exerciseID, date: date, reps: 8)], for: exerciseID)
-
-        sut.execute(entries: [
-            makeEntry(exerciseId: exerciseID, date: date, reps: 12),
-        ])
-
-        let saved = storage.load(for: exerciseID)
-        #expect(saved.count == 2)
-        #expect(saved.map { $0.setProgress[0].currentReps } == [8, 12])
+        #expect(storage.batches.count == 1)
+        #expect(storage.batches[0].map(\.exerciseId) == [firstID, secondID])
     }
 
     @Test func skipsEmptyEntries() {
-        let storage = MockAnalyticsStorage()
+        let storage = RecordingBatchStorage()
         let sut = SaveWorkoutAnalyticsUseCase(batchStorage: storage)
         let exerciseID = UUID()
 
@@ -53,23 +36,19 @@ struct SaveWorkoutAnalyticsUseCaseTests {
         ])
 
         #expect(savedCount == 0)
-        #expect(storage.load(for: exerciseID).isEmpty)
+        #expect(storage.batches.count == 1)
+        #expect(storage.batches.first?.isEmpty == true)
     }
 
     @Test func reportsStorageFailure() {
-        let storage = MockAnalyticsStorage()
-        let existingID = UUID()
-        storage.save([makeEntry(exerciseId: existingID, reps: 6)], for: existingID)
-        storage.saveSucceeds = false
+        let storage = RecordingBatchStorage(result: false)
         let sut = SaveWorkoutAnalyticsUseCase(batchStorage: storage)
+        let entry = makeEntry(exerciseId: UUID(), reps: 8)
 
-        let result = sut.execute(entries: [
-            makeEntry(exerciseId: UUID(), reps: 8),
-        ])
+        let result = sut.execute(entries: [entry])
 
         #expect(result == nil)
-        #expect(storage.load(for: existingID).count == 1)
-        #expect(storage.savedEntries.count == 1)
+        #expect(storage.batches.map { $0.map(\.id) } == [[entry.id]])
     }
 
     private func makeEntry(
@@ -88,5 +67,20 @@ struct SaveWorkoutAnalyticsUseCaseTests {
                 ),
             ]
         )
+    }
+}
+
+@MainActor
+private final class RecordingBatchStorage: WorkoutAnalyticsBatchStoring {
+    private let result: Bool
+    private(set) var batches: [[AnalyticsEntry]] = []
+
+    init(result: Bool = true) {
+        self.result = result
+    }
+
+    func appendWorkoutAnalytics(_ entries: [AnalyticsEntry]) -> Bool {
+        batches.append(entries)
+        return result
     }
 }

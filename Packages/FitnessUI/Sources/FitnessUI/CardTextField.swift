@@ -1,11 +1,12 @@
 import SwiftUI
+import FitnessResources
 
 /// Single-line text input styled to match the wheel-picker cards: a muted label
 /// over an editable field with a placeholder, on a dark rounded card with a
 /// hairline border. Shared by the exercise name bar and the new-workout sheet.
 public struct CardTextField: View {
-    private let label: String
-    private let placeholder: String
+    private let label: LocalizedStringResource
+    private let placeholder: LocalizedStringResource
     @Binding private var text: String
     private var isFocused: FocusState<Bool>.Binding
     private let accessibilityIdentifier: String?
@@ -14,8 +15,8 @@ public struct CardTextField: View {
     private let cornerRadius: CGFloat = 16
 
     public init(
-        label: String,
-        placeholder: String,
+        label: LocalizedStringResource,
+        placeholder: LocalizedStringResource,
         text: Binding<String>,
         isFocused: FocusState<Bool>.Binding,
         accessibilityIdentifier: String? = nil

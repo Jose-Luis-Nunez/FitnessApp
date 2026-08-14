@@ -1,5 +1,6 @@
 import SwiftUI
 import FitnessCore
+import FitnessResources
 import FitnessUI
 
 /// Presents post-exercise feedback as a separate, draggable sheet above the
@@ -46,7 +47,7 @@ public struct FeedbackSheetComponent: View {
                         .contentShape(Rectangle())
                         .onTapGesture { dismissFeedback() }
                         .accessibilityElement()
-                        .accessibilityLabel("Cancel feedback")
+                        .accessibilityLabel(AppText.feedbackCancel)
                         .accessibilityAddTraits(.isButton)
                         .accessibilityAction { dismissFeedback() }
                         .accessibilityIdentifier(TrainingIDs.feedbackSheetBackdrop)

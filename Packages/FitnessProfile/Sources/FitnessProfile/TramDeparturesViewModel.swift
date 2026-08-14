@@ -30,7 +30,7 @@ public final class TramDeparturesViewModel {
     public private(set) var isExpanded: Bool = false
     public private(set) var departures: [TramDeparture] = []
     public var isLoading: Bool = false
-    public var errorMessage: String?
+    public var error: TransitPresentationFailure?
     public var lastUpdated: Date?
     public var isReversed: Bool = false
     /// True when the currently displayed departures come from the cache (no live
@@ -87,7 +87,7 @@ public final class TramDeparturesViewModel {
     public func swap() {
         isReversed.toggle()
         loadCachedSnapshot()
-        errorMessage = nil
+        error = nil
         scheduleRefresh()
     }
 
@@ -106,7 +106,7 @@ public final class TramDeparturesViewModel {
             )
             guard !Task.isCancelled else { return }
             departures = result
-            errorMessage = nil
+            self.error = nil
             lastUpdated = Date()
             isStale = false
             scheduler.reportSuccess()
@@ -156,31 +156,35 @@ public final class TramDeparturesViewModel {
             departures = cached.departures
             lastUpdated = cached.savedAt
             isStale = true
-            errorMessage = nil
+            self.error = nil
             return
         }
         if let tramError = error as? BVGTramError {
-            errorMessage = tramError.errorDescription ?? "Failed to load."
+            switch tramError {
+            case .invalidURL: self.error = .invalidURL
+            case .network: self.error = .network
+            case .decoding: self.error = .decoding
+            case .rateLimited: self.error = .rateLimited
+            case .serverError(let statusCode): self.error = .server(statusCode: statusCode)
+            }
         } else {
-            errorMessage = "Failed to load."
+            self.error = .unknown
         }
     }
 
     // MARK: - Formatting
 
-    private static let timeFormatter: DateFormatter = {
+    public func formattedTime(for date: Date, locale: Locale) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "de_DE")
-        formatter.dateFormat = "HH:mm"
-        return formatter
-    }()
-
-    public func formattedTime(for date: Date) -> String {
-        Self.timeFormatter.string(from: date)
+        formatter.locale = locale
+        formatter.timeZone = TimeZone(identifier: "Europe/Berlin")
+        formatter.timeStyle = .short
+        formatter.dateStyle = .none
+        return formatter.string(from: date)
     }
 
-    public var formattedLastUpdated: String? {
+    public func formattedLastUpdated(locale: Locale) -> String? {
         guard let lastUpdated else { return nil }
-        return formattedTime(for: lastUpdated)
+        return formattedTime(for: lastUpdated, locale: locale)
     }
 }

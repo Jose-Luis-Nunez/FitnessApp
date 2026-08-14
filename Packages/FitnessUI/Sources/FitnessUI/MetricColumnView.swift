@@ -1,4 +1,5 @@
 import SwiftUI
+import FitnessResources
 
 /// Labeled metric column for card metric rows.
 ///
@@ -10,14 +11,14 @@ import SwiftUI
 /// intentionally not used for columns that diverge from this pattern
 /// (e.g. `progressColumn` has different spacing and owns the coaching-tip data band).
 public struct MetricColumnView<Content: View, Footer: View>: View {
-    let label: String
+    let label: LocalizedStringResource
     let alignment: HorizontalAlignment
     let onTap: (() -> Void)?
     let content: Content
     let footer: Footer
 
     public init(
-        label: String,
+        label: LocalizedStringResource,
         alignment: HorizontalAlignment = .leading,
         onTap: (() -> Void)? = nil,
         @ViewBuilder content: () -> Content,
@@ -48,7 +49,7 @@ public struct MetricColumnView<Content: View, Footer: View>: View {
 
 public extension MetricColumnView where Footer == EmptyView {
     init(
-        label: String,
+        label: LocalizedStringResource,
         alignment: HorizontalAlignment = .leading,
         onTap: (() -> Void)? = nil,
         @ViewBuilder content: () -> Content

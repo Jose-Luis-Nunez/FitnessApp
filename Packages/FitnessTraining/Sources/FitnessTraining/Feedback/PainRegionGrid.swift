@@ -1,5 +1,6 @@
 import SwiftUI
 import FitnessCore
+import FitnessResources
 import FitnessUI
 
 /// Grid-based **multi-select** picker for pain regions, pre-scoped to the
@@ -103,7 +104,7 @@ struct PainRegionTile: View {
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile, style: .continuous))
-            .accessibilityLabel(region.displayName)
+            .accessibilityLabel(region.localizedName)
             .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : [.isButton])
         }
         .buttonStyle(PlainButtonStyle())

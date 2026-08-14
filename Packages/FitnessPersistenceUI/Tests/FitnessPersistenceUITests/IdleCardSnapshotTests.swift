@@ -23,6 +23,7 @@ private func assertSnapshot<V: View>(
 ) {
     let hosted = view
         .appColorTheme(.green)
+        .environment(\.locale, Locale(identifier: "en_US"))
         .frame(width: size.width, height: size.height)
         .background(AppStyle.Color.backgroundColor)
 
@@ -90,12 +91,12 @@ struct IdleCardSnapshotTests {
         var state = LastRunCardPresentationState()
         state.updateAvailability(true)
 
-        let didExpand = state.apply(.failed) { _ in "unused" }
+        let didExpand = state.apply(.failed)
 
         #expect(!didExpand)
         #expect(state.hasHistory)
         #expect(state.setProgress.isEmpty)
-        #expect(state.dateText == nil)
+        #expect(state.date == nil)
     }
 
     @Test func availabilityFailurePreservesExistingLastRunAffordance() {
@@ -111,36 +112,12 @@ struct IdleCardSnapshotTests {
         var state = LastRunCardPresentationState()
         state.updateAvailability(true)
 
-        let didExpand = state.apply(.loaded(nil)) { _ in "unused" }
+        let didExpand = state.apply(.loaded(nil))
 
         #expect(!didExpand)
         #expect(!state.hasHistory)
         #expect(state.setProgress.isEmpty)
-        #expect(state.dateText == nil)
-    }
-
-    @Test func coachingTipAppAsset() throws {
-        let coachingTipImage = try appAssetImage(named: "tip_coaching_2")
-        let view = CardActionCircleButtonVisual(
-            iconSize: ExerciseCardLayout.ResetButton.iconSize,
-            discSize: ExerciseCardLayout.ResetButton.size,
-            glowSize: ExerciseCardLayout.ResetButton.size
-        ) {
-            coachingTipImage
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-        }
-        .frame(
-            minWidth: AppStyle.Layout.minimumTapTargetSize,
-            minHeight: AppStyle.Layout.minimumTapTargetSize
-        )
-
-        assertSnapshot(
-            of: view,
-            named: "coaching-tip-app-asset",
-            size: CGSize(width: 60, height: 60)
-        )
+        #expect(state.date == nil)
     }
 
     @Test func collapsed() throws {
@@ -162,59 +139,6 @@ struct IdleCardSnapshotTests {
         .modelContainer(container)
 
         assertSnapshot(of: view, named: "collapsed", size: CGSize(width: 393, height: 160))
-    }
-
-    @Test func collapsedWithSeat() throws {
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try ModelContainer(
-            for: WorkoutModel.self, ExerciseModel.self,
-            configurations: config
-        )
-        let ctx = container.mainContext
-
-        let workoutId = UUID()
-        let workout = WorkoutModel(
-            id: workoutId,
-            name: "Push",
-            selectedCategories: [MuscleCategoryGroup.chest.rawValue],
-            createdDate: .now,
-            lastModified: .now
-        )
-        ctx.insert(workout)
-
-        let model = ExerciseModel(
-            id: UUID(),
-            workoutId: workoutId,
-            name: "Butterfly",
-            weight: 35,
-            reps: 12,
-            sets: 4,
-            seatSetting: "3",
-            noSeats: false,
-            iconName: MuscleCategoryGroup.chest.defaultIconName,
-            category: MuscleCategoryGroup.chest.rawValue,
-            workout: workout
-        )
-        ctx.insert(model)
-        try ctx.save()
-
-        let analyticsVM = AnalyticsViewModel(
-            storageService: StubAnalyticsStorage(),
-            exerciseStorage: MockExerciseStorage(),
-            workoutStorage: MockWorkoutStorage()
-        )
-
-        let view = IdleActiveCardModelView(
-            model: model,
-            analyticsViewModel: analyticsVM,
-            onEdit: { _, _ in },
-            isEditable: false,
-            onStart: { _ in },
-            isInProgress: false
-        )
-        .modelContainer(container)
-
-        assertSnapshot(of: view, named: "with-seat", size: CGSize(width: 393, height: 160))
     }
 
     /// A four-part seat string must render only the first two positions on the

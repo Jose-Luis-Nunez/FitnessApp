@@ -1,5 +1,6 @@
 import SwiftUI
 import FitnessCore
+import FitnessResources
 import FitnessUI
 
 // MARK: - Training Picker Component
@@ -41,10 +42,10 @@ private struct TrainingPickerContent: View {
             ActiveSetEditPickerView(
                 title: {
                     switch vm.editMode {
-                    case .less: "Less"
-                    case .more: "More"
-                    case .edit: "Edit"
-                    case .achievement: "Set Result"
+                    case .less: AppText.actionLess
+                    case .more: AppText.actionMore
+                    case .edit: AppText.trainingEdit
+                    case .achievement: AppText.trainingSetResult
                     }
                 }(),
                 selectedReps: $vm.repsInput,

@@ -1,6 +1,7 @@
 import SwiftUI
 import FitnessAnalytics
 import FitnessCore
+import FitnessResources
 import FitnessUI
 @_spi(PersistenceUI) import FitnessStorage
 
@@ -162,7 +163,7 @@ private extension InactiveCardModelView {
 
     var titleSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(model.name)
+            Text(verbatim: model.name)
                 .font(theme.titleFont)
                 .foregroundColor(theme.titleColor)
                 .lineLimit(2)
@@ -173,7 +174,7 @@ private extension InactiveCardModelView {
                 }
 
             HStack(spacing: 4) {
-                Text("Completed exercise")
+                Text(AppText.exerciseCompleted)
                     .font(AppStyle.Font.cardSmallBold)
                     .foregroundColor(theme.subtitleColor)
 

@@ -1,6 +1,7 @@
 import SwiftUI
 import FitnessCore
 import FitnessUI
+import FitnessResources
 
 struct RenameWorkoutView: View {
     @Binding var workoutName: String
@@ -12,23 +13,23 @@ struct RenameWorkoutView: View {
 
     var body: some View {
         WorkoutFormSheet(
-            title: "Rename Workout",
+            title: AppText.workoutRenameTitle,
             isSaveDisabled: workoutName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
             onSave: onSave,
             isPresented: $isPresented
         ) {
             VStack(spacing: 32) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Name")
+                    Text(AppText.workoutNameShort)
                         .font(.headline)
                         .foregroundColor(textColor)
 
-                    Text("Set your workout name")
+                    Text(AppText.workoutSetName)
                         .font(.caption)
                         .foregroundColor(textColor.opacity(0.7))
 
                     HStack {
-                        TextField("Workout Name", text: $workoutName)
+                        TextField("", text: $workoutName, prompt: Text(AppText.workoutName))
                             .foregroundColor(textColor)
 
                         if !workoutName.isEmpty {

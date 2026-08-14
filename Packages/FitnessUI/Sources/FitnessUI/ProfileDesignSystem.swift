@@ -1,4 +1,5 @@
 import SwiftUI
+import FitnessResources
 
 /// Semantic colors for the profile family of screens.
 ///
@@ -57,28 +58,59 @@ public extension View {
 /// layout, leading icons, actions, and disclosure indicators remain owned by
 /// the feature composing the header.
 public struct ProfileCardHeading: View {
-    private let title: String
+    private let title: HeadingText
     private let detail: String?
+    private let localizedDetail: LocalizedStringResource?
     @Environment(\.appColorTheme) private var appColorTheme
 
     private var theme: ProfileColorTheme { appColorTheme.profile }
 
-    public init(_ title: String, detail: String? = nil) {
-        self.title = title
+    public init(_ title: LocalizedStringResource, detail: String? = nil) {
+        self.title = .localized(title)
         self.detail = detail
+        localizedDetail = nil
+    }
+
+    public init(_ title: LocalizedStringResource, localizedDetail: LocalizedStringResource) {
+        self.title = .localized(title)
+        detail = nil
+        self.localizedDetail = localizedDetail
+    }
+
+    public init(verbatim title: String, detail: String? = nil) {
+        self.title = .verbatim(title)
+        self.detail = detail
+        localizedDetail = nil
     }
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(title)
+            title.text
                 .font(AppStyle.Font.sectionHeadline)
                 .foregroundColor(theme.title)
 
             if let detail {
-                Text(detail)
+                Text(verbatim: detail)
                     .font(AppStyle.Font.profileCardTitle)
                     .foregroundColor(theme.secondary)
                     .lineLimit(1)
+            } else if let localizedDetail {
+                Text(localizedDetail)
+                    .font(AppStyle.Font.profileCardTitle)
+                    .foregroundColor(theme.secondary)
+                    .lineLimit(1)
+            }
+        }
+    }
+
+    private enum HeadingText {
+        case localized(LocalizedStringResource)
+        case verbatim(String)
+
+        var text: Text {
+            switch self {
+            case .localized(let resource): Text(resource)
+            case .verbatim(let value): Text(verbatim: value)
             }
         }
     }

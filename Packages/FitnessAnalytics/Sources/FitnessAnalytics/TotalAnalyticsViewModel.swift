@@ -42,25 +42,32 @@ public struct ExerciseDetailData {
 
 // MARK: - Training Rhythm Detail Data Models
 
+public enum TrainingRhythm: Equatable, Sendable {
+    case notEnoughData
+    case weekly
+    case biweekly
+    case weeks(Int)
+}
+
 public struct TrainingRhythmDetailData {
     public let trainingDates: [IdentifiableDate]
     public let gaps: [Int]
     public let averageGap: Double
-    public let rhythmLabel: String
-    public let explanation: String
+    public let rhythm: TrainingRhythm
+    public let daysSinceLastTraining: Int
 
     public init(
         trainingDates: [Date],
         gaps: [Int],
         averageGap: Double,
-        rhythmLabel: String,
-        explanation: String
+        rhythm: TrainingRhythm,
+        daysSinceLastTraining: Int
     ) {
         self.trainingDates = trainingDates.enumerated().map { IdentifiableDate(index: $0.offset, date: $0.element) }
         self.gaps = gaps
         self.averageGap = averageGap
-        self.rhythmLabel = rhythmLabel
-        self.explanation = explanation
+        self.rhythm = rhythm
+        self.daysSinceLastTraining = daysSinceLastTraining
     }
 }
 
@@ -150,44 +157,44 @@ public final class TotalAnalyticsViewModel {
                 AnalyticsTileData(
                     kind: .currentMonthTraining,
                     type: .number,
-                    value: "\(totalWorkoutDaysInCurrentMonth())",
-                    label: "Training \(currentMonthName())"
+                    value: .number(totalWorkoutDaysInCurrentMonth()),
+                    label: .trainingMonth(now)
                 ),
                 AnalyticsTileData(
                     kind: .currentYearTraining,
                     type: .number,
-                    value: "\(totalWorkoutDaysInYear())",
-                    label: "Training \(Calendar.current.component(.year, from: now))"
+                    value: .number(totalWorkoutDaysInYear()),
+                    label: .trainingYear(Calendar.current.component(.year, from: now))
                 ),
                 AnalyticsTileData(
                     kind: .lastWorkoutCompletion,
                     type: .number,
-                    value: "\(completionRate.percentage)%",
-                    label: "Last Workout Completion"
+                    value: .percentage(completionRate.percentage),
+                    label: .lastWorkoutCompletion
                 ),
                 AnalyticsTileData(
                     kind: .trainingRhythm,
                     type: .text,
-                    value: getTrainingRhythm(),
-                    label: "Training Rhythm"
+                    value: .rhythm(getTrainingRhythm()),
+                    label: .trainingRhythm
                 ),
                 AnalyticsTileData(
                     kind: .mostTrainedCategory,
                     type: .text,
-                    value: mostTrained.category.displayName,
-                    label: "Category with most exercise"
+                    value: .category(mostTrained.category),
+                    label: .mostTrainedCategory
                 ),
                 AnalyticsTileData(
                     kind: .leastTrainedCategory,
                     type: .text,
-                    value: leastTrained.category.displayName,
-                    label: "Category with least exercise"
+                    value: .category(leastTrained.category),
+                    label: .leastTrainedCategory
                 ),
                 AnalyticsTileData(
                     kind: .mostImprovedCategory,
                     type: .text,
-                    value: mostImproved.category.displayName,
-                    label: "Category with most Improvements"
+                    value: .category(mostImproved.category),
+                    label: .mostImprovedCategory
                 ),
             ]
         )
@@ -250,10 +257,6 @@ public final class TotalAnalyticsViewModel {
 
     public func allDatesWithData() -> Set<Date> {
         AnalyticsDateHelper.uniqueDays(from: loadAllAnalytics().map(\.date))
-    }
-
-    public func currentMonthName() -> String {
-        AnalyticsDateHelper.currentMonthName()
     }
 
     public func totalWorkoutDaysInYear() -> Int {
@@ -436,7 +439,7 @@ public final class TotalAnalyticsViewModel {
 
     // MARK: - Training Rhythm Analysis
 
-    public func getTrainingRhythm() -> String {
+    public func getTrainingRhythm() -> TrainingRhythm {
         let trainingDays = getTrainingDays()
         return calculateTrainingRhythm(from: trainingDays)
     }
@@ -459,29 +462,15 @@ public final class TotalAnalyticsViewModel {
         let extendedGaps = gaps + [daysSinceLastTraining]
 
         let averageGap = Double(gaps.reduce(0, +)) / Double(gaps.count)
-        let rhythmLabel = formatTrainingRhythm(averageGap: averageGap)
-
-        let explanation = createRhythmExplanation(
-            gaps: gaps,
-            daysSinceLastTraining: daysSinceLastTraining,
-            averageGap: averageGap,
-            rhythmLabel: rhythmLabel
-        )
+        let rhythm = formatTrainingRhythm(averageGap: averageGap)
 
         return TrainingRhythmDetailData(
             trainingDates: recentTrainingDays,
             gaps: extendedGaps,
             averageGap: averageGap,
-            rhythmLabel: rhythmLabel,
-            explanation: explanation
+            rhythm: rhythm,
+            daysSinceLastTraining: daysSinceLastTraining
         )
-    }
-
-    private func createRhythmExplanation(gaps: [Int], daysSinceLastTraining: Int, averageGap: Double, rhythmLabel: String) -> String {
-        let gapsText = gaps.map { "\($0)" }.joined(separator: ", ")
-        let roundedAverage = String(format: "%.1f", averageGap)
-
-        return "Historical gaps: \(gapsText) Days\nAverage: \(roundedAverage) Days\nSince last training: \(daysSinceLastTraining) Days (not in calculation)\nResult: \(rhythmLabel)"
     }
 
     public func getTrainingDays() -> [Date] {
@@ -502,19 +491,19 @@ public final class TotalAnalyticsViewModel {
         return trainingDays
     }
 
-    private func calculateTrainingRhythm(from trainingDays: [Date]) -> String {
+    private func calculateTrainingRhythm(from trainingDays: [Date]) -> TrainingRhythm {
         guard trainingDays.count >= 2 else {
-            return "Not enough data"
+            return .notEnoughData
         }
 
         let recentTrainingDays = Array(trainingDays.suffix(5))
         guard recentTrainingDays.count >= 2 else {
-            return "Not enough data"
+            return .notEnoughData
         }
 
         let gaps = calculateDayGaps(between: recentTrainingDays)
         guard !gaps.isEmpty else {
-            return "Not enough data"
+            return .notEnoughData
         }
 
         let averageGap = Double(gaps.reduce(0, +)) / Double(gaps.count)
@@ -538,14 +527,14 @@ public final class TotalAnalyticsViewModel {
         return gaps
     }
 
-    private func formatTrainingRhythm(averageGap: Double) -> String {
+    private func formatTrainingRhythm(averageGap: Double) -> TrainingRhythm {
         if averageGap <= 7.0 {
-            return "Weekly"
+            return .weekly
         } else if averageGap <= 14.0 {
-            return "Biweekly"
+            return .biweekly
         } else {
             let weeks = Int(round(averageGap / 7.0))
-            return "\(weeks) weeks"
+            return .weeks(weeks)
         }
     }
 

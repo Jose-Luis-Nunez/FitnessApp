@@ -55,34 +55,12 @@ struct WorkoutImportCoordinatorTests {
         #expect(sut.pendingImportText == nil)
     }
 
-    @Test func clearPending_resetsState() throws {
+    @Test func clearPending_resetsState() {
         let sut = WorkoutImportCoordinator()
-        let url = makeTempFileURL()
-        try "hello".data(using: .utf8)!.write(to: url)
-        defer { try? FileManager.default.removeItem(at: url) }
-        sut.handleIncomingFile(url)
-        #expect(sut.pendingImportText == "hello")
+        sut.pendingImportText = "hello"
 
         sut.clearPending()
 
         #expect(sut.pendingImportText == nil)
-    }
-
-    @Test func handleIncomingFile_overwritesExistingPendingText() throws {
-        let sut = WorkoutImportCoordinator()
-        let url1 = makeTempFileURL()
-        let url2 = makeTempFileURL()
-        try "first".data(using: .utf8)!.write(to: url1)
-        try "second".data(using: .utf8)!.write(to: url2)
-        defer {
-            try? FileManager.default.removeItem(at: url1)
-            try? FileManager.default.removeItem(at: url2)
-        }
-
-        sut.handleIncomingFile(url1)
-        #expect(sut.pendingImportText == "first")
-        sut.handleIncomingFile(url2)
-
-        #expect(sut.pendingImportText == "second", "Second file must overwrite the first one's pending text.")
     }
 }

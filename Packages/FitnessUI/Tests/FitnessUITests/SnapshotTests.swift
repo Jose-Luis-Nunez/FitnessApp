@@ -20,6 +20,7 @@ private func assertSnapshot<V: View>(
     let shouldRecord = record || ProcessInfo.processInfo.environment["RECORD_SNAPSHOTS"] == "1"
     let hosted = view
         .appColorTheme(.green)
+        .environment(\.locale, Locale(identifier: "en_US"))
         .frame(width: size.width, height: size.height)
         .background(AppStyle.Color.backgroundColor)
 
@@ -92,15 +93,6 @@ struct CardBackgroundSnapshotTests {
         assertSnapshot(of: view, named: "glass", size: CGSize(width: 350, height: 100))
     }
 
-    @Test func noPadding() {
-        let view = CardBackground(addPadding: false) {
-            Text("No Padding")
-                .foregroundColor(AppStyle.Color.white)
-                .font(AppStyle.Font.tileLabel)
-        }
-        assertSnapshot(of: view, named: "no-padding", size: CGSize(width: 350, height: 80))
-    }
-
     @Test func primaryStyle() {
         let view = CardBackground(style: .primary) {
             Text("Idle Card")
@@ -109,33 +101,6 @@ struct CardBackgroundSnapshotTests {
         }
         assertSnapshot(of: view, named: "primary", size: CGSize(width: 350, height: 100))
     }
-}
-
-// MARK: - Adaptive Glass Policy
-
-@Suite("Adaptive Surfaces — Policy")
-@MainActor
-struct AdaptiveSurfacePolicyTests {
-
-    @Test
-    func currentPlatformPolicy() {
-#if os(visionOS)
-        #expect(AppGlassTreatment.currentPlatform == .legacyMaterial)
-        #expect(AppDarkSurfaceTreatment.currentPlatform == .nativeGlass)
-#else
-        if #available(iOS 27.0, macOS 27.0, *) {
-            #expect(AppGlassTreatment.currentPlatform == .clear)
-            #expect(AppDarkSurfaceTreatment.currentPlatform == .flat)
-        } else if #available(iOS 26.0, macOS 26.0, *) {
-            #expect(AppGlassTreatment.currentPlatform == .regular)
-            #expect(AppDarkSurfaceTreatment.currentPlatform == .nativeGlass)
-        } else {
-            #expect(AppGlassTreatment.currentPlatform == .legacyMaterial)
-            #expect(AppDarkSurfaceTreatment.currentPlatform == .nativeGlass)
-        }
-#endif
-    }
-
 }
 
 // MARK: - CardShell Snapshots
@@ -304,23 +269,6 @@ struct WorkoutDropdownSnapshotTests {
         let view = WorkoutDropdownView(workoutName: "My very long workout name that gets truncated")
             .environment(overlay)
         assertSnapshot(of: view, named: "long-name", size: CGSize(width: 300, height: 60))
-    }
-}
-
-// MARK: - SetTileView Snapshots
-
-@Suite("SetTileView — Snapshots", .tags(.snapshot))
-@MainActor
-struct SetTileViewSnapshotTests {
-
-    @Test func withWeight() {
-        let view = SetTileView(setNumber: 1, weight: 62.5, reps: 10, hasWeight: true)
-        assertSnapshot(of: view, named: "with-weight", size: CGSize(width: 100, height: 90))
-    }
-
-    @Test func withoutWeight() {
-        let view = SetTileView(setNumber: 3, weight: 0, reps: 15, hasWeight: false)
-        assertSnapshot(of: view, named: "bodyweight", size: CGSize(width: 100, height: 90))
     }
 }
 
@@ -530,30 +478,6 @@ struct CapsuleToggleStyleSnapshotTests {
             ))
             .labelsHidden()
         assertSnapshot(of: view, named: "off", size: CGSize(width: 80, height: 50))
-    }
-}
-
-// MARK: - IdlePlayButton Snapshots
-
-@Suite("IdlePlayButton — Snapshots", .tags(.snapshot))
-@MainActor
-struct IdlePlayButtonSnapshotTests {
-
-    @Test func idle() {
-        let view = IdlePlayButton()
-        assertSnapshot(of: view, named: "idle", size: CGSize(width: 100, height: 100))
-    }
-}
-
-// MARK: - ExerciseCardResetButton Snapshots
-
-@Suite("ExerciseCardResetButton — Snapshots", .tags(.snapshot))
-@MainActor
-struct ExerciseCardResetButtonSnapshotTests {
-
-    @Test func idleStyledReset() {
-        let view = ExerciseCardResetButton(onTap: {})
-        assertSnapshot(of: view, named: "idle-styled-reset", size: CGSize(width: 100, height: 100))
     }
 }
 

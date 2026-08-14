@@ -1,4 +1,5 @@
 import SwiftUI
+import FitnessResources
 
 /// Shared rendering for the exercise muscle artwork used by active cards and
 /// the active-training sheet. Keeping the glow, crop, theme mapping, and tap
@@ -94,7 +95,7 @@ private struct ExerciseMuscleIconAccessibilityModifier: ViewModifier {
         if allowsEditing {
             content
                 .accessibilityElement()
-                .accessibilityLabel("Edit seat position")
+                .accessibilityLabel(AppText.accessibilityEditSeat)
                 .accessibilityAddTraits(.isButton)
                 .accessibilityAction {
                     onEdit()
@@ -102,7 +103,7 @@ private struct ExerciseMuscleIconAccessibilityModifier: ViewModifier {
         } else {
             content
                 .accessibilityElement()
-                .accessibilityLabel("Exercise muscle illustration")
+                .accessibilityLabel(AppText.accessibilityExerciseIllustration)
                 .accessibilityAddTraits(.isImage)
         }
     }

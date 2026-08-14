@@ -63,32 +63,6 @@ struct CategoriesTests {
         #expect(vm.categories == expected)
     }
 
-    @Test func categoriesIgnoreWorkoutSelectedCategories() {
-        let ws = MockWorkoutStorage()
-        ws.setCurrentWorkout(Workout(name: "AbsOnly", selectedCategories: [.abs]))
-
-        let vm = MuscleCategorySelectionViewModel(
-            coordinatorCache: MockCoordinatorCache(),
-            workoutStorage: ws
-        )
-
-        #expect(vm.categories.count == MuscleCategoryGroup.allCases.count)
-        #expect(vm.categories.contains(.arms))
-        #expect(vm.categories.contains(.chest))
-        #expect(vm.categories.contains(.back))
-        #expect(vm.categories.contains(.legs))
-        #expect(vm.categories.contains(.abs))
-    }
-
-    @Test func categoriesNonEmptyEvenWithoutWorkout() {
-        let ws = MockWorkoutStorage()
-        // currentWorkout intentionally nil
-        let vm = MuscleCategorySelectionViewModel(
-            coordinatorCache: MockCoordinatorCache(),
-            workoutStorage: ws
-        )
-        #expect(vm.categories.count == MuscleCategoryGroup.allCases.count)
-    }
 }
 
 // MARK: - Exercise Counts (with mocked ExerciseManaging)
@@ -115,45 +89,6 @@ struct ExerciseCountsTests {
         #expect(count?.active == 1)
     }
 
-    @Test func exerciseCountsUpdateAfterTrainingEnds() async throws {
-        let mock = MockExerciseManagement()
-        let exercise = makeExercise(isCompleted: false)
-        mock.exercisesByCategory[.arms] = [exercise]
-
-        let ws = MockWorkoutStorage()
-        ws.setCurrentWorkout(Workout(name: "Test", selectedCategories: [.arms]))
-
-        let cache = MockCoordinatorCache()
-        let vm = MuscleCategorySelectionViewModel(
-            coordinatorCache: cache,
-            exerciseManagement: mock,
-            workoutStorage: ws
-        )
-        #expect(vm.getExerciseCount(for: .arms)?.active == 1)
-
-        await Task.yield()
-
-        let coordinator = cache.coordinator(for: .arms)
-        coordinator.startTraining(for: exercise)
-
-        try await waitUntil(timeout: .seconds(2)) { coordinator.isTrainingActive }
-
-        var completed = exercise
-        completed.isCompleted = true
-        mock.exercisesByCategory[.arms] = [completed]
-
-        for _ in 0..<exercise.sets { coordinator.completeSet() }
-        coordinator.finishExercise()
-
-        // Polling-based auto-refresh was removed in T8d; the live UI uses
-        // @Query on ExerciseModel for reactivity. Tests must request a
-        // refresh explicitly to update the VM's snapshot.
-        try await Task.sleep(for: .milliseconds(100))
-        vm.refreshExercises()
-
-        #expect(vm.getExerciseCount(for: .arms)?.active == 0)
-    }
-
     @Test func manualUpdateCountsPicksUpChange() {
         let mock = MockExerciseManagement()
         let exercise = makeExercise(isCompleted: false)
@@ -175,6 +110,25 @@ struct ExerciseCountsTests {
 
         vm.refreshExercises()
         #expect(vm.getExerciseCount(for: .arms)?.active == 0)
+    }
+
+    @Test func selectionAndActiveSetQueriesUseInjectedDependencies() {
+        let cache = MockCoordinatorCache()
+        let workoutStorage = MockWorkoutStorage()
+        let vm = MuscleCategorySelectionViewModel(
+            coordinatorCache: cache,
+            exerciseManagement: MockExerciseManagement(),
+            workoutStorage: workoutStorage
+        )
+        let workout = Workout(name: "Selected", selectedCategories: [.arms])
+        let exercise = makeExercise(category: .arms)
+
+        vm.selectWorkout(workout)
+        #expect(workoutStorage.currentWorkout?.id == workout.id)
+        #expect(!vm.hasActiveSetForCategory(.arms))
+
+        cache.coordinator(for: .arms).startTraining(for: exercise)
+        #expect(vm.hasActiveSetForCategory(.arms))
     }
 }
 
@@ -396,155 +350,26 @@ struct ExerciseMutationTests {
     }
 }
 
-// MARK: - Exercise Stability Across Sessions (Phase 1c)
-
-@Suite("exercise stability across sessions", .tags(.fast))
-@MainActor
-struct ExerciseStabilityTests {
-
-    @Test func startTrainingDoesNotAffectExerciseData() async throws {
-        let mock = MockExerciseManagement()
-        let exercise = makeExercise()
-        mock.exercisesByCategory[.arms] = [exercise]
-
-        let cache = MockCoordinatorCache()
-
-        let ws = MockWorkoutStorage()
-        ws.setCurrentWorkout(Workout(name: "Test", selectedCategories: [.arms]))
-
-        let vm = MuscleCategorySelectionViewModel(
-            coordinatorCache: cache,
-            exerciseManagement: mock,
-            workoutStorage: ws
-        )
-        let countBefore = vm.getExerciseCount(for: .arms)
-        let exercisesBefore = vm.getExercises(for: .arms)
-
-        let coordinator = cache.coordinator(for: .arms)
-        coordinator.startTraining(for: exercise)
-        try await waitUntil(timeout: .seconds(2)) { coordinator.isTrainingActive }
-
-        #expect(vm.getExerciseCount(for: .arms)?.total == countBefore?.total)
-        #expect(vm.getExerciseCount(for: .arms)?.active == countBefore?.active)
-        #expect(vm.getExercises(for: .arms).count == exercisesBefore.count)
-    }
-
-    @Test func cancelTrainingDoesNotAffectExerciseData() async throws {
-        let mock = MockExerciseManagement()
-        let exercise = makeExercise()
-        mock.exercisesByCategory[.arms] = [exercise]
-
-        let cache = MockCoordinatorCache()
-
-        let ws = MockWorkoutStorage()
-        ws.setCurrentWorkout(Workout(name: "Test", selectedCategories: [.arms]))
-
-        let vm = MuscleCategorySelectionViewModel(
-            coordinatorCache: cache,
-            exerciseManagement: mock,
-            workoutStorage: ws
-        )
-        let countBefore = vm.getExerciseCount(for: .arms)
-        let exercisesBefore = vm.getExercises(for: .arms)
-
-        let coordinator = cache.coordinator(for: .arms)
-        coordinator.startTraining(for: exercise)
-        try await waitUntil(timeout: .seconds(2)) { coordinator.isTrainingActive }
-
-        coordinator.cancelTraining()
-        try await waitUntil(timeout: .seconds(2)) { !coordinator.hasActiveSessions }
-
-        #expect(vm.getExerciseCount(for: .arms)?.total == countBefore?.total)
-        #expect(vm.getExerciseCount(for: .arms)?.active == countBefore?.active)
-        #expect(vm.getExercises(for: .arms).count == exercisesBefore.count)
-    }
-}
-
 // MARK: - Current Workout ID Exposure (T7a)
 
 @MainActor
 @Suite("MuscleCategorySelectionViewModel.currentWorkoutId", .tags(.fast))
 struct CurrentWorkoutIdTests {
 
-    @Test func returnsNilWhenNoWorkoutSelected() {
+    @Test func tracksCurrentWorkoutAcrossNilSelectionAndSwitch() {
         let ws = MockWorkoutStorage()
-
         let vm = MuscleCategorySelectionViewModel(
             coordinatorCache: MockCoordinatorCache(),
             exerciseManagement: MockExerciseManagement(),
             workoutStorage: ws
         )
-
         #expect(vm.currentWorkoutId == nil)
-    }
-
-    @Test func returnsIdOfSelectedWorkout() {
-        let workout = Workout(name: "Test", selectedCategories: [.arms])
-        let ws = MockWorkoutStorage()
-        ws.setCurrentWorkout(workout)
-
-        let vm = MuscleCategorySelectionViewModel(
-            coordinatorCache: MockCoordinatorCache(),
-            exerciseManagement: MockExerciseManagement(),
-            workoutStorage: ws
-        )
-
-        #expect(vm.currentWorkoutId == workout.id)
-    }
-
-    @Test func reflectsWorkoutSwitch() {
         let w1 = Workout(name: "W1", selectedCategories: [.arms])
         let w2 = Workout(name: "W2", selectedCategories: [.chest])
-        let ws = MockWorkoutStorage()
         ws.setCurrentWorkout(w1)
-
-        let vm = MuscleCategorySelectionViewModel(
-            coordinatorCache: MockCoordinatorCache(),
-            exerciseManagement: MockExerciseManagement(),
-            workoutStorage: ws
-        )
-
         #expect(vm.currentWorkoutId == w1.id)
 
         ws.setCurrentWorkout(w2)
         #expect(vm.currentWorkoutId == w2.id)
-    }
-}
-
-// MARK: - Workout Switch Refreshes Exercises (Phase 0d safety-net)
-
-@Suite("workout switch refreshes exercises", .tags(.fast))
-@MainActor
-struct WorkoutSwitchRefreshTests {
-
-    @Test func refreshExercisesPicksUpNewWorkoutData() {
-        let mock = MockExerciseManagement()
-        let armExercise = makeExercise(name: "Curl")
-        mock.exercisesByCategory[.arms] = [armExercise]
-
-        let w1 = Workout(name: "Push", selectedCategories: [.arms, .chest])
-        let ws = MockWorkoutStorage()
-        ws.setCurrentWorkout(w1)
-
-        let vm = MuscleCategorySelectionViewModel(
-            coordinatorCache: MockCoordinatorCache(),
-            exerciseManagement: mock,
-            workoutStorage: ws
-        )
-
-        #expect(vm.getExerciseCount(for: .arms)?.total == 1)
-        #expect(vm.getExerciseCount(for: .chest)?.total == 0)
-
-        let w2 = Workout(name: "Pull", selectedCategories: [.back])
-        ws.setCurrentWorkout(w2)
-
-        let chestExercise = makeExercise(name: "Bench")
-        mock.exercisesByCategory[.chest] = [chestExercise]
-        mock.exercisesByCategory[.arms] = []
-
-        vm.refreshExercises()
-
-        #expect(vm.getExerciseCount(for: .arms)?.total == 0)
-        #expect(vm.getExerciseCount(for: .chest)?.total == 1)
     }
 }

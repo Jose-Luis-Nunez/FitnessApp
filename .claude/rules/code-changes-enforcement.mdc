@@ -14,8 +14,9 @@ bash .claude/hooks/lib/change-risk.sh classify
 - **Green:** lightweight main-agent review plus one relevant final
   test/snapshot; no subagents.
 - **Yellow:** independent reviewer and tester verification/run.
-- **Red:** reviewer, tester, affected tests, app build, relevant UI tests, and
-  ADR when an architectural decision is introduced.
+- **Red:** reviewer, tester, affected tests, app build, and ADR when an
+  architectural decision is introduced. UI evidence is added only when the
+  Selection Gate identifies a critical journey that lower layers cannot prove.
 
 Validation is bound to exact file contents through manifests in
 `.claude/hooks/state/`. It does not expire while contents remain unchanged and

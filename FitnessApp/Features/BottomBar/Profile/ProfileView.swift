@@ -2,18 +2,22 @@ import SwiftUI
 import FitnessUI
 import FitnessProfile
 import FitnessFriends
+import FitnessResources
 
 struct ProfileView: View {
     @State private var viewModel = ProfileViewModel()
     @State private var isBodyExpanded = false
     @Binding private var accentScheme: AppAccentScheme
+    @Binding private var appLanguage: AppLanguage
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var locale
     @FocusState private var focusedField: ProfileField?
 
     private var profileColors: ProfileColorTheme { appColorTheme.profile }
 
-    init(accentScheme: Binding<AppAccentScheme>) {
+    init(accentScheme: Binding<AppAccentScheme>, appLanguage: Binding<AppLanguage>) {
         _accentScheme = accentScheme
+        _appLanguage = appLanguage
     }
 
     enum ProfileField: Hashable {
@@ -31,6 +35,7 @@ struct ProfileView: View {
                         nicknameSection
                         bodyDataSection
                         iconColorSection
+                        languageSection
                         FriendsSection()
                         SBahnDeparturesCardView(viewModel: viewModel.sbahnVM)
                         TramDeparturesCardView(viewModel: viewModel.tramVM)
@@ -50,10 +55,10 @@ struct ProfileView: View {
         }
         // BMI is calculated locally on first expand. Server validation remains
         // explicit through Refresh or follows a real weight/height change.
-        .alert("Error", isPresented: $viewModel.showNicknameAlert) {
-            Button("OK", role: .cancel) {}
+        .alert(AppText.commonError, isPresented: $viewModel.showNicknameAlert) {
+            Button(AppText.actionOk, role: .cancel) {}
         } message: {
-            Text("Nickname cannot be empty.")
+            Text(AppText.profileNicknameEmpty)
         }
     }
 
@@ -64,7 +69,7 @@ struct ProfileView: View {
     private var iconColorSection: some View {
         ProfileCardContainer {
             HStack(spacing: AppStyle.Padding.card) {
-                ProfileCardHeading("Accent Color")
+                ProfileCardHeading(AppText.profileAccentColor)
                     .layoutPriority(1)
 
                 Spacer(minLength: 0)
@@ -90,7 +95,7 @@ struct ProfileView: View {
         return Button {
             accentScheme = scheme
         } label: {
-            Text(scheme.displayName)
+            Text(scheme.localizedName)
                 .font(AppStyle.Font.profileCardTitle)
                 .foregroundColor(isSelected ? profileColors.title : profileColors.secondary)
                 .frame(maxWidth: .infinity)
@@ -116,8 +121,82 @@ struct ProfileView: View {
         .frame(maxWidth: .infinity)
         .contentShape(Rectangle())
         .buttonStyle(.plain)
-        .accessibilityValue(isSelected ? "Selected" : "Not selected")
+        .accessibilityValue(isSelected ? AppText.commonSelected : AppText.commonNotSelected)
         .accessibilityIdentifier("id_profile_icon_color_\(scheme.rawValue)")
+    }
+
+    // MARK: - Language
+
+    private var languageSection: some View {
+        let languages = AppLanguage.allCases
+        let optionWidth = (
+            AppStyle.Layout.profileColorPickerWidth - AppStyle.Layout.separatorWidth
+        ) / 2
+
+        return ProfileCardContainer {
+            HStack(spacing: AppStyle.Padding.card) {
+                ProfileCardHeading(AppText.profileLanguage)
+                    .layoutPriority(1)
+
+                Spacer(minLength: 0)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 0) {
+                        ForEach(languages) { language in
+                            if language != languages.first {
+                                Rectangle()
+                                    .fill(profileColors.divider)
+                                    .frame(
+                                        width: AppStyle.Layout.separatorWidth,
+                                        height: 24
+                                    )
+                            }
+
+                            languageButton(for: language)
+                                .frame(width: optionWidth)
+                        }
+                    }
+                }
+                .scrollBounceBehavior(.basedOnSize)
+                .frame(width: AppStyle.Layout.profileColorPickerWidth)
+                .profileReadOnlyTileSurface()
+            }
+        }
+    }
+
+    private func languageButton(for language: AppLanguage) -> some View {
+        let isSelected = appLanguage == language
+
+        return Button {
+            appLanguage = language
+        } label: {
+            Text(verbatim: language.autonym)
+                .font(AppStyle.Font.profileCardTitle)
+                .foregroundColor(isSelected ? profileColors.title : profileColors.secondary)
+                .frame(maxWidth: .infinity)
+                .frame(height: AppStyle.Layout.minimumTapTargetSize)
+                .background {
+                    RoundedRectangle(
+                        cornerRadius: AppStyle.CornerRadius.tile,
+                        style: .continuous
+                    )
+                    .fill(isSelected ? profileColors.selectionBackground : .clear)
+                    .overlay {
+                        RoundedRectangle(
+                            cornerRadius: AppStyle.CornerRadius.tile,
+                            style: .continuous
+                        )
+                        .stroke(
+                            isSelected ? profileColors.selectionStroke : .clear,
+                            lineWidth: AppStyle.Layout.darkSurfaceOutlineWidth
+                        )
+                    }
+                }
+        }
+        .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
+        .buttonStyle(.plain)
+        .accessibilityValue(isSelected ? AppText.commonSelected : AppText.commonNotSelected)
     }
 
     // MARK: - Header
@@ -146,12 +225,11 @@ struct ProfileView: View {
             .accessibilityIdentifier("id_profile_avatar")
 
             if viewModel.hasProfile {
-                Text("Hey \(viewModel.nickname)")
+                Text(AppText.profileGreeting(name: viewModel.nickname))
                     .font(AppStyle.Font.profileGreeting)
                     .foregroundColor(profileColors.title)
-                    .accessibilityIdentifier("id_profile_greeting")
             } else {
-                Text("Profile")
+                Text(AppText.profileTitle)
                     .font(AppStyle.Font.profileGreeting)
                     .foregroundColor(profileColors.title)
             }
@@ -166,10 +244,10 @@ struct ProfileView: View {
         if viewModel.isEditingNickname || !viewModel.hasProfile {
             ProfileCardContainer {
                 VStack(spacing: AppStyle.CornerRadius.defaultButton) {
-                    ProfileCardHeading("Nickname")
+                    ProfileCardHeading(AppText.profileNickname)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
-                    TextField("Your nickname", text: $viewModel.inputNickname)
+                    TextField("", text: $viewModel.inputNickname, prompt: Text(AppText.profileNicknamePlaceholder))
                         .foregroundColor(profileColors.title)
                         .font(AppStyle.Font.tileValue)
                         .padding(AppStyle.Layout.profileInputPadding)
@@ -178,12 +256,11 @@ struct ProfileView: View {
                         .focused($focusedField, equals: .nickname)
                         .submitLabel(.done)
                         .onSubmit { viewModel.saveNickname() }
-                        .accessibilityIdentifier("id_profile_nickname_input")
                         .id(ProfileField.nickname)
 
                     ProfileActionRow(
-                        secondaryLabel: viewModel.hasProfile ? "Cancel" : nil,
-                        primaryLabel: "Save",
+                        secondaryLabel: viewModel.hasProfile ? AppText.actionCancel : nil,
+                        primaryLabel: AppText.actionSave,
                         isPrimaryEnabled: !viewModel.isNicknameInputEmpty,
                         secondaryAccessibilityIdentifier: "id_profile_nickname_cancel",
                         primaryAccessibilityIdentifier: "id_profile_nickname_save",
@@ -209,14 +286,13 @@ struct ProfileView: View {
                 viewModel.startEditingNickname()
             } label: {
                 ProfileCardContainer {
-                    ProfileCardHeading("Nickname", detail: viewModel.nickname)
+                    ProfileCardHeading(AppText.profileNickname, detail: viewModel.nickname)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
                 }
             }
             .buttonStyle(.plain)
-            .accessibilityHint("Edit nickname")
-            .accessibilityIdentifier("id_profile_nickname_edit")
+            .accessibilityHint(AppText.accessibilityEditNickname)
         }
     }
 
@@ -233,7 +309,7 @@ struct ProfileView: View {
                     }
                 } label: {
                     HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
-                        ProfileCardHeading("Body Details")
+                        ProfileCardHeading(AppText.profileBodyDetails)
 
                         Spacer()
 
@@ -278,8 +354,8 @@ struct ProfileView: View {
             BodyMetricsWheelRow(viewModel: viewModel)
 
             ProfileActionRow(
-                secondaryLabel: "Cancel",
-                primaryLabel: "Save",
+                secondaryLabel: AppText.actionCancel,
+                primaryLabel: AppText.actionSave,
                 secondaryAccessibilityIdentifier: "id_profile_body_cancel",
                 primaryAccessibilityIdentifier: "id_profile_body_save",
                 onSecondary: {
@@ -302,25 +378,27 @@ struct ProfileView: View {
     private var bodyDisplayGrid: some View {
         HStack(spacing: AppStyle.CornerRadius.defaultButton) {
             MetricTile(
-                label: "Weight",
-                value: viewModel.weightKg > 0 ? WeightFormatter.format(viewModel.weightKg) : "–",
+                label: AppText.profileWeight,
+                value: viewModel.weightKg > 0 ? WeightFormatter.format(viewModel.weightKg, locale: locale) : "–",
                 unit: "kg",
                 accessibilityID: "id_profile_weight_tile",
                 action: { viewModel.startEditingBody() }
             )
 
             MetricTile(
-                label: "Height",
-                value: viewModel.heightCm > 0 ? String(format: "%.0f", viewModel.heightCm) : "–",
+                label: AppText.profileHeight,
+                value: viewModel.heightCm > 0
+                    ? viewModel.heightCm.formatted(.number.precision(.fractionLength(0)).locale(locale))
+                    : "–",
                 unit: "cm",
                 accessibilityID: "id_profile_height_tile",
                 action: { viewModel.startEditingBody() }
             )
 
             MetricTile(
-                label: "Age",
+                label: AppText.profileAge,
                 value: viewModel.age > 0 ? "\(viewModel.age)" : "–",
-                unit: "Years",
+                localizedUnit: AppText.profileYears,
                 accessibilityID: "id_profile_age_tile",
                 action: { viewModel.startEditingBody() }
             )
@@ -334,16 +412,16 @@ struct ProfileView: View {
             Divider()
                 .background(profileColors.divider)
 
-            ProfileCardHeading("BMI", detail: "Your body mass index")
+            ProfileCardHeading(AppText.profileBmi, localizedDetail: AppText.profileBmiDetail)
 
             if let bmi = viewModel.bmiResult {
                 HStack(alignment: .firstTextBaseline, spacing: AppStyle.DeviceLayout.cardSpacing) {
-                    Text(viewModel.formattedBMI)
+                    Text(verbatim: viewModel.formattedBMI(locale: locale))
                         .font(AppStyle.Font.profileCardValue)
                         .foregroundColor(bmiColor(for: bmi.category))
                         .accessibilityIdentifier("id_profile_bmi_value")
 
-                    Text(bmi.category.displayName)
+                    Text(localizedBMICategory(bmi.category))
                         .font(AppStyle.Font.profileBMICategory)
                         .foregroundColor(bmiColor(for: bmi.category))
                         .fixedSize()
@@ -353,7 +431,7 @@ struct ProfileView: View {
 
                 bmiBar(value: bmi.value)
             } else if !viewModel.hasBodyData {
-                Text("Enter your weight and height to calculate your BMI.")
+                Text(AppText.profileBmiPrompt)
                     .font(AppStyle.Font.profileCardTitle)
                     .foregroundColor(profileColors.secondary)
             }
@@ -362,7 +440,7 @@ struct ProfileView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "wifi.slash")
                         .font(AppStyle.Font.profileSmallIcon)
-                    Text(error)
+                    Text(localizedBMIStatus(error))
                         .font(AppStyle.Font.detailCaption)
                 }
                 .foregroundColor(AppStyle.Color.yellow)
@@ -425,19 +503,64 @@ struct ProfileView: View {
         case .unknown: return AppStyle.Color.gray
         }
     }
+
+    private func localizedBMICategory(_ category: BMICategory) -> LocalizedStringResource {
+        switch category {
+        case .underweight: AppText.profileBmiUnderweight
+        case .normal: AppText.profileBmiNormal
+        case .overweight: AppText.profileBmiOverweight
+        case .obese: AppText.profileBmiObese
+        case .unknown: AppText.commonUnknown
+        }
+    }
+
+    private func localizedBMIStatus(_ status: BMIStatusMessage) -> LocalizedStringResource {
+        switch status {
+        case .offlineLocalResult: AppText.profileBmiOffline
+        case .calculationFailed: AppText.profileBmiFailed
+        }
+    }
 }
 
 // MARK: - Metric Tile
 
 private struct MetricTile: View {
-    let label: String
+    let label: LocalizedStringResource
     let value: String
-    let unit: String
+    private let unit: MetricUnit
     let accessibilityID: String
     var action: (() -> Void)? = nil
     @Environment(\.appColorTheme) private var appColorTheme
 
     private var profileColors: ProfileColorTheme { appColorTheme.profile }
+
+    init(
+        label: LocalizedStringResource,
+        value: String,
+        unit: String,
+        accessibilityID: String,
+        action: (() -> Void)? = nil
+    ) {
+        self.label = label
+        self.value = value
+        self.unit = .verbatim(unit)
+        self.accessibilityID = accessibilityID
+        self.action = action
+    }
+
+    init(
+        label: LocalizedStringResource,
+        value: String,
+        localizedUnit: LocalizedStringResource,
+        accessibilityID: String,
+        action: (() -> Void)? = nil
+    ) {
+        self.label = label
+        self.value = value
+        unit = .localized(localizedUnit)
+        self.accessibilityID = accessibilityID
+        self.action = action
+    }
 
     var body: some View {
         Button {
@@ -449,11 +572,11 @@ private struct MetricTile: View {
                     .foregroundColor(profileColors.secondary)
                     .fixedSize()
 
-                Text(value)
+                Text(verbatim: value)
                     .font(AppStyle.Font.profileCardValue)
                     .foregroundColor(profileColors.title)
 
-                Text(unit)
+                unit.text
                     .font(AppStyle.Font.profileCardUnit)
                     .foregroundColor(profileColors.secondary)
                     .fixedSize()
@@ -465,6 +588,18 @@ private struct MetricTile: View {
         .buttonStyle(.plain)
         .disabled(action == nil)
         .accessibilityIdentifier(accessibilityID)
+    }
+
+    private enum MetricUnit {
+        case verbatim(String)
+        case localized(LocalizedStringResource)
+
+        var text: Text {
+            switch self {
+            case .verbatim(let value): Text(verbatim: value)
+            case .localized(let resource): Text(resource)
+            }
+        }
     }
 }
 
@@ -479,6 +614,7 @@ private struct BodyMetricsWheelRow: View {
     @Bindable var viewModel: ProfileViewModel
     @State private var showWeightDecimal: Bool = false
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var locale
 
     private var profileColors: ProfileColorTheme { appColorTheme.profile }
 
@@ -499,7 +635,7 @@ private struct BodyMetricsWheelRow: View {
             HStack {
                 Spacer()
                 HStack(spacing: 6) {
-                    Text("Decimal")
+                    Text(AppText.commonDecimal)
                         .font(AppStyle.Font.defaultFont)
                         .foregroundColor(profileColors.title.opacity(0.85))
                     Toggle("", isOn: $showWeightDecimal)
@@ -516,30 +652,30 @@ private struct BodyMetricsWheelRow: View {
 
             HStack(alignment: .top, spacing: 0) {
                 FitnessWheelPickerColumn(
-                    title: "Weight (kg)",
+                    title: AppText.profileWeightKg,
                     selection: $viewModel.draftWeightKg,
                     values: filteredWeightOptions,
                     accessibilityID: "id_profile_weight_wheel"
                 ) { value in
-                    Text(WeightFormatter.format(value))
+                    Text(verbatim: WeightFormatter.format(value, locale: locale))
                 }
 
                 FitnessWheelPickerColumn(
-                    title: "Height (cm)",
+                    title: AppText.profileHeightCm,
                     selection: $viewModel.draftHeightCm,
                     values: Self.heightOptions,
                     accessibilityID: "id_profile_height_wheel"
                 ) { value in
-                    Text("\(value)")
+                    Text(verbatim: "\(value)")
                 }
 
                 FitnessWheelPickerColumn(
-                    title: "Age",
+                    title: AppText.profileAge,
                     selection: $viewModel.draftAge,
                     values: Self.ageOptions,
                     accessibilityID: "id_profile_age_wheel"
                 ) { value in
-                    Text("\(value)")
+                    Text(verbatim: "\(value)")
                 }
             }
             .frame(height: AppStyle.Layout.profileWheelHeight)

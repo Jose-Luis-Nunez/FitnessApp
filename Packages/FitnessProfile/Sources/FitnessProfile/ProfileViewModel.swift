@@ -1,6 +1,11 @@
 import Foundation
 import SwiftUI
 
+public enum BMIStatusMessage: Equatable, Sendable {
+    case offlineLocalResult
+    case calculationFailed
+}
+
 /// Isolates UserDefaults persistence from `@Observable` state so that
 /// reads/writes don't trigger observation on every keystroke.
 @MainActor
@@ -46,7 +51,7 @@ public final class ProfileViewModel {
 
     public var bmiResult: BMIResult?
     public var isLoadingBMI = false
-    public var bmiError: String?
+    public var bmiError: BMIStatusMessage?
 
     private let bmiService: BMIServicing
     private var bmiTask: Task<Void, Never>?
@@ -71,9 +76,9 @@ public final class ProfileViewModel {
         heightCm / 100.0
     }
 
-    public var formattedBMI: String {
+    public func formattedBMI(locale: Locale) -> String {
         guard let bmi = bmiResult else { return "–" }
-        return String(format: "%.1f", bmi.value)
+        return bmi.value.formatted(.number.precision(.fractionLength(1)).locale(locale))
     }
 
     public var isNicknameInputEmpty: Bool {
@@ -164,9 +169,9 @@ public final class ProfileViewModel {
                 if Task.isCancelled { return }
                 if let local = self.bmiService.calculateBMILocally(weightKg: weight, heightM: height) {
                     self.bmiResult = local
-                    self.bmiError = "Offline – using local calculation."
+                    self.bmiError = .offlineLocalResult
                 } else {
-                    self.bmiError = "Could not calculate BMI."
+                    self.bmiError = .calculationFailed
                 }
             }
         }

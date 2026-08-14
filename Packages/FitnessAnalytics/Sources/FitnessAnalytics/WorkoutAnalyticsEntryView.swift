@@ -1,29 +1,28 @@
 import FitnessCore
 import FitnessUI
 import SwiftUI
+import FitnessResources
 
 enum WorkoutAnalyticsAccessibility {
-    static func value(for draft: WorkoutAnalyticsExerciseDraft) -> String {
-        var components = [draft.exercise.category.rawValue.capitalized]
+    static func value(for draft: WorkoutAnalyticsExerciseDraft, locale: Locale) -> String {
+        var components = [AppText.resolve(draft.exercise.category.localizedGroupName, locale: locale)]
 
         if draft.exercise.hasWeight {
             let weights = Set(draft.entry.setProgress.map(\.weight))
             if weights.count == 1, let weight = weights.first {
-                components.append("\(WeightFormatter.format(weight)) kilograms")
+                components.append(AppText.resolve(AppText.accessibilityKilograms(value: WeightFormatter.format(weight, locale: locale)), locale: locale))
             } else {
-                components.append("Variable weight")
+                components.append(AppText.resolve(AppText.accessibilityVariableWeight, locale: locale))
             }
         }
 
-        components.append(
-            "\(draft.setCount) \(draft.setCount == 1 ? "set" : "sets")"
-        )
+        components.append(AppText.resolve(AppText.accessibilitySetCount(count: draft.setCount), locale: locale))
 
         let reps = Set(draft.entry.setProgress.map(\.currentReps))
         if reps.count == 1, let repCount = reps.first {
-            components.append("\(repCount) \(repCount == 1 ? "rep" : "reps")")
+            components.append(AppText.resolve(AppText.accessibilityRepCount(count: repCount), locale: locale))
         } else {
-            components.append("Variable reps")
+            components.append(AppText.resolve(AppText.accessibilityVariableReps, locale: locale))
         }
 
         return components.joined(separator: ", ")
@@ -238,11 +237,12 @@ private struct WorkoutAnalyticsDraftRowLayout: Layout {
 
 public struct WorkoutAnalyticsEntryView: View {
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var locale
     @Binding private var isPresented: Bool
     @State private var viewModel: WorkoutAnalyticsEntryViewModel
     @State private var showCalendar = false
     @State private var editingExerciseID: UUID?
-    private let headerDateFormatter: DateFormatter
+    private let headerDateFormatter: DateFormatter?
     private let exerciseIconProvider: (Exercise, AppAccentScheme) -> Image
 
     public init(workout: Workout, isPresented: Binding<Bool>) {
@@ -250,7 +250,7 @@ public struct WorkoutAnalyticsEntryView: View {
         _viewModel = State(
             initialValue: WorkoutAnalyticsEntryViewModel(workout: workout)
         )
-        headerDateFormatter = Self.workoutDateFormatter
+        headerDateFormatter = nil
         exerciseIconProvider = { exercise, scheme in
             Image(scheme.iconName(for: exercise.displayIconName))
         }
@@ -279,8 +279,7 @@ public struct WorkoutAnalyticsEntryView: View {
             CalendarDialogView(
                 isPresented: $showCalendar,
                 selectedDate: $viewModel.selectedDate,
-                title: "Workout Date",
-                locale: Locale(identifier: "en_US")
+                title: AppText.analyticsWorkoutDateTitle
             )
 
             if let editingExerciseID,
@@ -290,7 +289,7 @@ public struct WorkoutAnalyticsEntryView: View {
                     exercise: draft.exercise,
                     existingEntry: draft.entry,
                     isPresented: detailPresentationBinding,
-                    dateFormatter: Self.dateFormatter,
+                    dateFormatter: headerDateFormatter,
                     onSave: { entry in
                         viewModel.updateDraft(
                             exerciseId: editingExerciseID,
@@ -321,7 +320,7 @@ public struct WorkoutAnalyticsEntryView: View {
             }
 
             SheetActionArea(
-                saveLabel: "Save Workout",
+                saveLabel: AppText.workoutSave,
                 isSaveEnabled: viewModel.canSave,
                 backdropColor: .black,
                 saveAccessibilityIdentifier: WorkoutAnalyticsIDs.saveButton,
@@ -348,8 +347,8 @@ public struct WorkoutAnalyticsEntryView: View {
         VStack(alignment: .leading, spacing: AppStyle.Padding.card) {
             selectionHeader
 
-            if let saveErrorMessage = viewModel.saveErrorMessage {
-                Text(saveErrorMessage)
+            if viewModel.saveFailed {
+                Text(AppText.workoutAnalyticsSaveFailed)
                     .font(AppStyle.Font.detailCaption)
                     .foregroundColor(AppStyle.Color.error)
             }
@@ -367,20 +366,20 @@ public struct WorkoutAnalyticsEntryView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: AppStyle.Padding.cardVertical) {
-            Text("LOG WORKOUT")
+            Text(AppText.workoutLog)
                 .font(AppStyle.Font.sheetSectionLabel)
                 .foregroundColor(
                     AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel)
                 )
                 .accessibilityIdentifier(WorkoutAnalyticsIDs.screen)
 
-            Text(viewModel.workout.name)
+            Text(verbatim: viewModel.workout.name)
                 .font(AppStyle.Font.workoutEntryTitle)
                 .foregroundColor(AppStyle.Color.white)
                 .lineLimit(2)
                 .minimumScaleFactor(0.8)
 
-            Text("Review and save your workout")
+            Text(AppText.workoutReviewAndSave)
                 .font(AppStyle.Font.profileSubtitle)
                 .foregroundColor(
                     AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel)
@@ -408,15 +407,11 @@ public struct WorkoutAnalyticsEntryView: View {
                 )
 
                 VStack(alignment: .leading, spacing: AppStyle.Padding.cardVertical) {
-                    Text(
-                        headerDateFormatter.string(
-                            from: viewModel.selectedDate
-                        )
-                    )
+                    Text(verbatim: formattedHeaderDate)
                     .font(AppStyle.Font.analyticsExerciseTitle)
                     .foregroundColor(AppStyle.Color.white)
 
-                    Text(exerciseCountText)
+                    Text(AppText.exerciseCount(count: viewModel.drafts.count))
                         .font(AppStyle.Font.profileSubtitle)
                         .foregroundColor(
                             AppStyle.Color.white.opacity(
@@ -438,16 +433,11 @@ public struct WorkoutAnalyticsEntryView: View {
         .overlay(alignment: .bottom) {
             dateDivider
         }
-        .accessibilityLabel("Workout date")
+        .accessibilityLabel(AppText.analyticsWorkoutDate)
         .accessibilityValue(
-            Self.dateFormatter.string(from: viewModel.selectedDate)
+            Text(verbatim: formattedAccessibilityDate)
         )
         .accessibilityIdentifier(WorkoutAnalyticsIDs.dateButton)
-    }
-
-    private var exerciseCountText: String {
-        let count = viewModel.drafts.count
-        return "\(count) \(count == 1 ? "Exercise" : "Exercises")"
     }
 
     private var dateDivider: some View {
@@ -461,14 +451,14 @@ public struct WorkoutAnalyticsEntryView: View {
     }
 
     private var selectionHeader: some View {
-        Text("\(viewModel.selectedCount) of \(viewModel.drafts.count) exercises")
+        Text(AppText.analyticsSelectedExercises(selected: viewModel.selectedCount, total: viewModel.drafts.count))
             .font(AppStyle.Font.sheetSectionLabel)
             .foregroundColor(AppStyle.Color.white)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var emptyState: some View {
-        Text("This workout has no active exercises.")
+        Text(AppText.workoutNoActiveExercises)
             .font(AppStyle.Font.defaultFont)
             .foregroundColor(
                 AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel)
@@ -520,7 +510,7 @@ public struct WorkoutAnalyticsEntryView: View {
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(draft.exercise.name)
-            .accessibilityValue(WorkoutAnalyticsAccessibility.value(for: draft))
+            .accessibilityValue(WorkoutAnalyticsAccessibility.value(for: draft, locale: locale))
             .accessibilityAddTraits(
                 draft.isSelected ? [.isButton, .isSelected] : .isButton
             )
@@ -556,7 +546,7 @@ public struct WorkoutAnalyticsEntryView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Details for \(draft.exercise.name)")
+            .accessibilityLabel(AppText.exerciseDetailsAccessibility(name: draft.exercise.name))
             .accessibilityIdentifier(
                 WorkoutAnalyticsIDs.exerciseDetails(draft.id)
             )
@@ -569,13 +559,13 @@ public struct WorkoutAnalyticsEntryView: View {
         _ draft: WorkoutAnalyticsExerciseDraft
     ) -> some View {
         VStack(alignment: .leading, spacing: Self.exerciseTextSpacing) {
-            Text(draft.exercise.name)
+            Text(verbatim: draft.exercise.name)
                 .font(AppStyle.Font.analyticsExerciseData)
                 .foregroundColor(AppStyle.Color.white)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
 
-            Text(draft.exercise.category.rawValue.capitalized)
+            Text(draft.exercise.category.localizedName)
                 .font(AppStyle.Font.detailCaption)
                 .foregroundColor(
                     AppStyle.Color.white.opacity(
@@ -599,11 +589,11 @@ public struct WorkoutAnalyticsEntryView: View {
 
             metricColumn(
                 value: "\(draft.setCount)",
-                label: draft.setCount == 1 ? "set" : "sets"
+                label: AppText.exerciseSetLabel(count: draft.setCount)
             )
             metricColumn(
                 value: repsValue(for: draft),
-                label: "reps"
+                label: AppText.exerciseRepsLowercase
             )
         }
         .fixedSize(horizontal: true, vertical: false)
@@ -611,13 +601,13 @@ public struct WorkoutAnalyticsEntryView: View {
 
     private func weightMetric(value: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: Self.weightUnitSpacing) {
-            Text(value)
+            Text(verbatim: value)
                 .font(AppStyle.Font.sectionTitle)
                 .foregroundColor(appColorTheme.accent.glow)
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
 
-            Text("kg")
+            Text(verbatim: "kg")
                 .font(AppStyle.Font.detailCaption)
                 .foregroundColor(
                     AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel)
@@ -628,10 +618,10 @@ public struct WorkoutAnalyticsEntryView: View {
 
     private func metricColumn(
         value: String,
-        label: String
+        label: LocalizedStringResource
     ) -> some View {
         VStack(spacing: Self.exerciseTextSpacing) {
-            Text(value)
+            Text(verbatim: value)
                 .font(AppStyle.Font.sectionTitle)
                 .foregroundColor(AppStyle.Color.white)
                 .lineLimit(1)
@@ -653,9 +643,9 @@ public struct WorkoutAnalyticsEntryView: View {
     ) -> String {
         let weights = Set(draft.entry.setProgress.map(\.weight))
         guard weights.count == 1, let weight = weights.first else {
-            return "Var"
+            return AppText.resolve(AppText.commonVariable, locale: locale)
         }
-        return WeightFormatter.format(weight)
+        return WeightFormatter.format(weight, locale: locale)
     }
 
     private func repsValue(
@@ -663,9 +653,9 @@ public struct WorkoutAnalyticsEntryView: View {
     ) -> String {
         let reps = Set(draft.entry.setProgress.map(\.currentReps))
         guard reps.count == 1, let value = reps.first else {
-            return "Var"
+            return AppText.resolve(AppText.commonVariable, locale: locale)
         }
-        return "\(value)"
+        return value.formatted(.number.locale(locale))
     }
 
     private func selectionIcon(
@@ -715,19 +705,14 @@ public struct WorkoutAnalyticsEntryView: View {
         )
     }
 
-    private static let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US")
-        formatter.dateStyle = .medium
-        return formatter
-    }()
+    private var formattedHeaderDate: String {
+        headerDateFormatter?.string(from: viewModel.selectedDate)
+            ?? viewModel.selectedDate.formatted(.dateTime.weekday(.wide).month(.wide).day().locale(locale))
+    }
 
-    private static let workoutDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US")
-        formatter.dateFormat = "EEEE, MMMM d"
-        return formatter
-    }()
+    private var formattedAccessibilityDate: String {
+        viewModel.selectedDate.formatted(.dateTime.day().month(.abbreviated).year().locale(locale))
+    }
 
     private static let dateIconContainerSize: CGFloat = 44
     private static let dateCardVerticalPadding: CGFloat = 16

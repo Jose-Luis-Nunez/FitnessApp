@@ -1,6 +1,7 @@
 import SwiftUI
 import FitnessCore
 import FitnessUI
+import FitnessResources
 
 /// Two-column comparison area showing metrics for the user (left) and the
 /// selected friend (right). Tapping a category row navigates to the drill-down.
@@ -37,16 +38,16 @@ struct FriendComparisonView: View {
 
     private var columnHeaders: some View {
         HStack {
-            Text(myName)
+            Text(verbatim: myName)
                 .font(AppStyle.Font.profileCardTitle)
                 .foregroundColor(profileColors.secondary)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Text("Category")
+            Text(AppText.analyticsCategory)
                 .font(AppStyle.Font.profileCardTitle)
                 .foregroundColor(profileColors.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
-            Text(friendName)
+            Text(verbatim: friendName)
                 .font(AppStyle.Font.profileCardTitle)
                 .foregroundColor(profileColors.secondary)
                 .lineLimit(1)
@@ -69,12 +70,12 @@ struct FriendComparisonView: View {
                 }
             } label: {
                 HStack {
-                    Text("\(myCount)")
+                    Text(verbatim: "\(myCount)")
                         .font(AppStyle.Font.tileValue)
                         .foregroundColor(profileColors.title)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     HStack(spacing: 4) {
-                        Text(category.displayName)
+                        Text(category.localizedName)
                             .font(AppStyle.Font.defaultFont)
                             .foregroundColor(profileColors.secondary)
                         if hasPairs {
@@ -84,7 +85,7 @@ struct FriendComparisonView: View {
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
-                    Text("\(friendCount)")
+                    Text(verbatim: "\(friendCount)")
                         .font(AppStyle.Font.tileValue)
                         .foregroundColor(profileColors.title)
                         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -104,21 +105,21 @@ struct FriendComparisonView: View {
                 .padding(.vertical, 4)
 
             comparisonRow(
-                label: "Training days / month",
+                label: AppText.friendTrainingDaysMonth,
                 myValue: "\(comparison.myMetrics.trainingDaysThisMonth)",
                 friendValue: "\(comparison.friendMetrics.trainingDaysThisMonth)"
             )
             comparisonRow(
-                label: "Total exercises",
+                label: AppText.friendTotalExercises,
                 myValue: "\(comparison.myMetrics.totalExercises)",
                 friendValue: "\(comparison.friendMetrics.totalExercises)"
             )
         }
     }
 
-    private func comparisonRow(label: String, myValue: String, friendValue: String) -> some View {
+    private func comparisonRow(label: LocalizedStringResource, myValue: String, friendValue: String) -> some View {
         HStack {
-            Text(myValue)
+            Text(verbatim: myValue)
                 .font(AppStyle.Font.tileValue)
                 .foregroundColor(profileColors.title)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -126,7 +127,7 @@ struct FriendComparisonView: View {
                 .font(AppStyle.Font.defaultFont)
                 .foregroundColor(profileColors.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
-            Text(friendValue)
+            Text(verbatim: friendValue)
                 .font(AppStyle.Font.tileValue)
                 .foregroundColor(profileColors.title)
                 .frame(maxWidth: .infinity, alignment: .trailing)

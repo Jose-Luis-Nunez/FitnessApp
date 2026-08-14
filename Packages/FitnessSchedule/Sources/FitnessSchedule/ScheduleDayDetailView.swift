@@ -1,10 +1,12 @@
 import SwiftUI
 import FitnessAnalytics
 import FitnessCore
+import FitnessResources
 import FitnessUI
 
 public struct ScheduleDayDetailView: View {
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var locale
     public let date: Date
     public let workoutDetail: WorkoutDetailData?
     public let exerciseCount: Int
@@ -45,14 +47,14 @@ public struct ScheduleDayDetailView: View {
     private var headerRow: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(DateFormatter.germanMedium.string(from: date))
+                Text(verbatim: date.formatted(.dateTime.day().month(.wide).year().locale(locale)))
                     .font(AppStyle.Font.sectionTitle)
                     .foregroundColor(AppStyle.Color.white)
 
                 if let detail = workoutDetail {
                     let completed = detail.categories.flatMap(\.exercises).filter(\.isCompleted).count
                     let total = detail.categories.flatMap(\.exercises).count
-                    Text("\(completed)/\(total) Exercises")
+                    Text(AppText.analyticsCompletedExercises(completed: completed, total: total))
                         .font(AppStyle.Font.detailCaption)
                         .foregroundColor(appColorTheme.accent.glow.opacity(0.7))
                 }
@@ -72,7 +74,7 @@ public struct ScheduleDayDetailView: View {
         let total = (workoutDetail?.categories ?? []).flatMap(\.exercises).count
         let pct = total > 0 ? Int(round(Double(completed) / Double(total) * 100)) : 0
 
-        Text("\(pct)%")
+        Text(verbatim: "\(pct)%")
             .font(AppStyle.Font.detailBadge)
             .foregroundColor(pct == 100 ? appColorTheme.accent.glow : AppStyle.Color.white)
             .padding(.horizontal, 10)
@@ -91,7 +93,7 @@ public struct ScheduleDayDetailView: View {
 
     private func categorySection(_ category: CategoryDetailData) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(category.category.displayName)
+            Text(category.category.localizedName)
                 .font(AppStyle.Font.detailCategory)
                 .foregroundColor(appColorTheme.accent.glow)
 
@@ -103,13 +105,19 @@ public struct ScheduleDayDetailView: View {
 
     private func exerciseRow(_ detail: ExerciseDetailData) -> some View {
         HStack {
-            Text(detail.exercise.name)
+            Text(verbatim: detail.exercise.name)
                 .font(AppStyle.Font.detailExercise)
                 .foregroundColor(AppStyle.Color.white.opacity(detail.isCompleted ? 1 : 0.5))
 
             Spacer()
 
-            Text(detail.isCompleted ? "Done" : "—")
+            Group {
+                if detail.isCompleted {
+                    Text(AppText.actionDone)
+                } else {
+                    Text(verbatim: "—")
+                }
+            }
                 .font(AppStyle.Font.detailCaption)
                 .foregroundColor(detail.isCompleted ? appColorTheme.accent.glow : Color.white.opacity(0.3))
                 .padding(.horizontal, 8)
@@ -128,7 +136,7 @@ public struct ScheduleDayDetailView: View {
         HStack(spacing: 8) {
             Image(systemName: "figure.strengthtraining.traditional")
                 .foregroundColor(appColorTheme.accent.glow.opacity(0.6))
-            Text("\(exerciseCount) exercise\(exerciseCount == 1 ? "" : "s") logged")
+            Text(AppText.exerciseCountLogged(count: exerciseCount))
                 .font(AppStyle.Font.detailExercise)
                 .foregroundColor(AppStyle.Color.white.opacity(0.6))
         }
@@ -139,7 +147,7 @@ public struct ScheduleDayDetailView: View {
         HStack(spacing: 8) {
             Image(systemName: "moon.zzz.fill")
                 .foregroundColor(Color.white.opacity(0.25))
-            Text("No training on this day")
+            Text(AppText.trainingNoneDay)
                 .font(AppStyle.Font.detailExercise)
                 .foregroundColor(Color.white.opacity(0.35))
         }

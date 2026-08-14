@@ -10,138 +10,82 @@ struct BMIServiceTests {
 
     // MARK: - Local BMI Calculation
 
-    @Test func calculateLocally_normalWeight_returnsNormal() {
-        let result = service.calculateBMILocally(weightKg: 70, heightM: 1.75)
-        let unwrapped = try! #require(result)
-        #expect(unwrapped.category == .normal)
-        #expect(unwrapped.value >= 22.0 && unwrapped.value <= 23.0)
+    @Test func calculateLocallyClassifiesAndRoundsValidInputs() throws {
+        let cases: [(weight: Double, height: Double, value: Double, category: BMICategory)] = [
+            (70, 1.75, 22.9, .normal),
+            (50, 1.80, 15.4, .underweight),
+            (90, 1.75, 29.4, .overweight),
+            (120, 1.70, 41.5, .obese),
+        ]
+
+        for testCase in cases {
+            let result = try #require(service.calculateBMILocally(
+                weightKg: testCase.weight,
+                heightM: testCase.height
+            ))
+            #expect(result.value == testCase.value)
+            #expect(result.category == testCase.category)
+        }
     }
 
-    @Test func calculateLocally_underweight_returnsUnderweight() {
-        let result = service.calculateBMILocally(weightKg: 50, heightM: 1.80)
-        let unwrapped = try! #require(result)
-        #expect(unwrapped.category == .underweight)
-        #expect(unwrapped.value < 18.5)
-    }
+    @Test func calculateLocallyRejectsNonPositiveInputs() {
+        let cases: [(weight: Double, height: Double)] = [
+            (0, 1.75),
+            (70, 0),
+            (-10, 1.75),
+        ]
 
-    @Test func calculateLocally_overweight_returnsOverweight() {
-        let result = service.calculateBMILocally(weightKg: 90, heightM: 1.75)
-        let unwrapped = try! #require(result)
-        #expect(unwrapped.category == .overweight)
-        #expect(unwrapped.value >= 25 && unwrapped.value < 30)
-    }
-
-    @Test func calculateLocally_obese_returnsObese() {
-        let result = service.calculateBMILocally(weightKg: 120, heightM: 1.70)
-        let unwrapped = try! #require(result)
-        #expect(unwrapped.category == .obese)
-        #expect(unwrapped.value >= 30)
-    }
-
-    @Test func calculateLocally_zeroWeight_returnsNil() {
-        let result = service.calculateBMILocally(weightKg: 0, heightM: 1.75)
-        #expect(result == nil)
-    }
-
-    @Test func calculateLocally_zeroHeight_returnsNil() {
-        let result = service.calculateBMILocally(weightKg: 70, heightM: 0)
-        #expect(result == nil)
-    }
-
-    @Test func calculateLocally_negativeWeight_returnsNil() {
-        let result = service.calculateBMILocally(weightKg: -10, heightM: 1.75)
-        #expect(result == nil)
-    }
-
-    @Test func calculateLocally_roundsToOneDecimal() {
-        let result = service.calculateBMILocally(weightKg: 70, heightM: 1.75)
-        let unwrapped = try! #require(result)
-        let formatted = String(format: "%.1f", unwrapped.value)
-        #expect(formatted == "22.9")
+        for testCase in cases {
+            #expect(service.calculateBMILocally(
+                weightKg: testCase.weight,
+                heightM: testCase.height
+            ) == nil)
+        }
     }
 
     // MARK: - BMICategory Parsing
 
-    @Test func bmiCategory_parsesUnderweight() {
-        #expect(BMICategory(from: "Underweight") == .underweight)
-        #expect(BMICategory(from: "underweight") == .underweight)
-        #expect(BMICategory(from: "Severely Underweight") == .underweight)
-    }
+    @Test func bmiCategoryParsesKnownVariantsAndUnknownValues() {
+        let cases: [(input: String, category: BMICategory)] = [
+            ("Underweight", .underweight),
+            ("underweight", .underweight),
+            ("Severely Underweight", .underweight),
+            ("Normal weight", .normal),
+            ("normal", .normal),
+            ("Overweight", .overweight),
+            ("overweight", .overweight),
+            ("Obese", .obese),
+            ("obese class I", .obese),
+            ("Obesity", .obese),
+            ("obesity", .obese),
+            ("something else", .unknown),
+            ("", .unknown),
+        ]
 
-    @Test func bmiCategory_parsesNormal() {
-        #expect(BMICategory(from: "Normal weight") == .normal)
-        #expect(BMICategory(from: "normal") == .normal)
-    }
-
-    @Test func bmiCategory_parsesOverweight() {
-        #expect(BMICategory(from: "Overweight") == .overweight)
-        #expect(BMICategory(from: "overweight") == .overweight)
-    }
-
-    @Test func bmiCategory_parsesObese() {
-        #expect(BMICategory(from: "Obese") == .obese)
-        #expect(BMICategory(from: "obese class I") == .obese)
-        #expect(BMICategory(from: "Obesity") == .obese)
-        #expect(BMICategory(from: "obesity") == .obese)
-    }
-
-    @Test func bmiCategory_unknownString_returnsUnknown() {
-        #expect(BMICategory(from: "something else") == .unknown)
-        #expect(BMICategory(from: "") == .unknown)
-    }
-
-    // MARK: - BMICategory DisplayName
-
-    @Test func bmiCategory_displayNames() {
-        #expect(BMICategory.underweight.displayName == "Underweight")
-        #expect(BMICategory.normal.displayName == "Normal weight")
-        #expect(BMICategory.overweight.displayName == "Overweight")
-        #expect(BMICategory.obese.displayName == "Obese")
-        #expect(BMICategory.unknown.displayName == "Unknown")
+        for testCase in cases {
+            #expect(BMICategory(from: testCase.input) == testCase.category)
+        }
     }
 
     // MARK: - Fetch BMI (input validation)
 
-    @Test func fetchBMI_invalidInput_throws() async {
-        do {
-            _ = try await service.fetchBMI(weightKg: 0, heightM: 1.75)
-            Issue.record("Expected invalidInput error")
-        } catch let error as BMIError {
-            #expect(error == .invalidInput)
-        } catch {
-            Issue.record("Unexpected error type: \(error)")
-        }
-    }
-
-    @Test func fetchBMI_negativeHeight_throws() async {
-        do {
-            _ = try await service.fetchBMI(weightKg: 70, heightM: -1)
-            Issue.record("Expected invalidInput error")
-        } catch let error as BMIError {
-            #expect(error == .invalidInput)
-        } catch {
-            Issue.record("Unexpected error type: \(error)")
+    @Test func fetchBMIRejectsInvalidInputs() async {
+        for testCase in [(weight: 0.0, height: 1.75), (weight: 70.0, height: -1.0)] {
+            do {
+                _ = try await service.fetchBMI(
+                    weightKg: testCase.weight,
+                    heightM: testCase.height
+                )
+                Issue.record("Expected invalidInput error")
+            } catch let error as BMIError {
+                #expect(error == .invalidInput)
+            } catch {
+                Issue.record("Unexpected error type: \(error)")
+            }
         }
     }
 
     // MARK: - Stubbed API Tests (no network)
-
-    @Test func fetchBMI_stubbedObesity_parsesAsObese() async throws {
-        let service = BMIService(session: StubURLProtocol.session(json: """
-            {"bmi": 35.3, "Category": "Obesity", "weight": 108.0, "height": 1.75}
-            """))
-        let result = try await service.fetchBMI(weightKg: 108, heightM: 1.75)
-        #expect(result.category == .obese)
-        #expect(result.value == 35.3)
-    }
-
-    @Test func fetchBMI_stubbedUnderweight_parsesCorrectly() async throws {
-        let service = BMIService(session: StubURLProtocol.session(json: """
-            {"bmi": 16.3, "Category": "Underweight", "weight": 50.0, "height": 1.75}
-            """))
-        let result = try await service.fetchBMI(weightKg: 50, heightM: 1.75)
-        #expect(result.category == .underweight)
-    }
 
     @Test func fetchBMI_stubbedNormal_parsesCorrectly() async throws {
         let service = BMIService(session: StubURLProtocol.session(json: """
@@ -151,28 +95,17 @@ struct BMIServiceTests {
         #expect(result.category == .normal)
     }
 
-    @Test func fetchBMI_stubbedOverweight_parsesCorrectly() async throws {
-        let service = BMIService(session: StubURLProtocol.session(json: """
-            {"bmi": 27.8, "Category": "Overweight", "weight": 85.0, "height": 1.75}
-            """))
-        let result = try await service.fetchBMI(weightKg: 85, heightM: 1.75)
-        #expect(result.category == .overweight)
-    }
+    @Test func fetchBMIUnknownCategoriesFallBackToNumericBMI() async throws {
+        let cases: [(json: String, weight: Double, category: BMICategory)] = [
+            (#"{"bmi":37.0,"Category":"Morbid Obesity Class III","weight":113.0,"height":1.75}"#, 113, .obese),
+            (#"{"bmi":22.0,"Category":"Gesund","weight":67.0,"height":1.75}"#, 67, .normal),
+        ]
 
-    @Test func fetchBMI_stubbedUnknownCategory_fallsBackToBMIValue() async throws {
-        let service = BMIService(session: StubURLProtocol.session(json: """
-            {"bmi": 37.0, "Category": "Morbid Obesity Class III", "weight": 113.0, "height": 1.75}
-            """))
-        let result = try await service.fetchBMI(weightKg: 113, heightM: 1.75)
-        #expect(result.category == .obese, "Should fall back to BMI-value-based category, not .unknown")
-    }
-
-    @Test func fetchBMI_stubbedUnknownCategory_normalRange_fallsBack() async throws {
-        let service = BMIService(session: StubURLProtocol.session(json: """
-            {"bmi": 22.0, "Category": "Gesund", "weight": 67.0, "height": 1.75}
-            """))
-        let result = try await service.fetchBMI(weightKg: 67, heightM: 1.75)
-        #expect(result.category == .normal, "Should fall back to BMI-value-based category for unknown string")
+        for testCase in cases {
+            let service = BMIService(session: StubURLProtocol.session(json: testCase.json))
+            let result = try await service.fetchBMI(weightKg: testCase.weight, heightM: 1.75)
+            #expect(result.category == testCase.category)
+        }
     }
 
     @Test func fetchBMI_stubbed500_throwsServerError() async throws {

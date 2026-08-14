@@ -1,19 +1,20 @@
 import SwiftUI
 import FitnessAnalytics
 import FitnessCore
+import FitnessResources
 import FitnessUI
 @_spi(PersistenceUI) import FitnessStorage
 
 struct LastRunCardPresentationState {
     private(set) var hasHistory = false
     private(set) var setProgress: [SetProgress] = []
-    private(set) var dateText: String?
+    private(set) var date: Date?
 
     mutating func updateAvailability(_ hasHistory: Bool) {
         self.hasHistory = hasHistory
         if !hasHistory {
             setProgress = []
-            dateText = nil
+            date = nil
         }
     }
 
@@ -25,8 +26,7 @@ struct LastRunCardPresentationState {
     /// Applies only completed reads. A failed read deliberately preserves the
     /// current affordance and payload so the next user tap can retry.
     mutating func apply(
-        _ outcome: LatestAnalyticsEntryLoadOutcome,
-        formatDate: (Date) -> String
+        _ outcome: LatestAnalyticsEntryLoadOutcome
     ) -> Bool {
         switch outcome {
         case .failed:
@@ -37,7 +37,7 @@ struct LastRunCardPresentationState {
         case let .loaded(entry?):
             hasHistory = true
             setProgress = entry.setProgress
-            dateText = formatDate(entry.date)
+            date = entry.date
             return !setProgress.isEmpty
         }
     }
@@ -72,6 +72,7 @@ public struct IdleActiveCardModelView: View {
     @State private var weightPhases: [WeightPhase] = []
     @State private var analyticsRevision: ExerciseAnalyticsCacheRevision
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var locale
 
     public init(
         model: ExerciseModel,
@@ -133,14 +134,8 @@ public struct IdleActiveCardModelView: View {
     /// The unit (`kg`) is rendered as a separate `Text` so it can carry the
     /// muted label color while the number reads in the value-tier mint.
     private var weightNumber: String {
-        WeightFormatter.format(model.weight)
+        WeightFormatter.format(model.weight, locale: locale)
     }
-
-    private static let lastTrainingFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "dd.MM.yy"
-        return f
-    }()
 
     private func refreshAvailability() {
         lastRunPresentation.applyAvailability(
@@ -149,12 +144,7 @@ public struct IdleActiveCardModelView: View {
     }
 
     private func loadLastRun() -> Bool {
-        lastRunPresentation.apply(
-            analyticsViewModel.loadLatestEntry(for: model.id),
-            formatDate: { date in
-                Self.lastTrainingFormatter.string(from: date)
-            }
-        )
+        lastRunPresentation.apply(analyticsViewModel.loadLatestEntry(for: model.id))
     }
 
     private func handleAppear() {
@@ -333,15 +323,15 @@ private extension IdleActiveCardModelView {
 
     var weightColumn: some View {
         MetricColumnView(
-            label: model.hasWeight ? "Weight" : "Reps",
+            label: model.hasWeight ? AppText.profileWeight : AppText.exerciseReps,
             onTap: isEditable ? { onEdit(model.toDomain(), .weight) } : nil
         ) {
             if model.hasWeight {
                 HStack(alignment: .firstTextBaseline, spacing: 0) {
-                    Text(weightNumber)
+                    Text(verbatim: weightNumber)
                         .font(AppStyle.Font.idleWeightValue)
                         .foregroundColor(appColorTheme.accent.idleMetricValue)
-                    Text("kg")
+                    Text(verbatim: "kg")
                         .font(AppStyle.Font.idleWeightUnit)
                         .foregroundColor(appColorTheme.accent.idleMetricValue)
                 }
@@ -351,9 +341,9 @@ private extension IdleActiveCardModelView {
                 // around the multiplier, and the "x" rendered smaller than the
                 // numbers so the figures dominate.
                 (
-                    Text("\(model.sets)").font(AppStyle.Font.idleWeightValue)
-                        + Text("x").font(AppStyle.Font.idleRepsSeparator)
-                        + Text("\(model.reps)").font(AppStyle.Font.idleWeightValue)
+                    Text(verbatim: "\(model.sets)").font(AppStyle.Font.idleWeightValue)
+                        + Text(verbatim: "x").font(AppStyle.Font.idleRepsSeparator)
+                        + Text(verbatim: "\(model.reps)").font(AppStyle.Font.idleWeightValue)
                 )
                 .foregroundColor(appColorTheme.accent.idleMetricValue)
                 .lineLimit(1)
@@ -364,20 +354,20 @@ private extension IdleActiveCardModelView {
 
     var seatColumn: some View {
         MetricColumnView(
-            label: "Seat",
+            label: AppText.exerciseSeat,
             alignment: .center,
             onTap: isEditable ? { onEdit(model.toDomain(), .seat) } : nil
         ) {
             // Two slots — left/right seat position.
-            // Only the first positions are shown on the card; any beyond
-            // SeatSettings.idleCardVisibleLimit are stored but hidden here.
+            // Only the first two positions are shown on the card; additional
+            // stored positions remain hidden here.
             // Empty slots render "-" (no value yet).
             let positions = SeatSettings(encoded: model.seatSetting).positions
             let left = positions.indices.contains(0) ? positions[0] : "-"
             let right = positions.indices.contains(1) ? positions[1] : "-"
             HStack(spacing: 8) {
-                Text(left)
-                Text(right)
+                Text(verbatim: left)
+                Text(verbatim: right)
             }
             .font(AppStyle.Font.idleSeatValue)
             .foregroundColor(appColorTheme.accent.idleMetricValue)
@@ -425,8 +415,8 @@ private extension IdleActiveCardModelView {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Exercise analytics")
-                    .accessibilityHint("Shows exercise analytics")
+                    .accessibilityLabel(AppText.analyticsExerciseAccessibility)
+                    .accessibilityHint(AppText.accessibilityShowsExerciseAnalytics)
                     .accessibilityIdentifier(ExerciseCardIDs.analytics(model.id))
                 }
 
@@ -442,7 +432,7 @@ private extension IdleActiveCardModelView {
     /// Non-interactive "Data" label above the analytics chart. Coaching now
     /// lives in the expanded "Last run" trailing rail.
     var dataBand: some View {
-        Text("Data")
+        Text(AppText.commonData)
             .font(AppStyle.Font.metricLabel)
             .foregroundColor(AppStyle.Color.idleMetricLabel)
             .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.center] }
@@ -453,7 +443,7 @@ private extension IdleActiveCardModelView {
     /// per-set breakdown.
     var lastRunFooter: some View {
         HStack(spacing: 6) {
-            Text("Last run")
+            Text(AppText.trainingLastRun)
                 .font(AppStyle.Font.metricLabel)
                 .foregroundColor(appColorTheme.accent.idleMetricValue)
 
@@ -476,9 +466,9 @@ private extension IdleActiveCardModelView {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Last run details")
-            .accessibilityValue(isLastRunExpanded ? "Expanded" : "Collapsed")
-            .accessibilityHint(isLastRunExpanded ? "Hides set details" : "Shows set details")
+            .accessibilityLabel(AppText.accessibilityLastRunDetails)
+            .accessibilityValue(isLastRunExpanded ? AppText.commonExpanded : AppText.commonCollapsed)
+            .accessibilityHint(isLastRunExpanded ? AppText.accessibilityHidesSetDetails : AppText.accessibilityShowsSetDetails)
         }
     }
 
@@ -502,9 +492,9 @@ private extension IdleActiveCardModelView {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Coaching tips")
-        .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
-        .accessibilityHint(isExpanded ? "Collapses coaching tips" : "Expands coaching tips")
+        .accessibilityLabel(AppText.accessibilityCoachingTips)
+        .accessibilityValue(isExpanded ? AppText.commonExpanded : AppText.commonCollapsed)
+        .accessibilityHint(isExpanded ? AppText.accessibilityCollapsesCoachingTips : AppText.accessibilityExpandsCoachingTips)
     }
 
     func toggleCoachingTips() {
@@ -558,7 +548,7 @@ private extension IdleActiveCardModelView {
                 .contentShape(Rectangle())
             }
             .accessibilityIdentifier(MuscleCategoryIDs.startExercise)
-            .accessibilityLabel("Start exercise")
+            .accessibilityLabel(AppText.accessibilityStartExercise)
             .buttonStyle(.plain)
         }
     }
@@ -570,8 +560,8 @@ private extension IdleActiveCardModelView {
 
     var expandedContent: some View {
         VStack(alignment: .leading, spacing: 6) {
-            if let dateString = lastRunPresentation.dateText {
-                Text("Last training: \(dateString)")
+            if let date = lastRunPresentation.date {
+                Text(AppText.trainingLastTraining(date: date.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year(.twoDigits).locale(locale))))
                     .font(AppStyle.Font.dayChipNumber)
                     .foregroundColor(.white.opacity(AppStyle.Opacity.secondaryLabel))
                     .padding(.top, 6)

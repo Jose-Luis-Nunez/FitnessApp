@@ -1,17 +1,9 @@
 import Foundation
 import ActivityKit
+import FitnessTraining
 
 struct TrainingActivityAttributes: ActivityAttributes {
-    public struct ContentState: Codable, Hashable {
-        var exerciseName: String
-        var currentSet: Int
-        var totalSets: Int
-        var reps: Int
-        var weight: Double
-        var isFinished: Bool
-    }
+    typealias ContentState = TrainingActivityContentState
 
     var id: UUID
 }
-
-

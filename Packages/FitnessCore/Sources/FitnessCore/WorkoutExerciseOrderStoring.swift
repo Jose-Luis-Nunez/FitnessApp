@@ -1,10 +1,7 @@
 import Foundation
-import Mockable
-
 /// Persists the observed and learned workout-wide exercise order used by the
 /// flattened exercise list. A cycle starts after the previous global reset and
 /// ends at the next global "Reset All".
-@Mockable
 @MainActor
 public protocol WorkoutExerciseOrderStoring: AnyObject {
     /// Records the first genuine training start for an exercise in the current

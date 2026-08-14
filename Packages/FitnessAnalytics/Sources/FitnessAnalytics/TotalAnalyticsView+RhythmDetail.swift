@@ -1,3 +1,4 @@
+import FitnessResources
 import FitnessUI
 import SwiftUI
 
@@ -6,8 +7,8 @@ extension TotalAnalyticsView {
     var rhythmDetailView: some View {
         AnalyticsDetailSection(shouldShowIndicator: shouldShowRhythmScrollIndicator()) {
             AnalyticsDetailHeader(
-                title: "Training Rhythm",
-                subtitle: rhythmDetailData?.rhythmLabel,
+                title: AppText.analyticsTrainingRhythm,
+                subtitle: rhythmDetailData.map { AppText.resolve($0.rhythm.localizedResource, locale: locale) },
                 onBack: { showRhythmDetail = false }
             )
         } content: {
@@ -20,13 +21,13 @@ extension TotalAnalyticsView {
             if let rhythmDetail = rhythmDetailData {
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Last 5 training days")
+                    Text(AppText.trainingLastFiveDays)
                         .font(AppStyle.Font.cardHeadline)
                         .foregroundColor(appColorTheme.accent.glow)
 
                     ForEach(rhythmDetail.trainingDates) { item in
                         HStack {
-                            Text(DateFormatter.germanMedium.string(from: item.date))
+                            Text(verbatim: item.date.formatted(.dateTime.day().month(.wide).year().locale(locale)))
                                 .font(AppStyle.Font.detailExercise)
                                 .foregroundColor(appColorTheme.accent.glow)
 
@@ -34,8 +35,7 @@ extension TotalAnalyticsView {
 
                             if item.id < rhythmDetail.gaps.count - 1 {
                                 let gap = rhythmDetail.gaps[item.id]
-                                let dayText = gap == 1 ? "Day" : "Days"
-                                Text("\(gap) \(dayText)")
+                                Text(AppText.analyticsDayCount(count: gap))
                                     .font(AppStyle.Font.detailCaption)
                                     .foregroundColor(appColorTheme.accent.glow.opacity(0.7))
                                     .padding(.horizontal, 8)
@@ -55,15 +55,14 @@ extension TotalAnalyticsView {
 
                     if rhythmDetail.gaps.count > rhythmDetail.trainingDates.count - 1 {
                         HStack {
-                            Text("Today (\(DateFormatter.germanMedium.string(from: Date())))")
+                            Text(AppText.analyticsToday(date: Date().formatted(.dateTime.day().month(.wide).year().locale(locale))))
                                 .font(AppStyle.Font.detailExercise)
                                 .foregroundColor(appColorTheme.accent.glow)
 
                             Spacer()
 
-                            let daysSinceLastTraining = rhythmDetail.gaps.last ?? 0
-                            let dayText = daysSinceLastTraining == 1 ? "day" : "days"
-                            Text("Last training \(daysSinceLastTraining) \(dayText) ago")
+                            let daysSinceLastTraining = rhythmDetail.daysSinceLastTraining
+                            Text(AppText.trainingDaysAgo(count: daysSinceLastTraining))
                                 .font(AppStyle.Font.detailCaption)
                                 .foregroundColor(daysSinceLastTraining > 7 ? AppStyle.Color.yellow : appColorTheme.accent.glow.opacity(0.7))
                                 .padding(.horizontal, 8)
@@ -82,11 +81,16 @@ extension TotalAnalyticsView {
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Calculation")
+                    Text(AppText.commonCalculation)
                         .font(AppStyle.Font.cardHeadline)
                         .foregroundColor(appColorTheme.accent.glow)
 
-                    Text(rhythmDetail.explanation)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(AppText.analyticsHistoricalGapsLine(gaps: rhythmDetail.gaps.dropLast().map(String.init).joined(separator: ", ")))
+                        Text(AppText.analyticsAverageLine(average: rhythmDetail.averageGap.formatted(.number.precision(.fractionLength(1)).locale(locale))))
+                        Text(AppText.analyticsSinceLastTrainingLine(days: rhythmDetail.daysSinceLastTraining))
+                        Text(AppText.analyticsResultLine(result: AppText.resolve(rhythmDetail.rhythm.localizedResource, locale: locale)))
+                    }
                         .font(AppStyle.Font.detailExercise)
                         .foregroundColor(appColorTheme.accent.glow)
                         .padding(.leading, 12)
@@ -94,7 +98,7 @@ extension TotalAnalyticsView {
                 }
 
             } else {
-                Text("Not enough training data")
+                Text(AppText.analyticsNotEnoughTrainingData)
                     .font(AppStyle.Font.pickerAction)
                     .foregroundColor(appColorTheme.accent.glow.opacity(0.6))
                     .frame(maxWidth: .infinity, alignment: .center)

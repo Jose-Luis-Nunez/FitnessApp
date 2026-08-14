@@ -1,4 +1,5 @@
 import SwiftUI
+import FitnessResources
 
 /// User-selectable accent scheme for the whole app.
 ///
@@ -15,10 +16,10 @@ public enum AppAccentScheme: String, CaseIterable, Identifiable, Codable, Sendab
     /// change when the type or the user-facing label changes.
     public static let storageKey = "defaultIconColorScheme"
 
-    public var displayName: String {
+    public var localizedName: LocalizedStringResource {
         switch self {
-        case .green: return "Green"
-        case .grey: return "Grey"
+        case .green: return AppText.profileAccentGreen
+        case .grey: return AppText.profileAccentGrey
         }
     }
 

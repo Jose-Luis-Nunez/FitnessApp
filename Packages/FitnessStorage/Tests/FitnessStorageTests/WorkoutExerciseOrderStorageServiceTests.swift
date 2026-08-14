@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 import Testing
+@testable import FitnessStorageTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
 
 @MainActor

@@ -11,7 +11,7 @@
 #   2. observation-tracking-outside-view  — withObservationTracking added outside *View.swift
 #   3. polling-loop-in-service-or-vm      — 'while !Task.isCancelled' added in Service/ViewModel
 #   4. schema-change                      — @Attribute / @Relationship added under Models/
-#   5. new-package                        — new Packages/<name>/Package.swift
+#   5. new-package                        — new Packages/Package.swift or leaf manifest
 #   6. container-change                   — Container.swift modified
 
 detect_adr_triggers() {
@@ -49,7 +49,7 @@ detect_adr_triggers() {
 
   # Trigger 5 — new Package.swift created (not modified)
   # Only count files that are newly added with a 'name:' line in the diff.
-  if echo "$file_list" | grep -qE '^Packages/[^/]+/Package\.swift$' \
+  if echo "$file_list" | grep -qE '^Packages(/[^/]+)?/Package\.swift$' \
      && echo "$diff_text" | grep -qE '^\+.*name:[[:space:]]*"'; then
     ADR_TRIGGERS+=("new-package")
   fi

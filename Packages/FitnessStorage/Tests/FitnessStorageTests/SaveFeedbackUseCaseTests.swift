@@ -1,40 +1,38 @@
 import Testing
 import Foundation
-import SwiftData
 import FitnessCore
-import FitnessTestSupport
 @_spi(PersistenceUI) @testable import FitnessStorage
 
-@Suite("SaveFeedbackUseCase", .tags(.integration))
+@Suite("SaveFeedbackUseCase", .tags(.fast))
 @MainActor
 struct SaveFeedbackUseCaseTests {
+    private final class SpyFeedbackStorage: FeedbackStoring {
+        private(set) var saved: [ExerciseFeedback] = []
 
-    private let storage: FeedbackStorageService
-
-    init() {
-        let container = TestHelpers.makeInMemoryContainer()
-        storage = FeedbackStorageService(container: container)
+        func save(_ feedback: ExerciseFeedback) { saved.append(feedback) }
+        func load(for exerciseId: UUID) -> [ExerciseFeedback] { [] }
+        func latest(for exerciseId: UUID) -> ExerciseFeedback? { nil }
     }
 
     @Test func executeSkipsEmptyFeedback() {
+        let storage = SpyFeedbackStorage()
         let useCase = SaveFeedbackUseCase(feedbackStorage: storage)
         let empty = ExerciseFeedback(exerciseId: UUID())
+
         #expect(useCase.execute(empty) == false)
+        #expect(storage.saved.isEmpty)
     }
 
     @Test func executePersistsNonEmptyFeedback() {
-        let exerciseId = UUID()
+        let storage = SpyFeedbackStorage()
         let useCase = SaveFeedbackUseCase(feedbackStorage: storage)
         let feedback = ExerciseFeedback(
-            exerciseId: exerciseId,
+            exerciseId: UUID(),
             energyLevel: 2,
             symptoms: [.pain]
         )
 
         #expect(useCase.execute(feedback) == true)
-
-        let loaded = storage.load(for: exerciseId)
-        #expect(loaded.count == 1)
-        #expect(loaded.first?.energyLevel == 2)
+        #expect(storage.saved == [feedback])
     }
 }

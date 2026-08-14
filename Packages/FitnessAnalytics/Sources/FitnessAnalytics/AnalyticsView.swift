@@ -1,9 +1,11 @@
 import FitnessCore
+import FitnessResources
 import FitnessUI
 import SwiftUI
 
 public struct AnalyticsView: View {
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var locale
     @State private var exercise: Exercise
     public var viewModel: AnalyticsViewModel
     @State private var analyticsRevision: ExerciseAnalyticsCacheRevision
@@ -35,7 +37,7 @@ public struct AnalyticsView: View {
                     isPresented: $showCalendarDialog,
                     selectedDate: $selectedDate,
                     highlightedDates: cachedEntries.map(\.date),
-                    title: "Monthly training"
+                    title: AppText.analyticsMonthlyTraining
                 )
                 addDataOverlay
                 goalSetterOverlay
@@ -85,9 +87,15 @@ public struct AnalyticsView: View {
     private var hillChartView: some View {
         VStack(spacing: 0) {
             HStack {
-                Text(exercise.hasWeight ? "KG" : "Reps")
-                    .font(AppStyle.Font.analyticsAxis)
-                    .foregroundColor(.white.opacity(0.5))
+                Group {
+                    if exercise.hasWeight {
+                        Text(verbatim: "KG")
+                    } else {
+                        Text(AppText.exerciseReps)
+                    }
+                }
+                .font(AppStyle.Font.analyticsAxis)
+                .foregroundColor(.white.opacity(0.5))
                 Spacer()
             }
             GeometryReader { geometry in
@@ -102,7 +110,7 @@ public struct AnalyticsView: View {
             .frame(height: 105)
             HStack {
                 Spacer()
-                Text("Date")
+                Text(AppText.commonDate)
                     .font(AppStyle.Font.analyticsAxis)
                     .foregroundColor(.white.opacity(0.5))
             }
@@ -170,14 +178,8 @@ public struct AnalyticsView: View {
         }
     }
 
-    private static let chartDateFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "dd.MM"
-        return f
-    }()
-
     private func dynamicMilestonePointView(point: ProgressChartCalculator.ChartPoint, geometry: GeometryProxy) -> some View {
-        let weightText = WeightFormatter.format(point.weight)
+        let weightText = WeightFormatter.format(point.weight, locale: locale)
 
         return ZStack {
             Path { path in
@@ -193,13 +195,13 @@ public struct AnalyticsView: View {
                 .position(x: point.xPosition, y: point.yPosition)
                 .shadow(color: appColorTheme.accent.glow.opacity(0.7), radius: point.isCurrentWeight ? 6 : 3, x: 0, y: 0)
 
-            Text(weightText)
+            Text(verbatim: weightText)
                 .font(point.isCurrentWeight ? AppStyle.Font.cardValueBold : AppStyle.Font.cardSmallMedium)
                 .foregroundColor(appColorTheme.accent.glow)
                 .position(x: point.xPosition, y: point.yPosition - (point.isCurrentWeight ? 15 : 12))
 
             if let date = point.date {
-                Text(Self.chartDateFormatter.string(from: date))
+                Text(verbatim: date.formatted(.dateTime.day(.twoDigits).month(.twoDigits).locale(locale)))
                     .font(AppStyle.Font.analyticsAxis)
                     .foregroundColor(.white.opacity(0.5))
                     .position(x: point.xPosition, y: geometry.size.height + 2)
@@ -209,7 +211,7 @@ public struct AnalyticsView: View {
 
     private var headerView: some View {
         HStack(alignment: .center, spacing: 12) {
-            Text(exercise.name)
+            Text(verbatim: exercise.name)
                 .font(AppStyle.Font.analyticsExerciseTitle)
                 .foregroundColor(AppStyle.Color.white)
                 .fixedSize()
@@ -222,7 +224,7 @@ public struct AnalyticsView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "calendar")
                         .font(AppStyle.Font.detailExercise)
-                    Text(DateFormatter.germanShort.string(from: selectedDate))
+                    Text(verbatim: selectedDate.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year(.twoDigits).locale(locale)))
                         .font(AppStyle.Font.detailExercise)
                 }
                 .foregroundColor(appColorTheme.accent.glow)
@@ -263,7 +265,7 @@ public struct AnalyticsView: View {
 
         if entries.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
-                Text("No data available")
+                Text(AppText.commonNoDataAvailable)
                     .font(AppStyle.Font.defaultFont)
                     .foregroundColor(AppStyle.Color.white)
                     .padding(.horizontal, AppStyle.Padding.horizontal)
@@ -275,7 +277,7 @@ public struct AnalyticsView: View {
                         HStack(spacing: 8) {
                             Image(systemName: "plus.circle.fill")
                                 .font(AppStyle.Font.analyticsHeadline)
-                            Text("Add data")
+                            Text(AppText.analyticsAddData)
                                 .font(.body)
                                 .fontWeight(.bold)
                                 .accessibilityIdentifier(
@@ -307,7 +309,7 @@ public struct AnalyticsView: View {
             }
         } else {
             VStack(alignment: .leading, spacing: 11) {
-                Text("Results today")
+                Text(AppText.commonResultsToday)
                     .font(AppStyle.Font.analyticsExerciseData)
                     .foregroundColor(AppStyle.Color.white)
                     .padding(.horizontal, AppStyle.Padding.horizontal)
@@ -338,7 +340,7 @@ public struct AnalyticsView: View {
                                         logicalSetIndex: group.logicalSetIndex
                                     )
                                 } label: {
-                                    Label("Delete", systemImage: "trash")
+                                    Label(AppText.actionDelete, systemImage: "trash")
                                 }
                                 .tint(.red)
                             }
@@ -366,7 +368,7 @@ public struct AnalyticsView: View {
                                         setIndex: index
                                     )
                                 } label: {
-                                    Label("Delete", systemImage: "trash")
+                                    Label(AppText.actionDelete, systemImage: "trash")
                                 }
                                 .tint(.red)
                             }
@@ -390,7 +392,7 @@ public struct AnalyticsView: View {
             showAddDataSheet = true
         } label: {
             VStack(alignment: .leading, spacing: AppStyle.Padding.cardVertical) {
-                Text("Set \(group.logicalSetIndex + 1)")
+                Text(AppText.exerciseSetNumber(number: group.logicalSetIndex + 1))
                     .font(AppStyle.Font.sectionHeadline)
                     .foregroundColor(AppStyle.Color.white)
 
@@ -422,13 +424,13 @@ public struct AnalyticsView: View {
         progress: SetProgress
     ) -> some View {
         VStack(alignment: .leading, spacing: AppStyle.Layout.bilateralColumnSpacing) {
-            Text(side == .left ? "Left" : "Right")
+            Text(side == .left ? AppText.accessibilityLeft : AppText.accessibilityRight)
                 .font(AppStyle.Font.defaultFont)
                 .foregroundColor(appColorTheme.accent.glow)
 
             HStack(spacing: AppStyle.Layout.bilateralColumnSpacing) {
                 if exercise.hasWeight {
-                    Text("\(WeightFormatter.format(progress.weight)) kg")
+                    Text(verbatim: "\(WeightFormatter.format(progress.weight, locale: locale)) kg")
                         .font(AppStyle.Font.sectionHeadline)
                         .foregroundColor(appColorTheme.accent.glow)
                         .lineLimit(1)
@@ -437,7 +439,7 @@ public struct AnalyticsView: View {
                         )
                 }
 
-                Text("\(progress.currentReps) / \(initialReps)")
+                Text(verbatim: "\(progress.currentReps) / \(initialReps)")
                     .font(AppStyle.Font.detailExercise)
                     .foregroundColor(AppStyle.Color.white)
                     .lineLimit(1)
@@ -461,22 +463,22 @@ public struct AnalyticsView: View {
             showAddDataSheet = true
         } label: {
             HStack {
-                Text("Set")
+                Text(AppText.liveActivitySet)
                     .font(AppStyle.Font.numberPadSymbol)
                     .foregroundColor(AppStyle.Color.white)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 if exercise.hasWeight {
-                    Text(WeightFormatter.format(progress.weight))
+                    Text(verbatim: WeightFormatter.format(progress.weight, locale: locale))
                         .font(AppStyle.Font.analyticsBigNumber)
                         .foregroundColor(appColorTheme.accent.glow)
 
-                    Text("kg")
+                    Text(verbatim: "kg")
                         .font(AppStyle.Font.analyticsBigNumber)
                         .foregroundColor(appColorTheme.accent.primary)
                 }
 
-                Text("\(progress.currentReps) / \(initialReps)")
+                Text(verbatim: "\(progress.currentReps) / \(initialReps)")
                     .font(AppStyle.Font.numberPadSymbol)
                     .foregroundColor(AppStyle.Color.white)
             }
@@ -561,7 +563,7 @@ public struct AnalyticsView: View {
     }
 
     private var goalSheetHeader: some View {
-        Text(exercise.hasWeight ? "Set Weight Goal" : "Set Reps Goal")
+        Text(exercise.hasWeight ? AppText.analyticsSetWeightGoal : AppText.analyticsSetRepsGoal)
             .font(.headline)
             .foregroundColor(AppStyle.Color.white)
             .padding(.top, 16)
@@ -612,7 +614,7 @@ public struct AnalyticsView: View {
     private var goalPlaceholder: some View {
         Group {
             if tempGoal.isEmpty {
-                Text(exercise.hasWeight ? "Enter goal weight" : "Enter goal reps")
+                Text(exercise.hasWeight ? AppText.analyticsEnterGoalWeight : AppText.analyticsEnterGoalReps)
                     .font(AppStyle.Font.sectionTitle)
                     .foregroundColor(.white.opacity(0.4))
                     .padding(.leading, 16)
@@ -645,7 +647,7 @@ public struct AnalyticsView: View {
     }
 
     private var goalCancelButton: some View {
-        Button("Cancel") {
+        Button(AppText.actionCancel) {
             showGoalSheet = false
         }
         .font(.body)
@@ -657,7 +659,7 @@ public struct AnalyticsView: View {
     }
 
     private var goalSaveButton: some View {
-        Button("Save") {
+        Button(AppText.actionSave) {
             saveGoal()
         }
         .font(.body)
@@ -674,14 +676,14 @@ public struct AnalyticsView: View {
     }
 
     private func formatGoalForInput(_ goal: Double) -> String {
-        return WeightFormatter.formatGoalForInput(goal)
+        return WeightFormatter.formatGoalForInput(goal, locale: locale)
     }
 
     private var goalTileNumber: String {
         if let goal = exercise.goal {
-            return WeightFormatter.format(goal)
+            return WeightFormatter.format(goal, locale: locale)
         }
-        return "Set"
+        return AppText.resolve(AppText.analyticsSetGoal, locale: locale)
     }
 
     private var weightMilestoneView: some View {
@@ -698,7 +700,7 @@ public struct AnalyticsView: View {
                             .font(AppStyle.Font.analyticsBigNumber)
                             .foregroundColor(appColorTheme.accent.glow)
 
-                        Text(exercise.hasWeight ? "Goal kg" : "Goal Reps")
+                        Text(exercise.hasWeight ? AppText.analyticsGoalWeight : AppText.analyticsGoalReps)
                             .font(AppStyle.Font.chartAxisSmall)
                             .foregroundColor(.white.opacity(0.6))
                             .multilineTextAlignment(.center)
@@ -727,24 +729,37 @@ public struct AnalyticsView: View {
                     number: exercise.hasWeight
                         ? "\(viewModel.totalWeightIncreases(from: entries))"
                         : "\(viewModel.totalRepsIncreases(from: entries))",
-                    label: exercise.hasWeight ? "Weight increase" : "Reps increase"
+                    label: AppText.resolve(
+                        exercise.hasWeight ? AppText.analyticsWeightIncrease : AppText.analyticsRepsIncrease,
+                        locale: locale
+                    )
                 )
 
                 AnalyticsTileNumberView(
                     number: "\(viewModel.trainingDaysInCurrentMonth(from: entries))",
-                    label: "Training \(viewModel.currentMonthName())"
+                    label: AppText.resolve(
+                        AppText.analyticsTrainingMonth(month:
+                            Date().formatted(.dateTime.month(.wide).locale(locale))
+                        ),
+                        locale: locale
+                    )
                 )
 
                 AnalyticsTileNumberView(
                     number: exercise.hasWeight
                         ? "\(viewModel.trainingSessionsUntilWeightIncrease(from: entries))"
                         : "\(viewModel.trainingSessionsUntilRepsIncrease(from: entries))",
-                    label: exercise.hasWeight ? "Training to increase kg" : "Training to increase Reps"
+                    label: AppText.resolve(
+                        exercise.hasWeight
+                            ? AppText.analyticsTrainingToIncreaseWeight
+                            : AppText.analyticsTrainingToIncreaseReps,
+                        locale: locale
+                    )
                 )
 
                 AnalyticsTileNumberView(
                     number: "\(entries.count)",
-                    label: "Total training"
+                    label: AppText.resolve(AppText.analyticsTotalTraining, locale: locale)
                 )
             }
         }

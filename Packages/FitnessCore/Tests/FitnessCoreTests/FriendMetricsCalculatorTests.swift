@@ -88,18 +88,11 @@ struct FriendMetricsCalculatorTests {
         #expect(result.trainingDaysThisMonth == 2) // today + yesterday
     }
 
-    @Test("Training days is zero when no analytics in current month")
-    func metricsTrainingDaysZeroWhenNoEntries() {
-        let entries = [makeAnalyticsEntry(daysOffset: -40)]
-        let result = FriendMetricsCalculator.metrics(exercises: [], analytics: entries, now: now)
-        #expect(result.trainingDaysThisMonth == 0)
-    }
-
     // MARK: - categoryComparisons: matching
 
-    @Test("Matched pairs are found by case-insensitive name")
-    func categoryComparisonsCaseInsensitiveMatch() {
-        let mine = [makeExercise(name: "Bench Press", category: .chest, weight: 80, reps: 8)]
+    @Test("Matched pairs trim whitespace and compare names case-insensitively")
+    func categoryComparisonsNormalizeNames() {
+        let mine = [makeExercise(name: "  Bench Press  ", category: .chest, weight: 80, reps: 8)]
         let theirs = [makeExercise(name: "bench press", category: .chest, weight: 60, reps: 10)]
 
         let comps = FriendMetricsCalculator.categoryComparisons(myExercises: mine, friendExercises: theirs)
@@ -154,14 +147,4 @@ struct FriendMetricsCalculatorTests {
         #expect(backComp?.friendExclusiveCount == 1)
     }
 
-    @Test("Whitespace trimming in name matching")
-    func categoryComparisonsWhitespaceTrimming() {
-        let mine = [makeExercise(name: "  Squat  ", category: .legs)]
-        let theirs = [makeExercise(name: "Squat", category: .legs)]
-
-        let comps = FriendMetricsCalculator.categoryComparisons(myExercises: mine, friendExercises: theirs)
-        let legsComp = comps.first { $0.category == .legs }
-
-        #expect(legsComp?.matchedPairs.count == 1)
-    }
 }

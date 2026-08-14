@@ -1,8 +1,10 @@
 import SwiftUI
+import FitnessResources
 import FitnessUI
 
 public struct WeekSummaryView: View {
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var locale
     public let summary: WeekSummaryData
     public let selectedDate: Date
     public let onDayTap: (Date) -> Void
@@ -18,13 +20,13 @@ public struct WeekSummaryView: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("KW \(summary.calendarWeek)")
+                Text(AppText.analyticsCalendarWeek(week: summary.calendarWeek))
                     .font(AppStyle.Font.sectionTitle)
                     .foregroundColor(AppStyle.Color.white)
 
                 Spacer()
 
-                Text("\(summary.trainingDayCount) Training\(summary.trainingDayCount == 1 ? "" : "s") · \(summary.totalExercises) Exercises")
+                Text(AppText.analyticsTrainingExercises(training: summary.trainingDayCount, exercises: summary.totalExercises))
                     .font(AppStyle.Font.detailCaption)
                     .foregroundColor(appColorTheme.accent.glow.opacity(0.7))
             }
@@ -51,11 +53,11 @@ public struct WeekSummaryView: View {
         let isToday = calendar.isDateInToday(day.date)
 
         return VStack(spacing: 4) {
-            Text(day.label)
+            Text(verbatim: day.date.formatted(.dateTime.weekday(.abbreviated).locale(locale)))
                 .font(AppStyle.Font.dayChipLabel)
                 .foregroundColor(chipLabelColor(trained: day.isTrainingDay, selected: isSelected))
 
-            Text("\(calendar.component(.day, from: day.date))")
+            Text(verbatim: calendar.component(.day, from: day.date).formatted(.number.locale(locale)))
                 .font(day.isTrainingDay ? AppStyle.Font.dayChipNumberBold : AppStyle.Font.dayChipNumber)
                 .foregroundColor(chipNumberColor(trained: day.isTrainingDay, selected: isSelected, today: isToday))
 

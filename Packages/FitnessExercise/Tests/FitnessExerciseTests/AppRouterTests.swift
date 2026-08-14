@@ -10,24 +10,20 @@ struct AppRouterTests {
     // MARK: - Scene mapping
 
     @Test
-    func initialScene_isWorkouts() {
+    func initialState_isWorkoutsRoot() {
         let router = AppRouter()
         #expect(router.currentScene == .workouts)
+        #expect(router.isEmpty)
     }
 
     @Test
-    func navigateToHome_setsHomeScene() {
+    func navigateToHome_setsScenePathAndNavigationOrigin() {
         let router = AppRouter()
         router.navigate(to: .home)
+
         #expect(router.currentScene == .home)
-    }
-
-    @Test
-    func navigateToHome_marksItAsPushedFromWorkoutList() {
-        let router = AppRouter()
-        router.navigate(to: .home)
-
         #expect(router.isHomePushedFromWorkoutList)
+        #expect(!router.isEmpty)
     }
 
     @Test
@@ -39,31 +35,19 @@ struct AppRouterTests {
     }
 
     @Test
-    func switchToAnalytics_setsAnalyticsScene() {
-        let router = AppRouter()
-        router.switchToAnalytics()
-        #expect(router.currentScene == .analytics)
-    }
+    func publicDestinations_mapToTheirScenes() {
+        let cases: [((AppRouter) -> Void, AppCurrentScene)] = [
+            ({ $0.switchToAnalytics() }, .analytics),
+            ({ $0.switchToSchedule() }, .schedule),
+            ({ $0.switchToProfile() }, .profile),
+            ({ $0.navigate(to: .muscleCategory(.arms)) }, .category),
+        ]
 
-    @Test
-    func switchToSchedule_setsScheduleScene() {
-        let router = AppRouter()
-        router.switchToSchedule()
-        #expect(router.currentScene == .schedule)
-    }
-
-    @Test
-    func switchToProfile_setsProfileScene() {
-        let router = AppRouter()
-        router.switchToProfile()
-        #expect(router.currentScene == .profile)
-    }
-
-    @Test
-    func navigateToMuscleCategory_setsCategoryScene() {
-        let router = AppRouter()
-        router.navigate(to: .muscleCategory(.arms))
-        #expect(router.currentScene == .category)
+        for (navigate, expectedScene) in cases {
+            let router = AppRouter()
+            navigate(router)
+            #expect(router.currentScene == expectedScene)
+        }
     }
 
     @Test
@@ -144,7 +128,7 @@ struct AppRouterTests {
     }
 
     @Test
-    func pop_removesLastDestination() {
+    func pop_removesLastDestinationAndRestoresHomeOrigin() {
         let router = AppRouter()
         router.navigate(to: .home)
         router.navigate(to: .muscleCategory(.arms))
@@ -152,16 +136,6 @@ struct AppRouterTests {
 
         router.pop()
         #expect(router.currentScene == .home)
-    }
-
-    @Test
-    func pop_restoresHomeNavigationOrigin() {
-        let router = AppRouter()
-        router.navigate(to: .home)
-        router.navigate(to: .muscleCategory(.arms))
-
-        router.pop()
-
         #expect(router.isHomePushedFromWorkoutList)
     }
 
@@ -176,26 +150,4 @@ struct AppRouterTests {
         #expect(router.path.count == 1)
     }
 
-    @Test
-    func isEmpty_trueAtRoot() {
-        let router = AppRouter()
-        #expect(router.isEmpty)
-    }
-
-    @Test
-    func isEmpty_falseAfterNavigate() {
-        let router = AppRouter()
-        router.navigate(to: .home)
-        #expect(!router.isEmpty)
-    }
-
-    // MARK: - Analytics is distinct from home
-
-    @Test
-    func analyticsScene_isDistinctFromHomeScene() {
-        let router = AppRouter()
-        router.switchToAnalytics()
-        #expect(router.currentScene == .analytics)
-        #expect(router.currentScene != .home)
-    }
 }

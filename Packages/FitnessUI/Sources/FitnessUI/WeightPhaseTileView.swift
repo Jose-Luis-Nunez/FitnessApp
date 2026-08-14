@@ -1,8 +1,10 @@
 import SwiftUI
 import FitnessCore
+import FitnessResources
 
 public struct WeightPhaseTileView: View {
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var locale
     public let phase: WeightPhase
     public let hasWeight: Bool
 
@@ -12,50 +14,40 @@ public struct WeightPhaseTileView: View {
     }
 
     private var weightNumber: String {
-        WeightFormatter.format(phase.weight)
+        WeightFormatter.format(phase.weight, locale: locale)
     }
-
-    private var durationText: String {
-        phase.durationDays == 1 ? "Period: 1 Day" : "Period: \(phase.durationDays) Days"
-    }
-
-    private static let tileDate: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "dd.MM"
-        return f
-    }()
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             if hasWeight {
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text(weightNumber)
+                    Text(verbatim: weightNumber)
                         .font(AppStyle.Font.cardBoldTitle)
                         .foregroundColor(appColorTheme.accent.glow)
-                    Text("KG")
+                    Text(verbatim: "KG")
                         .font(AppStyle.Font.cardSmallBold)
                         .foregroundColor(appColorTheme.accent.glow)
                 }
             } else {
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text("\(phase.maxReps ?? 0)")
+                    Text(verbatim: "\(phase.maxReps ?? 0)")
                         .font(AppStyle.Font.cardBoldTitle)
                         .foregroundColor(appColorTheme.accent.glow)
-                    Text("Reps")
+                    Text(AppText.exerciseReps)
                         .font(AppStyle.Font.cardSmallBold)
                         .foregroundColor(appColorTheme.accent.glow)
                 }
             }
 
-            Text(durationText)
+            Text(AppText.analyticsPeriodDays(count: phase.durationDays))
                 .font(AppStyle.Font.cardSmallMedium)
                 .foregroundColor(.white.opacity(0.6))
 
             HStack(spacing: 4) {
-                Text("\(phase.sessionCount)")
+                Text(verbatim: "\(phase.sessionCount)")
                     .font(AppStyle.Font.cardSmallMedium)
                     .foregroundColor(.white)
-                Text("to")
+                Text(AppText.analyticsTo)
                     .font(AppStyle.Font.cardSmallMedium)
                     .foregroundColor(.white)
                 Image(systemName: "arrow.up.right")
@@ -84,10 +76,10 @@ public struct WeightPhaseTileView: View {
                 .font(AppStyle.Font.chartAxisSmall)
                 .foregroundColor(highlight ? appColorTheme.accent.glow : .white.opacity(0.5))
                 .frame(width: 14, alignment: .center)
-            Text(setsReps)
+            Text(verbatim: setsReps)
                 .font(AppStyle.Font.detailCaption)
                 .foregroundColor(highlight ? appColorTheme.accent.glow : .white.opacity(0.7))
-            Text("(\(Self.tileDate.string(from: date)))")
+            Text(verbatim: "(\(date.formatted(.dateTime.day(.twoDigits).month(.twoDigits).locale(locale))))")
                 .font(AppStyle.Font.chartAxisSmall)
                 .foregroundColor(.white.opacity(0.4))
         }

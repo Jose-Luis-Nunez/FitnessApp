@@ -1,8 +1,26 @@
 import SwiftUI
+import FitnessResources
 import FitnessUI
+
+enum ScheduleCalendarConfiguration {
+    static func calendar(locale: Locale) -> Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = locale
+        calendar.firstWeekday = 2
+        return calendar
+    }
+
+    static func weekdaySymbols(locale: Locale) -> [String] {
+        let calendar = calendar(locale: locale)
+        let symbols = calendar.shortWeekdaySymbols
+        let shift = calendar.firstWeekday - 1
+        return Array(symbols[shift...] + symbols[..<shift])
+    }
+}
 
 public struct ScheduleCalendarView: View {
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var locale
     @Binding public var selectedDate: Date
     public let trainingDays: Set<Date>
     public let datesWithData: Set<Date>
@@ -21,15 +39,11 @@ public struct ScheduleCalendarView: View {
     }
 
     private var calendar: Calendar {
-        var cal = Calendar(identifier: .gregorian)
-        cal.firstWeekday = 2
-        return cal
+        ScheduleCalendarConfiguration.calendar(locale: locale)
     }
 
     private var weekdaySymbols: [String] {
-        let symbols = calendar.shortWeekdaySymbols
-        let shift = calendar.firstWeekday - 1
-        return Array(symbols[shift...] + symbols[..<shift])
+        ScheduleCalendarConfiguration.weekdaySymbols(locale: locale)
     }
 
     private var daysInMonth: [Date] {
@@ -49,7 +63,7 @@ public struct ScheduleCalendarView: View {
 
     private var kwLabel: String {
         let week = calendar.component(.weekOfYear, from: selectedDate)
-        return "KW \(week)"
+        return AppText.resolve(AppText.analyticsCalendarWeek(week: week), locale: locale)
     }
 
     public var body: some View {
@@ -75,10 +89,10 @@ public struct ScheduleCalendarView: View {
     private var header: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(formattedMonthYear(currentMonth))
+                Text(verbatim: formattedMonthYear(currentMonth))
                     .foregroundColor(AppStyle.Color.white)
                     .font(AppStyle.Font.calendarHeader)
-                Text(kwLabel)
+                Text(verbatim: kwLabel)
                     .font(AppStyle.Font.calendarSubheader)
                     .foregroundColor(appColorTheme.accent.glow.opacity(0.7))
             }
@@ -104,7 +118,7 @@ public struct ScheduleCalendarView: View {
     private var weekdayRow: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7)) {
             ForEach(weekdaySymbols, id: \.self) { day in
-                Text(day.prefix(2))
+                Text(verbatim: String(day.prefix(2)))
                     .foregroundColor(AppStyle.Color.gray)
                     .font(AppStyle.Font.calendarSubheader)
             }
@@ -143,7 +157,7 @@ public struct ScheduleCalendarView: View {
                             .stroke(circleStroke(hasData: hasData, training: isTraining, selected: isSelected, today: isToday), lineWidth: 1.5)
                     )
 
-                Text("\(calendar.component(.day, from: date))")
+                Text(verbatim: calendar.component(.day, from: date).formatted(.number.locale(locale)))
                     .font(isSelected || isTraining ? AppStyle.Font.calendarDayBold : AppStyle.Font.calendarDay)
                     .foregroundColor(textColor(selected: isSelected, today: isToday, training: isTraining, future: isFuture))
             }
@@ -206,7 +220,7 @@ public struct ScheduleCalendarView: View {
     }
 
     private func formattedMonthYear(_ date: Date) -> String {
-        DateFormatter.germanMonthYear.string(from: date).capitalized
+        date.formatted(.dateTime.month(.wide).year().locale(locale)).capitalized(with: locale)
     }
 
     private func changeMonth(by offset: Int) {

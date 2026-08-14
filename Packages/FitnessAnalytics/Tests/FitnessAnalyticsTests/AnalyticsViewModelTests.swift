@@ -33,20 +33,8 @@ struct GetDailyRepsProgressionTests {
 
     @Test func returnsEmptyForNoData() {
         let vm = AnalyticsViewModel(storageService: MockAnalyticsStorage())
-        let result = vm.getDailyRepsProgression(for: UUID())
+        let result = vm.getDailyRepsProgression(from: [])
         #expect(result.isEmpty)
-    }
-
-    @Test func returnsSingleDay() {
-        let storage = MockAnalyticsStorage()
-        let id = UUID()
-        storage.save([makeEntry(exerciseId: id, date: date(0), sets: [(0, 12)])], for: id)
-
-        let vm = AnalyticsViewModel(storageService: storage)
-        let result = vm.getDailyRepsProgression(for: id)
-
-        #expect(result.count == 1)
-        #expect(result[0].value == 12)
     }
 
     @Test func takesMaxRepsAcrossSetsPerEntry() {
@@ -57,7 +45,7 @@ struct GetDailyRepsProgressionTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let result = vm.getDailyRepsProgression(for: id)
+        let result = vm.getDailyRepsProgression(from: storage.load(for: id))
 
         #expect(result.count == 1)
         #expect(result[0].value == 12)
@@ -73,7 +61,7 @@ struct GetDailyRepsProgressionTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let result = vm.getDailyRepsProgression(for: id)
+        let result = vm.getDailyRepsProgression(from: storage.load(for: id))
 
         #expect(result.count == 1)
         #expect(result[0].value == 15)
@@ -89,7 +77,7 @@ struct GetDailyRepsProgressionTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let result = vm.getDailyRepsProgression(for: id)
+        let result = vm.getDailyRepsProgression(from: storage.load(for: id))
 
         #expect(result.count == 3)
         #expect(result[0].value == 10)
@@ -106,7 +94,7 @@ struct TotalRepsIncreasesTests {
 
     @Test func returnsZeroForNoData() {
         let vm = AnalyticsViewModel(storageService: MockAnalyticsStorage())
-        #expect(vm.totalRepsIncreases(for: UUID()) == 0)
+        #expect(vm.totalRepsIncreases(from: []) == 0)
     }
 
     @Test func returnsZeroForPlateau() {
@@ -119,19 +107,7 @@ struct TotalRepsIncreasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        #expect(vm.totalRepsIncreases(for: id) == 0)
-    }
-
-    @Test func countsSingleIncrease() {
-        let storage = MockAnalyticsStorage()
-        let id = UUID()
-        storage.save([
-            makeEntry(exerciseId: id, date: date(-1), sets: [(0, 10)]),
-            makeEntry(exerciseId: id, date: date(0), sets: [(0, 12)])
-        ], for: id)
-
-        let vm = AnalyticsViewModel(storageService: storage)
-        #expect(vm.totalRepsIncreases(for: id) == 1)
+        #expect(vm.totalRepsIncreases(from: storage.load(for: id)) == 0)
     }
 
     @Test func countsMultipleIncreases() {
@@ -145,7 +121,7 @@ struct TotalRepsIncreasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        #expect(vm.totalRepsIncreases(for: id) == 2)
+        #expect(vm.totalRepsIncreases(from: storage.load(for: id)) == 2)
     }
 
     @Test func doesNotCountDecreases() {
@@ -158,7 +134,7 @@ struct TotalRepsIncreasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        #expect(vm.totalRepsIncreases(for: id) == 1)
+        #expect(vm.totalRepsIncreases(from: storage.load(for: id)) == 1)
     }
 }
 
@@ -177,7 +153,7 @@ struct TrainingSessionsUntilRepsIncreaseTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        #expect(vm.trainingSessionsUntilRepsIncrease(for: id) == 0)
+        #expect(vm.trainingSessionsUntilRepsIncrease(from: storage.load(for: id)) == 0)
     }
 
     @Test func returnsZeroForNoIncreases() {
@@ -191,7 +167,7 @@ struct TrainingSessionsUntilRepsIncreaseTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        #expect(vm.trainingSessionsUntilRepsIncrease(for: id) == 0)
+        #expect(vm.trainingSessionsUntilRepsIncrease(from: storage.load(for: id)) == 0)
     }
 
     @Test func detectsRegularPattern() {
@@ -211,7 +187,7 @@ struct TrainingSessionsUntilRepsIncreaseTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        #expect(vm.trainingSessionsUntilRepsIncrease(for: id) == 3)
+        #expect(vm.trainingSessionsUntilRepsIncrease(from: storage.load(for: id)) == 3)
     }
 }
 
@@ -223,24 +199,7 @@ struct RepsPhasesTests {
 
     @Test func returnsEmptyForNoData() {
         let vm = AnalyticsViewModel(storageService: MockAnalyticsStorage())
-        #expect(vm.repsPhases(for: UUID()).isEmpty)
-    }
-
-    @Test func returnsSinglePhase() {
-        let storage = MockAnalyticsStorage()
-        let id = UUID()
-        storage.save([
-            makeEntry(exerciseId: id, date: date(-1), sets: [(0, 10), (0, 10)]),
-            makeEntry(exerciseId: id, date: date(0), sets: [(0, 10), (0, 10)])
-        ], for: id)
-
-        let vm = AnalyticsViewModel(storageService: storage)
-        let phases = vm.repsPhases(for: id)
-
-        #expect(phases.count == 1)
-        #expect(phases[0].maxReps == 10)
-        #expect(phases[0].weight == 0)
-        #expect(phases[0].sessionCount == 2)
+        #expect(vm.repsPhases(from: []).isEmpty)
     }
 
     @Test func returnsMultiplePhases() {
@@ -254,11 +213,12 @@ struct RepsPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phases = vm.repsPhases(for: id)
+        let phases = vm.repsPhases(from: storage.load(for: id))
 
         #expect(phases.count == 2)
         #expect(phases[0].maxReps == 8)
         #expect(phases[1].maxReps == 12)
+        #expect(phases.map(\.sessionCount) == [2, 2])
     }
 
     @Test func respectsLimitParameter() {
@@ -273,7 +233,7 @@ struct RepsPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phases = vm.repsPhases(for: id, limit: 2)
+        let phases = vm.repsPhases(from: storage.load(for: id), limit: 2)
 
         #expect(phases.count == 2)
         #expect(phases[0].maxReps == 12)
@@ -290,7 +250,7 @@ struct RepsPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phases = vm.repsPhases(for: id)
+        let phases = vm.repsPhases(from: storage.load(for: id))
 
         #expect(phases.count == 2)
         let firstPhase = phases[0]
@@ -309,7 +269,7 @@ struct RepsPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phase = try #require(vm.weightPhases(for: id).first)
+        let phase = try #require(vm.weightPhases(from: storage.load(for: id)).first)
 
         #expect(phase.startSetsReps == "2×8")
     }
@@ -323,7 +283,7 @@ struct RepsPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phase = try #require(vm.weightPhases(for: id).first)
+        let phase = try #require(vm.weightPhases(from: storage.load(for: id)).first)
 
         #expect(phase.hasImproved == false)
     }
@@ -337,7 +297,7 @@ struct RepsPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phase = try #require(vm.weightPhases(for: id).first)
+        let phase = try #require(vm.weightPhases(from: storage.load(for: id)).first)
 
         #expect(phase.hasImproved == true)
     }
@@ -359,26 +319,40 @@ struct RepsPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phase = try #require(vm.weightPhases(for: id).first)
+        let phase = try #require(vm.weightPhases(from: storage.load(for: id)).first)
 
         #expect(phase.weight == 22)
         #expect(phase.startSetsReps == "2×10 / side")
     }
 
-    @Test func saveGoalUsesTargetedExerciseUpdate() {
-        let exerciseStorage = MockExerciseStorage()
-        var exercise = FitnessTestSupport.makeExercise(
-            name: "Curl",
-            category: .arms
-        )
-        exerciseStorage.exercisesByCategory[.arms] = [exercise]
-        let vm = AnalyticsViewModel(exerciseStorage: exerciseStorage)
+    @Test func saveGoalParsesSupportedInputsAndUsesTargetedUpdate() {
+        let cases: [(input: String, initial: Double?, expected: Double?)] = [
+            ("42.5", nil, 42.5),
+            ("42,5", nil, 42.5),
+            ("   ", 12, nil),
+            ("invalid", 12, 12),
+        ]
 
-        vm.saveGoal(for: &exercise, goalText: "42.5")
+        for testCase in cases {
+            let exerciseStorage = MockExerciseStorage()
+            var exercise = FitnessTestSupport.makeExercise(
+                name: "Curl",
+                category: .arms,
+                goal: testCase.initial
+            )
+            exerciseStorage.exercisesByCategory[.arms] = [exercise]
+            let vm = AnalyticsViewModel(exerciseStorage: exerciseStorage)
 
-        #expect(exerciseStorage.updatedExercises.map(\.id) == [exercise.id])
-        #expect(exerciseStorage.saveForWorkoutCallCount == 0)
-        #expect(exerciseStorage.exercisesByCategory[.arms]?.first?.goal == 42.5)
+            vm.saveGoal(for: &exercise, goalText: testCase.input)
+
+            #expect(exercise.goal == testCase.expected, "Input: \(testCase.input)")
+            #expect(exerciseStorage.updatedExercises.map(\.id) == [exercise.id])
+            #expect(exerciseStorage.saveForWorkoutCallCount == 0)
+            #expect(
+                exerciseStorage.exercisesByCategory[.arms]?.first?.goal == testCase.expected,
+                "Input: \(testCase.input)"
+            )
+        }
     }
 
     private func bilateralSet(
@@ -446,20 +420,8 @@ struct GetDailyWeightProgressionTests {
 
     @Test func returnsEmptyForNoData() {
         let vm = AnalyticsViewModel(storageService: MockAnalyticsStorage())
-        let result = vm.getDailyWeightProgression(for: UUID())
+        let result = vm.getDailyWeightProgression(from: [])
         #expect(result.isEmpty)
-    }
-
-    @Test func returnsSingleDay() {
-        let storage = MockAnalyticsStorage()
-        let id = UUID()
-        storage.save([makeEntry(exerciseId: id, date: date(0), sets: [(60, 10)])], for: id)
-
-        let vm = AnalyticsViewModel(storageService: storage)
-        let result = vm.getDailyWeightProgression(for: id)
-
-        #expect(result.count == 1)
-        #expect(result[0].value == 60)
     }
 
     @Test func takesMaxWeightAcrossSetsPerDay() {
@@ -470,7 +432,7 @@ struct GetDailyWeightProgressionTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let result = vm.getDailyWeightProgression(for: id)
+        let result = vm.getDailyWeightProgression(from: storage.load(for: id))
 
         #expect(result.count == 1)
         #expect(result[0].value == 60)
@@ -486,7 +448,7 @@ struct GetDailyWeightProgressionTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let result = vm.getDailyWeightProgression(for: id)
+        let result = vm.getDailyWeightProgression(from: storage.load(for: id))
 
         #expect(result.count == 1)
         #expect(result[0].value == 70)
@@ -502,7 +464,7 @@ struct GetDailyWeightProgressionTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let result = vm.getDailyWeightProgression(for: id)
+        let result = vm.getDailyWeightProgression(from: storage.load(for: id))
 
         #expect(result.count == 3)
         #expect(result[0].value == 40)
@@ -519,7 +481,7 @@ struct GetDailyWeightProgressionTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let result = vm.getDailyWeightProgression(for: id)
+        let result = vm.getDailyWeightProgression(from: storage.load(for: id))
 
         #expect(result.count == 1)
         #expect(result[0].value == 50)
@@ -534,7 +496,7 @@ struct TotalWeightIncreasesTests {
 
     @Test func returnsZeroForNoData() {
         let vm = AnalyticsViewModel(storageService: MockAnalyticsStorage())
-        #expect(vm.totalWeightIncreases(for: UUID()) == 0)
+        #expect(vm.totalWeightIncreases(from: []) == 0)
     }
 
     @Test func returnsZeroForPlateau() {
@@ -547,19 +509,7 @@ struct TotalWeightIncreasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        #expect(vm.totalWeightIncreases(for: id) == 0)
-    }
-
-    @Test func countsSingleIncrease() {
-        let storage = MockAnalyticsStorage()
-        let id = UUID()
-        storage.save([
-            makeEntry(exerciseId: id, date: date(-1), sets: [(40, 10)]),
-            makeEntry(exerciseId: id, date: date(0), sets: [(50, 10)])
-        ], for: id)
-
-        let vm = AnalyticsViewModel(storageService: storage)
-        #expect(vm.totalWeightIncreases(for: id) == 1)
+        #expect(vm.totalWeightIncreases(from: storage.load(for: id)) == 0)
     }
 
     @Test func countsMultipleIncreases() {
@@ -573,7 +523,7 @@ struct TotalWeightIncreasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        #expect(vm.totalWeightIncreases(for: id) == 2)
+        #expect(vm.totalWeightIncreases(from: storage.load(for: id)) == 2)
     }
 
     @Test func doesNotCountDecreases() {
@@ -586,7 +536,7 @@ struct TotalWeightIncreasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        #expect(vm.totalWeightIncreases(for: id) == 1)
+        #expect(vm.totalWeightIncreases(from: storage.load(for: id)) == 1)
     }
 }
 
@@ -605,7 +555,7 @@ struct TrainingSessionsUntilWeightIncreaseTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        #expect(vm.trainingSessionsUntilWeightIncrease(for: id) == 0)
+        #expect(vm.trainingSessionsUntilWeightIncrease(from: storage.load(for: id)) == 0)
     }
 
     @Test func returnsZeroForNoIncreases() {
@@ -619,7 +569,7 @@ struct TrainingSessionsUntilWeightIncreaseTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        #expect(vm.trainingSessionsUntilWeightIncrease(for: id) == 0)
+        #expect(vm.trainingSessionsUntilWeightIncrease(from: storage.load(for: id)) == 0)
     }
 
     @Test func detectsRegularPattern() {
@@ -638,7 +588,7 @@ struct TrainingSessionsUntilWeightIncreaseTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        #expect(vm.trainingSessionsUntilWeightIncrease(for: id) == 3)
+        #expect(vm.trainingSessionsUntilWeightIncrease(from: storage.load(for: id)) == 3)
     }
 }
 
@@ -650,23 +600,7 @@ struct WeightPhasesTests {
 
     @Test func returnsEmptyForNoData() {
         let vm = AnalyticsViewModel(storageService: MockAnalyticsStorage())
-        #expect(vm.weightPhases(for: UUID()).isEmpty)
-    }
-
-    @Test func returnsSinglePhase() {
-        let storage = MockAnalyticsStorage()
-        let id = UUID()
-        storage.save([
-            makeEntry(exerciseId: id, date: date(-1), sets: [(50, 10), (50, 10)]),
-            makeEntry(exerciseId: id, date: date(0), sets: [(50, 10), (50, 10)])
-        ], for: id)
-
-        let vm = AnalyticsViewModel(storageService: storage)
-        let phases = vm.weightPhases(for: id)
-
-        #expect(phases.count == 1)
-        #expect(phases[0].weight == 50)
-        #expect(phases[0].sessionCount == 2)
+        #expect(vm.weightPhases(from: []).isEmpty)
     }
 
     @Test func returnsMultiplePhases() {
@@ -680,11 +614,12 @@ struct WeightPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phases = vm.weightPhases(for: id)
+        let phases = vm.weightPhases(from: storage.load(for: id))
 
         #expect(phases.count == 2)
         #expect(phases[0].weight == 40)
         #expect(phases[1].weight == 60)
+        #expect(phases.map(\.sessionCount) == [2, 2])
     }
 
     @Test func respectsLimitParameter() {
@@ -699,7 +634,7 @@ struct WeightPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phases = vm.weightPhases(for: id, limit: 2)
+        let phases = vm.weightPhases(from: storage.load(for: id), limit: 2)
 
         #expect(phases.count == 2)
         #expect(phases[0].weight == 60)
@@ -716,7 +651,7 @@ struct WeightPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phases = vm.weightPhases(for: id)
+        let phases = vm.weightPhases(from: storage.load(for: id))
 
         #expect(phases.count == 2)
         let firstPhase = phases[0]
@@ -752,23 +687,60 @@ struct EntriesReactiveUpdateTests {
         #expect(vm.cachedEntries(for: id)?[0].setProgress[0].weight == 65)
     }
 
-    @Test func entriesEmptyAfterDeletingAllSets() {
+    @Test func saveOrReplaceRefreshesCachedEntry() {
         let storage = MockAnalyticsStorage()
         let id = UUID()
         let entry = makeEntry(exerciseId: id, date: date(0), sets: [(60, 10)])
         storage.save([entry], for: id)
+        let vm = AnalyticsViewModel(
+            storageService: storage,
+            saveOrReplaceAnalyticsUseCase: SaveOrReplaceAnalyticsUseCase(analyticsStorage: storage)
+        )
+        vm.reloadEntries(for: id)
 
+        vm.saveOrReplaceAnalyticsEntry(
+            exerciseId: id,
+            setProgress: [
+                SetProgress(status: .completedMore, currentReps: 12, weight: 65),
+            ],
+            date: entry.date
+        )
+
+        #expect(vm.cachedEntries(for: id)?.count == 1)
+        #expect(vm.cachedEntries(for: id)?.first?.setProgress.first?.currentReps == 12)
+        #expect(vm.cachedEntries(for: id)?.first?.setProgress.first?.weight == 65)
+    }
+
+    @Test func deleteLogicalSetRefreshesCachedEntry() {
+        let storage = MockAnalyticsStorage()
+        let id = UUID()
+        let entry = AnalyticsEntry(
+            exerciseId: id,
+            date: date(0),
+            setProgress: (0..<2).flatMap { logicalIndex in
+                ExerciseSide.allCases.map { side in
+                    SetProgress(
+                        status: .completedDone,
+                        currentReps: 10,
+                        weight: 20,
+                        side: side,
+                        logicalSetIndex: logicalIndex
+                    )
+                }
+            }
+        )
+        storage.save([entry], for: id)
         let vm = AnalyticsViewModel(
             storageService: storage,
             deleteAnalyticsSetUseCase: DeleteAnalyticsSetUseCase(analyticsStorage: storage)
         )
         vm.reloadEntries(for: id)
 
-        #expect(vm.cachedEntries(for: id)?.count == 1)
+        vm.deleteLogicalSetFromEntry(exerciseId: id, entryId: entry.id, logicalSetIndex: 0)
 
-        vm.deleteSetFromEntry(exerciseId: id, entryId: entry.id, setIndex: 0)
-
-        #expect(vm.cachedEntries(for: id)?.isEmpty == true)
+        let remaining = vm.cachedEntries(for: id)?.first?.setProgress
+        #expect(remaining?.count == 2)
+        #expect(remaining?.allSatisfy { $0.logicalSetIndex == 1 } == true)
     }
 
     @Test func deleteTriggersObservationOnEntries() {

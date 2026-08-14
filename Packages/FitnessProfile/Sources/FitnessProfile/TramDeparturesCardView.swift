@@ -1,11 +1,13 @@
 import SwiftUI
 import FitnessUI
+import FitnessResources
 
 public struct TramDeparturesCardView: View {
 
     @Bindable private var viewModel: TramDeparturesViewModel
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var locale
 
     private var profileColors: ProfileColorTheme { appColorTheme.profile }
 
@@ -47,7 +49,7 @@ public struct TramDeparturesCardView: View {
                     .foregroundColor(profileColors.accent)
 
                 ProfileCardHeading(
-                    "Tram \(viewModel.lineName)",
+                    AppText.transitTramLine(line: viewModel.lineName),
                     detail: "\(viewModel.fromLabel) → \(viewModel.toLabel)"
                 )
 
@@ -68,7 +70,7 @@ public struct TramDeparturesCardView: View {
 
     private var swapRow: some View {
         HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
-            endpointPill(text: viewModel.fromLabel, caption: "Start")
+            endpointPill(text: viewModel.fromLabel, caption: AppText.transitStart)
 
             Button {
                 viewModel.swap()
@@ -81,16 +83,16 @@ public struct TramDeparturesCardView: View {
             }
             .accessibilityIdentifier("id_profile_tram_swap")
 
-            endpointPill(text: viewModel.toLabel, caption: "Destination")
+            endpointPill(text: viewModel.toLabel, caption: AppText.transitDestination)
         }
     }
 
-    private func endpointPill(text: String, caption: String) -> some View {
+    private func endpointPill(text: String, caption: LocalizedStringResource) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(caption)
                 .font(AppStyle.Font.profileCardTitle)
                 .foregroundColor(profileColors.secondary)
-            Text(text)
+            Text(verbatim: text)
                 .font(AppStyle.Font.tileValue)
                 .foregroundColor(profileColors.title)
                 .lineLimit(1)
@@ -110,11 +112,11 @@ public struct TramDeparturesCardView: View {
             loadingRow
         } else if !viewModel.departures.isEmpty {
             departuresList
-        } else if viewModel.errorMessage == nil {
+        } else if viewModel.error == nil {
             emptyRow
         }
 
-        if let error = viewModel.errorMessage {
+        if let error = viewModel.error {
             errorRow(error)
         }
     }
@@ -130,7 +132,7 @@ public struct TramDeparturesCardView: View {
     }
 
     private var emptyRow: some View {
-        Text("No departures in the next 60 minutes.")
+        Text(AppText.transitNoDepartures)
             .font(AppStyle.Font.detailCaption)
             .foregroundColor(profileColors.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -146,14 +148,14 @@ public struct TramDeparturesCardView: View {
 
     private func departureRow(_ dep: TramDeparture, index: Int) -> some View {
         HStack(spacing: AppStyle.DeviceLayout.cardSpacing) {
-            Text(dep.line)
+            Text(verbatim: dep.line)
                 .font(AppStyle.Font.cardSmallBold)
                 .foregroundColor(profileColors.onAccent)
                 .frame(minWidth: AppStyle.Layout.setRowBadgeSize, minHeight: AppStyle.Layout.setRowBadgeSize)
                 .background(profileColors.accentFill)
                 .cornerRadius(AppStyle.CornerRadius.pill)
 
-            Text(viewModel.formattedTime(for: dep.plannedWhen))
+            Text(verbatim: viewModel.formattedTime(for: dep.plannedWhen, locale: locale))
                 .font(AppStyle.Font.tileValue)
                 .foregroundColor(profileColors.title)
                 .fixedSize()
@@ -162,7 +164,7 @@ public struct TramDeparturesCardView: View {
 
             Spacer(minLength: 0)
 
-            Text(dep.direction)
+            Text(verbatim: dep.direction)
                 .font(AppStyle.Font.detailCaption)
                 .foregroundColor(profileColors.secondary)
                 .lineLimit(1)
@@ -178,25 +180,25 @@ public struct TramDeparturesCardView: View {
     @ViewBuilder
     private func delayBadge(for delay: Int) -> some View {
         if delay > 0 {
-            Text("+\(delay) min")
+            Text(verbatim: "+\(delay) min")
                 .font(AppStyle.Font.cardSmallBold)
                 .foregroundColor(AppStyle.Color.yellow)
         } else if delay < 0 {
-            Text("\(delay) min")
+            Text(verbatim: "\(delay) min")
                 .font(AppStyle.Font.cardSmallBold)
                 .foregroundColor(profileColors.accent)
         } else {
-            Text("on time")
+            Text(AppText.transitOnTime)
                 .font(AppStyle.Font.cardSmallBold)
                 .foregroundColor(profileColors.accent)
         }
     }
 
-    private func errorRow(_ message: String) -> some View {
+    private func errorRow(_ failure: TransitPresentationFailure) -> some View {
         HStack(spacing: 4) {
             Image(systemName: "wifi.slash")
                 .font(AppStyle.Font.profileSmallIcon)
-            Text(message)
+            Text(failure.localizedResource)
                 .font(AppStyle.Font.detailCaption)
                 .lineLimit(2)
         }
@@ -224,16 +226,17 @@ public struct TramDeparturesCardView: View {
 
     @ViewBuilder
     private var footerStatusText: some View {
-        if let lastUpdated = viewModel.formattedLastUpdated {
+        if let lastUpdated = viewModel.formattedLastUpdated(locale: locale) {
             if viewModel.isStale {
-                Text("No internet · cached \(lastUpdated)")
+                Text(AppText.transitCached(time: lastUpdated))
                     .font(AppStyle.Font.sheetCaption)
                     .foregroundColor(AppStyle.Color.yellow)
             } else {
-                Text("Updated \(lastUpdated)")
+                Text(AppText.transitUpdated(time: lastUpdated))
                     .font(AppStyle.Font.sheetCaption)
                     .foregroundColor(profileColors.secondary)
             }
         }
     }
+
 }

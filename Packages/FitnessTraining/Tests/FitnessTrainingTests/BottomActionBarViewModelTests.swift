@@ -13,9 +13,7 @@ struct BottomActionBarViewModelTests {
         currentSet: Int = 0,
         currentExercise: Exercise? = nil,
         hasActiveExercise: Bool = true,
-        exercises: [Exercise] = [],
         isLastSetCompleted: Bool = false,
-        quickDoneAllCompleted: Bool = false,
         didEditCompleteSet: Bool = false,
         didJustEditSet: Bool = false
     ) -> BottomActionBarViewModel {
@@ -24,57 +22,25 @@ struct BottomActionBarViewModelTests {
             currentSet: currentSet,
             currentExercise: currentExercise,
             hasActiveExercise: hasActiveExercise,
-            exercises: exercises,
             isLastSetCompleted: isLastSetCompleted,
-            quickDoneAllCompleted: quickDoneAllCompleted,
             didEditCompleteSet: didEditCompleteSet,
             didJustEditSet: didJustEditSet
         )
     }
 
-    @Test func feedbackButtonHiddenWhenIdle() {
-        let vm = makeViewModel()
-        #expect(vm.showFeedbackButton == false)
-    }
-
-    @Test func feedbackButtonVisibleWhenFinishIsVisible() {
+    @Test func feedbackButtonVisibilityTracksFinishVisibility() {
         let exercise = makeExercise(sets: 3)
-        let vm = makeViewModel(
-            currentExercise: exercise,
-            isLastSetCompleted: true
-        )
-        #expect(vm.showFinishButton == true)
-        #expect(vm.showFeedbackButton == true)
-    }
+        let cases = [
+            makeViewModel(),
+            makeViewModel(currentExercise: exercise, isLastSetCompleted: true),
+            makeViewModel(isSetInProgress: true, currentSet: 1, currentExercise: exercise),
+            makeViewModel(currentSet: 0, currentExercise: exercise),
+            makeViewModel(currentExercise: exercise, didEditCompleteSet: true),
+        ]
 
-    @Test func feedbackButtonHiddenDuringActiveSet() {
-        let exercise = makeExercise(sets: 3)
-        let vm = makeViewModel(
-            isSetInProgress: true,
-            currentSet: 1,
-            currentExercise: exercise
-        )
-        #expect(vm.showFeedbackButton == false)
-    }
-
-    @Test func feedbackButtonHiddenAtStartOfExercise() {
-        let exercise = makeExercise(sets: 3)
-        let vm = makeViewModel(
-            currentSet: 0,
-            currentExercise: exercise
-        )
-        #expect(vm.showStartButton == true)
-        #expect(vm.showFeedbackButton == false)
-    }
-
-    @Test func feedbackButtonVisibleAfterEditCompletingSet() {
-        let exercise = makeExercise(sets: 3)
-        let vm = makeViewModel(
-            currentExercise: exercise,
-            didEditCompleteSet: true
-        )
-        #expect(vm.showFinishButton == true)
-        #expect(vm.showFeedbackButton == true)
+        for viewModel in cases {
+            #expect(viewModel.showFeedbackButton == viewModel.showFinishButton)
+        }
     }
 
     // MARK: - QuickDone → BottomActionBar integration
@@ -85,64 +51,13 @@ struct BottomActionBarViewModelTests {
             isSetInProgress: false,
             currentSet: 0,
             currentExercise: exercise,
-            isLastSetCompleted: true,
-            quickDoneAllCompleted: true
+            isLastSetCompleted: true
         )
 
         #expect(vm.showFinishButton == true, "Finish must be visible after QuickDone")
         #expect(vm.showSetControls == false, "Set controls must be hidden — all sets done")
         #expect(vm.showStartButton == false, "Start must be hidden — all sets done")
         #expect(vm.shouldShow == true, "Bar must remain visible for the Finish button")
-    }
-
-    @Test func completedOneTapQuickDoneKeepsOnlyFinishVisible() {
-        let exercise = makeExercise(sets: 3)
-        let vm = makeViewModel(
-            isSetInProgress: false,
-            currentExercise: exercise,
-            isLastSetCompleted: true,
-            quickDoneAllCompleted: true,
-            didEditCompleteSet: false
-        )
-
-        #expect(vm.showFinishButton == true)
-        #expect(vm.showSetControls == false)
-        #expect(vm.showStartButton == false)
-        #expect(vm.shouldShow == true)
-    }
-}
-
-// MARK: - End-to-End: ActiveSetViewModel → BottomActionBarViewModel
-
-@Suite("QuickDone → BottomActionBar E2E", .tags(.fast))
-@MainActor
-struct QuickDoneBottomActionBarE2ETests {
-
-    private func makeActionBar(from vm: ActiveSetViewModel, exercises: [Exercise]) -> BottomActionBarViewModel {
-        BottomActionBarViewModel(
-            isSetInProgress: vm.isSetInProgress,
-            currentSet: vm.currentSet,
-            currentExercise: vm.currentExercise,
-            hasActiveExercise: vm.currentExercise != nil,
-            exercises: exercises,
-            isLastSetCompleted: vm.isLastSetCompleted,
-            quickDoneAllCompleted: vm.quickDoneAllCompleted,
-            didEditCompleteSet: vm.didEditCompleteSet,
-            didJustEditSet: vm.didJustEditSet
-        )
-    }
-
-    @Test func startQuickDoneShowsFinishButton() {
-        let exercise = makeExercise(sets: 3)
-        let vm = ActiveSetViewModel()
-        vm.startQuickDone(for: exercise, category: .arms)
-
-        let bar = makeActionBar(from: vm, exercises: [exercise])
-
-        #expect(bar.showFinishButton == true, "Finish must be visible after startQuickDone")
-        #expect(bar.showSetControls == false, "No set controls — all sets already done")
-        #expect(bar.showStartButton == false, "No start — all sets already done")
-        #expect(bar.shouldShow == true, "Bar must stay visible so user can finish")
     }
 
 }

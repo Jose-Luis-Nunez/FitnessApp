@@ -37,6 +37,8 @@ old one.
 | [0017](../../docs/adr/0017-environment-injected-semantic-color-theme.md) | Superseded by ADR-0018; introduced the environment-injected Profile color theme. |
 | [0018](../../docs/adr/0018-neutral-primary-card-surface.md) | Training semantics and Profile consume one feature-neutral primary card surface. |
 | [0019](../../docs/adr/0019-value-propagated-app-color-theme.md) | One root-owned, value-propagated app color theme updates consumers without replacing view identity. |
+| [0020](../../docs/adr/0020-app-language-localization-boundary.md) | Catalog-derived localization and one root locale preserve state across app-language changes. |
+| [0021](../../docs/adr/0021-shared-package-graph-and-layered-test-plans.md) | One SwiftPM graph preserves module boundaries while native, integration and snapshot plans separate execution cost. |
 
 ## Feature Map
 
@@ -56,8 +58,17 @@ bottom navigation. Product logic lives in Swift packages:
 | `FitnessWorkouts` | Workout CRUD UI, import/export, workout sharing and workout-scoped analytics entry. |
 | `FitnessProfile` | Profile and body metrics plus BMI, Tram and S-Bahn integrations. |
 | `FitnessFriends` | Friend import and workout comparison while keeping imported data isolated from the user's workout store. |
-| `FitnessResources` | Package-owned resources shared by package UI. |
+| `FitnessResources` | App language, the English-source String Catalog, typed localization resources and package-owned assets shared by package UI. |
 | `FitnessTestSupport` | Stateful fakes, fixtures and asynchronous test helpers shared by package tests. It is not production architecture. |
+
+All modules are declared by the single `Packages/Package.swift` manifest and
+consumed by both the app project and the shared test workspace. This centralizes
+dependency resolution and build planning without changing module ownership.
+`FitnessFast` runs eligible test targets natively on macOS, including portable
+in-memory SwiftData service tests. Schema migrations, UIKit integration targets
+and snapshot targets remain isolated on the pinned iOS simulator.
+`FitnessPreMerge` is the umbrella compatibility plan. ADR-0021 records the graph
+and test-layer boundary.
 
 ### Main feature flows
 
@@ -283,14 +294,28 @@ surface while feature state names remain independent. Semantic status colors
 remain separate. ADR-0018 records the surface boundary; ADR-0019 records theme
 ownership and state-preserving propagation.
 
-Language selection is a separate future environment dependency: String Catalogs
-and typed `LocalizedStringResource` symbols belong in `FitnessResources`, while
-`Locale` or a language preference is injected independently. It is not part of
-`AppColorTheme`, a global settings store, or an identity-reset mechanism.
+`AppLanguage` is the independently persisted app-language preference. The
+Profile picker derives its options and locale mapping from the localizations
+bundled with the central `FitnessResources` String Catalog. Adding a language is
+therefore a catalog-only change rather than a new enum case or feature-view
+change. `FitnessAppApp` is its only `@AppStorage` owner and injects the mapped
+`Locale` at the visual root. A package build tool uses Xcode's symbol generator
+to expose catalog-derived public `AppText` symbols across SwiftPM module
+boundaries; its generated Swift file is build output, never a second text
+source. Non-View code receives locale or
+language explicitly. Language is not part of `AppColorTheme`, a global settings
+store, or an identity-reset mechanism. ADR-0020 records the catalog, fallback
+and state-preserving propagation boundary.
 
 ## Live Activity
 
-The app target owns the ActivityKit bridge that starts, updates and ends an active
-training activity from coordinator events. Shared activity attributes and actions
-form the contract with the widget extension. The widget renders those values and
-does not become a second owner of training-session state.
+The app target owns the currently unconnected ActivityKit bridge for starting,
+updating and ending a training activity. Wiring it to training coordinator
+events remains a separate feature fix. `FitnessTraining` owns the Codable,
+Sendable `TrainingActivityContentState`; the app's ActivityKit attributes expose
+it as their nested `ContentState` type alias. This keeps the payload and its
+localization compatibility tests below the host-app boundary. Shared activity
+attributes and actions form the contract with the widget extension. The widget
+renders those values and does not become a second owner of training-session
+state. Content state carries an optional app-language code with English
+fallback for older payloads.

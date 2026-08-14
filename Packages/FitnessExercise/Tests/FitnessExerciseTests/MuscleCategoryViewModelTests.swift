@@ -19,6 +19,7 @@ import FitnessTestSupport
 /// gain. Keep this file-private alias until the Support variant is restructured.
 private final class MockExerciseStorage: ExerciseStoring {
     var savedExercises: [MuscleCategoryGroup: [Exercise]] = [:]
+    private(set) var updateCalls: [Exercise] = []
 
     func loadForWorkout(workoutId: UUID, category: MuscleCategoryGroup) -> [Exercise] {
         savedExercises[category] ?? []
@@ -33,6 +34,7 @@ private final class MockExerciseStorage: ExerciseStoring {
     }
 
     func updateExercise(_ exercise: Exercise) {
+        updateCalls.append(exercise)
         for (category, exercises) in savedExercises {
             if let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
                 savedExercises[category]?[index] = exercise
@@ -80,29 +82,20 @@ private func makeVM(
 @MainActor
 struct UpdateExerciseTests {
 
-    @Test func updatesExerciseInArray() {
+    @Test func updateExerciseChangesArrayAndPersistsTargetedRow() {
         let id = UUID()
         let original = makeExercise(id: id, isCompleted: false)
-        let (vm, _) = makeVM(exercises: [original])
-
-        var updated = original
-        updated.isCompleted = true
-        vm.updateExercise(updated)
-
-        #expect(vm.exercises.first?.isCompleted == true)
-    }
-
-    @Test func savesAfterUpdate() {
-        let id = UUID()
-        let original = makeExercise(id: id)
         let (vm, storage) = makeVM(exercises: [original])
 
         var updated = original
+        updated.isCompleted = true
         updated.weight = 99
         vm.updateExercise(updated)
 
+        #expect(vm.exercises.first?.isCompleted == true)
         let saved = storage.savedExercises[.arms]
         #expect(saved?.first?.weight == 99)
+        #expect(storage.updateCalls.map(\.id) == [id])
     }
 
     @Test func ignoresUnknownExercise() {
@@ -131,13 +124,80 @@ struct ResetProgressTests {
     }
 }
 
+@Suite("exercise collection lifecycle", .tags(.fast))
+@MainActor
+struct ExerciseCollectionLifecycleTests {
+
+    @Test func addAndDeletePersistTheOrderedCollection() {
+        let existing = makeExercise(name: "Existing")
+        let first = makeExercise(name: "First")
+        let last = makeExercise(name: "Last")
+        let (vm, storage) = makeVM(exercises: [existing])
+
+        vm.add(first, atTop: true)
+        vm.add(last, atTop: false)
+        #expect(vm.exercises.map(\.name) == ["First", "Existing", "Last"])
+        #expect(storage.savedExercises[.arms]?.map(\.name) == ["First", "Existing", "Last"])
+
+        vm.deleteExercise(existing)
+        #expect(vm.exercises.map(\.name) == ["First", "Last"])
+        #expect(storage.savedExercises[.arms]?.map(\.name) == ["First", "Last"])
+    }
+
+    @Test func resetAndActivationUseTargetedUpdatesAndIgnoreNoOps() {
+        let completed = makeExercise(isCompleted: true)
+        let (vm, storage) = makeVM(exercises: [completed])
+
+        vm.resetExercise(completed)
+        let reset = vm.exercises[0]
+        #expect(!reset.isCompleted)
+
+        vm.setExerciseActive(reset, active: false)
+        let deactivated = vm.exercises[0]
+        #expect(!deactivated.isActive)
+
+        let callsBeforeNoOp = storage.updateCalls.count
+        vm.setExerciseActive(deactivated, active: false)
+        #expect(storage.updateCalls.count == callsBeforeNoOp)
+    }
+
+    @Test func visibilityFlagsFollowCompletionAndTrainingState() {
+        let exercise = makeExercise()
+        let coordinator = TrainingCoordinator(
+            findCategory: { _ in .arms },
+            onExerciseUpdate: { _, _ in },
+            onExerciseReset: { _, _ in }
+        )
+        let (vm, _) = makeVM(exercises: [exercise], coordinator: coordinator)
+
+        #expect(vm.showNewExercise)
+        #expect(vm.showStartTraining)
+        #expect(!vm.showCancel)
+        #expect(!vm.showReset)
+
+        coordinator.startTraining(for: exercise)
+        #expect(vm.showCancel)
+        #expect(!vm.showNewExercise)
+        #expect(!vm.showStartTraining)
+        #expect(!vm.showReset)
+
+        coordinator.cancelTraining(for: exercise.id)
+        var completed = exercise
+        completed.isCompleted = true
+        vm.updateExercise(completed)
+        #expect(!vm.showCancel)
+        #expect(!vm.showStartTraining)
+        #expect(vm.showReset)
+    }
+}
+
 // MARK: - refreshExercises (external change detection)
 
 @Suite("refreshExercises", .tags(.fast))
 @MainActor
 struct RefreshExercisesTests {
 
-    @Test func picksUpExternalCompletionChange() {
+    @Test func refreshReplacesSnapshotAcrossChangeAdditionAndDeletion() {
         let id = UUID()
         let original = makeExercise(id: id, isCompleted: false)
         let (vm, storage) = makeVM(exercises: [original])
@@ -151,127 +211,82 @@ struct RefreshExercisesTests {
         vm.refreshExercises()
 
         #expect(vm.exercises.first?.isCompleted == true)
-    }
-
-    @Test func refreshDoesNotLoseExercisesAddedExternally() {
-        let existing = makeExercise(name: "Curl")
-        let (vm, storage) = makeVM(exercises: [existing])
-
         let added = makeExercise(name: "Press")
-        storage.savedExercises[.arms] = [existing, added]
+        storage.savedExercises[.arms] = [completed, added]
 
         vm.refreshExercises()
 
         #expect(vm.exercises.count == 2)
         #expect(vm.exercises.contains(where: { $0.name == "Press" }))
-    }
-
-    @Test func refreshRemovesExternallyDeletedExercises() {
-        let ex1 = makeExercise(name: "Curl")
-        let ex2 = makeExercise(name: "Press")
-        let (vm, storage) = makeVM(exercises: [ex1, ex2])
-
-        storage.savedExercises[.arms] = [ex1]
+        storage.savedExercises[.arms] = [added]
 
         vm.refreshExercises()
 
         #expect(vm.exercises.count == 1)
-        #expect(vm.exercises.first?.name == "Curl")
+        #expect(vm.exercises.first?.name == "Press")
     }
 }
 
 // MARK: - Auto-refresh on external training completion
 
-private let testWorkoutId = UUID()
-
 @MainActor
-private func makeCoordinator(storage: MockExerciseStorage? = nil) -> TrainingCoordinator {
-    return TrainingCoordinator(
-        findCategory: { _ in .arms },
-        onExerciseUpdate: { exercise, category in
-            guard let storage else { return }
-            var exercises = storage.savedExercises[category] ?? []
-            if let index = exercises.firstIndex(where: { $0.id == exercise.id }) {
-                exercises[index] = exercise
-            }
-            storage.saveForWorkout(exercises, workoutId: testWorkoutId, category: category)
-        },
-        onExerciseReset: { _, _ in }
-    )
+private final class StorageBackedExerciseManagementSpy: ExerciseManaging {
+    private let storage: MockExerciseStorage
+    private(set) var updatedExercises: [Exercise] = []
+
+    init(storage: MockExerciseStorage) {
+        self.storage = storage
+    }
+
+    func updateExercise(_ updatedExercise: Exercise, category: MuscleCategoryGroup) {
+        updatedExercises.append(updatedExercise)
+        storage.updateExercise(updatedExercise)
+    }
+
+    func getExercises(for category: MuscleCategoryGroup) -> [Exercise] {
+        storage.savedExercises[category] ?? []
+    }
+
+    func addExercise(_ exercise: Exercise, category: MuscleCategoryGroup, atTop: Bool) {}
+    func completeExercise(_ exercise: Exercise, category: MuscleCategoryGroup, setProgress: [SetProgress]) {}
+    func resetExercise(_ exercise: Exercise, category: MuscleCategoryGroup) {}
+    func resetAllExercises(for categories: [MuscleCategoryGroup]) {}
+    func getExerciseCount(for category: MuscleCategoryGroup) -> (total: Int, active: Int) { (0, 0) }
+    func getAllExerciseCounts(for categories: [MuscleCategoryGroup]) -> [MuscleCategoryGroup: (total: Int, active: Int)] { [:] }
+    func hasInactiveExercises(for categories: [MuscleCategoryGroup]) -> Bool { false }
 }
 
 @Suite("observer stability — exercises must survive coordinator state changes", .tags(.fast))
 @MainActor
 struct ObserverStabilityTests {
-
-    @Test func startTrainingDoesNotRemoveExercises() async throws {
-        let ex1 = makeExercise(name: "Curl")
-        let ex2 = makeExercise(name: "Press")
-        let ex3 = makeExercise(name: "Fly")
-        let coordinator = makeCoordinator()
-        let (vm, _) = makeVM(exercises: [ex1, ex2, ex3], coordinator: coordinator)
-
-        #expect(vm.exercises.count == 3)
-
-        await Task.yield()
-
-        coordinator.startTraining(for: ex1)
-
-        try await waitUntil { coordinator.activeSessions[ex1.id] != nil }
-
-        #expect(vm.exercises.count == 3)
-        #expect(vm.exercises.contains(where: { $0.id == ex1.id }))
-        #expect(vm.exercises.contains(where: { $0.id == ex2.id }))
-        #expect(vm.exercises.contains(where: { $0.id == ex3.id }))
-    }
-
-    @Test func cancelTrainingDoesNotRemoveExercises() async throws {
-        let ex1 = makeExercise(name: "Curl")
-        let ex2 = makeExercise(name: "Press")
-        let coordinator = makeCoordinator()
-        let (vm, _) = makeVM(exercises: [ex1, ex2], coordinator: coordinator)
-
-        await Task.yield()
-
-        coordinator.startTraining(for: ex1)
-        try await waitUntil { coordinator.activeSessions[ex1.id] != nil }
-
-        #expect(vm.exercises.count == 2)
-
-        coordinator.cancelTraining(for: ex1.id)
-        try await waitUntil { coordinator.activeSessions[ex1.id] == nil }
-
-        #expect(vm.exercises.count == 2)
-        #expect(vm.exercises.contains(where: { $0.id == ex1.id }))
-        #expect(vm.exercises.contains(where: { $0.id == ex2.id }))
-    }
-
-    @Test func onlyCompletedExerciseUpdatesOthersStayUntouched() async throws {
+    @Test func productionCachePersistsOnlyCompletedExercise() throws {
         let ex1 = makeExercise(name: "Curl")
         let ex2 = makeExercise(name: "Press")
         let ex3 = makeExercise(name: "Fly")
         let storage = MockExerciseStorage()
         storage.savedExercises[.arms] = [ex1, ex2, ex3]
-        let coordinator = makeCoordinator(storage: storage)
+        let management = StorageBackedExerciseManagementSpy(storage: storage)
+        let analyticsViewModel = AnalyticsViewModel(
+            storageService: StubAnalyticsStorage(),
+            exerciseStorage: storage,
+            workoutStorage: MockWorkoutStorage()
+        )
+        let cache = TrainingCoordinatorCache(
+            exerciseManagement: management,
+            analyticsViewModel: analyticsViewModel
+        )
+        let coordinator = cache.coordinator(for: .arms)
         let (vm, _) = makeVM(exercises: [ex1, ex2, ex3], coordinator: coordinator, storage: storage)
 
-        await Task.yield()
-
         coordinator.startTraining(for: ex1)
-        try await waitUntil { coordinator.currentExercise != nil }
 
         for _ in 0..<ex1.sets {
             coordinator.completeSet()
         }
         coordinator.finishExercise()
-
-        // Polling-based auto-refresh was removed in T8d; the live UI now uses
-        // @Query against ExerciseModel for reactivity. The ViewModel's
-        // `exercises` array is only used as a backing store for the Form/Picker
-        // write path, so tests must request a refresh explicitly.
-        try await Task.sleep(for: .milliseconds(100))
         vm.refreshExercises()
 
+        #expect(management.updatedExercises.map(\.id) == [ex1.id])
         let completedEx = try #require(vm.exercises.first(where: { $0.id == ex1.id }))
         #expect(completedEx.isCompleted == true)
 
@@ -284,107 +299,6 @@ struct ObserverStabilityTests {
         #expect(untouched3.name == "Fly")
     }
 
-    @Test func exerciseCountStableAcrossMultipleSessionChanges() async throws {
-        let ex1 = makeExercise(name: "Curl")
-        let ex2 = makeExercise(name: "Press")
-        let coordinator = makeCoordinator()
-        let (vm, _) = makeVM(exercises: [ex1, ex2], coordinator: coordinator)
-
-        await Task.yield()
-
-        coordinator.startTraining(for: ex1)
-        try await waitUntil { coordinator.activeSessions[ex1.id] != nil }
-        #expect(vm.exercises.count == 2)
-
-        coordinator.startTraining(for: ex2)
-        try await waitUntil { coordinator.activeSessions[ex2.id] != nil }
-        #expect(vm.exercises.count == 2)
-
-        coordinator.cancelTraining(for: ex1.id)
-        try await waitUntil { coordinator.activeSessions[ex1.id] == nil }
-        #expect(vm.exercises.count == 2)
-
-        coordinator.cancelTraining(for: ex2.id)
-        try await waitUntil { coordinator.activeSessions[ex2.id] == nil }
-        #expect(vm.exercises.count == 2)
-    }
-}
-
-/// Snapshot-refresh after exercise completion. Since T8d removed VM-side
-/// polling, callers must explicitly invoke `vm.refreshExercises()` to pull
-/// new state from storage. The live UI does **not** do this — it observes
-/// SwiftData via `@Query` directly. These tests guard the legacy Form/Picker
-/// write path's snapshot consistency.
-@Suite("snapshot-refresh after coordinator finish (manual refresh path)", .tags(.fast))
-@MainActor
-struct SnapshotRefreshAfterFinishTests {
-
-    @Test func updatesExerciseInPlaceWhenCoordinatorCompletesIt() async throws {
-        let id = UUID()
-        let original = makeExercise(id: id, isCompleted: false)
-        let storage = MockExerciseStorage()
-        storage.savedExercises[.arms] = [original]
-        let coordinator = makeCoordinator(storage: storage)
-        let (vm, _) = makeVM(exercises: [original], coordinator: coordinator, storage: storage)
-
-        await Task.yield()
-
-        coordinator.startTraining(for: original)
-        #expect(coordinator.isTrainingActive == true)
-
-        try await waitUntil { coordinator.currentExercise != nil }
-
-        for _ in 0..<original.sets {
-            coordinator.completeSet()
-        }
-        coordinator.finishExercise()
-
-        // See note in onlyCompletedExerciseUpdatesOthersStayUntouched —
-        // VM-side polling is gone; explicit refresh is required.
-        try await Task.sleep(for: .milliseconds(100))
-        vm.refreshExercises()
-
-        #expect(vm.exercises.first?.isCompleted == true)
-        #expect(coordinator.lastCompletedExercise?.id == id)
-    }
-
-    @Test func doesNotUpdateWhenNoExerciseCompleted() async throws {
-        let original = makeExercise(isCompleted: false)
-        let coordinator = makeCoordinator()
-        let (vm, _) = makeVM(exercises: [original], coordinator: coordinator)
-
-        #expect(coordinator.lastCompletedExercise == nil)
-
-        try await Task.sleep(for: .milliseconds(200))
-
-        #expect(vm.exercises.first?.isCompleted == false)
-    }
-
-    @Test func ignoresCompletionForUnknownExerciseId() async throws {
-        let knownExercise = makeExercise(name: "Curl")
-        let unknownExercise = makeExercise(name: "Unknown")
-        let storage = MockExerciseStorage()
-        storage.savedExercises[.arms] = [knownExercise]
-        let coordinator = makeCoordinator(storage: storage)
-        let (vm, _) = makeVM(exercises: [knownExercise], coordinator: coordinator, storage: storage)
-
-        await Task.yield()
-
-        coordinator.startTraining(for: unknownExercise)
-        try await waitUntil { coordinator.currentExercise != nil }
-
-        for _ in 0..<unknownExercise.sets {
-            coordinator.completeSet()
-        }
-        coordinator.finishExercise()
-
-        try await waitUntil { coordinator.lastCompletedExercise != nil }
-        try await Task.sleep(for: .milliseconds(100))
-
-        #expect(vm.exercises.count == 1)
-        #expect(vm.exercises.first?.id == knownExercise.id)
-        #expect(vm.exercises.first?.isCompleted == false)
-    }
 }
 
 // MARK: - Current Workout ID Exposure (T7b)
@@ -403,27 +317,13 @@ struct MuscleCategoryViewModelCurrentWorkoutIdTests {
         )
     }
 
-    @Test func returnsNilWhenNoWorkoutSelected() {
+    @Test func tracksCurrentWorkoutAcrossNilSelectionAndSwitch() {
         let ws = MockWorkoutStorage()
         let vm = makeVMOnly(workoutStorage: ws)
         #expect(vm.currentWorkoutId == nil)
-    }
-
-    @Test func returnsIdOfSelectedWorkout() {
-        let workout = Workout(name: "Test", selectedCategories: [.arms])
-        let ws = MockWorkoutStorage()
-        ws.setCurrentWorkout(workout)
-        let vm = makeVMOnly(workoutStorage: ws)
-        #expect(vm.currentWorkoutId == workout.id)
-    }
-
-    @Test func reflectsWorkoutSwitch() {
         let w1 = Workout(name: "W1", selectedCategories: [.arms])
         let w2 = Workout(name: "W2", selectedCategories: [.chest])
-        let ws = MockWorkoutStorage()
         ws.setCurrentWorkout(w1)
-        let vm = makeVMOnly(workoutStorage: ws)
-
         #expect(vm.currentWorkoutId == w1.id)
 
         ws.setCurrentWorkout(w2)

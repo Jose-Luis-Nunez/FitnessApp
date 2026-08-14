@@ -1,4 +1,5 @@
 import FitnessCore
+import FitnessResources
 import FitnessUI
 import SwiftUI
 
@@ -7,8 +8,8 @@ extension TotalAnalyticsView {
     var workoutDetailView: some View {
         AnalyticsDetailSection(shouldShowIndicator: shouldShowScrollIndicator()) {
             AnalyticsDetailHeader(
-                title: "Last Workout",
-                subtitle: workoutDetailData.map { DateFormatter.germanShort.string(from: $0.date) },
+                title: AppText.analyticsLastWorkout,
+                subtitle: workoutDetailData.map { $0.date.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year(.twoDigits).locale(locale)) },
                 onBack: { showWorkoutDetail = false }
             )
         } content: {
@@ -23,7 +24,7 @@ extension TotalAnalyticsView {
                     categoryDetailSection(categoryDetail: categoryDetail)
                 }
             } else {
-                Text("No workout data available")
+                Text(AppText.analyticsNoWorkoutData)
                     .font(AppStyle.Font.pickerAction)
                     .foregroundColor(AppStyle.Color.white.opacity(0.6))
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -36,7 +37,7 @@ extension TotalAnalyticsView {
     @ViewBuilder
     func categoryDetailSection(categoryDetail: CategoryDetailData) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(categoryDetail.category.displayName)
+            Text(categoryDetail.category.localizedName)
                 .font(AppStyle.Font.cardHeadline)
                 .foregroundColor(appColorTheme.accent.glow)
 
@@ -49,13 +50,13 @@ extension TotalAnalyticsView {
     @ViewBuilder
     func exerciseDetailRow(exerciseDetail: ExerciseDetailData) -> some View {
         HStack {
-            Text(exerciseDetail.exercise.name)
+            Text(verbatim: exerciseDetail.exercise.name)
                 .font(AppStyle.Font.detailExercise)
                 .foregroundColor(appColorTheme.accent.glow)
 
             Spacer()
 
-            Text(exerciseDetail.isCompleted ? "Done" : "Not Started")
+            Text(exerciseDetail.isCompleted ? AppText.actionDone : AppText.analyticsNotStarted)
                 .font(AppStyle.Font.detailCaption)
                 .foregroundColor(exerciseDetail.isCompleted ? appColorTheme.accent.glow : appColorTheme.accent.glow.opacity(0.6))
                 .padding(.horizontal, 8)

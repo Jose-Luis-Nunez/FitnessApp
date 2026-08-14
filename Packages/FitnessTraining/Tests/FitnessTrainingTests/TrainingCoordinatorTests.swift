@@ -416,10 +416,7 @@ struct HandleQuickDoneTests {
         coordinator.startTraining(for: exercise)
         coordinator.handleQuickDone()
 
-        let barVM = coordinator.createBottomActionBarViewModel(
-            exercises: [exercise],
-            hasActiveExercise: true
-        )
+        let barVM = coordinator.createBottomActionBarViewModel(hasActiveExercise: true)
 
         #expect(barVM.showFinishButton == true)
         #expect(barVM.showSetControls == false)
@@ -647,113 +644,55 @@ struct SetCurrentExerciseTests {
 @Suite("createTrainingCallbacks", .tags(.fast))
 @MainActor
 struct CreateTrainingCallbacksTests {
-
-    @Test func onCompleteSetDelegatesToCoordinator() {
+    @Test func callbacksMapToCoordinatorAndExternalHandlers() {
         let coordinator = makeCoordinator()
         let exercise = makeExercise(sets: 3)
         coordinator.startTraining(for: exercise)
-
         let callbacks = coordinator.createTrainingCallbacks()
+
         callbacks.onCompleteSet()
-
         #expect(coordinator.activeSetViewModel.currentSet == 1)
-    }
-
-    @Test func onQuickDoneDelegatesToCoordinator() {
-        let coordinator = makeCoordinator()
-        let exercise = makeExercise(sets: 3)
-        coordinator.startTraining(for: exercise)
-
-        let callbacks = coordinator.createTrainingCallbacks()
         callbacks.onQuickDone()
-
         #expect(coordinator.activeSetViewModel.isLastSetCompleted == true)
         #expect(coordinator.activeSetViewModel.setProgress.allSatisfy { $0.status == .completedDone })
-    }
-
-    @Test func onFinishDelegatesToCoordinator() {
-        let coordinator = makeCoordinator()
-        let exercise = makeExercise(sets: 1)
-        coordinator.startTraining(for: exercise)
-        coordinator.completeSet()
-
-        let callbacks = coordinator.createTrainingCallbacks()
         callbacks.onFinish()
-
         #expect(coordinator.currentExercise == nil)
         #expect(coordinator.isTrainingActive == false)
-    }
 
-    @Test func onCategoryResetDelegatesToCoordinator() {
         var resetCalled = false
-
-        let coordinator = makeCoordinator(
+        let resetCoordinator = makeCoordinator(
             onExerciseReset: { _, _ in resetCalled = true }
         )
-        let exercise = makeExercise(sets: 2)
-        coordinator.startTraining(for: exercise)
-
-        let callbacks = coordinator.createTrainingCallbacks()
-        callbacks.onCategoryReset()
-
+        resetCoordinator.startTraining(for: makeExercise(sets: 2))
+        resetCoordinator.createTrainingCallbacks().onCategoryReset()
         #expect(resetCalled == true)
-        #expect(coordinator.activeSessions.isEmpty)
-    }
+        #expect(resetCoordinator.activeSessions.isEmpty)
 
-    @Test func onAddExerciseDelegatesToCallback() {
         var addCalled = false
-        let coordinator = TrainingCoordinator(
+        var resetAllCalled = false
+        let externalCoordinator = TrainingCoordinator(
             findCategory: { _ in .arms },
             onExerciseUpdate: { _, _ in },
             onExerciseReset: { _, _ in },
             onAddExercise: { addCalled = true },
-            analyticsViewModel: AnalyticsViewModel(storageService: StubAnalyticsStorage())
-        )
-
-        let callbacks = coordinator.createTrainingCallbacks()
-        callbacks.onAddExercise()
-
-        #expect(addCalled == true)
-    }
-
-    @Test func onResetAllExercisesDelegatesToCallback() {
-        var resetAllCalled = false
-        let coordinator = TrainingCoordinator(
-            findCategory: { _ in .arms },
-            onExerciseUpdate: { _, _ in },
-            onExerciseReset: { _, _ in },
             onResetAllExercises: { resetAllCalled = true },
             analyticsViewModel: AnalyticsViewModel(storageService: StubAnalyticsStorage())
         )
-
-        let callbacks = coordinator.createTrainingCallbacks()
-        callbacks.onResetAllExercises()
-
+        let externalCallbacks = externalCoordinator.createTrainingCallbacks()
+        externalCallbacks.onAddExercise()
+        externalCallbacks.onResetAllExercises()
+        #expect(addCalled == true)
         #expect(resetAllCalled == true)
-    }
 
-    @Test func onEditLessDelegatesToCoordinator() {
-        let coordinator = makeCoordinator()
-        let exercise = makeExercise(sets: 3)
-        coordinator.startTraining(for: exercise)
+        let lessCoordinator = makeCoordinator()
+        lessCoordinator.startTraining(for: makeExercise(sets: 3))
+        lessCoordinator.createTrainingCallbacks().onEditLess()
+        #expect(lessCoordinator.activeSetViewModel.editMode == .less)
 
-        let callbacks = coordinator.createTrainingCallbacks()
-        callbacks.onEditLess()
-
-        #expect(coordinator.activeSetViewModel.isEditing == true)
-        #expect(coordinator.activeSetViewModel.editMode == .less)
-    }
-
-    @Test func onEditMoreDelegatesToCoordinator() {
-        let coordinator = makeCoordinator()
-        let exercise = makeExercise(sets: 3)
-        coordinator.startTraining(for: exercise)
-
-        let callbacks = coordinator.createTrainingCallbacks()
-        callbacks.onEditMore()
-
-        #expect(coordinator.activeSetViewModel.isEditing == true)
-        #expect(coordinator.activeSetViewModel.editMode == .more)
+        let moreCoordinator = makeCoordinator()
+        moreCoordinator.startTraining(for: makeExercise(sets: 3))
+        moreCoordinator.createTrainingCallbacks().onEditMore()
+        #expect(moreCoordinator.activeSetViewModel.editMode == .more)
     }
 }
 

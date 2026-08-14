@@ -1,6 +1,7 @@
 import SwiftUI
 import FitnessUI
 import UniformTypeIdentifiers
+import FitnessResources
 
 /// Edge-to-edge Add Friend form presented inside a transparent full-screen host.
 ///
@@ -57,7 +58,7 @@ struct AddFriendSheet: View {
                 }
                 .buttonStyle(.plain)
                 .ignoresSafeArea()
-                .accessibilityLabel("Cancel adding friend")
+                .accessibilityLabel(AppText.friendCancelAdding)
 
                 sheetContent(geometry: geometry)
                     .offset(y: max(0, dragTranslation))
@@ -100,7 +101,7 @@ struct AddFriendSheet: View {
 
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: AppStyle.Padding.sectionSpacing) {
-                    Text("Add Friend")
+                    Text(AppText.friendAdd)
                         .font(AppStyle.Font.sheetTitle)
                         .foregroundColor(AppStyle.Color.white)
                         .frame(maxWidth: .infinity, alignment: .center)
@@ -110,7 +111,7 @@ struct AddFriendSheet: View {
                     fileSelectionButton
 
                     if let msg = viewModel.errorMessage {
-                        Text(msg)
+                        Text(msg.localizedResource)
                             .font(AppStyle.Font.profileCardTitle)
                             .foregroundColor(AppStyle.Color.error)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -123,8 +124,8 @@ struct AddFriendSheet: View {
 
             if !nameFieldFocused {
                 ProfileActionRow(
-                    secondaryLabel: "Cancel",
-                    primaryLabel: "Save",
+                    secondaryLabel: AppText.actionCancel,
+                    primaryLabel: AppText.actionSave,
                     isPrimaryEnabled: !viewModel.isSaveDisabled,
                     secondaryAccessibilityIdentifier: "id_friends_add_cancel",
                     primaryAccessibilityIdentifier: "id_friends_add_save",
@@ -206,11 +207,11 @@ struct AddFriendSheet: View {
 
     private var instructionSection: some View {
         VStack(alignment: .leading, spacing: AppStyle.Padding.cardVertical) {
-            Text("Import training data")
+            Text(AppText.friendImportTrainingData)
                 .font(AppStyle.Font.profileInputLabel)
                 .foregroundColor(profileColors.title)
 
-            Text("Enter a name, then choose the .fitnessfriend file shared by your friend.")
+            Text(AppText.friendImportInstructions)
                 .font(AppStyle.Font.detailCaption)
                 .foregroundColor(profileColors.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -220,8 +221,8 @@ struct AddFriendSheet: View {
 
     private var nameSection: some View {
         CardTextField(
-            label: "Name",
-            placeholder: "Friend name",
+            label: AppText.friendName,
+            placeholder: AppText.friendNamePlaceholder,
             text: $viewModel.friendName,
             isFocused: $nameFieldFocused,
             accessibilityIdentifier: AID.nameInput
@@ -237,7 +238,7 @@ struct AddFriendSheet: View {
                     .font(AppStyle.Font.sheetSectionLabel)
                     .foregroundColor(profileColors.accent)
 
-                Text("Choose friend file")
+                Text(AppText.friendChooseFile)
                     .font(AppStyle.Font.sheetSectionLabel)
                     .foregroundColor(profileColors.title)
                     .lineLimit(1)
@@ -264,10 +265,24 @@ struct AddFriendSheet: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier(AID.fileButton)
-        .accessibilityValue(
-            viewModel.hasData
-                ? "Selected, \(viewModel.fileName ?? "friend file")"
-                : "Not selected"
-        )
+        .accessibilityValue(fileSelectionAccessibilityValue)
+    }
+
+    private var fileSelectionAccessibilityValue: LocalizedStringResource {
+        guard viewModel.hasData else { return AppText.commonNotSelected }
+        guard let fileName = viewModel.fileName else { return AppText.commonSelected }
+        return AppText.friendSelectedFile(name: fileName)
+    }
+}
+
+private extension FriendImportFailure {
+    var localizedResource: LocalizedStringResource {
+        switch self {
+        case .unreadableFile: AppText.friendFileUnreadable
+        case .invalidJSON: AppText.errorInvalidWorkoutJson
+        case .newerVersion: AppText.errorNewerWorkoutVersion
+        case .incompleteData: AppText.errorIncompleteWorkout
+        case .savingFailed: AppText.errorSavingFailed
+        }
     }
 }

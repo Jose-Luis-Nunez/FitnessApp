@@ -1,14 +1,19 @@
 import Foundation
 import FitnessCore
 
+public enum TrainingStartLabel: Equatable, Sendable {
+    case training
+    case left(Int)
+    case right(Int)
+    case set(Int)
+}
+
 public struct BottomActionBarViewModel {
     public let isSetInProgress: Bool
     public let currentSet: Int
     public let currentExercise: Exercise?
     public let hasActiveExercise: Bool
-    public let exercises: [Exercise]
     public let isLastSetCompleted: Bool
-    public let quickDoneAllCompleted: Bool
     public let didEditCompleteSet: Bool
     public let didJustEditSet: Bool
 
@@ -17,9 +22,7 @@ public struct BottomActionBarViewModel {
         currentSet: Int,
         currentExercise: Exercise?,
         hasActiveExercise: Bool,
-        exercises: [Exercise],
         isLastSetCompleted: Bool,
-        quickDoneAllCompleted: Bool,
         didEditCompleteSet: Bool,
         didJustEditSet: Bool
     ) {
@@ -27,9 +30,7 @@ public struct BottomActionBarViewModel {
         self.currentSet = currentSet
         self.currentExercise = currentExercise
         self.hasActiveExercise = hasActiveExercise
-        self.exercises = exercises
         self.isLastSetCompleted = isLastSetCompleted
-        self.quickDoneAllCompleted = quickDoneAllCompleted
         self.didEditCompleteSet = didEditCompleteSet
         self.didJustEditSet = didJustEditSet
     }
@@ -63,23 +64,23 @@ public struct BottomActionBarViewModel {
         showFinishButton
     }
 
-    public var startButtonTitle: String {
+    public var startButtonLabel: TrainingStartLabel {
         if currentSet == 0 && !didJustEditSet {
-            return "Start Training"
+            return .training
         } else {
             guard let exercise = currentExercise,
                   currentSet < exercise.trainingSteps.count else {
-                return "Start Training"
+                return .training
             }
             let step = exercise.trainingSteps[currentSet]
             let setNumber = step.logicalSetIndex + 1
             switch step.side {
             case .left:
-                return "Start Left \(setNumber)"
+                return .left(setNumber)
             case .right:
-                return "Start Right \(setNumber)"
+                return .right(setNumber)
             case nil:
-                return "Start set \(setNumber)"
+                return .set(setNumber)
             }
         }
     }

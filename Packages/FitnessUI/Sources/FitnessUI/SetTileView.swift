@@ -1,8 +1,10 @@
 import SwiftUI
 import FitnessCore
+import FitnessResources
 
 public struct SetTileView: View {
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var locale
     public let setNumber: Int
     public let weight: Double
     public let reps: Int
@@ -16,12 +18,12 @@ public struct SetTileView: View {
     }
 
     private var weightText: String {
-        WeightFormatter.format(weight)
+        WeightFormatter.format(weight, locale: locale)
     }
 
     public var body: some View {
         VStack(spacing: 2) {
-            Text("SET \(setNumber)")
+            Text(AppText.exerciseSetNumberUppercase(number: setNumber))
                 .font(AppStyle.Font.cardSmallLabel)
                 .foregroundColor(.white.opacity(0.7))
 
@@ -29,22 +31,22 @@ public struct SetTileView: View {
                 HStack(alignment: .firstTextBaseline, spacing: 1) {
                     Text(weightText)
                         .font(AppStyle.Font.cardValueBold)
-                    Text("kg")
+                    Text(verbatim: "kg")
                         .font(AppStyle.Font.chartAxisSmall)
                 }
                 .foregroundColor(appColorTheme.accent.light)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
 
-                Text("\(reps) reps")
+                Text(AppText.exerciseRepetitionsCount(count: reps))
                     .font(AppStyle.Font.cardTinyLabel)
                     .foregroundColor(.white.opacity(0.7))
             } else {
-                Text("\(reps)")
+                Text(verbatim: "\(reps)")
                     .font(AppStyle.Font.cardValueBold)
                     .foregroundColor(appColorTheme.accent.light)
 
-                Text("reps")
+                Text(AppText.exerciseRepsLowercase)
                     .font(AppStyle.Font.cardTinyLabel)
                     .foregroundColor(.white.opacity(0.7))
             }

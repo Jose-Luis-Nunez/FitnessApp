@@ -1,231 +1,112 @@
 import Foundation
+import FitnessTestSupport
 import SwiftData
 import Testing
 import FitnessCore
-import FitnessTestSupport
 @_spi(PersistenceUI) import FitnessStorage
 @testable import FitnessPersistenceUI
 
-/// Tests for `CategoryTileModelView`: what is proven is the predicate logic against
-/// a real in-memory `ModelContainer`. `@Query` itself cannot be instantiated
-/// out-of-view, but running exactly the same predicate via `FetchDescriptor`
-/// proves the data layer — the UI render proof is carried by the invariant test in
-/// `FitnessStorageTests` once T7 puts the view into use.
-
 @MainActor
-@Suite("CategoryTileModelView — Bug-2 Predicate gegen ExerciseModel.workoutId", .tags(.integration))
+@Suite("CategoryTileModelView production contracts", .tags(.integration))
 struct CategoryTileModelViewTests {
 
+    @Test("Production predicate isolates workout and category")
+    func predicateIsolatesWorkoutAndCategory() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let selectedWorkout = makeWorkout(name: "Selected")
+        let otherWorkout = makeWorkout(name: "Other")
+        context.insert(selectedWorkout)
+        context.insert(otherWorkout)
+
+        let matching = makeExercise(workout: selectedWorkout, category: .arms)
+        context.insert(matching)
+        context.insert(makeExercise(workout: selectedWorkout, category: .chest))
+        context.insert(makeExercise(workout: otherWorkout, category: .arms))
+        try context.save()
+
+        let descriptor = FetchDescriptor<ExerciseModel>(
+            predicate: CategoryTileExerciseQuery.predicate(
+                workoutId: selectedWorkout.id,
+                category: .arms
+            )
+        )
+
+        #expect(try context.fetch(descriptor).map(\.id) == [matching.id])
+    }
+
+    @Test("Production aggregation handles completion, deactivation, legacy rows and active sessions")
+    func progressAggregationCoversMeaningfulStates() {
+        let workout = makeWorkout(name: "Workout")
+        let open = makeExercise(workout: workout, category: .arms)
+        open.isActive = nil
+        let completed = makeExercise(workout: workout, category: .arms)
+        completed.isCompleted = true
+        completed.isActive = true
+        let deactivated = makeExercise(workout: workout, category: .arms)
+        deactivated.isActive = false
+
+        let partial = CategoryTileProgressInfo(
+            exercises: [open, completed, deactivated],
+            hasActiveSet: false
+        )
+        #expect(partial.total == 2)
+        #expect(partial.completed == 1)
+        #expect(partial.progress == 0.5)
+        #expect(!partial.isCompleted)
+
+        open.isCompleted = true
+        let completedWithoutSession = CategoryTileProgressInfo(
+            exercises: [open, completed, deactivated],
+            hasActiveSet: false
+        )
+        #expect(completedWithoutSession.isCompleted)
+
+        let completedWithSession = CategoryTileProgressInfo(
+            exercises: [open, completed, deactivated],
+            hasActiveSet: true
+        )
+        #expect(!completedWithSession.isCompleted)
+
+        let empty = CategoryTileProgressInfo(exercises: [], hasActiveSet: false)
+        #expect(empty.total == 0)
+        #expect(empty.completed == 0)
+        #expect(empty.progress == 0)
+        #expect(!empty.isCompleted)
+    }
+
     private func makeContainer() throws -> ModelContainer {
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        return try ModelContainer(
-            for: WorkoutModel.self, ExerciseModel.self,
-            configurations: config
+        try ModelContainer(
+            for: WorkoutModel.self,
+            ExerciseModel.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
     }
 
-    private func makeWorkout(id: UUID = UUID()) -> WorkoutModel {
+    private func makeWorkout(name: String) -> WorkoutModel {
         WorkoutModel(
-            id: id,
-            name: "W",
-            selectedCategories: [MuscleCategoryGroup.chest.rawValue],
+            id: UUID(),
+            name: name,
+            selectedCategories: [MuscleCategoryGroup.arms.rawValue],
             createdDate: .now,
             lastModified: .now
         )
     }
 
-    private func insertExercise(
-        in ctx: ModelContext,
-        workoutId: UUID,
+    private func makeExercise(
         workout: WorkoutModel,
-        category: MuscleCategoryGroup = .arms,
-        isCompleted: Bool = false,
-        sortOrder: Int = 0
+        category: MuscleCategoryGroup
     ) -> ExerciseModel {
-        let m = ExerciseModel(
+        ExerciseModel(
             id: UUID(),
-            workoutId: workoutId,
-            name: "E\(sortOrder)",
-            weight: 60,
+            workoutId: workout.id,
+            name: "Exercise",
+            weight: 20,
             reps: 10,
             sets: 3,
-            isCompleted: isCompleted,
             iconName: category.defaultIconName,
             category: category.rawValue,
-            sortOrder: sortOrder,
             workout: workout
         )
-        ctx.insert(m)
-        return m
-    }
-
-    @Test("Total + active count matches data scoped to (workoutId, category)")
-    func countMatchesData() throws {
-        let container = try makeContainer()
-        let ctx = ModelContext(container)
-        let workoutId = UUID()
-        let workout = makeWorkout(id: workoutId)
-        ctx.insert(workout)
-
-        // 3 in 'arms', 1 of them completed
-        for i in 0..<3 {
-            _ = insertExercise(
-                in: ctx,
-                workoutId: workoutId,
-                workout: workout,
-                category: .arms,
-                isCompleted: i == 0,
-                sortOrder: i
-            )
-        }
-        // 1 in 'chest' (should NOT be counted)
-        _ = insertExercise(
-            in: ctx,
-            workoutId: workoutId,
-            workout: workout,
-            category: .chest,
-            isCompleted: false,
-            sortOrder: 0
-        )
-        try ctx.save()
-
-        let raw = MuscleCategoryGroup.arms.rawValue
-        let wid = workoutId
-        let descriptor = FetchDescriptor<ExerciseModel>(
-            predicate: #Predicate { exercise in
-                exercise.workoutId == wid && exercise.category == raw
-            }
-        )
-        let fetched = try ctx.fetch(descriptor)
-
-        let total = fetched.count
-        let active = fetched.lazy.filter { !$0.isCompleted }.count
-        let completed = total - active
-
-        #expect(total == 3)
-        #expect(active == 2)
-        #expect(completed == 1)
-    }
-
-    @Test("Predicate isolates by workoutId: exercises from another workout are not counted")
-    func predicateIsolatesByWorkout() throws {
-        let container = try makeContainer()
-        let ctx = ModelContext(container)
-
-        let workoutA = makeWorkout()
-        let workoutB = makeWorkout()
-        ctx.insert(workoutA)
-        ctx.insert(workoutB)
-
-        _ = insertExercise(in: ctx, workoutId: workoutA.id, workout: workoutA, category: .arms, sortOrder: 0)
-        _ = insertExercise(in: ctx, workoutId: workoutA.id, workout: workoutA, category: .arms, sortOrder: 1)
-        _ = insertExercise(in: ctx, workoutId: workoutB.id, workout: workoutB, category: .arms, sortOrder: 0)
-        try ctx.save()
-
-        let raw = MuscleCategoryGroup.arms.rawValue
-        let widA = workoutA.id
-        let widB = workoutB.id
-
-        let countA = try ctx.fetch(FetchDescriptor<ExerciseModel>(
-            predicate: #Predicate { $0.workoutId == widA && $0.category == raw }
-        )).count
-        let countB = try ctx.fetch(FetchDescriptor<ExerciseModel>(
-            predicate: #Predicate { $0.workoutId == widB && $0.category == raw }
-        )).count
-
-        #expect(countA == 2)
-        #expect(countB == 1)
-    }
-
-    /// Proves the Bug-2 data path: a mutation on `ExerciseModel.isCompleted`
-    /// immediately changes the active count for the category — even without a
-    /// view calling `refreshExercises()`. This is exactly what `@Query` does live
-    /// during render in the UI.
-    @Test("Bug-2 sanity: completed mutation lowers the active count in the same context")
-    func activeCountDropsAfterMutation() throws {
-        let container = try makeContainer()
-        let ctx = ModelContext(container)
-        let workoutId = UUID()
-        let workout = makeWorkout(id: workoutId)
-        ctx.insert(workout)
-
-        let exercise = insertExercise(
-            in: ctx,
-            workoutId: workoutId,
-            workout: workout,
-            category: .arms,
-            isCompleted: false
-        )
-        try ctx.save()
-
-        let raw = MuscleCategoryGroup.arms.rawValue
-        let wid = workoutId
-        let activeOnly = FetchDescriptor<ExerciseModel>(
-            predicate: #Predicate { ex in
-                ex.workoutId == wid && ex.category == raw && !ex.isCompleted
-            }
-        )
-
-        #expect(try ctx.fetch(activeOnly).count == 1)
-
-        exercise.isCompleted = true
-        try ctx.save()
-
-        #expect(try ctx.fetch(activeOnly).count == 0)
-    }
-
-    /// Pins the deactivate count semantics: a deactivated open exercise drops out
-    /// of BOTH the total and the active count (4/5 → 4/4). Mirrors the view's
-    /// `exercises.filter { $0.isActive ?? true }` basis. `isActive == nil` (legacy)
-    /// must still count as active.
-    @Test("Deactivated exercise drops out of total and active counts")
-    func deactivatedExerciseExcludedFromCounts() throws {
-        let container = try makeContainer()
-        let ctx = ModelContext(container)
-        let workoutId = UUID()
-        let workout = makeWorkout(id: workoutId)
-        ctx.insert(workout)
-
-        // Two active (one nil/legacy, one explicit true) + one deactivated, all open.
-        let legacy = insertExercise(in: ctx, workoutId: workoutId, workout: workout, category: .arms, sortOrder: 0)
-        let explicit = insertExercise(in: ctx, workoutId: workoutId, workout: workout, category: .arms, sortOrder: 1)
-        explicit.isActive = true
-        let deactivated = insertExercise(in: ctx, workoutId: workoutId, workout: workout, category: .arms, sortOrder: 2)
-        deactivated.isActive = false
-        try ctx.save()
-
-        let raw = MuscleCategoryGroup.arms.rawValue
-        let wid = workoutId
-        let fetched = try ctx.fetch(FetchDescriptor<ExerciseModel>(
-            predicate: #Predicate { $0.workoutId == wid && $0.category == raw }
-        ))
-
-        // Same basis the tile uses.
-        let activeExercises = fetched.filter { $0.isActive ?? true }
-        let total = activeExercises.count
-        let active = activeExercises.filter { !$0.isCompleted }.count
-
-        #expect(fetched.count == 3)            // all rows present in the store
-        #expect(total == 2)                    // deactivated excluded from total
-        #expect(active == 2)                   // and from active
-        _ = legacy                             // silence unused warning
-    }
-
-    @Test("Empty workout: predicate returns an empty list, total/active == 0")
-    func emptyWorkoutHasZeroCount() throws {
-        let container = try makeContainer()
-        let ctx = ModelContext(container)
-        let workoutId = UUID()
-        let workout = makeWorkout(id: workoutId)
-        ctx.insert(workout)
-        try ctx.save()
-
-        let raw = MuscleCategoryGroup.legs.rawValue
-        let wid = workoutId
-        let descriptor = FetchDescriptor<ExerciseModel>(
-            predicate: #Predicate { $0.workoutId == wid && $0.category == raw }
-        )
-        let fetched = try ctx.fetch(descriptor)
-        #expect(fetched.isEmpty)
     }
 }

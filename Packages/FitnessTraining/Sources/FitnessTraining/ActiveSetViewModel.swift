@@ -458,7 +458,10 @@ public final class ActiveSetViewModel {
             : nil
 
         editing.repsInput = String(remembered?.reps ?? progress.currentReps)
-        editing.weightInput = WeightFormatter.format(remembered?.weight ?? progress.weight)
+        // Editing state remains locale-neutral; the presentation layer formats
+        // the numeric value with its environment locale.
+        let weight = remembered?.weight ?? progress.weight
+        editing.weightInput = weight == floor(weight) ? String(Int(weight)) : String(weight)
         editing.pendingEditIndex = index
         editing.editMode = mode
         editing.isEditing = true

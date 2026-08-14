@@ -13,11 +13,11 @@ source "$HOOKS_DIR/lib/adr-triggers.sh"
 # Trigger detection scans Swift + Package.swift only. Markdown / hooks / skills
 # can mention the same patterns as documentation examples without being a real
 # structural change.
-DIFF=$(git diff HEAD -- '*.swift' 'Packages/*/Package.swift' 2>/dev/null || true)
-DIFF_FILES=$(git diff HEAD --name-only -- '*.swift' 'Packages/*/Package.swift' 2>/dev/null || true)
+DIFF=$(git diff HEAD -- '*.swift' 'Packages/Package.swift' 'Packages/*/Package.swift' 2>/dev/null || true)
+DIFF_FILES=$(git diff HEAD --name-only -- '*.swift' 'Packages/Package.swift' 'Packages/*/Package.swift' 2>/dev/null || true)
 
 # Untracked Swift / Package.swift files contribute too.
-UNTRACKED_FILES=$(git ls-files --others --exclude-standard 2>/dev/null | grep -E '\.swift$|^Packages/[^/]+/Package\.swift$' || true)
+UNTRACKED_FILES=$(git ls-files --others --exclude-standard 2>/dev/null | grep -E '\.swift$|^Packages(/[^/]+)?/Package\.swift$' || true)
 if [ -n "$UNTRACKED_FILES" ]; then
   while IFS= read -r f; do
     [ -z "$f" ] && continue

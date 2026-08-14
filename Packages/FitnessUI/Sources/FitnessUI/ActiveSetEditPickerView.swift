@@ -1,11 +1,13 @@
 import SwiftUI
+import FitnessResources
 
 public struct ActiveSetEditPickerView: View {
-    let title: String
+    @Environment(\.locale) private var locale
+    let title: LocalizedStringResource
     @Binding var selectedReps: String
     @Binding var selectedWeight: String
     let repsRange: ClosedRange<Int>
-    let weightOptions: [String]
+    let weightOptions: [Double]
     let onSave: (Int, Double) -> Void
     let onCancel: () -> Void
     let saveDisabled: Bool
@@ -17,16 +19,23 @@ public struct ActiveSetEditPickerView: View {
 
     @State private var isShown: Bool = true
     @State private var showDecimal: Bool = false
-    private var filteredWeightOptions: [String] {
-        showDecimal ? weightOptions : weightOptions.filter { !$0.contains(",") && !$0.contains(".") }
+    private var filteredWeightOptions: [Double] {
+        showDecimal ? weightOptions : weightOptions.filter { $0 == floor($0) }
+    }
+
+    private var selectedWeightValue: Binding<Double> {
+        Binding(
+            get: { WeightFormatter.parse(selectedWeight) ?? 0 },
+            set: { selectedWeight = WeightFormatter.format($0, locale: locale) }
+        )
     }
 
     public init(
-        title: String,
+        title: LocalizedStringResource,
         selectedReps: Binding<String>,
         selectedWeight: Binding<String>,
         repsRange: ClosedRange<Int>,
-        weightOptions: [String],
+        weightOptions: [Double],
         onSave: @escaping (Int, Double) -> Void,
         onCancel: @escaping () -> Void,
         saveDisabled: Bool
@@ -67,7 +76,7 @@ public struct ActiveSetEditPickerView: View {
                     HStack {
                         Spacer()
                         HStack(spacing: 6) {
-                            Text("Decimal")
+                            Text(AppText.commonDecimal)
                                 .font(AppStyle.Font.tileLabel)
                                 .foregroundColor(textColor.opacity(0.85))
                             Toggle("", isOn: $showDecimal)
@@ -80,20 +89,22 @@ public struct ActiveSetEditPickerView: View {
 
                 VStack(spacing: 0) {
                     HStack {
-                        Text("Weight")
+                        Text(AppText.exerciseWeight)
                             .font(AppStyle.Font.sheetSectionLabel)
                             .foregroundColor(textColor)
                             .frame(maxWidth: .infinity)
-                        Text("Reps")
+                        Text(AppText.exerciseReps)
                             .font(AppStyle.Font.sheetSectionLabel)
                             .foregroundColor(textColor)
                             .frame(maxWidth: .infinity)
                     }
 
                     HStack {
-                        Picker("Weight", selection: $selectedWeight) {
+                        Picker(AppText.exerciseWeight, selection: selectedWeightValue) {
                             ForEach(filteredWeightOptions, id: \.self) { value in
-                                Text("\(value) kg").tag(value).foregroundColor(pickerColor)
+                                Text(verbatim: WeightFormatter.displayWeight(value, locale: locale))
+                                    .tag(value)
+                                    .foregroundColor(pickerColor)
                             }
                         }
 #if os(iOS)
@@ -104,9 +115,9 @@ public struct ActiveSetEditPickerView: View {
                         .frame(maxWidth: .infinity)
                         .clipped()
 
-                        Picker("Reps", selection: $selectedReps) {
+                        Picker(AppText.exerciseReps, selection: $selectedReps) {
                             ForEach(repsRange.map(String.init), id: \.self) { value in
-                                Text(value).tag(value).foregroundColor(pickerColor)
+                                Text(verbatim: value).tag(value).foregroundColor(pickerColor)
                             }
                         }
 #if os(iOS)

@@ -1,4 +1,5 @@
 import SwiftUI
+import FitnessResources
 #if canImport(UIKit)
 import UIKit
 import Combine
@@ -266,8 +267,8 @@ public extension OverlaySheetContainer where Overlay == EmptyView {
 
 public struct ExercisePickerActionButtons: View {
     @Environment(\.appColorTheme) private var appColorTheme
-    let cancelLabel: String
-    let saveLabel: String
+    let cancelLabel: LocalizedStringResource
+    let saveLabel: LocalizedStringResource
     let cancelColor: Color
     let saveColorOverride: Color?
     let saveForegroundColor: Color
@@ -277,8 +278,8 @@ public struct ExercisePickerActionButtons: View {
     let saveAccessibilityIdentifier: String?
 
     public init(
-        cancelLabel: String = "Cancel",
-        saveLabel: String = "Save",
+        cancelLabel: LocalizedStringResource = AppText.actionCancel,
+        saveLabel: LocalizedStringResource = AppText.actionSave,
         cancelColor: Color = AppStyle.Color.white,
         saveColor: Color? = nil,
         saveForegroundColor: Color = AppStyle.Color.white,
