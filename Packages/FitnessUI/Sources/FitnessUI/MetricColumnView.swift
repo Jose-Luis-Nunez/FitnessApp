@@ -7,9 +7,8 @@ import FitnessResources
 /// content and an optional footer row. Wraps in `.contentShape(Rectangle())`
 /// and an optional tap gesture so the entire column is tappable.
 ///
-/// Used by `IdleActiveCardModelView` for the Weight and Seat columns;
-/// intentionally not used for columns that diverge from this pattern
-/// (e.g. `progressColumn` has different spacing and owns the coaching-tip data band).
+/// Available for labeled metric columns whose footer shares the column tap
+/// action. Callers with independent controls can use custom composition.
 public struct MetricColumnView<Content: View, Footer: View>: View {
     let label: LocalizedStringResource
     let alignment: HorizontalAlignment

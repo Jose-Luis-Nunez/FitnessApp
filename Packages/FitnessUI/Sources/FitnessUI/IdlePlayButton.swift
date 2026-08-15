@@ -6,7 +6,7 @@ import SwiftUI
 /// - a soft mint outer halo,
 /// - a flat disc filled with `idleCardBackground` so the button reads as a
 ///   "punched out" extension of the card surface,
-/// - a hairline metallic ring stroke (`idlePlayRingBase`),
+/// - a neutral-grey hairline ring,
 /// - the SF Symbol play glyph, optically nudged for visual centering.
 ///
 /// All visual constants are sourced from `AppStyle` so design-system

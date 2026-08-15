@@ -8,9 +8,16 @@ import SwiftUI
 /// `ExerciseCardLayout.ResetButton` (canonical source).
 public struct ExerciseCardResetButton: View {
     public let onTap: () -> Void
+    private let image: Image
 
     public init(onTap: @escaping () -> Void) {
         self.onTap = onTap
+        self.image = Image("repeat")
+    }
+
+    init(image: Image, onTap: @escaping () -> Void) {
+        self.onTap = onTap
+        self.image = image
     }
 
     public var body: some View {
@@ -20,7 +27,7 @@ public struct ExerciseCardResetButton: View {
                 discSize: ExerciseCardLayout.ResetButton.size,
                 glowSize: ExerciseCardLayout.ResetButton.size
             ) {
-                Image("repeat")
+                image
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()

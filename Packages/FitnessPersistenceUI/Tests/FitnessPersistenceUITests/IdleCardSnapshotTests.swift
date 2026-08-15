@@ -81,6 +81,22 @@ private func makeIdleCardContainer() throws -> (ExerciseModel, ModelContainer) {
     return (model, container)
 }
 
+private func snapshotImageProvider(artworkName: String) throws -> (String) -> Image {
+    let images = [
+        artworkName: try appAssetImage(named: artworkName),
+        "seat_arrow_medium": try appAssetImage(named: "seat_arrow_medium"),
+        "analytics_icon_2": try appAssetImage(named: "analytics_icon_2"),
+        "tip_coaching_2": try appAssetImage(named: "tip_coaching_2"),
+    ]
+
+    return { name in
+        guard let image = images[name] else {
+            preconditionFailure("Missing snapshot image fixture: \(name)")
+        }
+        return image
+    }
+}
+
 // MARK: - IdleActiveCardModelView Snapshots
 
 @Suite("IdleActiveCardModelView — Snapshots", .tags(.snapshot))
@@ -134,7 +150,10 @@ struct IdleCardSnapshotTests {
             onEdit: { _, _ in },
             isEditable: false,
             onStart: { _ in },
-            isInProgress: false
+            isInProgress: false,
+            imageProvider: try snapshotImageProvider(
+                artworkName: model.categoryGroup.defaultIconName
+            )
         )
         .modelContainer(container)
 
@@ -190,7 +209,10 @@ struct IdleCardSnapshotTests {
             onEdit: { _, _ in },
             isEditable: false,
             onStart: { _ in },
-            isInProgress: false
+            isInProgress: false,
+            imageProvider: try snapshotImageProvider(
+                artworkName: model.categoryGroup.defaultIconName
+            )
         )
         .modelContainer(container)
 
@@ -222,11 +244,57 @@ struct IdleCardSnapshotTests {
             analyticsViewModel: analyticsVM,
             onEdit: { _, _ in },
             isEditable: false,
-            onStart: { _ in }
+            onStart: { _ in },
+            imageProvider: try snapshotImageProvider(
+                artworkName: model.categoryGroup.defaultIconName
+            )
         )
         .modelContainer(container)
 
         assertSnapshot(of: view, named: "with-history", size: CGSize(width: 393, height: 220))
+        #expect(storage.availabilityCallCount == 1)
+        #expect(storage.latestLoadCallCount == 0)
+        #expect(storage.loadCallCount == 0)
+    }
+
+    @Test func collapsedBodyweightWithHistory() throws {
+        let (model, container) = try makeIdleCardContainer()
+        model.weight = 0
+        model.reps = 15
+        try container.mainContext.save()
+
+        let storage = MockAnalyticsStorage()
+        storage.save([
+            AnalyticsEntry(
+                exerciseId: model.id,
+                date: Date(timeIntervalSince1970: 1_735_689_600),
+                setProgress: [
+                    SetProgress(status: .completedDone, currentReps: 15, weight: 0),
+                    SetProgress(status: .completedDone, currentReps: 15, weight: 0),
+                    SetProgress(status: .completedDone, currentReps: 15, weight: 0),
+                ]
+            ),
+        ], for: model.id)
+        let analyticsVM = AnalyticsViewModel(
+            storageService: storage,
+            exerciseStorage: MockExerciseStorage(),
+            workoutStorage: MockWorkoutStorage()
+        )
+        storage.resetLoadTracking()
+
+        let view = IdleActiveCardModelView(
+            model: model,
+            analyticsViewModel: analyticsVM,
+            onEdit: { _, _ in },
+            isEditable: false,
+            onStart: { _ in },
+            imageProvider: try snapshotImageProvider(
+                artworkName: model.categoryGroup.defaultIconName
+            )
+        )
+        .modelContainer(container)
+
+        assertSnapshot(of: view, named: "bodyweight-with-history", size: CGSize(width: 393, height: 220))
         #expect(storage.availabilityCallCount == 1)
         #expect(storage.latestLoadCallCount == 0)
         #expect(storage.loadCallCount == 0)
@@ -261,7 +329,10 @@ struct IdleCardSnapshotTests {
             isEditable: false,
             onStart: { _ in },
             initiallyExpanded: false,
-            initiallyLastRunExpanded: true
+            initiallyLastRunExpanded: true,
+            imageProvider: try snapshotImageProvider(
+                artworkName: model.categoryGroup.defaultIconName
+            )
         )
         .modelContainer(container)
 
@@ -286,7 +357,10 @@ struct IdleCardSnapshotTests {
             isEditable: false,
             onStart: { _ in },
             isSelectionMode: true,
-            isSelected: true
+            isSelected: true,
+            imageProvider: try snapshotImageProvider(
+                artworkName: model.categoryGroup.defaultIconName
+            )
         )
         .modelContainer(container)
 
@@ -348,7 +422,10 @@ struct InactiveCardSnapshotTests {
             isEditable: false,
             analyticsViewModel: analyticsVM,
             onReset: nil,
-            isResetEnabled: false
+            isResetEnabled: false,
+            imageProvider: try snapshotImageProvider(
+                artworkName: model.displayIconName
+            )
         )
         .modelContainer(container)
 

@@ -1,6 +1,7 @@
 import SwiftUI
 
 public enum CardSurfaceStyle {
+    case plain
     case glass(Color)
     case gradient(Color)
     case primary
@@ -38,18 +39,30 @@ public struct CardBackground<Content: View>: View {
         self.content = content()
     }
 
+    @ViewBuilder
     public var body: some View {
+        switch style {
+        case .plain:
+            paddedContent
+        default:
+            paddedContent
+                .background(backgroundView)
+                .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous))
+                .overlay(strokeOverlay)
+        }
+    }
+
+    private var paddedContent: some View {
         content
             .padding(addPadding ? AppStyle.Padding.card : 0)
             .frame(maxWidth: .infinity)
-            .background(backgroundView)
-            .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous))
-            .overlay(strokeOverlay)
     }
 
     @ViewBuilder
     private var backgroundView: some View {
         switch style {
+        case .plain:
+            EmptyView()
         case .glass(let backgroundColor):
             Color.clear
                 .appDarkSurface(
@@ -87,6 +100,8 @@ public struct CardBackground<Content: View>: View {
     @ViewBuilder
     private var strokeOverlay: some View {
         switch style {
+        case .plain:
+            EmptyView()
         case .glass:
             EmptyView()
         case .gradient:

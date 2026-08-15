@@ -41,7 +41,7 @@ public struct CardActionCircleButtonVisual<Glyph: View>: View {
                 .overlay(
                     Circle()
                         .strokeBorder(
-                            appColorTheme.accent.idleMetricValue,
+                            AppStyle.Color.gray,
                             lineWidth: AppStyle.Layout.idlePlayRingWidth
                         )
                 )

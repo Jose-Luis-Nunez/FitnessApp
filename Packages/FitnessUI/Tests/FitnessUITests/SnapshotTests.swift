@@ -389,14 +389,17 @@ struct SetTilesRowSnapshotTests {
 
     /// Trailing accessory (reset button) with its width reserved so the three
     /// tiles stay exact — mirrors the completed card's reset-enabled layout.
-    @Test func withResetAccessory() {
+    @Test func withResetAccessory() throws {
+        let resetImage = try appAssetImage(named: "repeat")
         let view = SetTilesRow(
             setProgress: progress(3),
             hasWeight: true,
             chevronColor: AppStyle.Color.idleMetricLabel.opacity(AppStyle.Opacity.separatorLine),
             reservedTrailingWidth: ExerciseCardLayout.ResetButton.size,
             onTap: {},
-            trailingAccessory: { ExerciseCardResetButton {} }
+            trailingAccessory: {
+                ExerciseCardResetButton(image: resetImage) {}
+            }
         )
         assertSnapshot(of: view, named: "with-reset", size: CGSize(width: 360, height: 70))
     }

@@ -46,7 +46,7 @@ public struct ActiveCardModelView: View {
 
     public var body: some View {
         ZStack(alignment: .trailing) {
-            CardBackground(useGlassEffect: true, addPadding: false) {
+            CardBackground(style: .plain, addPadding: false) {
                 cardContentView
                     .padding(.horizontal, AppStyle.Padding.card)
                     .padding(.vertical, 12)

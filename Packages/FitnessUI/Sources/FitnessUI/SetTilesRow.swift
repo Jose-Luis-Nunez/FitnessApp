@@ -117,7 +117,7 @@ public struct SetTilesRow<TrailingAccessory: View>: View {
                                 .foregroundColor(chevronColor)
                                 .frame(
                                     width: scrollChevronWidth,
-                                    height: AppStyle.Layout.idleMetricContentRowHeight
+                                    height: AppStyle.Layout.idleMetricFooterRowHeight
                                 )
                             Spacer(minLength: 0)
                             trailingRailAccessory

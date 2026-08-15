@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// Structural card wrapper that standardizes header layout, spacing, shadow,
-/// and padding across all standard cards. Builds on `CardBackground` for the
-/// visual surface and `CardTheme` for content colors.
+/// Structural card wrapper that standardizes header layout, spacing, and
+/// padding across exercise rows. `CardTheme` decides whether the structure is
+/// frameless or receives a visual surface.
 ///
 /// Content slots (left to right in the header HStack):
 /// - `leading`: Left edge — typically a category icon or selection control.
@@ -75,12 +75,6 @@ public struct CardShell<
             }
         }
         .padding(.horizontal, AppStyle.Padding.card)
-        .shadow(
-            color: AppStyle.Shadow.cardColor,
-            radius: AppStyle.Shadow.cardRadius,
-            x: 0,
-            y: AppStyle.Shadow.cardY
-        )
     }
 }
 

@@ -43,6 +43,34 @@ struct LastRunCardPresentationState {
     }
 }
 
+/// Zoomed muscle artwork for the frameless exercise rows. The focused crop
+/// stays intact while a short bottom fade softens its hard frame edge.
+struct ExerciseCardArtworkView: View {
+    let image: Image
+    let size: CGFloat
+    let alignment: Alignment
+
+    var body: some View {
+        image
+            .resizable()
+            .interpolation(.high)
+            .scaledToFill()
+            .frame(width: size, height: size, alignment: alignment)
+            .clipped()
+            .mask {
+                LinearGradient(
+                    gradient: Gradient(stops: [
+                        .init(color: .white, location: 0),
+                        .init(color: .white, location: 0.90),
+                        .init(color: .clear, location: 1),
+                    ]),
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
+    }
+}
+
 /// Idle/Active card variant rendered against a live `@Bindable ExerciseModel`.
 ///
 /// The data source is the SwiftData `@Model` instance — all edits propagate
@@ -64,6 +92,7 @@ public struct IdleActiveCardModelView: View {
     /// all selectable cards line up at the same width.
     public let isSelectionMode: Bool
     public let isSelected: Bool
+    let imageProvider: (String) -> Image
 
     @State private var analyticsSheetDate: AnalyticsSheetDate?
     @State private var isExpanded = false
@@ -94,7 +123,34 @@ public struct IdleActiveCardModelView: View {
             isSelectionMode: isSelectionMode,
             isSelected: isSelected,
             initiallyExpanded: false,
-            initiallyLastRunExpanded: false
+            initiallyLastRunExpanded: false,
+            imageProvider: { Image($0) }
+        )
+    }
+
+    init(
+        model: ExerciseModel,
+        analyticsViewModel: AnalyticsViewModel,
+        onEdit: @escaping (Exercise, ExerciseEditMode) -> Void,
+        isEditable: Bool,
+        onStart: ((Exercise) -> Void)?,
+        isInProgress: Bool = false,
+        isSelectionMode: Bool = false,
+        isSelected: Bool = false,
+        imageProvider: @escaping (String) -> Image
+    ) {
+        self.init(
+            model: model,
+            analyticsViewModel: analyticsViewModel,
+            onEdit: onEdit,
+            isEditable: isEditable,
+            onStart: onStart,
+            isInProgress: isInProgress,
+            isSelectionMode: isSelectionMode,
+            isSelected: isSelected,
+            initiallyExpanded: false,
+            initiallyLastRunExpanded: false,
+            imageProvider: imageProvider
         )
     }
 
@@ -108,7 +164,8 @@ public struct IdleActiveCardModelView: View {
         isSelectionMode: Bool = false,
         isSelected: Bool = false,
         initiallyExpanded: Bool,
-        initiallyLastRunExpanded: Bool
+        initiallyLastRunExpanded: Bool,
+        imageProvider: @escaping (String) -> Image = { Image($0) }
     ) {
         self.model = model
         self.analyticsViewModel = analyticsViewModel
@@ -118,6 +175,7 @@ public struct IdleActiveCardModelView: View {
         self.isInProgress = isInProgress
         self.isSelectionMode = isSelectionMode
         self.isSelected = isSelected
+        self.imageProvider = imageProvider
         self._isExpanded = State(initialValue: initiallyExpanded)
         self._isLastRunExpanded = State(initialValue: initiallyLastRunExpanded)
         self._analyticsRevision = State(
@@ -132,7 +190,7 @@ public struct IdleActiveCardModelView: View {
 
     /// Numeric portion of the displayed weight, without the unit suffix.
     /// The unit (`kg`) is rendered as a separate `Text` so it can carry the
-    /// muted label color while the number reads in the value-tier mint.
+    /// muted label color while the number remains white.
     private var weightNumber: String {
         WeightFormatter.format(model.weight, locale: locale)
     }
@@ -195,12 +253,8 @@ public struct IdleActiveCardModelView: View {
                         .padding(.horizontal, AppStyle.Padding.idleExpandedContentHorizontal)
                 }
             }
-        }, contentBackground: {
-            if isExpanded || isLastRunExpanded {
-                AppStyle.Color.idleCardBackground.opacity(AppStyle.Opacity.idleExpandedOverlay)
-            }
         })
-        .frame(minWidth: AppStyle.Layout.idleCardContentMinWidth, maxWidth: .infinity)
+        .frame(maxWidth: .infinity)
         .sheet(item: $analyticsSheetDate) { sheetDate in
             AnalyticsView(exercise: model.toDomain(), viewModel: analyticsViewModel, initialDate: sheetDate.date)
         }
@@ -214,10 +268,6 @@ public struct IdleActiveCardModelView: View {
 // MARK: - Header
 
 private extension IdleActiveCardModelView {
-    enum IdleMetricLayout {
-        static let separatorValueFooterAlignmentOffset: CGFloat = -14
-    }
-
     @ViewBuilder
     var leadingContent: some View {
         if isSelectionMode {
@@ -257,12 +307,11 @@ private extension IdleActiveCardModelView {
     }
 
     var categoryIconView: some View {
-        Image(appColorTheme.scheme.iconName(for: model.categoryGroup.defaultIconName))
-            .resizable()
-            .interpolation(.high)
-            .scaledToFill()
-            .frame(width: AppStyle.Layout.idleActiveCardIconSize, height: AppStyle.Layout.idleActiveCardIconSize, alignment: model.categoryGroup.iconAlignment)
-            .clipped()
+        ExerciseCardArtworkView(
+            image: imageProvider(appColorTheme.scheme.iconName(for: model.categoryGroup.defaultIconName)),
+            size: AppStyle.Layout.idleActiveCardIconSize,
+            alignment: model.categoryGroup.iconAlignment
+        )
     }
 
     var titleSection: some View {
@@ -290,52 +339,48 @@ private extension IdleActiveCardModelView {
     }
 
     var metricRow: some View {
-        HStack(alignment: .metricLabel, spacing: 0) {
+        HStack(alignment: .top, spacing: 0) {
             weightColumn
 
             if !model.noSeats {
-                Spacer(minLength: 0)
-                verticalSeparator
                 Spacer(minLength: 0)
                 seatColumn
             }
 
             Spacer(minLength: 0)
-            verticalSeparator
-            Spacer(minLength: 0)
             progressColumn
             if showsTrailingAction {
                 Spacer(minLength: 0)
-                verticalSeparator
             }
         }
     }
 
-    var verticalSeparator: some View {
-        Rectangle()
-            .fill(AppStyle.Color.idleDivider)
-            .frame(width: AppStyle.Layout.separatorWidth, height: AppStyle.Layout.separatorHeight)
-            .padding(.horizontal, AppStyle.Layout.idleMetricSeparatorHorizontalPadding)
-            .alignmentGuide(.metricLabel) { d in
-                d[VerticalAlignment.top] + IdleMetricLayout.separatorValueFooterAlignmentOffset
+    var weightColumn: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            weightValue
+
+            // The footer owns its tap target so expanding the last run cannot
+            // also trigger the weight editor above it.
+            if !isSelectionMode, lastRunPresentation.hasHistory {
+                lastRunFooter
             }
+        }
     }
 
-    var weightColumn: some View {
-        MetricColumnView(
-            label: model.hasWeight ? AppText.profileWeight : AppText.exerciseReps,
-            onTap: isEditable ? { onEdit(model.toDomain(), .weight) } : nil
-        ) {
+    @ViewBuilder
+    var weightValue: some View {
+        let content = Group {
             if model.hasWeight {
-                HStack(alignment: .firstTextBaseline, spacing: 0) {
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text(verbatim: weightNumber)
                         .font(AppStyle.Font.idleWeightValue)
-                        .foregroundColor(appColorTheme.accent.idleMetricValue)
+                        .foregroundColor(AppStyle.Color.white)
                     Text(verbatim: "kg")
                         .font(AppStyle.Font.idleWeightUnit)
-                        .foregroundColor(appColorTheme.accent.idleMetricValue)
+                        .foregroundColor(AppStyle.Color.idleMetricUnit)
                 }
                 .fixedSize()
+                .frame(height: AppStyle.Layout.idleMetricContentRowHeight)
             } else {
                 // Bodyweight: show "sets x reps" on one line as "3x15" — no spaces
                 // around the multiplier, and the "x" rendered smaller than the
@@ -345,98 +390,106 @@ private extension IdleActiveCardModelView {
                         + Text(verbatim: "x").font(AppStyle.Font.idleRepsSeparator)
                         + Text(verbatim: "\(model.reps)").font(AppStyle.Font.idleWeightValue)
                 )
-                .foregroundColor(appColorTheme.accent.idleMetricValue)
+                .foregroundColor(AppStyle.Color.white)
                 .lineLimit(1)
                 .fixedSize()
+                .frame(height: AppStyle.Layout.idleMetricContentRowHeight)
             }
+        }
+        let accessibleContent = content
+            .frame(
+                minWidth: AppStyle.Layout.minimumTapTargetSize,
+                alignment: .leading
+            )
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(model.hasWeight ? AppText.profileWeight : AppText.exerciseReps)
+            .accessibilityValue(
+                model.hasWeight ? "\(weightNumber) kg" : "\(model.sets) x \(model.reps)"
+            )
+
+        if isEditable {
+            Button(action: { onEdit(model.toDomain(), .weight) }) {
+                accessibleContent
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        } else {
+            accessibleContent
         }
     }
 
+    @ViewBuilder
     var seatColumn: some View {
-        MetricColumnView(
-            label: AppText.exerciseSeat,
-            alignment: .center,
-            onTap: isEditable ? { onEdit(model.toDomain(), .seat) } : nil
-        ) {
-            // Two slots — left/right seat position.
-            // Only the first two positions are shown on the card; additional
-            // stored positions remain hidden here.
-            // Empty slots render "-" (no value yet).
-            let positions = SeatSettings(encoded: model.seatSetting).positions
-            let left = positions.indices.contains(0) ? positions[0] : "-"
-            let right = positions.indices.contains(1) ? positions[1] : "-"
-            HStack(spacing: 8) {
-                Text(verbatim: left)
-                Text(verbatim: right)
-            }
+        // Two slots — left/right seat position.
+        // Only the first two positions are shown on the card; additional
+        // stored positions remain hidden here.
+        // Empty slots render "-" (no value yet).
+        let positions = SeatSettings(encoded: model.seatSetting).positions
+        let left = positions.indices.contains(0) ? positions[0] : "-"
+        let right = positions.indices.contains(1) ? positions[1] : "-"
+        let content = HStack(spacing: 8) {
+            Text(verbatim: left)
+                .foregroundColor(AppStyle.Color.white)
+            Text(verbatim: "•")
+                .font(AppStyle.Font.idleSeatSeparator)
+                .foregroundColor(AppStyle.Color.white)
+            Text(verbatim: right)
+                .foregroundColor(AppStyle.Color.white)
+            seatAdjustmentIcon
+        }
             .font(AppStyle.Font.idleSeatValue)
-            .foregroundColor(appColorTheme.accent.idleMetricValue)
             .lineLimit(1)
             .fixedSize()
             .frame(height: AppStyle.Layout.idleMetricContentRowHeight)
-        } footer: {
-            seatFooterIcon
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(AppText.exerciseSeat)
+            .accessibilityValue("\(left), \(right)")
+
+        if isEditable {
+            Button(action: { onEdit(model.toDomain(), .seat) }) {
+                content
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        } else {
+            content
         }
     }
 
-    var seatFooterIcon: some View {
-        Image("seat_arrow_small")
+    var seatAdjustmentIcon: some View {
+        imageProvider("seat_arrow_medium")
             .renderingMode(.template)
             .resizable()
             .scaledToFit()
-            .frame(width: AppStyle.Layout.seatIconSize, height: AppStyle.Layout.idleMetricGlyphHeight)
+            .frame(width: AppStyle.Layout.seatIconSize, height: AppStyle.Layout.seatIconHeight)
             .foregroundColor(appColorTheme.accent.idleMetricValue)
-            .frame(height: AppStyle.Layout.idleMetricFooterRowHeight)
     }
 
     var progressColumn: some View {
-        VStack(alignment: .center, spacing: 4) {
-            dataBand
-
-            Image("analytics_icon_2")
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .frame(width: AppStyle.Layout.analyticsEntryIconWidth, height: AppStyle.Layout.idleMetricGlyphHeight)
-                .foregroundColor(appColorTheme.accent.idleMetricValue)
-                .frame(height: AppStyle.Layout.idleMetricContentRowHeight)
-                .accessibilityHidden(true)
-                // Grow the interaction surface upward so the visual position and
-                // the spacing to "Last run" remain unchanged.
-                .overlay(alignment: .bottom) {
-                    Button(action: {
-                        analyticsSheetDate = AnalyticsSheetDate(date: Date())
-                    }) {
-                        Color.clear
-                            .frame(
-                                minWidth: AppStyle.Layout.minimumTapTargetSize,
-                                minHeight: AppStyle.Layout.minimumTapTargetSize
-                            )
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(AppText.analyticsExerciseAccessibility)
-                    .accessibilityHint(AppText.accessibilityShowsExerciseAnalytics)
-                    .accessibilityIdentifier(ExerciseCardIDs.analytics(model.id))
+        imageProvider("analytics_icon_2")
+            .renderingMode(.template)
+            .resizable()
+            .scaledToFit()
+            .frame(width: AppStyle.Layout.analyticsEntryIconWidth, height: AppStyle.Layout.idleMetricGlyphHeight)
+            .foregroundColor(appColorTheme.accent.idleMetricValue)
+            .frame(height: AppStyle.Layout.idleMetricContentRowHeight)
+            .accessibilityHidden(true)
+            .overlay(alignment: .bottom) {
+                Button(action: {
+                    analyticsSheetDate = AnalyticsSheetDate(date: Date())
+                }) {
+                    Color.clear
+                        .frame(
+                            minWidth: AppStyle.Layout.minimumTapTargetSize,
+                            minHeight: AppStyle.Layout.minimumTapTargetSize
+                        )
+                        .contentShape(Rectangle())
                 }
-
-            // "Last run" only appears once the exercise has a completed run;
-            // before that the footer is omitted.
-            if !isSelectionMode, lastRunPresentation.hasHistory {
-                lastRunFooter
-                    .padding(.top, AppStyle.Layout.idleLastRunFooterTopSpacing)
+                .buttonStyle(.plain)
+                .accessibilityLabel(AppText.analyticsExerciseAccessibility)
+                .accessibilityHint(AppText.accessibilityShowsExerciseAnalytics)
+                .accessibilityIdentifier(ExerciseCardIDs.analytics(model.id))
             }
-        }
-    }
-
-    /// Non-interactive "Data" label above the analytics chart. Coaching now
-    /// lives in the expanded "Last run" trailing rail.
-    var dataBand: some View {
-        Text(AppText.commonData)
-            .font(AppStyle.Font.metricLabel)
-            .foregroundColor(AppStyle.Color.idleMetricLabel)
-            .alignmentGuide(.metricLabel) { d in d[VerticalAlignment.center] }
-            .fixedSize()
     }
 
     /// "Last run" entry: plain text + trailing chevron (no box). Taps expand the
@@ -445,17 +498,18 @@ private extension IdleActiveCardModelView {
         HStack(spacing: 6) {
             Text(AppText.trainingLastRun)
                 .font(AppStyle.Font.metricLabel)
-                .foregroundColor(appColorTheme.accent.idleMetricValue)
+                .foregroundColor(AppStyle.Color.idleMetricUnit)
 
             Image(systemName: "chevron.right")
                 .font(AppStyle.Font.cardSmallLabel)
-                .foregroundColor(AppStyle.Color.idleMetricLabel)
+                .foregroundColor(AppStyle.Color.idleMetricUnit)
                 .rotationEffect(.degrees(isLastRunExpanded ? 90 : 0))
         }
         .fixedSize()
+        .frame(height: AppStyle.Layout.idleMetricFooterRowHeight)
         .accessibilityHidden(true)
-        // Grow the interaction surface downward; together with the analytics
-        // target's bottom alignment this prevents competing tap regions.
+        // Grow the interaction surface downward without overlapping the
+        // independent Weight/Reps edit target above it.
         .overlay(alignment: .top) {
             Button(action: toggleLastRunDetails) {
                 Color.clear
@@ -517,7 +571,7 @@ private extension IdleActiveCardModelView {
             discSize: ExerciseCardLayout.ResetButton.size,
             glowSize: ExerciseCardLayout.ResetButton.size
         ) {
-            Image("tip_coaching_2")
+            imageProvider("tip_coaching_2")
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()

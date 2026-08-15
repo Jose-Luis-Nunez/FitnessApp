@@ -1,15 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "chair_icon.svg",
+      "filename" : "seat_arrow_medium.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
+      "filename" : "seat_arrow_medium@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
+      "filename" : "seat_arrow_medium@3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

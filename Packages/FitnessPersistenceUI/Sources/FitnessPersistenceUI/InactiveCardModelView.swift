@@ -35,6 +35,7 @@ public struct InactiveCardModelView: View {
     public var analyticsViewModel: AnalyticsViewModel
     public let onReset: ((Exercise) -> Void)?
     public let isResetEnabled: Bool
+    let imageProvider: (String) -> Image
 
     @State private var isShowingAnalytics = false
     @State private var isExpanded = false
@@ -50,12 +51,33 @@ public struct InactiveCardModelView: View {
         onReset: ((Exercise) -> Void)?,
         isResetEnabled: Bool
     ) {
+        self.init(
+            model: model,
+            onEdit: onEdit,
+            isEditable: isEditable,
+            analyticsViewModel: analyticsViewModel,
+            onReset: onReset,
+            isResetEnabled: isResetEnabled,
+            imageProvider: { Image($0) }
+        )
+    }
+
+    init(
+        model: ExerciseModel,
+        onEdit: @escaping (Exercise, ExerciseEditMode) -> Void,
+        isEditable: Bool,
+        analyticsViewModel: AnalyticsViewModel,
+        onReset: ((Exercise) -> Void)?,
+        isResetEnabled: Bool,
+        imageProvider: @escaping (String) -> Image
+    ) {
         self.model = model
         self.onEdit = onEdit
         self.isEditable = isEditable
         self.analyticsViewModel = analyticsViewModel
         self.onReset = onReset
         self.isResetEnabled = isResetEnabled
+        self.imageProvider = imageProvider
         self._analyticsRevision = State(
             initialValue: analyticsViewModel.revisionSource(for: model.id)
         )
@@ -95,16 +117,7 @@ public struct InactiveCardModelView: View {
                 .padding(.horizontal, AppStyle.Padding.card)
             }
         })
-        // The idle card's width is content-driven by its metric row (Weight | Seat
-        // | Data), whose minimum width is ~400pt including card padding. On
-        // narrow screens (iPhone 17, 402pt) that overflows the screen slightly so the
-        // idle card reaches closer to the edges; on wide screens (16 Pro Max) it fits
-        // within the standard margin. The completed card has sparse content and would
-        // otherwise sit at the standard margin only — narrower than the idle card on
-        // narrow screens. Matching the idle card's content minimum width here makes
-        // the two cards render identically on every device (overflow on narrow, fill
-        // on wide) instead of using a device-dependent fixed inset.
-        .frame(minWidth: AppStyle.Layout.idleCardContentMinWidth, maxWidth: .infinity)
+        .frame(maxWidth: .infinity)
         .contentShape(Rectangle())
         .onTapGesture { toggleExpansion() }
         .sheet(isPresented: $isShowingAnalytics) {
@@ -123,12 +136,11 @@ public struct InactiveCardModelView: View {
 private extension InactiveCardModelView {
 
     var categoryIconView: some View {
-        Image(appColorTheme.scheme.iconName(for: model.displayIconName))
-            .resizable()
-            .interpolation(.high)
-            .scaledToFill()
-            .frame(width: AppStyle.Layout.idleCategoryIconSize, height: AppStyle.Layout.idleCategoryIconSize, alignment: model.iconAlignment)
-            .clipped()
+        ExerciseCardArtworkView(
+            image: imageProvider(appColorTheme.scheme.iconName(for: model.displayIconName)),
+            size: AppStyle.Layout.idleCategoryIconSize,
+            alignment: model.iconAlignment
+        )
             .contentShape(Rectangle())
             .onTapGesture {
                 // Tapping the muscle icon opens the reused "Edit Seat" sheet so the
@@ -147,16 +159,17 @@ private extension InactiveCardModelView {
     }
 
     var checkmarkTrailing: some View {
-        // The expanded gap moves only the separator left so it aligns with the
-        // idle card while the right-anchored checkmark keeps its position.
-        HStack(spacing: AppStyle.Layout.inactiveTrailingSeparatorSpacing) {
-            Rectangle()
-                .fill(AppStyle.Color.idleDivider)
-                .frame(width: 0.75, height: 28)
+        CardActionCircleButtonVisual(
+            iconSize: 14,
+            discSize: AppStyle.Layout.idlePlayButtonSize,
+            glowSize: AppStyle.Layout.idlePlayButtonGlowSize
+        ) {
             SharpCheckmark()
-                .stroke(appColorTheme.accent.idleAccentFill, style: StrokeStyle(lineWidth: 2, lineCap: .square, lineJoin: .miter))
+                .stroke(
+                    appColorTheme.accent.idleAccentFill,
+                    style: StrokeStyle(lineWidth: 2, lineCap: .square, lineJoin: .miter)
+                )
                 .frame(width: 14, height: 11)
-                .frame(width: AppStyle.Layout.idlePlayButtonSize, height: AppStyle.Layout.idlePlayButtonSize)
         }
         .onTapGesture { toggleExpansion() }
     }
@@ -176,11 +189,11 @@ private extension InactiveCardModelView {
             HStack(spacing: 4) {
                 Text(AppText.exerciseCompleted)
                     .font(AppStyle.Font.cardSmallBold)
-                    .foregroundColor(theme.subtitleColor)
+                    .foregroundColor(AppStyle.Color.idleMetricUnit)
 
                 Image(systemName: "chevron.down")
                     .font(AppStyle.Font.cardSmallLabel)
-                    .foregroundColor(theme.subtitleColor)
+                    .foregroundColor(AppStyle.Color.idleMetricUnit)
                     .rotationEffect(.degrees(isExpanded ? 180 : 0))
             }
             .contentShape(Rectangle())

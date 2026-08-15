@@ -22,7 +22,7 @@ public struct AccentPalette: Sendable {
     public let black: Color             // greenBlack
     public let dark: Color              // greenDark
     public let trainingAccent: Color    // trainingAccent
-    public let idleMetricValue: Color   // idleMetricValue (+ idlePlayRingBase)
+    public let idleMetricValue: Color   // idleMetricValue
     public let idleAccentFill: Color    // idleAccentFill
     public let ringGlowBase: Color      // idlePlayRingGlow base (opacity applied at use site)
     public let progressTrack: Color     // progressTrack

@@ -24,24 +24,24 @@ public struct CardTheme {
 
 extension CardTheme {
     public static let idle = CardTheme(
-        surface: .primary,
+        surface: .plain,
         titleColor: AppStyle.Color.idleTitle,
         subtitleColor: AppStyle.Color.idleMetricLabel,
         titleFont: AppStyle.Font.idleCardTitle
     )
 
     public static let completed = CardTheme(
-        surface: .glass(AppStyle.Color.exerciseCardBackground),
+        surface: .plain,
         titleColor: Color.white,
         subtitleColor: Color.white.opacity(0.7)
     )
 
-    /// Completed exercise card on the same neutral `.primary` surface as
-    /// `IdleActiveCardModelView`, with matching headline / secondary text colors.
+    /// Completed exercise row with the same frameless surface and content
+    /// colors as `IdleActiveCardModelView`.
     /// Callers resolve a completion `EdgeIndicator` from `AppColorTheme` at
     /// render time so the value cannot retain an obsolete accent palette.
     public static let inactiveOnIdle = CardTheme(
-        surface: .primary,
+        surface: .plain,
         titleColor: AppStyle.Color.idleTitle,
         subtitleColor: AppStyle.Color.idleMetricLabel,
         titleFont: AppStyle.Font.idleCardTitle

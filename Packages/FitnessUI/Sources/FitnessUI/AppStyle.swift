@@ -43,11 +43,8 @@ public enum AppStyle {
         /// Stroke width of the outer border around the idle exercise card.
         public static let idleCardBorderWidth: CGFloat = 1
         public static let profileSurfaceBorderWidth: CGFloat = 1.5
-        /// Stroke width of the metallic ring around the idle play button.
-        /// Hairline (0.75) so the ring reads as a fine accent, not a heavy
-        /// border. On @2x/@3x this resolves to a clean 1.5px / 2.25px line
-        /// without aliasing.
-        public static let idlePlayRingWidth: CGFloat = 0.75
+        /// Hairline width of the neutral ring around the idle play button.
+        public static let idlePlayRingWidth: CGFloat = 0.5
         /// Blur radius of the soft mint outer glow rendered around the idle
         /// play button. Tuned together with `idlePlayButtonGlowSize` for a
         /// subtle hint that doesn't spill into the surrounding card surface.
@@ -59,13 +56,9 @@ public enum AppStyle {
         /// against the visible button (no excess padding around the glyph).
         public static let idlePlayButtonGlowSize: CGFloat = 42
 
-        /// Content-driven minimum total width of the idle exercise card, set by
-        /// its metric row (Weight | Seat | Data columns + separators) plus
-        /// the card's horizontal padding. The completed (inactive) card has sparse
-        /// content and adopts this as its `minWidth` so both cards render at an
-        /// identical width on every device — overflowing slightly on narrow screens
-        /// (iPhone 17) and filling within the standard margin on wide ones
-        /// (16 Pro Max) — instead of the completed card sitting narrower.
+        /// Legacy card-width contract retained for source compatibility.
+        /// Frameless exercise rows now size from their container.
+        @available(*, deprecated, message: "Frameless exercise rows size from their container.")
         public static let idleCardContentMinWidth: CGFloat = 400
 
         public static let completedBarWidth: CGFloat = 8
@@ -114,19 +107,22 @@ public enum AppStyle {
         public static let bilateralAnalyticsRowHeight: CGFloat = 122
         public static let bilateralHeaderStrokeWidth: CGFloat = 2
         public static let analyticsImageSize: CGFloat = 60
-        /// Width of the seat-arrows glyph on the idle card (height comes from `idleMetricGlyphHeight`).
-        public static let seatIconSize: CGFloat = 26
-        /// Matched height for the idle-card metric glyphs (seat arrows + Data chart) so they read as one size.
-        public static let idleMetricGlyphHeight: CGFloat = 20
-        /// Fixed, centered row heights for the idle-card metric columns so a text row and an icon row
-        /// occupy identical vertical space and the Seat/Data columns align row-for-row.
-        public static let idleMetricContentRowHeight: CGFloat = 20
+        /// Width of the vertical seat-arrows glyph on the idle card.
+        public static let seatIconSize: CGFloat = 8
+        /// Height of the vertical seat-arrows glyph on the idle card.
+        public static let seatIconHeight: CGFloat = 16
+        /// Height of the Data chart glyph on the idle card.
+        public static let idleMetricGlyphHeight: CGFloat = 26
+        /// Shared interactive height for Weight/Reps, Seat, and Analytics.
+        /// Matches the minimum tap target while centering their visual content.
+        public static let idleMetricContentRowHeight: CGFloat = 44
         public static let idleMetricFooterRowHeight: CGFloat = 20
-        /// Width of the Data chart glyph (landscape ~2.66:1); height comes from `idleMetricGlyphHeight`.
-        public static let analyticsEntryIconWidth: CGFloat = 40
+        /// Width of the Data chart glyph (landscape 2:1); height comes from `idleMetricGlyphHeight`.
+        public static let analyticsEntryIconWidth: CGFloat = 52
         /// Vertical gap between the idle card's "Last run" trigger and its expanded set details.
         public static let idleLastRunExpandedTopSpacing: CGFloat = 12
-        /// Additional breathing room between the analytics icon and the "Last run" trigger.
+        /// Legacy spacing token retained for source compatibility. Weight/Reps now
+        /// uses the shared metric-column spacing above its "Last run" footer.
         public static let idleLastRunFooterTopSpacing: CGFloat = 5
         /// Height reserved for expanded last-run tiles plus the trailing swipe/coaching rail.
         public static let idleLastRunDetailsHeight: CGFloat = 72
@@ -135,9 +131,12 @@ public enum AppStyle {
         /// Minimum interaction surface for tappable controls. Visual glyphs may
         /// remain smaller while their enclosing Button adopts this frame.
         public static let minimumTapTargetSize: CGFloat = 44
+        /// Legacy metric-separator geometry retained for source compatibility.
+        @available(*, deprecated, message: "Frameless exercise rows no longer render metric separators.")
         public static let separatorHeight: CGFloat = 32
+        @available(*, deprecated, message: "Frameless exercise rows no longer render metric separators.")
         public static let idleMetricSeparatorHorizontalPadding: CGFloat = 8
-        /// Gap that aligns the inactive card's trailing separator with the idle card.
+        @available(*, deprecated, message: "Frameless inactive rows no longer render a trailing separator.")
         public static let inactiveTrailingSeparatorSpacing: CGFloat = 22
         /// Stroke width of vertical column separators in metric rows.
         /// Hairline (0.5) so the separators read as fine guides rather than
@@ -292,17 +291,19 @@ public enum AppStyle {
         public static let metricLabel = SwiftUI.Font.system(size: 11, weight: .medium)
         // Idle-card metric values — one token per metric so each can be tuned
         // independently. SF Pro bold default design, geometric tabular figures.
-        /// Weight number, e.g. "80".
-        public static let idleWeightValue = SwiftUI.Font.system(size: 24, weight: .bold)
+        /// Weight number, e.g. "80". Prominent because the metric is directly editable.
+        public static let idleWeightValue = SwiftUI.Font.system(size: 20, weight: .bold)
         /// Weight unit suffix, e.g. "kg". The bodyweight "sets x reps" row reuses
         /// `idleWeightValue` so its numbers read at the same size as the kg value.
-        public static let idleWeightUnit = SwiftUI.Font.system(size: 12, weight: .bold)
+        public static let idleWeightUnit = SwiftUI.Font.system(size: 14, weight: .bold)
         /// The "x" separator in the bodyweight "sets x reps" value (e.g. the "x"
         /// in "3x15"). Smaller than `idleWeightValue` so the numbers dominate and
         /// the glyph reads as a compact multiplier.
-        public static let idleRepsSeparator = SwiftUI.Font.system(size: 16, weight: .bold)
+        public static let idleRepsSeparator = SwiftUI.Font.system(size: 14, weight: .bold)
         /// Seat position value, e.g. "4 / 7".
-        public static let idleSeatValue = SwiftUI.Font.system(size: 15, weight: .bold)
+        public static let idleSeatValue = SwiftUI.Font.system(size: 19, weight: .bold)
+        /// Center dot separating the two seat-position values.
+        public static let idleSeatSeparator = SwiftUI.Font.system(size: 10, weight: .bold)
         public static let iconSymbol = SwiftUI.Font.system(size: 20, weight: .semibold)
 
         public static let calendarHeader = SwiftUI.Font.system(size: 16, weight: .semibold)
@@ -374,8 +375,10 @@ public enum AppStyle {
         /// "Data", expand/collapse chevron). Neutral grey so the eye
         /// anchors on the mint values, not the labels.
         public static let idleMetricLabel = SwiftUI.Color(hex: "#9A9A9A")
-        // Accent-tier idle values, fills and play-ring colors are dynamic and
-        // therefore live in `AppColorTheme.accent`, not this fixed token set.
+        /// Unit suffix beside the primary idle-card value, e.g. "kg".
+        public static let idleMetricUnit = SwiftUI.Color(hex: "#A3AAB3")
+        // Accent-tier idle values and fills are dynamic and therefore live in
+        // `AppColorTheme.accent`, not this fixed token set.
         /// Vertical divider line between metric columns and the trailing action
         /// on the idle card. Dark neutral grey — sits
         /// quietly between the columns without competing with values or

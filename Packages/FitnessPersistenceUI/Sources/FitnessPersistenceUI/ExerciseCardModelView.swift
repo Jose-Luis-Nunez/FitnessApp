@@ -98,8 +98,8 @@ public struct ExerciseCardModelView: View {
                         .contentShape(Rectangle())
                         .onTapGesture { onToggleSelection?(model.toDomain()) }
                 )
-                // Inset by the card padding so the tint matches the visible card
-                // background (CardShell insets it by `AppStyle.Padding.card`).
+                // Inset by the row padding so the selection tint follows the
+                // frameless exercise content instead of spanning edge to edge.
                 .selectedMilkyAppearance(isSelected: isSelected, horizontalInset: AppStyle.Padding.card)
         } else if !isActiveTraining, case .idle = variant, let onLongPress {
             // Long-press an idle card to start the deactivate selection — with a
