@@ -32,7 +32,7 @@ public struct CardActionCircleButtonVisual<Glyph: View>: View {
     public var body: some View {
         ZStack {
             Circle()
-                .fill(appColorTheme.accent.ringGlowBase.opacity(0.10))
+                .fill(appColorTheme.accent.ringGlowBase.opacity(0.04))
                 .frame(width: glowSize, height: glowSize)
                 .blur(radius: glowRadius)
 

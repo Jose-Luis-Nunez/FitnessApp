@@ -73,11 +73,7 @@ public struct CategoryTileModelView: View {
 
     @ViewBuilder
     private func tileContent(info: CategoryTileProgressInfo) -> some View {
-        CardBackground(
-            backgroundColor: AppStyle.Color.exerciseCardBackground,
-            useGlassEffect: true,
-            addPadding: false
-        ) {
+        CardBackground(style: .primary, addPadding: false) {
             VStack(spacing: ExerciseCardLayout.CategoryTile.contentSpacing) {
                 headerRow(info: info)
                 iconView
@@ -120,7 +116,7 @@ public struct CategoryTileModelView: View {
 
                 Image(systemName: "checkmark")
                     .font(AppStyle.Font.categoryTileCount)
-                    .foregroundColor(AppStyle.Color.exerciseCardBackground)
+                    .foregroundColor(AppStyle.Color.profileCardBackground)
             }
         } else if info.total == 0 {
             ZStack {

@@ -48,7 +48,7 @@ public enum AppStyle {
         /// Blur radius of the soft mint outer glow rendered around the idle
         /// play button. Tuned together with `idlePlayButtonGlowSize` for a
         /// subtle hint that doesn't spill into the surrounding card surface.
-        public static let idlePlayButtonGlowRadius: CGFloat = 6
+        public static let idlePlayButtonGlowRadius: CGFloat = 3
         /// Diameter of the soft mint halo painted behind the idle play
         /// button. Only marginally larger than `idlePlayButtonSize` — the
         /// blur radius does the heavy lifting for the halo softness, so a
@@ -295,7 +295,7 @@ public enum AppStyle {
         public static let idleWeightValue = SwiftUI.Font.system(size: 20, weight: .bold)
         /// Weight unit suffix, e.g. "kg". The bodyweight "sets x reps" row reuses
         /// `idleWeightValue` so its numbers read at the same size as the kg value.
-        public static let idleWeightUnit = SwiftUI.Font.system(size: 14, weight: .bold)
+        public static let idleWeightUnit = SwiftUI.Font.system(size: 20, weight: .bold)
         /// The "x" separator in the bodyweight "sets x reps" value (e.g. the "x"
         /// in "3x15"). Smaller than `idleWeightValue` so the numbers dominate and
         /// the glyph reads as a compact multiplier.

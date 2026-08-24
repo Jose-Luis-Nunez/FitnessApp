@@ -9,6 +9,10 @@ import Foundation
 public struct SeatSettings: Equatable, Sendable {
     /// Maximum number of seat positions a user can store for one exercise.
     public static let editableLimit = 4
+    /// Maximum number of seat positions a compact card surface renders. Stored
+    /// positions beyond this limit stay available in the editor but are not
+    /// shown on the card.
+    public static let cardDisplayLimit = 2
     /// Trimmed, non-empty seat positions in display order.
     public private(set) var positions: [String]
 
@@ -23,6 +27,12 @@ public struct SeatSettings: Equatable, Sendable {
         self.positions = SeatSettings.clean(
             (encoded ?? "").split(separator: Self.separator).map(String.init)
         )
+    }
+
+    /// The positions a compact card shows, capped at `cardDisplayLimit`.
+    /// Empty when nothing is stored — callers decide how to render that.
+    public var cardPositions: [String] {
+        Array(positions.prefix(SeatSettings.cardDisplayLimit))
     }
 
     /// Pack the positions back into the stored format, or `nil` when there is

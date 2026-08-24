@@ -375,9 +375,9 @@ private extension IdleActiveCardModelView {
                     Text(verbatim: weightNumber)
                         .font(AppStyle.Font.idleWeightValue)
                         .foregroundColor(AppStyle.Color.white)
-                    Text(verbatim: "kg")
+                    Text(verbatim: "KG")
                         .font(AppStyle.Font.idleWeightUnit)
-                        .foregroundColor(AppStyle.Color.idleMetricUnit)
+                        .foregroundColor(appColorTheme.accent.idleMetricValue)
                 }
                 .fixedSize()
                 .frame(height: AppStyle.Layout.idleMetricContentRowHeight)
@@ -420,30 +420,35 @@ private extension IdleActiveCardModelView {
 
     @ViewBuilder
     var seatColumn: some View {
-        // Two slots — left/right seat position.
-        // Only the first two positions are shown on the card; additional
-        // stored positions remain hidden here.
-        // Empty slots render "-" (no value yet).
-        let positions = SeatSettings(encoded: model.seatSetting).positions
-        let left = positions.indices.contains(0) ? positions[0] : "-"
-        let right = positions.indices.contains(1) ? positions[1] : "-"
+        // Show up to two stored positions. A single position stands on its own;
+        // the separator is rendered only when a second value exists.
+        let positions = SeatSettings(encoded: model.seatSetting).cardPositions
+        let accessibilityValue = positions.isEmpty ? "-" : positions.joined(separator: ", ")
         let content = HStack(spacing: 8) {
-            Text(verbatim: left)
+            Text(verbatim: positions.first ?? "-")
                 .foregroundColor(AppStyle.Color.white)
-            Text(verbatim: "•")
-                .font(AppStyle.Font.idleSeatSeparator)
-                .foregroundColor(AppStyle.Color.white)
-            Text(verbatim: right)
-                .foregroundColor(AppStyle.Color.white)
+
+            if positions.count == SeatSettings.cardDisplayLimit {
+                Text(verbatim: "•")
+                    .font(AppStyle.Font.idleSeatSeparator)
+                    .foregroundColor(AppStyle.Color.white)
+                Text(verbatim: positions[1])
+                    .foregroundColor(AppStyle.Color.white)
+            }
+
             seatAdjustmentIcon
         }
             .font(AppStyle.Font.idleSeatValue)
             .lineLimit(1)
             .fixedSize()
-            .frame(height: AppStyle.Layout.idleMetricContentRowHeight)
+            .frame(
+                minWidth: AppStyle.Layout.minimumTapTargetSize,
+                minHeight: AppStyle.Layout.idleMetricContentRowHeight,
+                alignment: .leading
+            )
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(AppText.exerciseSeat)
-            .accessibilityValue("\(left), \(right)")
+            .accessibilityValue(accessibilityValue)
 
         if isEditable {
             Button(action: { onEdit(model.toDomain(), .seat) }) {

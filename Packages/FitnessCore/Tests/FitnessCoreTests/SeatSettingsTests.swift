@@ -39,7 +39,30 @@ struct SeatSettingsTests {
         #expect(s.positions == ["A", "B"])
     }
 
+    // MARK: - Card display
+
+    @Test func cardPositionsCapsAtDisplayLimit() {
+        // Stored positions beyond the limit stay in `positions` for the editor
+        // but must not reach the card.
+        let s = SeatSettings(encoded: "A / B / C / D")
+        #expect(s.positions == ["A", "B", "C", "D"])
+        #expect(s.cardPositions == ["A", "B"])
+    }
+
+    @Test func cardPositionsPassThroughWhenAtOrBelowLimit() {
+        #expect(SeatSettings(encoded: nil).cardPositions == [])
+        #expect(SeatSettings(encoded: "3").cardPositions == ["3"])
+        #expect(SeatSettings(encoded: "A / B").cardPositions == ["A", "B"])
+    }
+
+    @Test func cardPositionsDropEmptyPartsBeforeCapping() {
+        // The cap applies to cleaned values, so stray separators cannot push a
+        // real position off the card.
+        #expect(SeatSettings(encoded: "A / / B / C").cardPositions == ["A", "B"])
+    }
+
     @Test func policyLimits() {
         #expect(SeatSettings.editableLimit == 4)
+        #expect(SeatSettings.cardDisplayLimit == 2)
     }
 }

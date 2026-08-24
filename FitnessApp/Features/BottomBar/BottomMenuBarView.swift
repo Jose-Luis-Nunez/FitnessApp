@@ -340,7 +340,7 @@ private extension View {
     /// iOS 26 omits the surrounding `GlassEffectContainer`; the direct surface
     /// remains shared with the List/Muscle filter toggle on every OS version.
     @ViewBuilder
-    func bottomMenuSurface<S: Shape>(in shape: S) -> some View {
-        self.appDarkSurface(in: shape)
+    func bottomMenuSurface<S: InsettableShape>(in shape: S) -> some View {
+        self.appPrimarySurface(in: shape)
     }
 }

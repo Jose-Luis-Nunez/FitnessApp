@@ -44,7 +44,15 @@ public struct CardBackground<Content: View>: View {
         switch style {
         case .plain:
             paddedContent
-        default:
+        case .primary:
+            paddedContent
+                .appPrimarySurface(
+                    in: RoundedRectangle(
+                        cornerRadius: AppStyle.CornerRadius.card,
+                        style: .continuous
+                    )
+                )
+        case .glass, .gradient:
             paddedContent
                 .background(backgroundView)
                 .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous))
@@ -85,15 +93,7 @@ public struct CardBackground<Content: View>: View {
                 )
             }
         case .primary:
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    AppStyle.Color.idleCardSoft,
-                    AppStyle.Color.idleCardBackground,
-                    AppStyle.Color.idleCardDark,
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            EmptyView()
         }
     }
 
@@ -109,27 +109,50 @@ public struct CardBackground<Content: View>: View {
                 .stroke(AppStyle.Color.exerciseCardBackground.opacity(0.03), lineWidth: 1.5)
                 .blur(radius: 0.6)
         case .primary:
-            ZStack {
-                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
-                    .fill(
-                        RadialGradient(
-                            colors: [AppStyle.Color.idleCardInnerGlow, .clear],
-                            center: .topLeading,
-                            startRadius: 0,
-                            endRadius: 200
-                        )
-                    )
+            EmptyView()
+        }
+    }
+}
 
-                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.card, style: .continuous)
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: [AppStyle.Color.idleCardBorderLight, AppStyle.Color.idleCardBorderDark],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: AppStyle.Layout.idleCardBorderWidth
+public extension View {
+    /// Applies the neutral primary card treatment to any insettable shape.
+    /// Profile cards, category tiles, and compact navigation controls share
+    /// this surface while retaining their own rectangle, capsule, or circle.
+    func appPrimarySurface<S: InsettableShape>(in shape: S) -> some View {
+        background {
+            shape.fill(
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        AppStyle.Color.idleCardSoft,
+                        AppStyle.Color.idleCardBackground,
+                        AppStyle.Color.idleCardDark,
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+        }
+        .overlay {
+            ZStack {
+                shape.fill(
+                    RadialGradient(
+                        colors: [AppStyle.Color.idleCardInnerGlow, .clear],
+                        center: .topLeading,
+                        startRadius: 0,
+                        endRadius: 200
                     )
+                )
+
+                shape.strokeBorder(
+                    LinearGradient(
+                        colors: [AppStyle.Color.idleCardBorderLight, AppStyle.Color.idleCardBorderDark],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: AppStyle.Layout.idleCardBorderWidth
+                )
             }
         }
+        .clipShape(shape)
     }
 }

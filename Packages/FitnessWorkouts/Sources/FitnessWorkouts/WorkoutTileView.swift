@@ -111,11 +111,7 @@ public struct WorkoutTileView: View {
     private var heroTile: some View {
         ZStack(alignment: .topTrailing) {
             interactiveTile(
-                CardBackground(
-                    backgroundColor: AppStyle.Color.exerciseCardBackground,
-                    useGlassEffect: true,
-                    addPadding: false
-                ) {
+                CardBackground(style: .primary, addPadding: false) {
                     heroContent
                 }
                 .frame(maxWidth: .infinity)

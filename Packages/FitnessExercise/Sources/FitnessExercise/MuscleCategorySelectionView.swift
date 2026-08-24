@@ -596,7 +596,7 @@ public struct MuscleCategorySelectionView: View {
         .padding(filterBarPadding)
         .background {
             Color.clear
-                .appDarkSurface(in: .capsule)
+                .appPrimarySurface(in: Capsule())
         }
         .clipShape(Capsule())
     }
