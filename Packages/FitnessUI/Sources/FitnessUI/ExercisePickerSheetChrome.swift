@@ -35,12 +35,34 @@ public final class KeyboardObserver {
 }
 #endif
 
+// MARK: - Sheet Surface
+
+/// How a bottom sheet paints itself.
+///
+/// One value rather than a colour plus an "ignore the colour" flag: the two
+/// could previously be set contradictorily, and the colour was silently dead
+/// whenever the ambient surface was requested.
+public enum SheetSurface: Equatable, Sendable {
+    /// Flat fill, with an optional hairline border.
+    case flat(Color, border: Color? = nil)
+    /// The backdrop shared with the training and feedback sheets. For sheets
+    /// presented as their siblings; it carries its own border.
+    case ambient
+
+    public static var `default`: SheetSurface { .flat(AppStyle.Color.sheetBackground) }
+}
+
 // MARK: - Shared Sheet Modifier
 
 public struct ExercisePickerSheetModifier: ViewModifier {
     let isContentVisible: Bool
-    let backgroundColor: Color
-    let borderColor: Color?
+    let surface: SheetSurface
+    /// Exact visible height for the sheet, excluding the bottom safe area.
+    /// `nil` keeps the default content-sized height. Set it when the sheet has
+    /// to occupy the same frame as another sheet in the same flow — a
+    /// content-sized sheet cannot match one whose height is measured elsewhere.
+    let fixedHeight: CGFloat?
+    @Environment(\.safeAreaInsets) private var safeAreaInsets
 
     #if canImport(UIKit)
     @State private var keyboard = KeyboardObserver()
@@ -48,36 +70,44 @@ public struct ExercisePickerSheetModifier: ViewModifier {
 
     public init(
         isContentVisible: Bool,
-        backgroundColor: Color = AppStyle.Color.sheetBackground,
-        borderColor: Color? = nil
+        surface: SheetSurface = .default,
+        fixedHeight: CGFloat? = nil
     ) {
         self.isContentVisible = isContentVisible
-        self.backgroundColor = backgroundColor
-        self.borderColor = borderColor
+        self.surface = surface
+        self.fixedHeight = fixedHeight
     }
 
-    private var sheetShape: UnevenRoundedRectangle {
-        UnevenRoundedRectangle(
-            topLeadingRadius: AppStyle.CornerRadius.sheet,
-            bottomLeadingRadius: 0,
-            bottomTrailingRadius: 0,
-            topTrailingRadius: AppStyle.CornerRadius.sheet,
-            style: .continuous
-        )
+    /// The sheet's box extends under the bottom safe area, so the requested
+    /// visible height has to be grown by that inset for the *top* edge to land
+    /// where the measured sheet's top edge is.
+    private var resolvedHeight: CGFloat? {
+        fixedHeight.map { $0 + safeAreaInsets.bottom }
+    }
+
+
+    @ViewBuilder
+    private var surfaceBody: some View {
+        switch surface {
+        case .ambient:
+            AmbientSheetSurface()
+        case let .flat(color, border):
+            AmbientSheetSurface.shape
+                .fill(color)
+                .overlay(
+                    AmbientSheetSurface.shape
+                        .strokeBorder(border ?? .clear, lineWidth: 1)
+                )
+                .ignoresSafeArea(.container, edges: .bottom)
+        }
     }
 
     public func body(content: Content) -> some View {
         content
             .padding(.bottom, 28)
             .frame(maxWidth: .infinity)
-            .background(
-                sheetShape
-                    .fill(backgroundColor)
-                    .overlay(
-                        sheetShape.strokeBorder(borderColor ?? .clear, lineWidth: 1)
-                    )
-                    .ignoresSafeArea(.container, edges: .bottom)
-            )
+            .frame(height: resolvedHeight, alignment: .top)
+            .background(surfaceBody)
             #if canImport(UIKit)
             .padding(.bottom, keyboard.height > 0 ? keyboard.height - 28 : 0)
             #endif
@@ -90,13 +120,13 @@ public struct ExercisePickerSheetModifier: ViewModifier {
 public extension View {
     func exercisePickerSheet(
         isContentVisible: Bool,
-        backgroundColor: Color = AppStyle.Color.sheetBackground,
-        borderColor: Color? = nil
+        surface: SheetSurface = .default,
+        fixedHeight: CGFloat? = nil
     ) -> some View {
         modifier(ExercisePickerSheetModifier(
             isContentVisible: isContentVisible,
-            backgroundColor: backgroundColor,
-            borderColor: borderColor
+            surface: surface,
+            fixedHeight: fixedHeight
         ))
     }
 }
@@ -121,9 +151,21 @@ public struct SheetActionBar<Actions: View>: View {
 public struct OverlaySheetContainer<Content: View, Actions: View, Overlay: View>: View {
     @Binding var isPresented: Bool
     let allowBackdropDismiss: Bool
-    let backgroundColor: Color
-    let borderColor: Color?
+    let surface: SheetSurface
     let expandsToTop: Bool
+    /// Forwarded to `exercisePickerSheet`. When set, the action bar is pushed to
+    /// the sheet's bottom edge instead of trailing the content, so the freed
+    /// space opens up between content and actions rather than below them.
+    let fixedHeight: CGFloat?
+    /// `true` (default): the container draws its own backdrop and fades its
+    /// content in on appear.
+    ///
+    /// `false`: the caller owns the backdrop and the appear/disappear
+    /// animation. Required when the sheet has to slide in, because a slide has
+    /// to animate the sheet *without* dragging the backdrop along with it —
+    /// which is only expressible where the two are separate views, i.e. at the
+    /// call site. The container's own fade would also run on top of it.
+    let ownsPresentation: Bool
     let onCancel: () -> Void
     @ViewBuilder let overlay: () -> Overlay
     @ViewBuilder let actions: () -> Actions
@@ -134,9 +176,10 @@ public struct OverlaySheetContainer<Content: View, Actions: View, Overlay: View>
     public init(
         isPresented: Binding<Bool>,
         allowBackdropDismiss: Bool = true,
-        backgroundColor: Color = AppStyle.Color.sheetBackground,
-        borderColor: Color? = nil,
+        surface: SheetSurface = .default,
         expandsToTop: Bool = false,
+        fixedHeight: CGFloat? = nil,
+        ownsPresentation: Bool = true,
         onCancel: @escaping () -> Void,
         @ViewBuilder overlay: @escaping () -> Overlay,
         @ViewBuilder actions: @escaping () -> Actions,
@@ -144,9 +187,10 @@ public struct OverlaySheetContainer<Content: View, Actions: View, Overlay: View>
     ) {
         _isPresented = isPresented
         self.allowBackdropDismiss = allowBackdropDismiss
-        self.backgroundColor = backgroundColor
-        self.borderColor = borderColor
+        self.surface = surface
         self.expandsToTop = expandsToTop
+        self.fixedHeight = fixedHeight
+        self.ownsPresentation = ownsPresentation
         self.onCancel = onCancel
         self.overlay = overlay
         self.actions = actions
@@ -160,18 +204,16 @@ public struct OverlaySheetContainer<Content: View, Actions: View, Overlay: View>
 
     public var body: some View {
         ZStack(alignment: .bottom) {
-            Color.black.opacity(AppStyle.Opacity.overlayBackdrop)
-                .ignoresSafeArea()
-                .onTapGesture {
-                    if allowBackdropDismiss { dismiss() }
-                }
+            if ownsPresentation {
+                Color.black.opacity(AppStyle.Opacity.overlayBackdrop)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        if allowBackdropDismiss { dismiss() }
+                    }
+            }
 
             VStack(spacing: 0) {
-                Capsule()
-                    .fill(Color.white.opacity(AppStyle.Opacity.grabberHandle))
-                    .frame(width: 44, height: 5)
-                    .padding(.top, 8)
-                    .padding(.bottom, 10)
+                SheetGrabber()
 
                 // Full-height sheets scroll their content between the fixed
                 // grabber and action bar, so the content's top stays put
@@ -186,12 +228,28 @@ public struct OverlaySheetContainer<Content: View, Actions: View, Overlay: View>
                     content()
                 }
 
+                if fixedHeight != nil {
+                    Spacer(minLength: 0)
+                }
+
                 SheetActionBar { actions() }
             }
             .padding(.horizontal, AppStyle.Padding.horizontal)
-            .padding(.top, AppStyle.Padding.titleTop)
-            .frame(maxHeight: expandsToTop ? .infinity : nil, alignment: .top)
-            .exercisePickerSheet(isContentVisible: isContentVisible, backgroundColor: backgroundColor, borderColor: borderColor)
+            // No top padding: `SheetGrabber` carries its own inset, and adding
+            // another one here pushed the handle 8pt below where the training
+            // sheet's sits. The content keeps its distance to the handle.
+            // A fixed-height sheet has to let its stack fill that height,
+            // otherwise the stack stays content-sized and the action-bar
+            // spacer has nothing to expand into.
+            .frame(
+                maxHeight: (expandsToTop || fixedHeight != nil) ? .infinity : nil,
+                alignment: .top
+            )
+            .exercisePickerSheet(
+                isContentVisible: isContentVisible,
+                surface: surface,
+                fixedHeight: fixedHeight
+            )
             .gesture(
                 DragGesture().onEnded { value in
                     if allowBackdropDismiss && value.translation.height > 80 { dismiss() }
@@ -204,6 +262,10 @@ public struct OverlaySheetContainer<Content: View, Actions: View, Overlay: View>
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .ignoresSafeArea(edges: .bottom)
         .onAppear {
+            guard ownsPresentation else {
+                isContentVisible = true
+                return
+            }
             withAnimation(.easeOut(duration: 0.18)) { isContentVisible = true }
         }
         .onChange(of: isPresented) { _, newValue in
@@ -217,18 +279,20 @@ public extension OverlaySheetContainer where Overlay == EmptyView, Actions == Em
     init(
         isPresented: Binding<Bool>,
         allowBackdropDismiss: Bool = true,
-        backgroundColor: Color = AppStyle.Color.sheetBackground,
-        borderColor: Color? = nil,
+        surface: SheetSurface = .default,
         expandsToTop: Bool = false,
+        fixedHeight: CGFloat? = nil,
+        ownsPresentation: Bool = true,
         onCancel: @escaping () -> Void,
         @ViewBuilder content: @escaping () -> Content
     ) {
         self.init(
             isPresented: isPresented,
             allowBackdropDismiss: allowBackdropDismiss,
-            backgroundColor: backgroundColor,
-            borderColor: borderColor,
+            surface: surface,
             expandsToTop: expandsToTop,
+            fixedHeight: fixedHeight,
+            ownsPresentation: ownsPresentation,
             onCancel: onCancel,
             overlay: { EmptyView() },
             actions: { EmptyView() },
@@ -242,9 +306,10 @@ public extension OverlaySheetContainer where Overlay == EmptyView {
     init(
         isPresented: Binding<Bool>,
         allowBackdropDismiss: Bool = true,
-        backgroundColor: Color = AppStyle.Color.sheetBackground,
-        borderColor: Color? = nil,
+        surface: SheetSurface = .default,
         expandsToTop: Bool = false,
+        fixedHeight: CGFloat? = nil,
+        ownsPresentation: Bool = true,
         onCancel: @escaping () -> Void,
         @ViewBuilder actions: @escaping () -> Actions,
         @ViewBuilder content: @escaping () -> Content
@@ -252,9 +317,10 @@ public extension OverlaySheetContainer where Overlay == EmptyView {
         self.init(
             isPresented: isPresented,
             allowBackdropDismiss: allowBackdropDismiss,
-            backgroundColor: backgroundColor,
-            borderColor: borderColor,
+            surface: surface,
             expandsToTop: expandsToTop,
+            fixedHeight: fixedHeight,
+            ownsPresentation: ownsPresentation,
             onCancel: onCancel,
             overlay: { EmptyView() },
             actions: actions,

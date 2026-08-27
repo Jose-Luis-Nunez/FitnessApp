@@ -30,6 +30,14 @@ private func assertSnapshot<V: View>(
 
     SnapshotTesting.assertSnapshot(
         of: controller,
+        // Deliberately 0.99 here, unlike the card and training suites which run
+        // at 0.999. These baselines carry a pre-existing runtime drift against
+        // the pinned toolchain — measured at 0.141% of pixels with a maximum
+        // channel delta of 10/255 on `primaryStyle`, i.e. invisible — which sits
+        // just above a 0.999 budget. Tightening would fail this suite for
+        // renderer noise rather than for a real change, and re-recording it
+        // would hide the drift instead of recording it. Revisit together with
+        // the drift, not on its own.
         as: .image(precision: 0.99, perceptualPrecision: 0.98, size: size),
         named: name,
         record: shouldRecord,
@@ -314,7 +322,8 @@ struct SetTilesRowSnapshotTests {
         CardActionCircleButtonVisual(
             iconSize: ExerciseCardLayout.ResetButton.iconSize,
             discSize: ExerciseCardLayout.ResetButton.size,
-            glowSize: ExerciseCardLayout.ResetButton.size
+            frameSize: ExerciseCardLayout.ResetButton.size,
+            surface: .filled()
         ) {
             Image(systemName: "sparkles")
                 .resizable()

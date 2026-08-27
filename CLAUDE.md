@@ -32,7 +32,11 @@ For the human-readable agent overview see [AGENTS.md](AGENTS.md).
 
 - **Swift change → run `reviewing-code-changes`** when the user requests final validation. During development, the `Stop` hook emits lightweight hints and does not require final stamps or tests.
 - **Agent-infrastructure change → run `reviewing-agent-infrastructure`**, then spawn the Verifier subagent. The required `agent-infrastructure.stamp.md` must match the schema enforced by the verifier and hooks.
-- **Structural Swift change** (new feature, service, model, navigation, AppStyle token, shared component) → also update `.claude/references/architecture-documentation.md` in the same task.
+- **Structural Swift change** (new feature, service, model, navigation, or a
+  shared component that owns a contract) → also update
+  `.claude/references/architecture-documentation.md` in the same task.
+  Presentation-only work does not qualify: AppStyle tokens, background and
+  styling components, and other pure-visual changes are never documented there.
 - **UI test fails** → use the `debugging-ui-tests` skill before tweaking pipelines or timeouts.
 
 ## Review Preferences

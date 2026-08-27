@@ -14,12 +14,19 @@ public final class MockAnalyticsStorage: AnalyticsStoring, WorkoutAnalyticsBatch
     public private(set) var availabilityExerciseIDs: [UUID] = []
     public private(set) var latestLoadCallCount = 0
     public private(set) var latestLoadedExerciseIDs: [UUID] = []
+    /// Tracked separately from `loadCallCount` so a test can tell a bounded
+    /// recent-day read apart from a full-history read. Inheriting the protocol's
+    /// default made the two indistinguishable, which let a card that must never
+    /// pull the whole history look identical to one that does.
+    public private(set) var recentLoadCallCount = 0
+    public private(set) var recentLoadDayLimits: [Int] = []
     public private(set) var batchLoadCallCount = 0
     public private(set) var lastBatchExerciseIDs: [UUID] = []
     public var saveSucceeds = true
     public var singleLoadFails = false
     public var availabilityLoadFails = false
     public var latestLoadFails = false
+    public var recentLoadFails = false
     public var batchLoadFails = false
 
     public init() {}
@@ -65,6 +72,31 @@ public final class MockAnalyticsStorage: AnalyticsStoring, WorkoutAnalyticsBatch
         return savedEntries[exerciseId]?.max { $0.date < $1.date }
     }
 
+    /// Bounded read, mirroring the production contract: newest first, stopping
+    /// after `dayLimit` distinct training days.
+    public func loadRecentEntries(
+        for exerciseId: UUID,
+        dayLimit: Int
+    ) throws -> [AnalyticsEntry] {
+        recentLoadCallCount += 1
+        recentLoadDayLimits.append(dayLimit)
+        if recentLoadFails { throw LoadError.injected }
+        guard dayLimit > 0 else { return [] }
+
+        let calendar = Calendar.current
+        var days: [Date] = []
+        var result: [AnalyticsEntry] = []
+        for entry in (savedEntries[exerciseId] ?? []).sorted(by: { $0.date > $1.date }) {
+            let day = calendar.startOfDay(for: entry.date)
+            if !days.contains(day) {
+                guard days.count < dayLimit else { break }
+                days.append(day)
+            }
+            result.append(entry)
+        }
+        return result
+    }
+
     private func trackedSingleLoad(for exerciseId: UUID) -> [AnalyticsEntry] {
         loadCallCount += 1
         loadedExerciseIDs.append(exerciseId)
@@ -92,6 +124,8 @@ public final class MockAnalyticsStorage: AnalyticsStoring, WorkoutAnalyticsBatch
         availabilityExerciseIDs = []
         latestLoadCallCount = 0
         latestLoadedExerciseIDs = []
+        recentLoadCallCount = 0
+        recentLoadDayLimits = []
         batchLoadCallCount = 0
         lastBatchExerciseIDs = []
     }

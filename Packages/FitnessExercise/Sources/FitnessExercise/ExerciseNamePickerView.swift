@@ -53,7 +53,7 @@ public struct ExerciseNamePickerView: View {
     public var body: some View {
         OverlaySheetContainer(
             isPresented: $isPresented,
-            backgroundColor: AppStyle.Color.backgroundColor,
+            surface: .flat(AppStyle.Color.backgroundColor),
             expandsToTop: true,
             onCancel: onCancel,
             actions: {

@@ -9,6 +9,10 @@ private let logger = Logger(subsystem: "FitnessStorage", category: "AnalyticsSto
 @MainActor
 public final class AnalyticsStorageService: AnalyticsStoring, WorkoutAnalyticsBatchStoring {
     private static let readBatchSize = 200
+    /// Page size for `loadRecentEntries`. Comfortably above the number of
+    /// entries a couple of training days produce, so the common case is one
+    /// fetch, while still bounding an exercise with a long history.
+    private static let recentEntriesPageSize = 64
     // Retain the CONTAINER, not just its mainContext (see FeedbackStorageService).
     private let modelContainer: ModelContainer
     private var context: ModelContext { modelContainer.mainContext }
@@ -83,6 +87,46 @@ public final class AnalyticsStorageService: AnalyticsStoring, WorkoutAnalyticsBa
         )
         descriptor.fetchLimit = 1
         return try !context.fetchIdentifiers(descriptor).isEmpty
+    }
+
+    /// Fetches newest-first and stops after `dayLimit` distinct training days.
+    ///
+    /// A day can hold several entries, so the read cannot be limited by row
+    /// count up front. It pages instead: each page is a bounded fetch, and
+    /// paging stops as soon as one entry beyond the requested days is seen. Two
+    /// days therefore cost a single page in practice, and an exercise with years
+    /// of history is never materialized — an unbounded `fetch` would load all of
+    /// it and only skip the domain conversions.
+    public func loadRecentEntries(for exerciseId: UUID, dayLimit: Int) throws -> [AnalyticsEntry] {
+        guard dayLimit > 0 else { return [] }
+
+        let calendar = Calendar.current
+        var days: [Date] = []
+        var result: [AnalyticsEntry] = []
+        var offset = 0
+
+        while true {
+            var descriptor = FetchDescriptor<AnalyticsEntryModel>(
+                predicate: #Predicate<AnalyticsEntryModel> { $0.exerciseId == exerciseId },
+                sortBy: [SortDescriptor(\.date, order: .reverse)]
+            )
+            descriptor.fetchOffset = offset
+            descriptor.fetchLimit = Self.recentEntriesPageSize
+
+            let page = try context.fetch(descriptor)
+            guard !page.isEmpty else { return result }
+
+            for model in page {
+                let day = calendar.startOfDay(for: model.date)
+                if !days.contains(day) {
+                    guard days.count < dayLimit else { return result }
+                    days.append(day)
+                }
+                result.append(model.toDomain())
+            }
+
+            offset += page.count
+        }
     }
 
     public func loadLatestEntry(for exerciseId: UUID) throws -> AnalyticsEntry? {

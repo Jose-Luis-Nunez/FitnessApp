@@ -73,9 +73,6 @@ public struct MuscleCategoryView: View {
 
     public var body: some View {
         ZStack(alignment: .bottom) {
-            AppStyle.Color.backgroundColor
-                .ignoresSafeArea()
-
             VStack(spacing: 0) {
                 Text(group.localizedName)
                     .font(AppStyle.Font.navigationHeadline)
@@ -103,6 +100,7 @@ public struct MuscleCategoryView: View {
                     .hidesBottomBarWhilePresented(overlayState)
             }
         }
+        .ambientScreenBackground()
         .accessibilityIdentifier(MuscleCategoryIDs.screen)
 #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)

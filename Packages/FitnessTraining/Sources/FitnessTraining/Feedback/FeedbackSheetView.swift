@@ -11,9 +11,10 @@ import FitnessUI
 ///
 /// Layout:
 /// - The presenting component supplies the same dark gradient, border, size,
-///   and corner shape as the training sheet. The sticky header is opaque and
-///   the action area uses the same fade pattern as `WorkoutAnalyticsEntryView`,
-///   tinted with the matching top and bottom colors of the sheet gradient.
+///   and corner shape as the training sheet. Both the sticky header and the
+///   action area scrim the content underneath with the ambient surface's own
+///   base colour and fade out at their inner edge, so neither reads as a band
+///   across the sheet.
 /// - Title "Exercise Feedback" centered at the top of the content area
 ///   (no NavigationStack, no toolbar — keep it lean and focussed).
 /// - `ScrollView` with progressive-disclosure sections:
@@ -90,7 +91,10 @@ public struct FeedbackSheetView: View {
     public var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: AppStyle.Padding.sectionSpacing) {
-                sectionTitle(AppText.feedbackPhysicalSymptoms)
+                sectionTitle(
+                    AppText.feedbackPhysicalSymptoms,
+                    alignment: .center
+                )
                 SymptomChipsView(
                     selected: viewModel.symptoms,
                     onToggle: { viewModel.toggleSymptom($0) }
@@ -114,8 +118,8 @@ public struct FeedbackSheetView: View {
                     NoteField(text: $viewModel.note, isFocused: $isNotesFocused)
                 }
             }
-            .padding(.horizontal, AppStyle.Padding.horizontal)
-            .padding(.top, AppStyle.Padding.sectionSpacing)
+            .padding(.horizontal, Self.contentHorizontalPadding)
+            .padding(.top, Self.contentTopPadding)
             .padding(.bottom, AppStyle.Padding.sectionSpacing)
         }
         .scrollIndicators(.hidden)
@@ -141,25 +145,35 @@ public struct FeedbackSheetView: View {
         .accessibilityIdentifier(TrainingIDs.feedbackSheet)
     }
 
+    /// Left and right content margin for every element in this sheet, taken
+    /// from the training sheet so the two surfaces — which share size, shape,
+    /// and background — also share their edge inset.
+    private static let contentHorizontalPadding =
+        AppStyle.Layout.trainingSheetContentHorizontalPadding
+
+    /// The sheet title and the first section heading are both centred and read
+    /// as one block, so the gap between them is tighter than
+    /// `sectionSpacing` — which is calibrated for separating unrelated
+    /// sections. The height this frees goes to the symptom tiles.
+    private static let headerTitleBottomPadding: CGFloat = 10
+    private static let contentTopPadding: CGFloat = 6
+
+    /// Leading by default. The first section is centred instead: it sits
+    /// directly under the centred sheet title with no content above it, so a
+    /// left-aligned label there reads as a stray line rather than as a heading.
     @ViewBuilder
-    private func sectionTitle(_ text: LocalizedStringResource) -> some View {
+    private func sectionTitle(
+        _ text: LocalizedStringResource,
+        alignment: Alignment = .leading
+    ) -> some View {
         Text(text)
             .font(AppStyle.Font.sheetSectionLabel)
             .foregroundColor(AppStyle.Color.white.opacity(0.9))
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: alignment)
     }
 
     private var feedbackSheetGrabber: some View {
-        Capsule()
-            .fill(Color.white.opacity(AppStyle.Opacity.grabberHandle))
-            .frame(
-                width: AppStyle.Layout.grabberWidth,
-                height: AppStyle.Layout.grabberHeight
-            )
-            .padding(.top, 8)
-            .padding(.bottom, 10)
-            .frame(maxWidth: .infinity)
-            .contentShape(Rectangle())
+        SheetGrabber()
             .accessibilityElement()
             .accessibilityLabel(AppText.feedbackCancel)
             .accessibilityHint(AppText.feedbackCancelHint)
@@ -177,16 +191,38 @@ public struct FeedbackSheetView: View {
                 .foregroundColor(AppStyle.Color.white)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, AppStyle.Padding.sectionSpacing)
-                .padding(.bottom, AppStyle.Padding.sectionSpacing)
+                .padding(.bottom, Self.headerTitleBottomPadding)
         }
-        .background(AppStyle.Color.idleCardSoft)
+        .background(headerScrim)
+    }
+
+    /// The sticky header must hide content scrolling underneath it without
+    /// reading as a band across the sheet. A flat fill did exactly that: it was
+    /// a different colour than the ambient surface behind it and met the scroll
+    /// area with a hard edge. This scrim uses the ambient base colour instead
+    /// and fades out over its last quarter, so the boundary dissolves and the
+    /// surface's colour washes stay visible through it.
+    private var headerScrim: some View {
+        LinearGradient(
+            stops: [
+                .init(color: AppStyle.Color.ambientBase.opacity(0.92), location: 0.0),
+                .init(color: AppStyle.Color.ambientBase.opacity(0.92), location: 0.75),
+                .init(color: AppStyle.Color.ambientBase.opacity(0.0), location: 1.0),
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
     }
 
     private var feedbackActionArea: some View {
         SheetActionArea(
             saveLabel: AppText.actionSave,
             isSaveEnabled: viewModel.isSaveEnabled,
-            backdropColor: AppStyle.Color.idleCardDark,
+            // Matches the sheet's `AmbientScreenBackground` base rather than
+            // the old card gradient's bottom stop, which showed as a lighter
+            // band across the action area.
+            backdropColor: AppStyle.Color.ambientBase,
+            horizontalPadding: Self.contentHorizontalPadding,
             cancelAccessibilityIdentifier: TrainingIDs.feedbackCancelButton,
             saveAccessibilityIdentifier: TrainingIDs.feedbackSaveButton,
             onCancel: dismiss,

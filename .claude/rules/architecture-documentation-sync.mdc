@@ -5,14 +5,14 @@ alwaysApply: true
 
 # Architecture Documentation Sync
 
-Update `.claude/references/architecture-documentation.md` only when the current
-public or structural architecture changes: feature/package boundaries, domain
-models, services, use cases, shared components, state ownership, navigation, or
-new/renamed AppStyle tokens.
+Update `.claude/references/architecture-documentation.md` only when current
+public architecture changes: feature/package boundaries, domain models,
+services, use cases, contract-owning shared components, state ownership, or
+navigation.
 
-Do not update it for private refactors, layout-only changes, token value swaps,
-or test expectation changes.
+Never update it for AppStyle tokens, presentation-only components (backgrounds,
+styling wrappers), private refactors, layout-only edits, or test expectations.
 
-Route to one relevant section using
+Route to one section using
 `.claude/skills/reviewing-code-changes/references/architecture-routing.md`;
-never load or rewrite the complete document for a local change.
+never rewrite the whole document for a local change.

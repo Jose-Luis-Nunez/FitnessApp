@@ -235,7 +235,7 @@ struct BilateralTrainingSessionSnapshotTests {
 
         SnapshotTesting.assertSnapshot(
             of: controller,
-            as: .image(precision: 0.99, perceptualPrecision: 0.98, size: size),
+            as: .image(precision: 0.999, perceptualPrecision: 0.98, size: size),
             named: name,
             record: ProcessInfo.processInfo.environment["RECORD_SNAPSHOTS"] == "1"
                 ? .all
@@ -328,7 +328,7 @@ private func assertSetCardSnapshot(
 
     SnapshotTesting.assertSnapshot(
         of: controller,
-        as: .image(precision: 0.99, perceptualPrecision: 0.98, size: size),
+        as: .image(precision: 0.999, perceptualPrecision: 0.98, size: size),
         named: snapshotName
             ?? "\(rightStepActive ? "right-active" : (filled ? "filled" : "empty"))-\(Int(width))",
         record: shouldRecord ? .all : .never,

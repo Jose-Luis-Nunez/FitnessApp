@@ -73,7 +73,7 @@ public struct CategoryTileModelView: View {
 
     @ViewBuilder
     private func tileContent(info: CategoryTileProgressInfo) -> some View {
-        CardBackground(style: .primary, addPadding: false) {
+        CardBackground(style: .translucent, addPadding: false) {
             VStack(spacing: ExerciseCardLayout.CategoryTile.contentSpacing) {
                 headerRow(info: info)
                 iconView

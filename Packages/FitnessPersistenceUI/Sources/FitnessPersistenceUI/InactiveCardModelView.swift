@@ -21,6 +21,21 @@ struct LatestSetProgressCardState {
     }
 }
 
+struct SessionImprovementCardState {
+    private(set) var improvement: SessionImprovement?
+
+    /// A failed read must never look like "did not improve": the previous value
+    /// is kept so a later revision can retry instead of caching an empty state.
+    mutating func apply(_ outcome: SessionImprovementLoadOutcome) {
+        switch outcome {
+        case let .loaded(value):
+            improvement = value
+        case .failed:
+            break
+        }
+    }
+}
+
 /// Completed (inactive) card variant rendered against a live
 /// `@Bindable ExerciseModel`. The data source is the SwiftData `@Model` instance —
 /// all edits propagate automatically without snapshot sync (ADR-0001). Analytics
@@ -40,8 +55,10 @@ public struct InactiveCardModelView: View {
     @State private var isShowingAnalytics = false
     @State private var isExpanded = false
     @State private var latestSetPresentation = LatestSetProgressCardState()
+    @State private var improvementPresentation = SessionImprovementCardState()
     @State private var analyticsRevision: ExerciseAnalyticsCacheRevision
     @Environment(\.appColorTheme) private var appColorTheme
+    @Environment(\.locale) private var locale
 
     public init(
         model: ExerciseModel,
@@ -89,6 +106,15 @@ public struct InactiveCardModelView: View {
         )
     }
 
+    private func loadImprovement() {
+        improvementPresentation.apply(
+            analyticsViewModel.loadSessionImprovement(
+                for: model.id,
+                hasWeight: model.hasWeight
+            )
+        )
+    }
+
     private func toggleExpansion() {
         if isExpanded {
             isExpanded = false
@@ -123,7 +149,18 @@ public struct InactiveCardModelView: View {
         .sheet(isPresented: $isShowingAnalytics) {
             AnalyticsView(exercise: model.toDomain(), viewModel: analyticsViewModel)
         }
+        // Synchronous on purpose, not `.task`. `.task` runs its body in a
+        // scheduled Task, so the read can resume after the surrounding
+        // `ModelContext` is gone and then trap on a destroyed `model` — which is
+        // exactly what the collapsed-card snapshot caught. `onAppear` plus an
+        // id-change hook covers the same two triggers while the model is
+        // guaranteed alive. The read is affordable inline because
+        // `loadRecentEntries` is a bounded, paged fetch rather than a full
+        // history read.
+        .onAppear { loadImprovement() }
+        .onChange(of: model.id) { loadImprovement() }
         .onChange(of: analyticsRevision.value) {
+            loadImprovement()
             if isExpanded {
                 isExpanded = loadLatestSetProgress()
             }
@@ -138,7 +175,7 @@ private extension InactiveCardModelView {
     var categoryIconView: some View {
         ExerciseCardArtworkView(
             image: imageProvider(appColorTheme.scheme.iconName(for: model.displayIconName)),
-            size: AppStyle.Layout.idleCategoryIconSize,
+            size: AppStyle.Layout.idleActiveCardIconSize,
             alignment: model.iconAlignment
         )
             .contentShape(Rectangle())
@@ -158,11 +195,62 @@ private extension InactiveCardModelView {
             .accessibilityIdentifier(ExerciseCardIDs.seatEditIcon(model.id))
     }
 
+    /// Trailing column built on the *same* grid as the metric column on the
+    /// left: a title-height row, then a block of `improvementColumnHeight` whose
+    /// first line is a reserved stand-in for the gain value and whose second line
+    /// is the label. Because both columns share that rhythm and are centred in
+    /// the same header row, "Details" lands on the "now …" line by construction —
+    /// no tuned offset that would drift when a font or a height changes. The
+    /// same holds in the no-improvement state, where `completedColumn` reserves
+    /// the gain line the same way.
     var checkmarkTrailing: some View {
+        VStack(spacing: 4) {
+            // Reserves exactly one title line. The checkmark is taller and is
+            // drawn as an overlay, so it can extend downward without pushing the
+            // grid apart.
+            Text(verbatim: " ")
+                .font(theme.titleFont)
+                .hidden()
+                .overlay(alignment: .top) { checkmarkCircle }
+
+            VStack(spacing: improvementLineSpacing) {
+                // Stand-in for the gain line: same font, so it reserves the same
+                // height as "+5 kg" opposite it.
+                Text(verbatim: "+0")
+                    .font(AppStyle.Font.idleWeightValue)
+                    .hidden()
+
+                Text(AppText.commonDetails)
+                    .font(AppStyle.Font.metricLabel)
+                    .foregroundColor(AppStyle.Color.idleMetricUnit)
+            }
+            .frame(height: improvementColumnHeight)
+            // The chevron hangs below the label instead of joining the stack, so
+            // it cannot shift "Details" off the footer line.
+            .overlay(alignment: .bottom) {
+                Image(systemName: "chevron.down")
+                    .font(AppStyle.Font.cardSmallLabel)
+                    .foregroundColor(AppStyle.Color.idleMetricUnit)
+                    .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                    .offset(y: 6)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { toggleExpansion() }
+        // The tap target is a bare shape, so without this the expand affordance
+        // exists only for sighted pointer input.
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityLabel(Text(AppText.commonDetails))
+        .accessibilityAction { toggleExpansion() }
+    }
+
+    var checkmarkCircle: some View {
         CardActionCircleButtonVisual(
             iconSize: 14,
             discSize: AppStyle.Layout.idlePlayButtonSize,
-            glowSize: AppStyle.Layout.idlePlayButtonGlowSize
+            frameSize: AppStyle.Layout.idlePlayButtonGlowSize,
+            surface: .clear
         ) {
             SharpCheckmark()
                 .stroke(
@@ -171,11 +259,10 @@ private extension InactiveCardModelView {
                 )
                 .frame(width: 14, height: 11)
         }
-        .onTapGesture { toggleExpansion() }
     }
 
     var titleSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 4) {
             Text(verbatim: model.name)
                 .font(theme.titleFont)
                 .foregroundColor(theme.titleColor)
@@ -186,19 +273,110 @@ private extension InactiveCardModelView {
                     if isEditable { onEdit(model.toDomain(), .full) }
                 }
 
-            HStack(spacing: 4) {
-                Text(AppText.exerciseCompleted)
-                    .font(AppStyle.Font.cardSmallBold)
-                    .foregroundColor(AppStyle.Color.idleMetricUnit)
-
-                Image(systemName: "chevron.down")
-                    .font(AppStyle.Font.cardSmallLabel)
-                    .foregroundColor(AppStyle.Color.idleMetricUnit)
-                    .rotationEffect(.degrees(isExpanded ? 180 : 0))
-            }
-            .contentShape(Rectangle())
-            .onTapGesture { toggleExpansion() }
+            improvementRow
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+}
+
+// MARK: - Improvement Row
+
+private extension InactiveCardModelView {
+
+    /// Mirrors the idle card's metric row geometry — a value line on
+    /// `idleMetricContentRowHeight` over a footer on `idleMetricFooterRowHeight`.
+    /// Both heights are held in every state, which is what keeps the completed
+    /// card exactly as tall as the idle card no matter what it has to show.
+    @ViewBuilder
+    var improvementRow: some View {
+        let improvement = improvementPresentation.improvement
+
+        HStack(alignment: .top, spacing: 0) {
+            if let improvement, !improvement.isEmpty {
+                // Each present column claims an equal share and aligns leading,
+                // so a lone reps gain sits on the left instead of holding the
+                // reps position with an empty weight slot beside it.
+                if let gain = improvement.weightGain {
+                    gainColumn(
+                        gain: WeightFormatter.format(gain, locale: locale),
+                        unit: Text(verbatim: "kg"),
+                        footer: Text(AppText.exerciseNowWeight(
+                            weight: WeightFormatter.format(improvement.currentWeight, locale: locale)
+                        ))
+                    )
+                }
+
+                if let gain = improvement.repsGain {
+                    gainColumn(
+                        gain: "\(gain)",
+                        unit: Text(AppText.exerciseRepsUnit),
+                        footer: Text(AppText.exerciseNowReps(reps: improvement.currentReps))
+                    )
+                }
+            } else {
+                completedColumn
+            }
+        }
+    }
+
+    /// Height the improvement area occupies, matching the idle card's value row
+    /// plus its footer row. Pinning the *total* rather than each line lets the
+    /// gain and its "now …" line sit as tightly as the design wants while the
+    /// card stays exactly as tall as an idle card.
+    var improvementColumnHeight: CGFloat {
+        AppStyle.Layout.idleMetricContentRowHeight
+            + improvementLineSpacing
+            + AppStyle.Layout.idleMetricFooterRowHeight
+    }
+
+    /// Gap between the gain line and its "now …" line. Tuned against the design
+    /// rather than derived from a token: it is a one-off relation between these
+    /// two specific lines, not a design-system spacing.
+    var improvementLineSpacing: CGFloat { 5 }
+
+    func gainColumn(gain: String, unit: Text, footer: Text) -> some View {
+        VStack(alignment: .leading, spacing: improvementLineSpacing) {
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text(verbatim: "+\(gain)")
+                    .font(AppStyle.Font.idleWeightValue)
+                    .foregroundColor(appColorTheme.accent.idleAccentFill)
+
+                unit
+                    .font(AppStyle.Font.cardMetricUnit)
+                    .foregroundColor(AppStyle.Color.idleMetricUnit)
+            }
+
+            footer
+                .font(AppStyle.Font.cardMetricUnit)
+                .foregroundColor(AppStyle.Color.idleMetricUnit)
+        }
+        .fixedSize(horizontal: true, vertical: false)
+        .frame(height: improvementColumnHeight, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Nothing improved. Built on the same two-line grid as `gainColumn` and
+    /// `checkmarkTrailing` rather than as a single centred line: the hidden
+    /// stand-in reserves the gain line, so "Completed" lands on the footer line
+    /// level with "Details" opposite it. Centring it in the reserved height put
+    /// the two roughly 15pt apart, which contradicted the grid the trailing
+    /// column is documented to follow.
+    var completedColumn: some View {
+        VStack(alignment: .leading, spacing: improvementLineSpacing) {
+            Text(verbatim: "+0")
+                .font(AppStyle.Font.idleWeightValue)
+                .hidden()
+
+            Text(AppText.exerciseCompleted)
+                .font(AppStyle.Font.cardMetricUnit)
+                .foregroundColor(AppStyle.Color.idleMetricUnit)
+        }
+        // Same frame as `gainColumn`, centred rather than top-aligned: the
+        // reserved block is taller than its two lines, and every other column
+        // centres inside it. Top-aligning lifted "Completed" 13pt above the
+        // footer line it is meant to share with "Details".
+        .frame(height: improvementColumnHeight, alignment: .leading)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 

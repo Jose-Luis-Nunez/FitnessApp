@@ -92,6 +92,7 @@ public struct TrainingSessionComponent: View {
                     .foregroundColor(AppStyle.Color.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
+                    .padding(.leading, Self.titleLeadingInset)
                     .accessibilityIdentifier(TrainingIDs.sheetTitle)
 
                 ScrollViewReader { proxy in
@@ -147,6 +148,22 @@ public struct TrainingSessionComponent: View {
             .frame(width: railWidth, alignment: .top)
         }
         .padding(.horizontal, horizontalPadding)
+    }
+
+    /// The exercise name heads the same column as the set rows, but it sat at
+    /// the column's raw leading edge while the rows are inset twice over: once
+    /// by `SimpleActiveSetView` itself and once more per row — the standard row
+    /// pads itself, the bilateral layout pads its whole stack. Both paths
+    /// therefore carry `cardPadding` twice, which is why this needs no
+    /// per-mode branch. On top of that each set number is *centred* in a
+    /// `setRowBadgeSize` slot, so the digit starts further in again.
+    ///
+    /// Verified against the rendered snapshots rather than derived on paper:
+    /// the title and a leading "1" both land on 46.3pt at 430pt wide. The badge
+    /// term stays an approximation because the digit's width is unknown at
+    /// layout time — a two-digit set number starts marginally further left.
+    private static var titleLeadingInset: CGFloat {
+        AppStyle.DeviceLayout.cardPadding * 2 + AppStyle.Layout.setRowBadgeSize / 3
     }
 
     private func setViewportHeight(for exercise: Exercise) -> CGFloat {
@@ -363,7 +380,14 @@ public struct TrainingActionBarComponent: View {
         let currentViewModel = coordinator.activeSetViewModel
         let viewModel = bottomActionBarViewModel
 
-        if viewModel.shouldShow && !currentViewModel.isEditing {
+        // Kept in the layout while a set is being edited and only made inert.
+        // Removing it shrank the training sheet at the exact moment the
+        // Less/More sheet opens: the card behind dropped down while the picker
+        // slid up over it, which read as a two-step lurch rather than one
+        // movement. Opening the feedback sheet never triggered this, which is
+        // why that transition always felt smooth. The picker covers this bar
+        // completely, so keeping it rendered costs nothing visually.
+        if viewModel.shouldShow {
             BottomActionBarView(
                 viewModel: viewModel,
                 onStart: trainingCallbacks.onStart,
@@ -375,6 +399,12 @@ public struct TrainingActionBarComponent: View {
                 onOpenFeedback: trainingCallbacks.onOpenFeedback,
                 feedbackIconState: feedbackIconState
             )
+            // Both are required: `allowsHitTesting` stops touches, but the
+            // subtree would stay VoiceOver-focusable and XCUITest-tappable
+            // behind the modal picker, and activating it that way would still
+            // run the callbacks.
+            .allowsHitTesting(!currentViewModel.isEditing)
+            .accessibilityHidden(currentViewModel.isEditing)
             .zIndex(5)
         }
     }

@@ -11,13 +11,13 @@ public struct SheetActionArea: View {
     private let saveLabel: LocalizedStringResource
     private let isSaveEnabled: Bool
     private let backdropColor: Color
+    private let horizontalPadding: CGFloat
     private let cancelAccessibilityIdentifier: String
     private let saveAccessibilityIdentifier: String
     private let onCancel: () -> Void
     private let onSave: () -> Void
 
     @Environment(\.safeAreaInsets) private var safeAreaInsets
-    @Environment(\.appColorTheme) private var appColorTheme
 
     private static let homeMenuBarBottomOffset: CGFloat = -8
     private static let backdropFadeHeight: CGFloat = 28
@@ -28,6 +28,10 @@ public struct SheetActionArea: View {
         saveLabel: LocalizedStringResource,
         isSaveEnabled: Bool,
         backdropColor: Color,
+        /// Content margin for the button row. Defaults to the standard sheet
+        /// margin; pass the host sheet's own value when it differs, so the
+        /// actions line up with the content they belong to.
+        horizontalPadding: CGFloat = AppStyle.Padding.horizontal,
         cancelAccessibilityIdentifier: String = "",
         saveAccessibilityIdentifier: String = "",
         onCancel: @escaping () -> Void,
@@ -37,6 +41,7 @@ public struct SheetActionArea: View {
         self.saveLabel = saveLabel
         self.isSaveEnabled = isSaveEnabled
         self.backdropColor = backdropColor
+        self.horizontalPadding = horizontalPadding
         self.cancelAccessibilityIdentifier = cancelAccessibilityIdentifier
         self.saveAccessibilityIdentifier = saveAccessibilityIdentifier
         self.onCancel = onCancel
@@ -47,45 +52,16 @@ public struct SheetActionArea: View {
         ZStack(alignment: .bottom) {
             backdrop
 
-            HStack(spacing: AppStyle.Padding.card) {
-                Button(cancelLabel, action: onCancel)
-                    .font(AppStyle.Font.bottomBarButtons)
-                    .foregroundColor(AppStyle.Color.white)
-                    .frame(
-                        width: AppStyle.Layout.sheetActionSecondaryButtonWidth,
-                        height: AppStyle.Layout.sheetActionButtonHeight
-                    )
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier(cancelAccessibilityIdentifier)
-
-                Button(action: onSave) {
-                    Text(saveLabel)
-                        .font(AppStyle.Font.bottomBarButtons)
-                        .foregroundColor(AppStyle.Color.white)
-                        .frame(
-                            maxWidth: .infinity,
-                            minHeight: AppStyle.Layout.sheetActionButtonHeight,
-                            maxHeight: AppStyle.Layout.sheetActionButtonHeight
-                        )
-                        .background(
-                            isSaveEnabled
-                                ? appColorTheme.accent.primary
-                                : appColorTheme.accent.primary.opacity(0.15)
-                        )
-                        .clipShape(
-                            RoundedRectangle(
-                                cornerRadius: AppStyle.CornerRadius.editPickerViewButton,
-                                style: .continuous
-                            )
-                        )
-                }
-                .buttonStyle(.plain)
-                .frame(maxWidth: AppStyle.Layout.sheetActionPrimaryButtonMaxWidth)
-                .disabled(!isSaveEnabled)
-                .accessibilityIdentifier(saveAccessibilityIdentifier)
-            }
-            .frame(maxWidth: .infinity, alignment: .trailing)
-            .padding(.horizontal, AppStyle.Padding.horizontal)
+            SheetActionButtons(
+                cancelLabel: cancelLabel,
+                saveLabel: saveLabel,
+                isSaveEnabled: isSaveEnabled,
+                cancelAccessibilityIdentifier: cancelAccessibilityIdentifier,
+                saveAccessibilityIdentifier: saveAccessibilityIdentifier,
+                onCancel: onCancel,
+                onSave: onSave
+            )
+            .padding(.horizontal, horizontalPadding)
             .padding(.bottom, bottomPadding)
         }
         .frame(maxWidth: .infinity)

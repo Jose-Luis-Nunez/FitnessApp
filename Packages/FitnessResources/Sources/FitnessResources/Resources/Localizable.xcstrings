@@ -2452,6 +2452,23 @@
         }
       }
     },
+    "common.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Details"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Details"
+          }
+        }
+      }
+    },
     "common.error" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2968,13 +2985,13 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Abgeschl. Übung"
+            "value" : "Abgeschlossen"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Completed exercise"
+            "value" : "Completed"
           }
         }
       }
@@ -3231,6 +3248,40 @@
         }
       }
     },
+    "exercise.now_reps" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "jetzt %1$(reps)lld Wdh."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "now %1$(reps)lld reps"
+          }
+        }
+      }
+    },
+    "exercise.now_weight" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "jetzt %1$(weight)@ kg"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "now %1$(weight)@ kg"
+          }
+        }
+      }
+    },
     "exercise.of_count" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3341,6 +3392,23 @@
       }
     },
     "exercise.reps_lowercase" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wdh."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reps"
+          }
+        }
+      }
+    },
+    "exercise.reps_unit" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
@@ -3730,13 +3798,13 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Benommenheit / Drehschwindel"
+            "value" : "Benommenheit"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lightheaded / spinning"
+            "value" : "Lightheaded"
           }
         }
       }
@@ -3832,13 +3900,13 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Magenbeschwerden / Erschöpfung"
+            "value" : "Magenbeschwerden"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Upset stomach / Fatigue"
+            "value" : "Upset stomach"
           }
         }
       }
@@ -3985,13 +4053,13 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bewegungsausführung nicht haltbar"
+            "value" : "Heute keine Kraft"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Inability to hold form"
+            "value" : "No power today"
           }
         }
       }

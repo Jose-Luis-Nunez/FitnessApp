@@ -27,7 +27,7 @@ public struct FeedbackSheetComponent: View {
     public init(
         coordinator: TrainingCoordinator,
         category: MuscleCategoryGroup? = nil,
-        initialDetentHeight: CGFloat = 380
+        initialDetentHeight: CGFloat = TrainingSheetHeightLatch.fallbackHeight
     ) {
         self.coordinator = coordinator
         self.category = category
@@ -99,9 +99,8 @@ public struct FeedbackSheetComponent: View {
         )
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .frame(height: visibleHeight, alignment: .top)
-        .background { feedbackSheetSurface }
-        .clipShape(feedbackSheetShape)
-        .overlay { feedbackSheetBorder }
+        .background { AmbientSheetSurface() }
+        .clipShape(AmbientSheetSurface.shape)
         .overlay(alignment: .top) { feedbackDragRegion }
         .offset(y: presentationState.dismissOffset(dragTranslation: dragTranslation))
         .simultaneousGesture(compactSheetDragGesture)
@@ -198,63 +197,5 @@ public struct FeedbackSheetComponent: View {
         withAnimation(.easeInOut(duration: 0.25)) {
             coordinator.closeFeedback()
         }
-    }
-
-    private var feedbackSheetShape: UnevenRoundedRectangle {
-        UnevenRoundedRectangle(
-            topLeadingRadius: AppStyle.CornerRadius.sheet,
-            bottomLeadingRadius: 0,
-            bottomTrailingRadius: 0,
-            topTrailingRadius: AppStyle.CornerRadius.sheet,
-            style: .continuous
-        )
-    }
-
-    private var feedbackSheetSurface: some View {
-        ZStack {
-            feedbackSheetShape
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            AppStyle.Color.idleCardSoft,
-                            AppStyle.Color.idleCardBackground,
-                            AppStyle.Color.idleCardDark,
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-
-            feedbackSheetShape
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            AppStyle.Color.idleCardInnerGlow,
-                            .clear,
-                        ],
-                        center: .topLeading,
-                        startRadius: 0,
-                        endRadius: 200
-                    )
-                )
-        }
-        .ignoresSafeArea(edges: .bottom)
-    }
-
-    private var feedbackSheetBorder: some View {
-        feedbackSheetShape
-            .strokeBorder(
-                LinearGradient(
-                    colors: [
-                        AppStyle.Color.idleCardBorderLight,
-                        AppStyle.Color.idleCardBorderDark,
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
-                lineWidth: AppStyle.Layout.idleCardBorderWidth
-            )
-            .ignoresSafeArea(edges: .bottom)
-            .allowsHitTesting(false)
     }
 }

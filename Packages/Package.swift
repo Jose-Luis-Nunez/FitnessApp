@@ -341,7 +341,10 @@ let package = Package(
                 "FitnessTestSupport",
             ],
             path: "FitnessPersistenceUI/Tests/FitnessPersistenceUITests",
-            sources: ["CategoryTileModelViewTests.swift"]
+            sources: [
+                "CardLoadOutcomeStateTests.swift",
+                "CategoryTileModelViewTests.swift",
+            ]
         ),
         .testTarget(
             name: "FitnessPersistenceUISnapshotTests",

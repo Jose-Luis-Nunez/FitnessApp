@@ -35,7 +35,14 @@ private func assertSnapshot<V: View>(
 
     SnapshotTesting.assertSnapshot(
         of: controller,
-        as: .image(precision: 0.99, perceptualPrecision: 0.98, size: size),
+        // `precision` is the share of pixels allowed to differ, and 0.99 was
+        // loose enough to pass a baseline that no longer matched: a 1pt
+        // geometry shift on a 393-wide card moves well under 1% of the pixels.
+        // These are card primitives whose geometry *is* the contract, so the
+        // pixel budget is tightened to catch that. `perceptualPrecision` stays
+        // at 0.98 — it absorbs per-pixel antialiasing noise, which is the
+        // variation that should be tolerated.
+        as: .image(precision: 0.999, perceptualPrecision: 0.98, size: size),
         named: name,
         record: shouldRecord,
         file: file,
@@ -404,6 +411,64 @@ struct InactiveCardSnapshotTests {
         #expect(state.setProgress == [existing])
     }
 
+    /// The improved state, which had no baseline: `completedColumn` was aligned
+    /// against `gainColumn`'s footer line, so leaving the column it was aligned
+    /// *to* unobserved meant the shared grid was only argued, never seen. Two
+    /// training days with a gain in both weight and reps, so both columns render.
+    @Test func inactiveCollapsedWithImprovement() throws {
+        let (model, container) = try makeIdleCardContainer()
+        model.isCompleted = true
+        try container.mainContext.save()
+
+        let calendar = Calendar.current
+        // Fixed instant: the card compares training *days*, so a run near
+        // midnight must not be able to merge the two sessions into one.
+        let today = calendar.startOfDay(for: Date(timeIntervalSince1970: 1_767_268_800))
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
+
+        let storage = MockAnalyticsStorage()
+        storage.save(
+            [
+                AnalyticsEntry(
+                    exerciseId: model.id,
+                    date: yesterday.addingTimeInterval(9 * 3600),
+                    setProgress: [
+                        SetProgress(status: .completedDone, currentReps: 8, weight: 50)
+                    ]
+                ),
+                AnalyticsEntry(
+                    exerciseId: model.id,
+                    date: today.addingTimeInterval(9 * 3600),
+                    setProgress: [
+                        SetProgress(status: .completedDone, currentReps: 10, weight: 55)
+                    ]
+                )
+            ],
+            for: model.id
+        )
+
+        let analyticsVM = AnalyticsViewModel(
+            storageService: storage,
+            exerciseStorage: MockExerciseStorage(),
+            workoutStorage: MockWorkoutStorage()
+        )
+
+        let view = InactiveCardModelView(
+            model: model,
+            onEdit: { _, _ in },
+            isEditable: false,
+            analyticsViewModel: analyticsVM,
+            onReset: nil,
+            isResetEnabled: false,
+            imageProvider: try snapshotImageProvider(
+                artworkName: model.displayIconName
+            )
+        )
+        .modelContainer(container)
+
+        assertSnapshot(of: view, named: "with-improvement", size: CGSize(width: 393, height: 120))
+    }
+
     @Test func inactiveCollapsed() throws {
         let (model, container) = try makeIdleCardContainer()
         model.isCompleted = true
@@ -430,6 +495,14 @@ struct InactiveCardSnapshotTests {
         .modelContainer(container)
 
         assertSnapshot(of: view, named: "collapsed", size: CGSize(width: 393, height: 120))
+        // The collapsed card shows the session-improvement row, so it does read
+        // — but only through the bounded two-day path. The expensive reads stay
+        // untouched until the card is expanded, which is the contract this
+        // assertion protects. Before `loadRecentEntries` had its own tracking,
+        // the mock inherited it from `loadHistory` and the two were
+        // indistinguishable here.
+        #expect(storage.recentLoadCallCount == 1)
+        #expect(storage.recentLoadDayLimits == [2])
         #expect(storage.availabilityCallCount == 0)
         #expect(storage.latestLoadCallCount == 0)
         #expect(storage.loadCallCount == 0)

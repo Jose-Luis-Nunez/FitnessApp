@@ -375,8 +375,8 @@ private extension IdleActiveCardModelView {
                     Text(verbatim: weightNumber)
                         .font(AppStyle.Font.idleWeightValue)
                         .foregroundColor(AppStyle.Color.white)
-                    Text(verbatim: "KG")
-                        .font(AppStyle.Font.idleWeightUnit)
+                    Text(verbatim: "kg")
+                        .font(AppStyle.Font.cardMetricUnit)
                         .foregroundColor(appColorTheme.accent.idleMetricValue)
                 }
                 .fixedSize()
@@ -574,7 +574,8 @@ private extension IdleActiveCardModelView {
         CardActionCircleButtonVisual(
             iconSize: ExerciseCardLayout.ResetButton.iconSize,
             discSize: ExerciseCardLayout.ResetButton.size,
-            glowSize: ExerciseCardLayout.ResetButton.size
+            frameSize: ExerciseCardLayout.ResetButton.size,
+            surface: .filled()
         ) {
             imageProvider("tip_coaching_2")
                 .renderingMode(.template)

@@ -7,13 +7,21 @@ struct SymptomChipsView: View {
     let selected: Set<Symptom>
     let onToggle: (Symptom) -> Void
 
+    /// The grid spans the sheet's full content width — the enclosing stack
+    /// already applies the margin, so adding one here would push the tiles out
+    /// of line with every other element. The shortened symptom descriptions are
+    /// instead given room by the wider column gutter, which narrows the tiles
+    /// without moving their outer edges.
+    private static let columnGutter: CGFloat = 20
+    private static let rowSpacing: CGFloat = 10
+
     private let columns = [
-        GridItem(.flexible(), spacing: 10),
-        GridItem(.flexible(), spacing: 10)
+        GridItem(.flexible(), spacing: Self.columnGutter),
+        GridItem(.flexible(), spacing: Self.columnGutter)
     ]
 
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 10) {
+        LazyVGrid(columns: columns, spacing: Self.rowSpacing) {
             ForEach(Symptom.allCases) { symptom in
                 SymptomTile(
                     symptom: symptom,
@@ -23,7 +31,6 @@ struct SymptomChipsView: View {
                 .accessibilityIdentifier(TrainingIDs.symptomChip(symptom.rawValue))
             }
         }
-        .padding(.horizontal, 18)
     }
 }
 
@@ -43,6 +50,17 @@ private struct SymptomTile: View {
     }
 
     private var accentColor: Color { symptom.iconColor(in: appColorTheme) }
+
+    /// The symptom tiles share the active-set timer card's outline treatment —
+    /// `TrainingControlSurfaceStyle` already gives them its colour and line
+    /// width, so they take its corner radius too instead of the generic tile
+    /// radius, otherwise the two surfaces read as different components.
+    private static let cornerRadius = AppStyle.CornerRadius.timerCard
+
+    /// The tiles are the sheet's primary control and claim the vertical room
+    /// freed by tightening the header. A floor rather than a fixed height, so a
+    /// longer localized label can still push a tile taller instead of clipping.
+    private static let minimumHeight: CGFloat = 88
 
     var body: some View {
         Button(action: action) {
@@ -64,7 +82,9 @@ private struct SymptomTile: View {
 
                 Text(symptom.localizedDescription)
                     .font(AppStyle.Font.detailCaption)
-                    .foregroundColor(AppStyle.Color.white.opacity(0.55))
+                    // Same grey as the timer card's Cancel label — both are
+                    // supporting copy under a primary control.
+                    .foregroundColor(AppStyle.Color.idleMetricLabel)
                     .multilineTextAlignment(.center)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
@@ -73,32 +93,39 @@ private struct SymptomTile: View {
             .padding(.vertical, 4)
             .padding(.horizontal, 8)
             .frame(maxWidth: .infinity)
+            .frame(minHeight: Self.minimumHeight)
             .background {
                 ZStack {
                     TrainingControlSurfaceStyle.surface(
                         in: RoundedRectangle(
-                            cornerRadius: AppStyle.CornerRadius.tile,
+                            cornerRadius: Self.cornerRadius,
                             style: .continuous
                         )
                     )
 
                     if isSelected {
                         RoundedRectangle(
-                            cornerRadius: AppStyle.CornerRadius.tile,
+                            cornerRadius: Self.cornerRadius,
                             style: .continuous
                         )
                         .fill(accentColor.opacity(0.10))
                         .overlay {
                             RoundedRectangle(
-                                cornerRadius: AppStyle.CornerRadius.tile,
+                                cornerRadius: Self.cornerRadius,
                                 style: .continuous
                             )
-                            .stroke(accentColor, lineWidth: 1.5)
+                            // Same line width as the shared outline it replaces,
+                            // so selecting a tile changes its colour, not its
+                            // weight.
+                            .stroke(
+                                accentColor,
+                                lineWidth: AppStyle.Layout.darkSurfaceOutlineWidth
+                            )
                         }
                     }
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous))
         }
         .buttonStyle(.plain)
     }

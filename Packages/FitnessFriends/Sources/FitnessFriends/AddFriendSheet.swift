@@ -141,7 +141,7 @@ struct AddFriendSheet: View {
         .frame(maxWidth: .infinity)
         .frame(height: visibleHeight, alignment: .top)
         .background { trainingSheetGradient }
-        .clipShape(trainingSheetShape)
+        .clipShape(AmbientSheetSurface.shape)
         .overlay(alignment: .top) { sheetDragRegion }
     }
 
@@ -179,18 +179,8 @@ struct AddFriendSheet: View {
             }
     }
 
-    private var trainingSheetShape: UnevenRoundedRectangle {
-        UnevenRoundedRectangle(
-            topLeadingRadius: AppStyle.CornerRadius.sheet,
-            bottomLeadingRadius: 0,
-            bottomTrailingRadius: 0,
-            topTrailingRadius: AppStyle.CornerRadius.sheet,
-            style: .continuous
-        )
-    }
-
     private var trainingSheetGradient: some View {
-        trainingSheetShape
+        AmbientSheetSurface.shape
             .fill(
                 LinearGradient(
                     colors: [

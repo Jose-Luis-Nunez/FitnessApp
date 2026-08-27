@@ -339,8 +339,25 @@ private extension View {
 
     /// iOS 26 omits the surrounding `GlassEffectContainer`; the direct surface
     /// remains shared with the List/Muscle filter toggle on every OS version.
+    ///
+    /// A material rather than an opaque gradient: these controls float over the
+    /// ambient screen backdrop, so they have to obscure it instead of either
+    /// letting it read through or covering it with a flat plate.
     @ViewBuilder
     func bottomMenuSurface<S: InsettableShape>(in shape: S) -> some View {
-        self.appPrimarySurface(in: shape)
+        self.appDarkSurface(
+            backgroundColor: AppStyle.Color.idleCardBackground,
+            in: shape
+        )
+        // The bar and the training sheet's timer card are both floating chrome
+        // over the same backdrop, so they carry the same outline. iOS 26's
+        // native glass surface draws only its own faint system rim, which left
+        // these controls looking edgeless next to the timer.
+        .overlay {
+            shape.stroke(
+                AppStyle.Color.controlOutline,
+                lineWidth: AppStyle.Layout.darkSurfaceOutlineWidth
+            )
+        }
     }
 }

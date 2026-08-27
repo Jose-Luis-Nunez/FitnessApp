@@ -58,7 +58,11 @@ struct AnalyticsEntryFormSnapshotTests {
             as: .wait(
                 for: 0.25,
                 on: .image(
-                    precision: 0.99,
+                    // 0.999 rather than 0.99: the looser budget let a stale
+                    // baseline pass after a 1pt geometry shift, because that
+                    // moves well under 1% of the pixels. `perceptualPrecision`
+                    // stays at 0.98 to absorb antialiasing noise.
+                    precision: 0.999,
                     perceptualPrecision: 0.98,
                     size: size
                 )

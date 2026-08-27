@@ -6,6 +6,10 @@ public enum AppStyle {
         public static let screenHorizontal: CGFloat = 15
         public static let card: CGFloat = 16
         public static let titleTop: CGFloat = 8
+        /// Insets around the shared `SheetGrabber`, identical on every sheet so
+        /// the handle sits at the same height in all of them.
+        public static let sheetGrabberTop: CGFloat = 8
+        public static let sheetGrabberBottom: CGFloat = 10
         public static let titleBottom: CGFloat = 17
         public static let activeCardIconOverflow: CGFloat = 20
         public static let sectionSpacing: CGFloat = 18
@@ -25,11 +29,8 @@ public enum AppStyle {
         public static let activeCardContentHeight: CGFloat = 80
         public static let activeCardMaxWidth: CGFloat = 400
         public static let categoryIconSize: CGFloat = 50
-        public static let idleCategoryIconSize: CGFloat = 64
-        /// Body/muscle icon size on the idle/active exercise card only. Larger
-        /// than `idleCategoryIconSize` (used by the completed/inactive card) so
-        /// the active card reads as the focal item without growing the compact
-        /// completed card vertically.
+        /// Body/muscle icon size on the exercise cards. The idle/active card
+        /// reads as the focal item, so its icon is the larger of the two.
         public static let idleActiveCardIconSize: CGFloat = 78
         public static let checkmarkSize: CGFloat = 36
         public static let playButtonSize: CGFloat = 36
@@ -227,7 +228,6 @@ public enum AppStyle {
 
     public enum CornerRadius {
         public static let card: CGFloat = 16
-        public static let bottomBarButton: CGFloat = 12
         public static let editPickerViewButton: CGFloat = 12
         public static let defaultButton: CGFloat = 12
         public static let sheet: CGFloat = 22
@@ -255,6 +255,13 @@ public enum AppStyle {
         public static let trainingTimerCancel = SwiftUI.Font.system(size: 13, weight: .medium)
         public static let defaultFont = SwiftUI.Font.system(size: 12, weight: .semibold)
         public static let bottomBarButtons = SwiftUI.Font.system(size: 16, weight: .semibold)
+        /// Set index (1, 2, 3) at the left of a training-sheet set row.
+        ///
+        /// Sized to the reps value beside it so the row's two counted numbers
+        /// form a pair. It previously used the generic 12pt `defaultFont`, which
+        /// made the row's primary identifier smaller than its secondary "kg" and
+        /// "of N" labels.
+        public static let setRowNumber = SwiftUI.Font.system(size: 16, weight: .semibold)
 
         public static let analyticsExerciseTitle = SwiftUI.Font.system(size: 20, weight: .semibold)
         public static let analyticsExerciseData = SwiftUI.Font.system(size: 16, weight: .semibold)
@@ -293,9 +300,16 @@ public enum AppStyle {
         // independently. SF Pro bold default design, geometric tabular figures.
         /// Weight number, e.g. "80". Prominent because the metric is directly editable.
         public static let idleWeightValue = SwiftUI.Font.system(size: 20, weight: .bold)
-        /// Weight unit suffix, e.g. "kg". The bodyweight "sets x reps" row reuses
-        /// `idleWeightValue` so its numbers read at the same size as the kg value.
-        public static let idleWeightUnit = SwiftUI.Font.system(size: 20, weight: .bold)
+        /// Unit suffix and secondary value line on the exercise cards: the "kg"
+        /// beside a weight, the "reps" beside a rep gain, the "now …" footer, and
+        /// the plain "Completed" label.
+        ///
+        /// One token for all of them because the design sets them at one size on
+        /// both cards — the unit's ascender reaches only the belly of the adjacent
+        /// digit, and everything secondary matches it. This replaces the earlier
+        /// split into a 20pt idle-card unit and a 13pt completed-card unit, which
+        /// made the same "kg" look different depending on the card it sat on.
+        public static let cardMetricUnit = SwiftUI.Font.system(size: 13, weight: .regular)
         /// The "x" separator in the bodyweight "sets x reps" value (e.g. the "x"
         /// in "3x15"). Smaller than `idleWeightValue` so the numbers dominate and
         /// the glyph reads as a compact multiplier.
@@ -345,6 +359,27 @@ public enum AppStyle {
         //Screen Background: #0A090E
         //Card Background:   #121417
 
+        // MARK: Ambient Screen Background
+        /// Near-black base of `AmbientScreenBackground`. Slightly cooler and
+        /// deeper than `backgroundColor` so the two tinted washes above it stay
+        /// readable without being raised in opacity.
+        public static let ambientBase = SwiftUI.Color(hex: "#07090B")
+        /// Desaturated green wash, anchored bottom-leading. Green rather than
+        /// petrol: at `#1E4A50` green and blue were level, which reads as cyan.
+        /// Pulling blue down puts the tint on the green side the design asks for.
+        /// Kept dull on purpose — at wash opacity a saturated green reads as a
+        /// colour field instead of ambience.
+        public static let ambientCool = SwiftUI.Color(hex: "#1C5C3C")
+        /// Warm brown-orange wash, anchored trailing, upper-middle.
+        ///
+        /// Dark orange-red, hue ~16°. Do **not** rotate this further upward:
+        /// 27° read as bronze and 40° as yellow-green next to `ambientCool` on
+        /// the leading side. Both were tried and rejected. Proximity to the ~22°
+        /// orange of the muscle artwork is harmless — that highlight is fully
+        /// saturated at 60% brightness while this wash lands near luminance 24,
+        /// so the two separate by brightness, not by hue.
+        public static let ambientWarm = SwiftUI.Color(hex: "#6E2F18")
+
         public static let exerciseCardBackground = SwiftUI.Color(hex: "#232227")
         /// Base surface color for the Idle exercise card. Dedicated to the
         /// idle card so other cards/tiles app-wide stay on
@@ -364,6 +399,11 @@ public enum AppStyle {
         public static let yellow = SwiftUI.Color.yellow
 
         public static let gray = SwiftUI.Color(hex: "#4D4E53")
+        /// Outline for the app's floating controls: the active-set timer card
+        /// and the buttons that share its treatment, plus the home bottom menu
+        /// bar, its back button, and its overflow button. One token so those
+        /// outlines cannot drift apart — they are read side by side.
+        public static let controlOutline = gray
         public static let grayDark = SwiftUI.Color(hex: "#383838")
 
         // MARK: Idle Card — Text Hierarchy
@@ -375,8 +415,12 @@ public enum AppStyle {
         /// "Data", expand/collapse chevron). Neutral grey so the eye
         /// anchors on the mint values, not the labels.
         public static let idleMetricLabel = SwiftUI.Color(hex: "#9A9A9A")
-        /// Unit suffix beside the primary idle-card value, e.g. "kg".
-        public static let idleMetricUnit = SwiftUI.Color(hex: "#A3AAB3")
+        /// Unit suffix beside the primary idle-card value, e.g. "kg", and the
+        /// secondary footer labels on the idle/completed cards ("Last run",
+        /// "Completed exercise") with their chevrons. Dimmer than
+        /// `idleMetricLabel` so the mint value stays the only bright element in
+        /// the row.
+        public static let idleMetricUnit = SwiftUI.Color(hex: "#8A8B8C")
         // Accent-tier idle values and fills are dynamic and therefore live in
         // `AppColorTheme.accent`, not this fixed token set.
         /// Vertical divider line between metric columns and the trailing action
@@ -388,6 +432,25 @@ public enum AppStyle {
         public static let sheetBackground = SwiftUI.Color(hex: "#222025")
         public static let sheetInputBackground = SwiftUI.Color(hex: "#141518")
         public static let metricChipBackground = SwiftUI.Color(hex: "#100F15")
+        /// The contour line that traces the muscle artwork's body, sampled from
+        /// the rendered asset: hue 187° at 92% saturation and 46% brightness.
+        ///
+        /// Used to mark the active set in the training sheet — its number and the
+        /// outline of its reps field — so the highlight belongs to the same
+        /// family as the illustration rather than to the accent palette, whose
+        /// `glow` sits at 165° and is far brighter.
+        public static let muscleArtworkRim = SwiftUI.Color(hex: "#096A76")
+        /// The same artwork hue raised to label brightness, for the active set's
+        /// number. The rim value itself measures only 46% brightness — fine for
+        /// the reps field's outline, where a whole connected shape carries the
+        /// colour, but too dark for a single small digit.
+        public static let muscleArtworkRimBright = SwiftUI.Color(hex: "#13AABD")
+        /// Surface of the training sheet's primary "Done" action: dark petrol
+        /// teal / deep cyan-green at hue 179°, deliberately not emerald or mint.
+        ///
+        /// The brightest stop of the gradient this surface used to run — flat by
+        /// choice. No outline, glow or shadow belongs on it.
+        public static let trainingDoneSurface = SwiftUI.Color(hex: "#0A8684")
         /// Grey-scheme progress fill. Kept as a fixed primitive for the palette.
         public static let progressOrange = SwiftUI.Color(hex: "#F97316")
         /// Grey-scheme progress track. Kept as a fixed primitive for the palette.
@@ -442,6 +505,12 @@ public enum AppStyle {
         public static let grabberHandle: Double = 0.35
         public static let disabledElement: Double = 0.3
         public static let fadedOverlay: Double = 0.4
+        /// Peak strength of the cool wash in `AmbientScreenBackground`.
+        public static let ambientCoolWash: Double = 0.16
+        /// Peak strength of the warm wash in `AmbientScreenBackground`.
+        public static let ambientWarmWash: Double = 0.26
+        /// Corner darkening of the `AmbientScreenBackground` vignette.
+        public static let ambientVignette: Double = 0.55
         public static let idleIconGlow: Double = 0.3
         public static let idlePlayButtonGlow: Double = 0.15
         public static let idleExpandedOverlay: Double = 0.6

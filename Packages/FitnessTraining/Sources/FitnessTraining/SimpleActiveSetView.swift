@@ -447,40 +447,63 @@ public struct SimpleActiveSetView: View {
 public struct SetRowChipStyle: ViewModifier {
     public let minWidth: CGFloat
     public let horizontalPadding: CGFloat
+    /// Outline colour, or `nil` for no outline. The weight chip renders bare
+    /// text while the reps field keeps its box and tints the outline for the
+    /// active set, so the two can no longer share one hard-coded border.
+    public let borderColor: Color?
+    /// `nil` keeps the shared chip typography. The weight chip overrides it to
+    /// match the idle card's weight value.
+    public let font: Font?
 
     public init(
         minWidth: CGFloat,
-        horizontalPadding: CGFloat = AppStyle.Layout.setRowChipHorizontalPadding
+        horizontalPadding: CGFloat = AppStyle.Layout.setRowChipHorizontalPadding,
+        borderColor: Color? = AppStyle.Color.gray,
+        font: Font? = nil
     ) {
         self.minWidth = minWidth
         self.horizontalPadding = horizontalPadding
+        self.borderColor = borderColor
+        self.font = font
     }
 
     public func body(content: Content) -> some View {
         content
-            .font(AppStyle.Font.tileLabel)
+            .font(font ?? AppStyle.Font.tileLabel)
             .foregroundColor(AppStyle.Color.white)
             .frame(minWidth: minWidth, minHeight: 24)
             .padding(.horizontal, horizontalPadding)
             .padding(.vertical, 4)
-            .background(AppStyle.Color.metricChipBackground)
-            .cornerRadius(AppStyle.CornerRadius.defaultButton)
-            .overlay(
-                RoundedRectangle(cornerRadius: AppStyle.CornerRadius.defaultButton)
-                    .stroke(AppStyle.Color.gray.opacity(0.7), lineWidth: 1)
-            )
+            // No fill: the screen backdrop reads through the chip. The reps
+            // field still shows its outline, so it stays a recognisable input
+            // box without sitting on an opaque plate.
+            .overlay {
+                if let borderColor {
+                    // `.continuous` to match the Done button and the timer card;
+                    // plain circular corners read visibly rounder at this size.
+                    RoundedRectangle(
+                        cornerRadius: AppStyle.CornerRadius.defaultButton,
+                        style: .continuous
+                    )
+                    .stroke(borderColor, lineWidth: 1)
+                }
+            }
     }
 }
 
 public extension View {
     func setRowChipStyle(
         minWidth: CGFloat,
-        horizontalPadding: CGFloat = AppStyle.Layout.setRowChipHorizontalPadding
+        horizontalPadding: CGFloat = AppStyle.Layout.setRowChipHorizontalPadding,
+        borderColor: Color? = AppStyle.Color.gray,
+        font: Font? = nil
     ) -> some View {
         modifier(
             SetRowChipStyle(
                 minWidth: minWidth,
-                horizontalPadding: horizontalPadding
+                horizontalPadding: horizontalPadding,
+                borderColor: borderColor,
+                font: font
             )
         )
     }
@@ -524,10 +547,6 @@ private struct SetRowView: View {
 
     private var compact: Bool {
         placement.isBilateral
-    }
-
-    private var isHighlighted: Bool {
-        index == viewModel.activeSetIndex || (progress.status != .notStarted && progress.status != .inProgress)
     }
 
     private var isPending: Bool {
@@ -574,7 +593,12 @@ private struct SetRowView: View {
     }
 
     private func standardRow(sizing: SetRowMetricSizing) -> some View {
+        // Baseline-aligned, not centre-aligned: the weight is one text run of
+        // 20pt value plus 13pt unit sharing a baseline that sits well below the
+        // line box's centre, while "of N" is a standalone 13pt label. Centring
+        // put the two secondary labels at different heights.
         HStack(
+            alignment: .firstTextBaseline,
             spacing: sizing == .standardCompact
                 ? AppStyle.Layout.bilateralMetricSpacingCompact
                 : AppStyle.DeviceLayout.cardSpacing
@@ -626,39 +650,50 @@ private struct SetRowView: View {
         }
     }
 
+    /// True while this row is the one being trained. Drives the accent on the set
+    /// number and on the reps field's outline, which replaced the ring that used
+    /// to circle the number.
+    private var isActiveSetHighlight: Bool {
+        isActiveSetNumber && !viewModel.quickDoneAllCompleted
+    }
+
     private var setNumberBadge: some View {
-        ZStack {
-            Circle()
-                .fill(AppStyle.Color.backgroundColor)
-                .frame(width: AppStyle.Layout.setRowBadgeSize, height: AppStyle.Layout.setRowBadgeSize)
-
-            if isActiveSetNumber && !viewModel.quickDoneAllCompleted {
-                Circle()
-                    .stroke(appColorTheme.accent.glow, lineWidth: 2)
-                    .frame(width: AppStyle.Layout.setRowBadgeSize, height: AppStyle.Layout.setRowBadgeSize)
-            }
-
-            Text(verbatim: "\((progress.logicalSetIndex ?? index) + 1)")
-                .font(AppStyle.Font.defaultFont)
-                .foregroundColor(AppStyle.Color.white)
-        }
-        .opacity(isHighlighted ? 1.0 : 0.3)
+        // The number itself carries the active state; no ring around it. The
+        // frame is kept so row geometry (and the badge-size assertion in
+        // BilateralTrainingTests) is unaffected by dropping the circles.
+        Text(verbatim: "\((progress.logicalSetIndex ?? index) + 1)")
+            .font(AppStyle.Font.setRowNumber)
+            .foregroundColor(isActiveSetHighlight ? AppStyle.Color.muscleArtworkRimBright : AppStyle.Color.white)
+            .frame(
+                width: AppStyle.Layout.setRowBadgeSize,
+                height: AppStyle.Layout.setRowBadgeSize
+            )
     }
 
     private func weightChip(sizing: SetRowMetricSizing) -> some View {
         Button(action: handleMetricTap) {
-            Text(verbatim:
-                sizing == .bilateralTight
-                    ? WeightFormatter.format(progress.weight, locale: locale)
-                    : WeightFormatter.displayWeight(progress.weight, locale: locale)
-            )
+            // Value and unit are separate runs so the unit can take the idle
+            // card's dimmer, smaller treatment. `displayWeight` returns one
+            // combined "46 kg" string and cannot be styled per part.
+            {
+                let value = Text(verbatim: WeightFormatter.format(progress.weight, locale: locale))
+                    .font(AppStyle.Font.idleWeightValue)
+                    .foregroundColor(AppStyle.Color.white)
+                // The tight bilateral layout drops the unit entirely rather than
+                // appending an empty styled run.
+                guard sizing != .bilateralTight else { return value }
+                return value + Text(verbatim: " kg")
+                    .font(AppStyle.Font.cardMetricUnit)
+                    .foregroundColor(AppStyle.Color.idleMetricUnit)
+            }()
                 .lineLimit(1)
                 .minimumScaleFactor(AppStyle.Layout.bilateralMetricMinimumScaleFactor)
                 .setRowChipStyle(
                     minWidth: sizing == .standard
                         ? AppStyle.DeviceLayout.setRowWeightMinWidth
                         : 0,
-                    horizontalPadding: sizing.horizontalPadding
+                    horizontalPadding: sizing.horizontalPadding,
+                    borderColor: nil
                 )
                 .contentShape(
                     RoundedRectangle(
@@ -669,7 +704,6 @@ private struct SetRowView: View {
         }
         .buttonStyle(PlainButtonStyle())
         .disabled(!isMetricInteractionEnabled)
-        .opacity(isHighlighted ? 1.0 : 0.3)
         .accessibilityLabel(isPending ? AppText.accessibilityRecordSetResult : AppText.accessibilityEditWeight)
         .accessibilityValue(weightAccessibilityValue)
     }
@@ -677,6 +711,8 @@ private struct SetRowView: View {
     private func repsChip(sizing: SetRowMetricSizing) -> some View {
         Button(action: handleMetricTap) {
             Text(verbatim: !isPending ? "\(progress.currentReps)" : "")
+                // Only the value dims on inactive rows — the outline keeps full
+                // strength so every set stays visible as an input box.
                 .frame(
                     minWidth: !sizing.isStandard
                         ? AppStyle.Layout.bilateralRepsChipContentMinWidth
@@ -688,7 +724,13 @@ private struct SetRowView: View {
                         : (exercise.hasWeight
                             ? (sizing == .standardCompact ? 30 : 35)
                             : AppStyle.DeviceLayout.setRowRepsMinWidth),
-                    horizontalPadding: sizing.horizontalPadding
+                    horizontalPadding: sizing.horizontalPadding,
+                    // Same surface as before; only the outline changes, so the
+                    // active row is marked here just like its set number.
+                    borderColor: isActiveSetHighlight
+                        ? AppStyle.Color.muscleArtworkRim
+                        : AppStyle.Color.gray,
+                    font: AppStyle.Font.cardValueBold
                 )
                 .contentShape(
                     RoundedRectangle(
@@ -700,7 +742,6 @@ private struct SetRowView: View {
         .fixedSize(horizontal: !sizing.isStandard, vertical: false)
         .buttonStyle(PlainButtonStyle())
         .disabled(!isMetricInteractionEnabled)
-        .opacity(isHighlighted ? 1.0 : 0.3)
         .accessibilityLabel(isPending ? AppText.accessibilityRecordSetResult : AppText.accessibilityEditRepetitions)
         .accessibilityValue(repsAccessibilityValue)
         .accessibilityIdentifier(repsAccessibilityIdentifier)
@@ -738,8 +779,10 @@ private struct SetRowView: View {
                 Text(AppText.exerciseOfCount(count: exercise.reps))
             }
         }
-            .font(AppStyle.Font.detailExercise)
-            .foregroundColor(AppStyle.Color.white)
+            // Same treatment as the "kg" unit beside the weight, so the two
+            // secondary labels in a row read as one tier.
+            .font(AppStyle.Font.cardMetricUnit)
+            .foregroundColor(AppStyle.Color.idleMetricUnit)
             .lineLimit(1)
             .minimumScaleFactor(
                 compact
@@ -747,7 +790,6 @@ private struct SetRowView: View {
                     : 0.6
             )
             .fixedSize(horizontal: !compact, vertical: false)
-            .opacity(isHighlighted ? 1.0 : 0.3)
     }
 
     private var repsAccessibilityIdentifier: String {

@@ -5,7 +5,7 @@ import FitnessResources
 /// Visual state of the feedback entry-point icon shown in `BottomActionBarView`.
 /// Resolved per **active training session** from in-memory draft + committed
 /// storage. Each state maps to a dedicated bitmap asset shipped by the
-/// designer (`feedback_entry`, `feedback_entry_draft`, `feedback_entry_done`).
+/// designer (`feedback_entry_2`, `feedback_entry_draft`, `feedback_entry_done`).
 ///
 /// State transitions during a single training session for one exercise:
 /// - Sheet never opened, no content → `.entry`
@@ -26,12 +26,12 @@ public enum FeedbackEntryIconState: Equatable {
     case done
 
     /// Image-asset name shipped in `FitnessApp/Assets.xcassets/`. All three
-    /// assets share an identical 1024×1024 canvas with the orange plus-cross
-    /// centred at (0.500, 0.499); `.draft` and `.done` overlay an additional
-    /// green status badge on top — the render path is therefore uniform.
+    /// render through one uniform path in `BottomActionBarView` — no per-state
+    /// scale or offset. If a state looks off next to `.entry`, the asset is
+    /// what differs and gets re-exported; the render path stays uniform.
     public var assetName: String {
         switch self {
-        case .entry: return "feedback_entry"
+        case .entry: return "feedback_entry_2"
         case .draft: return "feedback_entry_draft"
         case .done:  return "feedback_entry_done"
         }

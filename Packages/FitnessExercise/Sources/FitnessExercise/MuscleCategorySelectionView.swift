@@ -137,23 +137,31 @@ public struct MuscleCategorySelectionView: View {
         let progress = listProgress(in: allWorkoutModels)
 
         return ZStack(alignment: .bottom) {
-            AppStyle.Color.backgroundColor.ignoresSafeArea()
-
             VStack {
                 Spacer()
 
+                // Scrim that darkens the canvas behind the floating bottom bar.
+                //
+                // The stops start gently on purpose: the previous curve reached
+                // 60% black at 40% of its height over a ramp of only ~44pt, which
+                // read as a hard edge against the ambient backdrop rather than a
+                // fade. The ramp is now roughly 2.5x longer and its early stops
+                // are much lighter, so the darkening becomes perceptible only in
+                // the lower half. The pure-black endpoint is kept — the solid
+                // bottom edge is intentional.
                 LinearGradient(
                     gradient: Gradient(stops: [
                         .init(color: Color.clear, location: 0.0),
-                        .init(color: Color.black.opacity(0.6), location: 0.4),
-                        .init(color: Color.black.opacity(0.8), location: 0.7),
-                        .init(color: Color.black.opacity(0.9), location: 0.9),
+                        .init(color: Color.black.opacity(0.12), location: 0.30),
+                        .init(color: Color.black.opacity(0.32), location: 0.52),
+                        .init(color: Color.black.opacity(0.58), location: 0.70),
+                        .init(color: Color.black.opacity(0.80), location: 0.85),
                         .init(color: Color.black, location: 1.0),
                     ]),
                     startPoint: .top,
                     endPoint: .bottom
                 )
-                .frame(height: safeAreaInset + 44)
+                .frame(height: safeAreaInset + 110)
                 .allowsHitTesting(false)
                 .offset(y: 34)
             }
@@ -321,7 +329,7 @@ public struct MuscleCategorySelectionView: View {
                 }
             }
         }
-        .background(AppStyle.Color.backgroundColor)
+        .ambientScreenBackground()
 #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
@@ -595,8 +603,18 @@ public struct MuscleCategorySelectionView: View {
         }
         .padding(filterBarPadding)
         .background {
+            // Material rather than a flat fill: it obscures the ambient backdrop
+            // instead of letting it read through, while keeping the depth of the
+            // platform's glass. A fully transparent capsule was tried and showed
+            // the wash through the control; the old opaque gradient read as a
+            // plate. `appDarkSurface` keeps native glass on iOS 26 and a
+            // deterministic dark fill plus one outline on iOS 27, so the backdrop
+            // stays hidden on every supported version.
             Color.clear
-                .appPrimarySurface(in: Capsule())
+                .appDarkSurface(
+                    backgroundColor: AppStyle.Color.idleCardBackground,
+                    in: Capsule()
+                )
         }
         .clipShape(Capsule())
     }

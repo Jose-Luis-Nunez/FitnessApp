@@ -16,6 +16,12 @@ public struct BottomActionBarView: View {
     public let onFinish: () -> Void
     public let onOpenFeedback: () -> Void
     public let feedbackIconState: FeedbackEntryIconState
+    /// The feedback artwork lives in the app target's asset catalog, so
+    /// `Image(_:)` resolves to nothing from a package test bundle — which is why
+    /// this control had no visual coverage and why a cropped asset went
+    /// unnoticed. Injecting the lookup lets a package snapshot load the same
+    /// files from disk, the way the exercise cards already do.
+    public let feedbackImageProvider: (FeedbackEntryIconState) -> Image
 
     public init(
         viewModel: BottomActionBarViewModel,
@@ -26,7 +32,8 @@ public struct BottomActionBarView: View {
         onEditMore: @escaping () -> Void,
         onFinish: @escaping () -> Void,
         onOpenFeedback: @escaping () -> Void = {},
-        feedbackIconState: FeedbackEntryIconState = .entry
+        feedbackIconState: FeedbackEntryIconState = .entry,
+        feedbackImageProvider: @escaping (FeedbackEntryIconState) -> Image = { Image($0.assetName) }
     ) {
         self.viewModel = viewModel
         self.onStart = onStart
@@ -37,6 +44,7 @@ public struct BottomActionBarView: View {
         self.onFinish = onFinish
         self.onOpenFeedback = onOpenFeedback
         self.feedbackIconState = feedbackIconState
+        self.feedbackImageProvider = feedbackImageProvider
     }
 
     public var body: some View {
@@ -51,7 +59,8 @@ public struct BottomActionBarView: View {
                     onEditMore: onEditMore,
                     onFinish: onFinish,
                     onOpenFeedback: onOpenFeedback,
-                    feedbackIconState: feedbackIconState
+                    feedbackIconState: feedbackIconState,
+                    feedbackImageProvider: feedbackImageProvider
                 )
             }
             .background(Color.clear)
@@ -71,16 +80,24 @@ public struct FloatingActionButtonsView: View {
     public let onFinish: () -> Void
     public let onOpenFeedback: () -> Void
     public let feedbackIconState: FeedbackEntryIconState
+    /// See `BottomActionBarView.feedbackImageProvider`.
+    public let feedbackImageProvider: (FeedbackEntryIconState) -> Image
     private let capsuleHeight: CGFloat = 48
 
     private let bottomOffset: CGFloat = 16
     private let setControlSurfaceHeight: CGFloat = 44
     private let setControlSurfaceHorizontalInset: CGFloat = 4
 
-    /// Active-set controls share the app's standard button radius so their
-    /// slimmer surfaces remain rounded rectangles rather than capsules.
+    /// Corner radius of the set-control surfaces: literally the timer card's
+    /// radius, so the two cannot look different.
+    ///
+    /// An earlier attempt scaled this by height on the theory that a shorter
+    /// shape needs a smaller radius to match a taller one's proportion. That was
+    /// wrong here — it produced 7.5pt and made the button visibly squarer than
+    /// the timer. Two shapes sitting in the same view read as the same family
+    /// when their radius is the same absolute value, not the same ratio.
     private var setControlCornerRadius: CGFloat {
-        AppStyle.CornerRadius.bottomBarButton
+        AppStyle.CornerRadius.timerCard
     }
 
     public init(
@@ -92,7 +109,8 @@ public struct FloatingActionButtonsView: View {
         onEditMore: @escaping () -> Void,
         onFinish: @escaping () -> Void,
         onOpenFeedback: @escaping () -> Void = {},
-        feedbackIconState: FeedbackEntryIconState = .entry
+        feedbackIconState: FeedbackEntryIconState = .entry,
+        feedbackImageProvider: @escaping (FeedbackEntryIconState) -> Image = { Image($0.assetName) }
     ) {
         self.viewModel = viewModel
         self.onStart = onStart
@@ -103,6 +121,7 @@ public struct FloatingActionButtonsView: View {
         self.onFinish = onFinish
         self.onOpenFeedback = onOpenFeedback
         self.feedbackIconState = feedbackIconState
+        self.feedbackImageProvider = feedbackImageProvider
     }
 
     public var body: some View {
@@ -116,7 +135,7 @@ public struct FloatingActionButtonsView: View {
 
                 if viewModel.showSetControls && viewModel.currentSet == 0 {
                     menuIconItem(
-                        icon: "quickDoneIcon",
+                        image: Image(systemName: "bolt.fill"),
                         action: onQuickDone,
                         style: .quickDone
                     )
@@ -138,11 +157,28 @@ public struct FloatingActionButtonsView: View {
     /// Active-set controls deliberately use three distinct surfaces rather
     /// than a single segmented capsule: "Done" reads as the primary action,
     /// while "Less" and "More" remain secondary adjustments.
+    /// Width reserved for Less/More.
+    private let setControlSecondaryWidth: CGFloat = 64
+    /// Done's width. Fixed, so it stays a block rather than spanning the bar.
+    private let setControlDoneWidth: CGFloat = 176
+    /// Gap between Done and its two neighbours.
+    private let setControlGap: CGFloat = 14
+
+    /// The three controls form one centred group with fixed gaps. Earlier
+    /// versions let spacers *between* the buttons absorb the slack, which pinned
+    /// Less/More to the outer edges and moved them whenever the trailing
+    /// quick-done circle appeared or disappeared. Putting the slack outside the
+    /// group keeps their distance to Done constant in both states.
     private var setControlButtons: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: setControlGap) {
             menuTextItem(text: AppText.actionLess, accessibilityToken: "Less", action: onEditLess, style: .control)
+                .frame(width: setControlSecondaryWidth)
+
             menuTextItem(text: AppText.actionDone, action: onCompleteSet, style: .done)
+                .frame(width: setControlDoneWidth)
+
             menuTextItem(text: AppText.actionMore, accessibilityToken: "More", action: onEditMore, style: .control)
+                .frame(width: setControlSecondaryWidth)
         }
         .frame(maxWidth: .infinity, maxHeight: capsuleHeight)
     }
@@ -150,15 +186,11 @@ public struct FloatingActionButtonsView: View {
     /// The start and finish states retain their existing single, shared
     /// capsule. Only the active-set controls become separate buttons.
     private var primaryActionCapsule: some View {
+        // Finish now carries the same filled surface and radius as Done, so the
+        // outlined pill that used to sit behind it would double up — and the
+        // pill's 24pt clip would round its 12pt corners back off.
         ZStack {
-            if viewModel.showFinishButton {
-                TrainingControlSurfaceStyle.surface(
-                    in: RoundedRectangle(
-                        cornerRadius: capsuleHeight / 2,
-                        style: .continuous
-                    )
-                )
-            } else {
+            if !viewModel.showFinishButton {
                 TrainingGlassEffectCompat.roundedRectangleContinuous(
                     cornerRadius: capsuleHeight / 2
                 )
@@ -184,7 +216,14 @@ public struct FloatingActionButtonsView: View {
             .frame(maxWidth: .infinity, maxHeight: capsuleHeight)
         }
         .frame(maxWidth: .infinity, maxHeight: capsuleHeight)
-        .clipShape(RoundedRectangle(cornerRadius: capsuleHeight / 2, style: .continuous))
+        .clipShape(
+            RoundedRectangle(
+                cornerRadius: viewModel.showFinishButton
+                    ? setControlCornerRadius
+                    : capsuleHeight / 2,
+                style: .continuous
+            )
+        )
     }
 
     @ViewBuilder
@@ -194,7 +233,7 @@ public struct FloatingActionButtonsView: View {
         action: @escaping () -> Void,
         style: MenuItemStyle
     ) -> some View {
-        let usesCompactSurface = style == .control || style == .done
+        let usesCompactSurface = style == .control || style == .done || style == .finish
         let visibleHeight = usesCompactSurface
             ? setControlSurfaceHeight
             : capsuleHeight
@@ -202,34 +241,30 @@ public struct FloatingActionButtonsView: View {
         Button(action: action) {
             Text(text)
                 .font(AppStyle.Font.bottomBarButtons)
-                .foregroundColor(AppStyle.Color.white.opacity(0.98))
+                // Less/More are secondary: same dimmed grey as the "kg" and
+                // "of N" labels in the set rows. Done keeps a bright label
+                // because it owns the accent surface.
+                .foregroundColor(
+                    style == .control
+                        ? AppStyle.Color.idleMetricUnit
+                        : AppStyle.Color.white.opacity(0.98)
+                )
                 .frame(maxWidth: .infinity, minHeight: visibleHeight, maxHeight: visibleHeight)
                 .padding(.horizontal, 2)
                 .background(alignment: .center) {
                     if usesCompactSurface {
-                        if style == .done {
+                        if style == .done || style == .finish {
                             RoundedRectangle(
                                 cornerRadius: setControlCornerRadius,
                                 style: .continuous
                             )
-                            .fill(appColorTheme.accent.black)
-                            .overlay(
-                                RoundedRectangle(
-                                    cornerRadius: setControlCornerRadius,
-                                    style: .continuous
-                                )
-                                .stroke(appColorTheme.accent.glow, lineWidth: 1.5)
-                            )
-                            .padding(.horizontal, setControlSurfaceHorizontalInset)
-                        } else {
-                            TrainingControlSurfaceStyle.surface(
-                                in: RoundedRectangle(
-                                    cornerRadius: setControlCornerRadius,
-                                    style: .continuous
-                                )
-                            )
+                            .fill(AppStyle.Color.trainingDoneSurface)
                             .padding(.horizontal, setControlSurfaceHorizontalInset)
                         }
+                        // Less/More draw no surface at all — plain labels beside
+                        // the accented Done button. `TrainingControlSurfaceStyle`
+                        // is deliberately left untouched here: the timer surface,
+                        // pain grid and symptom chips still rely on it.
                     }
                 }
                 .contentShape(Rectangle())
@@ -244,36 +279,45 @@ public struct FloatingActionButtonsView: View {
 
     @ViewBuilder
     private func menuIconItem(
-        icon: String,
+        image: Image,
         action: @escaping () -> Void,
         style: MenuItemStyle
     ) -> some View {
         glassCircleIconButton(
-            assetName: icon,
+            image: image,
             renderingMode: .template,
-            tint: AppStyle.Color.white,
+            // Same dimmed grey as the Less/More labels beside it — it is a
+            // secondary affordance, not a primary action.
+            tint: AppStyle.Color.idleMetricUnit,
             accessibilityIdentifier: accessibilityID(for: style, text: ""),
             action: action
         )
     }
 
     /// Feedback entry-point icon — renders one of three bitmap assets that the
-    /// designer ships explicitly per state (`feedback_entry`,
-    /// `feedback_entry_draft`, `feedback_entry_done`). All three assets share
-    /// the same 1024×1024 canvas with the orange plus-cross centred at
-    /// (0.500, 0.499) and (for `.draft` / `.done`) the green badge composited
-    /// on top at the same canvas position — so a single uniform render path
-    /// is enough; no per-state geometry is needed.
+    /// designer ships explicitly per state (`feedback_entry_2`,
+    /// `feedback_entry_draft`, `feedback_entry_done`). One render path for all
+    /// three — same zoom, same centring, no per-state geometry.
     @ViewBuilder
     private func feedbackIconButton(
         state: FeedbackEntryIconState,
         action: @escaping () -> Void
     ) -> some View {
         glassCircleIconButton(
-            assetName: state.assetName,
-            renderingMode: .original,
-            tint: nil,
+            image: feedbackImageProvider(state),
+            // `.template` with the same tint as the Quick-Done icon beside it.
+            // `.original` was right while the artwork carried its own orange and
+            // green; the states are monochrome line art now, so rendering them
+            // as-is only made this one control brighter than its neighbour. The
+            // states stay distinguishable by their badge shape, not by colour.
+            renderingMode: .template,
+            tint: AppStyle.Color.idleMetricUnit,
             accessibilityIdentifier: accessibilityID(for: .feedback, text: ""),
+            zoom: Self.feedbackIconZoom,
+            // The bitmap artwork reads smaller than an SF Symbol at the same
+            // render size, so the feedback entry point gets the larger glyph
+            // box to match the optical weight of the controls beside it.
+            iconSize: Self.bitmapIconSize,
             action: action
         )
         .accessibilityLabel(state.accessibilityLabel)
@@ -282,22 +326,36 @@ public struct FloatingActionButtonsView: View {
     /// Shared chrome for every round surface icon button in the bottom bar
     /// (Quick-Done, Feedback). The timer-matched transparent surface keeps the
     /// two entry points visually aligned with the secondary training controls.
+    /// Takes a built `Image` rather than an asset name so SF Symbols and bitmap
+    /// assets keep sharing this single render path.
     private func glassCircleIconButton(
-        assetName: String,
+        image: Image,
         renderingMode: Image.TemplateRenderingMode,
         tint: Color?,
         accessibilityIdentifier: String,
+        /// Scales the fitted artwork about the button's centre. `nil` renders it
+        /// at fit size. Above 1 the glyph grows past the frame and is clipped by
+        /// the circle; below 1 it shrinks inside it. Use it to bring assets whose
+        /// glyph fills a different share of its canvas to one apparent size.
+        zoom: CGFloat? = nil,
+        iconSize: CGFloat = Self.iconSize,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             ZStack {
                 TrainingControlSurfaceStyle.surface(in: Circle())
 
-                Image(assetName)
+                image
                     .renderingMode(renderingMode)
                     .resizable()
+                    // Always `.fit`, so the whole glyph is visible whatever the
+                    // asset's aspect. `.fill` crops the long axis away, which
+                    // cut the sides off any asset that is not square. Scaling
+                    // is `zoom`'s job, not the content mode's.
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: Self.iconSize, height: Self.iconSize)
+                    .scaleEffect(zoom ?? 1)
+                    .frame(width: iconSize, height: iconSize)
+                    .clipShape(Circle())
                     .foregroundColor(tint)
             }
         }
@@ -318,7 +376,13 @@ public struct FloatingActionButtonsView: View {
     /// Image render size inside the circular surface. ~67% of the diameter
     /// (Apple HIG glyph-in-circle proportion) so the icon visually breathes
     /// and the frame-less surface background isn't stretched by the image.
-    private static let iconSize: CGFloat = 32
+    private static let iconSize: CGFloat = 26
+    /// Render size for the bitmap feedback artwork — larger than `iconSize`
+    /// because the drawn figure carries less contrast than a stroked SF Symbol
+    /// and needs the extra area to stay readable at 48pt.
+    private static let bitmapIconSize: CGFloat = 34
+    /// Applies to every feedback icon state.
+    private static let feedbackIconZoom: CGFloat = 1.42
 
     private func accessibilityID(for style: MenuItemStyle, text: String) -> String {
         switch style {

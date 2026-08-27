@@ -25,7 +25,8 @@ public struct ExerciseCardResetButton: View {
             CardActionCircleButtonVisual(
                 iconSize: ExerciseCardLayout.ResetButton.iconSize,
                 discSize: ExerciseCardLayout.ResetButton.size,
-                glowSize: ExerciseCardLayout.ResetButton.size
+                frameSize: ExerciseCardLayout.ResetButton.size,
+                surface: .filled()
             ) {
                 image
                     .renderingMode(.template)

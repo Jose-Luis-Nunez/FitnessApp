@@ -27,7 +27,7 @@ struct TrainingSheetView: View {
     @Query private var models: [ExerciseModel]
     @State private var phase: Phase = .waitingForQuery
     @State private var formViewModel = ExerciseFormViewModel()
-    @State private var feedbackSheetDetentHeight: CGFloat = 380
+    @State private var sheetHeightLatch = TrainingSheetHeightLatch()
 
     private enum Phase {
         case waitingForQuery
@@ -71,12 +71,15 @@ struct TrainingSheetView: View {
                             alignment: .bottom
                         )
 
-                    TrainingPickerComponent(coordinator: trainingCoordinator)
+                    TrainingPickerComponent(
+                        coordinator: trainingCoordinator,
+                        sheetHeight: sheetHeightLatch.height
+                    )
 
                     FeedbackSheetComponent(
                         coordinator: trainingCoordinator,
                         category: category,
-                        initialDetentHeight: feedbackSheetDetentHeight
+                        initialDetentHeight: sheetHeightLatch.height
                     )
                 }
 
@@ -103,6 +106,15 @@ struct TrainingSheetView: View {
         .onDisappear {
             overlayState.showTrainingMiniMenu = false
         }
+    }
+
+    /// Anything presented over the training sheet. The sheet's own content
+    /// changes while one of these is up, so `TrainingSheetHeightLatch` must not
+    /// take a measurement then.
+    private var isOverlaySheetPresented: Bool {
+        trainingCoordinator.isFeedbackSheetPresented
+            || trainingCoordinator.focusedSession?.isEditing == true
+            || formViewModel.showForm
     }
 
     private func sheetContent(model: ExerciseModel) -> some View {
@@ -143,38 +155,19 @@ struct TrainingSheetView: View {
             // Measure the visible card itself, before the outer max-height
             // constraint can contribute transparent layout space. Native
             // fixed detents already resolve against the visible sheet height.
-            feedbackSheetDetentHeight = max(1, visibleHeight)
-        }
-        .background {
-            UnevenRoundedRectangle(
-                topLeadingRadius: AppStyle.CornerRadius.sheet,
-                bottomLeadingRadius: 0,
-                bottomTrailingRadius: 0,
-                topTrailingRadius: AppStyle.CornerRadius.sheet,
-                style: .continuous
+            sheetHeightLatch.record(
+                visibleHeight,
+                overlayPresented: isOverlaySheetPresented
             )
-            .fill(
-                LinearGradient(
-                    colors: [
-                        AppStyle.Color.idleCardSoft,
-                        AppStyle.Color.idleCardBackground,
-                        AppStyle.Color.idleCardDark,
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            .ignoresSafeArea(edges: .bottom)
         }
+        // Shape, ambient washes and border all come from the shared surface —
+        // this sheet defines the height its siblings adopt, so it must not
+        // describe its own surface alongside them.
+        .background { AmbientSheetSurface() }
         .overlay {
-            ZStack {
-                UnevenRoundedRectangle(
-                    topLeadingRadius: AppStyle.CornerRadius.sheet,
-                    bottomLeadingRadius: 0,
-                    bottomTrailingRadius: 0,
-                    topTrailingRadius: AppStyle.CornerRadius.sheet,
-                    style: .continuous
-                )
+            // The one thing this sheet adds: a corner glow the sibling sheets
+            // deliberately do not carry.
+            AmbientSheetSurface.shape
                 .fill(
                     RadialGradient(
                         colors: [
@@ -186,44 +179,16 @@ struct TrainingSheetView: View {
                         endRadius: 200
                     )
                 )
-
-                UnevenRoundedRectangle(
-                    topLeadingRadius: AppStyle.CornerRadius.sheet,
-                    bottomLeadingRadius: 0,
-                    bottomTrailingRadius: 0,
-                    topTrailingRadius: AppStyle.CornerRadius.sheet,
-                    style: .continuous
-                )
-                .strokeBorder(
-                    LinearGradient(
-                        colors: [
-                            AppStyle.Color.idleCardBorderLight,
-                            AppStyle.Color.idleCardBorderDark,
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: AppStyle.Layout.idleCardBorderWidth
-                )
-            }
-            .ignoresSafeArea(edges: .bottom)
-            .allowsHitTesting(false)
+                .ignoresSafeArea(edges: .bottom)
+                .allowsHitTesting(false)
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier(TrainingIDs.sheet)
     }
 
+
     private var sheetHeader: some View {
-        Capsule()
-            .fill(Color.white.opacity(AppStyle.Opacity.grabberHandle))
-            .frame(
-                width: AppStyle.Layout.grabberWidth,
-                height: AppStyle.Layout.grabberHeight
-            )
-            .padding(.top, 8)
-            .padding(.bottom, 10)
-            .frame(maxWidth: .infinity)
-            .contentShape(Rectangle())
+        SheetGrabber()
             .accessibilityElement()
             .accessibilityLabel(AppText.accessibilityCloseTraining)
             .accessibilityHint(AppText.accessibilityCloseTrainingHint)

@@ -23,8 +23,12 @@ enum TrainingGlassEffectCompat {
 /// timer. Keeping the surface package-internal prevents the timer and action
 /// buttons from drifting to subtly different outline treatments.
 enum TrainingControlSurfaceStyle {
+    /// Same value as the ring around the idle card's play button and as the
+    /// home bottom menu bar's outline, so all of the app's floating chrome
+    /// reads as one treatment. Previously dimmed to 70%, which made these
+    /// outlines a shade fainter than the ring.
     static var outlineColor: Color {
-        AppStyle.Color.gray.opacity(0.7)
+        AppStyle.Color.controlOutline
     }
 
     @ViewBuilder

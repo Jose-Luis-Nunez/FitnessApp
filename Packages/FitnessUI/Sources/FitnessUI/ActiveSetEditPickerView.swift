@@ -11,6 +11,14 @@ public struct ActiveSetEditPickerView: View {
     let onSave: (Int, Double) -> Void
     let onCancel: () -> Void
     let saveDisabled: Bool
+    /// Visible sheet height, so Less/More occupies the same frame as the
+    /// training sheet it is opened from. `nil` falls back to content sizing.
+    let fixedHeight: CGFloat?
+    /// How the sheet paints itself. Less/More is presented as a sibling of the
+    /// training sheet, so it uses that backdrop.
+    let surface: SheetSurface
+    /// See `OverlaySheetContainer.ownsPresentation`.
+    let ownsPresentation: Bool
 
     let textColor: Color = AppStyle.Color.white
     @Environment(\.appColorTheme) private var appColorTheme
@@ -38,7 +46,10 @@ public struct ActiveSetEditPickerView: View {
         weightOptions: [Double],
         onSave: @escaping (Int, Double) -> Void,
         onCancel: @escaping () -> Void,
-        saveDisabled: Bool
+        saveDisabled: Bool,
+        fixedHeight: CGFloat? = nil,
+        surface: SheetSurface = .default,
+        ownsPresentation: Bool = true
     ) {
         self.title = title
         _selectedReps = selectedReps
@@ -48,15 +59,25 @@ public struct ActiveSetEditPickerView: View {
         self.onSave = onSave
         self.onCancel = onCancel
         self.saveDisabled = saveDisabled
+        self.fixedHeight = fixedHeight
+        self.surface = surface
+        self.ownsPresentation = ownsPresentation
     }
 
     public var body: some View {
         OverlaySheetContainer(
             isPresented: $isShown,
+            surface: surface,
+            fixedHeight: fixedHeight,
+            ownsPresentation: ownsPresentation,
             onCancel: onCancel,
             actions: {
-                ExercisePickerActionButtons(
-                    saveDisabled: saveDisabled,
+                // Same Cancel/Save treatment as the feedback sheet — the two
+                // sheets sit in one flow, so their actions must not differ in
+                // button size, weight, or fill.
+                SheetActionButtons(
+                    saveLabel: AppText.actionSave,
+                    isSaveEnabled: !saveDisabled,
                     onCancel: { onCancel() },
                     onSave: {
                         if let reps = Int(selectedReps),
@@ -86,6 +107,19 @@ public struct ActiveSetEditPickerView: View {
                     }
                 }
                 .padding(.bottom, AppStyle.Padding.sectionSpacing)
+
+                // With a fixed sheet height there is far more room than the
+                // wheels need, and the container puts its own spacer above the
+                // action bar. This second spacer makes the two share the slack,
+                // which centres the wheels in the free area instead of leaving
+                // them pinned under the decimal toggle with a large gap below.
+                // A fixed padding cannot do this: the slack depends on the
+                // measured sheet height, so any constant is wrong on some
+                // device. Omitted when the sheet is content-sized, where there
+                // is no slack to distribute.
+                if fixedHeight != nil {
+                    Spacer(minLength: 0)
+                }
 
                 VStack(spacing: 0) {
                     HStack {

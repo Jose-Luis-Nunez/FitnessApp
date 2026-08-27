@@ -123,7 +123,7 @@ not call storage or networking directly.
 | `ExerciseStorageService` | singleton | Workout/category reads, targeted exercise updates, bulk operations and workout-wide counts. Single-exercise mutations follow ADR-0009. |
 | `ExerciseManagementService` | singleton | Exercise business operations composed over exercise, analytics and workout storage. |
 | `WorkoutExerciseOrderStorageService` | singleton | Records workout-scoped starts, finalizes cycles and promotes an order only after repeated matching observations. |
-| `AnalyticsStorageService` | singleton | Separates history availability, latest-entry, complete-history and chunked workout batch reads. Workout batch appends commit atomically. |
+| `AnalyticsStorageService` | singleton | Separates history availability, latest-entry, bounded recent-day, complete-history and chunked workout batch reads. Workout batch appends commit atomically. |
 | `TotalAnalyticsStorageService` | singleton | Builds a workout-scoped `WorkoutAnalyticsSnapshot` from one exercise read plus bounded analytics batches. |
 | `FeedbackStorageService` | singleton | Stores feedback per completed session and updates an existing record for the same session. |
 | `FriendStorageService` | singleton | Stores imported friend envelopes independently from live workout models. |
@@ -132,8 +132,15 @@ Analytics read intents stay separate because they have different costs:
 
 - Card visibility checks fetch only whether an entry exists.
 - Opening a last-run section fetches at most the newest entry.
+- Comparing a completed exercise against its previous training reads a bounded
+  window of the most recent training days, so a collapsed card never pulls the
+  full history.
 - Coaching and exercise analytics request one exercise's complete history.
 - Total analytics and schedule use workout-wide batched snapshots.
+
+Session-over-session improvement is derived on read, never stored: analytics
+entries accept an explicit date and can be corrected after the fact, so a
+persisted delta would silently go stale.
 
 Successful analytics writes invalidate only the affected exercise's cached stages.
 Failed reads are not converted into cacheable empty results, so the same user intent
@@ -207,7 +214,7 @@ composition remains in the owning feature package.
 | Exercise cards | `IdleActiveCardModelView` and `InactiveCardModelView` expose user intents for availability, latest-entry and coaching-history loading; they do not own storage. `ActiveCardModelView` renders coordinator-backed active state. |
 | Category/workout artwork | Shared stage and layout primitives in `FitnessUI` keep category and workout tiles structurally consistent without documenting their current dimensions here. |
 | Training session | `TrainingSessionComponent`, set rows, timer and picker components render coordinator state. The app root owns sheet presentation; the component does not own navigation or session lifetime. |
-| Editing sheets | `OverlaySheetContainer`, `SheetActionArea`, shared picker actions and editing-sheet visibility keep presentation chrome, prominent sheet-action sizing and bottom-bar suppression consistent. `ProfileActionRow` applies the same semantic secondary/primary composition with compact Profile-specific geometry; `RefreshActionButton` is its refresh-specific wrapper. Feature packages own form state and validation. |
+| Editing sheets | `OverlaySheetContainer`, `SheetActionArea`, shared picker actions and editing-sheet visibility keep presentation chrome, prominent sheet-action sizing and bottom-bar suppression consistent. `OverlaySheetContainer` takes one surface value rather than a colour plus an override flag, and can hand backdrop and appear/disappear ownership to its caller, which is what lets a sheet presented alongside another animate as one movement. Sheets that appear as siblings of the training sheet take that sheet's measured height rather than sizing themselves; `TrainingSheetHeightLatch` in `FitnessTraining` owns when a measurement counts, so the rule is testable outside the app target and the sheets do not each guess. `ProfileActionRow` applies the same semantic secondary/primary composition with compact Profile-specific geometry; `RefreshActionButton` is its refresh-specific wrapper. Feature packages own form state and validation. |
 | Feedback | `FeedbackSheetComponent` presents feature-owned feedback UI. `FeedbackViewModel` uses the coordinator-owned draft store and session-scoped persistence. |
 | Menus | `MiniActionMenuView` renders caller-provided actions. Every item has a stable semantic ID; localized labels are presentation data rather than identity. |
 | Workout selection | `WorkoutDropdownView` and `WorkoutPickerView` receive workout values and callbacks; they do not resolve persistence dependencies. |

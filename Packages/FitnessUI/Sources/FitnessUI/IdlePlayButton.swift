@@ -3,9 +3,8 @@ import SwiftUI
 /// Decorative play button used in the idle exercise card.
 ///
 /// Composition (back-to-front):
-/// - a soft mint outer halo,
-/// - a flat disc filled with `idleCardBackground` so the button reads as a
-///   "punched out" extension of the card surface,
+/// - no disc and no halo, so whatever the screen puts behind the card shows
+///   through the button unchanged,
 /// - a neutral-grey hairline ring,
 /// - the SF Symbol play glyph, optically nudged for visual centering.
 ///
@@ -21,8 +20,9 @@ public struct IdlePlayButton: View {
         CardActionCircleButtonVisual(
             iconSize: AppStyle.Layout.idlePlayIconSize,
             discSize: AppStyle.Layout.idlePlayButtonSize,
-            glowSize: AppStyle.Layout.idlePlayButtonGlowSize,
-            iconOffsetX: AppStyle.Layout.idlePlayIconOpticalOffset
+            frameSize: AppStyle.Layout.idlePlayButtonGlowSize,
+            iconOffsetX: AppStyle.Layout.idlePlayIconOpticalOffset,
+            surface: .clear
         ) {
             Image(systemName: "play.fill")
                 .resizable()

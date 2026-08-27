@@ -20,6 +20,7 @@ public enum AnalyticsLoadOutcome<Value: Sendable>: Sendable {
 
 public typealias AnalyticsHistoryAvailabilityOutcome = AnalyticsLoadOutcome<Bool>
 public typealias LatestAnalyticsEntryLoadOutcome = AnalyticsLoadOutcome<AnalyticsEntry?>
+public typealias SessionImprovementLoadOutcome = AnalyticsLoadOutcome<SessionImprovement?>
 
 @Observable
 @MainActor
@@ -141,6 +142,71 @@ public final class AnalyticsViewModel {
             logger.error("Failed to load latest analytics for exercise \(exerciseId): \(error)")
             return .failed
         }
+    }
+
+    /// Compares the two most recent training days of one exercise.
+    ///
+    /// Unlike `loadCardPhases` this is safe to call from a collapsed card: it
+    /// uses a bounded two-day read instead of the full history. A cached full
+    /// history is reused when one happens to be present, but the bounded result
+    /// is deliberately **not** written into the history cache — it is partial,
+    /// and consumers of `history` expect the complete series.
+    ///
+    /// `.loaded(nil)` means "no comparable earlier session"; a read failure stays
+    /// `.failed` so the card can keep retrying instead of caching an empty state.
+    public func loadSessionImprovement(
+        for exerciseId: UUID,
+        hasWeight: Bool
+    ) -> SessionImprovementLoadOutcome {
+        let history: [AnalyticsEntry]
+        if let record = cacheByExerciseId[exerciseId],
+           let cached = record.history,
+           !dirtyHistoryExerciseIds.contains(exerciseId) {
+            touchCache(exerciseId)
+            history = cached
+        } else {
+            do {
+                history = try storageService.loadRecentEntries(
+                    for: exerciseId,
+                    dayLimit: 2
+                )
+            } catch {
+                logger.error("Failed to load recent analytics for exercise \(exerciseId): \(error)")
+                return .failed
+            }
+        }
+        return .loaded(Self.improvement(from: history, hasWeight: hasWeight))
+    }
+
+    /// Pure derivation, kept static so it is trivially testable without a view
+    /// model instance or storage double.
+    static func improvement(
+        from history: [AnalyticsEntry],
+        hasWeight: Bool,
+        calendar: Calendar = .current
+    ) -> SessionImprovement? {
+        let sessions = DayTrainingSession
+            .sessions(from: history, calendar: calendar)
+            .suffix(2)
+        guard let current = sessions.last else { return nil }
+        let previous = sessions.count > 1 ? sessions.first : nil
+
+        // Reps at the working weight are the meaningful figure for a weighted
+        // exercise; a bodyweight exercise has no working weight, so its best rep
+        // count of the day is used instead.
+        let reps = { (session: DayTrainingSession) in
+            hasWeight ? session.minRepsAtMaxWeight : session.maxReps
+        }
+
+        let weightGain = previous.map { current.maxWeight - $0.maxWeight }
+        let repsGain = previous.map { reps(current) - reps($0) }
+
+        return SessionImprovement(
+            weightGain: (weightGain ?? 0) > 0 ? weightGain : nil,
+            currentWeight: current.maxWeight,
+            repsGain: (repsGain ?? 0) > 0 ? repsGain : nil,
+            currentReps: reps(current)
+        )
     }
 
     /// The full history is loaded only after the coaching-tip drill-down.
@@ -478,63 +544,15 @@ extension AnalyticsViewModel {
         let entries = history.sorted(by: { $0.date < $1.date })
         guard !entries.isEmpty else { return [] }
         
-        struct DaySession {
-            let date: Date
-            let weight: Double
-            let setsReps: String
-            let totalReps: Int
-        }
-        
-        let grouped = Dictionary(grouping: entries, by: { calendar.startOfDay(for: $0.date) })
-        let daySessions: [DaySession] = grouped.compactMap { (day, dayEntries) in
-            let allSets = dayEntries.flatMap { $0.setProgress }
-            guard !allSets.isEmpty else { return nil }
-            let bilateralGroups = dayEntries.compactMap {
-                BilateralSetGrouping.groups(for: $0.setProgress)
-            }
-
-            if bilateralGroups.count == dayEntries.count {
-                let allGroups = bilateralGroups.flatMap { $0 }
-                let maxWeight = allGroups
-                    .map { max($0.left.weight, $0.right.weight) }
-                    .max() ?? 0
-                let groupsAtWeight = allGroups.filter {
-                    max($0.left.weight, $0.right.weight) == maxWeight
-                }
-                let minReps = groupsAtWeight
-                    .flatMap { [$0.left.currentReps, $0.right.currentReps] }
-                    .min() ?? 0
-                let totalReps = allSets.reduce(0) { $0 + $1.currentReps }
-                let setsReps = "\(groupsAtWeight.count)×\(minReps) / side"
-                return DaySession(
-                    date: day,
-                    weight: maxWeight,
-                    setsReps: setsReps,
-                    totalReps: totalReps
-                )
-            }
-
-            let maxWeight = allSets.map(\.weight).max() ?? 0
-            let setsAtWeight = allSets.filter { $0.weight == maxWeight }
-            let totalReps = setsAtWeight.reduce(0) { $0 + $1.currentReps }
-            let minReps = setsAtWeight.map(\.currentReps).min() ?? 0
-            let setsReps = "\(setsAtWeight.count)×\(minReps)"
-            return DaySession(
-                date: day,
-                weight: maxWeight,
-                setsReps: setsReps,
-                totalReps: totalReps
-            )
-        }
-        .sorted(by: { $0.date < $1.date })
+        let daySessions = DayTrainingSession.sessions(from: entries, calendar: calendar)
         
         guard !daySessions.isEmpty else { return [] }
         
         struct RawPhase {
             let weight: Double
             let sessionCount: Int
-            let start: DaySession
-            let end: DaySession
+            let start: DayTrainingSession
+            let end: DayTrainingSession
         }
         
         var rawPhases: [RawPhase] = []
@@ -544,17 +562,17 @@ extension AnalyticsViewModel {
         
         for i in 1..<daySessions.count {
             let current = daySessions[i]
-            if current.weight == phaseStart.weight {
+            if current.maxWeight == phaseStart.maxWeight {
                 phaseEnd = current
                 sessionCount += 1
             } else {
-                rawPhases.append(RawPhase(weight: phaseStart.weight, sessionCount: sessionCount, start: phaseStart, end: phaseEnd))
+                rawPhases.append(RawPhase(weight: phaseStart.maxWeight, sessionCount: sessionCount, start: phaseStart, end: phaseEnd))
                 phaseStart = current
                 phaseEnd = current
                 sessionCount = 1
             }
         }
-        rawPhases.append(RawPhase(weight: phaseStart.weight, sessionCount: sessionCount, start: phaseStart, end: phaseEnd))
+        rawPhases.append(RawPhase(weight: phaseStart.maxWeight, sessionCount: sessionCount, start: phaseStart, end: phaseEnd))
         
         let phasesToReturn = Array(rawPhases.suffix(limit))
         var result: [WeightPhase] = []
@@ -572,11 +590,11 @@ extension AnalyticsViewModel {
                 weight: raw.weight,
                 sessionCount: raw.sessionCount,
                 durationDays: max(days, 1),
-                startSetsReps: raw.start.setsReps,
+                startSetsReps: raw.start.weightSetsRepsLabel,
                 startDate: raw.start.date,
-                endSetsReps: raw.end.setsReps,
+                endSetsReps: raw.end.weightSetsRepsLabel,
                 endDate: raw.end.date,
-                hasImproved: raw.end.totalReps > raw.start.totalReps
+                hasImproved: raw.end.weightPhaseTotalReps > raw.start.weightPhaseTotalReps
             ))
         }
         

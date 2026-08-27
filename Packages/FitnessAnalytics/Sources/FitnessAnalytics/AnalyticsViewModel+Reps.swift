@@ -100,34 +100,15 @@ extension AnalyticsViewModel {
         let entries = history.sorted(by: { $0.date < $1.date })
         guard !entries.isEmpty else { return [] }
 
-        struct DaySession {
-            let date: Date
-            let maxReps: Int
-            let setsReps: String
-            let totalReps: Int
-        }
-
-        let grouped = Dictionary(grouping: entries, by: { calendar.startOfDay(for: $0.date) })
-        let daySessions: [DaySession] = grouped.compactMap { (day, dayEntries) in
-            let allSets = dayEntries.flatMap { $0.setProgress }
-            guard !allSets.isEmpty else { return nil }
-            let maxReps = allSets.map(\.currentReps).max() ?? 0
-            let totalReps = allSets.reduce(0) { $0 + $1.currentReps }
-            let setsReps = BilateralSetGrouping.setRepsLabel(
-                forEntries: dayEntries.map(\.setProgress),
-                reps: maxReps
-            )
-            return DaySession(date: day, maxReps: maxReps, setsReps: setsReps, totalReps: totalReps)
-        }
-        .sorted(by: { $0.date < $1.date })
+        let daySessions = DayTrainingSession.sessions(from: entries, calendar: calendar)
 
         guard !daySessions.isEmpty else { return [] }
 
         struct RawPhase {
             let maxReps: Int
             let sessionCount: Int
-            let start: DaySession
-            let end: DaySession
+            let start: DayTrainingSession
+            let end: DayTrainingSession
         }
 
         var rawPhases: [RawPhase] = []
@@ -165,11 +146,11 @@ extension AnalyticsViewModel {
                 weight: 0,
                 sessionCount: raw.sessionCount,
                 durationDays: max(days, 1),
-                startSetsReps: raw.start.setsReps,
+                startSetsReps: raw.start.repsSetsRepsLabel,
                 startDate: raw.start.date,
-                endSetsReps: raw.end.setsReps,
+                endSetsReps: raw.end.repsSetsRepsLabel,
                 endDate: raw.end.date,
-                hasImproved: raw.end.totalReps > raw.start.totalReps,
+                hasImproved: raw.end.totalRepsAllSets > raw.start.totalRepsAllSets,
                 maxReps: raw.maxReps
             ))
         }
