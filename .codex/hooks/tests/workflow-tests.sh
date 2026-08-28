@@ -482,4 +482,26 @@ if [ "$largest_routed_reference" -gt 2000 ]; then
 fi
 pass_count=$((pass_count + 1))
 
+# `--result-bundle` guards its argument. These run without Xcode because a bad
+# argument exits during parsing, long before any destination or toolchain is
+# touched — the rest of the script stays outside this hermetic suite by design.
+TEST_PACKAGES="$REPO_ROOT/scripts/test-affected-packages.sh"
+
+# Asserting on the message, not merely on failure: without the guard the run
+# still fails, but inside `mkdir` with `illegal option -- -`, which names the
+# wrong problem. A plain `expect_failure` here passes either way and proves
+# nothing — measured, after a first version of these checks did exactly that.
+expect_equal "1" \
+  "$(cd "$REPO_ROOT" && bash "$TEST_PACKAGES" --result-bundle --list FitnessUI 2>&1 |
+      grep -c 'ERROR: --result-bundle needs a directory.')" \
+  "--result-bundle names the real problem when handed a flag"
+
+expect_equal "0" \
+  "$(cd "$REPO_ROOT" && bash "$TEST_PACKAGES" --result-bundle --list FitnessUI 2>&1 |
+      grep -c 'illegal option')" \
+  "--result-bundle fails before mkdir sees the flag"
+
+expect_success "--list still resolves a schedule without touching Xcode" \
+  bash -c "cd '$REPO_ROOT' && bash '$TEST_PACKAGES' --list FitnessUI >/dev/null 2>&1"
+
 echo "PASS: $pass_count workflow fixture checks"

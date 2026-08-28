@@ -37,6 +37,7 @@ re-running it. Record:
   bash .claude/hooks/lib/validation-evidence.sh write .claude/hooks/state/test-execution.manifest.tsv
   bash .claude/hooks/lib/validation-evidence.sh fingerprint .claude/hooks/state/test-execution.manifest.tsv
 Then write test-execution.stamp.md with result: PASS, domain_risk,
-verified_by, command, test count, xcresult (when available), and
+verified_by, command, test count, xcresult (a .xcresult path; required at high
+and blocker, may be n/a below), and
 source_fingerprint. Files: ${file_list}.
 EOF

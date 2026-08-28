@@ -183,7 +183,13 @@ test_execution_stamp_has_xcresult_contract() {
     sed 's/[[:space:]]*$//')
   [ -n "$xcresult" ] || return 1
   [ "$xcresult" != "n/a" ] || return 1
-  # Shape, not existence: `xcresult: yes` otherwise satisfies "named a bundle".
+  # Shape, not existence. The bundle legitimately lives in a temporary directory
+  # that may be swept between validation and commit, so requiring it to still be
+  # there would fail a stamp days later for a reason its author cannot fix — and
+  # a gate that fails for unfixable reasons gets routed around, back to `n/a`.
+  # The shape check is what stops `xcresult: yes` from satisfying "named a
+  # bundle"; it converts a missing artifact from an honest-looking answer into a
+  # deliberate fabrication, which is as far as a schema can reach.
   case "$xcresult" in *.xcresult) ;; *) return 1 ;; esac
 }
 

@@ -141,7 +141,7 @@ domain_risk: <low|medium|high|blocker>
 command: <final command>
 tests: <passed/total>
 exit_code: 0
-xcresult: <path or n/a>
+xcresult: <path to the .xcresult; required at high and blocker, may be n/a below>
 source_fingerprint: <manifest fingerprint>
 ```
 
