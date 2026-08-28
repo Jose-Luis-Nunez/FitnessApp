@@ -11,22 +11,24 @@ short self-review and do not spawn a reviewer.
 6. Check public API changes update every caller and test double.
 7. Search changed production code for `print(`, stale TODO/FIXME markers, and
    commented-out implementations.
-8. Run or verify the smallest complete test set for the affected behavior.
-9. Fix findings introduced by the current change before reporting PASS.
-10. Treat this pass as the senior-quality review: inspect production readiness,
-    not only whether the happy path works or tests are green.
-11. Search changed code and immediate consumers for dead code: unused
+8. Fix findings introduced by the current change before reporting PASS.
+9. Treat this pass as the senior-quality review: inspect production readiness,
+   not only whether the happy path works or tests are green.
+10. Search changed code and immediate consumers for dead code: unused
     declarations, unreachable branches, obsolete compatibility paths, and
     helpers with no production-reachable caller.
-12. Flag introduced code smells: duplicated decisions, mixed responsibilities,
+11. Flag introduced code smells: duplicated decisions, mixed responsibilities,
     oversized bodies/functions, boolean-state combinations, and abstractions
     that obscure ownership.
-13. Require unit coverage for feasible deterministic logic and state
+12. Require unit coverage for feasible deterministic logic and state
     transitions. Reserve UI tests for integration, presentation, and wiring
     that a lower layer cannot prove.
-14. Verify package direction and ownership. Views do not absorb navigation,
+13. Verify package direction and ownership. Views do not absorb navigation,
     persistence, or training logic; layers gain no parallel state owner or
     reverse dependency.
+
+Do not run the test suite. Test selection and execution belong to the tester
+phase; judging coverage here is item 12, not a reason to invoke `xcodebuild`.
 
 Report findings as **Bug**, **Nit**, or **Pre-existing**, with file and line.
 An empty review must state `No issues found`.

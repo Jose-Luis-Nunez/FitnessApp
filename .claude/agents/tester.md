@@ -15,6 +15,12 @@ infrastructure evidence belongs to its owning phase.
 
 ## Mode Selection
 
+**At most three test rounds per candidate.** After the third round do not
+re-test: write the remaining failures into the report, stamp `result: FAIL`, and
+hand back to the human. Rounds converge empirically after two to three; past
+that they mostly produce nits, and every further edit round carries its own
+regression risk.
+
 1. Run `bash .claude/hooks/lib/test-domain-risk.sh classify worktree` and record
    the result. Training/Exercise is blocker; Workouts/Analytics are high;
    Profile/Feedback are low. Mixed changes use the highest tier; technical risk

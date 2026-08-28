@@ -25,3 +25,8 @@ new token has nothing to record there.
 Describe stable ownership and package responsibilities. Do not enumerate
 volatile menu contents or transient UI conditions. When a new ADR already
 exists, confirm every architecture/ADR index links it.
+
+## Architecture Sync
+
+Update only the relevant current-state entry for structural/public changes.
+Product reference edits do not require an agent-infrastructure verifier.

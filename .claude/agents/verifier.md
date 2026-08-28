@@ -16,6 +16,12 @@ You receive:
 
 ## Verification Steps — do ALL of these
 
+**At most three verification rounds per candidate.** After the third round do
+not re-verify: write the remaining findings into the report, stamp
+`result: FAIL`, and hand back to the human. Rounds converge empirically after
+two to three; past that they mostly produce nits, and every further edit round
+carries its own regression risk.
+
 1. **Reference Integrity:** Run `rg` for any old/stale names mentioned in the report. Also run `rg` for common stale patterns across `.claude/` and `.codex/` files.
 2. **Overview Sync:** List actual files in `.claude/rules/`, `.claude/skills/*/`, `.claude/hooks/checks/`, and `.codex/hooks/checks/`. Compare with tables in `.claude/references/agent-system-overview.md`.
 3. **Description Consistency:** Read the frontmatter of each changed skill/rule. Check if `description` matches what the file actually does.

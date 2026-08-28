@@ -453,6 +453,38 @@ expect_success "validate command checks staged and unstaged whitespace" \
   grep -q 'git diff HEAD --check' "$REPO_ROOT/.claude/commands/validate.md"
 expect_success "subagent gate remains valid shell" bash -n "$REPO_ROOT/.claude/hooks/subagent-gate.sh"
 
+# Prose-only rules: one assertion per rule, each red if the sentence is deleted.
+expect_success "reviewer caps review rounds" \
+  grep -q 'At most three review rounds per candidate' "$REPO_ROOT/.claude/agents/reviewer.md"
+expect_success "verifier caps verification rounds" \
+  grep -q 'At most three verification rounds per candidate' "$REPO_ROOT/.claude/agents/verifier.md"
+expect_success "tester caps test rounds" \
+  grep -q 'At most three test rounds per candidate' "$REPO_ROOT/.claude/agents/tester.md"
+expect_success "nits never start a round of their own" \
+  grep -q 'Nits are non-blocking and never start a round of their own' "$REPO_ROOT/.claude/agents/reviewer.md"
+expect_success "re-reviews are scoped to the diff" \
+  grep -q 'From round 2 on, inspect the paths changed since your previous report' "$REPO_ROOT/.claude/agents/reviewer.md"
+expect_success "fresh reviewers are justified, not just mandated" \
+  grep -q 'confirmation bias' "$REPO_ROOT/.claude/skills/reviewing-code-changes/SKILL.md"
+expect_success "mutating checkers are serialized" \
+  grep -q 'Reviewers run one after another, never in parallel' "$REPO_ROOT/.claude/skills/reviewing-code-changes/SKILL.md"
+expect_success "the round counter is read before it is overwritten" \
+  grep -q 'survives only if you read the' "$REPO_ROOT/.claude/agents/reviewer.md"
+expect_success "handoff carries open findings, not cleared verdicts" \
+  grep -q 'Do not record which files you cleared' "$REPO_ROOT/.claude/agents/reviewer.md"
+expect_success "Bug severity requires a falsifiable failure scenario" \
+  grep -q 'must name a concrete failure scenario' "$REPO_ROOT/.claude/agents/reviewer.md"
+expect_success "the base review does not authorize a test run" \
+  grep -q 'Do not run the test suite' "$REPO_ROOT/.claude/skills/reviewing-code-changes/references/base-review.md"
+expect_success "the base review no longer tells the reviewer to run tests" \
+  bash -c '! grep -q "Run or verify the smallest complete test set" "'"$REPO_ROOT"'/.claude/skills/reviewing-code-changes/references/base-review.md"'
+expect_success "the orchestrator owns the round cap" \
+  grep -q 'do not spawn a fourth' "$REPO_ROOT/.claude/skills/reviewing-code-changes/SKILL.md"
+expect_success "the round counter is documented as a hint, not a bound fact" \
+  grep -q 'self-reported hint, not a bound fact' "$REPO_ROOT/.claude/agents/reviewer.md"
+expect_success "diff scoping does not narrow across public declarations" \
+  grep -q 'protocol conformance, do not narrow' "$REPO_ROOT/.claude/agents/reviewer.md"
+
 kill_switch_repo="$TEMP_ROOT/kill-switch"
 mkdir -p "$kill_switch_repo/.claude/hooks/state" "$kill_switch_repo/.codex/hooks"
 cp "$REPO_ROOT/.codex/hooks/post-task-check.sh" "$kill_switch_repo/.codex/hooks/"

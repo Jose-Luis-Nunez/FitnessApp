@@ -71,15 +71,24 @@ For yellow/red changes, spawn the reviewer with fresh context:
 
 - Codex: use `fork_turns: "none"`.
 - Claude Code: use a fresh reviewer Task.
-- Pass only the risk, changed-file list, and requested references.
-- Do not paste the diff or conversation history; the reviewer reads the
-  workspace.
 
 The reviewer uses `.codex/agents/reviewer.toml` in Codex or
 `.claude/agents/reviewer.md` in Claude Code. Fix Bug findings and re-review the
-final contents. Report residual duplication only when one actually remains.
-Test/infrastructure evidence is produced after code review, not reported as a
-code finding.
+final contents.
+
+Stop after three rounds; do not spawn a fourth. The cap lives here because a
+worker can only refuse once its spawn is already paid for. Hand the open
+findings to the human instead.
+
+Every round uses a **new** reviewer. Continuing one saves tokens but creates
+confirmation bias — the agent confirms its own earlier assumptions.
+
+The spawn prompt passes risk, file list, reference paths, and the previous
+round's open findings; no narrative, no diff, no conversation summary. Too
+little context makes the reviewer rediscover the known, too much distracts.
+
+Reviewers run one after another, never in parallel. The verifier mutates rules
+in the tree while checking, so a concurrent reviewer sees an unstable tree.
 
 ## 4. Test Once
 
@@ -93,9 +102,6 @@ risk may raise but never lower the baseline; mixed changes use the highest tier.
 Start the final tester only after the reviewer reports no Bug findings and the
 working-tree product/test contents are stable. This prevents an otherwise successful
 test run from becoming stale during senior-quality cleanup.
-
-Reviewer, tester, and verifier are final gates, not background watchers. Start
-them only on stable contents; if contents change, stop, batch fixes, then retry.
 
 - If no matching result exists, the tester uses `run`.
 - If the main agent already ran the complete required command on the final
@@ -147,9 +153,3 @@ source_fingerprint: <manifest fingerprint>
 
 Yellow/red stamps require `reviewer-subagent` and `tester-subagent`. Green
 stamps may use `main-agent`.
-
-## Architecture Sync
-
-Use `architecture-routing.md`. Update only the relevant current-state entry for
-structural/public changes. Product reference edits do not require an
-agent-infrastructure verifier.
