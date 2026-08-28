@@ -26,7 +26,9 @@ state.
 5. Green: perform the lightweight self-review and one relevant final test.
 6. Yellow/red: use one fresh reviewer as the senior-quality review, then start
    the tester only after all Bug findings are fixed. The tester verifies an
-   existing matching final result instead of repeating it.
+   existing matching final result instead of repeating it — which requires the
+   run to have kept its `.xcresult`, so pass `--result-bundle <dir>` to
+   `test-affected-packages.sh`. Counts on stdout are a claim, not evidence.
 7. Do not report stale test/infrastructure stamps as code findings before their
    respective validation phase.
 8. Write code and test manifests from all working-tree contents with

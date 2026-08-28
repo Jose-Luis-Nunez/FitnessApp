@@ -24,9 +24,16 @@ infrastructure evidence belongs to its owning phase.
 3. Check whether `test-execution.manifest.tsv` matches the current contents and
    the stamp documents every required package/command.
 4. Use **verify** when matching evidence exists: inspect command, exit code,
-   counts, and xcresult. Do not run the command again.
+   counts, and xcresult. Do not run the command again. `verify` requires an
+   artifact you can read — a counts summary quoted in a message is a claim, not
+   evidence. At high and blocker this is enforced: the stamp must name a
+   `.xcresult` and `n/a` is rejected. Below high it is judgement, and a native
+   check with no bundle is legitimate. Without a durable bundle where one is
+   required, the honest answer is `run`, whoever asked for `verify`.
 5. Use **run** when evidence is missing, incomplete, failed, or stale. Run each
-   required package test exactly once.
+   required package test exactly once. Pass `--result-bundle <dir>` so the
+   bundle survives; the script otherwise writes it to a temporary directory it
+   deletes on exit, leaving the counts only on stdout.
 
 Any code change after a test run invalidates that evidence.
 
@@ -77,7 +84,7 @@ packages: <packages>
 command: <command or verified commands>
 tests: <passed/total>
 exit_code: 0
-xcresult: <path or n/a>
+xcresult: <path to the .xcresult; required at high and blocker, may be n/a below>
 duration_seconds: <wall-clock seconds for the final command set>
 source_fingerprint: <fingerprint>
 ```

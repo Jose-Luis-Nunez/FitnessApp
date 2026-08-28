@@ -30,15 +30,15 @@ private func assertSnapshot<V: View>(
 
     SnapshotTesting.assertSnapshot(
         of: controller,
-        // Deliberately 0.99 here, unlike the card and training suites which run
-        // at 0.999. These baselines carry a pre-existing runtime drift against
-        // the pinned toolchain — measured at 0.141% of pixels with a maximum
-        // channel delta of 10/255 on `primaryStyle`, i.e. invisible — which sits
-        // just above a 0.999 budget. Tightening would fail this suite for
-        // renderer noise rather than for a real change, and re-recording it
-        // would hide the drift instead of recording it. Revisit together with
-        // the drift, not on its own.
-        as: .image(precision: 0.99, perceptualPrecision: 0.98, size: size),
+        // 0.999, matching the card and training suites. These baselines used to
+        // sit at 0.99 to tolerate a drift against the pinned toolchain. That
+        // drift was measured rather than assumed: two consecutive recordings are
+        // byte-identical, so the rendering is deterministic, and recording with
+        // the pre-refactor `CardActionCircleButtonVisual` / `CardBackground`
+        // produced byte-identical images too — so it was the toolchain, not the
+        // code. The baselines were re-recorded against the pinned toolchain, and
+        // the budget is now tight enough to catch a 1pt geometry shift.
+        as: .image(precision: 0.999, perceptualPrecision: 0.98, size: size),
         named: name,
         record: shouldRecord,
         file: file,
@@ -399,6 +399,10 @@ struct SetTilesRowSnapshotTests {
     /// Trailing accessory (reset button) with its width reserved so the three
     /// tiles stay exact — mirrors the completed card's reset-enabled layout.
     @Test func withResetAccessory() throws {
+        // The artwork lives in the app target's catalog, so it is loaded from
+        // disk here. This snapshot is about the row's reserved trailing width,
+        // not about the icon — the image only has to be present and the same
+        // size every run.
         let resetImage = try appAssetImage(named: "repeat")
         let view = SetTilesRow(
             setProgress: progress(3),

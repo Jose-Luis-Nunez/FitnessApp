@@ -16,12 +16,6 @@ public struct BottomActionBarView: View {
     public let onFinish: () -> Void
     public let onOpenFeedback: () -> Void
     public let feedbackIconState: FeedbackEntryIconState
-    /// The feedback artwork lives in the app target's asset catalog, so
-    /// `Image(_:)` resolves to nothing from a package test bundle — which is why
-    /// this control had no visual coverage and why a cropped asset went
-    /// unnoticed. Injecting the lookup lets a package snapshot load the same
-    /// files from disk, the way the exercise cards already do.
-    public let feedbackImageProvider: (FeedbackEntryIconState) -> Image
 
     public init(
         viewModel: BottomActionBarViewModel,
@@ -32,8 +26,7 @@ public struct BottomActionBarView: View {
         onEditMore: @escaping () -> Void,
         onFinish: @escaping () -> Void,
         onOpenFeedback: @escaping () -> Void = {},
-        feedbackIconState: FeedbackEntryIconState = .entry,
-        feedbackImageProvider: @escaping (FeedbackEntryIconState) -> Image = { Image($0.assetName) }
+        feedbackIconState: FeedbackEntryIconState = .entry
     ) {
         self.viewModel = viewModel
         self.onStart = onStart
@@ -44,7 +37,6 @@ public struct BottomActionBarView: View {
         self.onFinish = onFinish
         self.onOpenFeedback = onOpenFeedback
         self.feedbackIconState = feedbackIconState
-        self.feedbackImageProvider = feedbackImageProvider
     }
 
     public var body: some View {
@@ -59,8 +51,7 @@ public struct BottomActionBarView: View {
                     onEditMore: onEditMore,
                     onFinish: onFinish,
                     onOpenFeedback: onOpenFeedback,
-                    feedbackIconState: feedbackIconState,
-                    feedbackImageProvider: feedbackImageProvider
+                    feedbackIconState: feedbackIconState
                 )
             }
             .background(Color.clear)
@@ -80,8 +71,6 @@ public struct FloatingActionButtonsView: View {
     public let onFinish: () -> Void
     public let onOpenFeedback: () -> Void
     public let feedbackIconState: FeedbackEntryIconState
-    /// See `BottomActionBarView.feedbackImageProvider`.
-    public let feedbackImageProvider: (FeedbackEntryIconState) -> Image
     private let capsuleHeight: CGFloat = 48
 
     private let bottomOffset: CGFloat = 16
@@ -109,8 +98,7 @@ public struct FloatingActionButtonsView: View {
         onEditMore: @escaping () -> Void,
         onFinish: @escaping () -> Void,
         onOpenFeedback: @escaping () -> Void = {},
-        feedbackIconState: FeedbackEntryIconState = .entry,
-        feedbackImageProvider: @escaping (FeedbackEntryIconState) -> Image = { Image($0.assetName) }
+        feedbackIconState: FeedbackEntryIconState = .entry
     ) {
         self.viewModel = viewModel
         self.onStart = onStart
@@ -121,7 +109,6 @@ public struct FloatingActionButtonsView: View {
         self.onFinish = onFinish
         self.onOpenFeedback = onOpenFeedback
         self.feedbackIconState = feedbackIconState
-        self.feedbackImageProvider = feedbackImageProvider
     }
 
     public var body: some View {
@@ -304,7 +291,7 @@ public struct FloatingActionButtonsView: View {
         action: @escaping () -> Void
     ) -> some View {
         glassCircleIconButton(
-            image: feedbackImageProvider(state),
+            image: Image(state.assetName),
             // `.template` with the same tint as the Quick-Done icon beside it.
             // `.original` was right while the artwork carried its own orange and
             // green; the states are monochrome line art now, so rendering them

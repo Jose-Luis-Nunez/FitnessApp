@@ -12,6 +12,7 @@ XCODE_ACTION="test"
 ENABLE_COMPILATION_CACHE=0
 SHOW_BUILD_TIMING=0
 LIST_ONLY=0
+RESULT_BUNDLE_DIR=""
 
 usage() {
   cat >&2 <<'EOF'
@@ -34,6 +35,11 @@ Options:
   --diagnose                Include Xcode's build timing summary
   --build-for-testing       Build reusable test products without running tests
   --test-without-building   Re-run matching products after an unchanged build
+  --result-bundle DIR       Keep the .xcresult bundles in DIR instead of a
+                            temporary directory that is deleted on exit. Use
+                            this whenever the run has to serve as evidence:
+                            without it the counts exist only on stdout and
+                            cannot be verified afterwards.
   --list                    Print the resolved phase/target schedule only
 EOF
 }
@@ -75,6 +81,15 @@ while [ "$#" -gt 0 ]; do
     --test-without-building)
       XCODE_ACTION="test-without-building"
       shift
+      ;;
+    --result-bundle)
+      # Reject a following flag rather than treating it as the directory name:
+      # `--result-bundle --list` otherwise fails inside `mkdir` with a message
+      # that names the wrong problem.
+      [ "$#" -ge 2 ] || { usage; exit 2; }
+      case "$2" in -*) echo "ERROR: --result-bundle needs a directory." >&2; usage; exit 2 ;; esac
+      RESULT_BUNDLE_DIR="$2"
+      shift 2
       ;;
     --list)
       LIST_ONLY=1
@@ -199,8 +214,16 @@ export PATH="$XCODE_DEVELOPER_DIR/usr/bin:$PATH"
 
 MAC_DESTINATION="platform=macOS,arch=arm64"
 IOS_DESTINATION="platform=iOS Simulator,name=iPhone 17 Pro Max,OS=26.0"
-RESULT_DIRECTORY=$(mktemp -d "${TMPDIR:-/tmp}/fitness-module-tests.XXXXXX")
-trap 'rm -rf "$RESULT_DIRECTORY"' EXIT
+# A temporary directory is right for a developer loop and wrong for evidence:
+# the bundle is the only artifact that can be checked after the fact, and the
+# summary printed to stdout cannot. `--result-bundle` keeps it.
+if [ -n "$RESULT_BUNDLE_DIR" ]; then
+  mkdir -p "$RESULT_BUNDLE_DIR"
+  RESULT_DIRECTORY=$(cd "$RESULT_BUNDLE_DIR" && pwd)
+else
+  RESULT_DIRECTORY=$(mktemp -d "${TMPDIR:-/tmp}/fitness-module-tests.XXXXXX")
+  trap 'rm -rf "$RESULT_DIRECTORY"' EXIT
+fi
 
 print_targets() {
   phase="$1"
@@ -275,6 +298,10 @@ run_phase() {
   fi
 
   result_bundle="$RESULT_DIRECTORY/$phase_name.xcresult"
+  # `xcodebuild` refuses to overwrite an existing bundle and fails with a message
+  # naming the path rather than the reuse, so a second run into the same
+  # `--result-bundle` directory would look like an unrelated error.
+  rm -rf "$result_bundle"
   phase_started_at=$(date +%s)
   echo "START: $phase_name at $(date '+%H:%M:%S')"
   phase_arguments=(

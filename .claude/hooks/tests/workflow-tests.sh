@@ -77,7 +77,7 @@ write_fixture_evidence() {
       "$risk" "$reviewer" "$code_fingerprint" > .claude/hooks/state/code-changes.stamp.md
     bash "$EVIDENCE" write .claude/hooks/state/test-execution.manifest.tsv worktree
     test_fingerprint=$(bash "$EVIDENCE" fingerprint .claude/hooks/state/test-execution.manifest.tsv)
-    printf 'result: PASS\nverified_by: %s\nmode: verify\ndomain_risk: %s\ncommand: focused fixture\ntests: 1/1\nexit_code: 0\nsource_fingerprint: %s\n' \
+    printf 'result: PASS\nverified_by: %s\nmode: verify\ndomain_risk: %s\ncommand: focused fixture\ntests: 1/1\nexit_code: 0\nxcresult: fixture/pre-merge.xcresult\nsource_fingerprint: %s\n' \
       "$tester" "$domain_risk" "$test_fingerprint" > .claude/hooks/state/test-execution.stamp.md
   )
 }
@@ -306,6 +306,31 @@ write_fixture_evidence "$hook_repo" green main-agent main-agent
 )
 expect_success "pre-commit accepts exact green evidence" bash -c "cd '$hook_repo' && bash '$PRE_COMMIT'"
 
+# A delete paired with a similar add is what git reports as a rename, and
+# `--name-only` then prints only the destination. Before `--no-renames`, the
+# deletion dropped out of the manifest entirely and was left unbound: its
+# content could change without moving the fingerprint. This is the regression
+# that motivated the flag, and nothing else in this suite covers it.
+rename_repo=$(new_repo rename-pairing)
+(
+  cd "$rename_repo"
+  mkdir -p Assets/old.imageset Assets/new.imageset
+  printf '{ "images": [], "info": { "version": 1 } }\n' > Assets/old.imageset/Contents.json
+  git add Assets/old.imageset/Contents.json
+  git -c user.email=workflow@example.com -c user.name=Workflow commit -qm "asset"
+  git rm -q Assets/old.imageset/Contents.json
+  printf '{ "images": [], "info": { "version": 1 } }\n' > Assets/new.imageset/Contents.json
+  git add Assets/new.imageset/Contents.json
+)
+# Assertions deliberately outside a subshell: `expect_equal` exits on failure
+# and increments the counter, and a subshell would swallow both — the check
+# would report nothing and pass silently.
+rename_paths=$(cd "$rename_repo" && bash "$EVIDENCE" paths staged)
+expect_equal "1" "$(printf '%s\n' "$rename_paths" | grep -c 'Assets/new.imageset/Contents.json')" \
+  "rename destination is in the candidate"
+expect_equal "1" "$(printf '%s\n' "$rename_paths" | grep -c 'Assets/old.imageset/Contents.json')" \
+  "rename source deletion is in the candidate"
+
 prestage_repo=$(new_repo pre-stage-validation)
 printf 'struct CardView { let spacing = 12 }\n' > "$prestage_repo/Packages/FitnessUI/Sources/FitnessUI/CardView.swift"
 write_fixture_evidence "$prestage_repo" green main-agent main-agent
@@ -333,6 +358,56 @@ write_fixture_evidence "$yellow_hook_repo" yellow main-agent main-agent
 expect_failure "yellow rejects main-agent-only evidence" bash -c "cd '$yellow_hook_repo' && bash '$PRE_COMMIT' >/dev/null 2>&1"
 write_fixture_evidence "$yellow_hook_repo" yellow reviewer-subagent tester-subagent
 expect_success "yellow accepts reviewer and tester verification" bash -c "cd '$yellow_hook_repo' && bash '$PRE_COMMIT' >/dev/null"
+
+# Negative cases for the xcresult contract. The positive fixture above only
+# proves a good stamp is accepted; without these the contract could be deleted,
+# or defeated by trailing whitespace, with the suite still green.
+xcresult_stamp() {
+  local repo="$1"
+  local value="$2"
+  local fingerprint=""
+
+  fingerprint=$(
+    cd "$repo" &&
+      bash "$EVIDENCE" fingerprint .claude/hooks/state/test-execution.manifest.tsv
+  )
+  if [ -n "$value" ]; then
+    printf 'result: PASS\nverified_by: tester-subagent\nmode: verify\ndomain_risk: blocker\ncommand: focused fixture\ntests: 1/1\nexit_code: 0\nxcresult: %s\nsource_fingerprint: %s\n' \
+      "$value" "$fingerprint" > "$repo/.claude/hooks/state/test-execution.stamp.md"
+  else
+    printf 'result: PASS\nverified_by: tester-subagent\nmode: verify\ndomain_risk: blocker\ncommand: focused fixture\ntests: 1/1\nexit_code: 0\nsource_fingerprint: %s\n' \
+      "$fingerprint" > "$repo/.claude/hooks/state/test-execution.stamp.md"
+  fi
+}
+
+xcresult_stamp "$yellow_hook_repo" "n/a"
+expect_failure "blocker rejects a tester stamp naming no result bundle" \
+  bash -c "cd '$yellow_hook_repo' && bash '$PRE_COMMIT' >/dev/null 2>&1"
+
+xcresult_stamp "$yellow_hook_repo" "n/a "
+expect_failure "blocker rejects 'n/a' with trailing whitespace" \
+  bash -c "cd '$yellow_hook_repo' && bash '$PRE_COMMIT' >/dev/null 2>&1"
+
+xcresult_stamp "$yellow_hook_repo" ""
+expect_failure "blocker rejects a tester stamp with no xcresult field" \
+  bash -c "cd '$yellow_hook_repo' && bash '$PRE_COMMIT' >/dev/null 2>&1"
+
+# Shape, not just non-emptiness: without the `*.xcresult` check any word passes
+# as "named a bundle".
+xcresult_stamp "$yellow_hook_repo" "yes"
+expect_failure "blocker rejects a value that is not a result bundle" \
+  bash -c "cd '$yellow_hook_repo' && bash '$PRE_COMMIT' >/dev/null 2>&1"
+
+xcresult_stamp "$yellow_hook_repo" "fixture/pre-merge.xcresult"
+expect_success "blocker accepts a named result bundle" \
+  bash -c "cd '$yellow_hook_repo' && bash '$PRE_COMMIT' >/dev/null"
+
+# The trailing-whitespace strip is load-bearing for a *valid* path: without it
+# this stamp is wrongly rejected. The `n/a ` case above no longer covers the
+# strip, because the shape check rejects it first.
+xcresult_stamp "$yellow_hook_repo" "fixture/pre-merge.xcresult "
+expect_success "blocker accepts a named bundle with trailing whitespace" \
+  bash -c "cd '$yellow_hook_repo' && bash '$PRE_COMMIT' >/dev/null"
 
 print_repo=$(new_repo print)
 printf 'struct CardView { func debug() { print(\"debug\") } }\n' > "$print_repo/Packages/FitnessUI/Sources/FitnessUI/CardView.swift"

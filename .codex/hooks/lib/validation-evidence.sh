@@ -21,13 +21,20 @@ validation_paths() {
   local tracked=""
   local untracked=""
 
+  # `--no-renames` is load-bearing, not a style choice. With rename detection on,
+  # git pairs a deleted path with a similar added one and `--name-only` prints
+  # only the destination, so the *deletion* silently drops out of the manifest
+  # and is left unbound — restoring or altering that file would not change the
+  # fingerprint. A real case: deleting `quickDoneIcon.imageset/Contents.json`
+  # while adding `feedback_entry_2.imageset/Contents.json` paired at 55%
+  # similarity and cost the manifest one path.
   case "$mode" in
     worktree)
-      tracked=$(git diff --name-only --diff-filter=ACMRD HEAD 2>/dev/null || true)
+      tracked=$(git diff --name-only --no-renames --diff-filter=ACMRD HEAD 2>/dev/null || true)
       untracked=$(git ls-files --others --exclude-standard 2>/dev/null || true)
       ;;
     staged)
-      tracked=$(git diff --cached --name-only --diff-filter=ACMRD 2>/dev/null || true)
+      tracked=$(git diff --cached --name-only --no-renames --diff-filter=ACMRD 2>/dev/null || true)
       ;;
     *)
       echo "Unknown validation mode: $mode" >&2
@@ -151,11 +158,41 @@ test_execution_stamp_has_domain_contract() {
     validation_stamp_has_field_value "$stamp" source_fingerprint '[[:xdigit:]]{64}'
 }
 
+# High and blocker tiers must name a result bundle. Documenting
+# that `verify` needs a readable artifact was not enough: the schema allowed
+# `xcresult: n/a`, so a tester could pass every gate while the counts existed
+# only in a message. `n/a` stays legal below high, where a run may legitimately
+# be a native check without a bundle.
+test_execution_stamp_has_xcresult_contract() {
+  local stamp="$1"
+  local expected_domain="${2:-low}"
+  local xcresult=""
+
+  case "$expected_domain" in
+    high|blocker) ;;
+    *) return 0 ;;
+  esac
+
+  # Trailing whitespace is stripped as well as leading. This is load-bearing for
+  # a *valid* path: `…/run.xcresult ` would otherwise fail the shape check below
+  # and a good stamp would be wrongly rejected. It is no longer what stops
+  # `n/a ` — the shape check rejects that first — though it was, before the
+  # shape check existed.
+  xcresult=$(sed -n 's/^[[:space:]]*xcresult:[[:space:]]*//p' "$stamp" 2>/dev/null |
+    head -1 |
+    sed 's/[[:space:]]*$//')
+  [ -n "$xcresult" ] || return 1
+  [ "$xcresult" != "n/a" ] || return 1
+  # Shape, not existence: `xcresult: yes` otherwise satisfies "named a bundle".
+  case "$xcresult" in *.xcresult) ;; *) return 1 ;; esac
+}
+
 test_execution_stamp_has_required_fields() {
   local stamp="$1"
   local expected_domain="${2:-low}"
 
   test_execution_stamp_has_domain_contract "$stamp" "$expected_domain" &&
+    test_execution_stamp_has_xcresult_contract "$stamp" "$expected_domain" &&
     validation_stamp_has_field_value "$stamp" verified_by tester-subagent
 }
 
