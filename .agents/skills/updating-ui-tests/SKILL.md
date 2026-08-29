@@ -10,7 +10,7 @@ description: >-
 
 # Updating Existing UI Tests
 
-For shared conventions (DSL, constraints, template, naming) see `.claude/references/ui-test-conventions.md`.
+For shared conventions see the routing table in `.claude/references/ui-test-conventions.md`.
 
 ## Workflow
 
@@ -33,7 +33,7 @@ to keep the suite green.
 
 Perform two analyses on the existing test:
 
-1. **Convention review** — check the test against the **Review Checklist** in `.claude/references/ui-test-conventions.md` (raw API usage, hardcoded strings, structure issues, selector mismatches)
+1. **Convention review** — check the test against the checklist in `.claude/references/ui-test/review-checklist.md` (raw API usage, hardcoded strings, structure issues, selector mismatches)
 2. **Production scan** — read the test, extract all test ID references, find the production Views containing those identifiers. Check whether identifiers still exist in production `enum AID` constants, find new untested interactive elements, and flag stale selectors
 
 If the test fails on the first run, follow `debugging-ui-tests`. The diagnosis
@@ -58,13 +58,13 @@ Based on both agent reports, apply fixes:
 
 ### Step 3 — Review the Result
 
-Review the updated test file against the **Review Checklist** in `.claude/references/ui-test-conventions.md`. Reconfirm the retention decision with the actual maintenance cost exposed by the update, then fix any remaining violations before considering the update done.
+Review the updated test file against the checklist in `.claude/references/ui-test/review-checklist.md`. Reconfirm the retention decision with the actual maintenance cost exposed by the update, then fix any remaining violations before considering the update done.
 
 ## Documentation Sync
 
 When you edit files under `FitnessAppUITests/`, check if the change affects `references/ui-test-conventions.md` and update it in the **same task**:
 
-| What changed | What to update in `ui-test-conventions.md` |
+| What changed | What to update under `.claude/references/ui-test/` |
 |---|---|
 | DSL function added/renamed/removed in `ElementActions.swift` | **DSL Function Reference** table |
 | `TestDefaults` constant added/changed | **Timeout Defaults** table |
@@ -73,6 +73,6 @@ When you edit files under `FitnessAppUITests/`, check if the change affects `ref
 | `BaseTest` API changed | **Test Template** and rules |
 | New file/folder under `FitnessAppUITests/` | **Project Structure** tree |
 | Deleted file under `FitnessAppUITests/` | **Project Structure** tree — remove entry |
-| Selector-diagnosis tooling/steps changed | **Diagnosing a Failing Selector** section |
+| Selector-diagnosis tooling/steps changed | `ui-test/diagnosing.md` |
 
-Also update the **Review Checklist** in `ui-test-conventions.md` if the change affects validation rules.
+Also update the checklist in `ui-test/review-checklist.md` if the change affects validation rules.

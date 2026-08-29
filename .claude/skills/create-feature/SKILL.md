@@ -142,7 +142,7 @@ Pickers belong in `Features/Picker/`, not in a feature folder. Use existing pick
 - [ ] No business logic in the View
 - [ ] Navigation registered in `NavigationDestination` enum
 - [ ] `AppCurrentScene` enum updated if new scene type
-- [ ] All interactive elements (buttons, text fields, tappable views) have `.accessibilityIdentifier("id_<context>_<element>")` — see `.claude/references/ui-test-conventions.md`
+- [ ] All interactive elements (buttons, text fields, tappable views) have `.accessibilityIdentifier("id_<context>_<element>")` — see `.claude/references/ui-test/identifiers.md`
 - [ ] Matching Selector constants added in `FitnessAppUITests/Selectors/<ScreenName>Selectors.swift`
 - [ ] Unit tests written for ViewModel and Service logic (at minimum: initial state, main action, edge case). Place in the relevant `Packages/*/Tests/` target. New services must have a protocol so they can be mocked in tests.
 - [ ] Test domain classified with `bash .claude/hooks/lib/test-domain-risk.sh classify worktree`, then test layer selected with `.claude/references/test-selection-policy.md`. Training/Exercise is blocker; Workouts and Analytics are high; Profile and Feedback are low. Add focused unit/integration coverage for meaningful behavior risk; add a snapshot only for a stable reusable visual contract whose risk reduction exceeds baseline maintenance. A `public View` alone does not require a snapshot.

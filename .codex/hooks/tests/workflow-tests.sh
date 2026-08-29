@@ -618,6 +618,17 @@ expect_success "a recording run is judged by executed tests, not by the bundle" 
 expect_success "validate names the recording command" \
   grep -q 'test-affected-packages.sh --snapshots --record' "$REPO_ROOT/.claude/commands/validate.md"
 
+# The UI-test reference is routed like the review references. Four skills point
+# at it, so a split that leaves a pointer behind is the real risk here.
+expect_success "the UI-test reference routes instead of being read whole" \
+  grep -q 'Read only what the task needs' "$REPO_ROOT/.claude/references/ui-test-conventions.md"
+for ui_ref in identifiers dsl authoring fixtures-navigation diagnosing review-checklist; do
+  expect_success "ui-test/$ui_ref.md exists" \
+    test -f "$REPO_ROOT/.claude/references/ui-test/$ui_ref.md"
+done
+expect_success "no skill still points at a section that became a file" \
+  bash -c '! grep -rqE "\*\*(Review Checklist|Diagnosing a Failing Selector)\*\* (in|section)" "'"$REPO_ROOT"'/.claude/skills"'
+
 # Test scope follows the dependency graph, not just the changed paths. Without
 # this a changed public signature selected only its own package while consuming
 # packages shipped untested.

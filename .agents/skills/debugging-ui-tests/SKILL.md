@@ -11,7 +11,7 @@ description: >-
 
 # Debugging Failing UI Tests
 
-For shared conventions (DSL, selectors, layout, **diagnosis decision tree**) see `.claude/references/ui-test-conventions.md`.
+For shared conventions see the routing table in `.claude/references/ui-test-conventions.md`.
 
 For tests that **pass** but use outdated patterns or raw API, use `updating-ui-tests` instead.
 
@@ -25,8 +25,7 @@ See `.claude/rules/build-and-test.mdc` § "UI Tests" for the exact `xcodebuild` 
 
 ### Step 2 — Diagnose the Selector
 
-Work the **5-step decision tree** under `Diagnosing a Failing Selector` in
-`.claude/references/ui-test-conventions.md` **strictly in order**:
+Work the **5-step decision tree** under `.claude/references/ui-test/diagnosing.md` **strictly in order**:
 
 1. Use-case flow + selector sequence understood?
 2. Is the selector present in the UI hierarchy at the failure point?
@@ -62,7 +61,7 @@ This is the same bidirectional handoff pattern the two review skills already use
 
 When you edit files under `FitnessAppUITests/`, check if the change affects `references/ui-test-conventions.md` and update it in the **same task**:
 
-| What changed | What to update in `ui-test-conventions.md` |
+| What changed | What to update under `.claude/references/ui-test/` |
 |---|---|
 | DSL function added/renamed/removed in `ElementActions.swift` | **DSL Function Reference** table |
 | `TestDefaults` constant added/changed | **Timeout Defaults** table |
@@ -71,6 +70,6 @@ When you edit files under `FitnessAppUITests/`, check if the change affects `ref
 | `BaseTest` API changed | **Test Template** and rules |
 | New file/folder under `FitnessAppUITests/` | **Project Structure** tree |
 | Deleted file under `FitnessAppUITests/` | **Project Structure** tree — remove entry |
-| Selector-diagnosis tooling/steps changed | **Diagnosing a Failing Selector** section |
+| Selector-diagnosis tooling/steps changed | `ui-test/diagnosing.md` |
 
-Also update the **Review Checklist** in `ui-test-conventions.md` if the change affects validation rules.
+Also update the checklist in `ui-test/review-checklist.md` if the change affects validation rules.

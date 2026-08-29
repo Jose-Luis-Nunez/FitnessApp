@@ -8,7 +8,7 @@ description: >-
 
 # Writing New UI Tests
 
-For shared conventions (DSL, constraints, template, naming) see `.claude/references/ui-test-conventions.md`.
+For shared conventions see the routing table in `.claude/references/ui-test-conventions.md`.
 
 ## Workflow
 
@@ -69,7 +69,7 @@ view, or timeout.
 
 ### Step 3 — Write the Test
 
-Use the test template from `.claude/references/ui-test-conventions.md`. Key rules:
+Use the test template from `.claude/references/ui-test/authoring.md`. Key rules:
 
 - Inherit from `BaseTest`
 - Mark test methods `@MainActor`
@@ -80,13 +80,13 @@ Use the test template from `.claude/references/ui-test-conventions.md`. Key rule
 
 ### Step 4 — Review the Result
 
-Review the finished test file against the **Review Checklist** in `.claude/references/ui-test-conventions.md`. Confirm that the test still passes the Selection Gate after its real fixture and flow cost are known, then fix any remaining violations before considering the test done.
+Review the finished test file against the checklist in `.claude/references/ui-test/review-checklist.md`. Confirm that the test still passes the Selection Gate after its real fixture and flow cost are known, then fix any remaining violations before considering the test done.
 
 ## Documentation Sync
 
 When you edit files under `FitnessAppUITests/`, check if the change affects `references/ui-test-conventions.md` and update it in the **same task**:
 
-| What changed | What to update in `ui-test-conventions.md` |
+| What changed | What to update under `.claude/references/ui-test/` |
 |---|---|
 | DSL function added/renamed/removed in `ElementActions.swift` | **DSL Function Reference** table |
 | `TestDefaults` constant added/changed | **Timeout Defaults** table |
@@ -95,6 +95,6 @@ When you edit files under `FitnessAppUITests/`, check if the change affects `ref
 | `BaseTest` API changed | **Test Template** and rules |
 | New file/folder under `FitnessAppUITests/` | **Project Structure** tree |
 | Deleted file under `FitnessAppUITests/` | **Project Structure** tree — remove entry |
-| Selector-diagnosis tooling/steps changed | **Diagnosing a Failing Selector** section |
+| Selector-diagnosis tooling/steps changed | `ui-test/diagnosing.md` |
 
-Also update the **Review Checklist** in `ui-test-conventions.md` if the change affects validation rules.
+Also update the checklist in `ui-test/review-checklist.md` if the change affects validation rules.
