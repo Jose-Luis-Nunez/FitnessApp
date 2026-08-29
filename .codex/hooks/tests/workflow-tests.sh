@@ -590,6 +590,34 @@ expect_success "buildApp pins the same toolchain as the test runner" \
 expect_success "buildApp fails loudly on a missing toolchain" \
   grep -q 'DEVELOPER_DIR does not exist' "$REPO_ROOT/scripts/buildApp.sh"
 
+# Recording after validation moves the fingerprint and voids both stamps, so
+# the commit flow settles baselines before anything measures the candidate.
+expect_success "validate settles snapshot baselines before classifying" \
+  grep -q 'Settle snapshot baselines first' "$REPO_ROOT/.claude/commands/validate.md"
+expect_success "snapshots are not a per-change development test" \
+  grep -q 'Snapshot tests are not a development test' "$REPO_ROOT/.claude/skills/reviewing-test-quality/references/snapshots.md"
+
+# The recording plan must hardcode the value: a test plan does not expand build
+# settings in its own entries, so "$(RECORD_SNAPSHOTS)" reached the runner as a
+# literal string and silently recorded nothing.
+expect_success "the recording plan hardcodes the record flag" \
+  python3 -c "
+import json,sys
+d=json.load(open(sys.argv[1]))
+e=d['defaultOptions']['environmentVariableEntries']
+sys.exit(0 if any(x['key']=='RECORD_SNAPSHOTS' and x['value']=='1' for x in e) else 1)
+" "$REPO_ROOT/TestPlans/FitnessSnapshotsRecord.xctestplan"
+expect_success "the recording plan is registered with the scheme" \
+  grep -q 'FitnessSnapshotsRecord.xctestplan' "$REPO_ROOT/FitnessModules.xcworkspace/xcshareddata/xcschemes/FitnessModulesTests.xcscheme"
+expect_success "--record selects the recording plan" \
+  grep -q 'snapshot_plan="FitnessSnapshotsRecord"' "$REPO_ROOT/scripts/test-affected-packages.sh"
+# xcodebuild writes a result bundle even when it aborts before running anything,
+# so bundle-exists would report a hard failure as a successful recording.
+expect_success "a recording run is judged by executed tests, not by the bundle" \
+  grep -q 'Logical total: \[1-9\]' "$REPO_ROOT/scripts/test-affected-packages.sh"
+expect_success "validate names the recording command" \
+  grep -q 'test-affected-packages.sh --snapshots --record' "$REPO_ROOT/.claude/commands/validate.md"
+
 # Test scope follows the dependency graph, not just the changed paths. Without
 # this a changed public signature selected only its own package while consuming
 # packages shipped untested.

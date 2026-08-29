@@ -19,22 +19,30 @@ state.
    at least one changed path, and `git diff HEAD --check` passes. Include
    staged, unstaged, and untracked files in the changed-file inventory.
 2. Resolve applicable ADR triggers before starting subagents.
-3. Run both classifiers:
+3. Settle snapshot baselines first, before anything measures the candidate.
+   Snapshot tests are not a development test: do not run them per change. If
+   this change intentionally alters the appearance of a snapshotted view, run
+   `bash scripts/test-affected-packages.sh --snapshots --record <Package>` now
+   and inspect every image it lists.
+   Recording later would move the fingerprint and void both stamps, costing a
+   second review and a second test run. A baseline that changed without an
+   intended visual change is a regression, not a re-record.
+4. Run both classifiers:
    - `bash .claude/hooks/lib/change-risk.sh classify worktree` for review routing.
    - `bash .claude/hooks/lib/test-domain-risk.sh classify worktree` for test depth.
-4. Follow `.claude/skills/reviewing-code-changes/SKILL.md`.
-5. Green: perform the lightweight self-review and one relevant final test.
-6. Yellow/red: use one fresh reviewer as the senior-quality review, then start
+5. Follow `.claude/skills/reviewing-code-changes/SKILL.md`.
+6. Green: perform the lightweight self-review and one relevant final test.
+7. Yellow/red: use one fresh reviewer as the senior-quality review, then start
    the tester only after all Bug findings are fixed. The tester verifies an
    existing matching final result instead of repeating it — which requires the
    run to have kept its `.xcresult`, so pass `--result-bundle <dir>` to
    `test-affected-packages.sh`. Counts on stdout are a claim, not evidence.
-7. Do not report stale test/infrastructure stamps as code findings before their
+8. Do not report stale test/infrastructure stamps as code findings before their
    respective validation phase.
-8. Write code and test manifests from all working-tree contents with
+9. Write code and test manifests from all working-tree contents with
    `validation-evidence.sh write <manifest> worktree`.
-9. Write stamps containing the matching `source_fingerprint`.
-10. Run `.claude/hooks/tests/workflow-tests.sh` only when agent workflow files
+10. Write stamps containing the matching `source_fingerprint`.
+11. Run `.claude/hooks/tests/workflow-tests.sh` only when agent workflow files
     themselves changed.
 
 After PASS, staging the complete unchanged candidate preserves evidence:

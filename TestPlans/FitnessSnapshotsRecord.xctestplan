@@ -1,0 +1,55 @@
+{
+  "configurations": [
+    {
+      "id": "7B1E4C90-3D62-4A17-9F55-2C8E10B4A6D3",
+      "name": "Pinned iOS Snapshots (recording)",
+      "options": {
+        "codeCoverage": false
+      }
+    }
+  ],
+  "defaultOptions": {
+    "testTimeoutsEnabled": true,
+    "environmentVariableEntries": [
+      {
+        "key": "RECORD_SNAPSHOTS",
+        "value": "1"
+      }
+    ]
+  },
+  "testTargets": [
+    {
+      "parallelizable": false,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessUISnapshotTests",
+        "name": "FitnessUISnapshotTests"
+      }
+    },
+    {
+      "parallelizable": false,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessAnalyticsSnapshotTests",
+        "name": "FitnessAnalyticsSnapshotTests"
+      }
+    },
+    {
+      "parallelizable": false,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessTrainingSnapshotTests",
+        "name": "FitnessTrainingSnapshotTests"
+      }
+    },
+    {
+      "parallelizable": false,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessPersistenceUISnapshotTests",
+        "name": "FitnessPersistenceUISnapshotTests"
+      }
+    }
+  ],
+  "version": 1
+}

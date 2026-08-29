@@ -41,10 +41,19 @@ Options:
                             without it the counts exist only on stdout and
                             cannot be verified afterwards.
   --list                    Print the resolved phase/target schedule only
+  --record                  Re-record snapshot baselines instead of comparing.
+                            Selects the recording test plan, which is the only
+                            way the runner process sees RECORD_SNAPSHOTS: a
+                            plan does not inherit this shell's environment and
+                            does not expand build settings in its own entries.
+                            Prints every baseline the run changed.
 EOF
 }
 
 packages=()
+# Must precede the parse loop: initialising it further down silently reset the
+# flag the loop had just set.
+RECORD_SNAPSHOTS_MODE=0
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --fast|--integration|--snapshots|--pre-merge)
@@ -54,6 +63,10 @@ while [ "$#" -gt 0 ]; do
         exit 2
       fi
       MODE="$requested_mode"
+      shift
+      ;;
+    --record)
+      RECORD_SNAPSHOTS_MODE=1
       shift
       ;;
     --jobs|--xcode-jobs)
@@ -356,7 +369,48 @@ else
     run_phase "integration" "FitnessIntegration" "$IOS_DESTINATION" NO "${integration_targets[@]}" || result=1
   fi
   if [ "${#snapshot_targets[@]}" -gt 0 ]; then
-    run_phase "snapshots" "FitnessSnapshots" "$IOS_DESTINATION" NO "${snapshot_targets[@]}" || result=1
+    snapshot_plan="FitnessSnapshots"
+    if [ "$RECORD_SNAPSHOTS_MODE" -eq 1 ]; then
+      snapshot_plan="FitnessSnapshotsRecord"
+      baselines_before=$(git status --porcelain -- '*__Snapshots__*' 2>/dev/null || true)
+    fi
+    snapshot_status=0
+    run_phase "snapshots" "$snapshot_plan" "$IOS_DESTINATION" NO "${snapshot_targets[@]}" || snapshot_status=1
+    if [ "$RECORD_SNAPSHOTS_MODE" -eq 0 ]; then
+      [ "$snapshot_status" -eq 0 ] || result=1
+    else
+      # In record mode the library reports a failure by design ("record mode is
+      # on"), so the exit status cannot tell a successful recording from a run
+      # that never started -- a missing test plan also exits 1. The result
+      # bundle is no help either: xcodebuild writes one even when it aborts
+      # before running anything. The executed test count is the honest signal.
+      baselines_after=$(git status --porcelain -- '*__Snapshots__*' 2>/dev/null || true)
+      recorded_tests=0
+      if [ -f "$RESULT_DIRECTORY/snapshots.xcresult/Info.plist" ] &&
+         python3 "$REPO_ROOT/scripts/summarize-xcresult.py" \
+           "$RESULT_DIRECTORY/snapshots.xcresult" 2>/dev/null |
+           grep -qE '^Logical total: [1-9]'; then
+        recorded_tests=1
+      fi
+      echo
+      if [ "$recorded_tests" -eq 0 ]; then
+        echo "ERROR: the recording run never executed any test, so nothing was recorded."
+        echo "       Check the xcodebuild output above -- a missing test plan or a build"
+        echo "       failure looks like an ordinary snapshot failure otherwise."
+        result=1
+      else
+        if [ "$baselines_before" = "$baselines_after" ]; then
+          echo "RECORDED: the run executed and no baseline changed -- they were already current."
+        else
+          echo "RECORDED: the following baselines changed. Inspect every one before validating --"
+          echo "a baseline that moved without an intended visual change is a regression."
+          printf '%s\n' "$baselines_after" | sed 's/^/  /'
+          echo "  Compare with: git diff -- '*__Snapshots__*'"
+        fi
+        echo "  A recording run proves nothing and is not test evidence; validate on the"
+        echo "  settled contents afterwards."
+      fi
+    fi
   fi
 fi
 

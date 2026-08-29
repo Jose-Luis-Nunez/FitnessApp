@@ -49,6 +49,13 @@ legacy snapshot.
 
 #### H.3 — When to re-record a retained baseline
 
+Snapshot tests are not a development test. Ten edits in a row do not need ten
+snapshot runs, and re-running them after each edit only reproduces the same
+known failure at the price of a serialized simulator phase. Keep working, then
+re-record once at the start of the commit flow -- `/validate` step 3 -- so the
+candidate settles before any stamp binds to it.
+
+
 First re-run the Selection Gate. Re-record only when the snapshot remains worth
 maintaining and the visual change is **intentional**:
 

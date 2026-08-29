@@ -19,6 +19,8 @@
          </TestPlanReference>
          <TestPlanReference reference="container:TestPlans/FitnessPreMerge.xctestplan">
          </TestPlanReference>
+         <TestPlanReference reference="container:TestPlans/FitnessSnapshotsRecord.xctestplan">
+         </TestPlanReference>
       </TestPlans>
    </TestAction>
    <LaunchAction
