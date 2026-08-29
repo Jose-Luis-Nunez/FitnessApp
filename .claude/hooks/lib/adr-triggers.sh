@@ -48,9 +48,13 @@ detect_adr_triggers() {
   fi
 
   # Trigger 5 — new Package.swift created (not modified)
-  # Only count files that are newly added with a 'name:' line in the diff.
-  if echo "$file_list" | grep -qE '^Packages(/[^/]+)?/Package\.swift$' \
-     && echo "$diff_text" | grep -qE '^\+.*name:[[:space:]]*"'; then
+  # The old form asked whether Package.swift was touched at all and whether the
+  # diff added any 'name:' line. Adding a test target to the existing manifest
+  # satisfies both, so it demanded an ADR for something that created no package
+  # -- measured 2026-08-29. A created file is the one thing the diff states
+  # outright: its header pairs `--- /dev/null` with the new path.
+  if printf '%s\n' "$diff_text" | grep -A1 '^--- /dev/null$' |
+       grep -qE '^\+\+\+ b/Packages(/[^/]+)?/Package\.swift$'; then
     ADR_TRIGGERS+=("new-package")
   fi
 

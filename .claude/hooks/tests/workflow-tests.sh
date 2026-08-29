@@ -596,6 +596,8 @@ expect_success "validate settles snapshot baselines before classifying" \
   grep -q 'Settle snapshot baselines first' "$REPO_ROOT/.claude/commands/validate.md"
 expect_success "snapshots are not a per-change development test" \
   grep -q 'Snapshot tests are not a development test' "$REPO_ROOT/.claude/skills/reviewing-test-quality/references/snapshots.md"
+expect_success "a known redesign skips the comparison run" \
+  grep -q 'Never run the comparison first just to watch it' "$REPO_ROOT/.claude/skills/reviewing-test-quality/references/snapshots.md"
 
 # The recording plan must hardcode the value: a test plan does not expand build
 # settings in its own entries, so "$(RECORD_SNAPSHOTS)" reached the runner as a
@@ -628,6 +630,28 @@ for ui_ref in identifiers dsl authoring fixtures-navigation diagnosing review-ch
 done
 expect_success "no skill still points at a section that became a file" \
   bash -c '! grep -rqE "\*\*(Review Checklist|Diagnosing a Failing Selector)\*\* (in|section)" "'"$REPO_ROOT"'/.claude/skills"'
+
+# ADR trigger 5 distinguishes a created manifest from an edited one. The old
+# form fired on any Package.swift edit that added a `name:` line, so adding a
+# test target demanded an ADR for a package that never existed.
+adr_lib="$REPO_ROOT/.claude/hooks/lib/adr-triggers.sh"
+created_diff='diff --git a/Packages/NewThing/Package.swift b/Packages/NewThing/Package.swift
+new file mode 100644
+--- /dev/null
++++ b/Packages/NewThing/Package.swift
++    name: "NewThing",'
+modified_diff='diff --git a/Packages/Package.swift b/Packages/Package.swift
+--- a/Packages/Package.swift
++++ b/Packages/Package.swift
++            name: "FitnessExerciseSnapshotTests",'
+
+expect_equal "new-package" \
+  "$(bash -c 'source "$1"; detect_adr_triggers "$2" "Packages/NewThing/Package.swift"; printf "%s" "${ADR_TRIGGERS[*]}"' _ "$adr_lib" "$created_diff")" \
+  "a created Package.swift still requires an ADR"
+
+expect_equal "" \
+  "$(bash -c 'source "$1"; detect_adr_triggers "$2" "Packages/Package.swift"; printf "%s" "${ADR_TRIGGERS[*]}"' _ "$adr_lib" "$modified_diff")" \
+  "adding a target to the existing manifest does not require an ADR"
 
 # Test scope follows the dependency graph, not just the changed paths. Without
 # this a changed public signature selected only its own package while consuming

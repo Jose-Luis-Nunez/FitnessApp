@@ -58,6 +58,21 @@ adding protection, which is exactly the H.2 verdict for a composition under
 active development. Before adding a sixth, name the visual contract that the
 lower layers cannot hold.
 
+#### Two modes, and picking the wrong one costs a simulator phase
+
+**Verifying** -- you changed logic and expect the appearance to hold. Run the
+comparison; a red snapshot is news.
+
+**Redesigning** -- you deliberately changed the appearance. The comparison has
+nothing to tell you: it will fail, you already know why, and it costs a
+serialized simulator phase to hear it. Go straight to `--record`, inspect what
+it lists, then validate once. Never run the comparison first just to watch it
+go red.
+
+The two are told apart by intent, not by output, which is why nothing can pick
+for you. When unsure, verify -- a surprising red is worth one phase, and
+recording over an unintended change is a buried regression.
+
 Snapshot tests are not a development test. Ten edits in a row do not need ten
 snapshot runs, and re-running them after each edit only reproduces the same
 known failure at the price of a serialized simulator phase. Keep working, then
