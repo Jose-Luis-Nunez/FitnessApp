@@ -22,22 +22,6 @@
       "parallelizable": false,
       "target": {
         "containerPath": "container:Packages",
-        "identifier": "FitnessUISnapshotTests",
-        "name": "FitnessUISnapshotTests"
-      }
-    },
-    {
-      "parallelizable": false,
-      "target": {
-        "containerPath": "container:Packages",
-        "identifier": "FitnessAnalyticsSnapshotTests",
-        "name": "FitnessAnalyticsSnapshotTests"
-      }
-    },
-    {
-      "parallelizable": false,
-      "target": {
-        "containerPath": "container:Packages",
         "identifier": "FitnessTrainingSnapshotTests",
         "name": "FitnessTrainingSnapshotTests"
       }

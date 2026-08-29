@@ -49,6 +49,15 @@ legacy snapshot.
 
 #### H.3 — When to re-record a retained baseline
 
+The retained set is deliberately small: **five baselines** covering the idle
+card, the inactive card, and the training sheet. Decided 2026-08-29 after
+measuring that four IdleCard images alone drove 27% of 230 re-record events.
+Feature screens are not in it -- `MuscleCategorySelectionView` is covered by 14
+ViewModel tests and three UI-test files, so a snapshot would add churn without
+adding protection, which is exactly the H.2 verdict for a composition under
+active development. Before adding a sixth, name the visual contract that the
+lower layers cannot hold.
+
 Snapshot tests are not a development test. Ten edits in a row do not need ten
 snapshot runs, and re-running them after each edit only reproduces the same
 known failure at the price of a serialized simulator phase. Keep working, then

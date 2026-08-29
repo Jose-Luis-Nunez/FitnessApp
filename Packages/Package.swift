@@ -211,20 +211,9 @@ let package = Package(
         .testTarget(
             name: "FitnessUITests",
             dependencies: ["FitnessUI", "FitnessTestSupport"],
-            path: "FitnessUI/Tests/FitnessUITests",
-            exclude: ["SnapshotTests.swift", "__Snapshots__"]
+            path: "FitnessUI/Tests/FitnessUITests"
         ),
-        .testTarget(
-            name: "FitnessUISnapshotTests",
-            dependencies: [
-                "FitnessUI",
-                "FitnessTestSupport",
-                .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
-            ],
-            path: "FitnessUI/Tests/FitnessUITests",
-            sources: ["SnapshotTests.swift"]
-        ),
-        .testTarget(
+.testTarget(
             name: "FitnessAnalyticsTests",
             dependencies: [
                 "FitnessAnalytics",
@@ -233,12 +222,7 @@ let package = Package(
                 .product(name: "Factory", package: "Factory"),
             ],
             path: "FitnessAnalytics/Tests/FitnessAnalyticsTests",
-            exclude: [
-                "AnalyticsEntryFormSnapshotTests.swift",
-                "PerformanceLoadingTests.swift",
-                "WorkoutAnalyticsEntrySnapshotTests.swift",
-                "__Snapshots__",
-            ]
+            exclude: ["PerformanceLoadingTests.swift"]
         ),
         .testTarget(
             name: "FitnessAnalyticsIntegrationTests",
@@ -251,22 +235,7 @@ let package = Package(
             path: "FitnessAnalytics/Tests/FitnessAnalyticsTests",
             sources: ["PerformanceLoadingTests.swift"]
         ),
-        .testTarget(
-            name: "FitnessAnalyticsSnapshotTests",
-            dependencies: [
-                "FitnessAnalytics",
-                "FitnessCore",
-                "FitnessTestSupport",
-                .product(name: "Factory", package: "Factory"),
-                .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
-            ],
-            path: "FitnessAnalytics/Tests/FitnessAnalyticsTests",
-            sources: [
-                "AnalyticsEntryFormSnapshotTests.swift",
-                "WorkoutAnalyticsEntrySnapshotTests.swift",
-            ]
-        ),
-        .testTarget(
+.testTarget(
             name: "FitnessTrainingTests",
             dependencies: [
                 "FitnessTraining",
@@ -280,7 +249,6 @@ let package = Package(
             path: "FitnessTraining/Tests/FitnessTrainingTests",
             exclude: [
                 "BilateralTrainingSnapshotTests.swift",
-                "BottomActionBarViewSnapshotTests.swift",
                 "__Snapshots__",
             ]
         ),
@@ -296,10 +264,7 @@ let package = Package(
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
             ],
             path: "FitnessTraining/Tests/FitnessTrainingTests",
-            sources: [
-                "BilateralTrainingSnapshotTests.swift",
-                "BottomActionBarViewSnapshotTests.swift",
-            ]
+            sources: ["BilateralTrainingSnapshotTests.swift"]
         ),
         .testTarget(
             name: "FitnessExerciseTests",
@@ -318,7 +283,7 @@ let package = Package(
                 "WorkoutScopedExerciseQueryViewTests.swift",
             ]
         ),
-        .testTarget(
+.testTarget(
             name: "FitnessExerciseIntegrationTests",
             dependencies: [
                 "FitnessExercise",

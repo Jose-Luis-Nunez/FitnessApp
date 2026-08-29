@@ -207,8 +207,6 @@ for package in "${packages[@]}"; do
 
   if [ "$MODE" = "affected" ] || [ "$MODE" = "snapshots" ]; then
     case "$package" in
-      FitnessUI) add_unique snapshot_targets FitnessUISnapshotTests ;;
-      FitnessAnalytics) add_unique snapshot_targets FitnessAnalyticsSnapshotTests ;;
       FitnessTraining) add_unique snapshot_targets FitnessTrainingSnapshotTests ;;
       FitnessPersistenceUI) add_unique snapshot_targets FitnessPersistenceUISnapshotTests ;;
     esac
@@ -356,8 +354,7 @@ if [ "$MODE" = "pre-merge" ]; then
     FitnessTrainingTests FitnessExerciseTests FitnessScheduleTests
     FitnessProfileTests FitnessStorageTests FitnessStorageMigrationTests FitnessWorkoutsTests
     FitnessFriendsTests FitnessAnalyticsIntegrationTests FitnessExerciseIntegrationTests
-    FitnessPersistenceUIIntegrationTests FitnessUISnapshotTests
-    FitnessAnalyticsSnapshotTests FitnessTrainingSnapshotTests
+    FitnessPersistenceUIIntegrationTests FitnessTrainingSnapshotTests
     FitnessPersistenceUISnapshotTests
   )
   run_phase "pre-merge" "FitnessPreMerge" "$IOS_DESTINATION" NO "${premerge_targets[@]}" || result=1

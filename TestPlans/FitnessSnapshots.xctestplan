@@ -1,21 +1,33 @@
 {
-  "configurations" : [
+  "configurations": [
     {
-      "id" : "9EFB52AA-2A6B-4C30-8CE5-5E27F613A103",
-      "name" : "Pinned iOS Snapshots",
-      "options" : {
-        "codeCoverage" : false
+      "id": "9EFB52AA-2A6B-4C30-8CE5-5E27F613A103",
+      "name": "Pinned iOS Snapshots",
+      "options": {
+        "codeCoverage": false
       }
     }
   ],
-  "defaultOptions" : {
-    "testTimeoutsEnabled" : true
+  "defaultOptions": {
+    "testTimeoutsEnabled": true
   },
-  "testTargets" : [
-    { "parallelizable" : false, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessUISnapshotTests", "name" : "FitnessUISnapshotTests" } },
-    { "parallelizable" : false, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessAnalyticsSnapshotTests", "name" : "FitnessAnalyticsSnapshotTests" } },
-    { "parallelizable" : false, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessTrainingSnapshotTests", "name" : "FitnessTrainingSnapshotTests" } },
-    { "parallelizable" : false, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessPersistenceUISnapshotTests", "name" : "FitnessPersistenceUISnapshotTests" } }
+  "testTargets": [
+    {
+      "parallelizable": false,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessTrainingSnapshotTests",
+        "name": "FitnessTrainingSnapshotTests"
+      }
+    },
+    {
+      "parallelizable": false,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessPersistenceUISnapshotTests",
+        "name": "FitnessPersistenceUISnapshotTests"
+      }
+    }
   ],
-  "version" : 1
+  "version": 1
 }

@@ -180,8 +180,8 @@ struct BilateralTrainingUIKitContractTests {
 @Suite("Bilateral training session — Snapshots", .tags(.snapshot), .serialized)
 struct BilateralTrainingSessionSnapshotTests {
     @Test(
-        "Standard training-sheet rail stays aligned at supported widths",
-        arguments: [CGFloat(320), CGFloat(430)]
+        "Standard training-sheet rail stays aligned at the compact width",
+        arguments: [CGFloat(320)]
     )
     func standardTrainingSheetSessionSnapshot(width: CGFloat) throws {
         let standard = FitnessTestSupport.makeExercise(
@@ -200,8 +200,8 @@ struct BilateralTrainingSessionSnapshotTests {
     }
 
     @Test(
-        "Bilateral training-sheet rail stays aligned at supported widths",
-        arguments: [CGFloat(320), CGFloat(430)]
+        "Bilateral training-sheet rail stays aligned at the compact width",
+        arguments: [CGFloat(320)]
     )
     func bilateralTrainingSheetSessionSnapshot(width: CGFloat) throws {
         try assertTrainingSessionSnapshot(
@@ -336,57 +336,5 @@ private func assertSetCardSnapshot(
         testName: "\(function)",
         line: UInt(sourceLocation.line)
     )
-}
-
-@Suite("Bilateral training card — Snapshots", .tags(.snapshot), .serialized)
-@MainActor
-struct BilateralTrainingCardSnapshotTests {
-    @Test(
-        "Empty reps remain readable at compact, regular, and large widths",
-        arguments: [CGFloat(320)]
-    )
-    func empty(width: CGFloat) {
-        assertSetCardSnapshot(width: width, filled: false)
-    }
-
-    @Test(
-        "Filled reps remain readable at compact, regular, and large widths",
-        arguments: [CGFloat(320), CGFloat(430)]
-    )
-    func filled(width: CGFloat) {
-        assertSetCardSnapshot(width: width, filled: true)
-    }
-
-    @Test(
-        "Standard KG and reps rhythm stays unchanged",
-        arguments: [CGFloat(320)]
-    )
-    func standardFilled(width: CGFloat) {
-        assertSetCardSnapshot(
-            width: width,
-            filled: true,
-            executionMode: .standard
-        )
-    }
-
-    @Test("Left set number stays highlighted while Right is active")
-    func rightStepActive() {
-        assertSetCardSnapshot(
-            width: 393,
-            filled: false,
-            rightStepActive: true
-        )
-    }
-
-    @Test("Longest formatted weight and maximum reps stay inside the compact pair row")
-    func compactBoundaryValues() {
-        assertSetCardSnapshot(
-            width: 320,
-            filled: true,
-            weight: 299.5,
-            reps: 50,
-            snapshotName: "boundary-320"
-        )
-    }
 }
 #endif

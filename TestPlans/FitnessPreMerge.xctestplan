@@ -1,36 +1,153 @@
 {
-  "configurations" : [
+  "configurations": [
     {
-      "id" : "9EFB52AA-2A6B-4C30-8CE5-5E27F613A104",
-      "name" : "Pinned iOS Pre-Merge",
-      "options" : {
-        "codeCoverage" : false
+      "id": "9EFB52AA-2A6B-4C30-8CE5-5E27F613A104",
+      "name": "Pinned iOS Pre-Merge",
+      "options": {
+        "codeCoverage": false
       }
     }
   ],
-  "defaultOptions" : {
-    "testTimeoutsEnabled" : true
+  "defaultOptions": {
+    "testTimeoutsEnabled": true
   },
-  "testTargets" : [
-    { "parallelizable" : true, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessResourcesTests", "name" : "FitnessResourcesTests" } },
-    { "parallelizable" : true, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessCoreTests", "name" : "FitnessCoreTests" } },
-    { "parallelizable" : true, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessUITests", "name" : "FitnessUITests" } },
-    { "parallelizable" : true, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessAnalyticsTests", "name" : "FitnessAnalyticsTests" } },
-    { "parallelizable" : true, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessTrainingTests", "name" : "FitnessTrainingTests" } },
-    { "parallelizable" : true, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessExerciseTests", "name" : "FitnessExerciseTests" } },
-    { "parallelizable" : true, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessScheduleTests", "name" : "FitnessScheduleTests" } },
-    { "parallelizable" : true, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessProfileTests", "name" : "FitnessProfileTests" } },
-    { "parallelizable" : true, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessWorkoutsTests", "name" : "FitnessWorkoutsTests" } },
-    { "parallelizable" : true, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessFriendsTests", "name" : "FitnessFriendsTests" } },
-    { "parallelizable" : true, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessStorageTests", "name" : "FitnessStorageTests" } },
-    { "parallelizable" : false, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessStorageMigrationTests", "name" : "FitnessStorageMigrationTests" } },
-    { "parallelizable" : false, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessAnalyticsIntegrationTests", "name" : "FitnessAnalyticsIntegrationTests" } },
-    { "parallelizable" : false, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessExerciseIntegrationTests", "name" : "FitnessExerciseIntegrationTests" } },
-    { "parallelizable" : false, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessPersistenceUIIntegrationTests", "name" : "FitnessPersistenceUIIntegrationTests" } },
-    { "parallelizable" : false, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessUISnapshotTests", "name" : "FitnessUISnapshotTests" } },
-    { "parallelizable" : false, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessAnalyticsSnapshotTests", "name" : "FitnessAnalyticsSnapshotTests" } },
-    { "parallelizable" : false, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessTrainingSnapshotTests", "name" : "FitnessTrainingSnapshotTests" } },
-    { "parallelizable" : false, "target" : { "containerPath" : "container:Packages", "identifier" : "FitnessPersistenceUISnapshotTests", "name" : "FitnessPersistenceUISnapshotTests" } }
+  "testTargets": [
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessResourcesTests",
+        "name": "FitnessResourcesTests"
+      }
+    },
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessCoreTests",
+        "name": "FitnessCoreTests"
+      }
+    },
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessUITests",
+        "name": "FitnessUITests"
+      }
+    },
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessAnalyticsTests",
+        "name": "FitnessAnalyticsTests"
+      }
+    },
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessTrainingTests",
+        "name": "FitnessTrainingTests"
+      }
+    },
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessExerciseTests",
+        "name": "FitnessExerciseTests"
+      }
+    },
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessScheduleTests",
+        "name": "FitnessScheduleTests"
+      }
+    },
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessProfileTests",
+        "name": "FitnessProfileTests"
+      }
+    },
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessWorkoutsTests",
+        "name": "FitnessWorkoutsTests"
+      }
+    },
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessFriendsTests",
+        "name": "FitnessFriendsTests"
+      }
+    },
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessStorageTests",
+        "name": "FitnessStorageTests"
+      }
+    },
+    {
+      "parallelizable": false,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessStorageMigrationTests",
+        "name": "FitnessStorageMigrationTests"
+      }
+    },
+    {
+      "parallelizable": false,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessAnalyticsIntegrationTests",
+        "name": "FitnessAnalyticsIntegrationTests"
+      }
+    },
+    {
+      "parallelizable": false,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessExerciseIntegrationTests",
+        "name": "FitnessExerciseIntegrationTests"
+      }
+    },
+    {
+      "parallelizable": false,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessPersistenceUIIntegrationTests",
+        "name": "FitnessPersistenceUIIntegrationTests"
+      }
+    },
+    {
+      "parallelizable": false,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessTrainingSnapshotTests",
+        "name": "FitnessTrainingSnapshotTests"
+      }
+    },
+    {
+      "parallelizable": false,
+      "target": {
+        "containerPath": "container:Packages",
+        "identifier": "FitnessPersistenceUISnapshotTests",
+        "name": "FitnessPersistenceUISnapshotTests"
+      }
+    }
   ],
-  "version" : 1
+  "version": 1
 }
