@@ -32,6 +32,25 @@ change_diff() {
   done <<< "$(git ls-files --others --exclude-standard 2>/dev/null || true)"
 }
 
+# Green eligibility is decided by what a file declares, not by what it is named.
+# The name-based allowlist below missed 45 of 56 FitnessUI sources -- SheetGrabber,
+# IdlePlayButton, SetTilesRow and friends are pure presentation but do not end in
+# `View.swift`, so every cosmetic tweak to them paid for two subagents.
+change_file_is_presentation() {
+  local mode="$1"
+  local path="$2"
+  local body=""
+
+  if [ "$mode" = "staged" ]; then
+    body=$(git show ":$path" 2>/dev/null || true)
+  elif [ -f "$path" ]; then
+    body=$(cat "$path")
+  fi
+
+  printf '%s\n' "$body" |
+    grep -qE ': *(View|ViewModifier|ButtonStyle|LabelStyle|TextFieldStyle|ToggleStyle|ShapeStyle|Shape)\b'
+}
+
 change_risk_rank() {
   case "$1" in
     none) echo 0 ;;
@@ -94,7 +113,12 @@ classify_change_risk() {
         *View.swift|*/FitnessUI/Sources/FitnessUI/AppStyle.swift|*Style.swift)
           ;;
         *)
-          green_paths=false
+          # Widening only: a path that used to qualify still qualifies. The
+          # signal check on added lines below is unchanged and still forces
+          # yellow for state, concurrency, navigation, or sheet presentation.
+          if ! change_file_is_presentation "$mode" "$path"; then
+            green_paths=false
+          fi
           ;;
       esac
     done <<< "$production_swift"

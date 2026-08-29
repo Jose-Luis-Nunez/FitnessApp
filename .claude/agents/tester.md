@@ -25,8 +25,12 @@ regression risk.
    the result. Training/Exercise is blocker; Workouts/Analytics are high;
    Profile/Feedback are low. Mixed changes use the highest tier; technical risk
    may raise but never lower it.
-2. Determine affected packages and the smallest sufficient test set from the
-   changed paths and `.claude/references/test-selection-policy.md`.
+2. Determine affected packages with
+   `bash .claude/hooks/lib/package-dependents.sh scope worktree`, then pick the
+   smallest sufficient test set from that list and
+   `.claude/references/test-selection-policy.md`. The helper adds consuming
+   packages when the candidate changes a `public` or `open` declaration —
+   changed paths alone miss them, and their call sites then ship untested.
 3. Check whether `test-execution.manifest.tsv` matches the current contents and
    the stamp documents every required package/command.
 4. Use **verify** when matching evidence exists: inspect command, exit code,

@@ -514,6 +514,110 @@ if [ "$largest_routed_reference" -gt 2000 ]; then
 fi
 pass_count=$((pass_count + 1))
 
+# Every skill orchestrator stays routable. `deep-research` is the one exemption:
+# it is explicitly invoked, rare, and self-contained, so its size is paid only
+# when the user asks for it by name. Any other skill crossing 8000 bytes should
+# route its bulk into references instead, the way reviewing-code-changes and
+# reviewing-test-quality do.
+oversized_skill=""
+oversized_bytes=0
+while IFS= read -r skill; do
+  case "$skill" in
+    */deep-research/SKILL.md) continue ;;
+  esac
+  skill_bytes=$(wc -c < "$skill" | tr -d ' ')
+  if [ "$skill_bytes" -gt 8000 ] && [ "$skill_bytes" -gt "$oversized_bytes" ]; then
+    oversized_skill="$skill"
+    oversized_bytes="$skill_bytes"
+  fi
+done <<EOF
+$(find "$REPO_ROOT/.claude/skills" -name 'SKILL.md' -type f)
+EOF
+
+if [ -n "$oversized_skill" ]; then
+  echo "FAIL: skill orchestrator budget exceeded: ${oversized_skill} at ${oversized_bytes} bytes" >&2
+  exit 1
+fi
+pass_count=$((pass_count + 1))
+
+largest_agent_role=$(find "$REPO_ROOT/.claude/agents" -name '*.md' -type f -exec wc -c {} + |
+  awk '$2 != "total" {if ($1 > max) max=$1} END {print max+0}')
+if [ "$largest_agent_role" -gt 6000 ]; then
+  echo "FAIL: agent role budget exceeded: ${largest_agent_role} bytes" >&2
+  exit 1
+fi
+pass_count=$((pass_count + 1))
+
+expect_success "the test-quality skill routes instead of inlining every dimension" \
+  grep -q 'Do not read all five' "$REPO_ROOT/.claude/skills/reviewing-test-quality/SKILL.md"
+
+# Green eligibility follows the declared type, not the file name. Without this a
+# padding tweak to any of the 45 FitnessUI sources that do not end in
+# `View.swift` classified as yellow and paid for two subagents.
+green_repo=$(new_repo green-presentation)
+mkdir -p "$green_repo/Packages/FitnessUI/Sources/FitnessUI"
+printf 'import SwiftUI\npublic struct SheetGrabber: View {\n  public var body: some View { Capsule().padding(.horizontal, 12) }\n}\n' \
+  > "$green_repo/Packages/FitnessUI/Sources/FitnessUI/SheetGrabber.swift"
+expect_equal "green" \
+  "$(cd "$green_repo" && bash .claude/hooks/lib/change-risk.sh classify worktree)" \
+  "a presentation type not named *View.swift can still be green"
+
+printf 'import Foundation\npublic enum TimeFormatter {\n  public static func format(_ s: Int) -> String { "\\(s)" }\n}\n' \
+  > "$green_repo/Packages/FitnessUI/Sources/FitnessUI/TimeFormatter.swift"
+expect_equal "yellow" \
+  "$(cd "$green_repo" && bash .claude/hooks/lib/change-risk.sh classify worktree)" \
+  "a non-View helper in the same package stays yellow"
+
+state_green_repo=$(new_repo green-state-signal)
+mkdir -p "$state_green_repo/Packages/FitnessUI/Sources/FitnessUI"
+printf 'import SwiftUI\npublic struct SheetGrabber: View {\n  @State private var shown = false\n  public var body: some View { Capsule() }\n}\n' \
+  > "$state_green_repo/Packages/FitnessUI/Sources/FitnessUI/SheetGrabber.swift"
+expect_equal "yellow" \
+  "$(cd "$state_green_repo" && bash .claude/hooks/lib/change-risk.sh classify worktree)" \
+  "the state signal still overrides presentation shape"
+
+# Measured, not assumed: RECORD_SNAPSHOTS never reaches the test process through
+# the script, so the docs must not promise it.
+expect_success "the snapshot docs do not promise the broken env-var flow" \
+  bash -c '! grep -q "^RECORD_SNAPSHOTS=1 scripts/test-affected-packages.sh" "'"$REPO_ROOT"'/.claude/skills/reviewing-test-quality/references/snapshots.md"'
+expect_success "the snapshot docs name the flow that works" \
+  grep -q 'Set `record: true` on the failing assertSnapshot' "$REPO_ROOT/.claude/skills/reviewing-test-quality/references/snapshots.md"
+
+# Both scripts and the rule must name one toolchain. buildApp.sh pinned a
+# non-existent Xcode.app, so the skill died before it reached the app.
+expect_success "buildApp pins the same toolchain as the test runner" \
+  grep -q 'Xcode-beta.app/Contents/Developer' "$REPO_ROOT/scripts/buildApp.sh"
+expect_success "buildApp fails loudly on a missing toolchain" \
+  grep -q 'DEVELOPER_DIR does not exist' "$REPO_ROOT/scripts/buildApp.sh"
+
+# Test scope follows the dependency graph, not just the changed paths. Without
+# this a changed public signature selected only its own package while consuming
+# packages shipped untested.
+dep_repo=$(new_repo package-scope)
+mkdir -p "$dep_repo/Packages/FitnessTraining/Sources/FitnessTraining"
+cp "$REPO_ROOT/Packages/Package.swift" "$dep_repo/Packages/Package.swift"
+cp "$REPO_ROOT/.claude/hooks/lib/package-dependents.sh" "$dep_repo/.claude/hooks/lib/"
+printf 'public struct Coordinator {\n  public func pauseAll() {}\n}\n' \
+  > "$dep_repo/Packages/FitnessTraining/Sources/FitnessTraining/Coordinator.swift"
+expect_equal "yes" \
+  "$(cd "$dep_repo" && bash .claude/hooks/lib/package-dependents.sh public-surface worktree)" \
+  "an added public declaration is recognised as a surface change"
+expect_success "a public change pulls consuming packages into scope" \
+  bash -c "cd '$dep_repo' && bash .claude/hooks/lib/package-dependents.sh scope worktree | grep -qx FitnessExercise"
+
+private_repo=$(new_repo package-scope-private)
+mkdir -p "$private_repo/Packages/FitnessTraining/Sources/FitnessTraining"
+cp "$REPO_ROOT/Packages/Package.swift" "$private_repo/Packages/Package.swift"
+cp "$REPO_ROOT/.claude/hooks/lib/package-dependents.sh" "$private_repo/.claude/hooks/lib/"
+printf 'struct Coordinator {\n  private func helper() {}\n}\n' \
+  > "$private_repo/Packages/FitnessTraining/Sources/FitnessTraining/Coordinator.swift"
+expect_equal "FitnessTraining" \
+  "$(cd "$private_repo" && bash .claude/hooks/lib/package-dependents.sh scope worktree | tr '\n' ' ' | sed 's/ *$//')" \
+  "a private change does not widen scope beyond its own package"
+
+expect_success "the tester selects scope from the dependency helper" \
+  grep -q 'package-dependents.sh scope' "$REPO_ROOT/.claude/agents/tester.md"
+
 # `--result-bundle` guards its argument. These run without Xcode because a bad
 # argument exits during parsing, long before any destination or toolchain is
 # touched — the rest of the script stays outside this hermetic suite by design.

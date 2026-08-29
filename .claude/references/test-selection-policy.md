@@ -77,3 +77,11 @@ composition that consumes it.
   conventions.
 - In the final handoff, state which test layer was selected and why; if no new
   test is justified, state the risk-based reason.
+
+## Package Scope
+
+Selection starts from `package-dependents.sh scope`, not from the changed paths
+alone. A changed `public`/`open` declaration pulls in the packages that consume
+it; a private change stays in its own package. Without this a public signature
+change selected only its own package while consumers in other packages went
+untested with every gate green.

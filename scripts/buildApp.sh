@@ -47,7 +47,15 @@ REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
 }
 cd "$REPO_ROOT"
 
-export DEVELOPER_DIR=/Users/jose.nunez/Downloads/Xcode.app/Contents/Developer
+# Same pinned toolchain as test-affected-packages.sh and build-and-test.mdc.
+# This pointed at Xcode.app, which does not exist, so every run died at the
+# first xcodebuild call with a message about the toolchain rather than the app.
+export DEVELOPER_DIR="${DEVELOPER_DIR:-/Users/jose.nunez/Downloads/Xcode-beta.app/Contents/Developer}"
+if [ ! -d "$DEVELOPER_DIR" ]; then
+  echo "ERROR: DEVELOPER_DIR does not exist: $DEVELOPER_DIR" >&2
+  echo "       Set DEVELOPER_DIR to your Xcode's Contents/Developer and re-run." >&2
+  exit 1
+fi
 export PATH="$DEVELOPER_DIR/usr/bin:$PATH"
 
 SCHEME="${SCHEME:-FitnessApp}"
