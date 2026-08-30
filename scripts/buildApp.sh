@@ -55,6 +55,15 @@ export DEVELOPER_DIR="${DEVELOPER_DIR:-/Users/jose.nunez/Downloads/Xcode-beta.ap
 # already happened, so a relative invocation path (`../scripts/buildApp.sh`)
 # would resolve against the wrong directory and abort under `set -e`.
 SCRIPT_DIR="$REPO_ROOT/scripts"
+if [ ! -f "$SCRIPT_DIR/lib/derived-data.sh" ]; then
+  # Happens when the script is started with a working directory inside a
+  # different repository: `git rev-parse` then answers for *that* repo. Without
+  # this the run dies on a bare "No such file or directory".
+  echo "ERROR: $SCRIPT_DIR/lib/derived-data.sh not found." >&2
+  echo "       cwd resolved to the repository '$REPO_ROOT', which is not FitnessApp." >&2
+  echo "       Run this script from inside the FitnessApp checkout." >&2
+  exit 1
+fi
 # shellcheck source=lib/derived-data.sh
 . "$SCRIPT_DIR/lib/derived-data.sh"
 if [ ! -d "$DEVELOPER_DIR" ]; then

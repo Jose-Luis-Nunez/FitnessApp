@@ -248,7 +248,7 @@ Feature-specific behavior belongs to the feature rather than a global extension.
 | App root | Owns state that must survive destination reconstruction, including the Home Overview/List mode, shared overlay state, the router and the model container. |
 | `TrainingCoordinator` | Owns one training session's active exercise, execution progress, timer and feedback draft. It contains no SwiftData models. |
 | `TrainingCoordinatorCache` | Shares the category coordinator between screens, finds the coordinator for a particular exercise, and owns the recency order behind `activeTrainings`. |
-| `UIOverlayState` | Coordinates menus, editing-sheet visibility and exercise activate/deactivate selection across the current app surface. |
+| `UIOverlayState` | Coordinates menus, editing-sheet visibility and exercise activate/deactivate selection across the current app surface, and carries the training mini bar's measured plate clearance from the bar to the bottom-anchored page chrome that has to stay clear of it. |
 | Feature view models | Own transient presentation and form state; persisted truth continues to come from models or service reads. |
 
 `TrainingPresentation` contains only the exercise ID and category. Dismissing the

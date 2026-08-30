@@ -5,13 +5,18 @@ import Factory
 
 /// Shared answer to "is the training mini bar showing, and for which exercise?".
 ///
-/// It lives here rather than next to the view because two unrelated places need
-/// it: the bottom bar renders the mini bar, and page chrome that sits at the same
-/// height (the Overview/List toggle) has to step out of the way of the plate the
-/// mini bar brings with it.
+/// It lives in this package rather than next to the view so the scene rules stay
+/// with the router they depend on, and so they can be exercised without a view.
+///
+/// How much room the bar's plate takes is deliberately *not* answered here.
+/// That distance is published by the bar itself as
+/// `UIOverlayState.trainingMiniBarClearance`, because only the bar can measure a
+/// view it owns. Hand-measured constants for the same distance used to live in
+/// this type and drifted apart from the rendered plate the moment the bar's
+/// spacing changed — with content silently vanishing under an opaque plate as
+/// the only symptom.
 @MainActor
 public enum TrainingMiniBar {
-
     /// The mini bar is a way *back into* training, so it stays hidden while the
     /// training sheet itself is up, and on the scenes that are not part of the
     /// workout drill-down.
