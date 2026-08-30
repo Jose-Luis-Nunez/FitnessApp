@@ -86,6 +86,9 @@ public struct InactiveCardModelView: View {
         analyticsViewModel: AnalyticsViewModel,
         onReset: ((Exercise) -> Void)?,
         isResetEnabled: Bool,
+        // Mirrors `IdleActiveCardModelView`: the expanded set-tile row is only
+        // reachable through a tap, which a snapshot cannot perform.
+        initiallyExpanded: Bool = false,
         imageProvider: @escaping (String) -> Image
     ) {
         self.model = model
@@ -95,6 +98,7 @@ public struct InactiveCardModelView: View {
         self.onReset = onReset
         self.isResetEnabled = isResetEnabled
         self.imageProvider = imageProvider
+        self._isExpanded = State(initialValue: initiallyExpanded)
         self._analyticsRevision = State(
             initialValue: analyticsViewModel.revisionSource(for: model.id)
         )
@@ -137,7 +141,7 @@ public struct InactiveCardModelView: View {
             if isExpanded {
                 VStack(spacing: 0) {
                     Spacer().frame(height: 10)
-                    setTilesRow.frame(height: 60)
+                    setTilesRow.frame(height: ExerciseCardLayout.SetTiles.rowHeight)
                     Spacer().frame(height: 4)
                 }
                 .padding(.horizontal, AppStyle.Padding.card)
@@ -157,7 +161,19 @@ public struct InactiveCardModelView: View {
         // guaranteed alive. The read is affordable inline because
         // `loadRecentEntries` is a bounded, paged fetch rather than a full
         // history read.
-        .onAppear { loadImprovement() }
+        .onAppear {
+            loadImprovement()
+            // Only a card that starts expanded needs its set details fetched
+            // here; the normal path loads them in `toggleExpansion`. Mirrors the
+            // revision handler below, including collapsing again on a failed
+            // read rather than showing an empty details area.
+            //
+            // The success path is covered by the `expandedSetTiles` snapshot;
+            // the collapse rule itself by `LatestSetProgressCardState`'s own
+            // tests. A render-based test of this line could only assert that a
+            // read happened, which is not the rule worth protecting.
+            if isExpanded { isExpanded = loadLatestSetProgress() }
+        }
         .onChange(of: model.id) { loadImprovement() }
         .onChange(of: analyticsRevision.value) {
             loadImprovement()
@@ -220,9 +236,13 @@ private extension InactiveCardModelView {
                     .font(AppStyle.Font.idleWeightValue)
                     .hidden()
 
+                // The column is now a fixed width, so a longer localisation of
+                // "Details" shrinks instead of truncating or widening the column.
                 Text(AppText.commonDetails)
                     .font(AppStyle.Font.metricLabel)
                     .foregroundColor(AppStyle.Color.idleMetricUnit)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .frame(height: improvementColumnHeight)
         }
@@ -232,12 +252,11 @@ private extension InactiveCardModelView {
         // whole card is the tap target. Do not reinstate it without revisiting
         // that — it was removed on purpose, not lost.
         //
-        // Same minimum width the idle card reserves around its play button. The
-        // circles are the same size, but without this the column is only as wide
-        // as the word "Details" — narrower than that tap target — and since both
-        // columns are pinned to the same trailing edge, the checkmark ended up
-        // sitting a few points further right than the play button above it.
-        .frame(minWidth: AppStyle.Layout.minimumTapTargetSize)
+        // Fixed, not a minimum: the reset button below is centred in a column of
+        // exactly this width, and the two only line up if this one cannot grow
+        // with the width of the word "Details". See
+        // `ExerciseCardLayout.TrailingControl`.
+        .frame(width: ExerciseCardLayout.TrailingControl.columnWidth)
         .contentShape(Rectangle())
         .onTapGesture { toggleExpansion() }
         // The tap target is a bare shape, so without this the expand affordance
@@ -333,32 +352,19 @@ private extension InactiveCardModelView {
             + AppStyle.Layout.idleMetricFooterRowHeight
     }
 
-    /// Mirrors `IdleActiveCardModelView.weightValue`: weight plus unit, or
-    /// "sets x reps" for a bodyweight exercise. Muted rather than white — the
-    /// exercise is done, so the number is a record, not the next thing to do.
-    @ViewBuilder
-    var finishedValue: some View {
+    /// "Completed" plus what the exercise was finished with, for VoiceOver only.
+    /// Mirrors how the idle card states the same figures.
+    var completedAccessibilityLabel: Text {
         if model.hasWeight {
-            HStack(alignment: .firstTextBaseline, spacing: 3) {
-                Text(verbatim: WeightFormatter.format(model.weight, locale: locale))
-                    .font(AppStyle.Font.idleWeightValue)
-                    .foregroundColor(theme.subtitleColor)
-
-                Text(verbatim: "kg")
-                    .font(AppStyle.Font.cardMetricUnit)
-                    .foregroundColor(AppStyle.Color.idleMetricUnit)
-            }
-            .fixedSize()
-        } else {
-            (
-                Text(verbatim: "\(model.sets)").font(AppStyle.Font.idleWeightValue)
-                    + Text(verbatim: "x").font(AppStyle.Font.idleRepsSeparator)
-                    + Text(verbatim: "\(model.reps)").font(AppStyle.Font.idleWeightValue)
-            )
-            .foregroundColor(theme.subtitleColor)
-            .lineLimit(1)
-            .fixedSize()
+            return Text(AppText.exerciseCompleted)
+                + Text(verbatim: ", ")
+                + Text(AppText.exerciseNowWeight(
+                    weight: WeightFormatter.format(model.weight, locale: locale)
+                ))
         }
+        return Text(AppText.exerciseCompleted)
+            + Text(verbatim: ", ")
+            + Text(AppText.exerciseNowReps(reps: model.reps))
     }
 
     /// Gap between the gain line and its "now …" line. Tuned against the design
@@ -391,19 +397,27 @@ private extension InactiveCardModelView {
     /// `checkmarkTrailing`, so "Completed" lands on the footer line level with
     /// "Details" opposite it.
     ///
-    /// The value line carries what the exercise was finished with, rendered the
-    /// same way the idle card renders it. It used to be a hidden `+0` holding the
-    /// line open, which kept the card the right height but left a gap exactly
-    /// where every other card shows its number — the card read as padded rather
-    /// than finished. Filling the line keeps the height and removes the gap.
+    /// The value line stays empty on purpose. "Completed" is the whole message
+    /// of this state — nothing improved — and the finishing weight belongs to
+    /// the set tiles below, not to the line that everywhere else carries a gain.
+    /// A hidden stand-in holds the line open so the card keeps the idle card's
+    /// height. Do not fill it with the current weight: that was tried and read
+    /// as a gain that happens to be missing its `+`.
     var completedColumn: some View {
         VStack(alignment: .leading, spacing: improvementLineSpacing) {
-            finishedValue
+            Text(verbatim: "+0")
+                .font(AppStyle.Font.idleWeightValue)
+                .hidden()
 
             Text(AppText.exerciseCompleted)
                 .font(AppStyle.Font.cardMetricUnit)
                 .foregroundColor(AppStyle.Color.idleMetricUnit)
         }
+        // Sighted users reach the finishing weight by expanding the card; a
+        // hidden stand-in is not announced, so without this VoiceOver heard only
+        // "Completed" and lost the number entirely.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(completedAccessibilityLabel)
         // Same frame as `gainColumn`, centred rather than top-aligned: the
         // reserved block is taller than its two lines, and every other column
         // centres inside it. Top-aligning lifted "Completed" 13pt above the
@@ -423,11 +437,19 @@ private extension InactiveCardModelView {
             setProgress: latestSetPresentation.setProgress,
             hasWeight: model.hasWeight,
             chevronColor: theme.subtitleColor.opacity(AppStyle.Opacity.separatorLine),
-            reservedTrailingWidth: isResetEnabled ? ExerciseCardLayout.ResetButton.size : 0,
+            // Gated on the same flag as the accessory itself: reserving the
+            // column unconditionally left 52pt of dead trailing space, and
+            // correspondingly narrower tiles, whenever the reset button is
+            // absent.
+            reservedTrailingWidth: isResetEnabled ? ExerciseCardLayout.TrailingControl.columnWidth : 0,
+            visibleTileCount: AppStyle.Layout.setTileVisibleCount,
             onTap: { isShowingAnalytics = true },
             trailingAccessory: {
                 if isResetEnabled {
-                    ExerciseCardResetButton { onReset?(model.toDomain()) }
+                    ExerciseCardResetButton(image: imageProvider("repeat")) {
+                        onReset?(model.toDomain())
+                    }
+                        .frame(width: ExerciseCardLayout.TrailingControl.columnWidth)
                 }
             }
         )

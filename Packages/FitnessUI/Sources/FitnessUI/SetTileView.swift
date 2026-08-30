@@ -2,6 +2,12 @@ import SwiftUI
 import FitnessCore
 import FitnessResources
 
+/// One completed set: its number, the weight it was moved at, and the reps.
+///
+/// There is deliberately only one treatment. The tile briefly carried a
+/// `compact` / `detail` pair while the idle card and the completed card looked
+/// different; both now render the same row, so the variant was removed rather
+/// than left behind as an unused branch.
 public struct SetTileView: View {
     @Environment(\.appColorTheme) private var appColorTheme
     @Environment(\.locale) private var locale
@@ -21,49 +27,69 @@ public struct SetTileView: View {
         WeightFormatter.format(weight, locale: locale)
     }
 
+    /// Same muted grey as "Details" on the completed card header.
+    private var unitColor: Color { AppStyle.Color.idleMetricUnit }
+
     public var body: some View {
-        VStack(spacing: 2) {
+        VStack(alignment: .leading, spacing: 3) {
             Text(AppText.exerciseSetNumberUppercase(number: setNumber))
                 .font(AppStyle.Font.cardSmallLabel)
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(unitColor)
 
             if hasWeight {
-                HStack(alignment: .firstTextBaseline, spacing: 1) {
+                HStack(alignment: .firstTextBaseline, spacing: 3) {
                     Text(weightText)
-                        .font(AppStyle.Font.cardValueBold)
+                        .font(AppStyle.Font.setTileValue)
+                        .foregroundColor(appColorTheme.accent.light)
                     Text(verbatim: "kg")
-                        .font(AppStyle.Font.chartAxisSmall)
+                        .font(AppStyle.Font.setTileUnit)
+                        .foregroundColor(unitColor)
                 }
-                .foregroundColor(appColorTheme.accent.light)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
+                .frame(height: AppStyle.Layout.setTileValueRowHeight, alignment: .leading)
 
-                Text(AppText.exerciseRepetitionsCount(count: reps))
-                    .font(AppStyle.Font.cardTinyLabel)
-                    .foregroundColor(.white.opacity(0.7))
+                repsLine
             } else {
                 Text(verbatim: "\(reps)")
-                    .font(AppStyle.Font.cardValueBold)
+                    .font(AppStyle.Font.setTileValue)
                     .foregroundColor(appColorTheme.accent.light)
 
                 Text(AppText.exerciseRepsLowercase)
-                    .font(AppStyle.Font.cardTinyLabel)
-                    .foregroundColor(.white.opacity(0.7))
+                    .font(AppStyle.Font.setTileRepsUnit)
+                    .foregroundColor(unitColor)
             }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
-        // Inner fill / stroke mirror the "New Exercise" wheel picker columns
-        // (see `ExerciseWheelPickerRow`); the smaller `.tile` radius keeps the
-        // compact set tile from reading too round at this size.
-        .background(
-            RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile, style: .continuous)
-                .fill(AppStyle.Color.idleCardBackground)
-        )
+        // The row stretches tiles to its own height, so the stack has to claim
+        // that height and centre inside it; at its natural size it hangs from
+        // the top edge.
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .padding(.vertical, 6)
+        .padding(.horizontal, 10)
+        // `strokeBorder`, not `stroke`: a centred stroke puts half its width
+        // outside the shape, where the tile's own clip shape removes it — the
+        // ring then renders at half the width it asks for.
         .overlay(
             RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile, style: .continuous)
-                .stroke(AppStyle.Color.white.opacity(AppStyle.Opacity.subtleStroke), lineWidth: 1.5)
+                .strokeBorder(AppStyle.Color.gray, lineWidth: AppStyle.Layout.setTileRingWidth)
         )
         .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile, style: .continuous))
+    }
+
+    /// Reps footer for a weighted set.
+    ///
+    /// One plural-varied string, not a number plus a fixed noun: this line reads
+    /// as prose ("1 rep" / "12 reps"), and splitting it dropped the plural rule
+    /// so a single-rep set rendered "1 reps". A unit-only plural key is not an
+    /// option — `xcstringstool` derives arity from the format specifiers, so a
+    /// value without one generates an argument-less symbol that can never select
+    /// a plural form.
+    private var repsLine: some View {
+        Text(AppText.exerciseRepetitionsCount(count: reps))
+            .font(AppStyle.Font.setTileReps)
+            .foregroundColor(AppStyle.Color.white)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .frame(height: AppStyle.Layout.setTileRepsRowHeight, alignment: .leading)
     }
 }

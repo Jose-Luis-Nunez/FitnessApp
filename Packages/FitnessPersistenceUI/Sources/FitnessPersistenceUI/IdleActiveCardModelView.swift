@@ -244,7 +244,7 @@ public struct IdleActiveCardModelView: View {
             VStack(alignment: .leading, spacing: 8) {
                 if isLastRunExpanded, !lastRunPresentation.setProgress.isEmpty {
                     lastRunTilesRow
-                        .frame(height: AppStyle.Layout.idleLastRunDetailsHeight)
+                        .frame(height: ExerciseCardLayout.SetTiles.rowHeight)
                         .padding(.horizontal, AppStyle.Padding.card)
                         .padding(.top, AppStyle.Layout.idleLastRunExpandedTopSpacing)
                 }
@@ -569,13 +569,16 @@ private extension IdleActiveCardModelView {
         isExpanded = true
     }
 
-    /// Circular coaching glyph matching the completed card's reset-button size.
+    /// Circular coaching glyph matching the completed card's reset button: same
+    /// 40pt disc, same hairline ring, and the same transparent surface — the
+    /// filled disc and its mint halo would read as a different class of control
+    /// next to the set tiles, which now carry no fill either.
     var coachingTipBadge: some View {
         CardActionCircleButtonVisual(
-            iconSize: ExerciseCardLayout.ResetButton.iconSize,
+            iconSize: ExerciseCardLayout.CoachingTip.iconSize,
             discSize: ExerciseCardLayout.ResetButton.size,
             frameSize: ExerciseCardLayout.ResetButton.size,
-            surface: .filled()
+            surface: .clear
         ) {
             imageProvider("tip_coaching_2")
                 .renderingMode(.template)
@@ -646,23 +649,26 @@ private extension IdleActiveCardModelView {
         }
     }
 
-    /// Last-run per-set breakdown via the shared `SetTilesRow`. The idle card has
-    /// no reset accessory. The idle layout reveals part of the next tile as its
-    /// overflow affordance, so the coaching rail never needs a chevron.
+    /// Last-run per-set breakdown via the shared `SetTilesRow`. The coaching
+    /// button takes the trailing accessory slot the completed card gives its
+    /// reset button, and both reserve the same width — that is what keeps the
+    /// two cards' tiles identically sized.
     var lastRunTilesRow: some View {
-        let showsCoaching = !lastRunPresentation.setProgress.isEmpty
-        return SetTilesRow(
+        SetTilesRow(
             setProgress: lastRunPresentation.setProgress,
             hasWeight: model.hasWeight,
             chevronColor: AppStyle.Color.idleMetricLabel.opacity(AppStyle.Opacity.separatorLine),
-            reservedTrailingRailWidth: showsCoaching ? AppStyle.Layout.minimumTapTargetSize : 0,
-            visibleTileCount: AppStyle.Layout.idleLastRunVisibleTileCount,
-            showsOverflowChevron: false,
+            reservedTrailingWidth: ExerciseCardLayout.TrailingControl.columnWidth,
+            visibleTileCount: AppStyle.Layout.setTileVisibleCount,
             onTap: { analyticsSheetDate = AnalyticsSheetDate(date: Date()) },
-            trailingRailAccessory: {
-                if showsCoaching {
-                    coachingTipButton
-                }
+            trailingAccessory: {
+                // Explicit, not inherited from `minimumTapTargetSize` happening
+                // to equal it: `TrailingControl` documents that anything in this
+                // column claims `columnWidth`, and relying on the coincidence
+                // would let the two cards' tile widths diverge the moment either
+                // constant moves.
+                coachingTipButton
+                    .frame(width: ExerciseCardLayout.TrailingControl.columnWidth)
             }
         )
     }

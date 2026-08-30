@@ -46,6 +46,21 @@ public enum AppStyle {
         public static let profileSurfaceBorderWidth: CGFloat = 1.5
         /// Hairline width of the neutral ring around the idle play button.
         public static let idlePlayRingWidth: CGFloat = 0.5
+        /// Unscaled line heights of a set tile's value and reps rows.
+        ///
+        /// The rows are pinned to these rather than left to size themselves: a
+        /// `Text` shrunk by `minimumScaleFactor` also reports a smaller height,
+        /// which shortened the tile's centred stack and pulled the neighbouring
+        /// lines inward. Adjacent tiles then disagreed about where the set label
+        /// and the reps line sit — visible on any run mixing whole and decimal
+        /// weights. Pinning the height confines scaling to the glyphs.
+        public static let setTileValueRowHeight: CGFloat = 26
+        public static let setTileRepsRowHeight: CGFloat = 16
+
+        /// Ring around a set tile. Deliberately twice `idlePlayRingWidth`: the
+        /// same hairline that gives a 40pt circle a crisp edge dissolves along a
+        /// ~95pt rectangle, leaving the tile without a readable boundary.
+        public static let setTileRingWidth: CGFloat = 1
         /// Blur radius of the soft mint outer glow rendered around the idle
         /// play button. Tuned together with `idlePlayButtonGlowSize` for a
         /// subtle hint that doesn't spill into the surrounding card surface.
@@ -122,13 +137,11 @@ public enum AppStyle {
         public static let analyticsEntryIconWidth: CGFloat = 52
         /// Vertical gap between the idle card's "Last run" trigger and its expanded set details.
         public static let idleLastRunExpandedTopSpacing: CGFloat = 12
-        /// Legacy spacing token retained for source compatibility. Weight/Reps now
-        /// uses the shared metric-column spacing above its "Last run" footer.
-        public static let idleLastRunFooterTopSpacing: CGFloat = 5
-        /// Height reserved for expanded last-run tiles plus the trailing swipe/coaching rail.
-        public static let idleLastRunDetailsHeight: CGFloat = 72
-        /// Fractional tile count fitted into the idle last-run viewport so the next tile peeks in.
-        public static let idleLastRunVisibleTileCount: CGFloat = 3.4
+        /// Fractional tile count fitted into a set-tile viewport so the next tile
+        /// peeks in. Shared by the idle card's "Last run" row and the completed
+        /// card's expanded row: the fraction is what sets the tile width, so the
+        /// two rows only read as the same component while they share it.
+        public static let setTileVisibleCount: CGFloat = 3.4
         /// Minimum interaction surface for tappable controls. Visual glyphs may
         /// remain smaller while their enclosing Button adopts this frame.
         public static let minimumTapTargetSize: CGFloat = 44
@@ -292,9 +305,16 @@ public enum AppStyle {
         public static let cardBoldTitle = SwiftUI.Font.system(size: 20, weight: .bold)
         public static let cardSmallBold = SwiftUI.Font.system(size: 12, weight: .bold)
         public static let cardSmallLabel = SwiftUI.Font.system(size: 10, weight: .semibold)
-        public static let cardTinyLabel = SwiftUI.Font.system(size: 9, weight: .regular)
         public static let cardValueBold = SwiftUI.Font.system(size: 16, weight: .bold)
         public static let cardSmallMedium = SwiftUI.Font.system(size: 11, weight: .bold)
+
+        // Set tiles on the completed (inactive) card. Larger and left-aligned
+        // compared to the compact idle tiles, so the weight is the first thing
+        // read in the row; the unit and the reps footer stay quiet beside it.
+        public static let setTileValue = SwiftUI.Font.system(size: 22, weight: .bold)
+        public static let setTileUnit = SwiftUI.Font.system(size: 12, weight: .regular)
+        public static let setTileReps = SwiftUI.Font.system(size: 13, weight: .medium)
+        public static let setTileRepsUnit = SwiftUI.Font.system(size: 11, weight: .regular)
         public static let metricLabel = SwiftUI.Font.system(size: 11, weight: .medium)
         // Idle-card metric values — one token per metric so each can be tuned
         // independently. SF Pro bold default design, geometric tabular figures.

@@ -114,6 +114,7 @@ private func snapshotImageProvider(artworkName: String) throws -> (String) -> Im
         "seat_arrow_medium": try appAssetImage(named: "seat_arrow_medium"),
         "analytics_icon_2": try appAssetImage(named: "analytics_icon_2"),
         "tip_coaching_2": try appAssetImage(named: "tip_coaching_2"),
+        "repeat": try appAssetImage(named: "repeat"),
     ]
 
     return { name in
@@ -235,6 +236,64 @@ struct IdleCardSnapshotTests {
 }
 
 // MARK: - InactiveCardModelView Snapshots
+
+/// Split from the read-path suite below purely for readability. It carries no
+/// routing meaning: `Packages/Package.swift` compiles this whole file into
+/// `FitnessPersistenceUISnapshotTests`, and the test plans select targets, not
+/// suite tags — the `.tags(.integration)` suite below runs here too.
+@Suite("InactiveCardModelView — Snapshots", .tags(.snapshot))
+@MainActor
+struct InactiveCardRenderSnapshotTests {
+
+    /// The completed card's expanded set-tile row. It is the half of the shared
+    /// row that had no baseline at all, while the idle card's expanded row had
+    /// one — and that missing coverage is why an intra-tile alignment defect
+    /// could only be caught on the other card.
+    ///
+    /// Five sets, mixing whole and decimal weights, so the overflow chevron and
+    /// the down-scaled value both appear.
+    @Test func expandedSetTiles() throws {
+        let (model, container) = try makeIdleCardContainer()
+        let storage = MockAnalyticsStorage()
+        storage.save([
+            AnalyticsEntry(
+                exerciseId: model.id,
+                date: Date(timeIntervalSince1970: 1_735_689_600),
+                setProgress: (0..<5).map { index in
+                    SetProgress(
+                        status: .completedDone,
+                        currentReps: 10 + index,
+                        weight: 20 + Double(index) * 2.5
+                    )
+                }
+            ),
+        ], for: model.id)
+        let analyticsVM = AnalyticsViewModel(
+            storageService: storage,
+            exerciseStorage: MockExerciseStorage(),
+            workoutStorage: MockWorkoutStorage()
+        )
+
+        let view = InactiveCardModelView(
+            model: model,
+            onEdit: { _, _ in },
+            isEditable: false,
+            analyticsViewModel: analyticsVM,
+            onReset: { _ in },
+            isResetEnabled: true,
+            initiallyExpanded: true,
+            imageProvider: try snapshotImageProvider(
+                artworkName: model.categoryGroup.defaultIconName
+            )
+        )
+        .modelContainer(container)
+
+        assertSnapshot(of: view, named: "expanded-set-tiles", size: CGSize(width: 393, height: 360))
+    }
+
+}
+
+// MARK: - InactiveCardModelView Read Path
 
 @Suite("InactiveCardModelView — Read path", .tags(.integration))
 @MainActor
