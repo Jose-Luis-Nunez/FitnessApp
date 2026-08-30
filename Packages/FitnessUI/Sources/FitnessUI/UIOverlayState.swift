@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import CoreGraphics
 
 /// Drives the exercise multi-select editing mode that the three-dots mini-menu
 /// starts (deactivate / activate several exercises at once).
@@ -12,6 +13,17 @@ public enum ExerciseSelectionMode: Sendable {
 @Observable
 @MainActor
 public final class UIOverlayState {
+    /// Vertical room the training mini bar's plate currently claims above the
+    /// tab row, or 0 when no mini bar is showing.
+    ///
+    /// Published by the bar, which is the only view that can measure it, and
+    /// read by bottom-anchored page chrome that would otherwise sit under the
+    /// opaque plate. It exists because the alternative — each consumer carrying
+    /// its own hand-measured constant — drifts apart the moment the bar's
+    /// spacing or title font changes, and the failure is silent: content simply
+    /// disappears under the plate.
+    public var trainingMiniBarClearance: CGFloat = 0
+
     public var isEditingSheetVisible: Bool = false
     public var showCategoryMiniMenu: Bool = false
     public var showSelectionMiniMenu: Bool = false

@@ -51,6 +51,12 @@ cd "$REPO_ROOT"
 # This pointed at Xcode.app, which does not exist, so every run died at the
 # first xcodebuild call with a message about the toolchain rather than the app.
 export DEVELOPER_DIR="${DEVELOPER_DIR:-/Users/jose.nunez/Downloads/Xcode-beta.app/Contents/Developer}"
+# Derived from the repo root, not from `${BASH_SOURCE[0]}`: the `cd` above has
+# already happened, so a relative invocation path (`../scripts/buildApp.sh`)
+# would resolve against the wrong directory and abort under `set -e`.
+SCRIPT_DIR="$REPO_ROOT/scripts"
+# shellcheck source=lib/derived-data.sh
+. "$SCRIPT_DIR/lib/derived-data.sh"
 if [ ! -d "$DEVELOPER_DIR" ]; then
   echo "ERROR: DEVELOPER_DIR does not exist: $DEVELOPER_DIR" >&2
   echo "       Set DEVELOPER_DIR to your Xcode's Contents/Developer and re-run." >&2
@@ -137,15 +143,17 @@ deploy_device() {
     -quiet
   echo "  ✓ build succeeded"
 
-  # Glob-first lookup is ~0.3s faster than full DerivedData traversal.
-  APP_PATH=$(ls -dt "$HOME/Library/Developer/Xcode/DerivedData/${SCHEME}-"*/Build/Products/Debug-iphoneos/"${SCHEME}.app" 2>/dev/null | head -1 || true)
-  if [ -z "$APP_PATH" ] || [ ! -d "$APP_PATH" ]; then
-    APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "${SCHEME}.app" -path "*Build/Products/Debug-iphoneos*" -not -path "*Index.noindex*" -type d | head -1)
-  fi
-  if [ -z "$APP_PATH" ] || [ ! -d "$APP_PATH" ]; then
-    echo "ERROR: built .app not found under Debug-iphoneos." >&2
+  # Resolved by WorkspacePath, not by newest mtime: a leftover worktree's
+  # derived data outranks this checkout's by date and would be installed instead.
+  APP_PATH="$(fitness_app_bundle Debug-iphoneos "$SCHEME" || true)"
+  if [ -z "$APP_PATH" ]; then
+    echo "ERROR: built .app not found under Debug-iphoneos for this checkout." >&2
     return 1
   fi
+
+  # xcodebuild has reported success while silently skipping the app target;
+  # installing that leaves the device running code that is not the source.
+  "$SCRIPT_DIR/assert-app-build-current.sh" Debug-iphoneos || return 1
 
   echo "[2/3] Installing..."
   xcrun devicectl device install app --device "$DEVICE_UUID" "$APP_PATH" 2>&1 \
@@ -172,14 +180,15 @@ deploy_simulator() {
     -quiet
   echo "  ✓ build succeeded"
 
-  APP_PATH=$(ls -dt "$HOME/Library/Developer/Xcode/DerivedData/${SCHEME}-"*/Build/Products/Debug-iphonesimulator/"${SCHEME}.app" 2>/dev/null | head -1 || true)
-  if [ -z "$APP_PATH" ] || [ ! -d "$APP_PATH" ]; then
-    APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "${SCHEME}.app" -path "*Build/Products/Debug-iphonesimulator*" -not -path "*Index.noindex*" -type d | head -1)
-  fi
-  if [ -z "$APP_PATH" ] || [ ! -d "$APP_PATH" ]; then
-    echo "ERROR: built .app not found under Debug-iphonesimulator." >&2
+  # See deploy_device: selection is by WorkspacePath, and the freshness of the
+  # bundle is asserted before it is installed.
+  APP_PATH="$(fitness_app_bundle Debug-iphonesimulator "$SCHEME" || true)"
+  if [ -z "$APP_PATH" ]; then
+    echo "ERROR: built .app not found under Debug-iphonesimulator for this checkout." >&2
     return 1
   fi
+
+  "$SCRIPT_DIR/assert-app-build-current.sh" Debug-iphonesimulator || return 1
 
   echo "[2/3] Installing..."
   xcrun simctl install "$SIM_UUID" "$APP_PATH"

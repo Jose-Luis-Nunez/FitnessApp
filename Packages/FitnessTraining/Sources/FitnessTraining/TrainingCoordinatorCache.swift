@@ -108,11 +108,14 @@ public final class TrainingCoordinatorCache: TrainingCoordinatorCaching {
         var targets: [ActiveTrainingTarget] = []
 
         for id in focusRecency.reversed() {
-            for (group, coordinator) in coordinators
-            where coordinator.isExerciseInProgress(id) {
-                guard let exercise = coordinator.activeExercises[id] else { continue }
-                targets.append(ActiveTrainingTarget(exercise: exercise, group: group))
-            }
+            // `first(where:)` rather than a loop with a break: an exercise belongs
+            // to exactly one group, and stating that as a lookup makes it a fact
+            // of the code instead of a loop that happens to stop early.
+            guard let match = coordinators.first(where: { $0.value.isExerciseInProgress(id) }),
+                  let exercise = match.value.activeExercises[id]
+            else { continue }
+
+            targets.append(ActiveTrainingTarget(exercise: exercise, group: match.key))
         }
 
         // Every insertion path runs through `setFocusedExerciseId`, so a running

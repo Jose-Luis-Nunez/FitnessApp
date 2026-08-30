@@ -96,6 +96,8 @@ Codex-only source-command adapters live under `.agents/skills/source-command-*`.
 | `scripts/sync-agent-runtime.sh` | Generate/check Codex skills, hooks, and roles |
 | `scripts/generate-codex-agent.py` | Generate TOML role from canonical Markdown |
 | `scripts/install-hooks.sh` | Configure `.githooks` as Git hooks path |
+| `scripts/assert-app-build-current.sh` | Fail when the built app bundle is older than the newest app source; run by `buildApp.sh` before install because xcodebuild has reported success while skipping the app target |
+| `scripts/lib/derived-data.sh` | Resolve this checkout's derived-data bundle by recorded `WorkspacePath`, so a leftover worktree's build is never picked up |
 
 ## Development Stop Hook
 

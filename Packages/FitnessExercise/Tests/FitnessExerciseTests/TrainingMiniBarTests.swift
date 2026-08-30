@@ -71,11 +71,4 @@ struct TrainingMiniBarTests {
 
         #expect(TrainingMiniBar.targets(router: router, cache: cache).count == 2)
     }
-
-    /// The paging controls only exist from two exercises on, so a bar showing a
-    /// single one must claim exactly as much room as it did before this feature.
-    @Test func clearanceGrowsOnlyOncePagingControlsExist() {
-        #expect(TrainingMiniBar.clearance(for: 2) > TrainingMiniBar.clearance(for: 1))
-        #expect(TrainingMiniBar.clearance(for: 3) == TrainingMiniBar.clearance(for: 2))
-    }
 }

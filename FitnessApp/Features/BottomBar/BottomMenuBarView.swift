@@ -89,6 +89,15 @@ struct BottomMenuBarView: View {
             bottomBarSurfaceContent
         }
         .frame(height: capsuleHeight + 6)
+        // Sits outside the branch it guards. Entering multi-select swaps the
+        // whole bar for the selection action bar, which takes the mini bar's
+        // preference source with it — no further preference is delivered, so the
+        // last clearance would stick and hold room for a plate that is no longer
+        // drawn. Anything attached inside that branch disappears with it and
+        // cannot fire on the transition.
+        .onChange(of: overlayState.exerciseSelectionMode) { _, mode in
+            if mode != .none { overlayState.trainingMiniBarClearance = 0 }
+        }
     }
 
     @ViewBuilder
@@ -118,7 +127,11 @@ struct BottomMenuBarView: View {
                 .padding(.horizontal, 8)
                 .padding(.bottom, bottomOffset)
                 .overlay(alignment: .top) { miniBarOverlay(targets) }
-                .onPreferenceChange(MiniBarHeightKey.self) { miniBarHeight = $0 }
+                // Written from a preference change, never during body evaluation.
+                .onPreferenceChange(MiniBarHeightKey.self) { height in
+                    miniBarHeight = height
+                    overlayState.trainingMiniBarClearance = plateInset(forMiniBarHeight: height)
+                }
                 .background(alignment: .bottom) {
                     if !targets.isEmpty { barPlate }
                 }
@@ -190,11 +203,14 @@ struct BottomMenuBarView: View {
     }
 
     /// How far the plate rises above the tab row.
-    private var barPlateTopInset: CGFloat { miniBarBlockHeight }
+    private var barPlateTopInset: CGFloat { plateInset(forMiniBarHeight: miniBarHeight) }
 
-    /// How far the plate has to rise to clear the mini bar as well.
-    private var miniBarBlockHeight: CGFloat {
-        miniBarHeight + miniBarGap + barPlateTopPadding
+    /// The one definition of that distance. It is both what the plate is drawn
+    /// with and what page chrome is told to keep clear, so the two cannot drift
+    /// — which is exactly what happened while a second, hand-measured copy
+    /// existed in `TrainingMiniBar`.
+    private func plateInset(forMiniBarHeight height: CGFloat) -> CGFloat {
+        height > 0 ? height + miniBarGap + barPlateTopPadding : 0
     }
 
     private var barPlateShape: RoundedRectangle {

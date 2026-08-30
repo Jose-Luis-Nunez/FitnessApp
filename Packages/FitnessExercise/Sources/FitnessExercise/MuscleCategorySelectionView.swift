@@ -243,7 +243,7 @@ public struct MuscleCategorySelectionView: View {
                         // spacer is the end of the scroll content, so without it
                         // the last card stays permanently under the plate with
                         // no further scroll to reveal it.
-                        Spacer(minLength: safeAreaInset + 24 + miniBarClearance)
+                        Spacer(minLength: safeAreaInset + 24 + overlayState.trainingMiniBarClearance)
                     }
                 }
                 .coordinateSpace(name: "scroll")
@@ -270,7 +270,7 @@ public struct MuscleCategorySelectionView: View {
                         // has to move above it rather than be cut in half.
                         .padding(
                             .bottom,
-                            safeAreaInset + 24 + miniBarClearance
+                            safeAreaInset + 24 + overlayState.trainingMiniBarClearance
                         )
                     }
                 }
@@ -568,14 +568,6 @@ public struct MuscleCategorySelectionView: View {
     private var filterSelectionHeight: CGFloat { filterBarHeight - (filterBarPadding * 2) }
     private var filterSelectionWidth: CGFloat { filterSelectionHeight * 1.6 }
     private let filterIconSize: CGFloat = 30
-
-    /// Room the training mini bar's plate takes at the bottom of the screen.
-    /// Everything anchored down there — the floating toggle and the end of the
-    /// scroll content — has to add it, or the opaque plate covers them.
-    private var miniBarClearance: CGFloat {
-        let count = TrainingMiniBar.targets(router: router, cache: coordinatorCache).count
-        return count == 0 ? 0 : TrainingMiniBar.clearance(for: count)
-    }
 
     private var filterToggleView: some View {
         HStack(spacing: 0) {
