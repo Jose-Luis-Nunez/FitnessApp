@@ -225,16 +225,19 @@ private extension InactiveCardModelView {
                     .foregroundColor(AppStyle.Color.idleMetricUnit)
             }
             .frame(height: improvementColumnHeight)
-            // The chevron hangs below the label instead of joining the stack, so
-            // it cannot shift "Details" off the footer line.
-            .overlay(alignment: .bottom) {
-                Image(systemName: "chevron.down")
-                    .font(AppStyle.Font.cardSmallLabel)
-                    .foregroundColor(AppStyle.Color.idleMetricUnit)
-                    .rotationEffect(.degrees(isExpanded ? 180 : 0))
-                    .offset(y: 6)
-            }
         }
+        // No disclosure chevron under "Details" by design. It used to hang below
+        // the label as an overlay and read as if the card bulged past its own
+        // bottom edge; the word "Details" carries the affordance instead, and the
+        // whole card is the tap target. Do not reinstate it without revisiting
+        // that — it was removed on purpose, not lost.
+        //
+        // Same minimum width the idle card reserves around its play button. The
+        // circles are the same size, but without this the column is only as wide
+        // as the word "Details" — narrower than that tap target — and since both
+        // columns are pinned to the same trailing edge, the checkmark ended up
+        // sitting a few points further right than the play button above it.
+        .frame(minWidth: AppStyle.Layout.minimumTapTargetSize)
         .contentShape(Rectangle())
         .onTapGesture { toggleExpansion() }
         // The tap target is a bare shape, so without this the expand affordance
@@ -330,6 +333,34 @@ private extension InactiveCardModelView {
             + AppStyle.Layout.idleMetricFooterRowHeight
     }
 
+    /// Mirrors `IdleActiveCardModelView.weightValue`: weight plus unit, or
+    /// "sets x reps" for a bodyweight exercise. Muted rather than white — the
+    /// exercise is done, so the number is a record, not the next thing to do.
+    @ViewBuilder
+    var finishedValue: some View {
+        if model.hasWeight {
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text(verbatim: WeightFormatter.format(model.weight, locale: locale))
+                    .font(AppStyle.Font.idleWeightValue)
+                    .foregroundColor(theme.subtitleColor)
+
+                Text(verbatim: "kg")
+                    .font(AppStyle.Font.cardMetricUnit)
+                    .foregroundColor(AppStyle.Color.idleMetricUnit)
+            }
+            .fixedSize()
+        } else {
+            (
+                Text(verbatim: "\(model.sets)").font(AppStyle.Font.idleWeightValue)
+                    + Text(verbatim: "x").font(AppStyle.Font.idleRepsSeparator)
+                    + Text(verbatim: "\(model.reps)").font(AppStyle.Font.idleWeightValue)
+            )
+            .foregroundColor(theme.subtitleColor)
+            .lineLimit(1)
+            .fixedSize()
+        }
+    }
+
     /// Gap between the gain line and its "now …" line. Tuned against the design
     /// rather than derived from a token: it is a one-off relation between these
     /// two specific lines, not a design-system spacing.
@@ -356,17 +387,18 @@ private extension InactiveCardModelView {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// Nothing improved. Built on the same two-line grid as `gainColumn` and
-    /// `checkmarkTrailing` rather than as a single centred line: the hidden
-    /// stand-in reserves the gain line, so "Completed" lands on the footer line
-    /// level with "Details" opposite it. Centring it in the reserved height put
-    /// the two roughly 15pt apart, which contradicted the grid the trailing
-    /// column is documented to follow.
+    /// Nothing improved. Same two-line grid as `gainColumn` and
+    /// `checkmarkTrailing`, so "Completed" lands on the footer line level with
+    /// "Details" opposite it.
+    ///
+    /// The value line carries what the exercise was finished with, rendered the
+    /// same way the idle card renders it. It used to be a hidden `+0` holding the
+    /// line open, which kept the card the right height but left a gap exactly
+    /// where every other card shows its number — the card read as padded rather
+    /// than finished. Filling the line keeps the height and removes the gap.
     var completedColumn: some View {
         VStack(alignment: .leading, spacing: improvementLineSpacing) {
-            Text(verbatim: "+0")
-                .font(AppStyle.Font.idleWeightValue)
-                .hidden()
+            finishedValue
 
             Text(AppText.exerciseCompleted)
                 .font(AppStyle.Font.cardMetricUnit)

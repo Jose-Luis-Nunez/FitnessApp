@@ -113,6 +113,12 @@ public final class TrainingCoordinator {
     private let onExerciseUpdate: @MainActor (Exercise, MuscleCategoryGroup) -> Void
     private let onExerciseReset: @MainActor (Exercise, MuscleCategoryGroup) -> Void
     private let onNewSessionStarted: @MainActor (UUID, Exercise.ID) -> Void
+    /// Fires whenever a session becomes the focused one — on a fresh start and
+    /// on resuming an already-running exercise. The owning cache uses it to keep
+    /// a cross-category recency order; `focusedExerciseId` alone cannot answer
+    /// "which exercise was opened last" because every category group has its own
+    /// coordinator.
+    private let onSessionFocused: @MainActor (Exercise.ID) -> Void
     private var _onAddExercise: @MainActor () -> Void
     private var _onResetAllExercises: @MainActor () -> Void
 
@@ -129,6 +135,7 @@ public final class TrainingCoordinator {
         onExerciseUpdate: @escaping @MainActor (Exercise, MuscleCategoryGroup) -> Void,
         onExerciseReset: @escaping @MainActor (Exercise, MuscleCategoryGroup) -> Void,
         onNewSessionStarted: @escaping @MainActor (UUID, Exercise.ID) -> Void = { _, _ in },
+        onSessionFocused: @escaping @MainActor (Exercise.ID) -> Void = { _ in },
         onAddExercise: @escaping @MainActor () -> Void = {},
         onResetAllExercises: @escaping @MainActor () -> Void = {},
         analyticsViewModel: AnalyticsViewModel? = nil,
@@ -139,6 +146,7 @@ public final class TrainingCoordinator {
         self.onExerciseUpdate = onExerciseUpdate
         self.onExerciseReset = onExerciseReset
         self.onNewSessionStarted = onNewSessionStarted
+        self.onSessionFocused = onSessionFocused
         self._onAddExercise = onAddExercise
         self._onResetAllExercises = onResetAllExercises
         self.sessionFactory = sessionFactory
@@ -163,6 +171,9 @@ public final class TrainingCoordinator {
     private func setFocusedExerciseId(_ newValue: Exercise.ID?) {
         focusedExerciseId = newValue
         draftStore.handleActiveExerciseChange(to: newValue)
+        if let newValue {
+            onSessionFocused(newValue)
+        }
     }
 
     // MARK: - Training Actions

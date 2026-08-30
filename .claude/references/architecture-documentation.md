@@ -150,7 +150,7 @@ can retry without losing already visible data.
 
 | Service | Owner | Responsibility |
 |---|---|---|
-| `TrainingCoordinatorCache` | `FitnessTraining` | Provides one coordinator per muscle category and connects new-session events to learned exercise order. |
+| `TrainingCoordinatorCache` | `FitnessTraining` | Provides one coordinator per muscle category, connects new-session events to learned exercise order, and keeps the cross-category focus recency behind `activeTrainings`. |
 | `TimerService` | `FitnessTraining` | Rest timer over an injectable clock boundary. |
 | `ExerciseFeedbackDraftStore` | `TrainingCoordinator` | Keeps the current exercise's unsaved feedback in memory; drafts are discarded with the owning session/exercise lifecycle. |
 | `WorkoutImportCoordinator` / `FriendImportCoordinator` | `FitnessWorkouts` / `FitnessFriends` | Bridge app-level incoming files to their feature import flows, including cold launch before the screen mounts. The Add Friend form reuses its coordinator for an in-form system document picker before saving the named friend. |
@@ -247,13 +247,40 @@ Feature-specific behavior belongs to the feature rather than a global extension.
 | `AppRouter` | Owns `NavigationPath`, derives the current app scene and owns an independent optional `TrainingPresentation`. Views request navigation through router intents rather than mutating the path. |
 | App root | Owns state that must survive destination reconstruction, including the Home Overview/List mode, shared overlay state, the router and the model container. |
 | `TrainingCoordinator` | Owns one training session's active exercise, execution progress, timer and feedback draft. It contains no SwiftData models. |
-| `TrainingCoordinatorCache` | Shares the category coordinator between screens and finds the coordinator for a particular exercise. |
+| `TrainingCoordinatorCache` | Shares the category coordinator between screens, finds the coordinator for a particular exercise, and owns the recency order behind `activeTrainings`. |
 | `UIOverlayState` | Coordinates menus, editing-sheet visibility and exercise activate/deactivate selection across the current app surface. |
 | Feature view models | Own transient presentation and form state; persisted truth continues to come from models or service reads. |
 
 `TrainingPresentation` contains only the exercise ID and category. Dismissing the
 sheet does not imply cancelling the coordinator session. Real navigation-path
 mutations clear the presentation so it cannot outlive its Home or Category parent.
+
+Because a dismissed sheet leaves the session running, `TrainingMiniBarView` is the
+way back into it. `TrainingMiniBar` (in `FitnessExercise`) is the single owner of
+whether a mini bar shows and for which exercises: it restricts the bar to the Home
+and Category scenes and reads `TrainingCoordinatorCaching.activeTrainings` — every
+exercise still in progress, most recently focused first. The resolution is shared
+rather than private to the view because the mini bar turns the bottom bar into a
+plate, and bottom-anchored page chrome at the same height (the Overview/List
+toggle) has to add `TrainingMiniBar.clearance(for:)` to stay above it; the plate is
+taller once the bar carries paging controls, so the clearance depends on the count.
+
+With more than one exercise running the bar pages through them. Stepping only
+changes what is displayed — resuming stays bound to the up-chevron and the title,
+so paging can never present a training sheet. The displayed exercise is held by
+`Exercise.ID`, never by index: an index kept across a list change points at a
+different exercise once a session ends, which would resume the wrong one. The
+selection lives in `TrainingMiniBarView`'s own state, and its lifetime is the reset
+policy — the bar is torn down whenever the list empties, the sheet opens, or the
+scene changes, so it always reappears on the most recent exercise.
+
+`activeTrainings` is the single cross-category answer; there is deliberately no
+separate "newest only" accessor beside it, so a single-item caller and the head of
+the paged list cannot disagree. Liveness is decided by asking
+the owning coordinator rather than by mutating the recency list, so finishing,
+cancelling or resetting an exercise needs no extra bookkeeping. Focus recency lives
+on the cache because `TrainingCoordinator.focusedExerciseId` is per category group
+and cannot order sessions across groups.
 
 ## Navigation
 

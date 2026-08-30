@@ -63,7 +63,15 @@ public struct MuscleCategoryView: View {
 
     private var bottomListPadding: CGFloat {
         if formViewModel.showForm { return 340 }
-        return safeAreaBottomInset + 40
+        // The training mini bar's plate is opaque and sits over the end of this
+        // list; without the clearance the last card cannot be scrolled clear of
+        // it. This screen has no other bottom-anchored chrome to compensate.
+        return safeAreaBottomInset + 40 + miniBarClearance
+    }
+
+    private var miniBarClearance: CGFloat {
+        let count = TrainingMiniBar.targets(router: router).count
+        return count == 0 ? 0 : TrainingMiniBar.clearance(for: count)
     }
 
     @Environment(\.safeAreaInsets) private var safeAreaInsets

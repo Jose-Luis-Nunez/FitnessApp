@@ -591,12 +591,7 @@ private extension IdleActiveCardModelView {
             Button(action: { onStart(model.toDomain()) }) {
                 Group {
                     if isInProgress {
-                        Image("trainin_progress")
-                            .renderingMode(.template)
-                            .resizable()
-                            .scaledToFit()
-                            .foregroundColor(AppStyle.Color.yellow)
-                            .frame(width: AppStyle.Layout.idlePlayButtonSize, height: AppStyle.Layout.idlePlayButtonSize)
+                        IdlePauseButton()
                     } else {
                         IdlePlayButton()
                     }

@@ -11,6 +11,26 @@ import FitnessTestSupport
 
 // MARK: - Helpers
 
+/// Hosts a view and forces it through layout so `onAppear` runs, without
+/// comparing an image.
+///
+/// Used where the contract under test is what the card *reads*, not how it
+/// looks. Rendering is the trigger for those reads, which is why this cannot
+/// simply be dropped — but a stored baseline would add churn on every
+/// intentional redesign for no extra risk reduction.
+@MainActor
+private func renderForSideEffects<V: View>(_ view: V, size: CGSize) {
+    let controller = UIHostingController(rootView: view)
+    // A window, not just `loadViewIfNeeded()`: `onAppear` fires when the view
+    // actually appears in a hierarchy, and the reads under test happen there.
+    // Hosting without a window silently ran no reads at all and made the
+    // assertions below vacuous.
+    let window = UIWindow(frame: CGRect(origin: .zero, size: size))
+    window.rootViewController = controller
+    window.isHidden = false
+    window.layoutIfNeeded()
+}
+
 @MainActor
 private func assertSnapshot<V: View>(
     of view: V,
@@ -216,7 +236,7 @@ struct IdleCardSnapshotTests {
 
 // MARK: - InactiveCardModelView Snapshots
 
-@Suite("InactiveCardModelView — Snapshots", .tags(.snapshot))
+@Suite("InactiveCardModelView — Read path", .tags(.integration))
 @MainActor
 struct InactiveCardSnapshotTests {
 
@@ -251,7 +271,12 @@ struct InactiveCardSnapshotTests {
     }
 
 
-    @Test func inactiveCollapsed() throws {
+    /// The collapsed completed card must stay on the cheap read path. The
+    /// visual side of this used to be a stored snapshot; it was removed because
+    /// the card is a feature composition whose geometry changes on purpose,
+    /// so every redesign cost a baseline re-record while catching nothing the
+    /// assertions below do not.
+    @Test func collapsedCardReadsOnlyTheBoundedRecentPath() throws {
         let (model, container) = try makeIdleCardContainer()
         model.isCompleted = true
         try container.mainContext.save()
@@ -276,7 +301,7 @@ struct InactiveCardSnapshotTests {
         )
         .modelContainer(container)
 
-        assertSnapshot(of: view, named: "collapsed", size: CGSize(width: 393, height: 120))
+        renderForSideEffects(view, size: CGSize(width: 393, height: 120))
         // The collapsed card shows the session-improvement row, so it does read
         // — but only through the bounded two-day path. The expensive reads stay
         // untouched until the card is expanded, which is the contract this

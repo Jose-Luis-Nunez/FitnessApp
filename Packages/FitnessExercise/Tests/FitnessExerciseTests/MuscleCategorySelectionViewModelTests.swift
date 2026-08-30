@@ -24,6 +24,14 @@ private final class MockCoordinatorCache: TrainingCoordinatorCaching {
         return coordinator
     }
 
+    var activeTrainings: [ActiveTrainingTarget] {
+        coordinators.flatMap { group, coordinator in
+            coordinator.activeExercises.values.map {
+                ActiveTrainingTarget(exercise: $0, group: group)
+            }
+        }
+    }
+
     func findCoordinator(for exercise: Exercise) -> (TrainingCoordinator, MuscleCategoryGroup)? {
         for (group, coordinator) in coordinators {
             if coordinator.isExerciseInProgress(exercise.id) {

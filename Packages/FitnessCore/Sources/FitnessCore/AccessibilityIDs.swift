@@ -55,6 +55,11 @@ public enum BottomBarIDs {
     public static let analyticsTab = "id_bottom_tab_analytics"
     public static let scheduleTab = "id_bottom_tab_schedule"
     public static let profileTab = "id_bottom_tab_profile"
+    /// Netflix-style mini bar above the tab capsule that reopens the most
+    /// recently opened in-progress exercise.
+    public static let trainingMiniBar = "id_bottom_training_mini_bar"
+    public static let trainingMiniBarPrevious = "id_bottom_training_mini_bar_previous"
+    public static let trainingMiniBarNext = "id_bottom_training_mini_bar_next"
 }
 
 public enum ExerciseCardIDs {

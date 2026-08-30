@@ -123,4 +123,68 @@ struct TrainingCoordinatorCacheTests {
         #expect(coordinator.isExerciseInProgress(exercise.id))
         #expect(orderStorage.recordedStarts.isEmpty)
     }
+
+    // MARK: - activeTrainings
+
+    /// The mini bar pages through this list, so its order *is* the feature: the
+    /// exercise the user last opened has to come first, across categories.
+    @Test func activeTrainingsOrdersMostRecentlyFocusedFirstAcrossCategories() {
+        let cache = TrainingCoordinatorCache(
+            exerciseManagement: MockExerciseManagement(),
+            exerciseOrderStorage: WorkoutExerciseOrderStorageSpy()
+        )
+        let arm = FitnessTestSupport.makeExercise(name: "Curl", category: .arms)
+        let chest = FitnessTestSupport.makeExercise(name: "Bench", category: .chest)
+
+        cache.coordinator(for: .arms).startTraining(for: arm)
+        cache.coordinator(for: .chest).startTraining(for: chest)
+
+        #expect(cache.activeTrainings.map(\.exercise.id) == [chest.id, arm.id])
+        #expect(cache.activeTrainings.map(\.group) == [.chest, .arms])
+    }
+
+    /// Resuming re-focuses, which must move that exercise back to the front —
+    /// this is what makes the bar reopen on whatever the user was just doing.
+    @Test func activeTrainingsMovesResumedExerciseBackToTheFront() {
+        let cache = TrainingCoordinatorCache(
+            exerciseManagement: MockExerciseManagement(),
+            exerciseOrderStorage: WorkoutExerciseOrderStorageSpy()
+        )
+        let arm = FitnessTestSupport.makeExercise(name: "Curl", category: .arms)
+        let chest = FitnessTestSupport.makeExercise(name: "Bench", category: .chest)
+
+        cache.coordinator(for: .arms).startTraining(for: arm)
+        cache.coordinator(for: .chest).startTraining(for: chest)
+        cache.coordinator(for: .arms).startTraining(for: arm)
+
+        #expect(cache.activeTrainings.map(\.exercise.id) == [arm.id, chest.id])
+    }
+
+    /// Recency entries are never pruned, so a cancelled exercise still has one.
+    /// Liveness has to come from the coordinator, otherwise the bar would offer
+    /// a way back into a session that no longer exists.
+    @Test func activeTrainingsDropsCancelledExerciseButKeepsTheRest() {
+        let cache = TrainingCoordinatorCache(
+            exerciseManagement: MockExerciseManagement(),
+            exerciseOrderStorage: WorkoutExerciseOrderStorageSpy()
+        )
+        let arm = FitnessTestSupport.makeExercise(name: "Curl", category: .arms)
+        let chest = FitnessTestSupport.makeExercise(name: "Bench", category: .chest)
+
+        cache.coordinator(for: .arms).startTraining(for: arm)
+        cache.coordinator(for: .chest).startTraining(for: chest)
+        cache.coordinator(for: .chest).cancelTraining(for: chest.id)
+
+        #expect(cache.activeTrainings.map(\.exercise.id) == [arm.id])
+    }
+
+    @Test func activeTrainingsIsEmptyWhenNothingRuns() {
+        let cache = TrainingCoordinatorCache(
+            exerciseManagement: MockExerciseManagement(),
+            exerciseOrderStorage: WorkoutExerciseOrderStorageSpy()
+        )
+        _ = cache.coordinator(for: .arms)
+
+        #expect(cache.activeTrainings.isEmpty)
+    }
 }

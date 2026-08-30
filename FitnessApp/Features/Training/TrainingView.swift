@@ -28,6 +28,12 @@ struct TrainingSheetView: View {
     @State private var phase: Phase = .waitingForQuery
     @State private var formViewModel = ExerciseFormViewModel()
     @State private var sheetHeightLatch = TrainingSheetHeightLatch()
+    /// Tracks the pull-down while the finger is still down, so the sheet follows
+    /// it. Without this the gesture only fired on release and the sheet sat
+    /// perfectly still while being dragged — no sense of how far the pull still
+    /// had to go, and nothing at all below the threshold. `@GestureState` resets
+    /// itself on release, which is what springs the sheet back.
+    @GestureState private var dragTranslation: CGFloat = 0
 
     private enum Phase {
         case waitingForQuery
@@ -62,6 +68,11 @@ struct TrainingSheetView: View {
 
                 if let model = models.first, trainingCoordinator.isTrainingActive {
                     sheetContent(model: model)
+                        .offset(y: max(0, dragTranslation))
+                        .animation(.interactiveSpring(
+                            response: 0.3,
+                            dampingFraction: 0.8
+                        ), value: dragTranslation)
                         .frame(
                             maxHeight: max(
                                 0,
@@ -119,10 +130,7 @@ struct TrainingSheetView: View {
 
     private func sheetContent(model: ExerciseModel) -> some View {
         VStack(spacing: 0) {
-            sheetHeader
-
-            Color.clear
-                .frame(height: AppStyle.Layout.trainingSheetHeaderSpacing)
+            dragRegion
 
             TrainingSessionComponent(
                 coordinator: trainingCoordinator,
@@ -187,6 +195,21 @@ struct TrainingSheetView: View {
     }
 
 
+    /// The grabber plus the empty band below it. That gap is layout the sheet
+    /// already had, so folding it into the drag target widens the grip from the
+    /// grabber's ~23pt to the full header without moving anything or covering
+    /// content the way an overlay would.
+    private var dragRegion: some View {
+        VStack(spacing: 0) {
+            sheetHeader
+
+            Color.clear
+                .frame(height: AppStyle.Layout.trainingSheetHeaderSpacing)
+        }
+        .contentShape(Rectangle())
+        .gesture(sheetDragGesture)
+    }
+
     private var sheetHeader: some View {
         SheetGrabber()
             .accessibilityElement()
@@ -195,13 +218,22 @@ struct TrainingSheetView: View {
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { dismissTrainingSheet() }
             .accessibilityIdentifier(TrainingIDs.sheetGrabber)
-            .gesture(
-                DragGesture(minimumDistance: 12).onEnded { value in
-                    if value.translation.height > 80 {
-                        dismissTrainingSheet()
-                    }
+    }
+
+    /// Mirrors the pattern the feedback and add-friend sheets already use:
+    /// `updating` drives the live offset, `onEnded` decides at the same 80pt
+    /// threshold as before. Releasing below it drops `dragTranslation` back to
+    /// zero and the animation carries the sheet home.
+    private var sheetDragGesture: some Gesture {
+        DragGesture(minimumDistance: 12, coordinateSpace: .global)
+            .updating($dragTranslation) { value, state, _ in
+                state = value.translation.height
+            }
+            .onEnded { value in
+                if value.translation.height > 80 {
+                    dismissTrainingSheet()
                 }
-            )
+            }
     }
 
     private var seatPicker: some View {

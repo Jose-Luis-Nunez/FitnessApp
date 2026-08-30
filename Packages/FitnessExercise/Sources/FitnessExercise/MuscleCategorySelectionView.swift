@@ -239,7 +239,11 @@ public struct MuscleCategorySelectionView: View {
                             .padding(.horizontal, 0)
                             .accessibilityIdentifier(HomeIDs.listContent)
                         }
-                        Spacer(minLength: safeAreaInset + 24)
+                        // Includes the mini bar's plate: it is opaque and this
+                        // spacer is the end of the scroll content, so without it
+                        // the last card stays permanently under the plate with
+                        // no further scroll to reveal it.
+                        Spacer(minLength: safeAreaInset + 24 + miniBarClearance)
                     }
                 }
                 .coordinateSpace(name: "scroll")
@@ -261,7 +265,13 @@ public struct MuscleCategorySelectionView: View {
                             filterToggleView
                         }
                         .padding(.horizontal, SelectionLayoutConstants.horizontalPadding)
-                        .padding(.bottom, safeAreaInset + 24)
+                        // The training mini bar raises the bottom bar into a
+                        // full-width plate at exactly this height, so the toggle
+                        // has to move above it rather than be cut in half.
+                        .padding(
+                            .bottom,
+                            safeAreaInset + 24 + miniBarClearance
+                        )
                     }
                 }
                 .zIndex(3)
@@ -559,6 +569,14 @@ public struct MuscleCategorySelectionView: View {
     private var filterSelectionWidth: CGFloat { filterSelectionHeight * 1.6 }
     private let filterIconSize: CGFloat = 30
 
+    /// Room the training mini bar's plate takes at the bottom of the screen.
+    /// Everything anchored down there — the floating toggle and the end of the
+    /// scroll content — has to add it, or the opaque plate covers them.
+    private var miniBarClearance: CGFloat {
+        let count = TrainingMiniBar.targets(router: router, cache: coordinatorCache).count
+        return count == 0 ? 0 : TrainingMiniBar.clearance(for: count)
+    }
+
     private var filterToggleView: some View {
         HStack(spacing: 0) {
             Button(action: { selectViewMode(.overview) }) {
@@ -573,7 +591,7 @@ public struct MuscleCategorySelectionView: View {
                     .background {
                         if currentViewMode == .overview {
                             Capsule()
-                                .fill(AppStyle.Color.white.opacity(AppStyle.Opacity.selectionTintFill))
+                                .fill(FloatingChromeSurface.selectionFill)
                                 .scaleEffect(y: filterPillBounce ? 1.4 : 1.0)
                                 .matchedGeometryEffect(id: "filterSelection", in: filterNamespace)
                         }
@@ -591,7 +609,7 @@ public struct MuscleCategorySelectionView: View {
                     .background {
                         if currentViewMode == .list {
                             Capsule()
-                                .fill(AppStyle.Color.white.opacity(AppStyle.Opacity.selectionTintFill))
+                                .fill(FloatingChromeSurface.selectionFill)
                                 .scaleEffect(y: filterPillBounce ? 1.4 : 1.0)
                                 .matchedGeometryEffect(id: "filterSelection", in: filterNamespace)
                         }
@@ -603,18 +621,10 @@ public struct MuscleCategorySelectionView: View {
         }
         .padding(filterBarPadding)
         .background {
-            // Material rather than a flat fill: it obscures the ambient backdrop
-            // instead of letting it read through, while keeping the depth of the
-            // platform's glass. A fully transparent capsule was tried and showed
-            // the wash through the control; the old opaque gradient read as a
-            // plate. `appDarkSurface` keeps native glass on iOS 26 and a
-            // deterministic dark fill plus one outline on iOS 27, so the backdrop
-            // stays hidden on every supported version.
-            Color.clear
-                .appDarkSurface(
-                    backgroundColor: AppStyle.Color.idleCardBackground,
-                    in: Capsule()
-                )
+            // Shares the bottom bar's surface: the toggle floats at the same
+            // level, right above it, so the two reading as different materials
+            // was the whole problem.
+            FloatingChromeSurface.control(in: Capsule())
         }
         .clipShape(Capsule())
     }

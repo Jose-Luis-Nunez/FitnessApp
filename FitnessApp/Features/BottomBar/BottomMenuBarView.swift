@@ -3,6 +3,7 @@ import FitnessCore
 import FitnessUI
 import FitnessExercise
 import FitnessResources
+import FitnessTraining
 
 private enum BottomTab {
     case workouts, training, chart, calendar, profile
@@ -33,6 +34,7 @@ struct BottomMenuBarView: View {
     @Environment(UIOverlayState.self) private var overlayState
     @Environment(\.appColorTheme) private var appColorTheme
 
+    @State private var miniBarHeight: CGFloat = 0
     @State private var pillBounce: Bool = false
     @State private var bounceTab: BottomTab? = nil
     @Namespace private var tabNamespace
@@ -56,6 +58,15 @@ struct BottomMenuBarView: View {
     // they read as a balanced trio with the tab capsule while giving a large,
     // easy-to-hit target. Paired with `narrowBy` (see above).
     private let circleButtonSize: CGFloat = 56
+    /// Gap between the training mini bar and the top of the tab capsule row.
+    private let miniBarGap: CGFloat = 12
+    /// Breathing room above the topmost content on the plate.
+    private let barPlateTopPadding: CGFloat = 18
+    private let barPlateCornerRadius: CGFloat = 40
+    /// How far the plate reaches below the row's layout bottom. The capsule
+    /// itself already hangs `bottomOffset` below that, so this is that overhang
+    /// plus the margin the plate keeps under it.
+    private let barPlateBottomBleed: CGFloat = 45
 
     private var selectedTab: BottomTab {
         switch router.currentScene {
@@ -67,6 +78,10 @@ struct BottomMenuBarView: View {
         case .schedule:                    return .calendar
         case .profile:                     return .profile
         }
+    }
+
+    private var miniBarTargets: [ActiveTrainingTarget] {
+        TrainingMiniBar.targets(router: router)
     }
 
     var body: some View {
@@ -94,19 +109,96 @@ struct BottomMenuBarView: View {
                 .padding(.horizontal, 8)
                 .padding(.bottom, bottomOffset)
         } else {
-            HStack(spacing: 6) {
-                backButton
-
-                tabBar
-                    .frame(height: capsuleHeight)
-                    .clipShape(Capsule())
-                    .bottomMenuSurface(in: .capsule)
-
-                rightActionButton
-            }
-            .padding(.horizontal, 8)
-            .padding(.bottom, bottomOffset)
+            // The mini bar and its plate are drawn as overlay and background so
+            // the bar keeps its fixed height: showing or hiding a mini bar must
+            // never move the tabs. Both are placed off the measured mini-bar
+            // height rather than the layout, which does not know about them.
+            let targets = miniBarTargets
+            barRow
+                .padding(.horizontal, 8)
+                .padding(.bottom, bottomOffset)
+                .overlay(alignment: .top) { miniBarOverlay(targets) }
+                .onPreferenceChange(MiniBarHeightKey.self) { miniBarHeight = $0 }
+                .background(alignment: .bottom) {
+                    if !targets.isEmpty { barPlate }
+                }
         }
+    }
+
+    @ViewBuilder
+    private func miniBarOverlay(_ targets: [ActiveTrainingTarget]) -> some View {
+        if !targets.isEmpty {
+            TrainingMiniBarView(targets: targets)
+                .background {
+                    GeometryReader { proxy in
+                        Color.clear.preference(
+                            key: MiniBarHeightKey.self,
+                            value: proxy.size.height
+                        )
+                    }
+                }
+                // An offset rather than an alignment guide: a guide set inside
+                // this `if` does not reach the overlay's alignment, which put the
+                // mini bar straight on top of the tabs. The offset also carries
+                // hit testing with it. Hidden until measured so the first frame
+                // cannot flash over the tab row.
+                .offset(y: -(miniBarHeight + miniBarGap))
+                // Hidden *and* inert until measured: at the unmeasured offset the
+                // bar sits straight over the tab row, so a tap in that one frame
+                // would open the training sheet instead of switching tabs.
+                .opacity(miniBarHeight > 0 ? 1 : 0)
+                .allowsHitTesting(miniBarHeight > 0)
+        }
+    }
+
+    /// The capsule keeps its own surface on the plate too. It is partly
+    /// transparent and carries only a faint rim, so it reads as a control resting
+    /// on the plate rather than a second frame drawn inside it.
+    private var barRow: some View {
+        HStack(spacing: 6) {
+            backButton
+
+            tabBar
+                .frame(height: capsuleHeight)
+                .clipShape(Capsule())
+                .bottomMenuSurface(in: .capsule)
+
+            rightActionButton
+        }
+    }
+
+    /// Full-bleed glass backdrop behind the mini bar and the tab row. Extended past the
+    /// bottom edge so it reads as a surface rising from the screen edge, the way
+    /// the Netflix mini player does, instead of a floating card.
+    ///
+    /// Deliberately contour-free: the plate separates itself from the page by
+    /// blur and a faint lift, not by an outline, so it stays a calm material
+    /// rather than a stacked card. The accent glow is what keeps a nearly
+    /// colourless surface from reading as flat grey.
+    ///
+    /// The top inset is negative because the plate also has to cover the mini
+    /// bar, which the layout does not know about — the measured mini-bar height
+    /// keeps that in step with the actual text instead of a guessed constant.
+    private var barPlate: some View {
+        FloatingChromeSurface.plate(in: barPlateShape)
+            .padding(.top, -barPlateTopInset)
+            // Pulls the plate in to the bar row's own width. The row already
+            // leaves a small margin to the screen, which is what keeps the
+            // rounded corners clear of the edges.
+            .padding(.horizontal, 8)
+            .padding(.bottom, -barPlateBottomBleed)
+    }
+
+    /// How far the plate rises above the tab row.
+    private var barPlateTopInset: CGFloat { miniBarBlockHeight }
+
+    /// How far the plate has to rise to clear the mini bar as well.
+    private var miniBarBlockHeight: CGFloat {
+        miniBarHeight + miniBarGap + barPlateTopPadding
+    }
+
+    private var barPlateShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: barPlateCornerRadius, style: .continuous)
     }
 
     /// Multi-select morph: replaces the whole home bar the moment radio buttons
@@ -302,7 +394,7 @@ struct BottomMenuBarView: View {
                 .background {
                     if isSelected {
                         Capsule()
-                            .fill(AppStyle.Color.white.opacity(AppStyle.Opacity.selectionTintFill))
+                            .fill(FloatingChromeSurface.selectionFill)
                             .padding(.vertical, selectionVerticalInset)
                             .scaleEffect(pillBounce ? 1.4 : 1.0)
                             .matchedGeometryEffect(id: "selectedTab", in: tabNamespace)
@@ -337,27 +429,28 @@ private extension View {
         self.bottomMenuSurface(in: .circle)
     }
 
-    /// iOS 26 omits the surrounding `GlassEffectContainer`; the direct surface
-    /// remains shared with the List/Muscle filter toggle on every OS version.
+    /// The bar's floating controls carry the same glass as the mini bar's plate:
+    /// a real background blur with a slight lift and almost no colour of its own.
     ///
-    /// A material rather than an opaque gradient: these controls float over the
-    /// ambient screen backdrop, so they have to obscure it instead of either
-    /// letting it read through or covering it with a flat plate.
+    /// No outline. A stroke turns the material into a bordered plate, which is
+    /// exactly the flat, framed look the glass is meant to replace — the surfaces
+    /// are meant to separate from the page by blur, not by an edge.
     @ViewBuilder
     func bottomMenuSurface<S: InsettableShape>(in shape: S) -> some View {
-        self.appDarkSurface(
-            backgroundColor: AppStyle.Color.idleCardBackground,
-            in: shape
-        )
-        // The bar and the training sheet's timer card are both floating chrome
-        // over the same backdrop, so they carry the same outline. iOS 26's
-        // native glass surface draws only its own faint system rim, which left
-        // these controls looking edgeless next to the timer.
-        .overlay {
-            shape.stroke(
-                AppStyle.Color.controlOutline,
-                lineWidth: AppStyle.Layout.darkSurfaceOutlineWidth
-            )
+        self.background {
+            FloatingChromeSurface.control(in: shape)
         }
+    }
+}
+
+// MARK: - Mini Bar Measurement
+
+/// Reports the mini bar's rendered height so the plate can reach exactly over it
+/// without the mini bar taking part in layout.
+private struct MiniBarHeightKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
