@@ -90,7 +90,6 @@ struct DayTrainingSessionTests {
         #expect(sessions.first?.countAtMaxWeight == 2)
         #expect(sessions.first?.minRepsAtMaxWeight == 5)
         #expect(sessions.first?.maxReps == 20)
-        #expect(sessions.first?.totalRepsAllSets == 32)
         #expect(sessions.first?.totalRepsAtMaxWeight == 12)
     }
 
@@ -118,38 +117,6 @@ struct DayTrainingSessionTests {
                 .sessions(from: [bilateral, legacy], calendar: testCalendar)
                 .first?.isBilateral == false
         )
-    }
-
-    /// The two branches deliberately disagree, and `WeightPhase.hasImproved`
-    /// depends on that. Pinned so the asymmetry cannot be "tidied up" silently.
-    @Test func weightPhaseTotalRepsCountsAllSetsOnlyForBilateralDays() {
-        let unilateral = DayTrainingSession.sessions(
-            from: [entry(0, [(50, 5), (40, 20)])],
-            calendar: testCalendar
-        ).first
-
-        #expect(unilateral?.totalRepsAllSets == 25)
-        #expect(unilateral?.weightPhaseTotalReps == 5)
-
-        let bilateral = DayTrainingSession.sessions(
-            from: [
-                AnalyticsEntry(
-                    exerciseId: UUID(),
-                    date: day(0),
-                    setProgress: [
-                        SetProgress(status: .completedDone, currentReps: 5, weight: 50, side: .left, logicalSetIndex: 0),
-                        SetProgress(status: .completedDone, currentReps: 5, weight: 50, side: .right, logicalSetIndex: 0),
-                        SetProgress(status: .completedDone, currentReps: 20, weight: 40, side: .left, logicalSetIndex: 1),
-                        SetProgress(status: .completedDone, currentReps: 20, weight: 40, side: .right, logicalSetIndex: 1)
-                    ]
-                )
-            ],
-            calendar: testCalendar
-        ).first
-
-        #expect(bilateral?.isBilateral == true)
-        #expect(bilateral?.totalRepsAllSets == 50)
-        #expect(bilateral?.weightPhaseTotalReps == 50)
     }
 }
 

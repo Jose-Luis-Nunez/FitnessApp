@@ -1,26 +1,70 @@
 import Foundation
 
+/// The level a training session was performed at.
+///
+/// An enum rather than a weight plus an optional rep count, because exactly one
+/// of the two applies and the consumer must not have to be told which by a
+/// separate flag: a disagreement between the flag and the data used to render
+/// "0 kg" on bodyweight exercises.
+public enum PhaseValue: Equatable {
+    case weight(Double)
+    case reps(Int)
+}
+
+/// One training day, reduced to what an increase tile needs to name it.
+///
+/// Bundled rather than spread across parallel fields on `WeightPhase`: the three
+/// values describe *one* session that actually happened, and separate fields
+/// would let a later edit take the level from one day and the date from another
+/// without anything complaining.
+public struct PhaseEndpoint: Equatable {
+    public let value: PhaseValue
+    public let setsReps: String
+    public let date: Date
+
+    public init(value: PhaseValue, setsReps: String, date: Date) {
+        self.value = value
+        self.setsReps = setsReps
+        self.date = date
+    }
+}
+
+/// A step up: the session that first reached a new level, and the last session
+/// at the level before it.
+///
+/// Only increases are modelled. A change of weight in either direction opens a
+/// new grouping in the analytics history, but a deload is not progress, and a
+/// tile that announced one would be stating the opposite of what happened.
+///
+/// `daysToReach` and `workoutsToReach` describe the *way to* this level — the
+/// gap from `previousSession` to `startDate`, and the workouts spent at the old
+/// level to earn it. They deliberately do not describe the time spent at the new
+/// level; the tile's own two dates would contradict that.
+///
+/// Named `WeightPhase` for now because the type is referenced widely; the name
+/// predates the increase framing and is worth correcting separately.
 public struct WeightPhase: Identifiable {
     public let id = UUID()
-    public let weight: Double
-    public let sessionCount: Int
-    public let durationDays: Int
+    public let value: PhaseValue
+    public let daysToReach: Int
+    public let workoutsToReach: Int
     public let startSetsReps: String
     public let startDate: Date
-    public let endSetsReps: String
-    public let endDate: Date
-    public let hasImproved: Bool
-    public let maxReps: Int?
+    public let previousSession: PhaseEndpoint
 
-    public init(weight: Double, sessionCount: Int, durationDays: Int, startSetsReps: String, startDate: Date, endSetsReps: String, endDate: Date, hasImproved: Bool, maxReps: Int? = nil) {
-        self.weight = weight
-        self.sessionCount = sessionCount
-        self.durationDays = durationDays
+    public init(
+        value: PhaseValue,
+        daysToReach: Int,
+        workoutsToReach: Int,
+        startSetsReps: String,
+        startDate: Date,
+        previousSession: PhaseEndpoint
+    ) {
+        self.value = value
+        self.daysToReach = daysToReach
+        self.workoutsToReach = workoutsToReach
         self.startSetsReps = startSetsReps
         self.startDate = startDate
-        self.endSetsReps = endSetsReps
-        self.endDate = endDate
-        self.hasImproved = hasImproved
-        self.maxReps = maxReps
+        self.previousSession = previousSession
     }
 }

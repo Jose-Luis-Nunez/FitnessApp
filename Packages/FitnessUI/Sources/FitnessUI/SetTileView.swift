@@ -66,12 +66,15 @@ public struct SetTileView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .padding(.vertical, 6)
         .padding(.horizontal, 10)
-        // `strokeBorder`, not `stroke`: a centred stroke puts half its width
-        // outside the shape, where the tile's own clip shape removes it — the
-        // ring then renders at half the width it asks for.
+        // Same colour and hairline width as the cards' circular controls, drawn
+        // from their token: the tile reads as a member of that family, and the
+        // two cannot drift apart. It briefly carried its own doubled width,
+        // which only looked right while `stroke` was silently halving it —
+        // `strokeBorder` draws inside the shape, so the token's value is what
+        // actually renders.
         .overlay(
             RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile, style: .continuous)
-                .strokeBorder(AppStyle.Color.gray, lineWidth: AppStyle.Layout.setTileRingWidth)
+                .strokeBorder(AppStyle.Color.gray, lineWidth: AppStyle.Layout.idlePlayRingWidth)
         )
         .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile, style: .continuous))
     }

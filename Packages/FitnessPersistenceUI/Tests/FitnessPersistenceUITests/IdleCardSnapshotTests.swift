@@ -191,10 +191,79 @@ struct IdleCardSnapshotTests {
 
 
 
+    /// The coaching phase tiles, which had no baseline at all. They live behind
+    /// two expansions — the button sits in the last-run row, and the phases are
+    /// loaded when that row opens — so both flags are set, which is also the only
+    /// state the real card can reach them in.
+    ///
+    /// Two increases, so the row shows the overflow chevron and a peeking second
+    /// tile. This is also what pins `PhaseTiles.rowHeight`: too small a value
+    /// clips the second session out of the tile.
+    @Test func expandedCoachingPhases() throws {
+        let (model, container) = try makeIdleCardContainer()
+        let storage = MockAnalyticsStorage()
+        storage.save([
+            AnalyticsEntry(
+                exerciseId: model.id,
+                date: Date(timeIntervalSince1970: 1_734_998_400),
+                setProgress: (0..<3).map { _ in
+                    SetProgress(status: .completedDone, currentReps: 14, weight: 30)
+                }
+            ),
+            AnalyticsEntry(
+                exerciseId: model.id,
+                date: Date(timeIntervalSince1970: 1_735_430_400),
+                setProgress: (0..<3).map { _ in
+                    SetProgress(status: .completedDone, currentReps: 12, weight: 32)
+                }
+            ),
+            AnalyticsEntry(
+                exerciseId: model.id,
+                date: Date(timeIntervalSince1970: 1_735_689_600),
+                setProgress: (0..<3).map { _ in
+                    SetProgress(status: .completedDone, currentReps: 10, weight: 35)
+                }
+            ),
+        ], for: model.id)
+        let analyticsVM = AnalyticsViewModel(
+            storageService: storage,
+            exerciseStorage: MockExerciseStorage(),
+            workoutStorage: MockWorkoutStorage()
+        )
+
+        let view = IdleActiveCardModelView(
+            model: model,
+            analyticsViewModel: analyticsVM,
+            onEdit: { _, _ in },
+            isEditable: false,
+            onStart: { _ in },
+            initiallyExpanded: true,
+            initiallyLastRunExpanded: true,
+            imageProvider: try snapshotImageProvider(
+                artworkName: model.categoryGroup.defaultIconName
+            )
+        )
+        .modelContainer(container)
+
+        assertSnapshot(of: view, named: "expanded-coaching-phases", size: CGSize(width: 393, height: 560))
+    }
+
     @Test func expandedLastRunWithOverflow() throws {
         let (model, container) = try makeIdleCardContainer()
         let storage = MockAnalyticsStorage()
         storage.save([
+            // An earlier, lighter day so the history contains a weight increase.
+            // Without one there are no coaching phases, and the coaching button
+            // this baseline covers would not be offered at all. It is dated
+            // before the entry below, so the last-run row still renders the same
+            // five sets.
+            AnalyticsEntry(
+                exerciseId: model.id,
+                date: Date(timeIntervalSince1970: 1_735_257_600),
+                setProgress: [
+                    SetProgress(status: .completedDone, currentReps: 10, weight: 15),
+                ]
+            ),
             AnalyticsEntry(
                 exerciseId: model.id,
                 date: Date(timeIntervalSince1970: 1_735_689_600),
@@ -230,7 +299,11 @@ struct IdleCardSnapshotTests {
         assertSnapshot(of: view, named: "expanded-last-run-overflow", size: CGSize(width: 393, height: 360))
         #expect(storage.availabilityCallCount == 1)
         #expect(storage.latestLoadCallCount == 1)
-        #expect(storage.loadCallCount == 0)
+        // One full-history read, because an expanded last-run row must know
+        // whether a weight increase exists before it can decide whether to offer
+        // the coaching button. It used to be 0 here and 1 on the button's own
+        // tap; the read moved one gesture earlier, it was not added.
+        #expect(storage.loadCallCount == 1)
     }
 
 }

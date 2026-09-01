@@ -39,6 +39,7 @@ old one.
 | [0019](../../docs/adr/0019-value-propagated-app-color-theme.md) | One root-owned, value-propagated app color theme updates consumers without replacing view identity. |
 | [0020](../../docs/adr/0020-app-language-localization-boundary.md) | Catalog-derived localization and one root locale preserve state across app-language changes. |
 | [0021](../../docs/adr/0021-shared-package-graph-and-layered-test-plans.md) | One SwiftPM graph preserves module boundaries while native, integration and snapshot plans separate execution cost. |
+| [0022](../../docs/adr/0022-coaching-phase-read-follows-affordance-visibility.md) | The coaching-phase history read moves to the gesture that reveals the affordance, because its visibility now depends on that data. |
 
 ## Feature Map
 
@@ -78,8 +79,10 @@ and test-layer boundary.
 - Starting training presents `TrainingSheetView` above the current Home or Category
   stack. The router owns presentation, while `TrainingCoordinator` owns the session.
 - Exercise cards use demand-loaded analytics: availability for action visibility,
-  the latest entry for an opened last-run section, and full history only for the
-  coaching/phase drill-down. Parent lists do not prefetch full histories.
+  and the latest entry plus the full history when the last-run section is opened —
+  the coaching affordance is only offered when the history shows an increase, so
+  its visibility decides the read (ADR-0022). Parent lists do not prefetch full
+  histories.
 - `TotalAnalyticsView` and `ScheduleView` use a workout-wide
   `WorkoutAnalyticsSnapshot` so their rendered state is materialized before SwiftUI
   body evaluation.
@@ -100,7 +103,7 @@ second domain model.
 | `TrainingStep` | One executable step derived from an exercise's logical sets; bilateral exercises produce side-specific steps. |
 | `AnalyticsEntry` / `SetProgress` | A dated exercise result and its physical execution results. Side and logical-set metadata preserve bilateral meaning without nesting persistence records. |
 | `WorkoutAnalyticsSnapshot` | Sendable workout-wide read model containing exercises, deterministic flat entries and entries grouped by exercise ID. |
-| `WeightPhase` | A derived analytics interval used for coaching and progress presentation. |
+| `WeightPhase` | A derived weight or rep *increase*: the session that first reached a level, paired with the last session before it. Only steps up are modelled. |
 | `SeatSettings` | Optional equipment configuration associated with an exercise. |
 | `ExerciseFeedback`, `Symptom`, `BodyRegion` | Per-training-session subjective feedback and its typed classifications. |
 | `WorkoutShareEnvelope` | Versioned import/export boundary containing a workout, exercises and analytics. Imported identities are regenerated. |

@@ -130,31 +130,35 @@ extension AnalyticsViewModel {
         }
         rawPhases.append(RawPhase(maxReps: phaseStart.maxReps, sessionCount: sessionCount, start: phaseStart, end: phaseEnd))
 
-        let phasesToReturn = Array(rawPhases.suffix(limit))
-        var result: [WeightPhase] = []
-
-        for (index, raw) in phasesToReturn.enumerated() {
-            let days: Int
-            let globalIndex = rawPhases.count - phasesToReturn.count + index
-            if globalIndex + 1 < rawPhases.count {
-                days = calendar.dateComponents([.day], from: raw.start.date, to: rawPhases[globalIndex + 1].start.date).day ?? 0
-            } else {
-                days = calendar.dateComponents([.day], from: raw.start.date, to: raw.end.date).day ?? 0
-            }
-
-            result.append(WeightPhase(
-                weight: 0,
-                sessionCount: raw.sessionCount,
-                durationDays: max(days, 1),
-                startSetsReps: raw.start.repsSetsRepsLabel,
-                startDate: raw.start.date,
-                endSetsReps: raw.end.repsSetsRepsLabel,
-                endDate: raw.end.date,
-                hasImproved: raw.end.totalRepsAllSets > raw.start.totalRepsAllSets,
-                maxReps: raw.maxReps
-            ))
+        // Same rule as the weighted path — only steps up, each paired with its
+        // predecessor. See `weightPhases(from:limit:)`.
+        var increases: [(phase: RawPhase, previous: RawPhase)] = []
+        for index in 1..<rawPhases.count {
+            let phase = rawPhases[index]
+            let previous = rawPhases[index - 1]
+            guard phase.maxReps > previous.maxReps else { continue }
+            increases.append((phase, previous))
         }
 
-        return result
+        return increases.suffix(limit).map { entry in
+            let days = calendar.dateComponents(
+                [.day],
+                from: entry.previous.end.date,
+                to: entry.phase.start.date
+            ).day ?? 0
+
+            return WeightPhase(
+                value: .reps(entry.phase.maxReps),
+                daysToReach: max(days, 1),
+                workoutsToReach: entry.previous.sessionCount,
+                startSetsReps: entry.phase.start.repsSetsRepsLabel,
+                startDate: entry.phase.start.date,
+                previousSession: PhaseEndpoint(
+                    value: .reps(entry.previous.maxReps),
+                    setsReps: entry.previous.end.repsSetsRepsLabel,
+                    date: entry.previous.end.date
+                )
+            )
+        }
     }
 }

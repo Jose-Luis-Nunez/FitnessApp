@@ -1094,6 +1094,23 @@
         }
       }
     },
+    "analytics.increased": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gesteigert"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Increased"
+          }
+        }
+      }
+    },
     "analytics.last_workout": {
       "extractionState": "manual",
       "localizations": {
@@ -1247,7 +1264,24 @@
         }
       }
     },
-    "analytics.period_days": {
+    "analytics.previous_workout": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vorheriges Workout"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previous workout"
+          }
+        }
+      }
+    },
+    "analytics.reached_in_days": {
       "extractionState": "manual",
       "localizations": {
         "de": {
@@ -1256,13 +1290,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Zeitraum: %1$(count)lld Tag"
+                  "value": "Erreicht in %1$(count)lld Tag"
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Zeitraum: %1$(count)lld Tage"
+                  "value": "Erreicht in %1$(count)lld Tagen"
                 }
               }
             }
@@ -1274,13 +1308,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Period: %1$(count)lld Day"
+                  "value": "Reached in %1$(count)lld day"
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Period: %1$(count)lld Days"
+                  "value": "Reached in %1$(count)lld days"
                 }
               }
             }
@@ -1420,23 +1454,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Analytics"
-          }
-        }
-      }
-    },
-    "analytics.to": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "bis"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "to"
           }
         }
       }
@@ -1783,6 +1800,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "Weight increase"
+          }
+        }
+      }
+    },
+    "analytics.with_workout_count": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "mit %1$(count)lld Workout"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "mit %1$(count)lld Workouts"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "with %1$(count)lld workout"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "with %1$(count)lld workouts"
+                }
+              }
+            }
           }
         }
       }

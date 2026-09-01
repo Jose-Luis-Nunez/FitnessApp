@@ -62,6 +62,16 @@ public enum ExerciseCardLayout {
         public static let columnWidth: CGFloat = AppStyle.Layout.minimumTapTargetSize
     }
 
+    /// Constants for the coaching phase-tile row on the idle card.
+    public enum PhaseTiles {
+        /// Height of the phase-tile row. The row derives its tile width inside a
+        /// `GeometryReader`, which claims all offered height, so the caller has
+        /// to state it — the same arrangement `SetTiles.rowHeight` serves.
+        /// Sized against the tile's tallest state: the summary block, the
+        /// divider and two three-line sessions.
+        public static let rowHeight: CGFloat = 208
+    }
+
     /// Constants for the circular coaching-tip badge on the idle card.
     ///
     /// Shares `ResetButton.size` on purpose — it is the same 40pt card-action

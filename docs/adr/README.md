@@ -78,6 +78,7 @@ Cross-links to other ADRs, plans, code, external resources.
 | 0019 | Value-propagated app color theme without identity reset | accepted |
 | 0020 | App language and localization boundary | accepted |
 | 0021 | Shared package graph and layered test plans | accepted |
+| 0022 | Coaching-phase read follows the affordance's visibility | accepted |
 
 > **ADR-0004 note:** The number 0004 is intentionally unassigned. Two existing ADRs reference "ADR-0004" as a future anchor for two possible triggers:
 > - **TCA migration** (referenced in ADR-0001 §"Trigger occurred → write ADR-0004"): if the observability problems of SwiftUI/SwiftData become untenable, ADR-0004 would document the migration to The Composable Architecture.

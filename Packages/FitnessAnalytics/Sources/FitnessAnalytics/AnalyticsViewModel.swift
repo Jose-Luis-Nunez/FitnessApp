@@ -209,7 +209,8 @@ public final class AnalyticsViewModel {
         )
     }
 
-    /// The full history is loaded only after the coaching-tip drill-down.
+    /// The full history is loaded when the Last run row expands, because the
+    /// coaching affordance's visibility depends on the result (ADR-0022).
     public func loadCardPhases(
         for exerciseId: UUID,
         hasWeight: Bool
@@ -574,31 +575,44 @@ extension AnalyticsViewModel {
         }
         rawPhases.append(RawPhase(weight: phaseStart.maxWeight, sessionCount: sessionCount, start: phaseStart, end: phaseEnd))
         
-        let phasesToReturn = Array(rawPhases.suffix(limit))
-        var result: [WeightPhase] = []
-        
-        for (index, raw) in phasesToReturn.enumerated() {
-            let days: Int
-            let globalIndex = rawPhases.count - phasesToReturn.count + index
-            if globalIndex + 1 < rawPhases.count {
-                days = calendar.dateComponents([.day], from: raw.start.date, to: rawPhases[globalIndex + 1].start.date).day ?? 0
-            } else {
-                days = calendar.dateComponents([.day], from: raw.start.date, to: raw.end.date).day ?? 0
-            }
-            
-            result.append(WeightPhase(
-                weight: raw.weight,
-                sessionCount: raw.sessionCount,
-                durationDays: max(days, 1),
-                startSetsReps: raw.start.weightSetsRepsLabel,
-                startDate: raw.start.date,
-                endSetsReps: raw.end.weightSetsRepsLabel,
-                endDate: raw.end.date,
-                hasImproved: raw.end.weightPhaseTotalReps > raw.start.weightPhaseTotalReps
-            ))
+        // Only steps *up* qualify. A phase boundary is any change of weight, so
+        // a deload opens one too — and a tile announcing "Increased 50 kg" after
+        // 60 would state the opposite of what happened, besides switching on an
+        // affordance that is supposed to appear only after progress.
+        //
+        // Pairing each phase with its predecessor here also replaces the index
+        // arithmetic this loop used to do: every kept entry has a predecessor by
+        // construction, so there is no boundary case to reason about.
+        var increases: [(phase: RawPhase, previous: RawPhase)] = []
+        for index in 1..<rawPhases.count {
+            let phase = rawPhases[index]
+            let previous = rawPhases[index - 1]
+            guard phase.weight > previous.weight else { continue }
+            increases.append((phase, previous))
         }
-        
-        return result
+
+        return increases.suffix(limit).map { entry in
+            // The way *to* this weight: from the last workout at the old weight
+            // to the first at the new one, and the workouts that earned it.
+            let days = calendar.dateComponents(
+                [.day],
+                from: entry.previous.end.date,
+                to: entry.phase.start.date
+            ).day ?? 0
+
+            return WeightPhase(
+                value: .weight(entry.phase.weight),
+                daysToReach: max(days, 1),
+                workoutsToReach: entry.previous.sessionCount,
+                startSetsReps: entry.phase.start.weightSetsRepsLabel,
+                startDate: entry.phase.start.date,
+                previousSession: PhaseEndpoint(
+                    value: .weight(entry.previous.weight),
+                    setsReps: entry.previous.end.weightSetsRepsLabel,
+                    date: entry.previous.end.date
+                )
+            )
+        }
     }
 
 }

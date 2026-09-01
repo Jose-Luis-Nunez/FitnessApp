@@ -27,7 +27,6 @@ struct DayTrainingSession {
     let minRepsAtMaxWeight: Int
     /// Highest rep count of the day, regardless of weight.
     let maxReps: Int
-    let totalRepsAllSets: Int
     let totalRepsAtMaxWeight: Int
 }
 
@@ -49,7 +48,6 @@ extension DayTrainingSession {
                 // zero would render as a real "0 kg" session.
                 guard let maxReps = allSets.map(\.currentReps).max() else { return nil }
 
-                let totalRepsAllSets = allSets.reduce(0) { $0 + $1.currentReps }
 
                 let bilateralGroups = dayEntries.compactMap {
                     BilateralSetGrouping.groups(for: $0.setProgress)
@@ -88,7 +86,6 @@ extension DayTrainingSession {
                         countAtMaxWeight: groupsAtWeight.count,
                         minRepsAtMaxWeight: minRepsAtMaxWeight,
                         maxReps: maxReps,
-                        totalRepsAllSets: totalRepsAllSets,
                         totalRepsAtMaxWeight: repsAtWeight.reduce(0, +)
                     )
                 }
@@ -110,7 +107,6 @@ extension DayTrainingSession {
                     countAtMaxWeight: setsAtWeight.count,
                     minRepsAtMaxWeight: minRepsAtMaxWeight,
                     maxReps: maxReps,
-                    totalRepsAllSets: totalRepsAllSets,
                     totalRepsAtMaxWeight: setsAtWeight.reduce(0) { $0 + $1.currentReps }
                 )
             }
@@ -131,15 +127,5 @@ extension DayTrainingSession {
             forEntries: entries.map(\.setProgress),
             reps: maxReps
         )
-    }
-
-    /// Total reps as the weight-phase feature counts them.
-    ///
-    /// The two branches disagree — bilateral days count every set, unilateral
-    /// days only the sets at `maxWeight`. That asymmetry predates this type and
-    /// feeds `WeightPhase.hasImproved`, so it is preserved verbatim rather than
-    /// "fixed" as a side effect of extracting this reduction.
-    var weightPhaseTotalReps: Int {
-        isBilateral ? totalRepsAllSets : totalRepsAtMaxWeight
     }
 }

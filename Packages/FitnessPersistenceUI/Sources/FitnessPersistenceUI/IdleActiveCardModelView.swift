@@ -207,14 +207,13 @@ public struct IdleActiveCardModelView: View {
 
     private func handleAppear() {
         refreshAvailability()
+        // Keyed to `isLastRunExpanded`, not `isExpanded`: the phases decide
+        // whether the coaching button exists at all, and that button lives in
+        // the last-run row. Keyed to the tip expansion instead, a re-appear
+        // would make the button vanish while its row is still open.
         if isLastRunExpanded {
             _ = loadLastRun()
-        }
-        if isExpanded {
-            weightPhases = analyticsViewModel.loadCardPhases(
-                for: model.id,
-                hasWeight: model.hasWeight
-            )
+            loadPhases()
         }
     }
 
@@ -222,13 +221,15 @@ public struct IdleActiveCardModelView: View {
         refreshAvailability()
         if isLastRunExpanded {
             _ = loadLastRun()
+            loadPhases()
         }
-        if isExpanded {
-            weightPhases = analyticsViewModel.loadCardPhases(
-                for: model.id,
-                hasWeight: model.hasWeight
-            )
-        }
+    }
+
+    private func loadPhases() {
+        weightPhases = analyticsViewModel.loadCardPhases(
+            for: model.id,
+            hasWeight: model.hasWeight
+        )
     }
 
     private let theme: CardTheme = .idle
@@ -535,9 +536,16 @@ private extension IdleActiveCardModelView {
         if isLastRunExpanded {
             isExpanded = false
             isLastRunExpanded = false
+            weightPhases = []
             return
         }
         guard loadLastRun() else { return }
+        // The coaching button is only reachable from this row, and whether it
+        // may appear depends on the phases — so they are read here rather than
+        // on the button's own tap. Expanding is an explicit gesture, and the tap
+        // that follows is then served from cache, so the drill-down still costs
+        // one full history read in total.
+        loadPhases()
         isLastRunExpanded = true
     }
 
@@ -556,17 +564,12 @@ private extension IdleActiveCardModelView {
         .accessibilityHint(isExpanded ? AppText.accessibilityCollapsesCoachingTips : AppText.accessibilityExpandsCoachingTips)
     }
 
+    /// A plain toggle. The load moved to `toggleLastRunDetails()`, and the
+    /// `guard` that used to swallow the tap when there were no phases is gone
+    /// with it: the button no longer exists in that case, so the guard would be
+    /// an unreachable path that silently did nothing.
     func toggleCoachingTips() {
-        if isExpanded {
-            isExpanded = false
-            return
-        }
-        weightPhases = analyticsViewModel.loadCardPhases(
-            for: model.id,
-            hasWeight: model.hasWeight
-        )
-        guard !weightPhases.isEmpty else { return }
-        isExpanded = true
+        isExpanded.toggle()
     }
 
     /// Circular coaching glyph matching the completed card's reset button: same
@@ -630,23 +633,54 @@ private extension IdleActiveCardModelView {
         .padding(.top, 4)
     }
 
+    /// One tile at a time with the next one peeking in, plus the overflow
+    /// chevron — the same affordance the set tiles above it use, driven by the
+    /// same `SetTilesRowMetrics` arithmetic rather than a second mechanism.
+    ///
+    /// Three tiles abreast left each about 110pt wide, which forced the tile's
+    /// own content into a narrow column and made it read as a tall strip. A
+    /// phase tile states two sessions one under the other, so it needs the width
+    /// more than the row needs to show every phase at once.
     var phaseTilesRow: some View {
-        HStack(spacing: 8) {
-            ForEach(weightPhases) { phase in
-                WeightPhaseTileView(phase: phase, hasWeight: model.hasWeight)
-                    .frame(maxWidth: .infinity)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        analyticsSheetDate = AnalyticsSheetDate(date: phase.startDate)
-                    }
-            }
+        GeometryReader { geo in
+            let visibleCount = AppStyle.Layout.phaseTileVisibleCount
+            let showsChevron = SetTilesRowMetrics.showsChevron(
+                setCount: weightPhases.count,
+                visibleTileCount: visibleCount
+            )
+            let tileWidth = SetTilesRowMetrics.tileWidth(
+                available: geo.size.width,
+                reservedTrailingWidth: 0,
+                showsChevron: showsChevron,
+                visibleTileCount: visibleCount
+            )
 
-            if weightPhases.count < 3 {
-                ForEach(0..<(3 - weightPhases.count), id: \.self) { _ in
-                    Color.clear.frame(maxWidth: .infinity)
+            HStack(spacing: SetTilesRowMetrics.spacing) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: SetTilesRowMetrics.spacing) {
+                        ForEach(weightPhases) { phase in
+                            WeightPhaseTileView(phase: phase)
+                                .frame(width: tileWidth)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    analyticsSheetDate = AnalyticsSheetDate(date: phase.startDate)
+                                }
+                        }
+                    }
+                }
+
+                if showsChevron {
+                    Image(systemName: "chevron.compact.right")
+                        .font(AppStyle.Font.regularChip)
+                        .foregroundColor(
+                            AppStyle.Color.idleMetricLabel.opacity(AppStyle.Opacity.separatorLine)
+                        )
+                        .frame(width: SetTilesRowMetrics.chevronWidth)
+                        .frame(maxHeight: .infinity)
                 }
             }
         }
+        .frame(height: ExerciseCardLayout.PhaseTiles.rowHeight)
     }
 
     /// Last-run per-set breakdown via the shared `SetTilesRow`. The coaching
@@ -662,13 +696,17 @@ private extension IdleActiveCardModelView {
             visibleTileCount: AppStyle.Layout.setTileVisibleCount,
             onTap: { analyticsSheetDate = AnalyticsSheetDate(date: Date()) },
             trailingAccessory: {
-                // Explicit, not inherited from `minimumTapTargetSize` happening
-                // to equal it: `TrailingControl` documents that anything in this
-                // column claims `columnWidth`, and relying on the coincidence
-                // would let the two cards' tile widths diverge the moment either
-                // constant moves.
-                coachingTipButton
-                    .frame(width: ExerciseCardLayout.TrailingControl.columnWidth)
+                // Only offered when there is a weight increase to show. The
+                // column keeps its width either way — `TrailingControl`
+                // documents that anything placed here claims `columnWidth`, and
+                // letting it collapse would change the tile widths on this card
+                // but not on the completed one.
+                Group {
+                    if !weightPhases.isEmpty {
+                        coachingTipButton
+                    }
+                }
+                .frame(width: ExerciseCardLayout.TrailingControl.columnWidth)
             }
         )
     }

@@ -57,10 +57,6 @@ public enum AppStyle {
         public static let setTileValueRowHeight: CGFloat = 26
         public static let setTileRepsRowHeight: CGFloat = 16
 
-        /// Ring around a set tile. Deliberately twice `idlePlayRingWidth`: the
-        /// same hairline that gives a 40pt circle a crisp edge dissolves along a
-        /// ~95pt rectangle, leaving the tile without a readable boundary.
-        public static let setTileRingWidth: CGFloat = 1
         /// Blur radius of the soft mint outer glow rendered around the idle
         /// play button. Tuned together with `idlePlayButtonGlowSize` for a
         /// subtle hint that doesn't spill into the surrounding card surface.
@@ -137,6 +133,10 @@ public enum AppStyle {
         public static let analyticsEntryIconWidth: CGFloat = 52
         /// Vertical gap between the idle card's "Last run" trigger and its expanded set details.
         public static let idleLastRunExpandedTopSpacing: CGFloat = 12
+        /// Fractional tile count for the coaching phase tiles. Barely above one:
+        /// a phase tile states two sessions side by side and needs almost the
+        /// full width, while the sliver of the next tile still says there is one.
+        public static let phaseTileVisibleCount: CGFloat = 1.15
         /// Fractional tile count fitted into a set-tile viewport so the next tile
         /// peeks in. Shared by the idle card's "Last run" row and the completed
         /// card's expanded row: the fraction is what sets the tile width, so the

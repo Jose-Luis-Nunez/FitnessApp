@@ -115,12 +115,16 @@ struct ExerciseCardAnalyticsLoadingTests {
         #expect(storage.latestLoadedExerciseIDs == [exerciseID])
     }
 
-    @Test func coachingTapIsTheFirstFullHistoryRead() {
+    /// Named after the read, not the gesture that triggers it: the card phases
+    /// are the only card stage that needs the complete history, and the two
+    /// weights below make the fixture contain an actual increase — without one
+    /// there are no phases to return at all.
+    @Test func loadingCardPhasesIsTheFirstFullHistoryRead() {
         let storage = MockAnalyticsStorage()
         let exerciseID = UUID()
         storage.save([
-            entry(for: exerciseID, date: Date(timeIntervalSince1970: 100)),
-            entry(for: exerciseID, date: Date(timeIntervalSince1970: 200)),
+            entry(for: exerciseID, date: Date(timeIntervalSince1970: 100), weight: 20),
+            entry(for: exerciseID, date: Date(timeIntervalSince1970: 200_000), weight: 30),
         ], for: exerciseID)
         storage.resetLoadTracking()
         let viewModel = AnalyticsViewModel(storageService: storage)
@@ -135,6 +139,20 @@ struct ExerciseCardAnalyticsLoadingTests {
         #expect(storage.loadCallCount == 1)
         #expect(storage.loadedExerciseIDs == [exerciseID])
         #expect(storage.batchLoadCallCount == 0)
+    }
+
+    /// An exercise trained only at one weight has no phases, and that empty
+    /// result is exactly what hides the coaching-tip button.
+    @Test func anExerciseWithoutAnIncreaseYieldsNoPhases() {
+        let storage = MockAnalyticsStorage()
+        let exerciseID = UUID()
+        storage.save([
+            entry(for: exerciseID, date: Date(timeIntervalSince1970: 100), weight: 20),
+            entry(for: exerciseID, date: Date(timeIntervalSince1970: 200_000), weight: 20),
+        ], for: exerciseID)
+        let viewModel = AnalyticsViewModel(storageService: storage)
+
+        #expect(viewModel.loadCardPhases(for: exerciseID, hasWeight: true).isEmpty)
     }
 
     @Test func fullHistoryAnswersLowerCacheStagesWithoutMoreReads() {
@@ -222,15 +240,16 @@ struct ExerciseCardAnalyticsLoadingTests {
 
     private func entry(
         for exerciseID: UUID,
-        date: Date = Date()
+        date: Date = Date(),
+        weight: Double = 20
     ) -> AnalyticsEntry {
         AnalyticsEntry(
             exerciseId: exerciseID,
             date: date,
             setProgress: [
-                SetProgress(status: .completedDone, currentReps: 10, weight: 20),
-                SetProgress(status: .completedDone, currentReps: 10, weight: 20),
-                SetProgress(status: .completedDone, currentReps: 10, weight: 20),
+                SetProgress(status: .completedDone, currentReps: 10, weight: weight),
+                SetProgress(status: .completedDone, currentReps: 10, weight: weight),
+                SetProgress(status: .completedDone, currentReps: 10, weight: weight),
             ]
         )
     }
