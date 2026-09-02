@@ -141,20 +141,15 @@ extension AnalyticsViewModel {
         }
 
         return increases.suffix(limit).map { entry in
-            // Both endpoints normalised to their day boundary first. The
-            // sessions now carry real timestamps rather than midnight values, and
-            // `dateComponents([.day])` counts whole 24-hour units — an evening
-            // workout followed by a morning one two days later measured as one
-            // day, so the tile under-reported by up to a full day.
-            let days = calendar.dateComponents(
-                [.day],
-                from: calendar.startOfDay(for: entry.previous.end.date),
-                to: calendar.startOfDay(for: entry.phase.start.date)
-            ).day ?? 0
+            let days = TrainingSession.daysBetween(
+                entry.previous.end,
+                and: entry.phase.start,
+                calendar: calendar
+            )
 
             return LevelIncrease(
                 value: .reps(entry.phase.maxReps),
-                daysToReach: max(days, 1),
+                daysToReach: days,
                 workoutsToReach: entry.previous.sessionCount,
                 startSetsReps: entry.phase.start.repsSetsRepsLabel,
                 startDate: entry.phase.start.date,

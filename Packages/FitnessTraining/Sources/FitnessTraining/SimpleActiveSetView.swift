@@ -682,7 +682,11 @@ private struct SetRowView: View {
                 // The tight bilateral layout drops the unit entirely rather than
                 // appending an empty styled run.
                 guard sizing != .bilateralTight else { return value }
-                return value + Text(verbatim: " kg")
+                // The separator is grouped with the unit so both scale and dim
+                // with it. The unit used to be the literal `" kg"`, one run that
+                // carried the space along; taking the word from the catalog
+                // splits it in two, and the parentheses keep them one styled run.
+                return value + (Text(verbatim: " ") + Text(AppText.unitKilogram))
                     .font(AppStyle.Font.cardMetricUnit)
                     .foregroundColor(AppStyle.Color.idleMetricUnit)
             }()

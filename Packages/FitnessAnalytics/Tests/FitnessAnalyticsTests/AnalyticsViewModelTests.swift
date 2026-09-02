@@ -646,6 +646,9 @@ struct WeightIncreasesTests {
         #expect(increases.count == 1)
         #expect(increases.first?.value == .weight(25))
         #expect(increases.first?.previousSession.value == .weight(20))
+        // Zero, not one: both sessions are the same day, and the tile says so
+        // rather than claiming a span its own two dates contradict.
+        #expect(increases.first?.daysToReach == 0)
     }
 
     /// Every other fixture in this file is built on `startOfDay`, so none of them

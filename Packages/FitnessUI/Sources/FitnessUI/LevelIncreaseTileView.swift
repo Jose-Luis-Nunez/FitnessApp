@@ -30,10 +30,13 @@ public struct LevelIncreaseTileView: View {
 
             // Same line policy as the timeline rows below. Without it these two
             // wrap while those scale, and a wrapped summary pushes the timeline
-            // against the row's fixed height — German reaches the tile width
-            // first ("Erreicht in 12 Tagen").
+            // against the row's fixed height. German reaches the tile width
+            // first, and the longest of these strings is the same-day one
+            // ("Am selben Tag erreicht").
             Group {
-                Text(AppText.analyticsReachedInDays(count: increase.daysToReach))
+                // A same-day increase has no span to report, and "1 day" over
+                // two identical dates reads as a contradiction.
+                reachedLine
                     .foregroundColor(.white.opacity(0.6))
 
                 Text(AppText.analyticsWithWorkoutCount(count: increase.workoutsToReach))
@@ -148,6 +151,12 @@ public struct LevelIncreaseTileView: View {
                 .strokeBorder(color, lineWidth: AppStyle.Layout.idlePlayRingWidth)
                 .frame(width: 14, height: 14)
         }
+    }
+
+    private var reachedLine: Text {
+        increase.daysToReach == 0
+            ? Text(AppText.analyticsReachedSameDay)
+            : Text(AppText.analyticsReachedInDays(count: increase.daysToReach))
     }
 
     private func number(of value: TrainingLevel) -> String {

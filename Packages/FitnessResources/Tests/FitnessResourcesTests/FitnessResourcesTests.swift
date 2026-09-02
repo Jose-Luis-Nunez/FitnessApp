@@ -68,6 +68,10 @@ struct FitnessResourcesTests {
         #expect(AppText.resolve(AppText.exerciseCount(count: 2), locale: AppLanguage.german.locale) == "2 Übungen")
         #expect(AppText.resolve(AppText.analyticsReachedInDays(count: 1), locale: AppLanguage.english.locale) == "Reached in 1 day")
         #expect(AppText.resolve(AppText.analyticsReachedInDays(count: 2), locale: AppLanguage.german.locale) == "Erreicht in 2 Tagen")
+        // The string that replaces the line above when an increase happens
+        // within one day.
+        #expect(AppText.resolve(AppText.analyticsReachedSameDay, locale: AppLanguage.english.locale) == "Reached the same day")
+        #expect(AppText.resolve(AppText.analyticsReachedSameDay, locale: AppLanguage.german.locale) == "Am selben Tag erreicht")
         #expect(AppText.resolve(AppText.analyticsTrainingExercises(training: 1, exercises: 1), locale: AppLanguage.english.locale) == "1 Training · 1 Exercise")
         #expect(AppText.resolve(AppText.analyticsTrainingExercises(training: 2, exercises: 2), locale: AppLanguage.german.locale) == "2 Trainings · 2 Übungen")
         #expect(AppText.resolve(AppText.exerciseSetLabel(count: 1), locale: AppLanguage.english.locale) == "set")

@@ -72,7 +72,9 @@ private func assertSnapshot<V: View>(
 }
 
 @MainActor
-private func makeIdleCardContainer() throws -> (ExerciseModel, ModelContainer) {
+private func makeIdleCardContainer(
+    weight: Double = 20
+) throws -> (ExerciseModel, ModelContainer) {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
     let container = try ModelContainer(
         for: WorkoutModel.self, ExerciseModel.self,
@@ -94,7 +96,7 @@ private func makeIdleCardContainer() throws -> (ExerciseModel, ModelContainer) {
         id: UUID(),
         workoutId: workoutId,
         name: "Curl",
-        weight: 20,
+        weight: weight,
         reps: 10,
         sets: 3,
         noSeats: true,
@@ -256,6 +258,55 @@ struct IdleCardSnapshotTests {
         assertSnapshot(of: view, named: "expanded-coaching-phases", size: CGSize(width: 393, height: 560))
     }
 
+    /// The reps branch of the increase tile. `LevelIncreaseTileView` picks its
+    /// dimension from `TrainingLevel`, and only the weight case had a baseline —
+    /// the branch that once rendered "0 kg" was the uncovered one.
+    @Test func expandedCoachingPhasesForBodyweight() throws {
+        let (model, container) = try makeIdleCardContainer(weight: 0)
+        let storage = MockAnalyticsStorage()
+        storage.save([
+            AnalyticsEntry(
+                exerciseId: model.id,
+                date: Date(timeIntervalSince1970: 1_734_998_400),
+                setProgress: (0..<3).map { _ in
+                    SetProgress(status: .completedDone, currentReps: 8, weight: 0)
+                }
+            ),
+            AnalyticsEntry(
+                exerciseId: model.id,
+                date: Date(timeIntervalSince1970: 1_735_430_400),
+                setProgress: (0..<3).map { _ in
+                    SetProgress(status: .completedDone, currentReps: 12, weight: 0)
+                }
+            ),
+        ], for: model.id)
+        let analyticsVM = AnalyticsViewModel(
+            storageService: storage,
+            exerciseStorage: MockExerciseStorage(),
+            workoutStorage: MockWorkoutStorage()
+        )
+
+        let view = IdleActiveCardModelView(
+            model: model,
+            analyticsViewModel: analyticsVM,
+            onEdit: { _, _ in },
+            isEditable: false,
+            onStart: { _ in },
+            initiallyExpanded: true,
+            initiallyLastRunExpanded: true,
+            imageProvider: try snapshotImageProvider(
+                artworkName: model.categoryGroup.defaultIconName
+            )
+        )
+        .modelContainer(container)
+
+        assertSnapshot(
+            of: view,
+            named: "expanded-coaching-phases-bodyweight",
+            size: CGSize(width: 393, height: 560)
+        )
+    }
+
     @Test func expandedLastRunWithOverflow() throws {
         let (model, container) = try makeIdleCardContainer()
         let storage = MockAnalyticsStorage()
@@ -370,6 +421,49 @@ struct InactiveCardRenderSnapshotTests {
         .modelContainer(container)
 
         assertSnapshot(of: view, named: "expanded-set-tiles", size: CGSize(width: 393, height: 360))
+    }
+
+    /// The gain state of the completed card's header. `checkmarkTrailing`
+    /// branches on `hasImprovement`, and only the no-gain shape had a baseline.
+    @Test func headerWithWeightGain() throws {
+        let (model, container) = try makeIdleCardContainer(weight: 25)
+        let storage = MockAnalyticsStorage()
+        storage.save([
+            AnalyticsEntry(
+                exerciseId: model.id,
+                date: Date(timeIntervalSince1970: 1_735_257_600),
+                setProgress: (0..<3).map { _ in
+                    SetProgress(status: .completedDone, currentReps: 10, weight: 20)
+                }
+            ),
+            AnalyticsEntry(
+                exerciseId: model.id,
+                date: Date(timeIntervalSince1970: 1_735_689_600),
+                setProgress: (0..<3).map { _ in
+                    SetProgress(status: .completedDone, currentReps: 12, weight: 25)
+                }
+            ),
+        ], for: model.id)
+        let analyticsVM = AnalyticsViewModel(
+            storageService: storage,
+            exerciseStorage: MockExerciseStorage(),
+            workoutStorage: MockWorkoutStorage()
+        )
+
+        let view = InactiveCardModelView(
+            model: model,
+            onEdit: { _, _ in },
+            isEditable: false,
+            analyticsViewModel: analyticsVM,
+            onReset: { _ in },
+            isResetEnabled: true,
+            imageProvider: try snapshotImageProvider(
+                artworkName: model.categoryGroup.defaultIconName
+            )
+        )
+        .modelContainer(container)
+
+        assertSnapshot(of: view, named: "header-with-weight-gain", size: CGSize(width: 393, height: 200))
     }
 
 }

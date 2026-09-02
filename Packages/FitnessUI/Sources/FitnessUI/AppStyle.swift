@@ -324,7 +324,7 @@ public enum AppStyle {
         /// A card's state word where a gain value would otherwise stand, e.g.
         /// "Completed". Semibold so it outweighs the affordance beneath it, and
         /// three points under `idleCardTitle` so it cannot outweigh the exercise
-        /// name — at the title's own 16pt bold it did exactly that.
+        /// name — at the title's own 16pt semibold it did exactly that.
         public static let cardStateValue = SwiftUI.Font.system(size: 13, weight: .semibold)
         /// Unit suffix and secondary value line on the exercise cards: the "kg"
         /// beside a weight, the "reps" beside a rep gain, and the "now …" footer.

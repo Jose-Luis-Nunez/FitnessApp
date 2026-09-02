@@ -40,6 +40,10 @@ public struct LevelSession: Equatable {
 /// gap from `previousSession` to `startDate`, and the workouts spent at the old
 /// level to earn it. They deliberately do not describe the time spent at the new
 /// level; the tile's own two dates would contradict that.
+///
+/// `daysToReach == 0` means both sessions fall on the same day. It used to be
+/// clamped to 1, which made a same-day increase claim "1 day" while printing the
+/// same date on both of its rows.
 public struct LevelIncrease: Identifiable {
     public let id = UUID()
     public let value: TrainingLevel

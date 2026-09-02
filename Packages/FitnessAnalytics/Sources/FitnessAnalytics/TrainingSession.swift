@@ -58,6 +58,26 @@ extension TrainingSession {
             .sorted { $0.date < $1.date }
     }
 
+    /// Calendar days from one session to another, counted by day boundary.
+    ///
+    /// Both endpoints are normalised first. Sessions carry real timestamps, and
+    /// `dateComponents([.day])` counts whole 24-hour units — an evening workout
+    /// followed by a morning one two days later measures as one day, so a naive
+    /// count under-reports by up to a full day. Shared by both increase builders
+    /// so the correction cannot be present in one and missing in the other; a
+    /// duplicated fix is a fix waiting to be half-reverted.
+    static func daysBetween(
+        _ earlier: TrainingSession,
+        and later: TrainingSession,
+        calendar: Calendar
+    ) -> Int {
+        calendar.dateComponents(
+            [.day],
+            from: calendar.startOfDay(for: earlier.date),
+            to: calendar.startOfDay(for: later.date)
+        ).day ?? 0
+    }
+
     /// The shared reduction. `entries` is a day's worth or a single workout's;
     /// every figure below is derived the same way either way.
     private static func reduced(
