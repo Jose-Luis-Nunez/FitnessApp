@@ -185,7 +185,7 @@ public final class AnalyticsViewModel {
         hasWeight: Bool,
         calendar: Calendar = .current
     ) -> SessionImprovement? {
-        let sessions = DayTrainingSession
+        let sessions = TrainingSession
             .sessions(from: history, calendar: calendar)
             .suffix(2)
         guard let current = sessions.last else { return nil }
@@ -194,7 +194,7 @@ public final class AnalyticsViewModel {
         // Reps at the working weight are the meaningful figure for a weighted
         // exercise; a bodyweight exercise has no working weight, so its best rep
         // count of the day is used instead.
-        let reps = { (session: DayTrainingSession) in
+        let reps = { (session: TrainingSession) in
             hasWeight ? session.minRepsAtMaxWeight : session.maxReps
         }
 
@@ -545,24 +545,24 @@ extension AnalyticsViewModel {
         let entries = history.sorted(by: { $0.date < $1.date })
         guard !entries.isEmpty else { return [] }
         
-        let daySessions = DayTrainingSession.sessions(from: entries, calendar: calendar)
+        let workoutSessions = TrainingSession.workouts(from: entries)
         
-        guard !daySessions.isEmpty else { return [] }
+        guard !workoutSessions.isEmpty else { return [] }
         
         struct RawPhase {
             let weight: Double
             let sessionCount: Int
-            let start: DayTrainingSession
-            let end: DayTrainingSession
+            let start: TrainingSession
+            let end: TrainingSession
         }
         
         var rawPhases: [RawPhase] = []
-        var phaseStart = daySessions[0]
-        var phaseEnd = daySessions[0]
+        var phaseStart = workoutSessions[0]
+        var phaseEnd = workoutSessions[0]
         var sessionCount = 1
         
-        for i in 1..<daySessions.count {
-            let current = daySessions[i]
+        for i in 1..<workoutSessions.count {
+            let current = workoutSessions[i]
             if current.maxWeight == phaseStart.maxWeight {
                 phaseEnd = current
                 sessionCount += 1
@@ -594,10 +594,15 @@ extension AnalyticsViewModel {
         return increases.suffix(limit).map { entry in
             // The way *to* this weight: from the last workout at the old weight
             // to the first at the new one, and the workouts that earned it.
+            // Both endpoints normalised to their day boundary first. The
+            // sessions now carry real timestamps rather than midnight values, and
+            // `dateComponents([.day])` counts whole 24-hour units — an evening
+            // workout followed by a morning one two days later measured as one
+            // day, so the tile under-reported by up to a full day.
             let days = calendar.dateComponents(
                 [.day],
-                from: entry.previous.end.date,
-                to: entry.phase.start.date
+                from: calendar.startOfDay(for: entry.previous.end.date),
+                to: calendar.startOfDay(for: entry.phase.start.date)
             ).day ?? 0
 
             return LevelIncrease(

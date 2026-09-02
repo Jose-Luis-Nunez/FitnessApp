@@ -40,13 +40,13 @@ private func entry(
 
 // MARK: - Day grouping
 
-/// `DayTrainingSession` backs both the weight and the reps card, so a mistake
+/// `TrainingSession` backs both the weight and the reps card, so a mistake
 /// here changes two shipped features at once.
-@Suite("DayTrainingSession.sessions", .tags(.fast))
-struct DayTrainingSessionTests {
+@Suite("TrainingSession", .tags(.fast))
+struct TrainingSessionTests {
 
     @Test func groupsSeveralEntriesOfOneDayIntoOneSession() {
-        let sessions = DayTrainingSession.sessions(
+        let sessions = TrainingSession.sessions(
             from: [
                 entry(-1, [(40, 10)]),
                 entry(-1, [(45, 8)]),
@@ -61,7 +61,7 @@ struct DayTrainingSessionTests {
     }
 
     @Test func ordersOldestFirst() {
-        let sessions = DayTrainingSession.sessions(
+        let sessions = TrainingSession.sessions(
             from: [
                 entry(0, [(50, 6)]),
                 entry(-2, [(30, 12)]),
@@ -74,12 +74,12 @@ struct DayTrainingSessionTests {
     }
 
     @Test func dropsDaysWithoutARecordedSet() {
-        let sessions = DayTrainingSession.sessions(from: [entry(0, [])], calendar: testCalendar)
+        let sessions = TrainingSession.sessions(from: [entry(0, [])], calendar: testCalendar)
         #expect(sessions.isEmpty)
     }
 
     @Test func minRepsAtMaxWeightIgnoresLighterSets() {
-        let sessions = DayTrainingSession.sessions(
+        let sessions = TrainingSession.sessions(
             from: [
                 entry(0, [(50, 5), (50, 7), (40, 20)])
             ],
@@ -108,15 +108,58 @@ struct DayTrainingSessionTests {
         let legacy = entry(0, [(20, 10)])
 
         #expect(
-            DayTrainingSession
+            TrainingSession
                 .sessions(from: [bilateral], calendar: testCalendar)
                 .first?.isBilateral == true
         )
         #expect(
-            DayTrainingSession
+            TrainingSession
                 .sessions(from: [bilateral, legacy], calendar: testCalendar)
                 .first?.isBilateral == false
         )
+    }
+    /// The granularity the increase features need. Two entries on one day are
+    /// two sessions here, and the lighter one survives — the day grouping keeps
+    /// only the maximum, which is what hid a same-day increase.
+    @Test func workoutsKeepsEachEntryIncludingTheLighterOne() {
+        // Distinct timestamps on purpose: the reduction sorts by date, and with
+        // two identical dates the expected order would rest on `sorted(by:)`
+        // being stable, which Swift does not promise.
+        let lighter = AnalyticsEntry(
+            exerciseId: UUID(),
+            date: day(0).addingTimeInterval(9 * 3600),
+            setProgress: [SetProgress(status: .completedDone, currentReps: 10, weight: 20)]
+        )
+        let heavier = AnalyticsEntry(
+            exerciseId: UUID(),
+            date: day(0).addingTimeInterval(18 * 3600),
+            setProgress: [SetProgress(status: .completedDone, currentReps: 10, weight: 25)]
+        )
+
+        let sessions = TrainingSession.workouts(from: [lighter, heavier])
+
+        #expect(sessions.count == 2)
+        #expect(sessions.map(\.maxWeight) == [20, 25])
+    }
+
+    /// Bilaterality is decided per reduced session, so a single bilateral entry
+    /// stays bilateral even on a day whose other entry is not.
+    @Test func workoutsDecideBilateralityPerEntry() {
+        let bilateral = AnalyticsEntry(
+            exerciseId: UUID(),
+            date: day(0),
+            setProgress: [
+                SetProgress(status: .completedDone, currentReps: 5, weight: 50, side: .left, logicalSetIndex: 0),
+                SetProgress(status: .completedDone, currentReps: 5, weight: 50, side: .right, logicalSetIndex: 0)
+            ]
+        )
+        let sessions = TrainingSession.workouts(
+            from: [bilateral, entry(0, [(40, 10)])]
+        )
+
+        #expect(sessions.count == 2)
+        #expect(sessions.contains { $0.isBilateral })
+        #expect(sessions.contains { !$0.isBilateral })
     }
 }
 

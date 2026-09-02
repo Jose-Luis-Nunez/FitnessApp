@@ -211,15 +211,37 @@ private extension InactiveCardModelView {
             .accessibilityIdentifier(ExerciseCardIDs.seatEditIcon(model.id))
     }
 
-    /// Trailing column built on the *same* grid as the metric column on the
-    /// left: a title-height row, then a block of `improvementColumnHeight` whose
-    /// first line is a reserved stand-in for the gain value and whose second line
-    /// is the label. Because both columns share that rhythm and are centred in
-    /// the same header row, "Details" lands on the "now …" line by construction —
-    /// no tuned offset that would drift when a font or a height changes. The
-    /// same holds in the no-improvement state, where `completedColumn` reserves
-    /// the gain line the same way.
+    /// Trailing column. Two shapes, because the two header states need different
+    /// things from it.
+    ///
+    /// With a gain to show, it is built on the *same* grid as the metric column
+    /// on the left: a title-height row, then a block of
+    /// `improvementColumnHeight` whose first line is a reserved stand-in for the
+    /// gain value and whose second line is the label. Because both columns share
+    /// that rhythm and are centred in the same header row, "Details" lands on
+    /// the "now …" line by construction — no tuned offset that would drift when
+    /// a font or a height changes.
+    ///
+    /// With nothing to show, "Details" has moved under "Completed" on the left,
+    /// so this column carries only the checkmark and lets the header row centre
+    /// it. Reproducing the grid here would pin it to the top for no reason.
+    @ViewBuilder
     var checkmarkTrailing: some View {
+        if hasImprovement {
+            improvementCheckmarkColumn
+        } else {
+            checkmarkCircle
+                // The state is already announced by `completedColumn`'s label,
+                // which also carries the expansion action; a second element
+                // saying the same thing would just be another stop.
+                .accessibilityHidden(true)
+                .frame(width: ExerciseCardLayout.TrailingControl.columnWidth)
+                .contentShape(Rectangle())
+                .onTapGesture { toggleExpansion() }
+        }
+    }
+
+    var improvementCheckmarkColumn: some View {
         VStack(spacing: 4) {
             // Reserves exactly one title line. The checkmark is taller and is
             // drawn as an overlay, so it can extend downward without pushing the
@@ -305,6 +327,14 @@ private extension InactiveCardModelView {
 // MARK: - Improvement Row
 
 private extension InactiveCardModelView {
+
+    /// Whether the card has a gain to show, for the trailing column's benefit —
+    /// its two shapes are chosen by this. `improvementRow` asks the same
+    /// question inline because it needs the unwrapped value, not just the answer.
+    var hasImprovement: Bool {
+        guard let improvement = improvementPresentation.improvement else { return false }
+        return !improvement.isEmpty
+    }
 
     /// Mirrors the idle card's metric row geometry — a value line on
     /// `idleMetricContentRowHeight` over a footer on `idleMetricFooterRowHeight`.
@@ -393,31 +423,40 @@ private extension InactiveCardModelView {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// Nothing improved. Same two-line grid as `gainColumn` and
-    /// `checkmarkTrailing`, so "Completed" lands on the footer line level with
-    /// "Details" opposite it.
+    /// Nothing improved: "Completed" with "Details" beneath it, both on the left.
     ///
-    /// The value line stays empty on purpose. "Completed" is the whole message
-    /// of this state — nothing improved — and the finishing weight belongs to
-    /// the set tiles below, not to the line that everywhere else carries a gain.
-    /// A hidden stand-in holds the line open so the card keeps the idle card's
-    /// height. Do not fill it with the current weight: that was tried and read
-    /// as a gain that happens to be missing its `+`.
+    /// The two lines occupy the same grid the gain columns use — value line and
+    /// footer line — so the card keeps the idle card's height. Previously the
+    /// value line held a hidden stand-in and "Details" sat in the trailing
+    /// column opposite; with no gain to balance, that left the card's only two
+    /// words on opposite edges and pinned the checkmark to the top.
+    ///
+    /// The finishing weight deliberately stays out of the value line: it belongs
+    /// to the set tiles below, and filling the line that everywhere else carries
+    /// a gain read as a gain missing its `+`.
     var completedColumn: some View {
         VStack(alignment: .leading, spacing: improvementLineSpacing) {
-            Text(verbatim: "+0")
-                .font(AppStyle.Font.idleWeightValue)
-                .hidden()
-
+            // Styled as the value it is, not as a label. It sits on the line
+            // that carries "+5 kg" in the other states, and at the footer's
+            // 13pt grey it read as its own small print next to "Details" —
+            // two greys two points apart. Deliberately not the accent colour:
+            // on this card that means "you gained", which is the opposite of
+            // what this state says.
             Text(AppText.exerciseCompleted)
-                .font(AppStyle.Font.cardMetricUnit)
+                .font(AppStyle.Font.cardStateValue)
+                .foregroundColor(AppStyle.Color.idleTitle)
+
+            Text(AppText.commonDetails)
+                .font(AppStyle.Font.metricLabel)
                 .foregroundColor(AppStyle.Color.idleMetricUnit)
         }
-        // Sighted users reach the finishing weight by expanding the card; a
-        // hidden stand-in is not announced, so without this VoiceOver heard only
-        // "Completed" and lost the number entirely.
+        // One element carrying both the state and the affordance: the weight is
+        // announced (a set-tile row is not reachable without expanding), and the
+        // expansion the word "Details" promises is offered as an action.
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(completedAccessibilityLabel)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { toggleExpansion() }
         // Same frame as `gainColumn`, centred rather than top-aligned: the
         // reserved block is taller than its two lines, and every other column
         // centres inside it. Top-aligning lifted "Completed" 13pt above the

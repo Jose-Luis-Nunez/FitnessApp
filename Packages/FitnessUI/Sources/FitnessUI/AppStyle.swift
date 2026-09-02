@@ -321,9 +321,13 @@ public enum AppStyle {
         // independently. SF Pro bold default design, geometric tabular figures.
         /// Weight number, e.g. "80". Prominent because the metric is directly editable.
         public static let idleWeightValue = SwiftUI.Font.system(size: 20, weight: .bold)
+        /// A card's state word where a gain value would otherwise stand, e.g.
+        /// "Completed". Semibold so it outweighs the affordance beneath it, and
+        /// three points under `idleCardTitle` so it cannot outweigh the exercise
+        /// name — at the title's own 16pt bold it did exactly that.
+        public static let cardStateValue = SwiftUI.Font.system(size: 13, weight: .semibold)
         /// Unit suffix and secondary value line on the exercise cards: the "kg"
-        /// beside a weight, the "reps" beside a rep gain, the "now …" footer, and
-        /// the plain "Completed" label.
+        /// beside a weight, the "reps" beside a rep gain, and the "now …" footer.
         ///
         /// One token for all of them because the design sets them at one size on
         /// both cards — the unit's ascender reaches only the belly of the adjacent

@@ -100,24 +100,24 @@ extension AnalyticsViewModel {
         let entries = history.sorted(by: { $0.date < $1.date })
         guard !entries.isEmpty else { return [] }
 
-        let daySessions = DayTrainingSession.sessions(from: entries, calendar: calendar)
+        let workoutSessions = TrainingSession.workouts(from: entries)
 
-        guard !daySessions.isEmpty else { return [] }
+        guard !workoutSessions.isEmpty else { return [] }
 
         struct RawPhase {
             let maxReps: Int
             let sessionCount: Int
-            let start: DayTrainingSession
-            let end: DayTrainingSession
+            let start: TrainingSession
+            let end: TrainingSession
         }
 
         var rawPhases: [RawPhase] = []
-        var phaseStart = daySessions[0]
-        var phaseEnd = daySessions[0]
+        var phaseStart = workoutSessions[0]
+        var phaseEnd = workoutSessions[0]
         var sessionCount = 1
 
-        for i in 1..<daySessions.count {
-            let current = daySessions[i]
+        for i in 1..<workoutSessions.count {
+            let current = workoutSessions[i]
             if current.maxReps == phaseStart.maxReps {
                 phaseEnd = current
                 sessionCount += 1
@@ -141,10 +141,15 @@ extension AnalyticsViewModel {
         }
 
         return increases.suffix(limit).map { entry in
+            // Both endpoints normalised to their day boundary first. The
+            // sessions now carry real timestamps rather than midnight values, and
+            // `dateComponents([.day])` counts whole 24-hour units — an evening
+            // workout followed by a morning one two days later measured as one
+            // day, so the tile under-reported by up to a full day.
             let days = calendar.dateComponents(
                 [.day],
-                from: entry.previous.end.date,
-                to: entry.phase.start.date
+                from: calendar.startOfDay(for: entry.previous.end.date),
+                to: calendar.startOfDay(for: entry.phase.start.date)
             ).day ?? 0
 
             return LevelIncrease(

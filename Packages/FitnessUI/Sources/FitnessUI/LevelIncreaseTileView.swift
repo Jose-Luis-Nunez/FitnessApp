@@ -47,6 +47,7 @@ public struct LevelIncreaseTileView: View {
                 label: Text(AppText.analyticsPreviousWorkout),
                 endpoint: increase.previousSession,
                 markerColor: AppStyle.Color.gray,
+                markerIsFilled: false,
                 showsConnector: true
             )
 
@@ -63,6 +64,7 @@ public struct LevelIncreaseTileView: View {
                 // The accent marks where the increase landed; the row above it
                 // stays neutral, so the eye goes to the new value first.
                 markerColor: appColorTheme.accent.glow,
+                markerIsFilled: true,
                 showsConnector: false
             )
         }
@@ -81,15 +83,16 @@ public struct LevelIncreaseTileView: View {
         label: Text,
         endpoint: LevelSession,
         markerColor: Color,
+        markerIsFilled: Bool,
         showsConnector: Bool
     ) -> some View {
         HStack(alignment: .top, spacing: 6) {
             VStack(spacing: 0) {
                 // Same ring geometry the idle card's play button draws, so every
-                // circular marker on the cards reads as one family.
-                Circle()
-                    .strokeBorder(markerColor, lineWidth: AppStyle.Layout.idlePlayRingWidth)
-                    .frame(width: 14, height: 14)
+                // circular marker on the cards reads as one family. The point
+                // that was reached is solid, the one departed from hollow — the
+                // timeline then reads in one direction without a legend.
+                marker(color: markerColor, isFilled: markerIsFilled)
 
                 if showsConnector {
                     // Runs down to the row below, so the two points read as a
@@ -131,6 +134,19 @@ public struct LevelIncreaseTileView: View {
             // instead of wrapping into the next.
             .lineLimit(1)
             .minimumScaleFactor(0.7)
+        }
+    }
+
+    @ViewBuilder
+    private func marker(color: Color, isFilled: Bool) -> some View {
+        if isFilled {
+            Circle()
+                .fill(color)
+                .frame(width: 14, height: 14)
+        } else {
+            Circle()
+                .strokeBorder(color, lineWidth: AppStyle.Layout.idlePlayRingWidth)
+                .frame(width: 14, height: 14)
         }
     }
 

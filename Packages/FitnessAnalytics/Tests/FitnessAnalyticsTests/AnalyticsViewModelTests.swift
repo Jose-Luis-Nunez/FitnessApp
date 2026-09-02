@@ -629,6 +629,61 @@ struct WeightIncreasesTests {
         #expect(previous.date == date(-1))
     }
 
+    /// The reported scenario: a brand-new exercise finished once without an
+    /// increase and then again with one, both on the same day.
+    @Test func anIncreaseOnTheSameDayIsDetected() {
+        let storage = MockAnalyticsStorage()
+        let id = UUID()
+        let today = date(0)
+        storage.save([
+            makeEntry(exerciseId: id, date: today, sets: [(20, 10)]),
+            makeEntry(exerciseId: id, date: today.addingTimeInterval(3600), sets: [(25, 10)])
+        ], for: id)
+
+        let vm = AnalyticsViewModel(storageService: storage)
+        let increases = vm.weightIncreases(from: storage.load(for: id))
+
+        #expect(increases.count == 1)
+        #expect(increases.first?.value == .weight(25))
+        #expect(increases.first?.previousSession.value == .weight(20))
+    }
+
+    /// Every other fixture in this file is built on `startOfDay`, so none of them
+    /// can see a time-of-day remainder. An evening workout followed by a morning
+    /// one two calendar days later is 36 hours apart: counted as whole 24-hour
+    /// units that is one day, but the user spent two.
+    @Test func daysToReachCountsCalendarDaysNotElapsedHours() {
+        let storage = MockAnalyticsStorage()
+        let id = UUID()
+        let calendar = Calendar.current
+        let evening = calendar.date(byAdding: .hour, value: 20, to: date(-2))!
+        let morning = calendar.date(byAdding: .hour, value: 8, to: date(0))!
+        storage.save([
+            makeEntry(exerciseId: id, date: evening, sets: [(60, 10)]),
+            makeEntry(exerciseId: id, date: morning, sets: [(70, 10)])
+        ], for: id)
+
+        let vm = AnalyticsViewModel(storageService: storage)
+        let increases = vm.weightIncreases(from: storage.load(for: id))
+
+        #expect(increases.count == 1)
+        #expect(increases.first?.daysToReach == 2)
+    }
+
+    /// The same two sessions a day apart, as a control: if this passes while the
+    /// same-day case fails, the grouping granularity is the cause.
+    @Test func anIncreaseAcrossTwoDaysIsDetected() {
+        let storage = MockAnalyticsStorage()
+        let id = UUID()
+        storage.save([
+            makeEntry(exerciseId: id, date: date(-1), sets: [(20, 10)]),
+            makeEntry(exerciseId: id, date: date(0), sets: [(25, 10)])
+        ], for: id)
+
+        let vm = AnalyticsViewModel(storageService: storage)
+        #expect(vm.weightIncreases(from: storage.load(for: id)).count == 1)
+    }
+
     /// A phase boundary is any change of weight, so a deload opens one too. It is
     /// not progress: no tile, and therefore no coaching affordance either.
     @Test func aDeloadIsNotAnIncrease() {
