@@ -607,7 +607,7 @@ public struct WorkoutAnalyticsEntryView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
 
-            Text(verbatim: "kg")
+            Text(AppText.unitKilogram)
                 .font(AppStyle.Font.detailCaption)
                 .foregroundColor(
                     AppStyle.Color.white.opacity(AppStyle.Opacity.secondaryLabel)

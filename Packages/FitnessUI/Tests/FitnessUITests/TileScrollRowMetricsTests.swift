@@ -3,11 +3,11 @@ import FitnessTestSupport
 import Testing
 @testable import FitnessUI
 
-/// The set-tile row's width arithmetic is shared by the idle and completed
-/// exercise cards. These pin the numbers it produces; the rendering itself is
-/// covered by the card snapshots.
-@Suite("Set Tiles Row — Metrics", .tags(.fast))
-struct SetTilesRowMetricsTests {
+/// The tile row's width arithmetic is shared by the set-tile rows on both
+/// exercise cards and the idle card's coaching row. These pin the numbers it
+/// produces; the rendering itself is covered by the card snapshots.
+@Suite("Tile Scroll Row — Metrics", .tags(.fast))
+struct TileScrollRowMetricsTests {
 
     /// The viewport both cards hand the row on the reference device, and the
     /// trailing column both reserve for their circular control.
@@ -22,14 +22,14 @@ struct SetTilesRowMetricsTests {
     /// minus three inter-tile gaps = 269, over 3.4 tiles = 79.12.
     @Test
     func theSharedConfigurationProducesTheExpectedWidths() {
-        let scrollArea = SetTilesRowMetrics.scrollAreaWidth(
+        let scrollArea = TileScrollRowMetrics.scrollAreaWidth(
             available: available,
             reservedTrailingWidth: reservedTrailingWidth,
             showsChevron: true
         )
         #expect(scrollArea == 293)
 
-        let tile = SetTilesRowMetrics.tileWidth(
+        let tile = TileScrollRowMetrics.tileWidth(
             available: available,
             reservedTrailingWidth: reservedTrailingWidth,
             showsChevron: true,
@@ -43,7 +43,7 @@ struct SetTilesRowMetricsTests {
     /// spacing.
     @Test
     func anUnreservedTrailingColumnCostsNothing() {
-        let withoutAccessory = SetTilesRowMetrics.scrollAreaWidth(
+        let withoutAccessory = TileScrollRowMetrics.scrollAreaWidth(
             available: available,
             reservedTrailingWidth: 0,
             showsChevron: false
@@ -53,12 +53,12 @@ struct SetTilesRowMetricsTests {
 
     @Test
     func theChevronCostsItsColumnPlusOneSpacing() {
-        let without = SetTilesRowMetrics.scrollAreaWidth(
+        let without = TileScrollRowMetrics.scrollAreaWidth(
             available: available,
             reservedTrailingWidth: reservedTrailingWidth,
             showsChevron: false
         )
-        let with = SetTilesRowMetrics.scrollAreaWidth(
+        let with = TileScrollRowMetrics.scrollAreaWidth(
             available: available,
             reservedTrailingWidth: reservedTrailingWidth,
             showsChevron: true
@@ -73,13 +73,13 @@ struct SetTilesRowMetricsTests {
     /// viewport edge.
     @Test
     func aFractionalCountChargesSpacingForThePeekingTileToo() {
-        let wholeTiles = SetTilesRowMetrics.tileWidth(
+        let wholeTiles = TileScrollRowMetrics.tileWidth(
             available: available,
             reservedTrailingWidth: reservedTrailingWidth,
             showsChevron: true,
             visibleTileCount: 3
         )
-        let withPeek = SetTilesRowMetrics.tileWidth(
+        let withPeek = TileScrollRowMetrics.tileWidth(
             available: available,
             reservedTrailingWidth: reservedTrailingWidth,
             showsChevron: true,
@@ -95,13 +95,13 @@ struct SetTilesRowMetricsTests {
     /// viewport by it.
     @Test(arguments: [CGFloat(0), -1, 0.5])
     func aCountBelowOneIsTreatedAsOneTile(count: CGFloat) {
-        let clamped = SetTilesRowMetrics.tileWidth(
+        let clamped = TileScrollRowMetrics.tileWidth(
             available: available,
             reservedTrailingWidth: reservedTrailingWidth,
             showsChevron: false,
             visibleTileCount: count
         )
-        let one = SetTilesRowMetrics.tileWidth(
+        let one = TileScrollRowMetrics.tileWidth(
             available: available,
             reservedTrailingWidth: reservedTrailingWidth,
             showsChevron: false,
@@ -114,9 +114,12 @@ struct SetTilesRowMetricsTests {
     /// cannot be shown within the visible count — not at a repeated literal.
     @Test
     func theChevronFollowsTheVisibleTileCount() {
-        #expect(!SetTilesRowMetrics.showsChevron(setCount: 3, visibleTileCount: 3.4))
-        #expect(SetTilesRowMetrics.showsChevron(setCount: 4, visibleTileCount: 3.4))
-        #expect(!SetTilesRowMetrics.showsChevron(setCount: 2, visibleTileCount: 2))
-        #expect(SetTilesRowMetrics.showsChevron(setCount: 3, visibleTileCount: 2))
+        let overflows = { (tileCount: Int, visible: CGFloat) in
+            TileScrollRowMetrics.showsChevron(tileCount: tileCount, visibleTileCount: visible)
+        }
+        #expect(!overflows(3, 3.4))
+        #expect(overflows(4, 3.4))
+        #expect(!overflows(2, 2))
+        #expect(overflows(3, 2))
     }
 }

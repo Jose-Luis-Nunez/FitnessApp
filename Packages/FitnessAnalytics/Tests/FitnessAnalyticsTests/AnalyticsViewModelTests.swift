@@ -191,15 +191,15 @@ struct TrainingSessionsUntilRepsIncreaseTests {
     }
 }
 
-// MARK: - repsPhases
+// MARK: - repsIncreases
 
-@Suite("repsPhases", .tags(.fast))
+@Suite("repsIncreases", .tags(.fast))
 @MainActor
-struct RepsPhasesTests {
+struct RepsIncreasesTests {
 
     @Test func returnsEmptyForNoData() {
         let vm = AnalyticsViewModel(storageService: MockAnalyticsStorage())
-        #expect(vm.repsPhases(from: []).isEmpty)
+        #expect(vm.repsIncreases(from: []).isEmpty)
     }
 
     /// Bodyweight exercises step up in reps, and the opening rep level is no
@@ -215,7 +215,7 @@ struct RepsPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phases = vm.repsPhases(from: storage.load(for: id))
+        let phases = vm.repsIncreases(from: storage.load(for: id))
 
         #expect(phases.count == 1)
         #expect(phases[0].value == .reps(12))
@@ -234,7 +234,7 @@ struct RepsPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        #expect(vm.repsPhases(from: storage.load(for: id)).isEmpty)
+        #expect(vm.repsIncreases(from: storage.load(for: id)).isEmpty)
     }
 
     @Test func aSingleRepLevelYieldsNothing() {
@@ -246,7 +246,7 @@ struct RepsPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        #expect(vm.repsPhases(from: storage.load(for: id)).isEmpty)
+        #expect(vm.repsIncreases(from: storage.load(for: id)).isEmpty)
     }
 
     /// The endpoint carries reps, not weight — this path leaves `weight` at 0,
@@ -261,7 +261,7 @@ struct RepsPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phases = vm.repsPhases(from: storage.load(for: id))
+        let phases = vm.repsIncreases(from: storage.load(for: id))
 
         #expect(phases.count == 1)
         let previous = phases[0].previousSession
@@ -281,7 +281,7 @@ struct RepsPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phases = vm.repsPhases(from: storage.load(for: id), limit: 2)
+        let phases = vm.repsIncreases(from: storage.load(for: id), limit: 2)
 
         #expect(phases.count == 2)
         #expect(phases.map(\.value) == [.reps(12), .reps(14)])
@@ -303,7 +303,7 @@ struct RepsPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phase = try #require(vm.weightPhases(from: storage.load(for: id)).first)
+        let phase = try #require(vm.weightIncreases(from: storage.load(for: id)).first)
 
         #expect(phase.startSetsReps == "2×8")
     }
@@ -326,7 +326,7 @@ struct RepsPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phase = try #require(vm.weightPhases(from: storage.load(for: id)).first)
+        let phase = try #require(vm.weightIncreases(from: storage.load(for: id)).first)
 
         #expect(phase.value == .weight(22))
         #expect(phase.startSetsReps == "2×10 / side")
@@ -374,47 +374,6 @@ struct RepsPhasesTests {
             weight: weight,
             side: side,
             logicalSetIndex: logicalSetIndex
-        )
-    }
-
-    private func makeBilateralEntry(
-        exerciseId: UUID,
-        date: Date,
-        secondaryReps: Int
-    ) -> AnalyticsEntry {
-        AnalyticsEntry(
-            exerciseId: exerciseId,
-            date: date,
-            setProgress: [
-                SetProgress(
-                    status: .completedDone,
-                    currentReps: 5,
-                    weight: 50,
-                    side: .left,
-                    logicalSetIndex: 0
-                ),
-                SetProgress(
-                    status: .completedDone,
-                    currentReps: 5,
-                    weight: 50,
-                    side: .right,
-                    logicalSetIndex: 0
-                ),
-                SetProgress(
-                    status: .completedDone,
-                    currentReps: secondaryReps,
-                    weight: 40,
-                    side: .left,
-                    logicalSetIndex: 1
-                ),
-                SetProgress(
-                    status: .completedDone,
-                    currentReps: secondaryReps,
-                    weight: 40,
-                    side: .right,
-                    logicalSetIndex: 1
-                )
-            ]
         )
     }
 }
@@ -599,15 +558,15 @@ struct TrainingSessionsUntilWeightIncreaseTests {
     }
 }
 
-// MARK: - weightPhases
+// MARK: - weightIncreases
 
-@Suite("weightPhases", .tags(.fast))
+@Suite("weightIncreases", .tags(.fast))
 @MainActor
-struct WeightPhasesTests {
+struct WeightIncreasesTests {
 
     @Test func returnsEmptyForNoData() {
         let vm = AnalyticsViewModel(storageService: MockAnalyticsStorage())
-        #expect(vm.weightPhases(from: []).isEmpty)
+        #expect(vm.weightIncreases(from: []).isEmpty)
     }
 
     /// Four days at two weights are two raw phases, but only one of them is an
@@ -623,7 +582,7 @@ struct WeightPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phases = vm.weightPhases(from: storage.load(for: id))
+        let phases = vm.weightIncreases(from: storage.load(for: id))
 
         #expect(phases.count == 1)
         #expect(phases[0].value == .weight(60))
@@ -643,7 +602,7 @@ struct WeightPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        #expect(vm.weightPhases(from: storage.load(for: id)).isEmpty)
+        #expect(vm.weightIncreases(from: storage.load(for: id)).isEmpty)
     }
 
     /// The previous session must be the **last** day at the old weight — the
@@ -661,7 +620,7 @@ struct WeightPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phases = vm.weightPhases(from: storage.load(for: id))
+        let phases = vm.weightIncreases(from: storage.load(for: id))
 
         #expect(phases.count == 1)
         let previous = phases[0].previousSession
@@ -682,7 +641,7 @@ struct WeightPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        #expect(vm.weightPhases(from: storage.load(for: id)).isEmpty)
+        #expect(vm.weightIncreases(from: storage.load(for: id)).isEmpty)
     }
 
     /// A deload between two increases is skipped, not treated as the predecessor
@@ -698,7 +657,7 @@ struct WeightPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phases = vm.weightPhases(from: storage.load(for: id))
+        let phases = vm.weightIncreases(from: storage.load(for: id))
 
         #expect(phases.map(\.value) == [.weight(60), .weight(70)])
         #expect(phases.map(\.previousSession.value) == [.weight(40), .weight(50)])
@@ -716,7 +675,7 @@ struct WeightPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phases = vm.weightPhases(from: storage.load(for: id), limit: 2)
+        let phases = vm.weightIncreases(from: storage.load(for: id), limit: 2)
 
         #expect(phases.map(\.value) == [.weight(60), .weight(70)])
     }
@@ -735,7 +694,7 @@ struct WeightPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phases = vm.weightPhases(from: storage.load(for: id))
+        let phases = vm.weightIncreases(from: storage.load(for: id))
 
         #expect(phases.map(\.value) == [.weight(50), .weight(60), .weight(70)])
         #expect(phases.map(\.previousSession.value) == [.weight(40), .weight(50), .weight(60)])
@@ -757,7 +716,7 @@ struct WeightPhasesTests {
         ], for: id)
 
         let vm = AnalyticsViewModel(storageService: storage)
-        let phases = vm.weightPhases(from: storage.load(for: id))
+        let phases = vm.weightIncreases(from: storage.load(for: id))
 
         #expect(phases.count == 1)
         // Last 40kg day was date(-2), first 60kg day date(-1).

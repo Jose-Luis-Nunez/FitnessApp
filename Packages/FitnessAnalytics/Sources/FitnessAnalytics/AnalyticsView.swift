@@ -89,7 +89,8 @@ public struct AnalyticsView: View {
             HStack {
                 Group {
                     if exercise.hasWeight {
-                        Text(verbatim: "KG")
+                        Text(AppText.unitKilogram)
+                            .textCase(.uppercase)
                     } else {
                         Text(AppText.exerciseReps)
                     }
@@ -473,7 +474,7 @@ public struct AnalyticsView: View {
                         .font(AppStyle.Font.analyticsBigNumber)
                         .foregroundColor(appColorTheme.accent.glow)
 
-                    Text(verbatim: "kg")
+                    Text(AppText.unitKilogram)
                         .font(AppStyle.Font.analyticsBigNumber)
                         .foregroundColor(appColorTheme.accent.primary)
                 }

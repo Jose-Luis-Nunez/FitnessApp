@@ -5,60 +5,60 @@ import FitnessResources
 /// One weight or rep increase: the level reached, how it was earned, and the two
 /// sessions that bracket it.
 ///
-/// Takes no "has weight" flag. `PhaseValue` carries which dimension changed, so
+/// Takes no "has weight" flag. `TrainingLevel` carries which dimension changed, so
 /// the tile cannot be handed a weight and told to render reps — the mismatch that
 /// printed "0 kg" on bodyweight exercises.
-public struct WeightPhaseTileView: View {
+public struct LevelIncreaseTileView: View {
     @Environment(\.appColorTheme) private var appColorTheme
     @Environment(\.locale) private var locale
-    public let phase: WeightPhase
+    public let increase: LevelIncrease
 
-    public init(phase: WeightPhase) {
-        self.phase = phase
+    public init(increase: LevelIncrease) {
+        self.increase = increase
     }
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline, spacing: 2) {
-                Text(verbatim: number(of: phase.value))
+                Text(verbatim: number(of: increase.value))
                     .font(AppStyle.Font.cardBoldTitle)
                     .foregroundColor(appColorTheme.accent.glow)
-                unitLabel(for: phase.value, uppercased: true)
+                unitLabel(for: increase.value, uppercased: true)
                     .font(AppStyle.Font.cardSmallBold)
                     .foregroundColor(appColorTheme.accent.glow)
             }
 
-            Text(AppText.analyticsReachedInDays(count: phase.daysToReach))
-                .font(AppStyle.Font.cardSmallMedium)
-                .foregroundColor(.white.opacity(0.6))
+            // Same line policy as the timeline rows below. Without it these two
+            // wrap while those scale, and a wrapped summary pushes the timeline
+            // against the row's fixed height — German reaches the tile width
+            // first ("Erreicht in 12 Tagen").
+            Group {
+                Text(AppText.analyticsReachedInDays(count: increase.daysToReach))
+                    .foregroundColor(.white.opacity(0.6))
 
-            Text(AppText.analyticsWithWorkoutCount(count: phase.workoutsToReach))
-                .font(AppStyle.Font.cardSmallMedium)
-                .foregroundColor(AppStyle.Color.white)
+                Text(AppText.analyticsWithWorkoutCount(count: increase.workoutsToReach))
+                    .foregroundColor(AppStyle.Color.white)
+            }
+            .font(AppStyle.Font.cardSmallMedium)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
 
-            // Separates the summary above from the two sessions that bracket the
-            // increase, which are a different kind of statement.
-            Rectangle()
-                .fill(AppStyle.Color.white.opacity(AppStyle.Opacity.hairlineDivider))
-                .frame(height: 1)
-                .padding(.vertical, 2)
-
-            phaseRow(
+            sessionRow(
                 label: Text(AppText.analyticsPreviousWorkout),
-                endpoint: phase.previousSession,
+                endpoint: increase.previousSession,
                 markerColor: AppStyle.Color.gray,
                 showsConnector: true
             )
 
-            phaseRow(
+            sessionRow(
                 label: Text(AppText.analyticsIncreased),
                 // The session that first reached the new level, expressed the
                 // same way as the one before it so the two can be compared at a
                 // glance.
-                endpoint: PhaseEndpoint(
-                    value: phase.value,
-                    setsReps: phase.startSetsReps,
-                    date: phase.startDate
+                endpoint: LevelSession(
+                    value: increase.value,
+                    setsReps: increase.startSetsReps,
+                    date: increase.startDate
                 ),
                 // The accent marks where the increase landed; the row above it
                 // stays neutral, so the eye goes to the new value first.
@@ -68,12 +68,7 @@ public struct WeightPhaseTileView: View {
         }
         .padding(8)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.white.opacity(AppStyle.Opacity.subtleBackground))
-        .overlay(
-            RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile)
-                .stroke(Color.white.opacity(AppStyle.Opacity.subtleStroke), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile))
+        .tileChrome()
     }
 
     /// One point on the increase's timeline: a marker, a heading, the level with
@@ -82,9 +77,9 @@ public struct WeightPhaseTileView: View {
     /// Both ends share this. They used to differ — a `mappin`/`flag` glyph with
     /// sets and date crammed onto one line — and the shorthand was denser than it
     /// was informative. Only the marker colour distinguishes them now.
-    private func phaseRow(
+    private func sessionRow(
         label: Text,
-        endpoint: PhaseEndpoint,
+        endpoint: LevelSession,
         markerColor: Color,
         showsConnector: Bool
     ) -> some View {
@@ -139,7 +134,7 @@ public struct WeightPhaseTileView: View {
         }
     }
 
-    private func number(of value: PhaseValue) -> String {
+    private func number(of value: TrainingLevel) -> String {
         switch value {
         case let .weight(weight):
             return WeightFormatter.format(weight, locale: locale)
@@ -150,12 +145,21 @@ public struct WeightPhaseTileView: View {
 
     /// The header shouts its unit, the timeline rows state it quietly.
     @ViewBuilder
-    private func unitLabel(for value: PhaseValue, uppercased: Bool) -> some View {
+    private func unitLabel(for value: TrainingLevel, uppercased: Bool) -> some View {
+        // One key per dimension, casing decided here. The reps branch used to
+        // switch between two catalog keys while the weight branch uppercased a
+        // single one, so a locale whose reps abbreviation uppercases irregularly
+        // was handled in one branch and not the other.
+        unitText(for: value)
+            .textCase(uppercased ? .uppercase : nil)
+    }
+
+    private func unitText(for value: TrainingLevel) -> Text {
         switch value {
         case .weight:
-            Text(verbatim: uppercased ? "KG" : "kg")
+            return Text(AppText.unitKilogram)
         case .reps:
-            uppercased ? Text(AppText.exerciseReps) : Text(AppText.exerciseRepsLowercase)
+            return Text(AppText.exerciseRepsLowercase)
         }
     }
 

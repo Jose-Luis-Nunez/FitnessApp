@@ -553,19 +553,6 @@ private struct ExerciseOptionRow: View {
     }
 }
 
-private struct OptionalAccessibilityIdentifier: ViewModifier {
-    let identifier: String?
-
-    @ViewBuilder
-    func body(content: Content) -> some View {
-        if let identifier {
-            content.accessibilityIdentifier(identifier)
-        } else {
-            content
-        }
-    }
-}
-
 // MARK: - Seat Settings (step 2)
 
 /// A single seat-position row: drag handle (supplied by the parent so it can

@@ -322,7 +322,7 @@ private extension InactiveCardModelView {
                 if let gain = improvement.weightGain {
                     gainColumn(
                         gain: WeightFormatter.format(gain, locale: locale),
-                        unit: Text(verbatim: "kg"),
+                        unit: Text(AppText.unitKilogram),
                         footer: Text(AppText.exerciseNowWeight(
                             weight: WeightFormatter.format(improvement.currentWeight, locale: locale)
                         ))
@@ -444,6 +444,7 @@ private extension InactiveCardModelView {
             reservedTrailingWidth: isResetEnabled ? ExerciseCardLayout.TrailingControl.columnWidth : 0,
             visibleTileCount: AppStyle.Layout.setTileVisibleCount,
             onTap: { isShowingAnalytics = true },
+            tilesAccessibilityIdentifier: ExerciseCardIDs.analytics(model.id),
             trailingAccessory: {
                 if isResetEnabled {
                     ExerciseCardResetButton(image: imageProvider("repeat")) {
@@ -453,7 +454,6 @@ private extension InactiveCardModelView {
                 }
             }
         )
-        .accessibilityIdentifier(ExerciseCardIDs.analytics(model.id))
     }
 }
 

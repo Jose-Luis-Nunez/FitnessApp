@@ -146,7 +146,7 @@ public final class AnalyticsViewModel {
 
     /// Compares the two most recent training days of one exercise.
     ///
-    /// Unlike `loadCardPhases` this is safe to call from a collapsed card: it
+    /// Unlike `loadCardIncreases` this is safe to call from a collapsed card: it
     /// uses a bounded two-day read instead of the full history. A cached full
     /// history is reused when one happens to be present, but the bounded result
     /// is deliberately **not** written into the history cache — it is partial,
@@ -211,14 +211,14 @@ public final class AnalyticsViewModel {
 
     /// The full history is loaded when the Last run row expands, because the
     /// coaching affordance's visibility depends on the result (ADR-0022).
-    public func loadCardPhases(
+    public func loadCardIncreases(
         for exerciseId: UUID,
         hasWeight: Bool
-    ) -> [WeightPhase] {
+    ) -> [LevelIncrease] {
         let history = loadAnalytics(for: exerciseId)
         return hasWeight
-            ? weightPhases(from: history)
-            : repsPhases(from: history)
+            ? weightIncreases(from: history)
+            : repsIncreases(from: history)
     }
 
     /// Publishes confirmed workout-log writes without eagerly reading their
@@ -540,7 +540,7 @@ extension AnalyticsViewModel {
         return maxWeightPerDay
     }
     
-    func weightPhases(from history: [AnalyticsEntry], limit: Int = 3) -> [WeightPhase] {
+    func weightIncreases(from history: [AnalyticsEntry], limit: Int = 3) -> [LevelIncrease] {
         let calendar = Calendar.current
         let entries = history.sorted(by: { $0.date < $1.date })
         guard !entries.isEmpty else { return [] }
@@ -600,13 +600,13 @@ extension AnalyticsViewModel {
                 to: entry.phase.start.date
             ).day ?? 0
 
-            return WeightPhase(
+            return LevelIncrease(
                 value: .weight(entry.phase.weight),
                 daysToReach: max(days, 1),
                 workoutsToReach: entry.previous.sessionCount,
                 startSetsReps: entry.phase.start.weightSetsRepsLabel,
                 startDate: entry.phase.start.date,
-                previousSession: PhaseEndpoint(
+                previousSession: LevelSession(
                     value: .weight(entry.previous.weight),
                     setsReps: entry.previous.end.weightSetsRepsLabel,
                     date: entry.previous.end.date

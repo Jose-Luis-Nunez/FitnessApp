@@ -35,7 +35,6 @@ final class WorkoutAnalyticsEntryUITests: BaseTest {
 
         tapOnWithPrefix(WorkoutIDs.tilePrefix, elementType: .button)
         tapOn(HomeIDs.listViewToggle)
-        tapOnWithPrefix(ExerciseCardIDs.idleCardPrefix)
         tapOnWithPrefix(ExerciseCardIDs.analyticsPrefix)
 
         verifyExists(AnalyticsIDs.screen)

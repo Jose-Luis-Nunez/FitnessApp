@@ -380,7 +380,7 @@ struct ProfileView: View {
             MetricTile(
                 label: AppText.profileWeight,
                 value: viewModel.weightKg > 0 ? WeightFormatter.format(viewModel.weightKg, locale: locale) : "–",
-                unit: "kg",
+                unit: AppText.resolve(AppText.unitKilogram, locale: locale),
                 accessibilityID: "id_profile_weight_tile",
                 action: { viewModel.startEditingBody() }
             )

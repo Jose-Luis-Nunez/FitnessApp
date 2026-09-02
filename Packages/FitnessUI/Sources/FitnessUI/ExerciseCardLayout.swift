@@ -62,13 +62,15 @@ public enum ExerciseCardLayout {
         public static let columnWidth: CGFloat = AppStyle.Layout.minimumTapTargetSize
     }
 
-    /// Constants for the coaching phase-tile row on the idle card.
-    public enum PhaseTiles {
-        /// Height of the phase-tile row. The row derives its tile width inside a
+    /// Constants for the coaching increase-tile row on the idle card.
+    public enum IncreaseTiles {
+        /// Height of the increase-tile row. The row derives its tile width inside a
         /// `GeometryReader`, which claims all offered height, so the caller has
         /// to state it — the same arrangement `SetTiles.rowHeight` serves.
-        /// Sized against the tile's tallest state: the summary block, the
-        /// divider and two three-line sessions.
+        /// Sized against the tile's tallest state: the summary block and two
+        /// three-line sessions. The tiles are narrower than when this number was
+        /// chosen, so the lines scale sooner rather than overflow — check this
+        /// value again if the summary ever grows a line.
         public static let rowHeight: CGFloat = 208
     }
 

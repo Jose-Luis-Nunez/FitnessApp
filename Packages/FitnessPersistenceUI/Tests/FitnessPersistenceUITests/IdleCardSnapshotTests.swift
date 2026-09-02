@@ -196,9 +196,10 @@ struct IdleCardSnapshotTests {
     /// loaded when that row opens — so both flags are set, which is also the only
     /// state the real card can reach them in.
     ///
-    /// Two increases, so the row shows the overflow chevron and a peeking second
-    /// tile. This is also what pins `PhaseTiles.rowHeight`: too small a value
-    /// clips the second session out of the tile.
+    /// Three increases, so the row overflows: two tiles fit at
+    /// `increaseTileVisibleCount`, the third is only reachable by scrolling and
+    /// the chevron says so. This also pins `IncreaseTiles.rowHeight` — too small
+    /// a value clips the second session out of the tile.
     @Test func expandedCoachingPhases() throws {
         let (model, container) = try makeIdleCardContainer()
         let storage = MockAnalyticsStorage()
@@ -222,6 +223,13 @@ struct IdleCardSnapshotTests {
                 date: Date(timeIntervalSince1970: 1_735_689_600),
                 setProgress: (0..<3).map { _ in
                     SetProgress(status: .completedDone, currentReps: 10, weight: 35)
+                }
+            ),
+            AnalyticsEntry(
+                exerciseId: model.id,
+                date: Date(timeIntervalSince1970: 1_735_948_800),
+                setProgress: (0..<3).map { _ in
+                    SetProgress(status: .completedDone, currentReps: 8, weight: 37.5)
                 }
             ),
         ], for: model.id)

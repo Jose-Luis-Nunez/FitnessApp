@@ -41,7 +41,7 @@ public struct SetTileView: View {
                     Text(weightText)
                         .font(AppStyle.Font.setTileValue)
                         .foregroundColor(appColorTheme.accent.light)
-                    Text(verbatim: "kg")
+                    Text(AppText.unitKilogram)
                         .font(AppStyle.Font.setTileUnit)
                         .foregroundColor(unitColor)
                 }
@@ -66,17 +66,7 @@ public struct SetTileView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .padding(.vertical, 6)
         .padding(.horizontal, 10)
-        // Same colour and hairline width as the cards' circular controls, drawn
-        // from their token: the tile reads as a member of that family, and the
-        // two cannot drift apart. It briefly carried its own doubled width,
-        // which only looked right while `stroke` was silently halving it —
-        // `strokeBorder` draws inside the shape, so the token's value is what
-        // actually renders.
-        .overlay(
-            RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile, style: .continuous)
-                .strokeBorder(AppStyle.Color.gray, lineWidth: AppStyle.Layout.idlePlayRingWidth)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: AppStyle.CornerRadius.tile, style: .continuous))
+        .tileChrome()
     }
 
     /// Reps footer for a weighted set.

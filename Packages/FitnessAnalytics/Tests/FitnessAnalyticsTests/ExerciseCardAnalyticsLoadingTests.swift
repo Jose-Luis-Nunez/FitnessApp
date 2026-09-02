@@ -133,8 +133,8 @@ struct ExerciseCardAnalyticsLoadingTests {
         _ = viewModel.loadLatestEntry(for: exerciseID)
         #expect(storage.loadCallCount == 0)
 
-        #expect(!viewModel.loadCardPhases(for: exerciseID, hasWeight: true).isEmpty)
-        #expect(!viewModel.loadCardPhases(for: exerciseID, hasWeight: true).isEmpty)
+        #expect(!viewModel.loadCardIncreases(for: exerciseID, hasWeight: true).isEmpty)
+        #expect(!viewModel.loadCardIncreases(for: exerciseID, hasWeight: true).isEmpty)
 
         #expect(storage.loadCallCount == 1)
         #expect(storage.loadedExerciseIDs == [exerciseID])
@@ -152,7 +152,7 @@ struct ExerciseCardAnalyticsLoadingTests {
         ], for: exerciseID)
         let viewModel = AnalyticsViewModel(storageService: storage)
 
-        #expect(viewModel.loadCardPhases(for: exerciseID, hasWeight: true).isEmpty)
+        #expect(viewModel.loadCardIncreases(for: exerciseID, hasWeight: true).isEmpty)
     }
 
     @Test func fullHistoryAnswersLowerCacheStagesWithoutMoreReads() {

@@ -133,10 +133,11 @@ public enum AppStyle {
         public static let analyticsEntryIconWidth: CGFloat = 52
         /// Vertical gap between the idle card's "Last run" trigger and its expanded set details.
         public static let idleLastRunExpandedTopSpacing: CGFloat = 12
-        /// Fractional tile count for the coaching phase tiles. Barely above one:
-        /// a phase tile states two sessions side by side and needs almost the
-        /// full width, while the sliver of the next tile still says there is one.
-        public static let phaseTileVisibleCount: CGFloat = 1.15
+        /// Fractional tile count for the coaching increase tiles. Wider than the
+        /// set tiles, because an increase tile stacks two sessions with a date
+        /// each — but not one-per-row: a tile dragged across the full width reads
+        /// as a banner rather than as one of several comparable steps.
+        public static let increaseTileVisibleCount: CGFloat = 2.15
         /// Fractional tile count fitted into a set-tile viewport so the next tile
         /// peeks in. Shared by the idle card's "Last run" row and the completed
         /// card's expanded row: the fraction is what sets the tile width, so the

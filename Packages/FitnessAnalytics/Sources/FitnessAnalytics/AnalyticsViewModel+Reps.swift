@@ -95,7 +95,7 @@ extension AnalyticsViewModel {
         return patternFrequency.max(by: { $0.value < $1.value })?.key ?? 0
     }
 
-    func repsPhases(from history: [AnalyticsEntry], limit: Int = 3) -> [WeightPhase] {
+    func repsIncreases(from history: [AnalyticsEntry], limit: Int = 3) -> [LevelIncrease] {
         let calendar = Calendar.current
         let entries = history.sorted(by: { $0.date < $1.date })
         guard !entries.isEmpty else { return [] }
@@ -131,7 +131,7 @@ extension AnalyticsViewModel {
         rawPhases.append(RawPhase(maxReps: phaseStart.maxReps, sessionCount: sessionCount, start: phaseStart, end: phaseEnd))
 
         // Same rule as the weighted path — only steps up, each paired with its
-        // predecessor. See `weightPhases(from:limit:)`.
+        // predecessor. See `weightIncreases(from:limit:)`.
         var increases: [(phase: RawPhase, previous: RawPhase)] = []
         for index in 1..<rawPhases.count {
             let phase = rawPhases[index]
@@ -147,13 +147,13 @@ extension AnalyticsViewModel {
                 to: entry.phase.start.date
             ).day ?? 0
 
-            return WeightPhase(
+            return LevelIncrease(
                 value: .reps(entry.phase.maxReps),
                 daysToReach: max(days, 1),
                 workoutsToReach: entry.previous.sessionCount,
                 startSetsReps: entry.phase.start.repsSetsRepsLabel,
                 startDate: entry.phase.start.date,
-                previousSession: PhaseEndpoint(
+                previousSession: LevelSession(
                     value: .reps(entry.previous.maxReps),
                     setsReps: entry.previous.end.repsSetsRepsLabel,
                     date: entry.previous.end.date

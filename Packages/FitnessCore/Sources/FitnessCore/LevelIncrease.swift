@@ -6,23 +6,23 @@ import Foundation
 /// of the two applies and the consumer must not have to be told which by a
 /// separate flag: a disagreement between the flag and the data used to render
 /// "0 kg" on bodyweight exercises.
-public enum PhaseValue: Equatable {
+public enum TrainingLevel: Equatable {
     case weight(Double)
     case reps(Int)
 }
 
 /// One training day, reduced to what an increase tile needs to name it.
 ///
-/// Bundled rather than spread across parallel fields on `WeightPhase`: the three
+/// Bundled rather than spread across parallel fields on `LevelIncrease`: the three
 /// values describe *one* session that actually happened, and separate fields
 /// would let a later edit take the level from one day and the date from another
 /// without anything complaining.
-public struct PhaseEndpoint: Equatable {
-    public let value: PhaseValue
+public struct LevelSession: Equatable {
+    public let value: TrainingLevel
     public let setsReps: String
     public let date: Date
 
-    public init(value: PhaseValue, setsReps: String, date: Date) {
+    public init(value: TrainingLevel, setsReps: String, date: Date) {
         self.value = value
         self.setsReps = setsReps
         self.date = date
@@ -40,25 +40,22 @@ public struct PhaseEndpoint: Equatable {
 /// gap from `previousSession` to `startDate`, and the workouts spent at the old
 /// level to earn it. They deliberately do not describe the time spent at the new
 /// level; the tile's own two dates would contradict that.
-///
-/// Named `WeightPhase` for now because the type is referenced widely; the name
-/// predates the increase framing and is worth correcting separately.
-public struct WeightPhase: Identifiable {
+public struct LevelIncrease: Identifiable {
     public let id = UUID()
-    public let value: PhaseValue
+    public let value: TrainingLevel
     public let daysToReach: Int
     public let workoutsToReach: Int
     public let startSetsReps: String
     public let startDate: Date
-    public let previousSession: PhaseEndpoint
+    public let previousSession: LevelSession
 
     public init(
-        value: PhaseValue,
+        value: TrainingLevel,
         daysToReach: Int,
         workoutsToReach: Int,
         startSetsReps: String,
         startDate: Date,
-        previousSession: PhaseEndpoint
+        previousSession: LevelSession
     ) {
         self.value = value
         self.daysToReach = daysToReach

@@ -5776,6 +5776,24 @@
         }
       }
     },
+    "unit.kilogram": {
+      "comment": "SI symbol for kilogram. Identical in every supported locale today; the key exists so a locale using a different notation has somewhere to put it.",
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "kg"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "kg"
+          }
+        }
+      }
+    },
     "workout.analytics_save_failed": {
       "extractionState": "manual",
       "localizations": {

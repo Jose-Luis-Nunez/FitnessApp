@@ -74,7 +74,9 @@ public struct CustomNumberPadView: View {
 
     private var statusText: String {
         guard inputValue >= 999.0 else {
-            return isWeight ? "kg" : AppText.resolve(AppText.exerciseRepetitions, locale: locale)
+            return isWeight
+                ? AppText.resolve(AppText.unitKilogram, locale: locale)
+                : AppText.resolve(AppText.exerciseRepetitions, locale: locale)
         }
         return AppText.resolve(AppText.commonMaximumReached, locale: locale)
     }

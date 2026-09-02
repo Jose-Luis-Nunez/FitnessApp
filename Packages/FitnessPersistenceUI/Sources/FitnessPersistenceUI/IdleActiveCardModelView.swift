@@ -98,7 +98,7 @@ public struct IdleActiveCardModelView: View {
     @State private var isExpanded = false
     @State private var isLastRunExpanded = false
     @State private var lastRunPresentation = LastRunCardPresentationState()
-    @State private var weightPhases: [WeightPhase] = []
+    @State private var increases: [LevelIncrease] = []
     @State private var analyticsRevision: ExerciseAnalyticsCacheRevision
     @Environment(\.appColorTheme) private var appColorTheme
     @Environment(\.locale) private var locale
@@ -207,13 +207,13 @@ public struct IdleActiveCardModelView: View {
 
     private func handleAppear() {
         refreshAvailability()
-        // Keyed to `isLastRunExpanded`, not `isExpanded`: the phases decide
+        // Keyed to `isLastRunExpanded`, not `isExpanded`: the increases decide
         // whether the coaching button exists at all, and that button lives in
         // the last-run row. Keyed to the tip expansion instead, a re-appear
         // would make the button vanish while its row is still open.
         if isLastRunExpanded {
             _ = loadLastRun()
-            loadPhases()
+            loadIncreases()
         }
     }
 
@@ -221,12 +221,12 @@ public struct IdleActiveCardModelView: View {
         refreshAvailability()
         if isLastRunExpanded {
             _ = loadLastRun()
-            loadPhases()
+            loadIncreases()
         }
     }
 
-    private func loadPhases() {
-        weightPhases = analyticsViewModel.loadCardPhases(
+    private func loadIncreases() {
+        increases = analyticsViewModel.loadCardIncreases(
             for: model.id,
             hasWeight: model.hasWeight
         )
@@ -249,7 +249,7 @@ public struct IdleActiveCardModelView: View {
                         .padding(.horizontal, AppStyle.Padding.card)
                         .padding(.top, AppStyle.Layout.idleLastRunExpandedTopSpacing)
                 }
-                if isExpanded, !weightPhases.isEmpty {
+                if isExpanded, !increases.isEmpty {
                     expandedContent
                         .padding(.horizontal, AppStyle.Padding.idleExpandedContentHorizontal)
                 }
@@ -376,7 +376,7 @@ private extension IdleActiveCardModelView {
                     Text(verbatim: weightNumber)
                         .font(AppStyle.Font.idleWeightValue)
                         .foregroundColor(AppStyle.Color.white)
-                    Text(verbatim: "kg")
+                    Text(AppText.unitKilogram)
                         .font(AppStyle.Font.cardMetricUnit)
                         .foregroundColor(appColorTheme.accent.idleMetricValue)
                 }
@@ -536,16 +536,16 @@ private extension IdleActiveCardModelView {
         if isLastRunExpanded {
             isExpanded = false
             isLastRunExpanded = false
-            weightPhases = []
+            increases = []
             return
         }
         guard loadLastRun() else { return }
         // The coaching button is only reachable from this row, and whether it
-        // may appear depends on the phases — so they are read here rather than
+        // may appear depends on the increases — so they are read here rather than
         // on the button's own tap. Expanding is an explicit gesture, and the tap
         // that follows is then served from cache, so the drill-down still costs
         // one full history read in total.
-        loadPhases()
+        loadIncreases()
         isLastRunExpanded = true
     }
 
@@ -565,7 +565,7 @@ private extension IdleActiveCardModelView {
     }
 
     /// A plain toggle. The load moved to `toggleLastRunDetails()`, and the
-    /// `guard` that used to swallow the tap when there were no phases is gone
+    /// `guard` that used to swallow the tap when there were no increases is gone
     /// with it: the button no longer exists in that case, so the guard would be
     /// an unreachable path that silently did nothing.
     func toggleCoachingTips() {
@@ -628,59 +628,31 @@ private extension IdleActiveCardModelView {
                     .padding(.top, 6)
             }
 
-            phaseTilesRow
+            increaseTilesRow
         }
         .padding(.top, 4)
     }
 
-    /// One tile at a time with the next one peeking in, plus the overflow
-    /// chevron — the same affordance the set tiles above it use, driven by the
-    /// same `SetTilesRowMetrics` arithmetic rather than a second mechanism.
+    /// The coaching increases, one tile at a time with the next peeking in.
     ///
-    /// Three tiles abreast left each about 110pt wide, which forced the tile's
-    /// own content into a narrow column and made it read as a tall strip. A
-    /// phase tile states two sessions one under the other, so it needs the width
-    /// more than the row needs to show every phase at once.
-    var phaseTilesRow: some View {
-        GeometryReader { geo in
-            let visibleCount = AppStyle.Layout.phaseTileVisibleCount
-            let showsChevron = SetTilesRowMetrics.showsChevron(
-                setCount: weightPhases.count,
-                visibleTileCount: visibleCount
-            )
-            let tileWidth = SetTilesRowMetrics.tileWidth(
-                available: geo.size.width,
-                reservedTrailingWidth: 0,
-                showsChevron: showsChevron,
-                visibleTileCount: visibleCount
-            )
-
-            HStack(spacing: SetTilesRowMetrics.spacing) {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: SetTilesRowMetrics.spacing) {
-                        ForEach(weightPhases) { phase in
-                            WeightPhaseTileView(phase: phase)
-                                .frame(width: tileWidth)
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    analyticsSheetDate = AnalyticsSheetDate(date: phase.startDate)
-                                }
-                        }
+    /// Uses the same `TileScrollRow` as the set tiles above it rather than
+    /// rebuilding the scroller and chevron. Each tile opens its own date, so the
+    /// row passes no row-level tap and attaches the gesture per tile instead.
+    var increaseTilesRow: some View {
+        TileScrollRow(
+            items: increases,
+            visibleTileCount: AppStyle.Layout.increaseTileVisibleCount,
+            chevronColor: AppStyle.Color.idleMetricLabel.opacity(AppStyle.Opacity.separatorLine),
+            tile: { increase, _, width in
+                LevelIncreaseTileView(increase: increase)
+                    .frame(width: width)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        analyticsSheetDate = AnalyticsSheetDate(date: increase.startDate)
                     }
-                }
-
-                if showsChevron {
-                    Image(systemName: "chevron.compact.right")
-                        .font(AppStyle.Font.regularChip)
-                        .foregroundColor(
-                            AppStyle.Color.idleMetricLabel.opacity(AppStyle.Opacity.separatorLine)
-                        )
-                        .frame(width: SetTilesRowMetrics.chevronWidth)
-                        .frame(maxHeight: .infinity)
-                }
             }
-        }
-        .frame(height: ExerciseCardLayout.PhaseTiles.rowHeight)
+        )
+        .frame(height: ExerciseCardLayout.IncreaseTiles.rowHeight)
     }
 
     /// Last-run per-set breakdown via the shared `SetTilesRow`. The coaching
@@ -702,7 +674,7 @@ private extension IdleActiveCardModelView {
                 // letting it collapse would change the tile widths on this card
                 // but not on the completed one.
                 Group {
-                    if !weightPhases.isEmpty {
+                    if !increases.isEmpty {
                         coachingTipButton
                     }
                 }

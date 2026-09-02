@@ -48,7 +48,6 @@ extension DayTrainingSession {
                 // zero would render as a real "0 kg" session.
                 guard let maxReps = allSets.map(\.currentReps).max() else { return nil }
 
-
                 let bilateralGroups = dayEntries.compactMap {
                     BilateralSetGrouping.groups(for: $0.setProgress)
                 }
