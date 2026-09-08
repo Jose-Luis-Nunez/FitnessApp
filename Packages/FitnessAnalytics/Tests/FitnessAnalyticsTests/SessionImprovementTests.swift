@@ -38,52 +38,35 @@ private func entry(
     )
 }
 
-// MARK: - Day grouping
+// MARK: - Workout reduction
 
 /// `TrainingSession` backs both the weight and the reps card, so a mistake
 /// here changes two shipped features at once.
 @Suite("TrainingSession", .tags(.fast))
 struct TrainingSessionTests {
 
-    @Test func groupsSeveralEntriesOfOneDayIntoOneSession() {
-        let sessions = TrainingSession.sessions(
-            from: [
-                entry(-1, [(40, 10)]),
-                entry(-1, [(45, 8)]),
-                entry(0, [(50, 6)])
-            ],
-            calendar: testCalendar
-        )
-
-        #expect(sessions.count == 2)
-        #expect(sessions.first?.maxWeight == 45)
-        #expect(sessions.last?.maxWeight == 50)
-    }
-
     @Test func ordersOldestFirst() {
-        let sessions = TrainingSession.sessions(
+        let sessions = TrainingSession.workouts(
             from: [
                 entry(0, [(50, 6)]),
                 entry(-2, [(30, 12)]),
                 entry(-1, [(40, 10)])
-            ],
-            calendar: testCalendar
+            ]
         )
 
         #expect(sessions.map(\.maxWeight) == [30, 40, 50])
     }
 
-    @Test func dropsDaysWithoutARecordedSet() {
-        let sessions = TrainingSession.sessions(from: [entry(0, [])], calendar: testCalendar)
+    @Test func dropsWorkoutsWithoutARecordedSet() {
+        let sessions = TrainingSession.workouts(from: [entry(0, [])])
         #expect(sessions.isEmpty)
     }
 
     @Test func minRepsAtMaxWeightIgnoresLighterSets() {
-        let sessions = TrainingSession.sessions(
+        let sessions = TrainingSession.workouts(
             from: [
                 entry(0, [(50, 5), (50, 7), (40, 20)])
-            ],
-            calendar: testCalendar
+            ]
         )
 
         #expect(sessions.first?.maxWeight == 50)
@@ -93,31 +76,6 @@ struct TrainingSessionTests {
         #expect(sessions.first?.totalRepsAtMaxWeight == 12)
     }
 
-    /// A day counts as bilateral only when *every* one of its entries resolves
-    /// into pairs; one legacy entry falls the whole day back to set-based
-    /// figures.
-    @Test func oneNonBilateralEntryMakesTheWholeDayUnilateral() {
-        let bilateral = AnalyticsEntry(
-            exerciseId: UUID(),
-            date: day(0),
-            setProgress: [
-                SetProgress(status: .completedDone, currentReps: 10, weight: 20, side: .left, logicalSetIndex: 0),
-                SetProgress(status: .completedDone, currentReps: 10, weight: 20, side: .right, logicalSetIndex: 0)
-            ]
-        )
-        let legacy = entry(0, [(20, 10)])
-
-        #expect(
-            TrainingSession
-                .sessions(from: [bilateral], calendar: testCalendar)
-                .first?.isBilateral == true
-        )
-        #expect(
-            TrainingSession
-                .sessions(from: [bilateral, legacy], calendar: testCalendar)
-                .first?.isBilateral == false
-        )
-    }
     /// The granularity the increase features need. Two entries on one day are
     /// two sessions here, and the lighter one survives — the day grouping keeps
     /// only the maximum, which is what hid a same-day increase.
@@ -170,7 +128,7 @@ struct TrainingSessionTests {
 struct SessionImprovementDerivationTests {
 
     @Test func noHistoryYieldsNoImprovement() {
-        #expect(AnalyticsViewModel.improvement(from: [], hasWeight: true, calendar: testCalendar) == nil)
+        #expect(AnalyticsViewModel.improvement(from: [], hasWeight: true) == nil)
     }
 
     /// A first-ever training has nothing to compare against, but its current
@@ -191,8 +149,7 @@ struct SessionImprovementDerivationTests {
         let result = try #require(
             AnalyticsViewModel.improvement(
                 from: [entry(-1, [(50, 8)]), entry(0, [(55, 10)])],
-                hasWeight: true,
-                calendar: testCalendar
+                hasWeight: true
             )
         )
 
@@ -207,8 +164,7 @@ struct SessionImprovementDerivationTests {
         let result = try #require(
             AnalyticsViewModel.improvement(
                 from: [entry(-1, [(60, 12)]), entry(0, [(50, 8)])],
-                hasWeight: true,
-                calendar: testCalendar
+                hasWeight: true
             )
         )
 
@@ -222,8 +178,7 @@ struct SessionImprovementDerivationTests {
         let result = try #require(
             AnalyticsViewModel.improvement(
                 from: [entry(-1, [(50, 8)]), entry(0, [(50, 8)])],
-                hasWeight: true,
-                calendar: testCalendar
+                hasWeight: true
             )
         )
 
@@ -241,8 +196,7 @@ struct SessionImprovementDerivationTests {
         let weighted = try #require(
             AnalyticsViewModel.improvement(
                 from: history,
-                hasWeight: true,
-                calendar: testCalendar
+                hasWeight: true
             )
         )
         #expect(weighted.currentReps == 6)
@@ -251,16 +205,15 @@ struct SessionImprovementDerivationTests {
         let bodyweight = try #require(
             AnalyticsViewModel.improvement(
                 from: history,
-                hasWeight: false,
-                calendar: testCalendar
+                hasWeight: false
             )
         )
         #expect(bodyweight.currentReps == 20)
         #expect(bodyweight.repsGain == nil)
     }
 
-    /// Only the two most recent days matter, however long the history is.
-    @Test func comparesOnlyTheTwoMostRecentDays() throws {
+    /// Only the two most recent workouts matter, however long the history is.
+    @Test func comparesOnlyTheTwoMostRecentWorkouts() throws {
         let result = try #require(
             AnalyticsViewModel.improvement(
                 from: [
@@ -269,12 +222,36 @@ struct SessionImprovementDerivationTests {
                     entry(-1, [(50, 8)]),
                     entry(0, [(55, 9)])
                 ],
-                hasWeight: true,
-                calendar: testCalendar
+                hasWeight: true
             )
         )
 
         #expect(result.weightGain == 5)
         #expect(result.repsGain == 1)
+    }
+
+    /// Two workouts on one day, the second heavier. The day grouping kept only
+    /// the day's maximum, so there was nothing earlier to compare against and
+    /// the card reported no gain — while the coaching tile below it announced
+    /// the very same increase.
+    @Test func aSecondWorkoutOnTheSameDayIsCompared() throws {
+        let morning = AnalyticsEntry(
+            exerciseId: UUID(),
+            date: day(0).addingTimeInterval(9 * 3600),
+            setProgress: [SetProgress(status: .completedDone, currentReps: 8, weight: 50)]
+        )
+        let evening = AnalyticsEntry(
+            exerciseId: UUID(),
+            date: day(0).addingTimeInterval(18 * 3600),
+            setProgress: [SetProgress(status: .completedDone, currentReps: 10, weight: 55)]
+        )
+
+        let result = try #require(
+            AnalyticsViewModel.improvement(from: [morning, evening], hasWeight: true)
+        )
+
+        #expect(result.weightGain == 5)
+        #expect(result.repsGain == 2)
+        #expect(result.currentWeight == 55)
     }
 }

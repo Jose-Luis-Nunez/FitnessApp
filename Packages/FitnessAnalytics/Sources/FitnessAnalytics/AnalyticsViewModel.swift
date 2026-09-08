@@ -144,7 +144,7 @@ public final class AnalyticsViewModel {
         }
     }
 
-    /// Compares the two most recent training days of one exercise.
+    /// Compares the two most recent workouts of one exercise.
     ///
     /// Unlike `loadCardIncreases` this is safe to call from a collapsed card: it
     /// uses a bounded two-day read instead of the full history. A cached full
@@ -182,18 +182,27 @@ public final class AnalyticsViewModel {
     /// model instance or storage double.
     static func improvement(
         from history: [AnalyticsEntry],
-        hasWeight: Bool,
-        calendar: Calendar = .current
+        hasWeight: Bool
     ) -> SessionImprovement? {
+        // Workouts, not calendar days. Finishing an exercise twice in one day —
+        // the second time heavier — is an improvement, and the day grouping
+        // cannot see it: it keeps the day's maximum, so both workouts collapse
+        // into one session with nothing before it to compare against. The
+        // coaching tiles were corrected the same way; leaving this on days meant
+        // the card claimed no gain while the tile below it announced one.
+        //
+        // The fetch already suffices: `dayLimit: 2` returns the two most recent
+        // *training days* with all their entries, which always contains the two
+        // most recent workouts.
         let sessions = TrainingSession
-            .sessions(from: history, calendar: calendar)
+            .workouts(from: history)
             .suffix(2)
         guard let current = sessions.last else { return nil }
         let previous = sessions.count > 1 ? sessions.first : nil
 
         // Reps at the working weight are the meaningful figure for a weighted
         // exercise; a bodyweight exercise has no working weight, so its best rep
-        // count of the day is used instead.
+        // count of the workout is used instead.
         let reps = { (session: TrainingSession) in
             hasWeight ? session.minRepsAtMaxWeight : session.maxReps
         }
