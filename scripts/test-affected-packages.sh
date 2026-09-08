@@ -369,7 +369,7 @@ else
     snapshot_plan="FitnessSnapshots"
     if [ "$RECORD_SNAPSHOTS_MODE" -eq 1 ]; then
       snapshot_plan="FitnessSnapshotsRecord"
-      baselines_before=$(git status --porcelain -- '*__Snapshots__*' 2>/dev/null || true)
+      baselines_before=$(bash "$REPO_ROOT/scripts/snapshot-baselines.sh" state)
     fi
     snapshot_status=0
     run_phase "snapshots" "$snapshot_plan" "$IOS_DESTINATION" NO "${snapshot_targets[@]}" || snapshot_status=1
@@ -381,7 +381,8 @@ else
       # that never started -- a missing test plan also exits 1. The result
       # bundle is no help either: xcodebuild writes one even when it aborts
       # before running anything. The executed test count is the honest signal.
-      baselines_after=$(git status --porcelain -- '*__Snapshots__*' 2>/dev/null || true)
+      baselines_after=$(bash "$REPO_ROOT/scripts/snapshot-baselines.sh" state)
+      changed_baselines=$(bash "$REPO_ROOT/scripts/snapshot-baselines.sh" changed "$baselines_before" "$baselines_after")
       recorded_tests=0
       if [ -f "$RESULT_DIRECTORY/snapshots.xcresult/Info.plist" ] &&
          python3 "$REPO_ROOT/scripts/summarize-xcresult.py" \
@@ -396,12 +397,12 @@ else
         echo "       failure looks like an ordinary snapshot failure otherwise."
         result=1
       else
-        if [ "$baselines_before" = "$baselines_after" ]; then
+        if [ -z "$changed_baselines" ]; then
           echo "RECORDED: the run executed and no baseline changed -- they were already current."
         else
           echo "RECORDED: the following baselines changed. Inspect every one before validating --"
           echo "a baseline that moved without an intended visual change is a regression."
-          printf '%s\n' "$baselines_after" | sed 's/^/  /'
+          printf '%s\n' "$changed_baselines" | sed 's/^/  /'
           echo "  Compare with: git diff -- '*__Snapshots__*'"
         fi
         echo "  A recording run proves nothing and is not test evidence; validate on the"

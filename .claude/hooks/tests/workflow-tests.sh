@@ -703,4 +703,51 @@ expect_equal "0" \
 expect_success "--list still resolves a schedule without touching Xcode" \
   bash -c "cd '$REPO_ROOT' && bash '$TEST_PACKAGES' --list FitnessUI >/dev/null 2>&1"
 
+# The recording run must report by content, not by `git status` lines. Both
+# misreports were observed in use: a baseline already modified before the run
+# stays " M" however often it is re-recorded (a changed byte reported as "no
+# baseline changed"), and one recorded back to its HEAD bytes drops out of the
+# listing (reported as changed, with an empty list). The fixture replays both.
+BASELINES="$REPO_ROOT/scripts/snapshot-baselines.sh"
+record_repo=$(mktemp -d "${TMPDIR:-/tmp}/workflow-record.XXXXXX")
+(
+  cd "$record_repo"
+  git init -q
+  git config user.email fixture@example.com
+  git config user.name Fixture
+  mkdir -p Tests/__Snapshots__/Suite
+  printf 'a' > Tests/__Snapshots__/Suite/x.png
+  git add . && git commit -qm baseline
+  printf 'b' > Tests/__Snapshots__/Suite/x.png
+)
+before=$(cd "$record_repo" && bash "$BASELINES" state)
+printf 'c' > "$record_repo/Tests/__Snapshots__/Suite/x.png"
+after=$(cd "$record_repo" && bash "$BASELINES" state)
+expect_equal "Tests/__Snapshots__/Suite/x.png" \
+  "$(bash "$BASELINES" changed "$before" "$after")" \
+  "a re-recorded already-modified baseline is reported as changed"
+
+before=$after
+printf 'a' > "$record_repo/Tests/__Snapshots__/Suite/x.png"
+after=$(cd "$record_repo" && bash "$BASELINES" state)
+expect_equal "Tests/__Snapshots__/Suite/x.png" \
+  "$(bash "$BASELINES" changed "$before" "$after")" \
+  "a baseline recorded back to HEAD bytes is still named, not lost"
+
+before=$after
+after=$(cd "$record_repo" && bash "$BASELINES" state)
+expect_equal "" "$(bash "$BASELINES" changed "$before" "$after")" \
+  "an untouched baseline set reports nothing"
+
+printf 'n' > "$record_repo/Tests/__Snapshots__/Suite/new.png"
+after=$(cd "$record_repo" && bash "$BASELINES" state)
+expect_equal "Tests/__Snapshots__/Suite/new.png" \
+  "$(bash "$BASELINES" changed "$before" "$after")" \
+  "a newly recorded, untracked baseline is reported"
+
+expect_equal "0" "$(grep -c "git status --porcelain -- '\*__Snapshots__\*'" "$TEST_PACKAGES")" \
+  "--record no longer judges baselines by git status lines"
+expect_equal "2" "$(grep -c 'snapshot-baselines.sh" state' "$TEST_PACKAGES")" \
+  "--record snapshots the baseline contents before and after the run"
+
 echo "PASS: $pass_count workflow fixture checks"

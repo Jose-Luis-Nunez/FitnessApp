@@ -93,6 +93,7 @@ Codex-only source-command adapters live under `.agents/skills/source-command-*`.
 | `.claude/commands/validate.md` | Review and validate every current working-tree change before staging; Git authority is canonical in `AGENTS.md` |
 | `.claude/commands/buildApp.md` | Build/install/launch command |
 | `scripts/test-affected-packages.sh` | Route requested modules through one shared SwiftPM graph and native-fast, pinned-iOS integration, snapshot, or pre-merge test plans; Xcode owns global build/test-worker coordination, while compilation caching and reusable test products are explicit modes |
+| `scripts/snapshot-baselines.sh` | Content-hash view of the snapshot baselines so `--record` reports what actually changed, independent of prior `git status` state |
 | `scripts/sync-agent-runtime.sh` | Generate/check Codex skills, hooks, and roles |
 | `scripts/generate-codex-agent.py` | Generate TOML role from canonical Markdown |
 | `scripts/install-hooks.sh` | Configure `.githooks` as Git hooks path |
