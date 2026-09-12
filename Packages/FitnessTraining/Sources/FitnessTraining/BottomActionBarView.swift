@@ -241,7 +241,7 @@ public struct FloatingActionButtonsView: View {
                 .font(AppStyle.Font.bottomBarButtons)
                 // Less/More are secondary: same dimmed grey as the "kg" and
                 // "of N" labels in the set rows. Done keeps a bright label
-                // because it owns the accent surface.
+                // because it is the one control with a surface of its own.
                 .foregroundColor(
                     style == .control
                         ? AppStyle.Color.idleMetricUnit
@@ -252,24 +252,18 @@ public struct FloatingActionButtonsView: View {
                 .background(alignment: .center) {
                     if usesCompactSurface {
                         if style == .done || style == .finish {
-                            RoundedRectangle(
-                                cornerRadius: setControlCornerRadius,
-                                style: .continuous
-                            )
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        AppStyle.Color.trainingDoneSurface,
-                                        AppStyle.Color.trainingDoneSurfaceBottom,
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
+                            // Literally the timer pill's surface, so Done and the
+                            // dials over the artwork read as one set of controls.
+                            TrainingDialSurface.fill(
+                                RoundedRectangle(
+                                    cornerRadius: setControlCornerRadius,
+                                    style: .continuous
                                 )
                             )
                             .padding(.horizontal, setControlSurfaceHorizontalInset)
                         }
                         // Less/More draw no surface at all — plain labels beside
-                        // the accented Done button. `TrainingControlSurfaceStyle`
+                        // the raised Done button. `TrainingControlSurfaceStyle`
                         // is deliberately left untouched here: the timer surface,
                         // pain grid and symptom chips still rely on it.
                     }

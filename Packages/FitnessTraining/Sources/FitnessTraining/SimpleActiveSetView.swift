@@ -472,7 +472,6 @@ public struct SimpleActiveSetView: View {
 // MARK: - SetRowChip Modifier
 
 public struct SetRowChipStyle: ViewModifier {
-    public let minWidth: CGFloat
     public let horizontalPadding: CGFloat
     /// Outline colour, or `nil` for no outline. The weight chip renders bare
     /// text while the reps field keeps its box and tints the outline for the
@@ -483,12 +482,10 @@ public struct SetRowChipStyle: ViewModifier {
     public let font: Font?
 
     public init(
-        minWidth: CGFloat,
         horizontalPadding: CGFloat = AppStyle.Layout.setRowChipHorizontalPadding,
         borderColor: Color? = AppStyle.Color.gray,
         font: Font? = nil
     ) {
-        self.minWidth = minWidth
         self.horizontalPadding = horizontalPadding
         self.borderColor = borderColor
         self.font = font
@@ -498,7 +495,7 @@ public struct SetRowChipStyle: ViewModifier {
         content
             .font(font ?? AppStyle.Font.tileLabel)
             .foregroundColor(AppStyle.Color.white)
-            .frame(minWidth: minWidth, minHeight: 24)
+            .frame(minHeight: 24)
             .padding(.horizontal, horizontalPadding)
             .padding(.vertical, 4)
             // No fill: the screen backdrop reads through the chip. The reps
@@ -520,14 +517,12 @@ public struct SetRowChipStyle: ViewModifier {
 
 public extension View {
     func setRowChipStyle(
-        minWidth: CGFloat,
         horizontalPadding: CGFloat = AppStyle.Layout.setRowChipHorizontalPadding,
         borderColor: Color? = AppStyle.Color.gray,
         font: Font? = nil
     ) -> some View {
         modifier(
             SetRowChipStyle(
-                minWidth: minWidth,
                 horizontalPadding: horizontalPadding,
                 borderColor: borderColor,
                 font: font
@@ -799,7 +794,6 @@ private struct SetRowView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(AppStyle.Layout.bilateralMetricMinimumScaleFactor)
                 .setRowChipStyle(
-                    minWidth: 0,
                     horizontalPadding: sizing.horizontalPadding,
                     borderColor: nil
                 )
@@ -830,7 +824,6 @@ private struct SetRowView: View {
                         : nil
                 )
                 .setRowChipStyle(
-                    minWidth: 0,
                     horizontalPadding: sizing.isStandard ? 0 : sizing.horizontalPadding,
                     // The active row is marked by its set label; the box that
                     // used to carry the accent outline is gone on standard rows.

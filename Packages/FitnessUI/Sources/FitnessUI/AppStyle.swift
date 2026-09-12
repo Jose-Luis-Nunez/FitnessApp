@@ -514,17 +514,6 @@ public enum AppStyle {
         /// the reps field's outline, where a whole connected shape carries the
         /// colour, but too dark for a single small digit.
         public static let muscleArtworkRimBright = SwiftUI.Color(hex: "#13AABD")
-        /// Surface of the training sheet's primary "Done" action: dark petrol
-        /// teal / deep cyan-green at hue 179°, deliberately not emerald or mint.
-        ///
-        /// The brightest stop of the gradient this surface used to run — flat by
-        /// choice. No outline, glow or shadow belongs on it.
-        /// Done and Finish: a deep petrol slab, a touch lighter at the top so it
-        /// reads as a raised control without a highlight or outline. Sits in
-        /// the same family as the anatomy rim and the quick-done haze.
-        public static let trainingDoneSurface = SwiftUI.Color(hex: "#1D3A43")
-        public static let trainingDoneSurfaceBottom = SwiftUI.Color(hex: "#152E36")
-
         /// The dials over the training artwork (Cancel, timer, Quick-Done):
         /// a neutral near-black disc, and one mint accent for the progress arc
         /// and the bolt.
