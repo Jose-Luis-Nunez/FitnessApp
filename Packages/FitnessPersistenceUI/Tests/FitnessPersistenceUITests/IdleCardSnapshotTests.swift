@@ -20,7 +20,11 @@ import FitnessTestSupport
 /// intentional redesign for no extra risk reduction.
 @MainActor
 private func renderForSideEffects<V: View>(_ view: V, size: CGSize) {
-    let controller = UIHostingController(rootView: view)
+    // Same theme as the snapshot host: the fixture provider only knows the
+    // coloured figure assets.
+    let controller = UIHostingController(
+        rootView: view.appColorTheme(.green, muscleIcons: .colored)
+    )
     // A window, not just `loadViewIfNeeded()`: `onAppear` fires when the view
     // actually appears in a hierarchy, and the reads under test happen there.
     // Hosting without a window silently ran no reads at all and made the
@@ -42,7 +46,9 @@ private func assertSnapshot<V: View>(
     function: StaticString = #function
 ) {
     let hosted = view
-        .appColorTheme(.green)
+        // The coloured figures are the snapshot contract; the grey standard
+        // set is a user setting and is not part of these baselines.
+        .appColorTheme(.green, muscleIcons: .colored)
         .environment(\.locale, Locale(identifier: "en_US"))
         .frame(width: size.width, height: size.height)
         .background(AppStyle.Color.backgroundColor)

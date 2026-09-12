@@ -25,9 +25,9 @@ public struct CardTheme {
 extension CardTheme {
     public static let idle = CardTheme(
         surface: .plain,
-        titleColor: AppStyle.Color.idleTitle,
-        subtitleColor: AppStyle.Color.idleMetricLabel,
-        titleFont: AppStyle.Font.idleCardTitle
+        titleColor: AppStyle.Color.rowTitle,
+        subtitleColor: AppStyle.Color.rowSecondary,
+        titleFont: AppStyle.Font.rowTitle
     )
 
     public static let completed = CardTheme(
@@ -42,8 +42,8 @@ extension CardTheme {
     /// render time so the value cannot retain an obsolete accent palette.
     public static let inactiveOnIdle = CardTheme(
         surface: .plain,
-        titleColor: AppStyle.Color.idleTitle,
-        subtitleColor: AppStyle.Color.idleMetricLabel,
-        titleFont: AppStyle.Font.idleCardTitle
+        titleColor: AppStyle.Color.rowTitle,
+        subtitleColor: AppStyle.Color.rowSecondary,
+        titleFont: AppStyle.Font.rowTitle
     )
 }

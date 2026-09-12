@@ -6,14 +6,14 @@
       "scale": "1x"
     },
     {
+      "filename": "grey_defaultAbsIcon@2x.png",
       "idiom": "universal",
-      "scale": "2x",
-      "filename": "grey_defaultAbsIcon@2x.png"
+      "scale": "2x"
     },
     {
+      "filename": "grey_defaultAbsIcon@3x.png",
       "idiom": "universal",
-      "scale": "3x",
-      "filename": "grey_defaultAbsIcon@3x.png"
+      "scale": "3x"
     }
   ],
   "info": {

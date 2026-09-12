@@ -243,7 +243,7 @@ public struct WorkoutAnalyticsEntryView: View {
     @State private var showCalendar = false
     @State private var editingExerciseID: UUID?
     private let headerDateFormatter: DateFormatter?
-    private let exerciseIconProvider: (Exercise, AppAccentScheme) -> Image
+    private let exerciseIconProvider: (Exercise, AppColorTheme) -> Image
 
     public init(workout: Workout, isPresented: Binding<Bool>) {
         _isPresented = isPresented
@@ -251,8 +251,8 @@ public struct WorkoutAnalyticsEntryView: View {
             initialValue: WorkoutAnalyticsEntryViewModel(workout: workout)
         )
         headerDateFormatter = nil
-        exerciseIconProvider = { exercise, scheme in
-            Image(scheme.iconName(for: exercise.displayIconName))
+        exerciseIconProvider = { exercise, theme in
+            Image(theme.muscleIconName(for: exercise.displayIconName))
         }
     }
 
@@ -262,7 +262,7 @@ public struct WorkoutAnalyticsEntryView: View {
         headerDateFormatter: DateFormatter,
         exerciseIconProvider: @escaping (
             Exercise,
-            AppAccentScheme
+            AppColorTheme
         ) -> Image
     ) {
         _isPresented = isPresented
@@ -661,7 +661,7 @@ public struct WorkoutAnalyticsEntryView: View {
     private func selectionIcon(
         for exercise: Exercise
     ) -> some View {
-        exerciseIconProvider(exercise, appColorTheme.scheme)
+        exerciseIconProvider(exercise, appColorTheme)
             .resizable()
             .interpolation(.high)
             .scaledToFill()

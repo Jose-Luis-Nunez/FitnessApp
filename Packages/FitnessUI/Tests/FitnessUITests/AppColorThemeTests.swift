@@ -28,11 +28,23 @@ struct AppColorThemeTests {
         #expect(AppColorTheme.grey.profile.accentFill == AccentPalette.grey.idleAccentFill)
     }
 
-    @Test("Default icon variants are resolved by the injected scheme")
+    @Test("Default icon variants are resolved by the icon style, independent of the scheme")
     func iconResolution() {
-        #expect(AppAccentScheme.green.iconName(for: "defaultChestIcon") == "defaultChestIcon")
-        #expect(AppAccentScheme.grey.iconName(for: "defaultChestIcon") == "grey_defaultChestIcon")
-        #expect(AppAccentScheme.grey.iconName(for: "bicepsIcon") == "bicepsIcon")
+        #expect(MuscleIconStyle.colored.iconName(for: "defaultChestIcon") == "defaultChestIcon")
+        #expect(MuscleIconStyle.standard.iconName(for: "defaultChestIcon") == "grey_defaultChestIcon")
+        #expect(MuscleIconStyle.standard.iconName(for: "bicepsIcon") == "bicepsIcon")
+        #expect(AppColorTheme(scheme: .grey, muscleIcons: .colored).muscleIconName(for: "defaultAbsIcon") == "defaultAbsIcon")
+        #expect(AppColorTheme(scheme: .green).muscleIconName(for: "defaultAbsIcon") == "grey_defaultAbsIcon")
+        #expect(MuscleIconStyle.storageKey == "muscleIconStyle")
+    }
+
+    @Test("Progress track goes neutral with the standard figures, keeps the accent with the coloured ones")
+    func progressTrackFollowsIconStyle() {
+        #expect(AppColorTheme(scheme: .green, muscleIcons: .standard).progressTrack == AccentPalette.grey.progressTrack)
+        #expect(AppColorTheme(scheme: .green, muscleIcons: .colored).progressTrack == AccentPalette.green.progressTrack)
+        #expect(AppColorTheme(scheme: .grey, muscleIcons: .colored).progressTrack == AccentPalette.grey.progressTrack)
+        #expect(AppColorTheme(scheme: .green, muscleIcons: .standard).artworkHalo == AppStyle.Color.artworkHaloNeutral)
+        #expect(AppColorTheme(scheme: .green, muscleIcons: .colored).artworkHalo == AccentPalette.green.black)
     }
 
     @Test("Persisted accent contract remains compatible with existing installs")

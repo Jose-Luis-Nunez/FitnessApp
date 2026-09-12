@@ -18,7 +18,7 @@ public struct CategoryTileArtworkStage<Artwork: View>: View {
     public var body: some View {
         ZStack {
             Circle()
-                .fill(appColorTheme.accent.black)
+                .fill(appColorTheme.artworkHalo)
                 .frame(
                     width: ExerciseCardLayout.CategoryTile.iconGlowSize,
                     height: ExerciseCardLayout.CategoryTile.iconGlowSize

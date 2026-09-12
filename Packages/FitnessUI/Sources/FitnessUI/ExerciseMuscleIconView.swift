@@ -51,7 +51,7 @@ public struct ExerciseMuscleIconView: View {
     }
 
     private var resolvedArtwork: Image {
-        artwork ?? Image(appColorTheme.scheme.iconName(for: iconName))
+        artwork ?? Image(appColorTheme.muscleIconName(for: iconName))
     }
 
     public var body: some View {

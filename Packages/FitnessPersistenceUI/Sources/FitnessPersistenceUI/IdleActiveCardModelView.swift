@@ -44,7 +44,7 @@ struct LastRunCardPresentationState {
 }
 
 /// Zoomed muscle artwork for the frameless exercise rows. The focused crop
-/// stays intact while a short bottom fade softens its hard frame edge.
+/// ends on a clean edge; a bottom fade read as a dark band under the figure.
 struct ExerciseCardArtworkView: View {
     let image: Image
     let size: CGFloat
@@ -56,18 +56,17 @@ struct ExerciseCardArtworkView: View {
             .interpolation(.high)
             .scaledToFill()
             .frame(width: size, height: size, alignment: alignment)
+            // Zoom from the aligned edge, so a top-aligned crop keeps its head
+            // in view and grows downward rather than pushing out of the frame.
+            .scaleEffect(AppStyle.Layout.rowArtworkZoom, anchor: zoomAnchor)
+            .frame(width: size, height: size)
             .clipped()
-            .mask {
-                LinearGradient(
-                    gradient: Gradient(stops: [
-                        .init(color: .white, location: 0),
-                        .init(color: .white, location: 0.90),
-                        .init(color: .clear, location: 1),
-                    ]),
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            }
+            .opacity(AppStyle.Opacity.rowArtwork)
+    }
+
+    private var zoomAnchor: UnitPoint {
+        let y: CGFloat = alignment.vertical == .top ? 0 : (alignment.vertical == .bottom ? 1 : 0.5)
+        return UnitPoint(x: 0.5, y: y)
     }
 }
 
@@ -288,7 +287,7 @@ private extension IdleActiveCardModelView {
                 .frame(width: AppStyle.Layout.selectionRadioSize, height: AppStyle.Layout.selectionRadioSize)
             if isSelected {
                 Circle()
-                    .fill(appColorTheme.accent.glow)
+                    .fill(appColorTheme.accent.idleMetricValue)
                     .frame(width: AppStyle.Layout.selectionRadioDot, height: AppStyle.Layout.selectionRadioDot)
             }
         }
@@ -309,7 +308,7 @@ private extension IdleActiveCardModelView {
 
     var categoryIconView: some View {
         ExerciseCardArtworkView(
-            image: imageProvider(appColorTheme.scheme.iconName(for: model.categoryGroup.defaultIconName)),
+            image: imageProvider(appColorTheme.muscleIconName(for: model.categoryGroup.defaultIconName)),
             size: AppStyle.Layout.idleActiveCardIconSize,
             alignment: model.categoryGroup.iconAlignment
         )
@@ -319,8 +318,8 @@ private extension IdleActiveCardModelView {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .center, spacing: 0) {
                 Text(model.name)
-                    .font(AppStyle.Font.idleCardTitle)
-                    .foregroundColor(AppStyle.Color.idleTitle)
+                    .font(AppStyle.Font.rowTitle)
+                    .foregroundColor(AppStyle.Color.rowTitle)
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .layoutPriority(1)
@@ -343,9 +342,16 @@ private extension IdleActiveCardModelView {
         HStack(alignment: .top, spacing: 0) {
             weightColumn
 
-            if !model.noSeats {
-                Spacer(minLength: 0)
+            Spacer(minLength: 0)
+            // Always occupy the seat slot. Dropping it for seatless exercises
+            // let the spacers re-centre the analytics glyph, so it ended far
+            // left of the glyph on the neighbouring cards.
+            if model.noSeats {
+                Color.clear
+                    .frame(width: AppStyle.Layout.idleSeatSlotWidth, height: 1)
+            } else {
                 seatColumn
+                    .frame(minWidth: AppStyle.Layout.idleSeatSlotWidth, alignment: .leading)
             }
 
             Spacer(minLength: 0)
@@ -374,11 +380,11 @@ private extension IdleActiveCardModelView {
             if model.hasWeight {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text(verbatim: weightNumber)
-                        .font(AppStyle.Font.idleWeightValue)
-                        .foregroundColor(AppStyle.Color.white)
+                        .font(AppStyle.Font.rowValue)
+                        .foregroundColor(AppStyle.Color.rowValue)
                     Text(AppText.unitKilogram)
-                        .font(AppStyle.Font.cardMetricUnit)
-                        .foregroundColor(appColorTheme.accent.idleMetricValue)
+                        .font(AppStyle.Font.rowUnit)
+                        .foregroundColor(AppStyle.Color.rowUnit)
                 }
                 .fixedSize()
                 .frame(height: AppStyle.Layout.idleMetricContentRowHeight)
@@ -387,11 +393,11 @@ private extension IdleActiveCardModelView {
                 // around the multiplier, and the "x" rendered smaller than the
                 // numbers so the figures dominate.
                 (
-                    Text(verbatim: "\(model.sets)").font(AppStyle.Font.idleWeightValue)
-                        + Text(verbatim: "x").font(AppStyle.Font.idleRepsSeparator)
-                        + Text(verbatim: "\(model.reps)").font(AppStyle.Font.idleWeightValue)
+                    Text(verbatim: "\(model.sets)").font(AppStyle.Font.rowValue)
+                        + Text(verbatim: "x").font(AppStyle.Font.rowRepsSeparator)
+                        + Text(verbatim: "\(model.reps)").font(AppStyle.Font.rowValue)
                 )
-                .foregroundColor(AppStyle.Color.white)
+                .foregroundColor(AppStyle.Color.rowValue)
                 .lineLimit(1)
                 .fixedSize()
                 .frame(height: AppStyle.Layout.idleMetricContentRowHeight)
@@ -427,19 +433,19 @@ private extension IdleActiveCardModelView {
         let accessibilityValue = positions.isEmpty ? "-" : positions.joined(separator: ", ")
         let content = HStack(spacing: 8) {
             Text(verbatim: positions.first ?? "-")
-                .foregroundColor(AppStyle.Color.white)
+                .foregroundColor(AppStyle.Color.rowValue)
 
             if positions.count == SeatSettings.cardDisplayLimit {
                 Text(verbatim: "•")
-                    .font(AppStyle.Font.idleSeatSeparator)
-                    .foregroundColor(AppStyle.Color.white)
+                    .font(AppStyle.Font.rowSeatSeparator)
+                    .foregroundColor(AppStyle.Color.rowValue)
                 Text(verbatim: positions[1])
-                    .foregroundColor(AppStyle.Color.white)
+                    .foregroundColor(AppStyle.Color.rowValue)
             }
 
             seatAdjustmentIcon
         }
-            .font(AppStyle.Font.idleSeatValue)
+            .font(AppStyle.Font.rowSeatValue)
             .lineLimit(1)
             .fixedSize()
             .frame(
@@ -503,12 +509,12 @@ private extension IdleActiveCardModelView {
     var lastRunFooter: some View {
         HStack(spacing: 6) {
             Text(AppText.trainingLastRun)
-                .font(AppStyle.Font.metricLabel)
-                .foregroundColor(AppStyle.Color.idleMetricUnit)
+                .font(AppStyle.Font.rowSecondary)
+                .foregroundColor(AppStyle.Color.rowSecondary)
 
             Image(systemName: "chevron.right")
-                .font(AppStyle.Font.cardSmallLabel)
-                .foregroundColor(AppStyle.Color.idleMetricUnit)
+                .font(AppStyle.Font.rowSmallLabel)
+                .foregroundColor(AppStyle.Color.rowSecondary)
                 .rotationEffect(.degrees(isLastRunExpanded ? 90 : 0))
         }
         .fixedSize()
@@ -623,8 +629,8 @@ private extension IdleActiveCardModelView {
         VStack(alignment: .leading, spacing: 6) {
             if let date = lastRunPresentation.date {
                 Text(AppText.trainingLastTraining(date: date.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year(.twoDigits).locale(locale))))
-                    .font(AppStyle.Font.dayChipNumber)
-                    .foregroundColor(.white.opacity(AppStyle.Opacity.secondaryLabel))
+                    .font(AppStyle.Font.rowSecondary)
+                    .foregroundColor(AppStyle.Color.rowSecondary)
                     .padding(.top, 6)
             }
 

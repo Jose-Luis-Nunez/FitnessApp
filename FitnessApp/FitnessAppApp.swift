@@ -28,6 +28,8 @@ struct FitnessAppApp: App {
     /// Sole persistence owner for the app-wide accent preference. The stored
     /// key and raw values remain compatible with existing installations.
     @AppStorage(AppAccentScheme.storageKey) private var accentScheme: AppAccentScheme = .green
+    /// Which default muscle figures to draw; independent of the accent.
+    @AppStorage(MuscleIconStyle.storageKey) private var muscleIconStyle: MuscleIconStyle = .standard
     @AppStorage(AppLanguage.storageKey) private var appLanguage: AppLanguage = .english
 
     init() {
@@ -97,6 +99,7 @@ struct FitnessAppApp: App {
                                 case .profile:
                                     ProfileView(
                                         accentScheme: $accentScheme,
+                                        muscleIconStyle: $muscleIconStyle,
                                         appLanguage: $appLanguage
                                     )
                                         .navigationBarBackButtonHidden(true)
@@ -202,7 +205,7 @@ struct FitnessAppApp: App {
             }
             // Environment propagation re-renders color consumers without
             // replacing view identity or resetting feature-owned state.
-            .appColorTheme(accentScheme)
+            .appColorTheme(accentScheme, muscleIcons: muscleIconStyle)
             .environment(\.locale, appLanguage.locale)
             .environment(\.safeAreaInsets, geo.safeAreaInsets)
             .environment(overlayState)

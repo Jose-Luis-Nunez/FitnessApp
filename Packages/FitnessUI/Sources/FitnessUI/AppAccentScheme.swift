@@ -23,13 +23,6 @@ public enum AppAccentScheme: String, CaseIterable, Identifiable, Codable, Sendab
         }
     }
 
-    /// Resolves the asset name for a default category icon. Exercise-specific
-    /// artwork has no alternate asset and therefore passes through unchanged.
-    public func iconName(for icon: String) -> String {
-        guard self == .grey, icon.hasPrefix("default") else { return icon }
-        return "grey_\(icon)"
-    }
-
     public var palette: AccentPalette {
         switch self {
         case .green: return .green

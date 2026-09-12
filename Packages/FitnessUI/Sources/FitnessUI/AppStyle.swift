@@ -32,6 +32,9 @@ public enum AppStyle {
         /// Body/muscle icon size on the exercise cards. The idle/active card
         /// reads as the focal item, so its icon is the larger of the two.
         public static let idleActiveCardIconSize: CGFloat = 78
+        /// Extra zoom on the list-row artwork inside its square: the figure fills
+        /// the frame instead of floating in it, so it reads larger at the same size.
+        public static let rowArtworkZoom: CGFloat = 1.15
         public static let checkmarkSize: CGFloat = 36
         public static let playButtonSize: CGFloat = 36
         public static let playIconSize: CGFloat = 16
@@ -164,6 +167,10 @@ public enum AppStyle {
         /// Shared interactive height for Weight/Reps, Seat, and Analytics.
         /// Matches the minimum tap target while centering their visual content.
         public static let idleMetricContentRowHeight: CGFloat = 44
+        /// Reserved width of the seat column in a list row. Rows without a
+        /// seat keep an empty slot of this width, so the analytics glyph ends
+        /// at the same edge on every card.
+        public static let idleSeatSlotWidth: CGFloat = 96
         public static let idleMetricFooterRowHeight: CGFloat = 20
         /// Width of the Data chart glyph (landscape 2:1); height comes from `idleMetricGlyphHeight`.
         public static let analyticsEntryIconWidth: CGFloat = 52
@@ -293,10 +300,19 @@ public enum AppStyle {
     public enum Font {
         public static let navigationHeadline = SwiftUI.Font.system(size: 28, weight: .bold)
         public static let cardHeadline = SwiftUI.Font.system(size: 18, weight: .bold)
-        /// Idle/Inactive exercise-card title (e.g. "Loop"). Smaller +
-        /// less bold than `cardHeadline` so it reads as a refined label
-        /// rather than a heavy header — matches the design-mockup look.
-        public static let idleCardTitle = SwiftUI.Font.system(size: 16, weight: .semibold)
+        /// Exercise-row typography: SF Pro at regular weight throughout. The
+        /// hierarchy comes from size and colour, not from weight — bold values
+        /// beside a semibold title read as loud and high-contrast, while the
+        /// target look is thin, soft and low-contrast.
+        public static let rowTitle = SwiftUI.Font.system(size: 16, weight: .regular)
+        public static let rowValue = SwiftUI.Font.system(size: 20, weight: .regular)
+        public static let rowRepsSeparator = SwiftUI.Font.system(size: 14, weight: .regular)
+        public static let rowSeatValue = SwiftUI.Font.system(size: 19, weight: .regular)
+        public static let rowSeatSeparator = SwiftUI.Font.system(size: 10, weight: .regular)
+        public static let rowUnit = SwiftUI.Font.system(size: 12, weight: .regular)
+        public static let rowSecondary = SwiftUI.Font.system(size: 11, weight: .regular)
+        public static let rowSmallLabel = SwiftUI.Font.system(size: 10, weight: .regular)
+        public static let rowState = SwiftUI.Font.system(size: 13, weight: .regular)
         public static let regularChip = SwiftUI.Font.system(size: 16, weight: .semibold)
         public static let largeChip = SwiftUI.Font.system(size: 24, weight: .semibold)
         public static let bilateralSideHeader = SwiftUI.Font.system(size: 22, weight: .medium)
@@ -365,11 +381,6 @@ public enum AppStyle {
         // independently. SF Pro bold default design, geometric tabular figures.
         /// Weight number, e.g. "80". Prominent because the metric is directly editable.
         public static let idleWeightValue = SwiftUI.Font.system(size: 20, weight: .bold)
-        /// A card's state word where a gain value would otherwise stand, e.g.
-        /// "Completed". Semibold so it outweighs the affordance beneath it, and
-        /// three points under `idleCardTitle` so it cannot outweigh the exercise
-        /// name — at the title's own 16pt semibold it did exactly that.
-        public static let cardStateValue = SwiftUI.Font.system(size: 13, weight: .semibold)
         /// Unit suffix and secondary value line on the exercise cards: the "kg"
         /// beside a weight, the "reps" beside a rep gain, and the "now …" footer.
         ///
@@ -379,14 +390,6 @@ public enum AppStyle {
         /// split into a 20pt idle-card unit and a 13pt completed-card unit, which
         /// made the same "kg" look different depending on the card it sat on.
         public static let cardMetricUnit = SwiftUI.Font.system(size: 13, weight: .regular)
-        /// The "x" separator in the bodyweight "sets x reps" value (e.g. the "x"
-        /// in "3x15"). Smaller than `idleWeightValue` so the numbers dominate and
-        /// the glyph reads as a compact multiplier.
-        public static let idleRepsSeparator = SwiftUI.Font.system(size: 14, weight: .bold)
-        /// Seat position value, e.g. "4 / 7".
-        public static let idleSeatValue = SwiftUI.Font.system(size: 19, weight: .bold)
-        /// Center dot separating the two seat-position values.
-        public static let idleSeatSeparator = SwiftUI.Font.system(size: 10, weight: .bold)
         public static let iconSymbol = SwiftUI.Font.system(size: 20, weight: .semibold)
 
         public static let calendarHeader = SwiftUI.Font.system(size: 16, weight: .semibold)
@@ -480,6 +483,15 @@ public enum AppStyle {
         /// off-white so it reads soft against `idleCardBackground` instead of
         /// a hard pure-white edge.
         public static let idleTitle = SwiftUI.Color(hex: "#F2F2F2")
+
+        /// Exercise-row text colours. No pure white anywhere in a row: the
+        /// title and primary values are a muted off-white, units a step dimmer,
+        /// secondary lines a warm dark grey, and a gain a muted mint. Graded
+        /// greys carry the hierarchy so nothing has to shout.
+        public static let rowTitle = SwiftUI.Color(hex: "#D4D3D1")
+        public static let rowValue = SwiftUI.Color(hex: "#D4D3D1")
+        public static let rowUnit = SwiftUI.Color(hex: "#8F8D8B")
+        public static let rowSecondary = SwiftUI.Color(hex: "#807E7C")
         /// Secondary metric labels on the idle card (e.g. "Weight", "Seat",
         /// "Data", expand/collapse chevron). Neutral grey so the eye
         /// anchors on the mint values, not the labels.
@@ -523,6 +535,9 @@ public enum AppStyle {
         public static let progressOrange = SwiftUI.Color(hex: "#F97316")
         /// Grey-scheme progress track. Kept as a fixed primitive for the palette.
         public static let progressTrackGrey = SwiftUI.Color(hex: "#2C2F36")
+        /// Neutral mid grey for the halo behind the standard (grey) figures
+        /// in category tiles: visible as a soft shimmer, no colour cast.
+        public static let artworkHaloNeutral = SwiftUI.Color(hex: "#26282C")
         public static let numberPadGray = SwiftUI.Color(hex: "#555555")
         public static let inProgressGold = SwiftUI.Color(hex: "#D4A843")
 
@@ -565,6 +580,11 @@ public enum AppStyle {
         /// The dials over the training artwork.
         public static let trainingDialDisc: Double = 0.94
         public static let setRailLine: Double = 0.25
+        /// Large accent digits (+3, +5) are dimmed a touch so they do not glow.
+        public static let rowPositiveValue: Double = 0.92
+        /// Muscle artwork in list rows sits back into the surface instead of
+        /// glowing at full strength; the tinted figure reads as translucent.
+        public static let rowArtwork: Double = 0.8
         public static let trainingDialDivider: Double = 0.12
         public static let subtleBackground: Double = 0.06
         public static let subtleStroke: Double = 0.15

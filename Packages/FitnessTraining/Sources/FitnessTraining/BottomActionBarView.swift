@@ -240,26 +240,27 @@ public struct FloatingActionButtonsView: View {
             Text(text)
                 .font(AppStyle.Font.bottomBarButtons)
                 // Less/More are secondary: same dimmed grey as the "kg" and
-                // "of N" labels in the set rows. Done keeps a bright label
-                // because it is the one control with a surface of its own.
+                // "of N" labels in the set rows. Done and Finish sit on the
+                // mint surface, so their label is the dial's dark disc colour.
                 .foregroundColor(
                     style == .control
                         ? AppStyle.Color.idleMetricUnit
-                        : AppStyle.Color.white.opacity(0.98)
+                        : (usesCompactSurface && (style == .done || style == .finish)
+                            ? AppStyle.Color.trainingDialDisc
+                            : AppStyle.Color.white.opacity(0.98))
                 )
                 .frame(maxWidth: .infinity, minHeight: visibleHeight, maxHeight: visibleHeight)
                 .padding(.horizontal, 2)
                 .background(alignment: .center) {
                     if usesCompactSurface {
                         if style == .done || style == .finish {
-                            // Literally the timer pill's surface, so Done and the
-                            // dials over the artwork read as one set of controls.
-                            TrainingDialSurface.fill(
-                                RoundedRectangle(
-                                    cornerRadius: setControlCornerRadius,
-                                    style: .continuous
-                                )
+                            // The bolt's mint, so Done is the one filled accent
+                            // in the sheet and pairs with the Quick-Done dial.
+                            RoundedRectangle(
+                                cornerRadius: setControlCornerRadius,
+                                style: .continuous
                             )
+                            .fill(AppStyle.Color.trainingDialAccent)
                             .padding(.horizontal, setControlSurfaceHorizontalInset)
                         }
                         // Less/More draw no surface at all — plain labels beside

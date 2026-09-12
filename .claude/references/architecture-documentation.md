@@ -319,9 +319,17 @@ breakpoints or raw design constants. Shared card/tile geometry belongs to its
 palette; `FitnessAppApp` is its only `@AppStorage` owner. The root derives and
 injects one immutable `AppColorTheme`. SwiftUI then invalidates environment
 consumers without replacing view identity, so feature state, navigation and
-in-flight work survive a palette change. Dynamic accent colors and default-icon
-resolution come from that value rather than global `AppStyle.Color` or feature-
-owned persistence. Fixed color primitives remain in `AppStyle.Color`.
+in-flight work survive a palette change. Dynamic accent colors come from that
+value rather than global `AppStyle.Color` or feature-owned persistence. Fixed
+color primitives remain in `AppStyle.Color`.
+
+`MuscleIconStyle` is the independently persisted preference for the default
+muscle figures (`standard` = the neutral `grey_` set, `colored` = the tinted
+originals). `FitnessAppApp` is its only `@AppStorage` owner and carries it into
+the same `AppColorTheme`, so artwork consumers resolve asset names through
+`AppColorTheme.muscleIconName(for:)` and either palette can be paired with
+either figure set. Exercise-specific artwork has no alternate and passes
+through unchanged.
 
 `ProfileColorTheme` is the semantic Profile subset carried by `AppColorTheme`,
 including neutral selection-state surfaces. Profile, Friends and transit views

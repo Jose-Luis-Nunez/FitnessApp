@@ -13,7 +13,7 @@ public struct ProgressBar: View {
     @Environment(\.appColorTheme) private var appColorTheme
 
     private var fillColor: Color { appColorTheme.accent.glow }
-    private var trackColor: Color { appColorTheme.accent.progressTrack }
+    private var trackColor: Color { appColorTheme.progressTrack }
 
     public init(progress: Double, totalWidth: CGFloat) {
         self.progress = progress

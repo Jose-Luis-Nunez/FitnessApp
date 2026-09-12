@@ -8,6 +8,7 @@ struct ProfileView: View {
     @State private var viewModel = ProfileViewModel()
     @State private var isBodyExpanded = false
     @Binding private var accentScheme: AppAccentScheme
+    @Binding private var muscleIconStyle: MuscleIconStyle
     @Binding private var appLanguage: AppLanguage
     @Environment(\.appColorTheme) private var appColorTheme
     @Environment(\.locale) private var locale
@@ -15,8 +16,13 @@ struct ProfileView: View {
 
     private var profileColors: ProfileColorTheme { appColorTheme.profile }
 
-    init(accentScheme: Binding<AppAccentScheme>, appLanguage: Binding<AppLanguage>) {
+    init(
+        accentScheme: Binding<AppAccentScheme>,
+        muscleIconStyle: Binding<MuscleIconStyle>,
+        appLanguage: Binding<AppLanguage>
+    ) {
         _accentScheme = accentScheme
+        _muscleIconStyle = muscleIconStyle
         _appLanguage = appLanguage
     }
 
@@ -35,6 +41,7 @@ struct ProfileView: View {
                         nicknameSection
                         bodyDataSection
                         iconColorSection
+                        muscleIconSection
                         languageSection
                         FriendsSection()
                         SBahnDeparturesCardView(viewModel: viewModel.sbahnVM)
@@ -90,12 +97,62 @@ struct ProfileView: View {
     }
 
     private func iconColorButton(for scheme: AppAccentScheme) -> some View {
-        let isSelected = accentScheme == scheme
-
-        return Button {
+        segmentButton(
+            title: scheme.localizedName,
+            isSelected: accentScheme == scheme,
+            accessibilityIdentifier: "id_profile_icon_color_\(scheme.rawValue)"
+        ) {
             accentScheme = scheme
-        } label: {
-            Text(scheme.localizedName)
+        }
+    }
+
+    // MARK: - Muscle Icons
+
+    /// "Default icons: yes / no" — which figure set the cards and the training
+    /// sheet draw. Deliberately separate from the accent colour so either
+    /// palette can be paired with either set.
+    private var muscleIconSection: some View {
+        ProfileCardContainer {
+            HStack(spacing: AppStyle.Padding.card) {
+                ProfileCardHeading(AppText.profileMuscleIcons)
+                    .layoutPriority(1)
+
+                Spacer(minLength: 0)
+
+                HStack(spacing: 0) {
+                    muscleIconButton(for: .standard)
+
+                    Rectangle()
+                        .fill(profileColors.divider)
+                        .frame(width: AppStyle.Layout.separatorWidth, height: 24)
+
+                    muscleIconButton(for: .colored)
+                }
+                .frame(width: AppStyle.Layout.profileColorPickerWidth)
+                .profileReadOnlyTileSurface()
+            }
+        }
+    }
+
+    private func muscleIconButton(for style: MuscleIconStyle) -> some View {
+        segmentButton(
+            title: style.localizedName,
+            isSelected: muscleIconStyle == style,
+            accessibilityIdentifier: "id_profile_muscle_icons_\(style.rawValue)"
+        ) {
+            muscleIconStyle = style
+        }
+    }
+
+    /// One segment of the two-option pickers (accent colour, default icons).
+    private func segmentButton(
+        title: LocalizedStringResource,
+        isSelected: Bool,
+        accessibilityIdentifier: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(title)
                 .font(AppStyle.Font.profileCardTitle)
                 .foregroundColor(isSelected ? profileColors.title : profileColors.secondary)
                 .frame(maxWidth: .infinity)
@@ -122,7 +179,7 @@ struct ProfileView: View {
         .contentShape(Rectangle())
         .buttonStyle(.plain)
         .accessibilityValue(isSelected ? AppText.commonSelected : AppText.commonNotSelected)
-        .accessibilityIdentifier("id_profile_icon_color_\(scheme.rawValue)")
+        .accessibilityIdentifier(accessibilityIdentifier)
     }
 
     // MARK: - Language

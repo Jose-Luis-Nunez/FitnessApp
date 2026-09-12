@@ -128,6 +128,11 @@ struct UITestLaunchStrategy: AppLaunchStrategy {
             AppAccentScheme.green.rawValue,
             forKey: AppAccentScheme.storageKey
         )
+        // Keep the tinted figures the UI tests were written against.
+        UserDefaults.standard.set(
+            MuscleIconStyle.colored.rawValue,
+            forKey: MuscleIconStyle.storageKey
+        )
         UserDefaults.standard.set(
             AppLanguage.english.rawValue,
             forKey: AppLanguage.storageKey

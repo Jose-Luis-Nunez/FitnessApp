@@ -141,7 +141,7 @@ public struct CategoryTileModelView: View {
 
     private var iconView: some View {
         CategoryTileArtworkStage(alignment: group.iconAlignment) {
-            Image(appColorTheme.scheme.iconName(for: group.defaultIconName))
+            Image(appColorTheme.muscleIconName(for: group.defaultIconName))
                 .resizable()
                 .interpolation(.high)
                 .scaledToFill()

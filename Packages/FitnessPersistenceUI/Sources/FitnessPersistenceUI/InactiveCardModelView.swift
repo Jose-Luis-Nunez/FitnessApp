@@ -190,7 +190,7 @@ private extension InactiveCardModelView {
 
     var categoryIconView: some View {
         ExerciseCardArtworkView(
-            image: imageProvider(appColorTheme.scheme.iconName(for: model.displayIconName)),
+            image: imageProvider(appColorTheme.muscleIconName(for: model.displayIconName)),
             size: AppStyle.Layout.idleActiveCardIconSize,
             alignment: model.iconAlignment
         )
@@ -252,19 +252,20 @@ private extension InactiveCardModelView {
                 .overlay(alignment: .top) { checkmarkCircle }
 
             VStack(spacing: improvementLineSpacing) {
-                // Stand-in for the gain line: same font, so it reserves the same
-                // height as "+5 kg" opposite it.
+                // Stand-in for the gain line on the idle card's value row.
                 Text(verbatim: "+0")
-                    .font(AppStyle.Font.idleWeightValue)
+                    .font(AppStyle.Font.rowValue)
                     .hidden()
+                    .frame(height: AppStyle.Layout.idleMetricContentRowHeight)
 
                 // The column is now a fixed width, so a longer localisation of
                 // "Details" shrinks instead of truncating or widening the column.
                 Text(AppText.commonDetails)
-                    .font(AppStyle.Font.metricLabel)
-                    .foregroundColor(AppStyle.Color.idleMetricUnit)
+                    .font(AppStyle.Font.rowSecondary)
+                    .foregroundColor(AppStyle.Color.rowSecondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
+                    .frame(height: AppStyle.Layout.idleMetricFooterRowHeight)
             }
             .frame(height: improvementColumnHeight)
         }
@@ -372,10 +373,9 @@ private extension InactiveCardModelView {
         }
     }
 
-    /// Height the improvement area occupies, matching the idle card's value row
-    /// plus its footer row. Pinning the *total* rather than each line lets the
-    /// gain and its "now …" line sit as tightly as the design wants while the
-    /// card stays exactly as tall as an idle card.
+    /// Height the improvement area occupies: the idle card's value row, its
+    /// gap, and its footer row. Each line is pinned to its row as well, so the
+    /// "now …" line sits exactly where "Last run" sits on the idle card.
     var improvementColumnHeight: CGFloat {
         AppStyle.Layout.idleMetricContentRowHeight
             + improvementLineSpacing
@@ -397,26 +397,29 @@ private extension InactiveCardModelView {
             + Text(AppText.exerciseNowReps(reps: model.reps))
     }
 
-    /// Gap between the gain line and its "now …" line. Tuned against the design
-    /// rather than derived from a token: it is a one-off relation between these
-    /// two specific lines, not a design-system spacing.
-    var improvementLineSpacing: CGFloat { 5 }
+    /// Gap between the value row and the footer row — the same 4pt the idle
+    /// card puts between its weight and "Last run", so both footers align.
+    var improvementLineSpacing: CGFloat { 4 }
 
     func gainColumn(gain: String, unit: Text, footer: Text) -> some View {
         VStack(alignment: .leading, spacing: improvementLineSpacing) {
             HStack(alignment: .firstTextBaseline, spacing: 3) {
                 Text(verbatim: "+\(gain)")
-                    .font(AppStyle.Font.idleWeightValue)
-                    .foregroundColor(appColorTheme.accent.idleAccentFill)
+                    .font(AppStyle.Font.rowValue)
+                    // The scheme's idle accent, not a fixed hex: a gain has to
+                    // match the play and check glyphs in every palette.
+                    .foregroundColor(appColorTheme.accent.idleAccentFill.opacity(AppStyle.Opacity.rowPositiveValue))
 
                 unit
-                    .font(AppStyle.Font.cardMetricUnit)
-                    .foregroundColor(AppStyle.Color.idleMetricUnit)
+                    .font(AppStyle.Font.rowUnit)
+                    .foregroundColor(AppStyle.Color.rowUnit)
             }
+            .frame(height: AppStyle.Layout.idleMetricContentRowHeight)
 
             footer
-                .font(AppStyle.Font.cardMetricUnit)
-                .foregroundColor(AppStyle.Color.idleMetricUnit)
+                .font(AppStyle.Font.rowSecondary)
+                .foregroundColor(AppStyle.Color.rowSecondary)
+                .frame(height: AppStyle.Layout.idleMetricFooterRowHeight)
         }
         .fixedSize(horizontal: true, vertical: false)
         .frame(height: improvementColumnHeight, alignment: .leading)
@@ -443,12 +446,14 @@ private extension InactiveCardModelView {
             // on this card that means "you gained", which is the opposite of
             // what this state says.
             Text(AppText.exerciseCompleted)
-                .font(AppStyle.Font.cardStateValue)
-                .foregroundColor(AppStyle.Color.idleTitle)
+                .font(AppStyle.Font.rowState)
+                .foregroundColor(AppStyle.Color.rowSecondary)
+                .frame(height: AppStyle.Layout.idleMetricContentRowHeight)
 
             Text(AppText.commonDetails)
-                .font(AppStyle.Font.metricLabel)
-                .foregroundColor(AppStyle.Color.idleMetricUnit)
+                .font(AppStyle.Font.rowSecondary)
+                .foregroundColor(AppStyle.Color.rowSecondary)
+                .frame(height: AppStyle.Layout.idleMetricFooterRowHeight)
         }
         // One element carrying both the state and the affordance: the weight is
         // announced (a set-tile row is not reachable without expanding), and the
@@ -457,10 +462,8 @@ private extension InactiveCardModelView {
         .accessibilityLabel(completedAccessibilityLabel)
         .accessibilityAddTraits(.isButton)
         .accessibilityAction { toggleExpansion() }
-        // Same frame as `gainColumn`, centred rather than top-aligned: the
-        // reserved block is taller than its two lines, and every other column
-        // centres inside it. Top-aligning lifted "Completed" 13pt above the
-        // footer line it is meant to share with "Details".
+        // Same frame as `gainColumn`; both lines are pinned to the idle card's
+        // rows, so "Details" shares the footer line with "Last run" over there.
         .frame(height: improvementColumnHeight, alignment: .leading)
         .frame(maxWidth: .infinity, alignment: .leading)
     }

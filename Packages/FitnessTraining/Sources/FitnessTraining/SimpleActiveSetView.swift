@@ -232,12 +232,12 @@ enum SetRowPlacement: Equatable {
 /// Each marker reports its centre; the list draws one line from the first to
 /// the last. Drawing the line per row left gaps wherever a row was shorter
 /// than its neighbour, because an `HStack` does not stretch its children.
-private struct SetRailMarkerCentersKey: PreferenceKey {
-    static let defaultValue: [Int: Anchor<CGPoint>] = [:]
+private struct SetRailMarkerBoundsKey: PreferenceKey {
+    static let defaultValue: [Int: Anchor<CGRect>] = [:]
 
     static func reduce(
-        value: inout [Int: Anchor<CGPoint>],
-        nextValue: () -> [Int: Anchor<CGPoint>]
+        value: inout [Int: Anchor<CGRect>],
+        nextValue: () -> [Int: Anchor<CGRect>]
     ) {
         value.merge(nextValue()) { $1 }
     }
@@ -292,7 +292,10 @@ public struct SimpleActiveSetView: View {
     }
 
     private var standardContent: some View {
-        VStack(spacing: AppStyle.Layout.activeSetRowSpacing) {
+        // Leading, not centred: rows differ in width ("Goal 12" vs "10 of 12"),
+        // and centring them shifted each rail marker sideways by a different
+        // amount, so the line missed the pending rings.
+        VStack(alignment: .leading, spacing: AppStyle.Layout.activeSetRowSpacing) {
             ForEach(Array(setProgress.enumerated()), id: \.element.id) { index, progress in
                 SetRowView(
                     index: index,
@@ -305,18 +308,19 @@ public struct SimpleActiveSetView: View {
                 .id(progress.id)
             }
         }
-        .backgroundPreferenceValue(SetRailMarkerCentersKey.self) { anchors in
+        .backgroundPreferenceValue(SetRailMarkerBoundsKey.self) { anchors in
             GeometryReader { proxy in
-                if let first = anchors.keys.min(),
-                   let last = anchors.keys.max(),
-                   first != last,
-                   let top = anchors[first],
-                   let bottom = anchors[last] {
-                    let start = proxy[top]
-                    let end = proxy[bottom]
+                let frames = anchors.keys.sorted().map { proxy[anchors[$0]!] }
+                if frames.count > 1 {
+                    // One segment per gap, from a marker's bottom edge to the
+                    // next one's top edge, so the hollow rings stay empty
+                    // instead of showing the rail through them.
+                    let x = frames[0].midX
                     Path { path in
-                        path.move(to: start)
-                        path.addLine(to: end)
+                        for (upper, lower) in zip(frames, frames.dropFirst()) {
+                            path.move(to: CGPoint(x: x, y: upper.maxY))
+                            path.addLine(to: CGPoint(x: x, y: lower.minY))
+                        }
                     }
                     .stroke(
                         AppStyle.Color.white.opacity(AppStyle.Opacity.setRailLine),
@@ -695,7 +699,7 @@ private struct SetRowView: View {
     private func railMarker(index: Int) -> some View {
         markerGlyph
             .frame(width: AppStyle.Layout.setRailSlotWidth)
-            .anchorPreference(key: SetRailMarkerCentersKey.self, value: .center) {
+            .anchorPreference(key: SetRailMarkerBoundsKey.self, value: .bounds) {
                 [index: $0]
             }
             .padding(.trailing, AppStyle.Layout.setRailToLabelSpacing)
@@ -734,7 +738,13 @@ private struct SetRowView: View {
                     AppStyle.Color.white,
                     lineWidth: AppStyle.Layout.setRailRingWidth
                 )
-                .frame(width: dot + AppStyle.Layout.setRailRingWidth, height: dot + AppStyle.Layout.setRailRingWidth)
+                // Inset so the stroke stays inside the frame; the rail segments
+                // end at this frame's edges and must only touch the ring.
+                .padding(AppStyle.Layout.setRailRingWidth / 2)
+                .frame(
+                    width: dot + AppStyle.Layout.setRailRingWidth * 2,
+                    height: dot + AppStyle.Layout.setRailRingWidth * 2
+                )
         }
     }
 

@@ -248,6 +248,9 @@ public struct MuscleCategorySelectionView: View {
                 }
                 .coordinateSpace(name: "scroll")
             }
+            // The toggle pill slides; the content itself swaps instantly. A
+            // cross-fade between grid and list read as a page transition.
+            .animation(nil, value: currentViewMode)
 
             if isFilterBarVisible && overlayState.exerciseSelectionMode == .none {
                 VStack {
