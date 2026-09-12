@@ -300,7 +300,6 @@ public enum AppStyle {
         public static let regularChip = SwiftUI.Font.system(size: 16, weight: .semibold)
         public static let largeChip = SwiftUI.Font.system(size: 24, weight: .semibold)
         public static let bilateralSideHeader = SwiftUI.Font.system(size: 22, weight: .medium)
-        public static let trainingTimer = SwiftUI.Font.system(size: 16, weight: .bold)
         public static let trainingTimerLarge = SwiftUI.Font.system(size: 26, weight: .bold)
         public static let trainingTimerCancel = SwiftUI.Font.system(size: 13, weight: .medium)
         /// The category eyebrow above the exercise name: small, wide-tracked
@@ -694,10 +693,6 @@ public enum AppStyle {
             case .regular: return 6
             case .compact: return 4
             }
-        }
-
-        public static var setRowWeightMinWidth: CGFloat {
-            current == .compact ? 50 : 60
         }
 
         public static var isExtraLarge: Bool {

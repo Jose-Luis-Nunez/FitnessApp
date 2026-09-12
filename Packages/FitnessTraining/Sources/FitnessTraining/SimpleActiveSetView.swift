@@ -392,14 +392,6 @@ public struct SimpleActiveSetView: View {
             pairRow(
                 leftIndex: leftIndex,
                 rightIndex: rightIndex,
-                sizing: .standard,
-                metricSpacing: AppStyle.Layout.bilateralMetricSpacingComfortable,
-                pairSpacing: AppStyle.Layout.bilateralPairSpacingComfortable
-            )
-
-            pairRow(
-                leftIndex: leftIndex,
-                rightIndex: rightIndex,
                 sizing: .bilateralComfortable,
                 metricSpacing: AppStyle.Layout.bilateralMetricSpacingComfortable,
                 pairSpacing: AppStyle.Layout.bilateralPairSpacingComfortable
@@ -546,18 +538,20 @@ public extension View {
 
 // MARK: - Unified Set Row
 
+/// `standard` is the single-column row (text-only reps, no input box); the
+/// bilateral cases are the width ladder for the L/R pair rows, which keep the
+/// boxed field. The row kind therefore follows from the sizing alone.
 private enum SetRowMetricSizing: Equatable {
     case standard
-    case standardCompact
     case bilateralComfortable
     case bilateralCompact
     case bilateralTight
 
     var horizontalPadding: CGFloat {
         switch self {
-        case .standard, .bilateralComfortable:
+        case .bilateralComfortable:
             AppStyle.Layout.setRowChipHorizontalPadding
-        case .standardCompact, .bilateralCompact:
+        case .standard, .bilateralCompact:
             AppStyle.Layout.bilateralMetricChipHorizontalPadding
         case .bilateralTight:
             AppStyle.Layout.bilateralMetricChipHorizontalPaddingTight
@@ -565,7 +559,7 @@ private enum SetRowMetricSizing: Equatable {
     }
 
     var isStandard: Bool {
-        self == .standard || self == .standardCompact
+        self == .standard
     }
 }
 
@@ -623,11 +617,11 @@ private struct SetRowView: View {
         }
     }
 
-    /// Always the compact metrics. The column spans the whole sheet now, so
-    /// the roomy variant would always "fit" and spread one row's values
-    /// across the width; the tight rhythm is the one that reads as a row.
+    /// Tight metrics only. The column spans the whole sheet now, so a roomy
+    /// variant would always "fit" and spread one row's values across the
+    /// width; the tight rhythm is the one that reads as a row.
     private var standardRow: some View {
-        let sizing = SetRowMetricSizing.standardCompact
+        let sizing = SetRowMetricSizing.standard
         // Baseline-aligned, not centre-aligned: the weight is one text run of
         // 20pt value plus 13pt unit sharing a baseline that sits well below the
         // line box's centre, while "of N" is a standalone 13pt label. Centring
@@ -805,9 +799,7 @@ private struct SetRowView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(AppStyle.Layout.bilateralMetricMinimumScaleFactor)
                 .setRowChipStyle(
-                    minWidth: sizing == .standard
-                        ? AppStyle.DeviceLayout.setRowWeightMinWidth
-                        : 0,
+                    minWidth: 0,
                     horizontalPadding: sizing.horizontalPadding,
                     borderColor: nil
                 )

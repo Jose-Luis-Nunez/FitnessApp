@@ -137,6 +137,48 @@ struct BilateralTrainingUIKitContractTests {
         #expect(measured.height == AppStyle.Layout.trainingSheetBilateralSessionHeight)
     }
 
+    @Test("Ten sets stay inside the fixed sheet-session viewport")
+    func tenSetsUseFixedScrollViewport() {
+        let manySets = FitnessTestSupport.makeExercise(
+            name: "Ten Sets",
+            weight: 20,
+            reps: 12,
+            sets: 10,
+            category: .abs
+        )
+        let coordinator = makeTrainingSessionCoordinator(for: manySets)
+        let host = UIHostingController(
+            rootView: TrainingSessionComponent(coordinator: coordinator)
+        )
+
+        let measured = host.sizeThatFits(
+            in: CGSize(width: 393, height: CGFloat.greatestFiniteMagnitude)
+        )
+        let threeSetCoordinator = makeTrainingSessionCoordinator(
+            for: FitnessTestSupport.makeExercise(
+                name: "Three Sets",
+                weight: 20,
+                reps: 12,
+                sets: 3,
+                category: .abs
+            )
+        )
+        let threeSetHost = UIHostingController(
+            rootView: TrainingSessionComponent(coordinator: threeSetCoordinator)
+        )
+        let threeSetMeasured = threeSetHost.sizeThatFits(
+            in: CGSize(width: 393, height: CGFloat.greatestFiniteMagnitude)
+        )
+
+        #expect(abs(measured.height - threeSetMeasured.height) < 0.001)
+        #expect(coordinator.activeSetViewModel.setProgress.count == 10)
+    }
+
+}
+
+@MainActor
+@Suite("Training action bar — UIKit contracts", .tags(.integration))
+struct TrainingActionBarUIKitContractTests {
     @Test(
         "Active-set controls (Less / Done / More) stay inside every supported width",
         arguments: [CGFloat(320), CGFloat(375), CGFloat(393), CGFloat(430)]
@@ -177,44 +219,6 @@ struct BilateralTrainingUIKitContractTests {
 
         #expect(measured.width <= width)
     }
-
-    @Test("Ten sets stay inside the fixed sheet-session viewport")
-    func tenSetsUseFixedScrollViewport() {
-        let manySets = FitnessTestSupport.makeExercise(
-            name: "Ten Sets",
-            weight: 20,
-            reps: 12,
-            sets: 10,
-            category: .abs
-        )
-        let coordinator = makeTrainingSessionCoordinator(for: manySets)
-        let host = UIHostingController(
-            rootView: TrainingSessionComponent(coordinator: coordinator)
-        )
-
-        let measured = host.sizeThatFits(
-            in: CGSize(width: 393, height: CGFloat.greatestFiniteMagnitude)
-        )
-        let threeSetCoordinator = makeTrainingSessionCoordinator(
-            for: FitnessTestSupport.makeExercise(
-                name: "Three Sets",
-                weight: 20,
-                reps: 12,
-                sets: 3,
-                category: .abs
-            )
-        )
-        let threeSetHost = UIHostingController(
-            rootView: TrainingSessionComponent(coordinator: threeSetCoordinator)
-        )
-        let threeSetMeasured = threeSetHost.sizeThatFits(
-            in: CGSize(width: 393, height: CGFloat.greatestFiniteMagnitude)
-        )
-
-        #expect(abs(measured.height - threeSetMeasured.height) < 0.001)
-        #expect(coordinator.activeSetViewModel.setProgress.count == 10)
-    }
-
 }
 
 @MainActor

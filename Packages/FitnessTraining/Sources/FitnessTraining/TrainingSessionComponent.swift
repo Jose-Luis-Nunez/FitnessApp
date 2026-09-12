@@ -210,8 +210,7 @@ public struct TrainingSessionComponent: View {
 
             CompactTimerComponent(
                 viewModel: coordinator.activeSetViewModel,
-                onCancel: onCancel,
-                expanded: true
+                onCancel: onCancel
             )
             .frame(height: AppStyle.Layout.trainingSheetBilateralTimerHeight)
 
@@ -380,16 +379,13 @@ public struct TrainingSessionComponent: View {
 public struct CompactTimerComponent: View {
     public var viewModel: ActiveSetViewModel
     public let onCancel: (() -> Void)?
-    public let expanded: Bool
 
     public init(
         viewModel: ActiveSetViewModel,
-        onCancel: (() -> Void)?,
-        expanded: Bool = false
+        onCancel: (() -> Void)?
     ) {
         self.viewModel = viewModel
         self.onCancel = onCancel
-        self.expanded = expanded
     }
 
     private var surfaceShape: RoundedRectangle {
@@ -402,11 +398,7 @@ public struct CompactTimerComponent: View {
     public var body: some View {
         VStack(spacing: 2) {
             Text(verbatim: max(viewModel.timerSeconds, 0).formattedAsTimer)
-                .font(
-                    expanded
-                        ? AppStyle.Font.trainingTimerLarge
-                        : AppStyle.Font.trainingTimer
-                )
+                .font(AppStyle.Font.trainingTimerLarge)
                 .foregroundColor(AppStyle.Color.white)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)

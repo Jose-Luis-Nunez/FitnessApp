@@ -134,6 +134,7 @@ struct TrainingQuickDoneDial: View {
         .frame(width: diameter, height: diameter)
         .contentShape(Circle())
         .buttonStyle(.plain)
+        .accessibilityLabel(AppText.accessibilityQuickDone)
         .accessibilityIdentifier(TrainingIDs.quickDoneButton)
     }
 }
