@@ -137,6 +137,47 @@ struct BilateralTrainingUIKitContractTests {
         #expect(measured.height == AppStyle.Layout.trainingSheetBilateralSessionHeight)
     }
 
+    @Test(
+        "Active-set controls (Less / Done / More) stay inside every supported width",
+        arguments: [CGFloat(320), CGFloat(375), CGFloat(393), CGFloat(430)]
+    )
+    func setControlsFit(width: CGFloat) {
+        let exercise = FitnessTestSupport.makeExercise(
+            name: "Exercise 12",
+            weight: 20,
+            reps: 12,
+            sets: 3,
+            category: .abs
+        )
+        let viewModel = BottomActionBarViewModel(
+            isSetInProgress: true,
+            currentSet: 0,
+            currentExercise: exercise,
+            hasActiveExercise: true,
+            isLastSetCompleted: false,
+            didEditCompleteSet: false,
+            didJustEditSet: false
+        )
+        #expect(viewModel.showSetControls)
+
+        let host = UIHostingController(
+            rootView: FloatingActionButtonsView(
+                viewModel: viewModel,
+                onStart: {},
+                onCompleteSet: {},
+                onEditLess: {},
+                onEditMore: {},
+                onFinish: {}
+            )
+        )
+
+        let measured = host.sizeThatFits(
+            in: CGSize(width: width, height: .greatestFiniteMagnitude)
+        )
+
+        #expect(measured.width <= width)
+    }
+
     @Test("Ten sets stay inside the fixed sheet-session viewport")
     func tenSetsUseFixedScrollViewport() {
         let manySets = FitnessTestSupport.makeExercise(

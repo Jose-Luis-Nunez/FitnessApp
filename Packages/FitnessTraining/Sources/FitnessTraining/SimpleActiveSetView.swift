@@ -229,6 +229,20 @@ enum SetRowPlacement: Equatable {
     }
 }
 
+/// Each marker reports its centre; the list draws one line from the first to
+/// the last. Drawing the line per row left gaps wherever a row was shorter
+/// than its neighbour, because an `HStack` does not stretch its children.
+private struct SetRailMarkerCentersKey: PreferenceKey {
+    static let defaultValue: [Int: Anchor<CGPoint>] = [:]
+
+    static func reduce(
+        value: inout [Int: Anchor<CGPoint>],
+        nextValue: () -> [Int: Anchor<CGPoint>]
+    ) {
+        value.merge(nextValue()) { $1 }
+    }
+}
+
 enum SetRowHighlightResolver {
     static func isActiveSetNumber(
         rowIndex: Int,
@@ -285,9 +299,30 @@ public struct SimpleActiveSetView: View {
                     progress: progress,
                     exercise: exercise,
                     viewModel: viewModel,
-                    placement: .standard
+                    placement: .standard,
+                    railIndex: index
                 )
                 .id(progress.id)
+            }
+        }
+        .backgroundPreferenceValue(SetRailMarkerCentersKey.self) { anchors in
+            GeometryReader { proxy in
+                if let first = anchors.keys.min(),
+                   let last = anchors.keys.max(),
+                   first != last,
+                   let top = anchors[first],
+                   let bottom = anchors[last] {
+                    let start = proxy[top]
+                    let end = proxy[bottom]
+                    Path { path in
+                        path.move(to: start)
+                        path.addLine(to: end)
+                    }
+                    .stroke(
+                        AppStyle.Color.white.opacity(AppStyle.Opacity.setRailLine),
+                        lineWidth: AppStyle.Layout.setRailLineWidth
+                    )
+                }
             }
         }
     }
@@ -544,6 +579,9 @@ private struct SetRowView: View {
     let placement: SetRowPlacement
     var bilateralMetricSizing: SetRowMetricSizing = .bilateralCompact
     var bilateralMetricSpacing: CGFloat = AppStyle.Layout.bilateralMetricSpacingCompact
+    /// This row's index on the vertical progress rail. Standard rows only;
+    /// bilateral rows have no rail.
+    var railIndex: Int? = nil
 
     private var compact: Bool {
         placement.isBilateral
@@ -585,39 +623,44 @@ private struct SetRowView: View {
         }
     }
 
+    /// Always the compact metrics. The column spans the whole sheet now, so
+    /// the roomy variant would always "fit" and spread one row's values
+    /// across the width; the tight rhythm is the one that reads as a row.
     private var standardRow: some View {
-        ViewThatFits(in: .horizontal) {
-            standardRow(sizing: .standard)
-            standardRow(sizing: .standardCompact)
-        }
-    }
-
-    private func standardRow(sizing: SetRowMetricSizing) -> some View {
+        let sizing = SetRowMetricSizing.standardCompact
         // Baseline-aligned, not centre-aligned: the weight is one text run of
         // 20pt value plus 13pt unit sharing a baseline that sits well below the
         // line box's centre, while "of N" is a standalone 13pt label. Centring
         // put the two secondary labels at different heights.
-        HStack(
+        return HStack(
             alignment: .firstTextBaseline,
-            spacing: sizing == .standardCompact
-                ? AppStyle.Layout.bilateralMetricSpacingCompact
-                : AppStyle.DeviceLayout.cardSpacing
+            spacing: AppStyle.Layout.bilateralMetricSpacingCompact
         ) {
-            setNumberBadge
+            if let railIndex {
+                railMarker(index: railIndex)
+            }
+
+            setLabel
 
             if exercise.hasWeight {
                 weightChip(sizing: sizing)
             }
 
-            repsChip(sizing: sizing)
-
-            repsLabel(sizing: sizing)
-
+            // Pending rows show the target as "Goal 12"; completed rows show
+            // the achieved count as "10 of 12". Both are plain text, so the
+            // outlined input box that used to hold the reps is gone and the
+            // row is as compact as the weight beside it.
+            if isPending {
+                goalLabel
+                repsChip(sizing: sizing)
+            } else {
+                repsChip(sizing: sizing)
+                repsLabel(sizing: sizing)
+            }
         }
-        .padding(
-            .horizontal,
-            sizing == .standardCompact ? 0 : AppStyle.DeviceLayout.cardPadding
-        )
+        // No per-row inset. The compact fallback used to drop it while the
+        // standard row kept it, so rows in one list started at two different
+        // edges, and the title above them could line up with only one.
     }
 
     private var bilateralRow: some View {
@@ -655,6 +698,75 @@ private struct SetRowView: View {
     /// to circle the number.
     private var isActiveSetHighlight: Bool {
         isActiveSetNumber && !viewModel.quickDoneAllCompleted
+    }
+
+    /// The rail marker: a white dot for a completed set, a mint dot inside a
+    /// mint ring for the one being trained, a white hollow ring for the rest.
+    /// The connecting line is drawn once by the list, through these centres.
+    private func railMarker(index: Int) -> some View {
+        markerGlyph
+            .frame(width: AppStyle.Layout.setRailSlotWidth)
+            .anchorPreference(key: SetRailMarkerCentersKey.self, value: .center) {
+                [index: $0]
+            }
+            .padding(.trailing, AppStyle.Layout.setRailToLabelSpacing)
+        // Non-text in a baseline-aligned row: line its centre up with the
+        // x-height of the 20pt set label rather than with its baseline.
+        .alignmentGuide(.firstTextBaseline) { dimensions in
+            dimensions[VerticalAlignment.center] + AppStyle.Layout.setRailBaselineOffset
+        }
+        .accessibilityHidden(true)
+    }
+
+    @ViewBuilder
+    private var markerGlyph: some View {
+        let dot = AppStyle.Layout.setRailDotSize
+        let ring = AppStyle.Layout.setRailRingSize
+        if !isPending {
+            Circle()
+                .fill(AppStyle.Color.white)
+                .frame(width: dot, height: dot)
+        } else if isActiveSetHighlight {
+            ZStack {
+                Circle()
+                    .stroke(
+                        AppStyle.Color.trainingDialAccent,
+                        lineWidth: AppStyle.Layout.setRailRingWidth
+                    )
+                    .frame(width: ring, height: ring)
+
+                Circle()
+                    .fill(AppStyle.Color.trainingDialAccent)
+                    .frame(width: dot, height: dot)
+            }
+        } else {
+            Circle()
+                .stroke(
+                    AppStyle.Color.white,
+                    lineWidth: AppStyle.Layout.setRailRingWidth
+                )
+                .frame(width: dot + AppStyle.Layout.setRailRingWidth, height: dot + AppStyle.Layout.setRailRingWidth)
+        }
+    }
+
+    /// "Set 1" rather than a bare digit: the standard row has the width for
+    /// the word, and it reads as a label instead of a stray number. The active
+    /// set is white; the others take the same grey as their dimmed values, so
+    /// the whole inactive row recedes as one.
+    private var setLabel: some View {
+        Text(AppText.trainingSetNumber(number: (progress.logicalSetIndex ?? index) + 1))
+            .font(AppStyle.Font.trainingSetLabel)
+            .foregroundColor(isActiveSetHighlight ? AppStyle.Color.white : AppStyle.Color.idleMetricLabel)
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
+    }
+
+    private var goalLabel: some View {
+        Text(AppText.trainingGoal)
+            .font(AppStyle.Font.cardMetricUnit)
+            .foregroundColor(AppStyle.Color.idleMetricUnit)
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
     }
 
     private var setNumberBadge: some View {
@@ -714,27 +826,30 @@ private struct SetRowView: View {
 
     private func repsChip(sizing: SetRowMetricSizing) -> some View {
         Button(action: handleMetricTap) {
-            Text(verbatim: !isPending ? "\(progress.currentReps)" : "")
-                // Only the value dims on inactive rows — the outline keeps full
-                // strength so every set stays visible as an input box.
+            // Standard rows are text-only: the pending target after "Goal", or
+            // the achieved count before "of N". Bilateral rows keep the boxed
+            // field, whose empty state is what marks the pending side there.
+            Text(verbatim: sizing.isStandard
+                ? "\(isPending ? exercise.reps : progress.currentReps)"
+                : (!isPending ? "\(progress.currentReps)" : ""))
                 .frame(
                     minWidth: !sizing.isStandard
                         ? AppStyle.Layout.bilateralRepsChipContentMinWidth
                         : nil
                 )
                 .setRowChipStyle(
-                    minWidth: !sizing.isStandard
-                        ? 0
-                        : (exercise.hasWeight
-                            ? (sizing == .standardCompact ? 30 : 35)
-                            : AppStyle.DeviceLayout.setRowRepsMinWidth),
-                    horizontalPadding: sizing.horizontalPadding,
-                    // Same surface as before; only the outline changes, so the
-                    // active row is marked here just like its set number.
-                    borderColor: isActiveSetHighlight
-                        ? AppStyle.Color.muscleArtworkRim
-                        : AppStyle.Color.gray,
-                    font: AppStyle.Font.cardValueBold
+                    minWidth: 0,
+                    horizontalPadding: sizing.isStandard ? 0 : sizing.horizontalPadding,
+                    // The active row is marked by its set label; the box that
+                    // used to carry the accent outline is gone on standard rows.
+                    borderColor: sizing.isStandard
+                        ? nil
+                        : (isActiveSetHighlight
+                            ? AppStyle.Color.muscleArtworkRim
+                            : AppStyle.Color.gray),
+                    font: sizing.isStandard
+                        ? AppStyle.Font.idleWeightValue
+                        : AppStyle.Font.cardValueBold
                 )
                 .contentShape(
                     RoundedRectangle(

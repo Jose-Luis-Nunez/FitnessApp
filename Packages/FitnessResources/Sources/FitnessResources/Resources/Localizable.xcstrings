@@ -5123,6 +5123,40 @@
         }
       }
     },
+    "training.goal": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ziel"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Goal"
+          }
+        }
+      }
+    },
+    "training.set_number": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Satz %1$(number)lld"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set %1$(number)lld"
+          }
+        }
+      }
+    },
     "training.days_ago": {
       "extractionState": "manual",
       "localizations": {

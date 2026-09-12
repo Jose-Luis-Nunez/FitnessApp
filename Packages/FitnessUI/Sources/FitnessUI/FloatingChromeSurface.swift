@@ -7,10 +7,14 @@ import SwiftUI
 /// described their own.
 ///
 /// Warm rather than neutral on purpose: a cool grey over this page reads as a
-/// dead slab. The plate runs a soft diagonal from a warmer smoke at the leading
-/// top to near-black at the trailing bottom; controls sit on it as a lighter,
-/// partly transparent warm charcoal with a faint light rim, which is what keeps
-/// them separated from the plate without an opaque outline.
+/// dead slab. The plate runs a soft vertical ramp from a warmer smoke at the
+/// top to near-black at the bottom; controls sit on it as a lighter, partly
+/// transparent warm charcoal, which is what keeps them separated from the plate
+/// without an opaque outline.
+///
+/// No outline on any of it. A rim, however faint, turns the material into a
+/// framed plate; the surfaces separate from the page by blur and fill alone,
+/// the same way the category tiles do.
 ///
 /// Three earlier attempts are recorded here so they are not repeated: repainting
 /// the screen's petrol wash put a green film over the chrome rather than light
@@ -19,8 +23,15 @@ import SwiftUI
 /// registering; and trading tint for a thinner, sheened surface read as flimsy,
 /// not glassier.
 public enum FloatingChromeSurface {
-    /// Diagonal smoke ramp for the plate. Four stops rather than two: a straight
+    /// Vertical smoke ramp for the plate. Four stops rather than two: a straight
     /// two-colour ramp over this distance shows a visible band through the middle.
+    ///
+    /// Top to bottom, not diagonal. The controls are partly transparent and
+    /// inherit whatever the plate does beneath them; on the old diagonal the
+    /// back button sat on the light end and melted into the plate while the
+    /// trailing button sat on the dark end and stood out. Running the ramp
+    /// vertically keeps the warm smoke behind the mini bar and puts the whole
+    /// tab row on the same dark end, so both side buttons read alike.
     private static let plateRamp: [Color] = [
         Color(hex: "#2D2725"),
         Color(hex: "#262423"),
@@ -32,37 +43,58 @@ public enum FloatingChromeSurface {
     /// page, where there is no plate — still carries through and the control
     /// reads as sitting *on* something.
     private static let controlFill = Color(hex: "#242120")
-    private static let controlFillOpacity: Double = 0.72
-    /// A rim rather than an outline: barely there, and only to separate the
-    /// control from whatever is behind it.
-    private static let controlRimOpacity: Double = 0.10
+    private static let controlFillOpacity: Double = 0.60
 
     /// The selected segment's pill, a step lighter than the control it sits in
     /// and warm in the same direction.
     public static let selectionFill = Color(hex: "#3A3533")
+
+    /// Over the training sheet the chrome is literally the timer pill's
+    /// surface: same colour, same opacity, and no material under it, so the
+    /// bar and the dials over the artwork read as one set of instruments.
+    private static let trainingSelectionFill = Color(hex: "#2E3134")
+
+    /// Which palette the chrome uses. `floating` is the warm charcoal of the
+    /// overview screens; `training` is the neutral grey of the training sheet.
+    public enum Variant: Equatable, Sendable {
+        case floating
+        case training
+    }
+
+    public static func selectionFill(for variant: Variant) -> Color {
+        switch variant {
+        case .floating: selectionFill
+        case .training: trainingSelectionFill
+        }
+    }
 
     /// The plate behind the bottom bar's mini bar and tab row.
     public static func plate<S: Shape>(in shape: S) -> some View {
         shape.fill(
             LinearGradient(
                 colors: plateRamp,
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                startPoint: .top,
+                endPoint: .bottom
             )
         )
     }
 
-    /// A floating control: capsule or circle.
-    public static func control<S: InsettableShape>(in shape: S) -> some View {
+    /// A floating control: capsule or circle. Material plus a partly
+    /// transparent fill on purpose: the fill keeps the colour, the material lets
+    /// whatever scrolls beneath show through blurred.
+    public static func control<S: InsettableShape>(
+        in shape: S,
+        variant: Variant = .floating
+    ) -> some View {
         ZStack {
-            shape.fill(.ultraThinMaterial)
-
-            shape.fill(controlFill.opacity(controlFillOpacity))
-
-            shape.strokeBorder(
-                AppStyle.Color.white.opacity(controlRimOpacity),
-                lineWidth: AppStyle.Layout.darkSurfaceOutlineWidth
-            )
+            switch variant {
+            case .floating:
+                shape.fill(.ultraThinMaterial)
+                shape.fill(controlFill.opacity(controlFillOpacity))
+            case .training:
+                shape.fill(AppStyle.Color.trainingDialDisc)
+                    .opacity(AppStyle.Opacity.trainingDialDisc)
+            }
         }
         .environment(\.colorScheme, .dark)
     }

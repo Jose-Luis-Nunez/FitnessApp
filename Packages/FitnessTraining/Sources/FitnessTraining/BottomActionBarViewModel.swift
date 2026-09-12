@@ -51,6 +51,14 @@ public struct BottomActionBarViewModel {
         isSetInProgress && hasActiveExercise && !isLastSetCompleted
     }
 
+    /// Quick-Done completes the whole exercise in one go, so it is offered
+    /// only while the set controls are up and nothing has been recorded yet.
+    /// Read by the training sheet's dial column and by the action bar (which
+    /// hides the feedback entry point while the dial is showing).
+    public var showsQuickDone: Bool {
+        showSetControls && currentSet == 0
+    }
+
     public var showFinishButton: Bool {
         (isLastSetCompleted || didEditCompleteSet) && currentExercise != nil
     }

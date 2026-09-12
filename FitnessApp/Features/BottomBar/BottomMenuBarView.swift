@@ -84,6 +84,13 @@ struct BottomMenuBarView: View {
         TrainingMiniBar.targets(router: router)
     }
 
+    /// Neutral grey over the training sheet, warm charcoal everywhere else.
+    /// Switched hard, no animation: a colour fade during the sheet's slide
+    /// read as a second, unrelated transition.
+    private var chromeVariant: FloatingChromeSurface.Variant {
+        router.trainingPresentation != nil ? .training : .floating
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
             bottomBarSurfaceContent
@@ -174,7 +181,7 @@ struct BottomMenuBarView: View {
             tabBar
                 .frame(height: capsuleHeight)
                 .clipShape(Capsule())
-                .bottomMenuSurface(in: .capsule)
+                .bottomMenuSurface(in: .capsule, variant: chromeVariant)
 
             rightActionButton
         }
@@ -260,7 +267,7 @@ struct BottomMenuBarView: View {
         }
         .frame(height: capsuleHeight)
         .clipShape(Capsule())
-        .bottomMenuSurface(in: .capsule)
+        .bottomMenuSurface(in: .capsule, variant: chromeVariant)
     }
 
     // MARK: - Shared Components
@@ -322,7 +329,7 @@ struct BottomMenuBarView: View {
                     .foregroundColor(AppStyle.Color.white)
                     .imageScale(.large)
                     .frame(width: circleButtonSize, height: circleButtonSize)
-                    .circleGlass()
+                    .circleGlass(variant: chromeVariant)
                     // contentShape must live INSIDE the label (last modifier) so
                     // it survives .buttonStyle(.plain) recomposing the label —
                     // otherwise the hit area collapses to the drawn glyph. Mirrors
@@ -362,7 +369,7 @@ struct BottomMenuBarView: View {
                     .foregroundColor(AppStyle.Color.white)
                     .imageScale(.large)
                     .frame(width: circleButtonSize, height: circleButtonSize)
-                    .circleGlass()
+                    .circleGlass(variant: chromeVariant)
                     // contentShape must live INSIDE the label (last modifier) so it
                     // survives .buttonStyle(.plain) recomposing the label — otherwise
                     // the hit area collapses to the thin ellipsis glyph. Mirrors the
@@ -410,7 +417,7 @@ struct BottomMenuBarView: View {
                 .background {
                     if isSelected {
                         Capsule()
-                            .fill(FloatingChromeSurface.selectionFill)
+                            .fill(FloatingChromeSurface.selectionFill(for: chromeVariant))
                             .padding(.vertical, selectionVerticalInset)
                             .scaleEffect(pillBounce ? 1.4 : 1.0)
                             .matchedGeometryEffect(id: "selectedTab", in: tabNamespace)
@@ -441,8 +448,8 @@ struct BottomMenuBarView: View {
 // MARK: - Circle Glass Modifier
 
 private extension View {
-    func circleGlass() -> some View {
-        self.bottomMenuSurface(in: .circle)
+    func circleGlass(variant: FloatingChromeSurface.Variant) -> some View {
+        self.bottomMenuSurface(in: .circle, variant: variant)
     }
 
     /// The bar's floating controls carry the same glass as the mini bar's plate:
@@ -452,9 +459,12 @@ private extension View {
     /// exactly the flat, framed look the glass is meant to replace — the surfaces
     /// are meant to separate from the page by blur, not by an edge.
     @ViewBuilder
-    func bottomMenuSurface<S: InsettableShape>(in shape: S) -> some View {
+    func bottomMenuSurface<S: InsettableShape>(
+        in shape: S,
+        variant: FloatingChromeSurface.Variant
+    ) -> some View {
         self.background {
-            FloatingChromeSurface.control(in: shape)
+            FloatingChromeSurface.control(in: shape, variant: variant)
         }
     }
 }

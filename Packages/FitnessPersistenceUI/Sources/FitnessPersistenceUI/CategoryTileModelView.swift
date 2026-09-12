@@ -73,7 +73,7 @@ public struct CategoryTileModelView: View {
 
     @ViewBuilder
     private func tileContent(info: CategoryTileProgressInfo) -> some View {
-        CardBackground(style: .translucent, addPadding: false) {
+        CardBackground(style: .plain, addPadding: false) {
             VStack(spacing: ExerciseCardLayout.CategoryTile.contentSpacing) {
                 headerRow(info: info)
                 iconView
@@ -153,7 +153,11 @@ public struct CategoryTileModelView: View {
     private func progressRow(info: CategoryTileProgressInfo) -> some View {
         if info.total > 0 {
             HStack(spacing: ExerciseCardLayout.CategoryTile.contentSpacing) {
-                if !info.isCompleted {
+                // The count sits right next to the bar so the two read as one
+                // unit; only the completed tile (no bar) keeps its count trailing.
+                if info.isCompleted {
+                    Spacer()
+                } else {
                     ProgressBar(
                         progress: info.progress,
                         totalWidth: ExerciseCardLayout.CategoryTile.progressWidth
@@ -161,13 +165,15 @@ public struct CategoryTileModelView: View {
                         .frame(height: ExerciseCardLayout.ProgressBar.height)
                 }
 
-                Spacer()
-
                 Text(AppText.commonCompletedOfTotal(completed: info.completed, total: info.total))
                     .font(AppStyle.Font.categoryTileProgress)
                     .foregroundColor(info.isCompleted ? appColorTheme.accent.glow : AppStyle.Color.white)
                     .lineLimit(1)
                     .minimumScaleFactor(ExerciseCardLayout.CategoryTile.minimumTextScale)
+
+                if !info.isCompleted {
+                    Spacer()
+                }
             }
             .padding(.horizontal, ExerciseCardLayout.CategoryTile.contentPadding)
         } else {

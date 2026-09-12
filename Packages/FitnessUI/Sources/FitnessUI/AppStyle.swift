@@ -76,6 +76,17 @@ public enum AppStyle {
         public static let completedBarWidth: CGFloat = 8
         public static let setRowBadgeSize: CGFloat = 26
         public static let setRowChipHorizontalPadding: CGFloat = 8
+        /// The vertical progress rail to the left of the set rows.
+        public static let setRailSlotWidth: CGFloat = 18
+        /// Gap between the rail marker and "Set N". Wide on purpose: the rail
+        /// and the title sit at the sheet's edge while the values keep their
+        /// place further in, so the two do not read as one cramped block.
+        public static let setRailToLabelSpacing: CGFloat = 16
+        public static let setRailLineWidth: CGFloat = 1.5
+        public static let setRailDotSize: CGFloat = 8
+        public static let setRailRingSize: CGFloat = 16
+        public static let setRailRingWidth: CGFloat = 1.5
+        public static let setRailBaselineOffset: CGFloat = 7
         public static let bilateralSideHeaderSize: CGFloat = 42
         public static let bilateralColumnSpacing: CGFloat = 4
         public static let bilateralMetricSpacingTight: CGFloat = 2
@@ -90,21 +101,46 @@ public enum AppStyle {
         public static let activeSetVerticalPadding: CGFloat = 12
         /// Exactly three standard set rows remain visible before the set-only
         /// scroller is needed. The value includes the card's vertical insets.
-        public static let trainingSheetStandardSetViewportHeight: CGFloat = 152
+        public static let trainingSheetStandardSetViewportHeight: CGFloat = 156
         /// Bilateral rows additionally reserve the existing L/R header while
         /// keeping three logical set pairs visible in the set-only scroller.
         public static let trainingSheetBilateralSetViewportHeight: CGFloat = 218
-        public static let trainingSheetTimerHeight: CGFloat = 70
         public static let trainingSheetBilateralTimerHeight: CGFloat = 88
-        public static let trainingSheetRailMaximumWidth: CGFloat = 120
         public static let trainingSheetRailMinimumWidth: CGFloat = 88
         public static let trainingSheetBilateralRailMinimumWidth: CGFloat = 72
         public static let trainingSheetBilateralContentHorizontalPadding: CGFloat = 4
         public static let trainingSheetContentHorizontalPadding: CGFloat = 20
         public static let trainingSheetContentMinimumHorizontalPadding: CGFloat = 8
         public static let trainingSheetSetVerticalOffset: CGFloat = 6
-        public static let trainingSheetStandardSessionHeight: CGFloat = 212
-        public static let trainingSheetBilateralSessionHeight: CGFloat = 270
+        public static let trainingSheetStandardSessionHeight: CGFloat = 244
+        /// Share of the sheet width the muscle artwork takes. The artwork is
+        /// the sheet's second column, not a thumbnail beside the sets.
+        public static let trainingSheetArtworkRailFraction: CGFloat = 0.42
+        public static let trainingSheetArtworkRailMaximumWidth: CGFloat = 200
+        public static let trainingSheetArtworkUpperBodyZoom: CGFloat = 1.35
+        /// Steps the whole values column in from the sheet edge; title and
+        /// rows move together.
+        public static let trainingSheetValuesColumnLeadingInset: CGFloat = 12
+        public static let trainingSheetBilateralValuesColumnLeadingInset: CGFloat = 12
+        /// The dial column over the artwork's trailing edge: the timer pill
+        /// (with Cancel) and Quick-Done under it, hung from the rail's top.
+        public static let trainingDialTopInset: CGFloat = 36
+        /// Gap the values column keeps to the dial column's leading edge.
+        public static let trainingDialColumnClearance: CGFloat = 8
+        public static let trainingDialSmallDiameter: CGFloat = 56
+        public static let trainingDialPillSpacing: CGFloat = 8
+        public static let trainingDialPillVerticalPadding: CGFloat = 8
+        public static let trainingDialPillRingInset: CGFloat = 6
+        public static let trainingDialPillDividerInset: CGFloat = 10
+        public static let trainingDialPillCancelHeight: CGFloat = 28
+        public static let trainingDialProgressWidth: CGFloat = 3
+        public static let trainingDialSpacing: CGFloat = 10
+        /// Negative on purpose: the dials sit a little past the artwork's edge,
+        /// into the sheet's content padding, so they hug the sheet rather than
+        /// floating inside the figure's column.
+        public static let trainingDialTrailingInset: CGFloat = -6
+        public static let trainingDialQuickDoneIconSize: CGFloat = 20
+        public static let trainingSheetBilateralSessionHeight: CGFloat = 288
         public static let trainingSheetHeaderSpacing: CGFloat = 16
         public static let trainingSheetActionBarTopSpacing: CGFloat = 14
         public static let trainingSheetBottomBarClearance: CGFloat = 76
@@ -267,6 +303,11 @@ public enum AppStyle {
         public static let trainingTimer = SwiftUI.Font.system(size: 16, weight: .bold)
         public static let trainingTimerLarge = SwiftUI.Font.system(size: 26, weight: .bold)
         public static let trainingTimerCancel = SwiftUI.Font.system(size: 13, weight: .medium)
+        /// The category eyebrow above the exercise name: small, wide-tracked
+        /// caps that label the title without competing with it.
+        public static let trainingCategoryEyebrow = SwiftUI.Font.system(size: 11, weight: .semibold)
+        public static let trainingDialPillTimer = SwiftUI.Font.system(size: 11, weight: .semibold)
+        public static let trainingDialCancelLabel = SwiftUI.Font.system(size: 13, weight: .medium)
         public static let defaultFont = SwiftUI.Font.system(size: 12, weight: .semibold)
         public static let bottomBarButtons = SwiftUI.Font.system(size: 16, weight: .semibold)
         /// Set index (1, 2, 3) at the left of a training-sheet set row.
@@ -276,6 +317,10 @@ public enum AppStyle {
         /// made the row's primary identifier smaller than its secondary "kg" and
         /// "of N" labels.
         public static let setRowNumber = SwiftUI.Font.system(size: 16, weight: .semibold)
+        /// "Set N" on the training sheet: the same size as the weight beside
+        /// it, so the row reads as one line of equals rather than a small
+        /// label and a big number.
+        public static let trainingSetLabel = SwiftUI.Font.system(size: 20, weight: .semibold)
 
         public static let analyticsExerciseTitle = SwiftUI.Font.system(size: 20, weight: .semibold)
         public static let analyticsExerciseData = SwiftUI.Font.system(size: 16, weight: .semibold)
@@ -475,7 +520,17 @@ public enum AppStyle {
         ///
         /// The brightest stop of the gradient this surface used to run — flat by
         /// choice. No outline, glow or shadow belongs on it.
-        public static let trainingDoneSurface = SwiftUI.Color(hex: "#0A8684")
+        /// Done and Finish: a deep petrol slab, a touch lighter at the top so it
+        /// reads as a raised control without a highlight or outline. Sits in
+        /// the same family as the anatomy rim and the quick-done haze.
+        public static let trainingDoneSurface = SwiftUI.Color(hex: "#1D3A43")
+        public static let trainingDoneSurfaceBottom = SwiftUI.Color(hex: "#152E36")
+
+        /// The dials over the training artwork (Cancel, timer, Quick-Done):
+        /// a neutral near-black disc, and one mint accent for the progress arc
+        /// and the bolt.
+        public static let trainingDialDisc = SwiftUI.Color(hex: "#1B1E20")
+        public static let trainingDialAccent = SwiftUI.Color(hex: "#2FE8C8")
         /// Grey-scheme progress fill. Kept as a fixed primitive for the palette.
         public static let progressOrange = SwiftUI.Color(hex: "#F97316")
         /// Grey-scheme progress track. Kept as a fixed primitive for the palette.
@@ -517,6 +572,12 @@ public enum AppStyle {
 
     public enum Opacity {
         public static let overlayBackdrop: Double = 0.55
+        /// Dark fill under the training timer where it overlaps the artwork.
+        public static let trainingTimerBackdrop: Double = 0.8
+        /// The dials over the training artwork.
+        public static let trainingDialDisc: Double = 0.94
+        public static let setRailLine: Double = 0.25
+        public static let trainingDialDivider: Double = 0.12
         public static let subtleBackground: Double = 0.06
         public static let subtleStroke: Double = 0.15
         /// Shared iOS-27 dark-surface base fill, replacing the raised native
@@ -637,10 +698,6 @@ public enum AppStyle {
 
         public static var setRowWeightMinWidth: CGFloat {
             current == .compact ? 50 : 60
-        }
-
-        public static var setRowRepsMinWidth: CGFloat {
-            current == .compact ? 110 : 120
         }
 
         public static var isExtraLarge: Bool {

@@ -11,6 +11,12 @@ public struct ExerciseMuscleIconView: View {
     public let accessibilityIdentifier: String
     public let onEdit: () -> Void
     public let size: CGFloat?
+    /// Height of the artwork frame. `nil` keeps it square at `size`; the
+    /// training sheet passes its column height so the figure fills the rail.
+    public let height: CGFloat?
+    /// Magnifies the artwork inside its frame, anchored to `alignment`, so a
+    /// top-aligned figure grows into its torso and loses legs at the bottom.
+    public let zoom: CGFloat
     public let showsGlow: Bool
     public let artwork: Image?
 
@@ -22,6 +28,8 @@ public struct ExerciseMuscleIconView: View {
         allowsEditing: Bool,
         accessibilityIdentifier: String,
         size: CGFloat? = nil,
+        height: CGFloat? = nil,
+        zoom: CGFloat = 1,
         showsGlow: Bool = true,
         artwork: Image? = nil,
         onEdit: @escaping () -> Void
@@ -31,6 +39,8 @@ public struct ExerciseMuscleIconView: View {
         self.allowsEditing = allowsEditing
         self.accessibilityIdentifier = accessibilityIdentifier
         self.size = size
+        self.height = height
+        self.zoom = zoom
         self.showsGlow = showsGlow
         self.artwork = artwork
         self.onEdit = onEdit
@@ -64,8 +74,13 @@ public struct ExerciseMuscleIconView: View {
                     .scaledToFill()
                     .frame(
                         width: resolvedSize,
-                        height: resolvedSize,
+                        height: height ?? resolvedSize,
                         alignment: alignment
+                    )
+                    .scaleEffect(zoom, anchor: UnitPoint(alignment))
+                    .frame(
+                        width: resolvedSize,
+                        height: height ?? resolvedSize
                     )
                     .clipped()
             }
@@ -105,6 +120,23 @@ private struct ExerciseMuscleIconAccessibilityModifier: ViewModifier {
                 .accessibilityElement()
                 .accessibilityLabel(AppText.accessibilityExerciseIllustration)
                 .accessibilityAddTraits(.isImage)
+        }
+    }
+}
+
+private extension UnitPoint {
+    /// The frame anchor that keeps the aligned edge fixed while scaling.
+    init(_ alignment: Alignment) {
+        switch alignment {
+        case .top: self = .top
+        case .bottom: self = .bottom
+        case .leading: self = .leading
+        case .trailing: self = .trailing
+        case .topLeading: self = .topLeading
+        case .topTrailing: self = .topTrailing
+        case .bottomLeading: self = .bottomLeading
+        case .bottomTrailing: self = .bottomTrailing
+        default: self = .center
         }
     }
 }

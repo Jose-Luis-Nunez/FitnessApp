@@ -56,6 +56,11 @@ public struct TrainingSessionComponent: View {
         availableWidth: CGFloat
     ) -> some View {
         let isBilateral = exercise.executionMode == .bilateral
+        // Bilateral rows need the width for their L/R pairs, so the artwork
+        // stays a narrow rail there. The standard layout gives the figure a
+        // real column: values on the left, the body on the right. The values
+        // may run over the figure's leading edge — that part of the artwork
+        // is empty background — so the rail is not shrunk to make room.
         let railWidth = isBilateral
             ? min(
                 AppStyle.Layout.trainingSheetRailMinimumWidth,
@@ -65,10 +70,10 @@ public struct TrainingSessionComponent: View {
                 )
             )
             : min(
-                AppStyle.Layout.trainingSheetRailMaximumWidth,
+                AppStyle.Layout.trainingSheetArtworkRailMaximumWidth,
                 max(
                     AppStyle.Layout.trainingSheetRailMinimumWidth,
-                    availableWidth * 0.28
+                    availableWidth * AppStyle.Layout.trainingSheetArtworkRailFraction
                 )
             )
         let horizontalPadding = isBilateral
@@ -85,15 +90,35 @@ public struct TrainingSessionComponent: View {
             ? AppStyle.Layout.bilateralMetricSpacingCompact
             : dynamicSpacing
         let scrollTarget = activeSetScrollTarget(for: exercise)
-        return HStack(alignment: .top, spacing: columnSpacing) {
+        // A `ZStack`, not an `HStack`: the values column spans the full width
+        // and the artwork rail sits on top at the trailing edge, so long rows
+        // overlap the figure's empty leading margin instead of squeezing it.
+        return ZStack(alignment: .topTrailing) {
+            // Artwork first, so the values draw over its empty leading margin
+            // rather than disappearing under the figure.
+            artworkRail(exercise, railWidth: railWidth)
+
             VStack(alignment: .leading, spacing: AppStyle.Padding.titleBottom) {
-                Text(exercise.name)
-                    .font(AppStyle.Font.navigationHeadline)
-                    .foregroundColor(AppStyle.Color.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                    .padding(.leading, Self.titleLeadingInset)
-                    .accessibilityIdentifier(TrainingIDs.sheetTitle)
+                VStack(alignment: .leading, spacing: 2) {
+                    // The eyebrow: which category this exercise belongs to,
+                    // small and wide-tracked so it labels the title rather
+                    // than competing with it.
+                    Text(exercise.category.localizedName)
+                        .font(AppStyle.Font.trainingCategoryEyebrow)
+                        .textCase(.uppercase)
+                        .tracking(2.5)
+                        .foregroundColor(AppStyle.Color.idleMetricUnit)
+                        .lineLimit(1)
+                        .accessibilityIdentifier(TrainingIDs.sheetCategory)
+
+                    Text(exercise.name)
+                        .font(AppStyle.Font.navigationHeadline)
+                        .foregroundColor(AppStyle.Color.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .accessibilityIdentifier(TrainingIDs.sheetTitle)
+                }
+                .padding(.leading, Self.titleLeadingInset)
 
                 ScrollViewReader { proxy in
                     ScrollView(.vertical) {
@@ -101,6 +126,12 @@ public struct TrainingSessionComponent: View {
                     }
                     .scrollIndicators(.hidden)
                     .scrollBounceBehavior(.basedOnSize)
+                    // Standard rows hug their content: a `ScrollView` hit-tests
+                    // its whole frame, and one spanning the column would sit
+                    // over the figure and swallow the tap that opens the seat
+                    // picker. Bilateral rows are width-aware layouts and keep
+                    // the full column.
+                    .fixedSize(horizontal: !isBilateral, vertical: false)
                     .frame(height: setViewportHeight(for: exercise), alignment: .top)
                     .offset(y: AppStyle.Layout.trainingSheetSetVerticalOffset)
                     .accessibilityIdentifier(TrainingIDs.setScroll)
@@ -122,60 +153,152 @@ public struct TrainingSessionComponent: View {
                     }
                 }
             }
+            // The whole values column steps in from the sheet edge. Title and
+            // rows move together, so their shared edge is preserved.
+            .padding(
+                .leading,
+                isBilateral
+                    ? AppStyle.Layout.trainingSheetBilateralValuesColumnLeadingInset
+                    : AppStyle.Layout.trainingSheetValuesColumnLeadingInset
+            )
+            // Bilateral keeps the two side by side; the rail's width is taken
+            // off the column so the L/R pairs never run under the figure.
+            // Standard may run over the figure but must stop short of the dial
+            // column: a `ScrollView` hit-tests its whole frame, empty space
+            // included, and would swallow taps meant for Cancel and Quick-Done.
+            .padding(
+                .trailing,
+                isBilateral
+                    ? railWidth + columnSpacing
+                    : AppStyle.Layout.trainingDialSmallDiameter
+                        + AppStyle.Layout.trainingDialTrailingInset
+                        + AppStyle.Layout.trainingDialColumnClearance
+            )
             .frame(maxWidth: .infinity, alignment: .leading)
-            .layoutPriority(1)
-
-            VStack(spacing: dynamicSpacing) {
-                ExerciseMuscleIconView(
-                    iconName: exercise.displayIconName,
-                    alignment: exercise.iconAlignment,
-                    allowsEditing: exercise.allowsSeatEditing,
-                    accessibilityIdentifier: TrainingIDs.muscleIcon,
-                    size: railWidth,
-                    showsGlow: false,
-                    artwork: muscleArtwork,
-                    onEdit: { onEdit?(exercise, .seat) }
-                )
-                .frame(height: railWidth)
-
-                CompactTimerComponent(
-                    viewModel: coordinator.activeSetViewModel,
-                    onCancel: onCancel,
-                    expanded: exercise.executionMode == .bilateral
-                )
-                .frame(height: timerHeight(for: exercise))
-            }
-            .frame(width: railWidth, alignment: .top)
         }
         .padding(.horizontal, horizontalPadding)
     }
 
-    /// The exercise name heads the same column as the set rows, but it sat at
-    /// the column's raw leading edge while the rows are inset twice over: once
-    /// by `SimpleActiveSetView` itself and once more per row — the standard row
-    /// pads itself, the bilateral layout pads its whole stack. Both paths
-    /// therefore carry `cardPadding` twice, which is why this needs no
-    /// per-mode branch. On top of that each set number is *centred* in a
-    /// `setRowBadgeSize` slot, so the digit starts further in again.
-    ///
-    /// Verified against the rendered snapshots rather than derived on paper:
-    /// the title and a leading "1" both land on 46.3pt at 430pt wide. The badge
-    /// term stays an approximation because the digit's width is unknown at
-    /// layout time — a two-digit set number starts marginally further left.
+    /// Standard: the figure fills the whole column height and the timer pill
+    /// hangs over it from the top-trailing corner, instead of in a slot below
+    /// it. That is what lets the figure be this large: nothing else claims
+    /// height in the rail. Bilateral rows leave only a narrow rail, where a
+    /// full-height figure is a cropped strip with a pill over it, so that mode
+    /// keeps the square icon with the timer and Quick-Done stacked below.
+    @ViewBuilder
+    private func artworkRail(_ exercise: Exercise, railWidth: CGFloat) -> some View {
+        if exercise.executionMode == .bilateral {
+            stackedRail(exercise, railWidth: railWidth)
+        } else {
+            overlaidRail(exercise, railWidth: railWidth)
+        }
+    }
+
+    private func stackedRail(_ exercise: Exercise, railWidth: CGFloat) -> some View {
+        VStack(spacing: dynamicSpacing) {
+            ExerciseMuscleIconView(
+                iconName: exercise.displayIconName,
+                alignment: exercise.iconAlignment,
+                allowsEditing: exercise.allowsSeatEditing,
+                accessibilityIdentifier: TrainingIDs.muscleIcon,
+                size: railWidth,
+                showsGlow: false,
+                artwork: muscleArtwork,
+                onEdit: { onEdit?(exercise, .seat) }
+            )
+            .frame(height: railWidth)
+
+            CompactTimerComponent(
+                viewModel: coordinator.activeSetViewModel,
+                onCancel: onCancel,
+                expanded: true
+            )
+            .frame(height: AppStyle.Layout.trainingSheetBilateralTimerHeight)
+
+            if showsQuickDone {
+                TrainingQuickDoneDial(
+                    diameter: AppStyle.Layout.trainingDialSmallDiameter,
+                    action: quickDoneAction
+                )
+            }
+        }
+        .frame(width: railWidth, alignment: .top)
+    }
+
+    private func overlaidRail(_ exercise: Exercise, railWidth: CGFloat) -> some View {
+        let railHeight = sessionHeight(for: exercise)
+        return ZStack(alignment: .topTrailing) {
+            ExerciseMuscleIconView(
+                iconName: exercise.displayIconName,
+                alignment: exercise.iconAlignment,
+                allowsEditing: exercise.allowsSeatEditing,
+                accessibilityIdentifier: TrainingIDs.muscleIcon,
+                size: railWidth,
+                height: railHeight,
+                // Upper-body categories zoom into the torso; legs keep the
+                // full figure because their focus is at the bottom.
+                zoom: exercise.category == .legs
+                    ? 1
+                    : AppStyle.Layout.trainingSheetArtworkUpperBodyZoom,
+                showsGlow: false,
+                artwork: muscleArtwork,
+                onEdit: { onEdit?(exercise, .seat) }
+            )
+            .frame(width: railWidth, height: railHeight)
+
+            // The timer pill with Quick-Done under it, hung from the top of
+            // the rail at shoulder height. Quick-Done is here and not in the
+            // Less/Done/More bar so the two share one trailing edge.
+            VStack(alignment: .trailing, spacing: AppStyle.Layout.trainingDialSpacing) {
+                TrainingTimerPill(
+                    viewModel: coordinator.activeSetViewModel,
+                    width: AppStyle.Layout.trainingDialSmallDiameter,
+                    onCancel: {
+                        if let onCancel {
+                            onCancel()
+                        } else {
+                            coordinator.activeSetViewModel.cancelActiveSet()
+                        }
+                    }
+                )
+
+                if showsQuickDone {
+                    TrainingQuickDoneDial(
+                        diameter: AppStyle.Layout.trainingDialSmallDiameter,
+                        action: quickDoneAction
+                    )
+                }
+            }
+            .padding(.trailing, AppStyle.Layout.trainingDialTrailingInset)
+            .padding(.top, AppStyle.Layout.trainingDialTopInset)
+        }
+        .frame(width: railWidth, height: railHeight, alignment: .topTrailing)
+    }
+
+    /// The rule lives on `BottomActionBarViewModel`; the sheet only reads it.
+    private var showsQuickDone: Bool {
+        coordinator.createBottomActionBarViewModel(
+            hasActiveExercise: coordinator.isTrainingActive
+        ).showsQuickDone
+    }
+
+    private var quickDoneAction: () -> Void {
+        coordinator.createTrainingCallbacks().onQuickDone
+    }
+
+    /// The exercise name heads the same column as the set rows. The rows are
+    /// inset once, by `SimpleActiveSetView` itself; the standard row adds
+    /// nothing, the bilateral layout pads its whole stack once more. The title
+    /// matches the standard row's leading edge, which is the progress rail's
+    /// marker; "Set N" sits `setRailToLabelSpacing` further in on purpose.
     private static var titleLeadingInset: CGFloat {
-        AppStyle.DeviceLayout.cardPadding * 2 + AppStyle.Layout.setRowBadgeSize / 3
+        AppStyle.DeviceLayout.cardPadding
     }
 
     private func setViewportHeight(for exercise: Exercise) -> CGFloat {
         exercise.executionMode == .bilateral
             ? AppStyle.Layout.trainingSheetBilateralSetViewportHeight
             : AppStyle.Layout.trainingSheetStandardSetViewportHeight
-    }
-
-    private func timerHeight(for exercise: Exercise) -> CGFloat {
-        exercise.executionMode == .bilateral
-            ? AppStyle.Layout.trainingSheetBilateralTimerHeight
-            : AppStyle.Layout.trainingSheetTimerHeight
     }
 
     private func sessionHeight(for exercise: Exercise) -> CGFloat {
@@ -269,6 +392,13 @@ public struct CompactTimerComponent: View {
         self.expanded = expanded
     }
 
+    private var surfaceShape: RoundedRectangle {
+        RoundedRectangle(
+            cornerRadius: AppStyle.CornerRadius.timerCard,
+            style: .continuous
+        )
+    }
+
     public var body: some View {
         VStack(spacing: 2) {
             Text(verbatim: max(viewModel.timerSeconds, 0).formattedAsTimer)
@@ -301,14 +431,16 @@ public struct CompactTimerComponent: View {
         .padding(.top, 6)
         .padding(.bottom, 2)
         .frame(maxWidth: .infinity)
+        // A dark fill under the outline keeps the digits readable; the shared
+        // control surface stays outline-only for the pain grid and symptom
+        // chips that also use it.
+        .background {
+            surfaceShape
+                .fill(AppStyle.Color.black.opacity(AppStyle.Opacity.trainingTimerBackdrop))
+        }
         .overlay {
-            TrainingControlSurfaceStyle.surface(
-                in: RoundedRectangle(
-                    cornerRadius: AppStyle.CornerRadius.timerCard,
-                    style: .continuous
-                )
-            )
-            .allowsHitTesting(false)
+            TrainingControlSurfaceStyle.surface(in: surfaceShape)
+                .allowsHitTesting(false)
         }
     }
 }
@@ -392,7 +524,6 @@ public struct TrainingActionBarComponent: View {
                 viewModel: viewModel,
                 onStart: trainingCallbacks.onStart,
                 onCompleteSet: trainingCallbacks.onCompleteSet,
-                onQuickDone: trainingCallbacks.onQuickDone,
                 onEditLess: trainingCallbacks.onEditLess,
                 onEditMore: trainingCallbacks.onEditMore,
                 onFinish: trainingCallbacks.onFinish,

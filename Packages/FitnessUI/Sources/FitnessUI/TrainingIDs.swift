@@ -6,6 +6,7 @@ public enum TrainingIDs {
     public static let sheetBackdrop = "id_training_sheet_backdrop"
     public static let sheetGrabber = "id_training_sheet_grabber"
     public static let sheetTitle = "id_training_sheet_title"
+    public static let sheetCategory = "id_training_sheet_category"
     public static let muscleIcon = "id_training_muscle_icon"
     public static let setScroll = "id_training_set_scroll"
     public static let doneButton = "id_button_done"

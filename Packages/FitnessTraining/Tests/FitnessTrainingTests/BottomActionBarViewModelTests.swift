@@ -28,6 +28,17 @@ struct BottomActionBarViewModelTests {
         )
     }
 
+    @Test("Quick-Done is offered only while set controls are up and nothing is recorded")
+    func quickDoneVisibility() {
+        let exercise = makeExercise(sets: 3)
+
+        #expect(makeViewModel(isSetInProgress: true, currentSet: 0, currentExercise: exercise).showsQuickDone)
+        #expect(!makeViewModel(isSetInProgress: true, currentSet: 1, currentExercise: exercise).showsQuickDone)
+        #expect(!makeViewModel(isSetInProgress: false, currentSet: 0, currentExercise: exercise).showsQuickDone)
+        #expect(!makeViewModel(isSetInProgress: true, currentSet: 0, currentExercise: exercise, hasActiveExercise: false).showsQuickDone)
+        #expect(!makeViewModel(isSetInProgress: true, currentSet: 0, currentExercise: exercise, isLastSetCompleted: true).showsQuickDone)
+    }
+
     @Test func feedbackButtonVisibilityTracksFinishVisibility() {
         let exercise = makeExercise(sets: 3)
         let cases = [

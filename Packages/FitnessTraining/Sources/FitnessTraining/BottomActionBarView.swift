@@ -10,7 +10,6 @@ public struct BottomActionBarView: View {
     public let viewModel: BottomActionBarViewModel
     public let onStart: () -> Void
     public let onCompleteSet: () -> Void
-    public let onQuickDone: () -> Void
     public let onEditLess: () -> Void
     public let onEditMore: () -> Void
     public let onFinish: () -> Void
@@ -21,7 +20,6 @@ public struct BottomActionBarView: View {
         viewModel: BottomActionBarViewModel,
         onStart: @escaping () -> Void,
         onCompleteSet: @escaping () -> Void,
-        onQuickDone: @escaping () -> Void,
         onEditLess: @escaping () -> Void,
         onEditMore: @escaping () -> Void,
         onFinish: @escaping () -> Void,
@@ -31,7 +29,6 @@ public struct BottomActionBarView: View {
         self.viewModel = viewModel
         self.onStart = onStart
         self.onCompleteSet = onCompleteSet
-        self.onQuickDone = onQuickDone
         self.onEditLess = onEditLess
         self.onEditMore = onEditMore
         self.onFinish = onFinish
@@ -46,7 +43,6 @@ public struct BottomActionBarView: View {
                     viewModel: viewModel,
                     onStart: onStart,
                     onCompleteSet: onCompleteSet,
-                    onQuickDone: onQuickDone,
                     onEditLess: onEditLess,
                     onEditMore: onEditMore,
                     onFinish: onFinish,
@@ -65,7 +61,6 @@ public struct FloatingActionButtonsView: View {
     public let viewModel: BottomActionBarViewModel
     public let onStart: () -> Void
     public let onCompleteSet: () -> Void
-    public let onQuickDone: () -> Void
     public let onEditLess: () -> Void
     public let onEditMore: () -> Void
     public let onFinish: () -> Void
@@ -93,7 +88,6 @@ public struct FloatingActionButtonsView: View {
         viewModel: BottomActionBarViewModel,
         onStart: @escaping () -> Void,
         onCompleteSet: @escaping () -> Void,
-        onQuickDone: @escaping () -> Void,
         onEditLess: @escaping () -> Void,
         onEditMore: @escaping () -> Void,
         onFinish: @escaping () -> Void,
@@ -103,12 +97,17 @@ public struct FloatingActionButtonsView: View {
         self.viewModel = viewModel
         self.onStart = onStart
         self.onCompleteSet = onCompleteSet
-        self.onQuickDone = onQuickDone
         self.onEditLess = onEditLess
         self.onEditMore = onEditMore
         self.onFinish = onFinish
         self.onOpenFeedback = onOpenFeedback
         self.feedbackIconState = feedbackIconState
+    }
+
+    /// Quick-Done is drawn by the training session's dial column, not here;
+    /// the bar only has to keep the feedback entry point out of its way.
+    private var showsQuickDone: Bool {
+        viewModel.showsQuickDone
     }
 
     public var body: some View {
@@ -120,13 +119,7 @@ public struct FloatingActionButtonsView: View {
                     primaryActionCapsule
                 }
 
-                if viewModel.showSetControls && viewModel.currentSet == 0 {
-                    menuIconItem(
-                        image: Image(systemName: "bolt.fill"),
-                        action: onQuickDone,
-                        style: .quickDone
-                    )
-                } else if viewModel.showFeedbackButton {
+                if viewModel.showFeedbackButton && !showsQuickDone {
                     feedbackIconButton(state: feedbackIconState, action: onOpenFeedback)
                 }
             }
@@ -138,7 +131,7 @@ public struct FloatingActionButtonsView: View {
     }
 
     enum MenuItemStyle {
-        case control, done, start, finish, allDone, quickDone, feedback
+        case control, done, start, finish, allDone, feedback
     }
 
     /// Active-set controls deliberately use three distinct surfaces rather
@@ -146,28 +139,46 @@ public struct FloatingActionButtonsView: View {
     /// while "Less" and "More" remain secondary adjustments.
     /// Width reserved for Less/More.
     private let setControlSecondaryWidth: CGFloat = 64
-    /// Done's width. Fixed, so it stays a block rather than spanning the bar.
+    /// Done's preferred width. Bounded above so it stays a block rather than
+    /// spanning the bar, and below so it still reads as the primary action on
+    /// the narrowest supported sheet.
     private let setControlDoneWidth: CGFloat = 176
-    /// Gap between Done and its two neighbours.
-    private let setControlGap: CGFloat = 14
+    private let setControlDoneMinimumWidth: CGFloat = 120
+    /// Gap between Done and its two neighbours. Wide on purpose: Less and More
+    /// sit out towards the sheet's edges, so Done stands alone in the middle.
+    /// On narrow sheets the gap yields first, down to `setControlMinimumGap`,
+    /// and only then does Done give up width.
+    private let setControlGap: CGFloat = 36
+    private let setControlMinimumGap: CGFloat = 14
 
-    /// The three controls form one centred group with fixed gaps. Earlier
-    /// versions let spacers *between* the buttons absorb the slack, which pinned
-    /// Less/More to the outer edges and moved them whenever the trailing
-    /// quick-done circle appeared or disappeared. Putting the slack outside the
-    /// group keeps their distance to Done constant in both states.
+    /// The three controls form one centred group. Earlier versions let
+    /// unbounded spacers absorb the slack, which pinned Less/More to the
+    /// outer edges and moved them whenever a trailing circle appeared or
+    /// disappeared. The group is therefore capped at its preferred width so
+    /// the gaps never grow past `setControlGap`; below that width the bounded
+    /// spacers and Done's flexible frame shrink instead of overrunning the
+    /// screen, which fixed 64 + 176 + 64 + 2×36 pt frames did on 375 pt phones.
     private var setControlButtons: some View {
-        HStack(spacing: setControlGap) {
+        HStack(spacing: 0) {
             menuTextItem(text: AppText.actionLess, accessibilityToken: "Less", action: onEditLess, style: .control)
                 .frame(width: setControlSecondaryWidth)
 
+            Spacer(minLength: setControlMinimumGap)
+
             menuTextItem(text: AppText.actionDone, action: onCompleteSet, style: .done)
-                .frame(width: setControlDoneWidth)
+                .frame(minWidth: setControlDoneMinimumWidth, maxWidth: setControlDoneWidth)
+
+            Spacer(minLength: setControlMinimumGap)
 
             menuTextItem(text: AppText.actionMore, accessibilityToken: "More", action: onEditMore, style: .control)
                 .frame(width: setControlSecondaryWidth)
         }
-        .frame(maxWidth: .infinity, maxHeight: capsuleHeight)
+        .frame(maxWidth: setControlGroupPreferredWidth, maxHeight: capsuleHeight)
+        .frame(maxWidth: .infinity)
+    }
+
+    private var setControlGroupPreferredWidth: CGFloat {
+        setControlSecondaryWidth * 2 + setControlDoneWidth + setControlGap * 2
     }
 
     /// The start and finish states retain their existing single, shared
@@ -245,7 +256,16 @@ public struct FloatingActionButtonsView: View {
                                 cornerRadius: setControlCornerRadius,
                                 style: .continuous
                             )
-                            .fill(AppStyle.Color.trainingDoneSurface)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        AppStyle.Color.trainingDoneSurface,
+                                        AppStyle.Color.trainingDoneSurfaceBottom,
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
                             .padding(.horizontal, setControlSurfaceHorizontalInset)
                         }
                         // Less/More draw no surface at all — plain labels beside
@@ -262,23 +282,6 @@ public struct FloatingActionButtonsView: View {
         .contentShape(Rectangle())
         .buttonStyle(PlainButtonStyle())
         .accessibilityIdentifier(accessibilityID(for: style, text: accessibilityToken))
-    }
-
-    @ViewBuilder
-    private func menuIconItem(
-        image: Image,
-        action: @escaping () -> Void,
-        style: MenuItemStyle
-    ) -> some View {
-        glassCircleIconButton(
-            image: image,
-            renderingMode: .template,
-            // Same dimmed grey as the Less/More labels beside it — it is a
-            // secondary affordance, not a primary action.
-            tint: AppStyle.Color.idleMetricUnit,
-            accessibilityIdentifier: accessibilityID(for: style, text: ""),
-            action: action
-        )
     }
 
     /// Feedback entry-point icon — renders one of three bitmap assets that the
@@ -378,7 +381,6 @@ public struct FloatingActionButtonsView: View {
         case .start:     return TrainingIDs.startButton
         case .allDone:   return TrainingIDs.allDoneButton
         case .control:   return TrainingIDs.controlButton(text)
-        case .quickDone: return TrainingIDs.quickDoneButton
         case .feedback:  return TrainingIDs.feedbackButton
         }
     }
